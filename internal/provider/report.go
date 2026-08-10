@@ -75,14 +75,11 @@ func overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalRe
 	} else if plan.Config.IsUnknown() {
 		plan.Config = resolved.Config
 
-		// The practitioner omitted the whole config block, so they configured
-		// neither metric mirror. The per-attribute modifiers that normally keep an
-		// unconfigured mirror out of state cannot fire here — the framework does
-		// not descend into the children of an Unknown object — so drop the API
-		// echo explicitly. Without this, prior state carries metrics[*].type, which
-		// is Required (non-computed), and Terraform Core then proposes null for the
-		// whole config on the next plan and phantom-diffs the entire resource.
-		// See useNullForUnconfiguredMetricMirror for the mechanism.
+		// config omitted entirely means neither metric mirror is configured. The
+		// per-attribute modifiers cannot do this here — the framework does not
+		// descend into the children of an Unknown object — so drop the API echo
+		// explicitly, or prior state carries metrics[*].type and permanently diffs
+		// the resource. See useNullForUnconfiguredMetricMirror.
 		plan.Config.Metric = resource_report.NewMetricValueNull()
 		emptyMetrics, emptyDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
 		diags.Append(emptyDiags...)
@@ -1536,25 +1533,13 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		diags.Append(emptyMetricsDiags...)
 	}
 
-	// State-aware read for the metric mirrors.
-	//
-	// `metric` (deprecated) and `metrics` are two views of the same API field and
-	// the API returns BOTH populated regardless of which one was configured. Their
-	// type/value leaves are Required (non-computed), so storing the echo for the
-	// mirror the practitioner never configured makes Terraform Core propose null
-	// for it on the next plan and cascades into a permanent whole-resource diff
-	// (see useNullForUnconfiguredMetricMirror for the full mechanism).
-	//
-	// The plan modifiers keep the unconfigured mirror out of state at plan time;
-	// Read has to agree or a refresh would put the echo straight back and
-	// reintroduce the diff. Preserving the prior null/[] here is what makes
-	// refreshing plans stable. On import there is no prior state, so both mirrors
-	// are populated from the API as usual.
+	// State-aware read for the metric mirrors: preserve a prior null/[] instead of
+	// mapping the API echo, so a refresh does not undo what the plan modifiers do.
+	// See useNullForUnconfiguredMetricMirror.
 	if state.Config.IsNull() || state.Config.IsUnknown() {
-		// Import: no prior state to compare against. Populate the canonical
-		// `metrics` from the API and leave the deprecated `metric` mirror null, so
-		// a config written against `metrics` round-trips cleanly. A config still
-		// using `metric` gets one convergent diff after import.
+		// Import has no prior state. Populate the canonical `metrics` and leave the
+		// deprecated `metric` mirror null, so a config written against `metrics`
+		// round-trips cleanly; one using `metric` gets one convergent diff.
 		configMap["metric"] = resource_report.NewMetricValueNull()
 	} else {
 		if state.Config.Metric.IsNull() {

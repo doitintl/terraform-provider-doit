@@ -65,11 +65,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	}
 
 	// Category A: nested clearable filter values and mode.
-	//
-	// metric_filter.values used to be here too, but the spec now marks
-	// metric_filter's metric/operator/values Required (the API rejects a
-	// metric_filter missing any of them), so a clearing modifier there would be
-	// dead code — Terraform requires the value to be present.
 	if configAttr, ok := s.Attributes["config"].(schema.SingleNestedAttribute); ok {
 		if filtersAttr, ok := configAttr.Attributes["filters"].(schema.ListNestedAttribute); ok {
 			if attr, ok := filtersAttr.NestedObject.Attributes["values"].(schema.ListAttribute); ok {
@@ -82,22 +77,33 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			}
 			configAttr.Attributes["filters"] = filtersAttr
 		}
+
+		// Category A: group is clearable. Omitting the block proposes [], which the
+		// request builder sends as "group": [], so removal takes effect instead of
+		// being dropped by the PATCH merge. Clearing a group that carries a limit
+		// relies on the API pruning the limit's server-side filter on the grouped
+		// dimension; that filter is not exposed through the public `filters` field,
+		// so the provider cannot reconcile it itself.
+		//
+		// Sending [] is also what keeps plans stable: group[*].limit.metric is
+		// Required, so an API-populated group left in state while absent from config
+		// permanently diffs the resource — see useNullForUnconfiguredMetricMirror.
+		if attr, ok := configAttr.Attributes["group"].(schema.ListNestedAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+			configAttr.Attributes["group"] = attr
+		}
+
 		if fsAttr, ok := configAttr.Attributes["forecast_settings"].(schema.SingleNestedAttribute); ok {
 			fsAttr.PlanModifiers = append(fsAttr.PlanModifiers, useNullOrDefaultForForecastSettings())
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
 
-		// The metric mirrors: NOT a clearing classification. `metric` (deprecated)
-		// and `metrics` are two views of the same API field, and the API returns
-		// BOTH populated no matter which one the practitioner configured. Because
-		// their type/value leaves are Required (non-computed), storing the API echo
-		// for the mirror the practitioner did not configure makes Terraform Core
-		// propose null for it on the next plan, which cascades into a whole-resource
-		// "known after apply" diff that never converges. These modifiers keep the
-		// unconfigured mirror out of state; they do NOT clear anything server-side
-		// (the API derives the mirror and always keeps it), which is why both
-		// attributes stay Category B below rather than becoming Category A.
-		// See useNullForUnconfiguredMetricMirror for the full mechanism.
+		// metric (deprecated) and metrics are two views of one API field, and the
+		// API returns both populated whichever one is configured. Keep the
+		// unconfigured mirror out of state; their type/value leaves are Required, so
+		// storing the echo permanently diffs the resource. Not a clearing
+		// classification — both stay Category B below, since nothing is cleared
+		// server-side. See useNullForUnconfiguredMetricMirror.
 		if attr, ok := configAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnconfiguredMetricMirror())
 			configAttr.Attributes["metric"] = attr

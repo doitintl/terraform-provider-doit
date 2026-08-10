@@ -52,10 +52,9 @@ func TestAccReport_ForecastSettings_Import(t *testing.T) {
 				ResourceName:      "doit_report.forecast_import_test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// config.metric and config.metrics are two views of one API field.
-				// Import has no config to tell which one is in use, so it populates the
-				// canonical metrics and leaves the deprecated metric mirror null (see
-				// mapReportToModel). Trailing dots keep config.metric_filter.* matched.
+				// Import cannot tell which mirror is in use, so it populates the
+				// canonical metrics and leaves metric null. Trailing dots keep
+				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
 			},
 		},
@@ -77,10 +76,9 @@ func TestAccReport_ForecastSettings_ImportWithIntervals(t *testing.T) {
 				ResourceName:      "doit_report.intervals_test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// config.metric and config.metrics are two views of one API field.
-				// Import has no config to tell which one is in use, so it populates the
-				// canonical metrics and leaves the deprecated metric mirror null (see
-				// mapReportToModel). Trailing dots keep config.metric_filter.* matched.
+				// Import cannot tell which mirror is in use, so it populates the
+				// canonical metrics and leaves metric null. Trailing dots keep
+				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
 			},
 		},

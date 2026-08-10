@@ -74,40 +74,21 @@ func (m useNullOrDefaultForForecastSettingsModifier) PlanModifyObject(ctx contex
 }
 
 // useNullForUnconfiguredMetricMirror proposes null for an Optional+Computed
-// nested object whenever the config value is null.
+// nested object whenever the config value is null, keeping an API-populated
+// object out of state when the practitioner did not configure it.
 //
-// This is required — not merely cosmetic — for Optional+Computed nested objects
-// whose children are Required, when the API populates the object even though the
-// practitioner never configured it (config.metric / config.metrics are mirrors of
-// each other and the API always returns both).
+// Required for Optional+Computed objects with Required children: Terraform Core
+// (objchange.optionalValueNotComputable) proposes null for such an attribute when
+// its prior value holds any non-null non-computed descendant, which no longer
+// matches prior state. The framework then marks every config-null Computed
+// attribute without a Default as unknown, producing a whole-resource
+// "known after apply" diff that never converges. Holding null in state instead
+// removes the descendants Core keys off. The Read path must agree — see
+// mapReportToModel.
 //
-// Terraform Core's objchange.proposedNewAttributes contains:
-//
-//	case attr.Computed && configV.IsNull():
-//	    newV = priorV
-//	    if optionalValueNotComputable(attr, priorV) {
-//	        newV = configV // null
-//	    }
-//
-// optionalValueNotComputable reports true when the attribute is Optional, has a
-// NestedType, and any non-null descendant of the PRIOR value maps to a schema
-// attribute with Computed:false. Core reads that as "the practitioner must have
-// configured this before and has now removed it" and proposes null — which no
-// longer matches the prior state, so the plan is non-empty. The framework then
-// marks every config-null Computed attribute without a Default as unknown
-// (MarkComputedNilsAsUnknown), cascading into a whole-resource "known after
-// apply" diff that never converges.
-//
-// Keeping the object null in state when the practitioner did not configure it
-// removes the non-null non-computed descendants Core keys off, so Core preserves
-// prior (null == null) and the plan stays empty. The Read path must agree — see
-// the state-aware handling in mapReportToModel.
-//
-// This is deliberately NOT named use{Empty,Null}ForUnknown*WhenConfigNull: it is
-// not a clearing modifier and clearableattr must not classify it as Category A.
-// Removing the attribute from config does not clear anything server-side — the
-// API derives the mirror and always keeps it — so there is no null to send in
-// the request builder. config.metric stays Category B (acknowledgeNotClearable).
+// Not named use{Empty,Null}ForUnknown*WhenConfigNull on purpose: clearableattr
+// classifies by that naming, and this does not clear anything server-side, so
+// there is no null to send in the request builder.
 func useNullForUnconfiguredMetricMirror() planmodifier.Object {
 	return useNullForUnconfiguredMetricMirrorModifier{}
 }
@@ -129,15 +110,12 @@ func (m useNullForUnconfiguredMetricMirrorModifier) PlanModifyObject(_ context.C
 }
 
 // useEmptyForUnconfiguredMetricsMirror is the config.metrics counterpart of
-// useNullForUnconfiguredMetricMirror. It proposes an empty list whenever
-// config.metrics is null, keeping the API-echoed mirror out of state for the
-// same reason (see that modifier for the Core mechanism).
+// useNullForUnconfiguredMetricMirror; see that modifier for the mechanism.
 //
-// It deliberately does NOT reuse useNullForUnknownListWhenConfigNull: that one is
-// guarded on !req.StateValue.IsNull() and therefore does not fire on Create, so
-// the API echo would still reach state on the very first apply and poison the
-// next plan. Empty list (rather than null) keeps the repo's "user-configurable
-// lists are [] not null" convention that the Read path and listnullread expect.
+// Proposes an empty list rather than null to keep the "user-configurable lists
+// are [] not null" convention the Read path and listnullread expect. It cannot
+// reuse useNullForUnknownListWhenConfigNull, which is guarded on
+// !req.StateValue.IsNull() and so does not fire on Create.
 func useEmptyForUnconfiguredMetricsMirror() planmodifier.List {
 	return useEmptyForUnconfiguredMetricsMirrorModifier{}
 }
