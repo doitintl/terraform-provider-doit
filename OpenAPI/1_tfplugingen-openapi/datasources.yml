@@ -267,3 +267,8 @@ data_sources:
     read:
       path: /core/v1/service-quotas
       method: GET
+  # Budget Suggestions data source
+  budget_suggestions:
+    read:
+      path: /analytics/v1/budget-suggestions
+      method: GET

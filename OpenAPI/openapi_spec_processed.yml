@@ -1302,6 +1302,29 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
+  /analytics/v1/budget-suggestions:
+    get:
+      tags:
+        - Budget Suggestions
+      summary: List budget suggestions
+      description: |-
+        Returns the pending AI-generated budget suggestions for your account. The set is small (a handful
+        of pending suggestions) and is returned in full. Each suggestion can be accepted (after you create a
+        matching budget via `POST /analytics/v1/budgets`) or dismissed.
+      operationId: listBudgetSuggestions
+      responses:
+        "200":
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBudgetSuggestions200Response'
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
   /analytics/v1/dimension:
     get:
       tags:
@@ -5566,6 +5589,75 @@ components:
           format: int64
         url:
           type: string
+    BudgetSuggestion:
+      type: object
+      description: An AI-generated budget recommendation.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rationale:
+          type: string
+          description: Explanation of why this budget is suggested.
+        confidence:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+        amount:
+          description: Suggested budget amount as a decimal-string value with its currency.
+          allOf:
+            - $ref: '#/components/schemas/BudgetSuggestionAmount'
+        timeInterval:
+          type: string
+        alertThresholds:
+          type: array
+          description: Suggested alert thresholds as percentages of the amount.
+          items:
+            type: number
+            format: double
+        scopeChips:
+          type: array
+          description: Human-readable summary of the suggested budget scope.
+          items:
+            $ref: '#/components/schemas/BudgetSuggestionScopeChipsItem'
+        config:
+          type: object
+          description: Draft budget configuration to merge over the create-budget defaults.
+          additionalProperties: true
+        generatedTime:
+          type: string
+          description: Timestamp when the suggestion was generated.
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - dismissed
+            - skippedDraft
+    BudgetSuggestionAmount:
+      type: object
+      description: Suggested budget amount as a decimal-string value with its currency.
+      properties:
+        amount:
+          type: string
+          description: Decimal string, e.g. "1234.56".
+        currency:
+          type: string
+    BudgetSuggestionScopeChipsItem:
+      type: object
+      properties:
+        key:
+          type: string
+        values:
+          type: array
+          items:
+            type: string
     Category:
       type: string
       description: The insight category.
@@ -9202,6 +9294,18 @@ components:
           format: int64
           description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
           nullable: true
+    ListBudgetSuggestions200Response:
+      type: object
+      properties:
+        items:
+          type: array
+          description: Array of pending budget suggestions.
+          items:
+            $ref: "#/components/schemas/BudgetSuggestion"
+        rowCount:
+          type: integer
+          description: Number of suggestions returned.
+          format: int64
     ListBudgets200Response:
       type: object
       properties:

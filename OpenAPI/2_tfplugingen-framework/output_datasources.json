@@ -2468,6 +2468,155 @@
 			}
 		},
 		{
+			"name": "budget_suggestions",
+			"schema": {
+				"attributes": [
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "alert_thresholds",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"float64": {}
+											},
+											"description": "Suggested alert thresholds as percentages of the amount."
+										}
+									},
+									{
+										"name": "amount",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "amount",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Decimal string, e.g. \"1234.56\"."
+													}
+												},
+												{
+													"name": "currency",
+													"string": {
+														"computed_optional_required": "computed"
+													}
+												}
+											],
+											"description": "Suggested budget amount as a decimal-string value with its currency."
+										}
+									},
+									{
+										"name": "confidence",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "config",
+										"string": {
+											"computed_optional_required": "computed",
+											"custom_type": {
+												"import": {
+													"path": "github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+												},
+												"type": "jsontypes.NormalizedType{}",
+												"value_type": "jsontypes.Normalized"
+											},
+											"description": "Draft budget configuration to merge over the create-budget defaults. Value is JSON-encoded."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "generated_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Timestamp when the suggestion was generated."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "rationale",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Explanation of why this budget is suggested."
+										}
+									},
+									{
+										"name": "scope_chips",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "key",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "values",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															}
+														}
+													}
+												]
+											},
+											"description": "Human-readable summary of the suggested budget scope."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "time_interval",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									}
+								]
+							},
+							"description": "Array of pending budget suggestions."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Number of suggestions returned."
+						}
+					}
+				],
+				"description": "AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.",
+				"markdown_description": "AI-generated budget recommendations you can accept (link to a budget you created) or dismiss."
+			}
+		},
+		{
 			"name": "budgets",
 			"schema": {
 				"attributes": [
