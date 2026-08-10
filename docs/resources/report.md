@@ -548,9 +548,12 @@ Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`
 
-Optional:
+Required:
 
 - `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--group--limit--metric))
+
+Optional:
+
 - `sort` (String) Sort order for ranking results.
 Possible values: `a_to_z`, `asc`, `desc`
 - `value` (Number) The number of items to show
@@ -558,7 +561,7 @@ Possible values: `a_to_z`, `asc`, `desc`
 <a id="nestedatt--config--group--limit--metric"></a>
 ### Nested Schema for `config.group.limit.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -584,7 +587,7 @@ require two ordered entries.
 <a id="nestedatt--config--limit_by_change--metric"></a>
 ### Nested Schema for `config.limit_by_change.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -596,7 +599,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 <a id="nestedatt--config--metric"></a>
 ### Nested Schema for `config.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -607,23 +610,26 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 <a id="nestedatt--config--metric_filter"></a>
 ### Nested Schema for `config.metric_filter`
 
-Optional:
+Required:
 
 - `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
-- `operand` (String) Whether the threshold applies to each value (default) or the series total.
-Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
-`OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
-echo the effective value (`single_value` or `series_total`).
-Possible values: `single_value`, `series_total`
 - `operator` (String) Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
 `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
 Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)
 
+Optional:
+
+- `operand` (String) Whether the threshold applies to each value (default) or the series total.
+Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
+`OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
+echo the effective value (`single_value` or `series_total`).
+Possible values: `single_value`, `series_total`
+
 <a id="nestedatt--config--metric_filter--metric"></a>
 ### Nested Schema for `config.metric_filter.metric`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`
@@ -635,7 +641,7 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 <a id="nestedatt--config--metrics"></a>
 ### Nested Schema for `config.metrics`
 
-Optional:
+Required:
 
 - `type` (String) Type of metric to use.
 Possible values: `basic`, `custom`, `extended`

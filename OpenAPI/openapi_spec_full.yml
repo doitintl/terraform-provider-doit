@@ -10179,6 +10179,10 @@ components:
     ExternalConfigMetricFilter:
       description: Metric filter to limit report rows by metric value.
       type: object
+      required:
+        - metric
+        - operator
+        - values
       properties:
         metric:
           $ref: "#/components/schemas/ExternalMetric"
@@ -10271,6 +10275,9 @@ components:
     ExternalMetric:
       description: Metric selector used in reports and filters.
       type: object
+      required:
+        - type
+        - value
       properties:
         type:
           description: Type of metric to use.
@@ -10763,6 +10770,8 @@ components:
       type: object
       description: |-
         To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+      required:
+        - metric
       properties:
         metric:
           $ref: "#/components/schemas/ExternalMetric"

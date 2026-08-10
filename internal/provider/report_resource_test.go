@@ -184,6 +184,10 @@ func TestAccReport_Import(t *testing.T) {
 				ResourceName:      "doit_report.this",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// Import cannot tell which mirror is in use, so it populates the
+				// canonical metrics and leaves metric null. Trailing dots keep
+				// config.metric_filter.* out of the prefix match.
+				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
 			},
 		},
 	})
@@ -4045,6 +4049,10 @@ func TestAccReport_MetricFilterOperand(t *testing.T) {
 				ResourceName:      "doit_report.operand",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// Import cannot tell which mirror is in use, so it populates the
+				// canonical metrics and leaves metric null. Trailing dots keep
+				// config.metric_filter.* out of the prefix match.
+				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
 			},
 			// Step 4: omit operand -> resolves to the schema default single_value (Update).
 			{
@@ -4105,6 +4113,10 @@ func TestAccReport_LimitAggregation(t *testing.T) {
 				ResourceName:      "doit_report.limitagg",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// Import cannot tell which mirror is in use, so it populates the
+				// canonical metrics and leaves metric null. Trailing dots keep
+				// config.metric_filter.* out of the prefix match.
+				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
 			},
 			// Step 4: update to none.
 			{
@@ -4200,6 +4212,10 @@ func TestAccReport_LimitByChange(t *testing.T) {
 				ResourceName:      "doit_report.lbc",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// Import cannot tell which mirror is in use, so it populates the
+				// canonical metrics and leaves metric null. Trailing dots keep
+				// config.metric_filter.* out of the prefix match.
+				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
 			},
 			// Step 4: update to absolute/between/[10,90], include_incomplete_data = true.
 			{
@@ -4462,21 +4478,21 @@ resource "doit_report" "three_limits" {
 `, i)
 }
 
-// TestAccReport_MetricFieldsRequired asserts the DoiT API requirement (surfaced
-// by reportMetricFieldsValidator) that every configured metric object must set
-// both type and value. Before the validator existed, omitting these produced a
-// cryptic apply-time API error ("Field validation for 'Type'/'Value' failed on
-// the 'required' tag"); now it is a clear plan-time error. This covers the shared
-// metric handling consistently across contexts: limit_by_change.metric,
-// metric_filter.metric and the top-level metric.
+// TestAccReport_MetricFieldsRequired asserts that every metric object must set
+// both type and value. Both are Required in the schema, so Terraform's config
+// decoder rejects the omission before the provider runs. Covers the shared
+// metric handling across limit_by_change.metric, metric_filter.metric and the
+// top-level metric.
 func TestAccReport_MetricFieldsRequired(t *testing.T) {
-	missingType := regexp.MustCompile(`Missing Required Metric Field`)
+	// HCL's diagnostic renderer word-wraps the message, so "attribute" and the
+	// quoted field name can land on different lines — match across the wrap.
+	missingRequiredField := regexp.MustCompile(`attribute\s+"(type|value)" is required`)
 
 	cases := []struct {
 		name   string
 		config func(int) string
 	}{
-		// limit_by_change.metric omitting type — the exact scenario Copilot flagged.
+		// limit_by_change.metric omitting type.
 		{"limit_by_change_metric_missing_type", testAccReportLimitByChangeMetricMissingType},
 		// metric_filter.metric omitting type — same shared metric handling.
 		{"metric_filter_metric_missing_type", testAccReportMetricFilterMetricMissingType},
@@ -4494,7 +4510,7 @@ func TestAccReport_MetricFieldsRequired(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      tc.config(n),
-						ExpectError: missingType,
+						ExpectError: missingRequiredField,
 					},
 				},
 			})
@@ -4566,6 +4582,400 @@ resource "doit_report" "metric_no_value" {
         metric = {
             type = "basic"
         }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_GroupClearing covers the clearing lifecycle for config.group
+// using a group that carries a top/bottom limit, which is the case that both
+// requires the API to prune the limit's server-side filter and, since
+// group[*].limit.metric is Required, would otherwise permanently diff.
+func TestAccReport_GroupClearing(t *testing.T) {
+	n := acctest.RandInt()
+
+	groupPresent := statecheck.ExpectKnownValue(
+		"doit_report.grp_clear",
+		tfjsonpath.New("config").AtMapKey("group").AtSliceIndex(0).AtMapKey("limit").AtMapKey("value"),
+		knownvalue.Int64Exact(5))
+	groupCleared := statecheck.ExpectKnownValue(
+		"doit_report.grp_clear",
+		tfjsonpath.New("config").AtMapKey("group"),
+		knownvalue.ListExact([]knownvalue.Check{}))
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create WITH a limited group.
+			{
+				Config:            testAccReportWithLimitedGroup(n),
+				ConfigStateChecks: []statecheck.StateCheck{groupPresent},
+			},
+			// Step 2: drift check.
+			{
+				Config: testAccReportWithLimitedGroup(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Step 3: omit the group block — it is actually cleared, not preserved.
+			{
+				Config:            testAccReportGroupCleared(n),
+				ConfigStateChecks: []statecheck.StateCheck{groupCleared},
+			},
+			// Step 4: drift check — this is what permanently diffed before.
+			{
+				Config: testAccReportGroupCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportWithLimitedGroup(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "grp_clear" {
+    name = "test-grp-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        group = [{
+            id   = "cloud_provider"
+            type = "fixed"
+            limit = {
+                value  = 5
+                sort   = "desc"
+                metric = { type = "basic", value = "cost" }
+            }
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportGroupCleared(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "grp_clear" {
+    name = "test-grp-clear-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_Metric_MirrorsConflict asserts that config.metric and
+// config.metrics cannot both be configured. toExternalConfig sends only metrics
+// when both are set, so differing values would leave state inconsistent and
+// drift on every refresh.
+func TestAccReport_Metric_MirrorsConflict(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportWithBothMetricMirrors(n),
+				ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Combination`),
+			},
+		},
+	})
+}
+
+func testAccReportWithBothMetricMirrors(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "both_mirrors" {
+    name = "test-both-mirrors-%d"
+    config = {
+        metric  = { type = "basic", value = "usage" }
+        metrics = [{ type = "basic", value = "cost" }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_Metric_MirrorSwitchBackAndForth switches metrics -> metric ->
+// metrics. The configured mirror must survive and the other stay out of state in
+// both directions. Only config can distinguish them — prior state holds both —
+// which is why the plan modifier keys off req.ConfigValue rather than state.
+func TestAccReport_Metric_MirrorSwitchBackAndForth(t *testing.T) {
+	n := acctest.RandInt()
+
+	metricsOnly := []statecheck.StateCheck{
+		statecheck.ExpectKnownValue("doit_report.metric_clear",
+			tfjsonpath.New("config").AtMapKey("metric"), knownvalue.Null()),
+		statecheck.ExpectKnownValue("doit_report.metric_clear",
+			tfjsonpath.New("config").AtMapKey("metrics").AtSliceIndex(0).AtMapKey("value"),
+			knownvalue.StringExact("usage")),
+	}
+	metricOnly := []statecheck.StateCheck{
+		statecheck.ExpectKnownValue("doit_report.metric_clear",
+			tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
+			knownvalue.StringExact("cost")),
+		statecheck.ExpectKnownValue("doit_report.metric_clear",
+			tfjsonpath.New("config").AtMapKey("metrics"),
+			knownvalue.ListExact([]knownvalue.Check{})),
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Start on the canonical metrics list.
+			{
+				Config:            testAccReportMetricCleared(n),
+				ConfigStateChecks: metricsOnly,
+			},
+			// Switch to the deprecated singular metric.
+			{
+				Config:            testAccReportWithSingularMetric(n),
+				ConfigStateChecks: metricOnly,
+			},
+			{
+				Config: testAccReportWithSingularMetric(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// ...and back again.
+			{
+				Config:            testAccReportMetricCleared(n),
+				ConfigStateChecks: metricsOnly,
+			},
+			{
+				Config: testAccReportMetricCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_Metric_UpgradeFromBothMirrorsInState pins upgrade safety from a
+// state that holds BOTH mirrors, which is what earlier provider versions wrote.
+// The configured mirror must be preserved and the upgrade must converge in one
+// apply — that apply is noisy, since Core proposes null for the unconfigured
+// mirror and cascades the rest of config to "known after apply" for that plan.
+func TestAccReport_Metric_UpgradeFromBothMirrorsInState(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:               testAccPreCheckFunc(t),
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: create with the last release, which writes BOTH mirrors.
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"doit": {Source: "doitintl/doit", VersionConstraint: "1.6.0"},
+				},
+				Config: testAccReportWithSingularMetric(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.metric_clear",
+						tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
+						knownvalue.StringExact("cost")),
+					statecheck.ExpectKnownValue("doit_report.metric_clear",
+						tfjsonpath.New("config").AtMapKey("metrics").AtSliceIndex(0).AtMapKey("value"),
+						knownvalue.StringExact("cost")),
+				},
+			},
+			// Step 2: same config, current provider. One convergent apply; the
+			// configured mirror survives and the echoed one drops out of state.
+			{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				Config:                   testAccReportWithSingularMetric(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.metric_clear",
+						tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
+						knownvalue.StringExact("cost")),
+					statecheck.ExpectKnownValue("doit_report.metric_clear",
+						tfjsonpath.New("config").AtMapKey("metrics"),
+						knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			// Step 3: the upgrade has settled — no permadiff.
+			{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				Config:                   testAccReportWithSingularMetric(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_NestedMetricOmitted asserts that metric_filter and
+// group[*].limit reject a missing metric/operator/values at plan time. All are
+// Required in the schema, so Terraform rejects them before the provider runs.
+//
+// Because the API refuses these configs, neither container can hold an
+// unconfigured-but-echoed metric, so neither needs the mirror handling that
+// config.metric/config.metrics require.
+func TestAccReport_NestedMetricOmitted(t *testing.T) {
+	// Terraform's own config decoder rejects these now, before the provider is
+	// called. HCL word-wraps diagnostics, so tolerate a wrap before the name.
+	missingRequiredField := regexp.MustCompile(`attribute\s+"(metric|operator|values)" is required`)
+
+	cases := []struct {
+		name   string
+		config func(int) string
+	}{
+		{"metric_filter_metric_omitted", testAccReportMetricFilterMetricOmitted},
+		{"group_limit_metric_omitted", testAccReportGroupLimitMetricOmitted},
+		{"metric_filter_operator_omitted", testAccReportMetricFilterOperatorOmitted},
+		{"metric_filter_values_omitted", testAccReportMetricFilterValuesOmitted},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			n := acctest.RandInt()
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config(n),
+						ExpectError: missingRequiredField,
+					},
+				},
+			})
+		})
+	}
+}
+
+func testAccReportMetricFilterMetricOmitted(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_metric_omitted" {
+    name = "test-mf-metric-omitted-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            operator = "gt"
+            values   = [1]
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricFilterOperatorOmitted(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_operator_omitted" {
+    name = "test-mf-operator-omitted-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            values = [1]
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportMetricFilterValuesOmitted(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "mf_values_omitted" {
+    name = "test-mf-values-omitted-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        metric_filter = {
+            metric = {
+                type  = "basic"
+                value = "cost"
+            }
+            operator = "gt"
+        }
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i)
+}
+
+func testAccReportGroupLimitMetricOmitted(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "grp_limit_metric_omitted" {
+    name = "test-grp-limit-metric-omitted-%d"
+    config = {
+        metric = {
+            type  = "basic"
+            value = "cost"
+        }
+        group = [{
+            id   = "cloud_provider"
+            type = "fixed"
+            limit = {
+                value = 5
+                sort  = "desc"
+            }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -4730,6 +5140,10 @@ func TestAccReport_Count_Lifecycle(t *testing.T) {
 				ResourceName:      "doit_report.count_test",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// Import cannot tell which mirror is in use, so it populates the
+				// canonical metrics and leaves metric null. Trailing dots keep
+				// config.metric_filter.* out of the prefix match.
+				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
 			},
 		},
 	})
@@ -5276,19 +5690,33 @@ resource "doit_report" "ds_test" {
 // Setting metric then switching to a metrics list drops the block from config, but
 // the API keeps metric populated (now mirroring metrics[0]="usage"). The removal
 // applies idempotently — the mirror does not drift (no permadiff).
-func TestAccReport_Metric_NotClearable(t *testing.T) {
+// TestAccReport_Metric_UnconfiguredMirrorNotStored pins that only the configured
+// mirror is stored. The API returns both populated, but their type/value leaves
+// are Required, so storing the unconfigured one permanently diffs the resource.
+// This is a state-tracking decision, not a clearing one — the API keeps deriving
+// `metric` either way. See useNullForUnconfiguredMetricMirror.
+func TestAccReport_Metric_UnconfiguredMirrorNotStored(t *testing.T) {
 	n := acctest.RandInt()
 
-	// Step 1: the singular metric is set to "cost".
+	// Step 1: metric is configured, so it is tracked; metrics is not configured,
+	// so its mirror stays out of state as an empty list.
 	metricCost := statecheck.ExpectKnownValue(
 		"doit_report.metric_clear",
 		tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
 		knownvalue.StringExact("cost"))
-	// Step 2: after switching to metrics=[usage] and dropping the metric block,
-	// config.metric is not cleared — it mirrors metrics[0] ("usage").
-	metricMirrored := statecheck.ExpectKnownValue(
+	metricsEmpty := statecheck.ExpectKnownValue(
 		"doit_report.metric_clear",
-		tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
+		tfjsonpath.New("config").AtMapKey("metrics"),
+		knownvalue.ListExact([]knownvalue.Check{}))
+	// Step 2: after switching to metrics=[usage] and dropping the metric block,
+	// the roles swap — metrics is tracked and the metric mirror drops to null.
+	metricNull := statecheck.ExpectKnownValue(
+		"doit_report.metric_clear",
+		tfjsonpath.New("config").AtMapKey("metric"),
+		knownvalue.Null())
+	metricsUsage := statecheck.ExpectKnownValue(
+		"doit_report.metric_clear",
+		tfjsonpath.New("config").AtMapKey("metrics").AtSliceIndex(0).AtMapKey("value"),
 		knownvalue.StringExact("usage"))
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -5299,15 +5727,15 @@ func TestAccReport_Metric_NotClearable(t *testing.T) {
 			// Step 1: create WITH the singular metric.
 			{
 				Config:            testAccReportWithSingularMetric(n),
-				ConfigStateChecks: []statecheck.StateCheck{metricCost},
+				ConfigStateChecks: []statecheck.StateCheck{metricCost, metricsEmpty},
 			},
-			// Step 2: switch to metrics list, dropping metric — metric is not
-			// cleared (mirrors metrics[0]); removal applies idempotently.
+			// Step 2: switch to the metrics list, dropping metric.
 			{
 				Config:            testAccReportMetricCleared(n),
-				ConfigStateChecks: []statecheck.StateCheck{metricMirrored},
+				ConfigStateChecks: []statecheck.StateCheck{metricNull, metricsUsage},
 			},
-			// Step 3: drift check — the mirrored metric produces no diff.
+			// Step 3: drift check — this is the regression guard for the phantom
+			// diff; without the mirror handling this plan never converges.
 			{
 				Config: testAccReportMetricCleared(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{

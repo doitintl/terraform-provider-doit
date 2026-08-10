@@ -77,6 +77,14 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 		return
 	}
 
+	// doit_report_query derives its config schema from the generated resource
+	// schema, not from reportResource.Schema, so attribute-level validators added
+	// there do not carry over. Re-attach the ones that must hold for both.
+	if attr, ok := dsConfigAttrs["metric"].(dsschema.SingleNestedAttribute); ok {
+		attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
+		dsConfigAttrs["metric"] = attr
+	}
+
 	resp.Schema = dsschema.Schema{
 		Description: "Runs an ad-hoc Cloud Analytics query without persisting a report." +
 			"\n\nThe query is executed with the provided config and results are returned" +
@@ -157,12 +165,11 @@ func (d *reportQueryDataSource) Configure(_ context.Context, req datasource.Conf
 	d.client = client
 }
 
-// ValidateConfig enforces the same metric-field requirements as the report
-// resource (every metric object must set type and value). report_query reuses the
-// report config schema and toExternalConfig, so without this the query endpoint
-// would receive a metric missing type/value and return a cryptic HTTP 400.
+// ValidateConfig enforces cross-field requirements not expressible in the
+// schema alone. Metric type/value are enforced by the schema itself (both are
+// Required), since report_query's config schema is derived from the report
+// resource schema (which now marks them Required).
 func (d *reportQueryDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
-	validateReportMetricFieldsConfig(ctx, req.Config, &resp.Diagnostics)
 	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
 }
 

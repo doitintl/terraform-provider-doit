@@ -5,14 +5,28 @@ import (
 	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
+
+// metricMirrorConflictValidator rejects config.metric being set alongside
+// config.metrics. They are two views of one API field: toExternalConfig sends
+// only metrics when both are present, so differing values leave state
+// inconsistent and drift on every refresh.
+//
+// Shared because doit_report_query builds its config schema from the generated
+// resource schema rather than from reportResource.Schema, so it does not inherit
+// attribute-level validators added there.
+func metricMirrorConflictValidator() validator.Object {
+	return objectvalidator.ConflictsWith(path.MatchRoot("config").AtName("metrics"))
+}
 
 // warnNASentinels appends a Warning diagnostic for every string inside valueLists
 // that matches the legacy NullFallback sentinel pattern (e.g. "[Service N/A]").
@@ -295,149 +309,6 @@ func validateReportTimestamps(ctx context.Context, config tfsdk.Config, diags *d
 			continue
 		}
 		validateRFC3339(val.ValueString(), p, diags)
-	}
-}
-
-// reportMetricFieldsValidator validates that every configured metric object
-// specifies both `type` and `value`. The DoiT API requires both fields on every
-// ExternalMetric (in `metric`, `metric_filter.metric`, `limit_by_change.metric`,
-// `group[*].limit.metric` and `metrics[*]`) and rejects requests that omit them
-// with a cryptic "Field validation for 'Type'/'Value' failed on the 'required'
-// tag" error at apply time. The generated schema marks these leaves
-// Optional+Computed (the upstream OpenAPI ExternalMetric lists no required
-// fields), so this validator surfaces the requirement as a clear plan-time error.
-//
-// This is a ConfigValidator because attribute-level validators do not fire on
-// attributes inside SingleNestedAttribute with CustomType.
-type reportMetricFieldsValidator struct{}
-
-var _ resource.ConfigValidator = reportMetricFieldsValidator{}
-
-func (v reportMetricFieldsValidator) Description(_ context.Context) string {
-	return "Validates that every configured metric object specifies both type and value"
-}
-
-func (v reportMetricFieldsValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that every configured metric object specifies both `type` and `value`"
-}
-
-// validateMetricFields reports an error for each of type/value that is explicitly
-// null (omitted) on a configured metric. Unknown values (e.g. a custom-metric ID
-// resolved after apply) are left to the API.
-func validateMetricFields(metricType, value basetypes.StringValue, p path.Path, diags *diag.Diagnostics) {
-	if metricType.IsNull() {
-		diags.AddAttributeError(
-			p.AtName("type"),
-			"Missing Required Metric Field",
-			"`type` is required on every metric object. The DoiT API rejects metrics without a `type` "+
-				"(e.g. type = \"basic\").",
-		)
-	}
-	if value.IsNull() {
-		diags.AddAttributeError(
-			p.AtName("value"),
-			"Missing Required Metric Field",
-			"`value` is required on every metric object. The DoiT API rejects metrics without a `value` "+
-				"(e.g. value = \"cost\").",
-		)
-	}
-}
-
-func (v reportMetricFieldsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	validateReportMetricFieldsConfig(ctx, req.Config, &resp.Diagnostics)
-}
-
-// validateReportMetricFieldsConfig walks every metric object in a report config
-// and requires both type and value on each. It is shared by the report resource
-// (reportMetricFieldsValidator) and the report_query data source, both of which
-// build the same ExternalConfig from an identical schema, so the requirement is
-// enforced consistently across both consumers.
-func validateReportMetricFieldsConfig(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
-	// Singular MetricValue objects.
-	singular := map[string]resource_report.MetricValue{}
-	singularPaths := map[string]path.Path{
-		"metric":          path.Root("config").AtName("metric"),
-		"metric_filter":   path.Root("config").AtName("metric_filter").AtName("metric"),
-		"limit_by_change": path.Root("config").AtName("limit_by_change").AtName("metric"),
-	}
-
-	var metric resource_report.MetricValue
-	if d := config.GetAttribute(ctx, path.Root("config").AtName("metric"), &metric); !d.HasError() {
-		singular["metric"] = metric
-	} else {
-		diags.Append(d...)
-	}
-
-	var metricFilter resource_report.MetricFilterValue
-	if d := config.GetAttribute(ctx, path.Root("config").AtName("metric_filter"), &metricFilter); !d.HasError() {
-		if !metricFilter.IsNull() && !metricFilter.IsUnknown() {
-			singular["metric_filter"] = metricFilter.Metric
-		}
-	} else {
-		diags.Append(d...)
-	}
-
-	var limitByChange resource_report.LimitByChangeValue
-	if d := config.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange); !d.HasError() {
-		if !limitByChange.IsNull() && !limitByChange.IsUnknown() {
-			singular["limit_by_change"] = limitByChange.Metric
-		}
-	} else {
-		diags.Append(d...)
-	}
-
-	for key, m := range singular {
-		if m.IsNull() || m.IsUnknown() {
-			continue
-		}
-		validateMetricFields(m.MetricType, m.Value, singularPaths[key], diags)
-	}
-
-	// group[*].limit.metric
-	var groups types.List
-	groupDiags := config.GetAttribute(ctx, path.Root("config").AtName("group"), &groups)
-	diags.Append(groupDiags...)
-	if !groupDiags.HasError() && !groups.IsNull() && !groups.IsUnknown() {
-		var groupVals []resource_report.GroupValue
-		elemDiags := groups.ElementsAs(ctx, &groupVals, false)
-		diags.Append(elemDiags...)
-		if !elemDiags.HasError() {
-			for i, g := range groupVals {
-				if g.Limit.IsNull() || g.Limit.IsUnknown() {
-					continue
-				}
-				if g.Limit.Metric.IsNull() || g.Limit.Metric.IsUnknown() {
-					continue
-				}
-				validateMetricFields(
-					g.Limit.Metric.MetricType, g.Limit.Metric.Value,
-					path.Root("config").AtName("group").AtListIndex(i).AtName("limit").AtName("metric"),
-					diags,
-				)
-			}
-		}
-	}
-
-	// metrics[*]
-	var metrics types.List
-	metricsDiags := config.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
-	diags.Append(metricsDiags...)
-	if !metricsDiags.HasError() && !metrics.IsNull() && !metrics.IsUnknown() {
-		var metricsVals []resource_report.MetricsValue
-		elemDiags := metrics.ElementsAs(ctx, &metricsVals, false)
-		diags.Append(elemDiags...)
-		if !elemDiags.HasError() {
-			for i, m := range metricsVals {
-				if m.IsNull() || m.IsUnknown() {
-					continue
-				}
-				validateMetricFields(
-					m.MetricsType, m.Value,
-					path.Root("config").AtName("metrics").AtListIndex(i),
-					diags,
-				)
-			}
-		}
 	}
 }
 
