@@ -434,7 +434,6 @@ resource "doit_report" "this" {
 		}
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		advanced_analysis = {
 		  trending_up   = true
@@ -705,7 +704,6 @@ resource "doit_report" "timezone_test" {
 		}
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		data_source    = "billing"
 		display_values = "actuals_only"
@@ -1488,7 +1486,6 @@ resource "doit_report" "secondary_custom" {
         }
         time_range = {
           mode = "custom"
-          unit = "day"
         }
         secondary_time_range = {
           custom_time_range = {
@@ -1560,7 +1557,6 @@ resource "doit_report" "secondary_offset" {
         }
         time_range = {
           mode = "custom"
-          unit = "day"
         }
         secondary_time_range = {
           custom_time_range = {
@@ -1696,7 +1692,6 @@ resource "doit_report" "secondary_update" {
         }
         time_range = {
           mode = "custom"
-          unit = "day"
         }
         secondary_time_range = {
           custom_time_range = {
@@ -1708,6 +1703,74 @@ resource "doit_report" "secondary_update" {
         display_values = "actuals_only"
         currency       = "USD"
         layout         = "table"
+    }
+}
+`, i)
+}
+
+// TestAccReport_CustomTimeRange_ComputedTimestamps asserts
+// reportTimestampValidator defers on unknown from/to rather than treating them
+// as empty, so a custom_time_range derived from another resource or data source
+// validates once its values resolve.
+func TestAccReport_CustomTimeRange_ComputedTimestamps(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportComputedCustomTimeRange(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.computed_range",
+						tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("from"),
+						knownvalue.StringExact("2026-07-27T00:00:00Z")),
+				},
+			},
+			// Drift check.
+			{
+				Config: testAccReportComputedCustomTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportComputedCustomTimeRange(i int) string {
+	return fmt.Sprintf(`
+# terraform_data yields values that are unknown during plan, mirroring
+# timestamps derived from another resource or data source.
+resource "terraform_data" "range_%[1]d" {
+    input = {
+        from = "2026-07-27T00:00:00Z"
+        to   = "2026-07-29T00:00:00Z"
+    }
+}
+
+resource "doit_report" "computed_range" {
+    name        = "test-computed-range-%[1]d"
+    description = "custom_time_range built from computed values"
+    config = {
+        metrics = [{ type = "basic", value = "cost" }]
+        aggregation    = "total"
+        time_interval  = "day"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        custom_time_range = {
+            from = terraform_data.range_%[1]d.output.from
+            to   = terraform_data.range_%[1]d.output.to
+        }
+        time_range = {
+            mode = "custom"
+        }
     }
 }
 `, i)
@@ -1749,7 +1812,6 @@ resource "doit_report" "invalid_ts" {
     }
     time_range = {
       mode = "custom"
-      unit = "day"
     }
     data_source    = "billing"
     display_values = "actuals_only"
@@ -1795,7 +1857,6 @@ resource "doit_report" "invalid_sec_ts" {
     }
     time_range = {
       mode = "custom"
-      unit = "day"
     }
     secondary_time_range = {
       custom_time_range = {
@@ -3489,7 +3550,6 @@ resource "doit_report" "forecast_custom_test" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00-05:00"
@@ -3674,7 +3734,6 @@ resource "doit_report" "forecast_intervals_test" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00-05:00"
@@ -3723,7 +3782,6 @@ resource "doit_report" "forecast_invalid" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00Z"
@@ -3762,7 +3820,6 @@ resource "doit_report" "forecast_empty" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00Z"
@@ -5587,7 +5644,6 @@ resource "doit_report" "ctr_clear" {
         layout         = "table"
         time_range = {
             mode = "custom"
-            unit = "day"
         }
         custom_time_range = {
             from = "2024-01-01T00:00:00Z"
@@ -5951,7 +6007,6 @@ resource "doit_report" "str_clear" {
         time_interval = "month"
         time_range = {
             mode = "custom"
-            unit = "day"
         }
         custom_time_range = {
             from = "2024-01-01T00:00:00Z"
@@ -5985,7 +6040,6 @@ resource "doit_report" "str_clear" {
         time_interval = "month"
         time_range = {
             mode = "custom"
-            unit = "day"
         }
         custom_time_range = {
             from = "2024-01-01T00:00:00Z"

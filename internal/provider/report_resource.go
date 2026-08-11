@@ -250,6 +250,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportTimestampValidator{},
 		// count is only valid when aggregation is "count".
 		reportCountAggregationValidator{},
+		// unit has no meaning when time_range.mode is "custom".
+		reportCustomTimeRangeUnitValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
 	}
