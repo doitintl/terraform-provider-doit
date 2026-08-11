@@ -7,11 +7,9 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 )
 
-// The API omits config.timeRange.unit when a report has no unit — a custom
-// range carries none, since its bounds come from customTimeRange. mode is
-// always sent today, but is guarded the same way so the pair cannot drift.
-// Both mappers must render the absent field as null instead of dereferencing
-// it, which would panic the provider on every read of such a report.
+// The API omits config.timeRange.unit for a custom range, whose bounds come
+// from customTimeRange instead. Both mappers must render an omitted mode or
+// unit as null rather than dereferencing it.
 func TestMapReportToModel_TimeRangeNilModeAndUnit(t *testing.T) {
 	ctx := context.Background()
 

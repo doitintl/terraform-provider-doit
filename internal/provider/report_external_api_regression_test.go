@@ -1,24 +1,10 @@
-// Regression tests for two bugs in the external Cloud Analytics API
-// (`/analytics/v1/...`), the surface this provider talks to.
+// Acceptance coverage for two behaviours of the external Cloud Analytics API:
+// custom time ranges, which carry no `unit`, and multi-metric queries, which
+// must return one column per requested metric.
 //
-// Tracked upstream as CMP-49333 (follow-up to CMP-47539), fixed by
-// doiteng/omni#60621. Until that fix is deployed, every test in this file
-// except the *WithUnit control is expected to FAIL against the live API:
-//
-//  1. `timeRange.mode = "custom"` without a `unit` is rejected, because
-//     TimeSettings.Validate() requires a unit for every mode. The provider
-//     omits `unit` from the payload when it is not configured, and the
-//     OpenAPI spec marks none of the timeRange fields required — so this is
-//     a spec-legal request the API refuses. Reaches both the report resource
-//     (create/update) and the report_query data source, since both flow
-//     through MergeConfigWithExternalConfig.
-//
-//  2. Queries requesting several metrics return only the first metric's
-//     column. ExternalAPIService.ProcessResult extracted a single metric via
-//     GetMetricIndex / GetFirstConfigMetric, so the remaining columns were
-//     dropped from both `schema` and `rows` with no error. Reaches
-//     report_query and report_result, the two data sources whose responses
-//     are built by ProcessResult.
+// Each spans two provider surfaces — custom ranges reach the report resource
+// and doit_report_query; multi-metric results reach doit_report_query and
+// doit_report_result — so both are asserted on each surface.
 package provider_test
 
 import (
@@ -34,12 +20,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// --- Bug 1: custom time range without a unit ---
+// --- Custom time ranges ---
 
-// TestAccReportQueryDataSource_CustomTimeRangeWithoutUnit runs an ad-hoc query
-// over an explicit date range, specifying only mode = "custom" in time_range.
-// unit is left unset, which is what a user writing a custom range would
-// naturally do: for a custom range the unit carries no meaning.
+// TestAccReportQueryDataSource_CustomTimeRangeWithoutUnit asserts an ad-hoc
+// query over an explicit date range succeeds with only mode = "custom" set, no
+// unit configured.
 func TestAccReportQueryDataSource_CustomTimeRangeWithoutUnit(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -63,12 +48,9 @@ func TestAccReportQueryDataSource_CustomTimeRangeWithoutUnit(t *testing.T) {
 	})
 }
 
-// TestAccReportQueryDataSource_CustomTimeRangeUnitRejected covers the other
-// half of the pair: supplying a unit alongside mode = "custom" is refused at
-// plan time by reportCustomTimeRangeUnitValidator, so the request is never
-// made. The API rejects the combination and omits unit from custom-mode
-// responses; catching it here turns that 400 into an actionable error and
-// avoids a configured value diffing forever against an absent one.
+// TestAccReportQueryDataSource_CustomTimeRangeUnitRejected asserts
+// reportCustomTimeRangeUnitValidator refuses a unit alongside mode = "custom"
+// at plan time, so no request is made.
 func TestAccReportQueryDataSource_CustomTimeRangeUnitRejected(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -83,8 +65,8 @@ func TestAccReportQueryDataSource_CustomTimeRangeUnitRejected(t *testing.T) {
 	})
 }
 
-// TestAccReport_CustomTimeRangeUnitRejected is the resource-side counterpart,
-// confirming the validator is wired into both surfaces.
+// TestAccReport_CustomTimeRangeUnitRejected asserts the same rejection on the
+// resource, confirming the validator is wired into both surfaces.
 func TestAccReport_CustomTimeRangeUnitRejected(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -99,13 +81,9 @@ func TestAccReport_CustomTimeRangeUnitRejected(t *testing.T) {
 	})
 }
 
-// TestAccReport_CustomTimeRangeWithoutUnit covers the same missing-unit payload
-// on the resource path (POST/PATCH /analytics/v1/reports) rather than the query
-// path. The second step re-applies to check for drift: once the API accepts the
-// request, timeRange serializes `unit` unconditionally, so a custom-mode report
-// created without a unit is expected to read back as unit = "" — an
-// Optional+Computed value outside the attribute's own enum. The drift step is
-// what will show whether that round-trips stably.
+// TestAccReport_CustomTimeRangeWithoutUnit asserts a report with a custom range
+// and no unit is created, that the unit the API omits from its response reads
+// back as null, and that the pair round-trips without drift.
 func TestAccReport_CustomTimeRangeWithoutUnit(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -126,6 +104,12 @@ func TestAccReport_CustomTimeRangeWithoutUnit(t *testing.T) {
 						"doit_report.custom_range",
 						tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("mode"),
 						knownvalue.StringExact("custom")),
+					// The API omits unit for a custom range; the mapper records
+					// the absent field as null rather than dereferencing it.
+					statecheck.ExpectKnownValue(
+						"doit_report.custom_range",
+						tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("unit"),
+						knownvalue.Null()),
 					statecheck.ExpectKnownValue(
 						"doit_report.custom_range",
 						tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("from"),
@@ -145,14 +129,13 @@ func TestAccReport_CustomTimeRangeWithoutUnit(t *testing.T) {
 	})
 }
 
-// --- Bug 2: multi-metric queries drop every metric after the first ---
+// --- Multi-metric queries ---
 
-// TestAccReportQueryDataSource_MultiMetricReturnsAllColumns asks for two
-// metrics and asserts both reach the result. The live schema for this config is
-// [year, month, cost, usage, timestamp] — the trailing timestamp column is
-// appended for the datetime dimensions, so the width is compared against the
-// schema rather than pinned to a literal. With the bug, `usage` was absent from
-// both schema and rows.
+// TestAccReportQueryDataSource_MultiMetricReturnsAllColumns asserts every
+// requested metric reaches the result. The schema for this config is
+// [year, month, cost, usage, timestamp], the trailing timestamp column being
+// appended for the datetime dimensions, so row width is compared against the
+// schema rather than a literal.
 func TestAccReportQueryDataSource_MultiMetricReturnsAllColumns(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -162,12 +145,11 @@ func TestAccReportQueryDataSource_MultiMetricReturnsAllColumns(t *testing.T) {
 			{
 				Config: testAccReportQueryMultiMetricConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Metric columns present, in the order requested. This is
-					// the assertion that detects the dropped metric.
+					// Both metric columns present, in the order requested.
 					resource.TestCheckOutput("query_metric_columns", "cost,usage"),
-					// Guards a partial fix where schema gains a column but rows
-					// do not. "no_rows" means the query returned nothing, which
-					// would make this inconclusive rather than passing.
+					// Row width matches the schema, so a schema column without a
+					// corresponding cell fails. "no_rows" marks the check
+					// inconclusive rather than passing it.
 					resource.TestCheckOutput("query_row_matches_schema", "true"),
 				),
 			},
@@ -175,11 +157,10 @@ func TestAccReportQueryDataSource_MultiMetricReturnsAllColumns(t *testing.T) {
 	})
 }
 
-// TestAccReportResultDataSource_MultiMetricReturnsAllColumns covers the other
-// ProcessResult caller: reading a saved two-metric report's results via
-// GET /analytics/v1/reports/{id}. Only the metric column names are asserted,
-// since the report config pins no dimensions and the API supplies its own —
-// making the total column count unpredictable.
+// TestAccReportResultDataSource_MultiMetricReturnsAllColumns asserts the same
+// for a saved report read through doit_report_result. Only the metric column
+// names are checked: the config pins no dimensions, so the API supplies its own
+// and the total column count is not predictable.
 func TestAccReportResultDataSource_MultiMetricReturnsAllColumns(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-multimetric")
 
@@ -200,9 +181,9 @@ func TestAccReportResultDataSource_MultiMetricReturnsAllColumns(t *testing.T) {
 
 // --- Test config helpers ---
 
-// testAccReportQueryCustomTimeRangeConfig builds a custom-range query. extraTimeRange
-// is injected into the time_range block so the same config serves both the
-// unit-less case and the control that supplies a unit.
+// testAccReportQueryCustomTimeRangeConfig builds a custom-range query.
+// extraTimeRange is injected into the time_range block so one config serves both
+// the unit-less and unit-present cases.
 func testAccReportQueryCustomTimeRangeConfig(extraTimeRange string) string {
 	return fmt.Sprintf(`
 data "doit_report_query" "test" {
@@ -233,8 +214,7 @@ data "doit_report_query" "test" {
 }
 
 // testAccReportCustomTimeRangeWithUnit is the config the validator must refuse:
-// a custom range with a unit still present, as configs written against the old
-// API (which required one) look today.
+// a custom range with a unit set.
 func testAccReportCustomTimeRangeWithUnit(i int) string {
 	return fmt.Sprintf(`
 resource "doit_report" "custom_range_unit" {

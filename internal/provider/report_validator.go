@@ -342,10 +342,9 @@ func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, r
 }
 
 // reportCustomTimeRangeUnitValidator rejects time_range.unit alongside
-// time_range.mode = "custom". Same rationale as reportCountAggregationValidator
-// for being a ConfigValidator rather than an attribute validator: attribute
-// validators do not run on attributes inside a SingleNestedAttribute with a
-// CustomType.
+// time_range.mode = "custom". A ConfigValidator rather than an attribute
+// validator because attribute validators do not run on attributes inside a
+// SingleNestedAttribute with a CustomType.
 type reportCustomTimeRangeUnitValidator struct{}
 
 var _ resource.ConfigValidator = reportCustomTimeRangeUnitValidator{}
@@ -363,12 +362,10 @@ func (v reportCustomTimeRangeUnitValidator) ValidateResource(ctx context.Context
 }
 
 // validateReportCustomTimeRangeUnit enforces that time_range.unit is absent when
-// mode is "custom". A custom range takes its bounds from custom_time_range, so
-// the unit carries no meaning there; the API rejects the combination and omits
-// unit from custom-mode responses, which would otherwise leave the configured
-// value permanently diffed against an absent one. Catching it at plan time turns
-// an API 400 into an actionable error. Unknown values are deferred, since they
-// may resolve to a valid combination.
+// mode is "custom": a custom range takes its bounds from custom_time_range, and
+// the API both rejects the combination and omits unit from custom-mode
+// responses. Shared by the report resource and the report_query data source.
+// Unknown values are deferred, since they may resolve to a valid combination.
 func validateReportCustomTimeRangeUnit(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
 	var timeRange resource_report.TimeRangeValue
 	d := config.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)

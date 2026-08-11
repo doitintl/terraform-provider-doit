@@ -1708,11 +1708,10 @@ resource "doit_report" "secondary_update" {
 `, i)
 }
 
-// TestAccReport_CustomTimeRange_ComputedTimestamps verifies that
+// TestAccReport_CustomTimeRange_ComputedTimestamps asserts
 // reportTimestampValidator defers on unknown from/to rather than treating them
-// as empty. custom_time_range values are commonly derived from another resource
-// or data source, which makes them unknown at plan time; rejecting that as an
-// "Empty Custom Time Range" would block a legitimate config outright.
+// as empty, so a custom_time_range derived from another resource or data source
+// validates once its values resolve.
 func TestAccReport_CustomTimeRange_ComputedTimestamps(t *testing.T) {
 	n := acctest.RandInt()
 

@@ -1682,9 +1682,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 	// Nested Object: TimeRange
 	if config.TimeRange != nil {
-		// mode and unit are nil-guarded rather than dereferenced: the API omits
-		// unit for a custom range, which carries no unit. Mirrors the handling
-		// of SecondaryTimeRange.Unit below.
+		// mode and unit are nil-guarded: the API omits unit for a custom range.
 		trMap := map[string]attr.Value{
 			"amount":          types.Int64PointerValue(config.TimeRange.Amount),
 			"include_current": types.BoolPointerValue(config.TimeRange.IncludeCurrent),
