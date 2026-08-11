@@ -1708,6 +1708,75 @@ resource "doit_report" "secondary_update" {
 `, i)
 }
 
+// TestAccReport_CustomTimeRange_ComputedTimestamps verifies that
+// reportTimestampValidator defers on unknown from/to rather than treating them
+// as empty. custom_time_range values are commonly derived from another resource
+// or data source, which makes them unknown at plan time; rejecting that as an
+// "Empty Custom Time Range" would block a legitimate config outright.
+func TestAccReport_CustomTimeRange_ComputedTimestamps(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportComputedCustomTimeRange(n),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.computed_range",
+						tfjsonpath.New("config").AtMapKey("custom_time_range").AtMapKey("from"),
+						knownvalue.StringExact("2026-07-27T00:00:00Z")),
+				},
+			},
+			// Drift check.
+			{
+				Config: testAccReportComputedCustomTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportComputedCustomTimeRange(i int) string {
+	return fmt.Sprintf(`
+# terraform_data yields values that are unknown during plan, mirroring
+# timestamps derived from another resource or data source.
+resource "terraform_data" "range_%[1]d" {
+    input = {
+        from = "2026-07-27T00:00:00Z"
+        to   = "2026-07-29T00:00:00Z"
+    }
+}
+
+resource "doit_report" "computed_range" {
+    name        = "test-computed-range-%[1]d"
+    description = "custom_time_range built from computed values"
+    config = {
+        metrics = [{ type = "basic", value = "cost" }]
+        aggregation    = "total"
+        time_interval  = "day"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        custom_time_range = {
+            from = terraform_data.range_%[1]d.output.from
+            to   = terraform_data.range_%[1]d.output.to
+        }
+        time_range = {
+            mode = "custom"
+        }
+    }
+}
+`, i)
+}
+
 // TestAccReport_InvalidTimestamp verifies that invalid RFC3339 timestamps in
 // custom_time_range.from are caught at plan time by the reportTimestampValidator,
 // rather than waiting for API rejection at apply time.

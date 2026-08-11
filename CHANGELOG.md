@@ -13,7 +13,8 @@
 
 ### BUG FIXES
 
-- **resource/doit_report, data-source/doit_report**: Fixed a provider crash when reading a report whose `config.time_range` omits `mode` or `unit`. The API now omits `unit` for custom time ranges, which the previous code dereferenced unconditionally. **Users managing reports with a custom time range should upgrade before the upstream API change is deployed**, as an older provider will panic when reading them
+- **resource/doit_report, data-source/doit_report**: Fixed a provider crash when reading a report whose `config.time_range` omits `mode` or `unit`. The API now omits `unit` for custom time ranges, which the previous code dereferenced unconditionally. **Users managing reports with a custom time range should upgrade as soon as possible**, as an older provider will panic when reading them
+- **resource/doit_report, data-source/doit_report_query**: `config.custom_time_range` no longer reports a spurious "Empty Custom Time Range" error when `from`/`to` are computed from another resource or data source. Unknown values are now deferred until they resolve, matching `forecast_settings.future_custom_date_range`
 
 ## v1.6.0 (2026-07-30)
 

@@ -231,9 +231,11 @@ func validateReportTimestamps(ctx context.Context, config tfsdk.Config, diags *d
 		if d.HasError() || ctr.IsNull() || ctr.IsUnknown() {
 			continue
 		}
-		fromEmpty := ctr.From.IsNull() || ctr.From.IsUnknown()
-		toEmpty := ctr.To.IsNull() || ctr.To.IsUnknown()
-		if fromEmpty && toEmpty {
+		if ctr.From.IsUnknown() || ctr.To.IsUnknown() {
+			continue // defer validation until values are known
+		}
+
+		if ctr.From.IsNull() && ctr.To.IsNull() {
 			diags.AddAttributeError(
 				p,
 				"Empty Custom Time Range",

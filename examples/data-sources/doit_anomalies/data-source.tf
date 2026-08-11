@@ -13,9 +13,9 @@ data "doit_anomalies" "with_notifications" {
 
 output "notification_audit" {
   value = [for a in data.doit_anomalies.with_notifications.anomalies : {
-    id           = a.id
-    service      = a.service_name
-    severity     = a.severity_level
+    id       = a.id
+    service  = a.service_name
+    severity = a.severity_level
     notifications = [for n in a.notifications : {
       channel   = n.channel
       timestamp = n.timestamp
@@ -135,16 +135,16 @@ data "doit_report_query" "anomaly_cost_detail" {
   count = length(local.unacknowledged)
 
   config = {
-    metrics = [{ type = "basic", value = "cost" }]
+    metrics       = [{ type = "basic", value = "cost" }]
     currency      = "USD"
     time_interval = "day"
+    custom_time_range = {
+      # start_time / end_time are epoch milliseconds — divide by 1000 for seconds
+      from = formatdate("YYYY-MM-DD'T'hh:mm:ss'Z'", timeadd("1970-01-01T00:00:00Z", "${floor(local.unacknowledged[count.index].start_time / 1000)}s"))
+      to   = formatdate("YYYY-MM-DD'T'hh:mm:ss'Z'", timeadd("1970-01-01T00:00:00Z", "${floor((local.unacknowledged[count.index].end_time != null ? local.unacknowledged[count.index].end_time : local.unacknowledged[count.index].start_time + 86400000) / 1000)}s"))
+    }
     time_range = {
       mode = "custom"
-      custom_time_range = {
-        # start_time / end_time are epoch milliseconds — divide by 1000 for seconds
-        from = formatdate("YYYY-MM-DD'T'hh:mm:ss'Z'", timeadd("1970-01-01T00:00:00Z", "${floor(local.unacknowledged[count.index].start_time / 1000)}s"))
-        to   = formatdate("YYYY-MM-DD'T'hh:mm:ss'Z'", timeadd("1970-01-01T00:00:00Z", "${floor((local.unacknowledged[count.index].end_time != null ? local.unacknowledged[count.index].end_time : local.unacknowledged[count.index].start_time + 86400000) / 1000)}s"))
-      }
     }
     group = [
       { id = "sku_description", type = "fixed" }
