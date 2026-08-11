@@ -171,6 +171,7 @@ func (d *reportQueryDataSource) Configure(_ context.Context, req datasource.Conf
 // resource schema (which now marks them Required).
 func (d *reportQueryDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
 	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
+	validateReportCustomTimeRangeUnit(ctx, req.Config, &resp.Diagnostics)
 }
 
 func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

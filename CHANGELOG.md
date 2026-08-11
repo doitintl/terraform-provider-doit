@@ -2,10 +2,18 @@
 
 ## Unreleased
 
+### BREAKING CHANGES
+
+- **resource/doit_report, data-source/doit_report_query**: Setting `config.time_range.unit` together with `config.time_range.mode = "custom"` is now rejected at plan time. A custom range takes its bounds from `config.custom_time_range`, so the unit has no effect; the upstream API is dropping `unit` from custom-mode responses and rejecting the combination on write. Configurations that specify both — which the API previously required — must remove `unit` from the `time_range` block
+
 ### ENHANCEMENTS
 
 - **resource/doit_allocation**: `anomaly_detection` is now writable on single allocations. Removing it from configuration disables it (the API clears the field with an explicit `false`); it is rejected at plan time when used with group allocations (`rules`)
 - **data-source/doit_allocations**: Added the `anomaly_detection` field to listed allocations
+
+### BUG FIXES
+
+- **resource/doit_report, data-source/doit_report**: Fixed a provider crash when reading a report whose `config.time_range` omits `mode` or `unit`. The API now omits `unit` for custom time ranges, which the previous code dereferenced unconditionally. **Users managing reports with a custom time range should upgrade before the upstream API change is deployed**, as an older provider will panic when reading them
 
 ## v1.6.0 (2026-07-30)
 

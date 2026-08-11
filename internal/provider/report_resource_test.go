@@ -434,7 +434,6 @@ resource "doit_report" "this" {
 		}
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		advanced_analysis = {
 		  trending_up   = true
@@ -705,7 +704,6 @@ resource "doit_report" "timezone_test" {
 		}
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		data_source    = "billing"
 		display_values = "actuals_only"
@@ -1488,7 +1486,6 @@ resource "doit_report" "secondary_custom" {
         }
         time_range = {
           mode = "custom"
-          unit = "day"
         }
         secondary_time_range = {
           custom_time_range = {
@@ -1560,7 +1557,6 @@ resource "doit_report" "secondary_offset" {
         }
         time_range = {
           mode = "custom"
-          unit = "day"
         }
         secondary_time_range = {
           custom_time_range = {
@@ -1696,7 +1692,6 @@ resource "doit_report" "secondary_update" {
         }
         time_range = {
           mode = "custom"
-          unit = "day"
         }
         secondary_time_range = {
           custom_time_range = {
@@ -1749,7 +1744,6 @@ resource "doit_report" "invalid_ts" {
     }
     time_range = {
       mode = "custom"
-      unit = "day"
     }
     data_source    = "billing"
     display_values = "actuals_only"
@@ -1795,7 +1789,6 @@ resource "doit_report" "invalid_sec_ts" {
     }
     time_range = {
       mode = "custom"
-      unit = "day"
     }
     secondary_time_range = {
       custom_time_range = {
@@ -3489,7 +3482,6 @@ resource "doit_report" "forecast_custom_test" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00-05:00"
@@ -3674,7 +3666,6 @@ resource "doit_report" "forecast_intervals_test" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00-05:00"
@@ -3723,7 +3714,6 @@ resource "doit_report" "forecast_invalid" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00Z"
@@ -3762,7 +3752,6 @@ resource "doit_report" "forecast_empty" {
 		time_interval = "month"
 		time_range = {
 			mode = "custom"
-			unit = "day"
 		}
 		custom_time_range = {
 			from = "2023-01-01T00:00:00Z"
@@ -5587,7 +5576,6 @@ resource "doit_report" "ctr_clear" {
         layout         = "table"
         time_range = {
             mode = "custom"
-            unit = "day"
         }
         custom_time_range = {
             from = "2024-01-01T00:00:00Z"
@@ -5951,7 +5939,6 @@ resource "doit_report" "str_clear" {
         time_interval = "month"
         time_range = {
             mode = "custom"
-            unit = "day"
         }
         custom_time_range = {
             from = "2024-01-01T00:00:00Z"
@@ -5985,7 +5972,6 @@ resource "doit_report" "str_clear" {
         time_interval = "month"
         time_range = {
             mode = "custom"
-            unit = "day"
         }
         custom_time_range = {
             from = "2024-01-01T00:00:00Z"

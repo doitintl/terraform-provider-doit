@@ -339,6 +339,65 @@ func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, r
 	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
 }
 
+// reportCustomTimeRangeUnitValidator rejects time_range.unit alongside
+// time_range.mode = "custom". Same rationale as reportCountAggregationValidator
+// for being a ConfigValidator rather than an attribute validator: attribute
+// validators do not run on attributes inside a SingleNestedAttribute with a
+// CustomType.
+type reportCustomTimeRangeUnitValidator struct{}
+
+var _ resource.ConfigValidator = reportCustomTimeRangeUnitValidator{}
+
+func (v reportCustomTimeRangeUnitValidator) Description(_ context.Context) string {
+	return "Validates that unit is not set when time_range.mode is \"custom\""
+}
+
+func (v reportCustomTimeRangeUnitValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `unit` is not set when `time_range.mode` is `\"custom\"`"
+}
+
+func (v reportCustomTimeRangeUnitValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportCustomTimeRangeUnit(ctx, req.Config, &resp.Diagnostics)
+}
+
+// validateReportCustomTimeRangeUnit enforces that time_range.unit is absent when
+// mode is "custom". A custom range takes its bounds from custom_time_range, so
+// the unit carries no meaning there; the API rejects the combination and omits
+// unit from custom-mode responses, which would otherwise leave the configured
+// value permanently diffed against an absent one. Catching it at plan time turns
+// an API 400 into an actionable error. Unknown values are deferred, since they
+// may resolve to a valid combination.
+func validateReportCustomTimeRangeUnit(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
+	var timeRange resource_report.TimeRangeValue
+	d := config.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	diags.Append(d...)
+
+	if d.HasError() || timeRange.IsNull() || timeRange.IsUnknown() {
+		return
+	}
+
+	if timeRange.Mode.IsUnknown() || timeRange.Unit.IsUnknown() {
+		return
+	}
+
+	if timeRange.Mode.IsNull() || timeRange.Mode.ValueString() != "custom" {
+		return
+	}
+
+	if timeRange.Unit.IsNull() {
+		return
+	}
+
+	diags.AddAttributeError(
+		path.Root("config").AtName("time_range").AtName("unit"),
+		"Invalid Time Range Configuration",
+		fmt.Sprintf("`unit` must not be set when `time_range.mode` is \"custom\", but it is %q. "+
+			"A custom range takes its bounds from `custom_time_range`, so `unit` has no effect "+
+			"and the API rejects the combination. Remove `unit` from the `time_range` block.",
+			timeRange.Unit.ValueString()),
+	)
+}
+
 // validateReportCountAggregation is the shared body used by both the report
 // resource and the report_query data source, which build the same ExternalConfig
 // from an identical schema. It enforces the count/aggregation coupling in both
