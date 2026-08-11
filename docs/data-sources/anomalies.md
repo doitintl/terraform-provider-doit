@@ -154,7 +154,6 @@ data "doit_report_query" "anomaly_cost_detail" {
     time_interval = "day"
     time_range = {
       mode = "custom"
-      unit = "day"
       custom_time_range = {
         # start_time / end_time are epoch milliseconds — divide by 1000 for seconds
         from = formatdate("YYYY-MM-DD'T'hh:mm:ss'Z'", timeadd("1970-01-01T00:00:00Z", "${floor(local.unacknowledged[count.index].start_time / 1000)}s"))
