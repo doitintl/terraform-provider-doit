@@ -6,6 +6,7 @@
 
 - **resource/doit_report, data-source/doit_report_query**: Setting `config.time_range.unit` together with `config.time_range.mode = "custom"` is now rejected at plan time. A custom range takes its bounds from `config.custom_time_range`, so the unit has no effect; the upstream API is dropping `unit` from custom-mode responses and rejecting the combination on write. Configurations that specify both — which the API previously required — must remove `unit` from the `time_range` block ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
 - **resource/doit_report, data-source/doit_report_query**: `config.metric` and `config.metrics` can no longer both be set — the API only ever honored `metrics` when both were present, silently ignoring `metric`, which previously left state inconsistent and diffing forever. Configurations setting both must remove one ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
+- **data-source/doit_alerts, doit_allocations, doit_annotations, doit_budgets, doit_commitments, doit_dimensions, doit_folders, doit_labels, doit_reports**: `max_results` is now a number, correcting an upstream spec error that typed it as a string. Configurations passing a quoted string (e.g. `max_results = "50"`) must switch to a plain number (`max_results = 50`) ([#286](https://github.com/doitintl/terraform-provider-doit/pull/286))
 
 ### FEATURES
 
