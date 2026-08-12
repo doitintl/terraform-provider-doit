@@ -150,11 +150,11 @@ These resources are no longer supported in the Terraform provider. Existing Attr
 
 ### Deprecated Attributes
 
-The following attributes are deprecated and will be removed in v2.0.0:
+The following attributes are deprecated and will be removed in a future version of the provider:
 
-| Attribute | Replacement | Notes |
-|-----------|-------------|-------|
-| `scope` | `scopes` | The new `scopes` attribute provides more flexibility with filter modes |
+| Attribute | Replacement | Notes                                                                  |
+| --------- | ----------- | ---------------------------------------------------------------------- |
+| `scope`   | `scopes`    | The new `scopes` attribute provides more flexibility with filter modes |
 
 **Before (v0.x):**
 
@@ -185,15 +185,15 @@ resource "doit_budget" "my_budget" {
 
 ### Schema Changes
 
-| Attribute | v0.x | v1.0.0 |
-|-----------|------|--------|
-| `name` | Required | Optional |
-| `currency` | Required | Optional |
-| `type` | Required | Optional |
-| `start_period` | Required | Optional |
-| `collaborators` | Required | Optional |
-| `recipients` | Required | Optional |
-| `last_updated` | Computed | **Removed** (use `update_time`) |
+| Attribute       | v0.x     | v1.0.0                          |
+| --------------- | -------- | ------------------------------- |
+| `name`          | Required | Optional                        |
+| `currency`      | Required | Optional                        |
+| `type`          | Required | Optional                        |
+| `start_period`  | Required | Optional                        |
+| `collaborators` | Required | Optional                        |
+| `recipients`    | Required | Optional                        |
+| `last_updated`  | Computed | **Removed** (use `update_time`) |
 
 ### New Attributes
 
@@ -207,6 +207,7 @@ resource "doit_budget" "my_budget" {
 ### Nested Schema Changes
 
 **`alerts`:**
+
 - New computed fields: `forecasted_date`, `triggered`
 
 ### Validation Changes (Breaking)
@@ -227,10 +228,10 @@ No manual state manipulation is required.
 
 ### Schema Changes
 
-| Attribute | v0.x | v1.0.0 |
-|-----------|------|--------|
-| `description` | Optional | **Required** |
-| `rule` | Required | Optional (use `rule` for single allocations) |
+| Attribute     | v0.x     | v1.0.0                                       |
+| ------------- | -------- | -------------------------------------------- |
+| `description` | Optional | **Required**                                 |
+| `rule`        | Required | Optional (use `rule` for single allocations) |
 
 ### New Attributes
 
@@ -268,8 +269,8 @@ resource "doit_allocation" "example" {
 
 ### Deprecated Attributes
 
-| Attribute | Replacement | Notes |
-|-----------|-------------|-------|
+| Attribute       | Replacement      | Notes                                                      |
+| --------------- | ---------------- | ---------------------------------------------------------- |
 | `config.metric` | `config.metrics` | The new `metrics` list supports up to 4 metrics per report |
 
 **Before (v0.x):**
@@ -313,9 +314,11 @@ resource "doit_report" "my_report" {
 Several nested attributes have changed from Required to Optional to improve flexibility. The most notable change is:
 
 **`config.filters`:**
+
 - New required attribute: `mode` (possible values: `is`, `starts_with`, `ends_with`, `contains`, `regexp`)
 
 **Before (v0.x):**
+
 ```hcl
 filters = [
   {
@@ -327,6 +330,7 @@ filters = [
 ```
 
 **After (v1.0.0):**
+
 ```hcl
 filters = [
   {
@@ -348,11 +352,11 @@ filters = [
 
 The `data_source` attribute values use **hyphens** (not underscores):
 
-| ✅ Correct | ❌ Incorrect |
-|-----------|-------------|
-| `billing` | |
-| `bqlens` | |
-| `billing-datahub` | `billing_datahub` |
+| ✅ Correct               | ❌ Incorrect             |
+| ------------------------ | ------------------------ |
+| `billing`                |                          |
+| `bqlens`                 |                          |
+| `billing-datahub`        | `billing_datahub`        |
 | `kubernetes-utilization` | `kubernetes_utilization` |
 
 ### Important: All Attributes Must Use `snake_case`
@@ -361,17 +365,17 @@ All HCL attribute names in the `config` block must use `snake_case` format.
 Using `camelCase` attributes (e.g., `dataSource`, `sortGroups`) will be **silently ignored**
 and the values will not be applied to the report.
 
-| ✅ Correct (snake_case) | ❌ Incorrect (camelCase) |
-|------------------------|------------------------|
-| `data_source` | `dataSource` |
-| `sort_groups` | `sortGroups` |
-| `sort_dimensions` | `sortDimensions` |
-| `time_interval` | `timeInterval` |
-| `display_values` | `displayValues` |
-| `time_range` | `timeRange` |
-| `advanced_analysis` | `advancedAnalysis` |
+| ✅ Correct (snake_case)       | ❌ Incorrect (camelCase)    |
+| ----------------------------- | --------------------------- |
+| `data_source`                 | `dataSource`                |
+| `sort_groups`                 | `sortGroups`                |
+| `sort_dimensions`             | `sortDimensions`            |
+| `time_interval`               | `timeInterval`              |
+| `display_values`              | `displayValues`             |
+| `time_range`                  | `timeRange`                 |
+| `advanced_analysis`           | `advancedAnalysis`          |
 | `include_promotional_credits` | `includePromotionalCredits` |
-| `custom_time_range` | `customTimeRange` |
+| `custom_time_range`           | `customTimeRange`           |
 
 ---
 
@@ -379,8 +383,8 @@ and the values will not be applied to the report.
 
 ### Deprecated Attributes
 
-| Attribute | Replacement | Notes |
-|-----------|-------------|-------|
+| Attribute             | Replacement     | Notes                                                                  |
+| --------------------- | --------------- | ---------------------------------------------------------------------- |
 | `config.attributions` | `config.scopes` | The new `scopes` attribute provides more flexibility with filter modes |
 
 **Before (v0.x):**

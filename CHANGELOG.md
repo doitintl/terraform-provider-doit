@@ -1,20 +1,39 @@
 # Changelog
 
-## Unreleased
+## v1.7.0 (2026-08-12)
 
 ### BREAKING CHANGES
 
-- **resource/doit_report, data-source/doit_report_query**: Setting `config.time_range.unit` together with `config.time_range.mode = "custom"` is now rejected at plan time. A custom range takes its bounds from `config.custom_time_range`, so the unit has no effect; the upstream API is dropping `unit` from custom-mode responses and rejecting the combination on write. Configurations that specify both — which the API previously required — must remove `unit` from the `time_range` block
+- **resource/doit_report, data-source/doit_report_query**: Setting `config.time_range.unit` together with `config.time_range.mode = "custom"` is now rejected at plan time. A custom range takes its bounds from `config.custom_time_range`, so the unit has no effect; the upstream API is dropping `unit` from custom-mode responses and rejecting the combination on write. Configurations that specify both — which the API previously required — must remove `unit` from the `time_range` block ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
+- **resource/doit_report, data-source/doit_report_query**: `config.metric` and `config.metrics` can no longer both be set — the API only ever honored `metrics` when both were present, silently ignoring `metric`, which previously left state inconsistent and diffing forever. Configurations setting both must remove one ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
+- **data-source/doit_alerts, doit_allocations, doit_annotations, doit_budgets, doit_commitments, doit_dimensions, doit_folders, doit_labels, doit_reports**: `max_results` is now a number, correcting an upstream spec error that typed it as a string. Configurations passing a quoted string (e.g. `max_results = "50"`) must switch to a plain number (`max_results = 50`) ([#286](https://github.com/doitintl/terraform-provider-doit/pull/286))
+
+### FEATURES
+
+- **data-source/doit_ps4c_aws_organization, doit_ps4c_aws_organizations**: New data sources for PerfectScale for Commitments (PS4C) AWS organization inventory and savings stats ([#277](https://github.com/doitintl/terraform-provider-doit/pull/277))
+- **data-source/doit_service_quotas**: New read-only data source for AWS/GCP service-quota snapshots (limit, usage, utilization percent, status), filterable by `cloud_provider` and `min_utilization_percent` ([#278](https://github.com/doitintl/terraform-provider-doit/pull/278))
+- **data-source/doit_budget_suggestions**: New read-only data source listing pending AI-generated budget recommendations ([#282](https://github.com/doitintl/terraform-provider-doit/pull/282))
 
 ### ENHANCEMENTS
 
-- **resource/doit_allocation**: `anomaly_detection` is now writable on single allocations. Removing it from configuration disables it (the API clears the field with an explicit `false`); it is rejected at plan time when used with group allocations (`rules`)
-- **data-source/doit_allocations**: Added the `anomaly_detection` field to listed allocations
+- **resource/doit_allocation**: `anomaly_detection` is now writable on single allocations. Removing it from configuration disables it (the API clears the field with an explicit `false`); it is rejected at plan time when used with group allocations (`rules`) ([#280](https://github.com/doitintl/terraform-provider-doit/pull/280))
+- **data-source/doit_allocations**: Added the `anomaly_detection` field to listed allocations ([#280](https://github.com/doitintl/terraform-provider-doit/pull/280))
 
 ### BUG FIXES
 
-- **resource/doit_report, data-source/doit_report**: Fixed a provider crash when reading a report whose `config.time_range` omits `mode` or `unit`. The API now omits `unit` for custom time ranges, which the previous code dereferenced unconditionally. **Users managing reports with a custom time range should upgrade as soon as possible**, as an older provider will panic when reading them
-- **resource/doit_report, data-source/doit_report_query**: `config.custom_time_range` no longer reports a spurious "Empty Custom Time Range" error when `from`/`to` are computed from another resource or data source. Unknown values are now deferred until they resolve, matching `forecast_settings.future_custom_date_range`
+- **resource/doit_report, data-source/doit_report**: Fixed a provider crash when reading a report whose `config.time_range` omits `mode` or `unit`. The API now omits `unit` for custom time ranges, which the previous code dereferenced unconditionally. **Users managing reports with a custom time range should upgrade as soon as possible**, as an older provider will panic when reading them ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
+- **resource/doit_report, data-source/doit_report_query**: `config.custom_time_range` no longer reports a spurious "Empty Custom Time Range" error when `from`/`to` are computed from another resource or data source. Unknown values are now deferred until they resolve, matching `forecast_settings.future_custom_date_range` ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
+- **resource/doit_report, data-source/doit_report_query**: Fixed a permanent whole-resource diff when `config.metric` or `config.metrics` was omitted from configuration — the mirror field left unconfigured is no longer forced to unknown on every plan ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
+- **resource/doit_report**: `config.group` can now be cleared by removing it from configuration; it previously remained stuck in state due to the API's PATCH-merge semantics ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
+- **resource/doit_report, data-source/doit_report_query**: Restored the deprecation warning on `config.metric`, which the `allOf`-composed schema had silently dropped ([#284](https://github.com/doitintl/terraform-provider-doit/pull/284))
+
+### DOCUMENTATION
+
+- Documented the `request_timeout` provider configuration option and its `DOIT_REQUEST_TIMEOUT` environment variable in the README, which had been missing since the option was added
+
+### INTERNAL
+
+- Upgraded `github.com/hashicorp/terraform-plugin-log` to v0.11.0 (plus transitive `golang.org/x/text`, `google.golang.org/protobuf`, and `google.golang.org/genproto` bumps)
 
 ## v1.6.0 (2026-07-30)
 
