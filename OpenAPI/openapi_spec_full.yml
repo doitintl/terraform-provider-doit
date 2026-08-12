@@ -1147,8 +1147,9 @@ paths:
           in: query
           description: The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
           schema:
-            type: string
-            default: "50"
+            type: integer
+            format: int64
+            default: 50
         - $ref: "#/components/parameters/pageToken"
         - name: filter
           in: query
@@ -1212,7 +1213,7 @@ paths:
             schema:
               $ref: "#/components/schemas/BudgetCreateUpdateRequest"
             example:
-              name: schemathesis-stateful-budget
+              name: monthly-cloud-budget
               amount: 100
               currency: USD
               usePrevSpend: false
@@ -1480,6 +1481,9 @@ paths:
       summary: Retrieve a dimension
       description: Returns a dimension by type and key.
       operationId: getDimensions
+      x-cli-name: get-dimension
+      x-cli-aliases:
+        - get-dimensions
       parameters:
         - name: type
           in: query
@@ -1820,8 +1824,8 @@ paths:
                   default: root
                   example: root
             example:
-              name: schemathesis-stateful-report
-              description: Schemathesis stateful test report
+              name: monthly-cost-by-service
+              description: Monthly cost grouped by service
               config:
                 includeSubtotals: false
                 sortGroups: asc
@@ -1890,45 +1894,17 @@ paths:
                   $ref: "#/components/schemas/ExternalConfig"
             example:
               config:
-                includeSubtotals: false
-                sortGroups: asc
-                sortDimensions: desc
+                dataSource: billing
                 metrics:
                   - type: basic
                     value: cost
-                  - type: basic
-                    value: usage
-                  - type: extended
-                    value: amortized_cost
-                metricFilter:
-                  metric:
-                    type: basic
-                    value: cost
-                  operator: gt
-                  values:
-                    - 0.1
                 timeRange:
-                  amount: 7
+                  amount: 30
                   includeCurrent: false
                   mode: last
                   unit: day
-                aggregation: total
-                dimensions:
-                  - id: year
-                    type: datetime
-                  - id: month
-                    type: datetime
-                  - id: day
-                    type: datetime
-                displayValues: actuals_only
                 group:
-                  - limit:
-                      metric:
-                        type: basic
-                        value: cost
-                      sort: desc
-                      value: 3
-                    id: service_description
+                  - id: service_description
                     type: fixed
                 timeInterval: day
       responses:
@@ -1969,7 +1945,7 @@ paths:
           in: query
           description: >-
             An optional parameter to override the report time settings. Must be
-            provided together with `endDate`. Format: yyyy-mm-dd
+            provided together with endDate. Format: yyyy-mm-dd
           schema:
             type: string
             format: date
@@ -1978,7 +1954,7 @@ paths:
           in: query
           description: >-
             An optional parameter to override the report time settings. Must be
-            provided together with `startDate`. Format: yyyy-mm-dd
+            provided together with startDate. Format: yyyy-mm-dd
           schema:
             type: string
             format: date
@@ -4149,6 +4125,9 @@ paths:
 
         Assets are returned in reverse chronological order by default.
       operationId: idOfAssets
+      x-cli-name: list-assets
+      x-cli-aliases:
+        - id-of-assets
       parameters:
         - name: maxResults
           in: query
@@ -4233,6 +4212,9 @@ paths:
       summary: Update an asset
       description: Updates an existing asset, such as G Suite/Workspace or Office 365 subscription, to add or remove licenses.
       operationId: idOfAsset
+      x-cli-name: update-asset
+      x-cli-aliases:
+        - id-of-asset
       parameters:
         - name: id
           in: path
@@ -4282,6 +4264,9 @@ paths:
         Returns a list of all historical requests that your account has access to.
         Tickets are returned in reverse chronological order by default.
       operationId: idOfTickets
+      x-cli-name: list-tickets
+      x-cli-aliases:
+        - id-of-tickets
       parameters:
         - name: maxResults
           in: query
@@ -4341,6 +4326,9 @@ paths:
       summary: Create a request
       description: Creates a new support request
       operationId: idOfTicketsPost
+      x-cli-name: create-ticket
+      x-cli-aliases:
+        - id-of-tickets-post
       requestBody:
         content:
           application/json:
@@ -4370,6 +4358,9 @@ paths:
       summary: Get a request
       description: Returns the details of a single support request by its ID.
       operationId: idOfTicketGet
+      x-cli-name: get-ticket
+      x-cli-aliases:
+        - id-of-ticket-get
       parameters:
         - name: ticketId
           in: path
@@ -4412,6 +4403,9 @@ paths:
         resolve to an active agent returns `400`. At least one mutable field
         must be present. The response echoes the fields that were applied.
       operationId: idOfTicketUpdate
+      x-cli-name: update-ticket
+      x-cli-aliases:
+        - id-of-ticket-update
       parameters:
         - name: ticketId
           in: path
@@ -4476,6 +4470,9 @@ paths:
         comments are returned. All comments are returned in a single response
         (no pagination).
       operationId: idOfTicketCommentsList
+      x-cli-name: list-ticket-comments
+      x-cli-aliases:
+        - id-of-ticket-comments-list
       parameters:
         - name: ticketId
           in: path
@@ -4510,6 +4507,9 @@ paths:
         are always public. For DoiT employees, comments can be marked as
         private (internal notes) by setting the `private` field to `true`.
       operationId: idOfTicketCommentsPost
+      x-cli-name: create-ticket-comment
+      x-cli-aliases:
+        - id-of-ticket-comments-post
       parameters:
         - name: ticketId
           in: path
@@ -4593,6 +4593,9 @@ paths:
         response echoes the actual stored strings so callers can verify the
         transform.
       operationId: idOfTicketTagsAdd
+      x-cli-name: add-ticket-tags
+      x-cli-aliases:
+        - id-of-ticket-tags-add
       parameters:
         - name: ticketId
           in: path
@@ -4636,6 +4639,9 @@ paths:
         mapping as on add, so a customer who added `my_tag` (stored as
         `customer_tag/my_tag`) can remove it by sending `my_tag`.
       operationId: idOfTicketTagsRemove
+      x-cli-name: remove-ticket-tags
+      x-cli-aliases:
+        - id-of-ticket-tags-remove
       parameters:
         - name: ticketId
           in: path
@@ -8329,7 +8335,6 @@ components:
       required:
         - name
         - platform
-        - structure
         - eligibleFrom
       properties:
         name:
@@ -8337,6 +8342,9 @@ components:
         platform:
           type: string
         structure:
+          description: >-
+            Which preset the template started from. Optional — an omitted or
+            blank value is recorded as "blank".
           type: string
         eligibleFrom:
           type: string
@@ -15015,8 +15023,9 @@ components:
       description: >-
         The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
       schema:
-        type: string
-        default: "50"
+        type: integer
+        format: int64
+        default: 50
     pageToken:
       name: pageToken
       in: query

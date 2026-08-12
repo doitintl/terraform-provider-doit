@@ -61,7 +61,7 @@ output "reports_with_labels" {
 The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 Possible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**
 - `max_creation_time` (String) Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
-- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))

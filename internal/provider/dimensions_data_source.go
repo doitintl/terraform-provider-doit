@@ -99,7 +99,7 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		params.MaxResults = new(data.MaxResults.ValueString())
+		params.MaxResults = new(data.MaxResults.ValueInt64())
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}

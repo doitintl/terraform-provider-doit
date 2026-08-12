@@ -57,7 +57,7 @@ data "doit_commitments" "limited" {
 
 // TestAccCommitmentsDataSource_PageTokenOnly tests using a page_token from a previous API call.
 func TestAccCommitmentsDataSource_PageTokenOnly(t *testing.T) {
-	pageToken := getCommitmentFirstPageToken(t, "1")
+	pageToken := getCommitmentFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 commitment)")
 	}
@@ -87,7 +87,7 @@ data "doit_commitments" "from_token" {
 
 // TestAccCommitmentsDataSource_MaxResultsAndPageToken tests using both parameters together.
 func TestAccCommitmentsDataSource_MaxResultsAndPageToken(t *testing.T) {
-	pageToken := getCommitmentFirstPageToken(t, "1")
+	pageToken := getCommitmentFirstPageToken(t, 1)
 	if pageToken == "" {
 		t.Skip("No page_token returned (need more than 1 commitment)")
 	}
@@ -265,7 +265,7 @@ func computeCommitmentCount(t *testing.T) int {
 	return total
 }
 
-func getCommitmentFirstPageToken(t *testing.T, maxResults string) string {
+func getCommitmentFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
 	skipIfNoAcc(t)
 	client := getAPIClient(t)

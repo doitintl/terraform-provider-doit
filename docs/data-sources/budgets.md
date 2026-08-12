@@ -36,7 +36,7 @@ output "budget_names" {
 - `filter` (String) An expression for filtering the results of the request. The syntax is "key:[<value>]".
 Available keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
 - `max_creation_time` (String) Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
-- `max_results` (String) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))

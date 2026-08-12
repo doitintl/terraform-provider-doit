@@ -40,7 +40,7 @@ output "label_names" {
 
 - `filter` (String) An expression for filtering the results.
 Valid fields: **name**, **type**.
-- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 Possible values: `id`, `name`, `type`, `createTime`, `updateTime`

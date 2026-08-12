@@ -8809,7 +8809,7 @@ type Value2 = int
 type ManagementAccountId = string
 
 // MaxResults defines model for maxResults.
-type MaxResults = string
+type MaxResults = int64
 
 // PageToken defines model for pageToken.
 type PageToken = string
@@ -8958,7 +8958,7 @@ type ListAnnotationsParamsSortOrder string
 // ListBudgetsParams defines parameters for ListBudgets.
 type ListBudgetsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-	MaxResults *string `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
 	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
@@ -9092,10 +9092,10 @@ type GetReportParams struct {
 	// TimeRange An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
 	TimeRange *string `form:"timeRange,omitempty" json:"timeRange,omitempty"`
 
-	// StartDate An optional parameter to override the report time settings. Must be provided together with `endDate`. Format: yyyy-mm-dd
+	// StartDate An optional parameter to override the report time settings. Must be provided together with endDate. Format: yyyy-mm-dd
 	StartDate *openapi_types.Date `form:"startDate,omitempty" json:"startDate,omitempty"`
 
-	// EndDate An optional parameter to override the report time settings. Must be provided together with `startDate`. Format: yyyy-mm-dd
+	// EndDate An optional parameter to override the report time settings. Must be provided together with startDate. Format: yyyy-mm-dd
 	EndDate *openapi_types.Date `form:"endDate,omitempty" json:"endDate,omitempty"`
 }
 
@@ -14185,7 +14185,7 @@ func NewListAlertsRequest(server string, params *ListAlertsParams) (*http.Reques
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -14418,7 +14418,7 @@ func NewListAllocationsRequest(server string, params *ListAllocationsParams) (*h
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -14675,7 +14675,7 @@ func NewListAnnotationsRequest(server string, params *ListAnnotationsParams) (*h
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -14959,7 +14959,7 @@ func NewListBudgetsRequest(server string, params *ListBudgetsParams) (*http.Requ
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15240,7 +15240,7 @@ func NewListCommitmentsRequest(server string, params *ListCommitmentsParams) (*h
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15410,7 +15410,7 @@ func NewListDimensionsRequest(server string, params *ListDimensionsParams) (*htt
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15512,7 +15512,7 @@ func NewListFoldersRequest(server string, params *ListFoldersParams) (*http.Requ
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15733,7 +15733,7 @@ func NewListLabelsRequest(server string, params *ListLabelsParams) (*http.Reques
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -16071,7 +16071,7 @@ func NewListReportsRequest(server string, params *ListReportsParams) (*http.Requ
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
