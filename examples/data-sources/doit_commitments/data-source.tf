@@ -4,7 +4,7 @@ data "doit_commitments" "all" {
 
 # List commitments with a result limit
 data "doit_commitments" "recent" {
-  max_results = "10"
+  max_results = 10
 }
 
 # Filter commitments by provider

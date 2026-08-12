@@ -55,7 +55,7 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "An expression for filtering the results.\nThe fields eligible for filtering are: type, label, key.",
 				MarkdownDescription: "An expression for filtering the results.\nThe fields eligible for filtering are: type, label, key.",
 			},
-			"max_results": schema.StringAttribute{
+			"max_results": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
@@ -105,7 +105,7 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 type DimensionsModel struct {
 	Dimensions types.List   `tfsdk:"dimensions"`
 	Filter     types.String `tfsdk:"filter"`
-	MaxResults types.String `tfsdk:"max_results"`
+	MaxResults types.Int64  `tfsdk:"max_results"`
 	PageToken  types.String `tfsdk:"page_token"`
 	RowCount   types.Int64  `tfsdk:"row_count"`
 	SortBy     types.String `tfsdk:"sort_by"`

@@ -28,7 +28,7 @@ output "folder_names" {
 
 # Retrieve the first page of folders
 data "doit_folders" "first_page" {
-  max_results = "5"
+  max_results = 5
 }
 ```
 
@@ -37,7 +37,7 @@ data "doit_folders" "first_page" {
 
 ### Optional
 
-- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 

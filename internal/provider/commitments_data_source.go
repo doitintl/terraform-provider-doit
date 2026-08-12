@@ -104,7 +104,7 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
-		params.MaxResults = new(data.MaxResults.ValueString())
+		params.MaxResults = new(data.MaxResults.ValueInt64())
 
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
@@ -159,7 +159,7 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		data.RowCount = types.Int64Value(int64(len(allCommitments)))
 		data.PageToken = types.StringNull()
-		data.MaxResults = types.StringNull()
+		data.MaxResults = types.Int64Null()
 	}
 
 	// Map commitment items with proper diagnostics.
