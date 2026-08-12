@@ -11206,6 +11206,15 @@ components:
       description: Page token, returned by a previous call, to request the next page of results
       schema:
         type: string
+    includeRevoked:
+      name: includeRevoked
+      in: query
+      required: false
+      description: >-
+        If `true`, includes end-customer mappings that have been revoked. Defaults to `false` (revoked mappings are excluded).
+      schema:
+        type: boolean
+        default: false
     reportId:
       name: id
       in: path

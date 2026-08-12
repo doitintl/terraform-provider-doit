@@ -7159,6 +7159,200 @@ paths:
           $ref: "#/components/responses/422_billing_transfer_batch_validation"
         "500":
           $ref: "#/components/responses/500"
+  /billingtransfer/v1/programmanagementaccounts/status:
+    get:
+      tags:
+        - Billing Transfer
+      summary: Get program management account status
+      description: |
+        Lightweight polling surface for the onboarding wizard: returns each of the caller's PMAs
+        with only its IAM status/diff and timestamps — no tenant fan-out, no handshake
+        aggregation, no pagination. Distributor-only.
+      operationId: getBillingTransferProgramManagementAccountsStatus
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramManagementAccountsStatusResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /billingtransfer/v1/end-customers:
+    get:
+      tags:
+        - Billing Transfer
+      summary: List end-customers under a reseller PMA
+      description: |
+        Lists the end-customer AWS account mappings under a reseller's program management
+        account, identified by `dpmaId` and `resellerPmaAccountId`. Callable by the reseller who
+        owns the PMA or the distributor who owns the DPMA.
+      operationId: listBillingTransferEndCustomers
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - name: dpmaId
+          in: query
+          required: true
+          description: DPMA ID that owns the reseller PMA referenced by `resellerPmaAccountId`.
+          schema:
+            type: string
+        - name: resellerPmaAccountId
+          in: query
+          required: true
+          description: 12-digit AWS account ID of the reseller's program management account.
+          schema:
+            type: string
+            example: "123456789012"
+        - $ref: "#/components/parameters/includeRevoked"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEndCustomersResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          description: >-
+            Forbidden - The caller lacks the BillingTransferAdmin permission, or is not the
+            reseller who owns this PMA nor the distributor who owns the DPMA.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "404":
+          description: >-
+            Not Found - No reseller PMA exists for the given `resellerPmaAccountId` under the
+            given `dpmaId`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "500":
+          $ref: "#/components/responses/500"
+  /billingtransfer/v1/resellers/{resellerPmaAccountId}/end-customers:
+    get:
+      tags:
+        - Billing Transfer
+      summary: List end-customers under a reseller PMA, by reseller PMA alone
+      description: |
+        Same result as `GET /billingtransfer/v1/end-customers`, identified by
+        `resellerPmaAccountId` alone (no `dpmaId` needed). Callable by the reseller who owns the
+        PMA or the distributor who owns its DPMA.
+      operationId: listBillingTransferEndCustomersByReseller
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - name: resellerPmaAccountId
+          in: path
+          required: true
+          description: 12-digit AWS account ID of the reseller's program management account.
+          schema:
+            type: string
+            example: "123456789012"
+        - $ref: "#/components/parameters/includeRevoked"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEndCustomersResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          description: Forbidden - The caller lacks the BillingTransferAdmin permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "404":
+          description: >-
+            Not Found - No reseller PMA exists for the given `resellerPmaAccountId`, or it exists
+            but the caller is not the reseller who owns it or the distributor who owns its DPMA.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "500":
+          $ref: "#/components/responses/500"
+  /billingtransfer/v1/reseller-accounts:
+    get:
+      tags:
+        - Billing Transfer
+      summary: List the caller's reseller PMA nodes
+      description: |
+        Lists every reseller program management account (RPMA) node belonging to the calling
+        reseller, with handshake state and status but without end-customer tenants — the
+        reseller-tier analog of `GET /billingtransfer/v1/programmanagementaccounts`.
+      operationId: listBillingTransferResellerAccounts
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListResellerAccountsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          description: Forbidden - The caller lacks the BillingTransferAdmin permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "500":
+          $ref: "#/components/responses/500"
+  /billingtransfer/v1/reseller-accounts/end-customers:
+    get:
+      tags:
+        - Billing Transfer
+      summary: List the caller's reseller PMA nodes with their end-customer tenants
+      description: |
+        Lists every reseller PMA node belonging to the calling reseller, each with the
+        end-customer tenants connected under it — the reseller-tier analog of
+        `GET /billingtransfer/v1/programmanagementaccounts`. `region`, `iamStatus` and
+        `lastRefreshTime` are inherited from the parent DPMA root; the reseller node itself
+        carries no IAM/region metadata of its own.
+      operationId: listBillingTransferResellerAccountsWithTenants
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/includeRevoked"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListResellerAccountsWithTenantsResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          description: Forbidden - The caller lacks the BillingTransferAdmin permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "500":
+          $ref: "#/components/responses/500"
 components:
   schemas:
     CloudflowCollaborator:
@@ -15291,6 +15485,220 @@ components:
           description: Items rejected before processing. Omitted when every item passed validation.
           items:
             $ref: "#/components/schemas/InvalidHandshakeItem"
+    EndCustomerNode:
+      type: object
+      additionalProperties: false
+      required:
+        - ecAccountId
+        - ecCustomerId
+        - status
+        - handshakeState
+        - billSourceType
+        - createdAt
+      properties:
+        ecAccountId:
+          type: string
+          description: 12-digit AWS account ID of the end-customer account.
+          example: "123456789012"
+        ecCustomerId:
+          type: string
+          description: DoiT customer ID the end-customer account is mapped to.
+        status:
+          type: string
+          enum:
+            - pending
+            - cur_export_waiting
+            - active
+            - canceled
+            - declined
+            - expired
+            - revoked
+        handshakeState:
+          $ref: "#/components/schemas/HandshakeState"
+        billSourceType:
+          type: string
+        effectiveTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the handshake reached a terminal state. `null` until then.
+        createdAt:
+          type: string
+          format: date-time
+        lastRefreshTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this mapping's status was last refreshed. `null` if never refreshed.
+    ListEndCustomersResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndCustomerNode"
+    ProgramManagementAccountStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - dpmaId
+        - accountId
+        - iamStatus
+        - createdAt
+      properties:
+        dpmaId:
+          type: string
+        accountId:
+          type: string
+          description: 12-digit AWS account ID of the program management account.
+          example: "123456789012"
+        iamStatus:
+          type: string
+        iamDiff:
+          allOf:
+            - $ref: "#/components/schemas/IamDiff"
+          nullable: true
+          description: >-
+            Present when `iamStatus` indicates drift. `null` when the deployed IAM matches
+            expectations.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this account's root record was last updated. `null` if never updated.
+    ProgramManagementAccountsStatusResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgramManagementAccountStatus"
+    ResellerAccount:
+      type: object
+      additionalProperties: false
+      required:
+        - resellerPmaAccountId
+        - dpmaId
+        - handshakeId
+        - handshakeState
+        - status
+        - createdAt
+      properties:
+        resellerPmaAccountId:
+          type: string
+          description: 12-digit AWS account ID of the reseller's program management account.
+          example: "123456789012"
+        dpmaId:
+          type: string
+        handshakeId:
+          type: string
+        handshakeState:
+          $ref: "#/components/schemas/HandshakeState"
+        status:
+          type: string
+          enum:
+            - handshake_pending
+            - cur_export_waiting
+            - active
+            - declined
+            - canceled
+            - expired
+        effectiveTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the handshake reached a terminal state. `null` until then.
+        createdAt:
+          type: string
+          format: date-time
+    ListResellerAccountsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResellerAccount"
+    ResellerAccountWithTenants:
+      type: object
+      additionalProperties: false
+      required:
+        - resellerPmaAccountId
+        - dpmaId
+        - handshakeId
+        - handshakeState
+        - status
+        - region
+        - iamStatus
+        - createdAt
+        - handshakeStatus
+        - tenants
+      properties:
+        resellerPmaAccountId:
+          type: string
+          description: 12-digit AWS account ID of the reseller's program management account.
+          example: "123456789012"
+        dpmaId:
+          type: string
+        handshakeId:
+          type: string
+        handshakeState:
+          $ref: "#/components/schemas/HandshakeState"
+        status:
+          type: string
+          enum:
+            - handshake_pending
+            - cur_export_waiting
+            - active
+            - declined
+            - canceled
+            - expired
+        region:
+          type: string
+          description: Inherited from the parent DPMA root; the reseller node itself carries no region metadata.
+        iamStatus:
+          type: string
+          description: Inherited from the parent DPMA root; the reseller node itself carries no IAM metadata.
+        lastRefreshTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Inherited from the parent DPMA root. `null` if never refreshed.
+        effectiveTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the handshake reached a terminal state. `null` until then.
+        createdAt:
+          type: string
+          format: date-time
+        handshakeStatus:
+          $ref: "#/components/schemas/HandshakeStatus"
+        tenants:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndCustomerNode"
+    ListResellerAccountsWithTenantsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResellerAccountWithTenants"
   responses:
     "400":
       description: >-
@@ -15642,6 +16050,16 @@ components:
       description: Page token, returned by a previous call, to request the next page of results
       schema:
         type: string
+    includeRevoked:
+      name: includeRevoked
+      in: query
+      required: false
+      description: >-
+        If `true`, includes end-customer mappings that have been revoked. Defaults to `false`
+        (revoked mappings are excluded).
+      schema:
+        type: boolean
+        default: false
     reportId:
       name: id
       in: path
