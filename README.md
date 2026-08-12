@@ -20,13 +20,14 @@ The DoiT Cloud Intelligence Terraform Provider lets you manage [DoiT Cloud Intel
 
 ### Authentication
 
-The provider supports three configuration options, all of which can be set via environment variables:
+The provider supports four configuration options, all of which can be set via environment variables:
 
-| Attribute          | Environment Variable    | Required | Description                                           |
-| ------------------ | ----------------------- | -------- | ----------------------------------------------------- |
-| `api_token`        | `DOIT_API_TOKEN`        | Yes      | Your DoiT API key                                     |
-| `host`             | `DOIT_HOST`             | No       | API host (defaults to `https://api.doit.com`)         |
-| `customer_context` | `DOIT_CUSTOMER_CONTEXT` | No\*     | Customer context (_required for DoiT employees only_) |
+| Attribute          | Environment Variable    | Required | Description                                                  |
+| ------------------ | ----------------------- | -------- | -------------------------------------------------------------- |
+| `api_token`        | `DOIT_API_TOKEN`        | Yes      | Your DoiT API key                                             |
+| `host`             | `DOIT_HOST`             | No       | API host (defaults to `https://api.doit.com`)                 |
+| `customer_context` | `DOIT_CUSTOMER_CONTEXT` | No\*     | Customer context (_required for DoiT employees only_)         |
+| `request_timeout`  | `DOIT_REQUEST_TIMEOUT`  | No       | Timeout per HTTP request, e.g. `30s`, `2m` (defaults to `120s`) |
 
 ### Provider Configuration
 
