@@ -82,6 +82,8 @@ tags:
     description: Manage CloudFlow.
   - name: PerfectScale for Commitments AWS
     description: PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.
+  - name: Billing Transfer
+    description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
 paths:
   /analytics/v1/alerts:
     get:

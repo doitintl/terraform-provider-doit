@@ -82,6 +82,8 @@ tags:
     description: Manage CloudFlow.
   - name: PerfectScale for Commitments AWS
     description: PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.
+  - name: Billing Transfer
+    description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
 
 paths:
   /analytics/v1/alerts:
@@ -6970,6 +6972,158 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /billingtransfer/v1/resellerhandshakes:
+    post:
+      tags:
+        - Billing Transfer
+      summary: Create reseller handshakes (batch)
+      description: |
+        Maps reseller to distributor; also sends the handshake if required, as part of AWS
+        billing transfer onboarding. Distributor-only; callers without the ChannelOps distributor
+        tier entitlement receive `403`.
+
+        Each item in the batch is processed independently; per-item outcomes are returned in
+        `results[]` with HTTP `200` even when some items fail. Malformed items (missing fields,
+        duplicate `resellerPmaAccountId` within the batch) are rejected up front with `422` and
+        reported in `invalidItems`, and none of the batch is processed in that case.
+      operationId: createBillingTransferResellerHandshakes
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |
+            If `true`, validates the batch and simulates the outcome without issuing any AWS
+            Organizations handshakes. The response shape is identical to a real execution.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResellerHandshakeBatchCreate"
+      responses:
+        "200":
+          description: OK - Batch processed; see `results` and `summary` for per-item outcomes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResellerHandshakeBatchResult"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          description: >-
+            Forbidden - The caller is not entitled to the ChannelOps distributor tier, or does
+            not own the referenced `dpmaId`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "422":
+          $ref: "#/components/responses/422_billing_transfer_batch_validation"
+        "500":
+          $ref: "#/components/responses/500"
+        "502":
+          description: Bad Gateway - AWS Organizations was unreachable; retry later.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+  /billingtransfer/v1/programmanagementaccounts:
+    get:
+      tags:
+        - Billing Transfer
+      summary: List program management accounts
+      description: |
+        Lists the caller's program management accounts (PMAs) and the reseller tenants mapped to
+        each one, including AWS Organizations handshake status per account. Distributor-only.
+      operationId: listBillingTransferProgramManagementAccounts
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramManagementAccountList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /billingtransfer/v1/end-customer-mappings:
+    post:
+      tags:
+        - Billing Transfer
+      summary: Create end-customer mappings (batch)
+      description: |
+        Maps end-customer AWS accounts under a reseller's PMA to their DoiT tenant, as part of AWS
+        billing transfer onboarding. Reseller-only; distributors are explicitly denied (`403`).
+
+        Unlike `POST /billingtransfer/v1/resellerhandshakes`, this endpoint has no
+        `Idempotency-Key` requirement and no `dryRun` support.
+
+        This path is a deliberate exception to the de-hyphenation convention used by the sibling
+        `resellerhandshakes` and `programmanagementaccounts` paths — it stays hyphenated to match
+        the existing Go route and its console-facing equivalent.
+
+        Each item in the batch is processed independently; per-item outcomes are returned in
+        `results[]` with HTTP `200`. Malformed items are rejected up front and reported in
+        `invalidItems` without processing any of the batch.
+      operationId: createBillingTransferEndCustomerMappings
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EndCustomerMappingBatchCreate"
+      responses:
+        "200":
+          description: >-
+            OK - Batch processed; see `results` for per-item outcomes and `invalidItems` for any
+            items rejected before processing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EndCustomerMappingBatchResult"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          description: >-
+            Forbidden - The caller is a distributor (denied), does not own the referenced
+            `resellerPmaAccountId`, or the reseller is not mapped to the referenced `dpmaId`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingTransferProblemDetails"
+        "422":
+          $ref: "#/components/responses/422_billing_transfer_batch_validation"
+        "500":
+          $ref: "#/components/responses/500"
 components:
   schemas:
     CloudflowCollaborator:
@@ -14692,6 +14846,416 @@ components:
           items:
             $ref: "#/components/schemas/AwsOrganizationServiceSettings"
           description: Settings for each activated product line.
+    BillingTransferProblemDetails:
+      type: object
+      description: >-
+        RFC 7807 problem-detail body returned by Billing Transfer endpoints for 4xx/5xx errors.
+      additionalProperties: false
+      required:
+        - type
+        - title
+        - status
+        - code
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI identifying the problem type.
+        title:
+          type: string
+          description: Short, human-readable summary of the problem type.
+        status:
+          type: integer
+          description: The HTTP status code repeated in the body.
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence of the problem.
+        code:
+          type: string
+          description: Stable machine-readable error code.
+          example: "billing-transfer.batch_validation_failed"
+        retryable:
+          type: boolean
+          description: Whether retrying the same request may succeed without changes.
+        invalidItems:
+          type: array
+          description: Present on batch-validation failures; the batch items that failed validation.
+          items:
+            $ref: "#/components/schemas/InvalidHandshakeItem"
+    InvalidHandshakeItem:
+      type: object
+      description: A single batch item that failed validation before processing began.
+      additionalProperties: false
+      required:
+        - index
+        - code
+      properties:
+        index:
+          type: integer
+          description: Zero-based position of the invalid item within the submitted batch.
+        resellerCustomerId:
+          type: string
+          description: Present when the invalid item is a reseller-handshake batch item.
+        code:
+          type: string
+          description: >-
+            Stable machine-readable error code (e.g. `duplicate_pma`, `duplicate_ec_account`).
+          example: "duplicate_pma"
+        reason:
+          type: string
+          description: Human-readable explanation of why the item is invalid.
+    HandshakeState:
+      type: string
+      description: AWS Organizations Handshake `State` value, lowercased.
+      enum:
+        - requested
+        - open
+        - canceled
+        - accepted
+        - declined
+        - expired
+    ResellerHandshakeItem:
+      type: object
+      additionalProperties: false
+      required:
+        - resellerCustomerId
+        - resellerPmaAccountId
+      properties:
+        resellerCustomerId:
+          type: string
+          description: DoiT customer ID of the reseller's end customer to issue a handshake for.
+        resellerPmaAccountId:
+          type: string
+          description: 12-digit AWS account ID of the reseller's program management account (PMA).
+          example: "123456789012"
+    ResellerHandshakeBatchCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - dpmaId
+        - items
+      properties:
+        dpmaId:
+          type: string
+          description: The distributor's program management account (DPMA) ID issuing the handshakes.
+        sendHandshakes:
+          type: boolean
+          description: >-
+            If `true`, issues a new AWS Organizations handshake for each item without an existing
+            one. If omitted or `false`, maps the batch in place without issuing any AWS
+            Organizations handshakes.
+          default: false
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Batch items. Duplicate `resellerPmaAccountId` values within the batch are rejected.
+          items:
+            $ref: "#/components/schemas/ResellerHandshakeItem"
+    ResellerHandshakeError:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Stable machine-readable error code for this item.
+        message:
+          type: string
+          description: Human-readable explanation of the failure.
+    ResellerHandshakeStatus:
+      type: string
+      description: Outcome of processing this batch item.
+      enum:
+        - handshake_issued
+        - no_op
+        - mapped
+        - remapped
+        - failed
+    ResellerHandshakeResult:
+      type: object
+      additionalProperties: false
+      required:
+        - resellerCustomerId
+        - resellerPmaAccountId
+        - status
+      properties:
+        resellerCustomerId:
+          type: string
+        resellerPmaAccountId:
+          type: string
+        status:
+          $ref: "#/components/schemas/ResellerHandshakeStatus"
+        handshakeId:
+          type: string
+          description: >-
+            AWS Organizations handshake ID. Absent when no handshake was issued (e.g. `no_op`,
+            `failed`, or dry run).
+        handshakeState:
+          $ref: "#/components/schemas/HandshakeState"
+        error:
+          $ref: "#/components/schemas/ResellerHandshakeError"
+    ResellerHandshakeBatchSummary:
+      type: object
+      description: >-
+        Per-outcome counts across the batch. Field names are snake_case, matching the actual
+        wire format returned by this endpoint — an intentional inconsistency with the rest of the
+        payload, which is camelCase.
+      additionalProperties: false
+      required:
+        - handshake_issued
+        - no_op
+        - mapped
+        - remapped
+        - failed
+      properties:
+        handshake_issued:
+          type: integer
+        no_op:
+          type: integer
+        mapped:
+          type: integer
+        remapped:
+          type: integer
+        failed:
+          type: integer
+    ResellerHandshakeBatchResult:
+      type: object
+      additionalProperties: false
+      required:
+        - dpmaId
+        - results
+        - summary
+      properties:
+        dpmaId:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResellerHandshakeResult"
+        summary:
+          $ref: "#/components/schemas/ResellerHandshakeBatchSummary"
+    IamDiff:
+      type: object
+      additionalProperties: false
+      properties:
+        missing:
+          type: array
+          items:
+            type: string
+        extra:
+          type: array
+          items:
+            type: string
+    MappedTenant:
+      type: object
+      additionalProperties: false
+      required:
+        - customerId
+        - tenantType
+        - parentTenant
+        - displayName
+        - resellerPmaAccountId
+        - handshakeState
+        - status
+      properties:
+        customerId:
+          type: string
+        tenantType:
+          type: string
+        parentTenant:
+          type: string
+        displayName:
+          type: string
+        resellerPmaAccountId:
+          type: string
+          example: "123456789012"
+        handshakeState:
+          $ref: "#/components/schemas/HandshakeState"
+        status:
+          type: string
+        effectiveTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the handshake reached a terminal state. `null` until then.
+    HandshakeStatus:
+      type: object
+      description: Per-AWS-Organizations-handshake-state counts across all tenants mapped to a PMA.
+      additionalProperties: false
+      required:
+        - total
+        - requested
+        - open
+        - accepted
+        - declined
+        - canceled
+        - expired
+      properties:
+        total:
+          type: integer
+        requested:
+          type: integer
+        open:
+          type: integer
+        accepted:
+          type: integer
+        declined:
+          type: integer
+        canceled:
+          type: integer
+        expired:
+          type: integer
+    ProgramManagementAccount:
+      type: object
+      additionalProperties: false
+      required:
+        - dpmaId
+        - accountId
+        - roleArn
+        - stackName
+        - region
+        - iamStatus
+        - createdAt
+        - tenants
+        - handshakeStatus
+      properties:
+        dpmaId:
+          type: string
+        accountId:
+          type: string
+          description: 12-digit AWS account ID of the program management account.
+          example: "123456789012"
+        roleArn:
+          type: string
+        stackName:
+          type: string
+        region:
+          type: string
+        iamStatus:
+          type: string
+        iamDiff:
+          allOf:
+            - $ref: "#/components/schemas/IamDiff"
+          nullable: true
+          description: >-
+            Present when `iamStatus` indicates drift. `null` when the deployed IAM matches
+            expectations.
+        createdAt:
+          type: string
+          format: date-time
+        lastRefreshTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this account's handshake/tenant state was last refreshed. `null` if never refreshed.
+        tenants:
+          type: array
+          items:
+            $ref: "#/components/schemas/MappedTenant"
+        handshakeStatus:
+          $ref: "#/components/schemas/HandshakeStatus"
+    ProgramManagementAccountList:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgramManagementAccount"
+        pageToken:
+          type: string
+          description: Opaque cursor for the next page. Absent when this is the last page.
+        rowCount:
+          type: integer
+    EndCustomerMappingItem:
+      type: object
+      additionalProperties: false
+      required:
+        - ecAccountId
+        - ecCustomerId
+      properties:
+        ecAccountId:
+          type: string
+          description: 12-digit AWS account ID of the end-customer account being mapped.
+          example: "123456789012"
+        ecCustomerId:
+          type: string
+          description: DoiT customer ID to map the end-customer account to.
+        curBasePath:
+          type: string
+          description: Optional CUR export base path for the end-customer account.
+    EndCustomerMappingBatchCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - dpmaId
+        - resellerPmaAccountId
+        - items
+      properties:
+        dpmaId:
+          type: string
+        resellerPmaAccountId:
+          type: string
+          description: 12-digit AWS account ID of the reseller's program management account.
+          example: "123456789012"
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: >-
+            Batch items. Duplicate `ecAccountId` or `ecCustomerId` values within the batch are
+            rejected.
+          items:
+            $ref: "#/components/schemas/EndCustomerMappingItem"
+    EndCustomerMappingResultStatus:
+      type: string
+      enum:
+        - mapped
+        - already_mapped
+        - remapped
+    EndCustomerMappingResult:
+      type: object
+      additionalProperties: false
+      required:
+        - ecAccountId
+        - ecCustomerId
+        - status
+      properties:
+        ecAccountId:
+          type: string
+        ecCustomerId:
+          type: string
+        curBasePath:
+          type: string
+        status:
+          $ref: "#/components/schemas/EndCustomerMappingResultStatus"
+    EndCustomerMappingBatchResult:
+      type: object
+      additionalProperties: false
+      required:
+        - dpmaId
+        - resellerPmaAccountId
+        - results
+      properties:
+        dpmaId:
+          type: string
+        resellerPmaAccountId:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndCustomerMappingResult"
+        invalidItems:
+          type: array
+          description: Items rejected before processing. Omitted when every item passed validation.
+          items:
+            $ref: "#/components/schemas/InvalidHandshakeItem"
   responses:
     "400":
       description: >-
@@ -14739,6 +15303,17 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    "422_billing_transfer_batch_validation":
+      description: >-
+        Unprocessable Entity - One or more items in the batch failed validation before any
+        processing began (missing required fields, or duplicate account/customer IDs within the
+        batch), or a batch-level field such as `dpmaId` is missing or invalid. None of the batch
+        was processed; resubmit with corrected `items`. Invalid items are listed in
+        `invalidItems`.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BillingTransferProblemDetails"
     "429":
       description: >-
         Too Many Requests.
