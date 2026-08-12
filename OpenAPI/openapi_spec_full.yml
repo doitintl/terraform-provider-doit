@@ -420,6 +420,12 @@ paths:
       responses:
         "200":
           description: OK - Allocation deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -627,6 +633,12 @@ paths:
       responses:
         "200":
           description: OK - Annotation deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -816,6 +828,12 @@ paths:
       responses:
         "200":
           description: OK - Label deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1076,6 +1094,12 @@ paths:
       responses:
         "200":
           description: OK - Custom theme deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1305,7 +1329,12 @@ paths:
       responses:
         "200":
           description: OK - Budget deleted.
-          content: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1989,6 +2018,12 @@ paths:
       responses:
         "200":
           description: OK - Report deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
           links:
             listReports:
               operationId: listReports
