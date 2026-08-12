@@ -315,7 +315,7 @@
 					},
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}
@@ -851,7 +851,7 @@
 				"attributes": [
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}
@@ -1092,7 +1092,7 @@
 				"attributes": [
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}
@@ -2622,7 +2622,7 @@
 				"attributes": [
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection."
 						}
@@ -7797,7 +7797,7 @@
 					},
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}
@@ -8330,7 +8330,7 @@
 				"attributes": [
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}
@@ -8473,7 +8473,7 @@
 				"attributes": [
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}
@@ -9712,7 +9712,7 @@
 				"attributes": [
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}
@@ -11953,7 +11953,7 @@
 				"attributes": [
 					{
 						"name": "max_results",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
 							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
 						}

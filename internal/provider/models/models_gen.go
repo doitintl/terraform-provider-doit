@@ -8809,7 +8809,7 @@ type Value2 = int
 type ManagementAccountId = string
 
 // MaxResults defines model for maxResults.
-type MaxResults = string
+type MaxResults = int64
 
 // PageToken defines model for pageToken.
 type PageToken = string
@@ -8958,7 +8958,7 @@ type ListAnnotationsParamsSortOrder string
 // ListBudgetsParams defines parameters for ListBudgets.
 type ListBudgetsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
-	MaxResults *string `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
 	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
@@ -9092,10 +9092,10 @@ type GetReportParams struct {
 	// TimeRange An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
 	TimeRange *string `form:"timeRange,omitempty" json:"timeRange,omitempty"`
 
-	// StartDate An optional parameter to override the report time settings. Must be provided together with `endDate`. Format: yyyy-mm-dd
+	// StartDate An optional parameter to override the report time settings. Must be provided together with endDate. Format: yyyy-mm-dd
 	StartDate *openapi_types.Date `form:"startDate,omitempty" json:"startDate,omitempty"`
 
-	// EndDate An optional parameter to override the report time settings. Must be provided together with `startDate`. Format: yyyy-mm-dd
+	// EndDate An optional parameter to override the report time settings. Must be provided together with startDate. Format: yyyy-mm-dd
 	EndDate *openapi_types.Date `form:"endDate,omitempty" json:"endDate,omitempty"`
 }
 
@@ -14185,7 +14185,7 @@ func NewListAlertsRequest(server string, params *ListAlertsParams) (*http.Reques
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -14418,7 +14418,7 @@ func NewListAllocationsRequest(server string, params *ListAllocationsParams) (*h
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -14675,7 +14675,7 @@ func NewListAnnotationsRequest(server string, params *ListAnnotationsParams) (*h
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -14959,7 +14959,7 @@ func NewListBudgetsRequest(server string, params *ListBudgetsParams) (*http.Requ
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15240,7 +15240,7 @@ func NewListCommitmentsRequest(server string, params *ListCommitmentsParams) (*h
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15410,7 +15410,7 @@ func NewListDimensionsRequest(server string, params *ListDimensionsParams) (*htt
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15512,7 +15512,7 @@ func NewListFoldersRequest(server string, params *ListFoldersParams) (*http.Requ
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15733,7 +15733,7 @@ func NewListLabelsRequest(server string, params *ListLabelsParams) (*http.Reques
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -16071,7 +16071,7 @@ func NewListReportsRequest(server string, params *ListReportsParams) (*http.Requ
 
 		if params.MaxResults != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -21994,6 +21994,8 @@ func (r CreateAllocationResp) ContentType() string {
 type DeleteAllocationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *map[string]interface{}
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -22004,6 +22006,11 @@ type DeleteAllocationResp struct {
 	JSON404 *N404
 	// JSON409 the response for an HTTP 409 `application/json` response
 	JSON409 *[]AllocationDeleteValidation
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteAllocationResp) GetJSON200() *map[string]interface{} {
+	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -22339,6 +22346,8 @@ func (r CreateAnnotationResp) ContentType() string {
 type DeleteAnnotationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *map[string]interface{}
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -22347,6 +22356,11 @@ type DeleteAnnotationResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteAnnotationResp) GetJSON200() *map[string]interface{} {
+	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -22739,6 +22753,8 @@ func (r CreateBudgetResp) ContentType() string {
 type DeleteBudgetResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *map[string]interface{}
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -22747,6 +22763,11 @@ type DeleteBudgetResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteBudgetResp) GetJSON200() *map[string]interface{} {
+	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -23712,6 +23733,8 @@ func (r CreateLabelResp) ContentType() string {
 type DeleteLabelResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *map[string]interface{}
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -23720,6 +23743,11 @@ type DeleteLabelResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteLabelResp) GetJSON200() *map[string]interface{} {
+	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -24243,6 +24271,8 @@ func (r QueryResp) ContentType() string {
 type DeleteReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *map[string]interface{}
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -24253,6 +24283,11 @@ type DeleteReportResp struct {
 	JSON404 *N404
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteReportResp) GetJSON200() *map[string]interface{} {
+	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -24788,6 +24823,8 @@ func (r CreateCustomThemeResp) ContentType() string {
 type DeleteCustomThemeResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *map[string]interface{}
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -24796,6 +24833,11 @@ type DeleteCustomThemeResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DeleteCustomThemeResp) GetJSON200() *map[string]interface{} {
+	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -31792,8 +31834,12 @@ func ParseDeleteAllocationResp(rsp *http.Response) (*DeleteAllocationResp, error
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400
@@ -32065,8 +32111,12 @@ func ParseDeleteAnnotationResp(rsp *http.Response) (*DeleteAnnotationResp, error
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400
@@ -32378,8 +32428,12 @@ func ParseDeleteBudgetResp(rsp *http.Response) (*DeleteBudgetResp, error) {
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400
@@ -33147,8 +33201,12 @@ func ParseDeleteLabelResp(rsp *http.Response) (*DeleteLabelResp, error) {
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400
@@ -33564,8 +33622,12 @@ func ParseDeleteReportResp(rsp *http.Response) (*DeleteReportResp, error) {
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400
@@ -33992,8 +34054,12 @@ func ParseDeleteCustomThemeResp(rsp *http.Response) (*DeleteCustomThemeResp, err
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400

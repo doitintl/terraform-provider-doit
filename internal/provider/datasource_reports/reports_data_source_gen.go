@@ -30,7 +30,7 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.",
 				MarkdownDescription: "Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.",
 			},
-			"max_results": schema.StringAttribute{
+			"max_results": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
 				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
@@ -131,7 +131,7 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 type ReportsModel struct {
 	Filter          types.String `tfsdk:"filter"`
 	MaxCreationTime types.String `tfsdk:"max_creation_time"`
-	MaxResults      types.String `tfsdk:"max_results"`
+	MaxResults      types.Int64  `tfsdk:"max_results"`
 	MinCreationTime types.String `tfsdk:"min_creation_time"`
 	PageToken       types.String `tfsdk:"page_token"`
 	Reports         types.List   `tfsdk:"reports"`

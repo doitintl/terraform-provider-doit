@@ -18,7 +18,7 @@ data "doit_commitments" "all" {
 
 # List commitments with a result limit
 data "doit_commitments" "recent" {
-  max_results = "10"
+  max_results = 10
 }
 
 # Filter commitments by provider
@@ -40,7 +40,7 @@ output "commitment_count" {
 
 - `filter` (String) An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 Available filter keys: **name**, **provider**
-- `max_results` (String) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 Possible values: `name`, `startDate`, `endDate`, `provider`, `createTime`, `updateTime`

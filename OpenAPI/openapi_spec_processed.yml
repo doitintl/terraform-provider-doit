@@ -82,6 +82,8 @@ tags:
     description: Manage CloudFlow.
   - name: PerfectScale for Commitments AWS
     description: PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.
+  - name: Billing Transfer
+    description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
 paths:
   /analytics/v1/alerts:
     get:
@@ -406,6 +408,12 @@ paths:
       responses:
         "200":
           description: OK - Allocation deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -602,6 +610,12 @@ paths:
       responses:
         "200":
           description: OK - Annotation deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -791,6 +805,12 @@ paths:
       responses:
         "200":
           description: OK - Label deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1043,6 +1063,12 @@ paths:
       responses:
         "200":
           description: OK - Custom theme deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1116,8 +1142,9 @@ paths:
           in: query
           description: The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
           schema:
-            type: string
-            default: "50"
+            type: integer
+            format: int64
+            default: 50
         - $ref: "#/components/parameters/pageToken"
         - name: filter
           in: query
@@ -1164,7 +1191,7 @@ paths:
             schema:
               $ref: "#/components/schemas/BudgetCreateUpdateRequest"
             example:
-              name: schemathesis-stateful-budget
+              name: monthly-cloud-budget
               amount: 100
               currency: USD
               usePrevSpend: false
@@ -1254,7 +1281,12 @@ paths:
       responses:
         "200":
           description: OK - Budget deleted.
-          content: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -1332,6 +1364,9 @@ paths:
       summary: Retrieve a dimension
       description: Returns a dimension by type and key.
       operationId: getDimensions
+      x-cli-name: get-dimension
+      x-cli-aliases:
+        - get-dimensions
       parameters:
         - name: type
           in: query
@@ -1635,8 +1670,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateReportRequestBody'
             example:
-              name: schemathesis-stateful-report
-              description: Schemathesis stateful test report
+              name: monthly-cost-by-service
+              description: Monthly cost grouped by service
               config:
                 includeSubtotals: false
                 sortGroups: asc
@@ -1701,45 +1736,17 @@ paths:
               $ref: '#/components/schemas/QueryRequestBody'
             example:
               config:
-                includeSubtotals: false
-                sortGroups: asc
-                sortDimensions: desc
+                dataSource: billing
                 metrics:
                   - type: basic
                     value: cost
-                  - type: basic
-                    value: usage
-                  - type: extended
-                    value: amortized_cost
-                metricFilter:
-                  metric:
-                    type: basic
-                    value: cost
-                  operator: gt
-                  values:
-                    - 0.1
                 timeRange:
-                  amount: 7
+                  amount: 30
                   includeCurrent: false
                   mode: last
                   unit: day
-                aggregation: total
-                dimensions:
-                  - id: year
-                    type: datetime
-                  - id: month
-                    type: datetime
-                  - id: day
-                    type: datetime
-                displayValues: actuals_only
                 group:
-                  - limit:
-                      metric:
-                        type: basic
-                        value: cost
-                      sort: desc
-                      value: 3
-                    id: service_description
+                  - id: service_description
                     type: fixed
                 timeInterval: day
       responses:
@@ -1776,7 +1783,7 @@ paths:
         - name: startDate
           in: query
           description: >-
-            An optional parameter to override the report time settings. Must be provided together with `endDate`. Format: yyyy-mm-dd
+            An optional parameter to override the report time settings. Must be provided together with endDate. Format: yyyy-mm-dd
           schema:
             type: string
             format: date
@@ -1784,7 +1791,7 @@ paths:
         - name: endDate
           in: query
           description: >-
-            An optional parameter to override the report time settings. Must be provided together with `startDate`. Format: yyyy-mm-dd
+            An optional parameter to override the report time settings. Must be provided together with startDate. Format: yyyy-mm-dd
           schema:
             type: string
             format: date
@@ -1817,6 +1824,12 @@ paths:
       responses:
         "200":
           description: OK - Report deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
           links:
             listReports:
               operationId: listReports
@@ -2664,6 +2677,9 @@ paths:
 
         Assets are returned in reverse chronological order by default.
       operationId: idOfAssets
+      x-cli-name: list-assets
+      x-cli-aliases:
+        - id-of-assets
       parameters:
         - name: maxResults
           in: query
@@ -2735,6 +2751,9 @@ paths:
       summary: Update an asset
       description: Updates an existing asset, such as G Suite/Workspace or Office 365 subscription, to add or remove licenses.
       operationId: idOfAsset
+      x-cli-name: update-asset
+      x-cli-aliases:
+        - id-of-asset
       parameters:
         - name: id
           in: path
@@ -2773,6 +2792,9 @@ paths:
         Returns a list of all historical requests that your account has access to.
         Tickets are returned in reverse chronological order by default.
       operationId: idOfTickets
+      x-cli-name: list-tickets
+      x-cli-aliases:
+        - id-of-tickets
       parameters:
         - name: maxResults
           in: query
@@ -2829,6 +2851,9 @@ paths:
       summary: Get a request
       description: Returns the details of a single support request by its ID.
       operationId: idOfTicketGet
+      x-cli-name: get-ticket
+      x-cli-aliases:
+        - id-of-ticket-get
       parameters:
         - name: ticketId
           in: path
@@ -2867,6 +2892,9 @@ paths:
         comments are returned. All comments are returned in a single response
         (no pagination).
       operationId: idOfTicketCommentsList
+      x-cli-name: list-ticket-comments
+      x-cli-aliases:
+        - id-of-ticket-comments-list
       parameters:
         - name: ticketId
           in: path
@@ -2946,6 +2974,9 @@ paths:
         response echoes the actual stored strings so callers can verify the
         transform.
       operationId: idOfTicketTagsAdd
+      x-cli-name: add-ticket-tags
+      x-cli-aliases:
+        - id-of-ticket-tags-add
       parameters:
         - name: ticketId
           in: path
@@ -2989,6 +3020,9 @@ paths:
         mapping as on add, so a customer who added `my_tag` (stored as
         `customer_tag/my_tag`) can remove it by sending `my_tag`.
       operationId: idOfTicketTagsRemove
+      x-cli-name: remove-ticket-tags
+      x-cli-aliases:
+        - id-of-ticket-tags-remove
       parameters:
         - name: ticketId
           in: path
@@ -11163,8 +11197,9 @@ components:
       description: >-
         The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
       schema:
-        type: string
-        default: "50"
+        type: integer
+        format: int64
+        default: 50
     pageToken:
       name: pageToken
       in: query

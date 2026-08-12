@@ -13,5 +13,5 @@ output "folder_names" {
 
 # Retrieve the first page of folders
 data "doit_folders" "first_page" {
-  max_results = "5"
+  max_results = 5
 }
