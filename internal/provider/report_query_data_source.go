@@ -82,6 +82,9 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 	// there do not carry over. Re-attach the ones that must hold for both.
 	if attr, ok := dsConfigAttrs["metric"].(dsschema.SingleNestedAttribute); ok {
 		attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
+		// Workaround for https://github.com/doitintl/terraform-plugin-codegen-openapi/issues/5:
+		// the codegen fork drops the deprecation on allOf-composed properties.
+		attr.DeprecationMessage = "This attribute is deprecated."
 		dsConfigAttrs["metric"] = attr
 	}
 
@@ -287,6 +290,7 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 			result[name] = dsschema.StringAttribute{
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
+				DeprecationMessage:  a.DeprecationMessage,
 				Required:            a.Required,
 				Optional:            a.Optional,
 				Computed:            a.Computed,
@@ -298,6 +302,7 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 			result[name] = dsschema.BoolAttribute{
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
+				DeprecationMessage:  a.DeprecationMessage,
 				Required:            a.Required,
 				Optional:            a.Optional,
 				Computed:            a.Computed,
@@ -309,6 +314,7 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 			result[name] = dsschema.Int64Attribute{
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
+				DeprecationMessage:  a.DeprecationMessage,
 				Required:            a.Required,
 				Optional:            a.Optional,
 				Computed:            a.Computed,
@@ -320,6 +326,7 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 			result[name] = dsschema.Float64Attribute{
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
+				DeprecationMessage:  a.DeprecationMessage,
 				Required:            a.Required,
 				Optional:            a.Optional,
 				Computed:            a.Computed,
@@ -332,6 +339,7 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 				ElementType:         a.ElementType,
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
+				DeprecationMessage:  a.DeprecationMessage,
 				Required:            a.Required,
 				Optional:            a.Optional,
 				Computed:            a.Computed,
@@ -347,6 +355,7 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 				CustomType:          a.CustomType,
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
+				DeprecationMessage:  a.DeprecationMessage,
 				Required:            a.Required,
 				Optional:            a.Optional,
 				Computed:            a.Computed,
@@ -364,6 +373,7 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 				},
 				Description:         a.Description,
 				MarkdownDescription: a.MarkdownDescription,
+				DeprecationMessage:  a.DeprecationMessage,
 				Required:            a.Required,
 				Optional:            a.Optional,
 				Computed:            a.Computed,
