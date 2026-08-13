@@ -52,8 +52,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2 v1.11.4 h1:rPYF9/LECdNymJufQKmri9gV604RvvABwgOA8un7yAo=
 github.com/dlclark/regexp2 v1.11.4/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
-github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260803110448-b278c1c91926 h1:hsm9vVthly/wEdVw98Jbd76uXJB9PkZhuXePaV2etlQ=
-github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260803110448-b278c1c91926/go.mod h1:IxLiAxGac8tdJjjcvD604g/FDxKyNC18DQ9KBxLh8Z4=
+github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260813080312-7ad2e3340a3c h1:irINIijLPQi0FM0CP7PHOBWA9/C2sNurbCnbEZU/6+Q=
+github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260813080312-7ad2e3340a3c/go.mod h1:FJUc3rumWvHyNmI9L7cOsQDKyd6UMB3FS/d9e2mgiek=
 github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260605111443-a72258dfe4c6 h1:A196htHYMjXvDSRwbGibsygFz7HTEVKXhRcLWa7BkkY=
 github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260605111443-a72258dfe4c6/go.mod h1:X20JLZjGvx7MIS5S2CQ1maVFNUyPZ6/Q/tycb5QXC/0=
 github.com/dprotaso/go-yit v0.0.0-20191028211022-135eb7262960/go.mod h1:9HQzr9D/0PGwMEbC3d5AB7oi67+h4TsQqItC1GVYG58=
@@ -328,8 +328,8 @@ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACk
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
-golang.org/x/crypto v0.54.0 h1:YLIA59K4fiNzHzjnZt2tUJQjQtUWfWbeHBqKtk3eScw=
-golang.org/x/crypto v0.54.0/go.mod h1:KWL8ny2AZdGR2cWmzeHrp2azQPGogOv+HeQaVEXC2dk=
+golang.org/x/crypto v0.55.0 h1:+KWHjbgOaAQ66dh/YlkZKHlz9ZUlq61AFirAR9ntP8M=
+golang.org/x/crypto v0.55.0/go.mod h1:uq0V9dE/fzQuJtbnL+2EhWOE63vo164FY8xqEnV9xis=
 golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b h1:DXr+pvt3nC887026GRP39Ej11UATqWDmWuS99x26cD0=
 golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b/go.mod h1:4QTo5u+SEIbbKW1RacMZq1YEfOBqeXa19JeshGi+zc4=
 golang.org/x/mod v0.3.0/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=

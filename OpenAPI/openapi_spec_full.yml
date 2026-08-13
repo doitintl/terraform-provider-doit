@@ -42,6 +42,8 @@ tags:
     description: Ingest third-party cost, usage, and metric-based data for analysis.
   - name: Invoices
     description: Access your current and historical billing documents.
+  - name: Billing Explainer
+    description: Explain month-over-month changes in invoiced cloud costs.
   - name: Cloud Incidents
     description: Service disruptions and outages from cloud providers.
   - name: Cloud Diagrams
@@ -2602,6 +2604,11 @@ paths:
       responses:
         "200":
           description: OK - The request succeeded.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
           content:
             application/json:
               schema:
@@ -2612,13 +2619,17 @@ paths:
               parameters:
                 id: $response.body#/accountID
         "400":
-          $ref: "#/components/responses/400"
+          $ref: "#/components/responses/BadRequest"
         "401":
-          $ref: "#/components/responses/401"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/403"
+          $ref: "#/components/responses/Forbidden"
         "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /datahub/v1/csv/upload:
     post:
       tags:
@@ -3170,6 +3181,11 @@ paths:
       responses:
         "200":
           description: OK - All available invoices returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
           content:
             application/json:
               schema:
@@ -3188,13 +3204,15 @@ paths:
                     description: Invoice rows count
                     format: int64
         "400":
-          $ref: "#/components/responses/400"
+          $ref: "#/components/responses/BadRequest"
         "401":
-          $ref: "#/components/responses/401"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/403"
+          $ref: "#/components/responses/Forbidden"
         "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   "/billing/v1/invoices/{id}":
     get:
       tags:
@@ -3212,6 +3230,11 @@ paths:
       responses:
         "200":
           description: OK - Invoice details returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
           content:
             application/json:
               schema:
@@ -3256,13 +3279,94 @@ paths:
                     items:
                       $ref: "#/components/schemas/ListItem"
         "400":
-          $ref: "#/components/responses/400"
+          $ref: "#/components/responses/BadRequest"
         "401":
-          $ref: "#/components/responses/401"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          $ref: "#/components/responses/403"
+          $ref: "#/components/responses/Forbidden"
         "404":
-          $ref: "#/components/responses/404"
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/billing/v1/billing-explainers/{invoiceMonth}":
+    get:
+      tags:
+        - Billing Explainer
+      summary: Retrieve a per-payer billing explainer
+      description: Returns the invoiced cost changes for each payer in the authenticated tenant.
+      operationId: getBillingExplainerPerPayer
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingExplainerInvoiceMonth"
+      responses:
+        "200":
+          description: Billing explainer returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingExplainerCustomer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber}":
+    get:
+      tags:
+        - Billing Explainer
+      summary: Retrieve an entity invoice explainer
+      description: Returns invoiced cost changes for an invoice owned by the specified billing profile in the authenticated tenant.
+      operationId: getEntityInvoiceExplainer
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - name: billingProfileId
+          in: path
+          required: true
+          description: Billing profile identifier shown on the invoice.
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_-]{1,128}$
+            example: CUST-12345
+        - name: invoiceNumber
+          in: path
+          required: true
+          description: Customer-facing invoice number.
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_-]{1,64}$
+            example: IN244004936
+      responses:
+        "200":
+          description: Billing explainer returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityInvoiceExplainer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /core/v1/service-quotas:
     get:
       tags:
@@ -14124,6 +14228,215 @@ components:
         - conversationId
         - answerId
         - feedback
+    BillingExplainerMoney:
+      description: Monetary value represented as a decimal string and an ISO 4217 currency code.
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: string
+          pattern: ^-?(0|[1-9][0-9]*)(\.[0-9]+)?$
+          minLength: 1
+          maxLength: 30
+          description: Decimal amount serialized at the currency's minor-unit precision.
+          example: "19.99"
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter uppercase currency code.
+          example: USD
+      example:
+        amount: "19.99"
+        currency: USD
+    BillingExplainerCostLineItem:
+      type: object
+      additionalProperties: false
+      required:
+        - costType
+        - cost
+      properties:
+        costType:
+          type: string
+        cost:
+          $ref: "#/components/schemas/BillingExplainerMoney"
+    BillingExplainerSupportDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - projectId
+        - serviceDescription
+        - description
+        - cost
+        - baseCost
+      properties:
+        projectId:
+          type: string
+        serviceDescription:
+          type: string
+        description:
+          type: string
+        cost:
+          $ref: "#/components/schemas/BillingExplainerMoney"
+        baseCost:
+          $ref: "#/components/schemas/BillingExplainerMoney"
+    BillingExplainerSupportCharges:
+      type: object
+      additionalProperties: false
+      required:
+        - cost
+        - details
+      properties:
+        cost:
+          $ref: "#/components/schemas/BillingExplainerMoney"
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/BillingExplainerSupportDetail"
+    BillingExplainerServiceSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - serviceCharges
+        - discounts
+        - tax
+        - supportCharges
+        - credits
+        - savings
+        - otherCharges
+        - refunds
+        - total
+      properties:
+        serviceCharges:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        discounts:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        tax:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        supportCharges:
+          $ref: "#/components/schemas/BillingExplainerSupportCharges"
+        credits:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        savings:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        otherCharges:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        refunds:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        total:
+          $ref: "#/components/schemas/BillingExplainerMoney"
+    BillingExplainerCostLineItems:
+      type: array
+      items:
+        $ref: "#/components/schemas/BillingExplainerCostLineItem"
+    BillingExplainerSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - aws
+        - doit
+        - awsWithoutDoit
+      properties:
+        aws:
+          $ref: "#/components/schemas/BillingExplainerServiceSummary"
+        doit:
+          $ref: "#/components/schemas/BillingExplainerServiceSummary"
+        awsWithoutDoit:
+          $ref: "#/components/schemas/BillingExplainerServiceSummary"
+    BillingExplainerCostDetail:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/BillingExplainerMoney"
+    BillingExplainerProviderCosts:
+      type: object
+      additionalProperties: false
+      required:
+        - doit
+        - aws
+      properties:
+        doit:
+          $ref: "#/components/schemas/BillingExplainerCostDetail"
+        aws:
+          $ref: "#/components/schemas/BillingExplainerCostDetail"
+    BillingExplainerCostDifferences:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/BillingExplainerProviderCosts"
+    BillingExplainer:
+      type: object
+      required:
+        - summary
+        - service
+        - account
+      properties:
+        summary:
+          $ref: "#/components/schemas/BillingExplainerSummary"
+        service:
+          $ref: "#/components/schemas/BillingExplainerCostDifferences"
+        account:
+          $ref: "#/components/schemas/BillingExplainerCostDifferences"
+    BillingExplainerPayer:
+      allOf:
+        - $ref: "#/components/schemas/BillingExplainer"
+        - type: object
+          required:
+            - payerId
+            - friendlyName
+          properties:
+            payerId:
+              type: string
+            friendlyName:
+              type: string
+    BillingExplainerCustomer:
+      type: object
+      additionalProperties: false
+      required:
+        - customerId
+        - invoiceMonth
+        - updateTime
+        - payers
+        - doitCredits
+        - invoiceAdjustments
+      properties:
+        customerId:
+          type: string
+        invoiceMonth:
+          type: string
+          pattern: ^\d{4}-(0[1-9]|1[0-2])$
+        updateTime:
+          type: string
+          format: date-time
+        payers:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/BillingExplainerPayer"
+        doitCredits:
+          $ref: "#/components/schemas/BillingExplainerMoney"
+        invoiceAdjustments:
+          $ref: "#/components/schemas/BillingExplainerMoney"
+    EntityInvoiceExplainer:
+      allOf:
+        - $ref: "#/components/schemas/BillingExplainer"
+        - type: object
+          required:
+            - customerId
+            - billingProfileId
+            - invoiceNumber
+            - invoiceMonth
+          properties:
+            customerId:
+              type: string
+            billingProfileId:
+              type: string
+            invoiceNumber:
+              type: string
+            invoiceMonth:
+              type: string
+              pattern: ^\d{4}-(0[1-9]|1[0-2])$
     ProblemDetails:
       type: object
       required:
@@ -14177,6 +14490,7 @@ components:
         docsUrl:
           type: string
           format: uri
+          nullable: true
     CommitmentTerm:
       type: string
       enum:
@@ -15954,7 +16268,7 @@ components:
             code: unauthorized
             retryable: false
     Forbidden:
-      description: Authenticated but not authorised to access this customer's PS4C resources.
+      description: Authenticated but not authorised to access the requested resource.
       headers:
         Request-Id:
           $ref: "#/components/headers/RequestId"
@@ -15990,6 +16304,25 @@ components:
             detail: organization not found
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: not_found
+            retryable: false
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/conflict
+            title: Conflict
+            status: 409
+            detail: The requested resource already exists.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: conflict
             retryable: false
     InternalServerError:
       description: Unexpected server error.
@@ -16095,6 +16428,15 @@ components:
       required: true
       schema:
         type: string
+    billingExplainerInvoiceMonth:
+      name: invoiceMonth
+      in: path
+      description: Invoice month in `YYYY-MM` format.
+      required: true
+      schema:
+        type: string
+        pattern: ^\d{4}-(0[1-9]|1[0-2])$
+        example: 2026-06
     tenantId:
       in: header
       name: X-Tenant-Id

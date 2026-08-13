@@ -155,6 +155,14 @@ data_sources:
     read:
       path: /support/v1/metadata/products
       method: GET
+  billing_explainer_per_payer:
+    read:
+      path: /billing/v1/billing-explainers/{invoiceMonth}
+      method: GET
+  entity_invoice_explainer:
+    read:
+      path: /billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber}
+      method: GET
   # Support request data sources (single ticket + comments)
   support_request:
     read:

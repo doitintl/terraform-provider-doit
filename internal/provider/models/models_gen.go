@@ -4658,6 +4658,121 @@ type AwsSupportedFeature struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// BillingExplainerCostDetail defines model for BillingExplainerCostDetail.
+type BillingExplainerCostDetail map[string]BillingExplainerMoney
+
+// BillingExplainerCostDifferences defines model for BillingExplainerCostDifferences.
+type BillingExplainerCostDifferences map[string]BillingExplainerProviderCosts
+
+// BillingExplainerCostLineItem defines model for BillingExplainerCostLineItem.
+type BillingExplainerCostLineItem struct {
+	// Cost Monetary value represented as a decimal string and an ISO 4217 currency code.
+	//
+	// Example: {"amount":"19.99","currency":"USD"}
+	Cost     BillingExplainerMoney `json:"cost"`
+	CostType string                `json:"costType"`
+}
+
+// BillingExplainerCostLineItems defines model for BillingExplainerCostLineItems.
+type BillingExplainerCostLineItems = []BillingExplainerCostLineItem
+
+// BillingExplainerCustomer defines model for BillingExplainerCustomer.
+type BillingExplainerCustomer struct {
+	CustomerId string `json:"customerId"`
+
+	// DoitCredits Monetary value represented as a decimal string and an ISO 4217 currency code.
+	//
+	// Example: {"amount":"19.99","currency":"USD"}
+	DoitCredits BillingExplainerMoney `json:"doitCredits"`
+
+	// InvoiceAdjustments Monetary value represented as a decimal string and an ISO 4217 currency code.
+	//
+	// Example: {"amount":"19.99","currency":"USD"}
+	InvoiceAdjustments BillingExplainerMoney            `json:"invoiceAdjustments"`
+	InvoiceMonth       string                           `json:"invoiceMonth"`
+	Payers             map[string]BillingExplainerPayer `json:"payers"`
+	UpdateTime         time.Time                        `json:"updateTime"`
+}
+
+// BillingExplainerMoney Monetary value represented as a decimal string and an ISO 4217 currency code.
+//
+// Example: {"amount":"19.99","currency":"USD"}
+type BillingExplainerMoney struct {
+	// Amount Decimal amount serialized at the currency's minor-unit precision.
+	//
+	// Example: 19.99
+	Amount string `json:"amount"`
+
+	// Currency ISO 4217 three-letter uppercase currency code.
+	//
+	// Example: USD
+	Currency string `json:"currency"`
+}
+
+// BillingExplainerPayer defines model for BillingExplainerPayer.
+type BillingExplainerPayer struct {
+	Account      BillingExplainerCostDifferences `json:"account"`
+	FriendlyName string                          `json:"friendlyName"`
+	PayerId      string                          `json:"payerId"`
+	Service      BillingExplainerCostDifferences `json:"service"`
+	Summary      BillingExplainerSummary         `json:"summary"`
+}
+
+// BillingExplainerProviderCosts defines model for BillingExplainerProviderCosts.
+type BillingExplainerProviderCosts struct {
+	Aws  BillingExplainerCostDetail `json:"aws"`
+	Doit BillingExplainerCostDetail `json:"doit"`
+}
+
+// BillingExplainerServiceSummary defines model for BillingExplainerServiceSummary.
+type BillingExplainerServiceSummary struct {
+	Credits        BillingExplainerCostLineItems  `json:"credits"`
+	Discounts      BillingExplainerCostLineItems  `json:"discounts"`
+	OtherCharges   BillingExplainerCostLineItems  `json:"otherCharges"`
+	Refunds        BillingExplainerCostLineItems  `json:"refunds"`
+	Savings        BillingExplainerCostLineItems  `json:"savings"`
+	ServiceCharges BillingExplainerCostLineItems  `json:"serviceCharges"`
+	SupportCharges BillingExplainerSupportCharges `json:"supportCharges"`
+	Tax            BillingExplainerCostLineItems  `json:"tax"`
+
+	// Total Monetary value represented as a decimal string and an ISO 4217 currency code.
+	//
+	// Example: {"amount":"19.99","currency":"USD"}
+	Total BillingExplainerMoney `json:"total"`
+}
+
+// BillingExplainerSummary defines model for BillingExplainerSummary.
+type BillingExplainerSummary struct {
+	Aws            BillingExplainerServiceSummary `json:"aws"`
+	AwsWithoutDoit BillingExplainerServiceSummary `json:"awsWithoutDoit"`
+	Doit           BillingExplainerServiceSummary `json:"doit"`
+}
+
+// BillingExplainerSupportCharges defines model for BillingExplainerSupportCharges.
+type BillingExplainerSupportCharges struct {
+	// Cost Monetary value represented as a decimal string and an ISO 4217 currency code.
+	//
+	// Example: {"amount":"19.99","currency":"USD"}
+	Cost    BillingExplainerMoney           `json:"cost"`
+	Details []BillingExplainerSupportDetail `json:"details"`
+}
+
+// BillingExplainerSupportDetail defines model for BillingExplainerSupportDetail.
+type BillingExplainerSupportDetail struct {
+	// BaseCost Monetary value represented as a decimal string and an ISO 4217 currency code.
+	//
+	// Example: {"amount":"19.99","currency":"USD"}
+	BaseCost BillingExplainerMoney `json:"baseCost"`
+
+	// Cost Monetary value represented as a decimal string and an ISO 4217 currency code.
+	//
+	// Example: {"amount":"19.99","currency":"USD"}
+	Cost               BillingExplainerMoney `json:"cost"`
+	Description        string                `json:"description"`
+	ProjectId          string                `json:"projectId"`
+	ServiceDescription string                `json:"serviceDescription"`
+}
+
 // BudgetAPI Budget details and runtime metrics.
 type BudgetAPI struct {
 	// Alerts List of up to three thresholds defined as a percentage of amount.
@@ -6355,6 +6470,17 @@ type DismissalDetailsReason string
 // DisplayStatus The display status of the insight.
 type DisplayStatus string
 
+// EntityInvoiceExplainer defines model for EntityInvoiceExplainer.
+type EntityInvoiceExplainer struct {
+	Account          BillingExplainerCostDifferences `json:"account"`
+	BillingProfileId string                          `json:"billingProfileId"`
+	CustomerId       string                          `json:"customerId"`
+	InvoiceMonth     string                          `json:"invoiceMonth"`
+	InvoiceNumber    string                          `json:"invoiceNumber"`
+	Service          BillingExplainerCostDifferences `json:"service"`
+	Summary          BillingExplainerSummary         `json:"summary"`
+}
+
 // Error Standard error response structure.
 type Error struct {
 	// Error Detailed error message.
@@ -7724,7 +7850,7 @@ type ProblemDetails struct {
 	// Detail Example: customer not found
 	Detail  string                       `json:"detail"`
 	Details *[]ProblemDetailsDetailsItem `json:"details,omitempty"`
-	DocsUrl *string                      `json:"docsUrl,omitempty"`
+	DocsUrl nullable.Nullable[string]    `json:"docsUrl,omitempty"`
 
 	// Instance Example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
 	Instance string `json:"instance"`
@@ -8805,6 +8931,9 @@ type Value1 = float32
 // Value2 defines model for Value.2.
 type Value2 = int
 
+// BillingExplainerInvoiceMonth Example: 2026-06
+type BillingExplainerInvoiceMonth = string
+
 // ManagementAccountId Example: 123456789012
 type ManagementAccountId = string
 
@@ -9134,6 +9263,40 @@ type IdOfAssetsParams struct {
 	// filter results in “AND,” while using the same key multiple times in
 	// the same filter results in “OR”.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// GetBillingExplainerPerPayerParams defines parameters for GetBillingExplainerPerPayer.
+type GetBillingExplainerPerPayerParams struct {
+	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
+	// (DoiT API Design Standards §15).
+	//
+	// Resolution when the header is absent:
+	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+	//   optional.
+	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+	//   server does not guess across tenant scopes.
+	//
+	// When the header is present but conflicts with the tenant the key is scoped to, the request is
+	// rejected with `400` and code `tenant_id_mismatch`.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetEntityInvoiceExplainerParams defines parameters for GetEntityInvoiceExplainer.
+type GetEntityInvoiceExplainerParams struct {
+	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
+	// (DoiT API Design Standards §15).
+	//
+	// Resolution when the header is absent:
+	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+	//   optional.
+	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+	//   server does not guess across tenant scopes.
+	//
+	// When the header is present but conflicts with the tenant the key is scoped to, the request is
+	// rejected with `400` and code `tenant_id_mismatch`.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
 // ListInvoicesParams defines parameters for ListInvoices.
@@ -10754,6 +10917,20 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /billing/v1/assets/{id} (the `IdOfAsset` operationId).
 	IdOfAsset(ctx context.Context, id string, body IdOfAssetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetBillingExplainerPerPayer Retrieve a per-payer billing explainer
+	//
+	// Returns the invoiced cost changes for each payer in the authenticated tenant.
+	//
+	// Corresponds with GET /billing/v1/billing-explainers/{invoiceMonth} (the `GetBillingExplainerPerPayer` operationId).
+	GetBillingExplainerPerPayer(ctx context.Context, invoiceMonth BillingExplainerInvoiceMonth, params *GetBillingExplainerPerPayerParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEntityInvoiceExplainer Retrieve an entity invoice explainer
+	//
+	// Returns invoiced cost changes for an invoice owned by the specified billing profile in the authenticated tenant.
+	//
+	// Corresponds with GET /billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber} (the `GetEntityInvoiceExplainer` operationId).
+	GetEntityInvoiceExplainer(ctx context.Context, billingProfileId string, invoiceNumber string, params *GetEntityInvoiceExplainerParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListInvoices List invoices
 	//
@@ -12836,6 +13013,40 @@ func (c *Client) IdOfAssetWithBody(ctx context.Context, id string, contentType s
 // Corresponds with PATCH /billing/v1/assets/{id} (the `IdOfAsset` operationId).
 func (c *Client) IdOfAsset(ctx context.Context, id string, body IdOfAssetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIdOfAssetRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetBillingExplainerPerPayer Retrieve a per-payer billing explainer
+//
+// Returns the invoiced cost changes for each payer in the authenticated tenant.
+//
+// Corresponds with GET /billing/v1/billing-explainers/{invoiceMonth} (the `GetBillingExplainerPerPayer` operationId).
+func (c *Client) GetBillingExplainerPerPayer(ctx context.Context, invoiceMonth BillingExplainerInvoiceMonth, params *GetBillingExplainerPerPayerParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetBillingExplainerPerPayerRequest(c.Server, invoiceMonth, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEntityInvoiceExplainer Retrieve an entity invoice explainer
+//
+// Returns invoiced cost changes for an invoice owned by the specified billing profile in the authenticated tenant.
+//
+// Corresponds with GET /billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber} (the `GetEntityInvoiceExplainer` operationId).
+func (c *Client) GetEntityInvoiceExplainer(ctx context.Context, billingProfileId string, invoiceNumber string, params *GetEntityInvoiceExplainerParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEntityInvoiceExplainerRequest(c.Server, billingProfileId, invoiceNumber, params)
 	if err != nil {
 		return nil, err
 	}
@@ -17046,6 +17257,111 @@ func NewIdOfAssetRequestWithBody(server string, id string, contentType string, b
 	return req, nil
 }
 
+// NewGetBillingExplainerPerPayerRequest constructs an http.Request for the GetBillingExplainerPerPayer method
+func NewGetBillingExplainerPerPayerRequest(server string, invoiceMonth BillingExplainerInvoiceMonth, params *GetBillingExplainerPerPayerParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "invoiceMonth", invoiceMonth, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/billing/v1/billing-explainers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetEntityInvoiceExplainerRequest constructs an http.Request for the GetEntityInvoiceExplainer method
+func NewGetEntityInvoiceExplainerRequest(server string, billingProfileId string, invoiceNumber string, params *GetEntityInvoiceExplainerParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingProfileId", billingProfileId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "invoiceNumber", invoiceNumber, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/billing/v1/billing-profiles/%s/billing-explainers/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListInvoicesRequest constructs an http.Request for the ListInvoices method
 func NewListInvoicesRequest(server string, params *ListInvoicesParams) (*http.Request, error) {
 	var err error
@@ -20816,6 +21132,24 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /billing/v1/assets/{id} (the `IdOfAsset` operationId).
 	IdOfAssetWithResponse(ctx context.Context, id string, body IdOfAssetJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfAssetResp, error)
+
+	// GetBillingExplainerPerPayerWithResponse Retrieve a per-payer billing explainer
+	//
+	// Returns the invoiced cost changes for each payer in the authenticated tenant.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /billing/v1/billing-explainers/{invoiceMonth} (the `GetBillingExplainerPerPayer` operationId).
+	GetBillingExplainerPerPayerWithResponse(ctx context.Context, invoiceMonth BillingExplainerInvoiceMonth, params *GetBillingExplainerPerPayerParams, reqEditors ...RequestEditorFn) (*GetBillingExplainerPerPayerResp, error)
+
+	// GetEntityInvoiceExplainerWithResponse Retrieve an entity invoice explainer
+	//
+	// Returns invoiced cost changes for an invoice owned by the specified billing profile in the authenticated tenant.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber} (the `GetEntityInvoiceExplainer` operationId).
+	GetEntityInvoiceExplainerWithResponse(ctx context.Context, billingProfileId string, invoiceNumber string, params *GetEntityInvoiceExplainerParams, reqEditors ...RequestEditorFn) (*GetEntityInvoiceExplainerResp, error)
 
 	// ListInvoicesWithResponse List invoices
 	//
@@ -25510,19 +25844,320 @@ func (r IdOfAssetResp) ContentType() string {
 	return ""
 }
 
+// GetBillingExplainerPerPayerResp200Headers the declared response headers of an HTTP 200 response for GetBillingExplainerPerPayer
+type GetBillingExplainerPerPayerResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetBillingExplainerPerPayerResp400Headers the declared response headers of an HTTP 400 response for GetBillingExplainerPerPayer
+type GetBillingExplainerPerPayerResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetBillingExplainerPerPayerResp401Headers the declared response headers of an HTTP 401 response for GetBillingExplainerPerPayer
+type GetBillingExplainerPerPayerResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetBillingExplainerPerPayerResp403Headers the declared response headers of an HTTP 403 response for GetBillingExplainerPerPayer
+type GetBillingExplainerPerPayerResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetBillingExplainerPerPayerResp404Headers the declared response headers of an HTTP 404 response for GetBillingExplainerPerPayer
+type GetBillingExplainerPerPayerResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetBillingExplainerPerPayerResp500Headers the declared response headers of an HTTP 500 response for GetBillingExplainerPerPayer
+type GetBillingExplainerPerPayerResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetBillingExplainerPerPayerResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *BillingExplainerCustomer
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetBillingExplainerPerPayerResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetBillingExplainerPerPayerResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetBillingExplainerPerPayerResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetBillingExplainerPerPayerResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetBillingExplainerPerPayerResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetBillingExplainerPerPayerResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetBillingExplainerPerPayerResp) GetJSON200() *BillingExplainerCustomer {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetBillingExplainerPerPayerResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetBillingExplainerPerPayerResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetBillingExplainerPerPayerResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetBillingExplainerPerPayerResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetBillingExplainerPerPayerResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetBillingExplainerPerPayerResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetBillingExplainerPerPayerResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetBillingExplainerPerPayerResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetBillingExplainerPerPayerResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetEntityInvoiceExplainerResp200Headers the declared response headers of an HTTP 200 response for GetEntityInvoiceExplainer
+type GetEntityInvoiceExplainerResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetEntityInvoiceExplainerResp400Headers the declared response headers of an HTTP 400 response for GetEntityInvoiceExplainer
+type GetEntityInvoiceExplainerResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetEntityInvoiceExplainerResp401Headers the declared response headers of an HTTP 401 response for GetEntityInvoiceExplainer
+type GetEntityInvoiceExplainerResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetEntityInvoiceExplainerResp403Headers the declared response headers of an HTTP 403 response for GetEntityInvoiceExplainer
+type GetEntityInvoiceExplainerResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetEntityInvoiceExplainerResp404Headers the declared response headers of an HTTP 404 response for GetEntityInvoiceExplainer
+type GetEntityInvoiceExplainerResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetEntityInvoiceExplainerResp500Headers the declared response headers of an HTTP 500 response for GetEntityInvoiceExplainer
+type GetEntityInvoiceExplainerResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetEntityInvoiceExplainerResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EntityInvoiceExplainer
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetEntityInvoiceExplainerResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetEntityInvoiceExplainerResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetEntityInvoiceExplainerResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetEntityInvoiceExplainerResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetEntityInvoiceExplainerResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetEntityInvoiceExplainerResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEntityInvoiceExplainerResp) GetJSON200() *EntityInvoiceExplainer {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetEntityInvoiceExplainerResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetEntityInvoiceExplainerResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetEntityInvoiceExplainerResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetEntityInvoiceExplainerResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetEntityInvoiceExplainerResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEntityInvoiceExplainerResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEntityInvoiceExplainerResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEntityInvoiceExplainerResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEntityInvoiceExplainerResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListInvoicesResp200Headers the declared response headers of an HTTP 200 response for ListInvoices
+type ListInvoicesResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListInvoicesResp400Headers the declared response headers of an HTTP 400 response for ListInvoices
+type ListInvoicesResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListInvoicesResp401Headers the declared response headers of an HTTP 401 response for ListInvoices
+type ListInvoicesResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListInvoicesResp403Headers the declared response headers of an HTTP 403 response for ListInvoices
+type ListInvoicesResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListInvoicesResp404Headers the declared response headers of an HTTP 404 response for ListInvoices
+type ListInvoicesResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListInvoicesResp500Headers the declared response headers of an HTTP 500 response for ListInvoices
+type ListInvoicesResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
 type ListInvoicesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *ListInvoices200Response
-	// JSON400 the response for an HTTP 400 `application/json` response
-	JSON400 *N400
-	// JSON401 the response for an HTTP 401 `application/json` response
-	JSON401 *N401
-	// JSON403 the response for an HTTP 403 `application/json` response
-	JSON403 *N403
-	// JSON404 the response for an HTTP 404 `application/json` response
-	JSON404 *N404
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListInvoicesResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListInvoicesResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListInvoicesResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListInvoicesResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListInvoicesResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListInvoicesResp500Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -25530,24 +26165,29 @@ func (r ListInvoicesResp) GetJSON200() *ListInvoices200Response {
 	return r.JSON200
 }
 
-// GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r ListInvoicesResp) GetJSON400() *N400 {
-	return r.JSON400
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListInvoicesResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
 }
 
-// GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r ListInvoicesResp) GetJSON401() *N401 {
-	return r.JSON401
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListInvoicesResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
 }
 
-// GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r ListInvoicesResp) GetJSON403() *N403 {
-	return r.JSON403
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListInvoicesResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
-// GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r ListInvoicesResp) GetJSON404() *N404 {
-	return r.JSON404
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListInvoicesResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListInvoicesResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
 }
 
 // GetBody returns the raw response body bytes
@@ -25579,19 +26219,70 @@ func (r ListInvoicesResp) ContentType() string {
 	return ""
 }
 
+// GetInvoiceResp200Headers the declared response headers of an HTTP 200 response for GetInvoice
+type GetInvoiceResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoiceResp400Headers the declared response headers of an HTTP 400 response for GetInvoice
+type GetInvoiceResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoiceResp401Headers the declared response headers of an HTTP 401 response for GetInvoice
+type GetInvoiceResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetInvoiceResp403Headers the declared response headers of an HTTP 403 response for GetInvoice
+type GetInvoiceResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoiceResp404Headers the declared response headers of an HTTP 404 response for GetInvoice
+type GetInvoiceResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoiceResp500Headers the declared response headers of an HTTP 500 response for GetInvoice
+type GetInvoiceResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
 type GetInvoiceResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *GetInvoice200Response
-	// JSON400 the response for an HTTP 400 `application/json` response
-	JSON400 *N400
-	// JSON401 the response for an HTTP 401 `application/json` response
-	JSON401 *N401
-	// JSON403 the response for an HTTP 403 `application/json` response
-	JSON403 *N403
-	// JSON404 the response for an HTTP 404 `application/json` response
-	JSON404 *N404
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetInvoiceResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetInvoiceResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetInvoiceResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetInvoiceResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetInvoiceResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetInvoiceResp500Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -25599,24 +26290,29 @@ func (r GetInvoiceResp) GetJSON200() *GetInvoice200Response {
 	return r.JSON200
 }
 
-// GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r GetInvoiceResp) GetJSON400() *N400 {
-	return r.JSON400
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetInvoiceResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
 }
 
-// GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r GetInvoiceResp) GetJSON401() *N401 {
-	return r.JSON401
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetInvoiceResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
 }
 
-// GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r GetInvoiceResp) GetJSON403() *N403 {
-	return r.JSON403
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetInvoiceResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
-// GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r GetInvoiceResp) GetJSON404() *N404 {
-	return r.JSON404
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetInvoiceResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetInvoiceResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
 }
 
 // GetBody returns the raw response body bytes
@@ -30353,6 +31049,36 @@ func (c *ClientWithResponses) IdOfAssetWithResponse(ctx context.Context, id stri
 	return ParseIdOfAssetResp(rsp)
 }
 
+// GetBillingExplainerPerPayerWithResponse Retrieve a per-payer billing explainer
+//
+// Returns the invoiced cost changes for each payer in the authenticated tenant.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /billing/v1/billing-explainers/{invoiceMonth} (the `GetBillingExplainerPerPayer` operationId).
+func (c *ClientWithResponses) GetBillingExplainerPerPayerWithResponse(ctx context.Context, invoiceMonth BillingExplainerInvoiceMonth, params *GetBillingExplainerPerPayerParams, reqEditors ...RequestEditorFn) (*GetBillingExplainerPerPayerResp, error) {
+	rsp, err := c.GetBillingExplainerPerPayer(ctx, invoiceMonth, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetBillingExplainerPerPayerResp(rsp)
+}
+
+// GetEntityInvoiceExplainerWithResponse Retrieve an entity invoice explainer
+//
+// Returns invoiced cost changes for an invoice owned by the specified billing profile in the authenticated tenant.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber} (the `GetEntityInvoiceExplainer` operationId).
+func (c *ClientWithResponses) GetEntityInvoiceExplainerWithResponse(ctx context.Context, billingProfileId string, invoiceNumber string, params *GetEntityInvoiceExplainerParams, reqEditors ...RequestEditorFn) (*GetEntityInvoiceExplainerResp, error) {
+	rsp, err := c.GetEntityInvoiceExplainer(ctx, billingProfileId, invoiceNumber, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEntityInvoiceExplainerResp(rsp)
+}
+
 // ListInvoicesWithResponse List invoices
 //
 // Returns a list of all the current and historical invoices for your organization.
@@ -34580,6 +35306,352 @@ func ParseIdOfAssetResp(rsp *http.Response) (*IdOfAssetResp, error) {
 	return response, nil
 }
 
+// ParseGetBillingExplainerPerPayerResp parses an HTTP response from a GetBillingExplainerPerPayerWithResponse call
+func ParseGetBillingExplainerPerPayerResp(rsp *http.Response) (*GetBillingExplainerPerPayerResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetBillingExplainerPerPayerResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest BillingExplainerCustomer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetBillingExplainerPerPayerResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetBillingExplainerPerPayerResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetBillingExplainerPerPayerResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetBillingExplainerPerPayerResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetBillingExplainerPerPayerResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetBillingExplainerPerPayerResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetEntityInvoiceExplainerResp parses an HTTP response from a GetEntityInvoiceExplainerWithResponse call
+func ParseGetEntityInvoiceExplainerResp(rsp *http.Response) (*GetEntityInvoiceExplainerResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEntityInvoiceExplainerResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EntityInvoiceExplainer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetEntityInvoiceExplainerResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetEntityInvoiceExplainerResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetEntityInvoiceExplainerResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetEntityInvoiceExplainerResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetEntityInvoiceExplainerResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetEntityInvoiceExplainerResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListInvoicesResp parses an HTTP response from a ListInvoicesWithResponse call
 func ParseListInvoicesResp(rsp *http.Response) (*ListInvoicesResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -34602,33 +35674,152 @@ func ParseListInvoicesResp(rsp *http.Response) (*ListInvoicesResp, error) {
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest N400
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON400 = &dest
+		response.ApplicationproblemJSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest N401
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON401 = &dest
+		response.ApplicationproblemJSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON403 = &dest
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
+		var dest NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON404 = &dest
+		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListInvoicesResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListInvoicesResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListInvoicesResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListInvoicesResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListInvoicesResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListInvoicesResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil
@@ -34656,33 +35847,152 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest N400
+		var dest BadRequest
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON400 = &dest
+		response.ApplicationproblemJSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest N401
+		var dest Unauthorized
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON401 = &dest
+		response.ApplicationproblemJSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
+		var dest Forbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON403 = &dest
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
+		var dest NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON404 = &dest
+		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetInvoiceResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetInvoiceResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetInvoiceResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetInvoiceResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetInvoiceResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetInvoiceResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil
