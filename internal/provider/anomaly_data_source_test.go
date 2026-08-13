@@ -115,6 +115,52 @@ func TestAccAnomalyDataSource_AcknowledgedFields(t *testing.T) {
 	})
 }
 
+// TestAccAnomalyDataSource_DeactivationReason verifies that the
+// deactivation_reason attribute is accessible. It is null while an anomaly
+// is still active, so we use an output expression to validate the mapping
+// works without requiring a specific value.
+func TestAccAnomalyDataSource_DeactivationReason(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomalyDataSourceDeactivationReasonConfig(anomalyID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomalyDataSourceDeactivationReasonConfig(anomalyID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceDeactivationReasonConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "deactivation_reason" {
+  value = data.doit_anomaly.test.deactivation_reason != null ? data.doit_anomaly.test.deactivation_reason : "active"
+}
+`, id)
+}
+
 func testAccAnomalyDataSourceConfig(id string) string {
 	return fmt.Sprintf(`
 data "doit_anomaly" "test" {

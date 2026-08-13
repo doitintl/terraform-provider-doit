@@ -257,6 +257,47 @@ output "anomaly_notifications" {
 `
 }
 
+// TestAccAnomaliesDataSource_DeactivationReason verifies that the
+// deactivation_reason attribute is accessible on anomalies list items. It is
+// null for active anomalies, so we use an output expression to validate the
+// mapping works without requiring specific values.
+func TestAccAnomaliesDataSource_DeactivationReason(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceDeactivationReasonConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.deactivation_reason_test", "row_count"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceDeactivationReasonConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceDeactivationReasonConfig() string {
+	return `
+data "doit_anomalies" "deactivation_reason_test" {
+  max_results = 1
+}
+
+output "anomaly_deactivation_reason" {
+  value = [for a in data.doit_anomalies.deactivation_reason_test.anomalies : a.deactivation_reason != null ? a.deactivation_reason : "active"]
+}
+`
+}
+
 // TestAccAnomaliesDataSource_IncludeNotifications verifies that setting
 // include_notifications = true causes the API to return notification events
 // in each anomaly's notifications list.

@@ -187,6 +187,27 @@ func (e AllocationListItemAllocationType) Valid() bool {
 	}
 }
 
+// Defines values for AnomalyItemDeactivationReason.
+const (
+	AnomalyItemDeactivationReasonExpired  AnomalyItemDeactivationReason = "expired"
+	AnomalyItemDeactivationReasonReverted AnomalyItemDeactivationReason = "reverted"
+	AnomalyItemDeactivationReasonUnknown  AnomalyItemDeactivationReason = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyItemDeactivationReason enum.
+func (e AnomalyItemDeactivationReason) Valid() bool {
+	switch e {
+	case AnomalyItemDeactivationReasonExpired:
+		return true
+	case AnomalyItemDeactivationReasonReverted:
+		return true
+	case AnomalyItemDeactivationReasonUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AnomalyItemStatus.
 const (
 	AnomalyItemStatusActive   AnomalyItemStatus = "active"
@@ -2209,6 +2230,27 @@ func (e ExternalSplitTargetType) Valid() bool {
 	case ExternalSplitTargetTypeSystemLabel:
 		return true
 	case ExternalSplitTargetTypeTag:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetAnomaly200ResponseDeactivationReason.
+const (
+	GetAnomaly200ResponseDeactivationReasonExpired  GetAnomaly200ResponseDeactivationReason = "expired"
+	GetAnomaly200ResponseDeactivationReasonReverted GetAnomaly200ResponseDeactivationReason = "reverted"
+	GetAnomaly200ResponseDeactivationReasonUnknown  GetAnomaly200ResponseDeactivationReason = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the GetAnomaly200ResponseDeactivationReason enum.
+func (e GetAnomaly200ResponseDeactivationReason) Valid() bool {
+	switch e {
+	case GetAnomaly200ResponseDeactivationReasonExpired:
+		return true
+	case GetAnomaly200ResponseDeactivationReasonReverted:
+		return true
+	case GetAnomaly200ResponseDeactivationReasonUnknown:
 		return true
 	default:
 		return false
@@ -4250,6 +4292,9 @@ type AnomalyItem struct {
 	// CostOfAnomaly Excess cost over and above the expected normal cost.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
+	// DeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+	DeactivationReason nullable.Nullable[AnomalyItemDeactivationReason] `json:"deactivationReason,omitempty"`
+
 	// EndTime End of the anomaly.
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
 
@@ -4285,6 +4330,9 @@ type AnomalyItem struct {
 	// Top3SKUs Array of SKU entries contributing to an anomaly.
 	Top3SKUs AnomalySKUArray `json:"top3SKUs"`
 }
+
+// AnomalyItemDeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+type AnomalyItemDeactivationReason string
 
 // AnomalyItemStatus defines model for AnomalyItem.Status.
 type AnomalyItemStatus string
@@ -6908,6 +6956,9 @@ type GetAnomaly200Response struct {
 	// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
+	// DeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+	DeactivationReason nullable.Nullable[GetAnomaly200ResponseDeactivationReason] `json:"deactivationReason,omitempty"`
+
 	// EndTime End of the anomaly
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
 
@@ -6942,6 +6993,9 @@ type GetAnomaly200Response struct {
 	// Top3SKUs Array of SKU entries contributing to an anomaly.
 	Top3SKUs AnomalySKUArray `json:"top3SKUs"`
 }
+
+// GetAnomaly200ResponseDeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+type GetAnomaly200ResponseDeactivationReason string
 
 // GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
 type GetAnomaly200ResponseStatus string

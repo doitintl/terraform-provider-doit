@@ -4864,6 +4864,15 @@ components:
           type: integer
           nullable: true
           description: End of the anomaly.
+        deactivationReason:
+          type: string
+          nullable: true
+          description: >-
+            Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+          enum:
+            - reverted
+            - expired
+            - unknown
         timeFrame:
           type: string
           description: "Timeframe: Daily or Hourly"
@@ -8600,6 +8609,15 @@ components:
           type: integer
           nullable: true
           description: End of the anomaly
+        deactivationReason:
+          type: string
+          nullable: true
+          description: >-
+            Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+          enum:
+            - reverted
+            - expired
+            - unknown
         timeFrame:
           type: string
           description: "Timeframe: Daily or Hourly"

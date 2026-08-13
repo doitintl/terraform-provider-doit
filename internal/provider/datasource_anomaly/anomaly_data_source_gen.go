@@ -53,6 +53,11 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The difference between the actual cost and the maximum cost in the normal range.",
 				MarkdownDescription: "The difference between the actual cost and the maximum cost in the normal range.",
 			},
+			"deactivation_reason": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.",
+				MarkdownDescription: "Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.",
+			},
 			"end_time": schema.Int64Attribute{
 				Computed:            true,
 				Description:         "End of the anomaly",
@@ -209,26 +214,27 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AnomalyModel struct {
-	Acknowledged    types.Bool    `tfsdk:"acknowledged"`
-	AcknowledgedAt  types.String  `tfsdk:"acknowledged_at"`
-	AcknowledgedBy  types.String  `tfsdk:"acknowledged_by"`
-	ActualCost      types.Float64 `tfsdk:"actual_cost"`
-	Attribution     types.String  `tfsdk:"attribution"`
-	BillingAccount  types.String  `tfsdk:"billing_account"`
-	CostOfAnomaly   types.Float64 `tfsdk:"cost_of_anomaly"`
-	EndTime         types.Int64   `tfsdk:"end_time"`
-	ExpectedMaxCost types.Float64 `tfsdk:"expected_max_cost"`
-	Id              types.String  `tfsdk:"id"`
-	Notifications   types.List    `tfsdk:"notifications"`
-	Platform        types.String  `tfsdk:"platform"`
-	ResourceData    types.List    `tfsdk:"resource_data"`
-	Scope           types.String  `tfsdk:"scope"`
-	ServiceName     types.String  `tfsdk:"service_name"`
-	SeverityLevel   types.String  `tfsdk:"severity_level"`
-	StartTime       types.Int64   `tfsdk:"start_time"`
-	Status          types.String  `tfsdk:"status"`
-	TimeFrame       types.String  `tfsdk:"time_frame"`
-	Top3skus        types.List    `tfsdk:"top3skus"`
+	Acknowledged       types.Bool    `tfsdk:"acknowledged"`
+	AcknowledgedAt     types.String  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy     types.String  `tfsdk:"acknowledged_by"`
+	ActualCost         types.Float64 `tfsdk:"actual_cost"`
+	Attribution        types.String  `tfsdk:"attribution"`
+	BillingAccount     types.String  `tfsdk:"billing_account"`
+	CostOfAnomaly      types.Float64 `tfsdk:"cost_of_anomaly"`
+	DeactivationReason types.String  `tfsdk:"deactivation_reason"`
+	EndTime            types.Int64   `tfsdk:"end_time"`
+	ExpectedMaxCost    types.Float64 `tfsdk:"expected_max_cost"`
+	Id                 types.String  `tfsdk:"id"`
+	Notifications      types.List    `tfsdk:"notifications"`
+	Platform           types.String  `tfsdk:"platform"`
+	ResourceData       types.List    `tfsdk:"resource_data"`
+	Scope              types.String  `tfsdk:"scope"`
+	ServiceName        types.String  `tfsdk:"service_name"`
+	SeverityLevel      types.String  `tfsdk:"severity_level"`
+	StartTime          types.Int64   `tfsdk:"start_time"`
+	Status             types.String  `tfsdk:"status"`
+	TimeFrame          types.String  `tfsdk:"time_frame"`
+	Top3skus           types.List    `tfsdk:"top3skus"`
 }
 
 var _ basetypes.ObjectTypable = NotificationsType{}

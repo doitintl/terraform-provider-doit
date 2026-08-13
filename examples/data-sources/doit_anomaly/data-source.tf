@@ -38,3 +38,8 @@ output "anomaly_acknowledged_by" {
   description = "Email of the user who acknowledged the anomaly"
   value       = data.doit_anomaly.example.acknowledged_by
 }
+
+output "anomaly_deactivation_reason" {
+  description = "Why the anomaly stopped being active (null while still active)"
+  value       = data.doit_anomaly.example.deactivation_reason
+}

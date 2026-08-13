@@ -30,11 +30,12 @@ output "total_anomalies" {
 
 output "anomaly_summary" {
   value = [for a in data.doit_anomalies.all.anomalies : {
-    id          = a.id
-    service     = a.service_name
-    cost_impact = a.cost_of_anomaly
-    severity    = a.severity_level
-    status      = a.status
+    id                  = a.id
+    service             = a.service_name
+    cost_impact         = a.cost_of_anomaly
+    severity            = a.severity_level
+    status              = a.status
+    deactivation_reason = a.deactivation_reason
   }]
 }
 
