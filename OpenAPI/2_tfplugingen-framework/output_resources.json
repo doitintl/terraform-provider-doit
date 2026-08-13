@@ -3227,6 +3227,7 @@
 												}
 											}
 										],
+										"deprecation_message": "This attribute is deprecated.",
 										"description": "Deprecated: Use 'metrics' instead."
 									}
 								},
