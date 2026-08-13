@@ -111,9 +111,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		if attr, ok := configAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnconfiguredMetricMirror())
 			attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
-			// Workaround for https://github.com/doitintl/terraform-plugin-codegen-openapi/issues/5:
-			// the codegen fork drops the deprecation on allOf-composed properties.
-			attr.DeprecationMessage = "This attribute is deprecated."
 			configAttr.Attributes["metric"] = attr
 		}
 		if attr, ok := configAttr.Attributes["metrics"].(schema.ListNestedAttribute); ok {

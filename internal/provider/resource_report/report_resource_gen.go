@@ -741,6 +741,7 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						Computed:            true,
 						Description:         "Deprecated: Use 'metrics' instead.",
 						MarkdownDescription: "Deprecated: Use 'metrics' instead.",
+						DeprecationMessage:  "This attribute is deprecated.",
 					},
 					"metric_filter": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
