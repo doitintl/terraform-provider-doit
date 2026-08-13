@@ -3,6 +3,7 @@ package provider_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -116,9 +117,10 @@ func TestAccAnomalyDataSource_AcknowledgedFields(t *testing.T) {
 }
 
 // TestAccAnomalyDataSource_DeactivationReason verifies that the
-// deactivation_reason attribute is accessible. It is null while an anomaly
-// is still active, so we use an output expression to validate the mapping
-// works without requiring a specific value.
+// deactivation_reason attribute is mapped to a non-null enum value.
+// TEST_ANOMALY_ID is a years-old anomaly in the test tenant that is always
+// deactivated (the tenant has no anomalies that stay reliably active), so
+// this asserts the actual mapped value rather than just checking presence.
 func TestAccAnomalyDataSource_DeactivationReason(t *testing.T) {
 	anomalyID := os.Getenv("TEST_ANOMALY_ID")
 	if anomalyID == "" {
@@ -134,6 +136,7 @@ func TestAccAnomalyDataSource_DeactivationReason(t *testing.T) {
 				Config: testAccAnomalyDataSourceDeactivationReasonConfig(anomalyID),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+					resource.TestMatchOutput("deactivation_reason", regexp.MustCompile(`^(reverted|expired|unknown)$`)),
 				),
 			},
 			// Drift verification
@@ -156,7 +159,7 @@ data "doit_anomaly" "test" {
 }
 
 output "deactivation_reason" {
-  value = data.doit_anomaly.test.deactivation_reason != null ? data.doit_anomaly.test.deactivation_reason : "active"
+  value = data.doit_anomaly.test.deactivation_reason
 }
 `, id)
 }

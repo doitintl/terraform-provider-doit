@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"sync"
 	"testing"
 
@@ -258,10 +259,17 @@ output "anomaly_notifications" {
 }
 
 // TestAccAnomaliesDataSource_DeactivationReason verifies that the
-// deactivation_reason attribute is accessible on anomalies list items. It is
-// null for active anomalies, so we use an output expression to validate the
-// mapping works without requiring specific values.
+// deactivation_reason attribute is mapped to a non-null enum value on
+// anomalies list items. The test tenant's anomalies are all years-old and
+// deactivated (there's no reliably-active anomaly to test against), so
+// max_results = 1 deterministically returns exactly one deactivated anomaly
+// and we assert its actual mapped value rather than just checking presence.
 func TestAccAnomaliesDataSource_DeactivationReason(t *testing.T) {
+	anomalyCount := getAnomalyCount(t)
+	if anomalyCount < 1 {
+		t.Skip("Need at least 1 anomaly to test deactivation_reason mapping")
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
@@ -270,7 +278,8 @@ func TestAccAnomaliesDataSource_DeactivationReason(t *testing.T) {
 			{
 				Config: testAccAnomaliesDataSourceDeactivationReasonConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.doit_anomalies.deactivation_reason_test", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.deactivation_reason_test", "anomalies.#", "1"),
+					resource.TestMatchOutput("anomaly_deactivation_reason", regexp.MustCompile(`^(reverted|expired|unknown)$`)),
 				),
 			},
 			// Drift verification
@@ -293,7 +302,7 @@ data "doit_anomalies" "deactivation_reason_test" {
 }
 
 output "anomaly_deactivation_reason" {
-  value = [for a in data.doit_anomalies.deactivation_reason_test.anomalies : a.deactivation_reason != null ? a.deactivation_reason : "active"]
+  value = data.doit_anomalies.deactivation_reason_test.anomalies[0].deactivation_reason
 }
 `
 }
