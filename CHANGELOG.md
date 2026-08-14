@@ -18,7 +18,7 @@
 - **provider**: A `524` response from the API is now reported as itself instead of being masked. Previously the default `request_timeout` of `120s` collided with the API's own 120-second edge timeout, so the request was usually cancelled locally first; that cancellation is indistinguishable from a network fault and was therefore retried, re-running an expensive query until the operation deadline expired. Affected slow reads such as `data-source/doit_report_result` against large reports
 - **provider**: A `Retry-After` header of `0`, a negative value, or a date already in the past no longer schedules an immediate retry. Such values were previously honored literally, producing a hot retry loop against a rate-limited API and pinning the backoff to a flat cadence that never grew
 - **provider**: `Retry-After` now accepts all three HTTP-date formats permitted by RFC 7231 (IMF-fixdate, RFC 850, and asctime); only IMF-fixdate was previously recognized
-- **provider**: An outsized `Retry-After` value is now capped at 5 minutes rather than being allowed to consume the whole operation budget
+- **provider**: An outsized `Retry-After` value is now capped at 60 seconds — the retry policy's own maximum interval — rather than being allowed to consume the whole operation budget. A large negative value is also rejected outright; it previously overflowed to a positive duration and was honored as a legitimate wait
 
 ### INTERNAL
 

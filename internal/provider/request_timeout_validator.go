@@ -39,7 +39,7 @@ func (v requestTimeoutValidator) ValidateString(_ context.Context, req validator
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
 			"Invalid Request Timeout",
-			fmt.Sprintf("Could not parse request_timeout %q as a duration: %s. Use Go duration format, e.g. \"30s\", \"2m\", \"1h\".", value, err),
+			fmt.Sprintf("Could not parse request_timeout %q as a duration: %s. Use Go duration format, e.g. \"150s\", \"4m\", \"1h\".", value, err),
 		)
 		return
 	}

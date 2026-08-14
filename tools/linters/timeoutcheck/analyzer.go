@@ -6,11 +6,13 @@
 // contain no API calls (no StatusCode() or WithResponse call), such as no-op
 // Delete methods.
 //
-// Second, the default passed to Timeouts.Create/Read/Update/Delete must be a
-// named constant from internal/provider/timeouts.go rather than a literal
-// duration. Literals had drifted into 136 call sites across 84 files, which made
-// the defaults impossible to change in one place and let the timeout ordering
-// invariant documented in timeouts.go be violated silently.
+// Second, the default passed to Timeouts.Create/Read/Update/Delete must be that
+// operation's Default<Op>Timeout constant from internal/provider/timeouts.go
+// rather than a literal duration. Literals had drifted into 136 call sites
+// across 84 files, which made the defaults impossible to change in one place and
+// let the timeout ordering invariant documented in timeouts.go be violated
+// silently. A resource with a genuine need for a different default can silence
+// this with //nolint:timeoutcheck and a comment explaining why.
 package timeoutcheck
 
 import (
@@ -68,20 +70,24 @@ func checkTimeoutDefaults(pass *analysis.Pass, insp *inspector.Inspector) {
 			return
 		}
 
-		// Accept only a reference to a declared constant. Checking for a bare
-		// identifier is not enough: a local variable holding a literal
-		// (timeout := 2*time.Minute) would slip through and defeat the point.
-		if ident, ok := call.Args[1].(*ast.Ident); ok {
+		// Accept only the operation's own default constant, by name and as a
+		// declared constant. Weaker checks leave real holes: accepting any bare
+		// identifier lets a variable holding a literal through
+		// (timeout := 2*time.Minute), and accepting any constant lets both a
+		// locally declared literal (const short = 2*time.Minute) and another
+		// operation's default (Timeouts.Read(ctx, DefaultCreateTimeout)) pass —
+		// the latter being an easy copy-paste error between CRUD methods.
+		want := "Default" + sel.Sel.Name + "Timeout"
+		if ident, ok := call.Args[1].(*ast.Ident); ok && ident.Name == want {
 			if _, isConst := pass.TypesInfo.ObjectOf(ident).(*types.Const); isConst {
 				return
 			}
 		}
 
 		pass.Reportf(call.Args[1].Pos(),
-			"Timeouts.%s must use a named default timeout constant "+
-				"(e.g. Default%sTimeout from timeouts.go), not a literal duration "+
-				"or a variable holding one",
-			sel.Sel.Name, sel.Sel.Name)
+			"Timeouts.%s must use the %s constant from timeouts.go, not a literal "+
+				"duration, a variable, or another operation's default",
+			sel.Sel.Name, want)
 	})
 }
 

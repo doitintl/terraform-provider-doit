@@ -164,11 +164,11 @@ const (
 func literalTimeoutDefaults(ctx context.Context) {
 	var data modelWithTimeouts
 
-	_, _ = data.Timeouts.Create(ctx, 5*time.Minute) // want "Timeouts.Create must use a named default timeout constant"
-	_, _ = data.Timeouts.Read(ctx, 2*time.Minute)   // want "Timeouts.Read must use a named default timeout constant"
-	_, _ = data.Timeouts.Update(ctx, 5*time.Minute) // want "Timeouts.Update must use a named default timeout constant"
-	_, _ = data.Timeouts.Delete(ctx, 2*time.Minute) // want "Timeouts.Delete must use a named default timeout constant"
-	_, _ = data.Timeouts.Read(ctx, 0)               // want "Timeouts.Read must use a named default timeout constant"
+	_, _ = data.Timeouts.Create(ctx, 5*time.Minute) // want "Timeouts.Create must use the DefaultCreateTimeout constant"
+	_, _ = data.Timeouts.Read(ctx, 2*time.Minute)   // want "Timeouts.Read must use the DefaultReadTimeout constant"
+	_, _ = data.Timeouts.Update(ctx, 5*time.Minute) // want "Timeouts.Update must use the DefaultUpdateTimeout constant"
+	_, _ = data.Timeouts.Delete(ctx, 2*time.Minute) // want "Timeouts.Delete must use the DefaultDeleteTimeout constant"
+	_, _ = data.Timeouts.Read(ctx, 0)               // want "Timeouts.Read must use the DefaultReadTimeout constant"
 }
 
 // GOOD: named constants as the default.
@@ -186,8 +186,21 @@ func variableTimeoutDefaults(ctx context.Context) {
 	var data modelWithTimeouts
 
 	timeout := 2 * time.Minute
-	_, _ = data.Timeouts.Read(ctx, timeout) // want "Timeouts.Read must use a named default timeout constant"
+	_, _ = data.Timeouts.Read(ctx, timeout) // want "Timeouts.Read must use the DefaultReadTimeout constant"
 
 	var deadline time.Duration = 5 * time.Minute
-	_, _ = data.Timeouts.Create(ctx, deadline) // want "Timeouts.Create must use a named default timeout constant"
+	_, _ = data.Timeouts.Create(ctx, deadline) // want "Timeouts.Create must use the DefaultCreateTimeout constant"
+}
+
+// BAD: a constant that is not this operation's default.
+func mismatchedTimeoutDefaults(ctx context.Context) {
+	var data modelWithTimeouts
+
+	// A locally declared literal is still a literal.
+	const short = 2 * time.Minute
+	_, _ = data.Timeouts.Read(ctx, short) // want "Timeouts.Read must use the DefaultReadTimeout constant"
+
+	// Another operation's default — an easy copy-paste error between CRUD methods.
+	_, _ = data.Timeouts.Read(ctx, DefaultCreateTimeout) // want "Timeouts.Read must use the DefaultReadTimeout constant"
+	_, _ = data.Timeouts.Delete(ctx, DefaultReadTimeout) // want "Timeouts.Delete must use the DefaultDeleteTimeout constant"
 }
