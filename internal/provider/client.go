@@ -94,9 +94,20 @@ const (
 
 	// maxRetryAfter caps how long a server-supplied Retry-After is honored.
 	// Without it, an outsized value (e.g. "86400") would sit and burn the whole
-	// operation budget doing nothing.
-	maxRetryAfter = 5 * time.Minute
+	// operation budget doing nothing: the retry loop waits on the context, so
+	// once the wait reaches the operation timeout no retry can ever happen.
+	//
+	// It is deliberately tied to retryMaxInterval — we never wait longer than
+	// our own policy's ceiling — which also keeps it well inside the smallest
+	// operation default, so a capped wait still leaves budget for the retry it
+	// was waiting for.
+	maxRetryAfter = retryMaxInterval
 )
+
+// The Retry-After cap is only meaningful if a capped wait still leaves room for
+// the retry itself. Enforced at compile time; see timeouts.go for the same
+// technique applied to the timeout defaults.
+const _ = uint(DefaultReadTimeout - maxRetryAfter - minRetryHeadroom)
 
 // newRetryBackOff builds the default exponential retry policy.
 //
@@ -125,7 +136,7 @@ func newRetryBackOff() *backoff.ExponentialBackOff {
 // cadence that never grows. Falling back to exponential backoff instead keeps
 // the retries spreading out.
 //
-// A honored value is clamped to [retryInitialInterval, maxRetryAfter], so a
+// An honored value is clamped to [retryInitialInterval, maxRetryAfter], so a
 // date a few milliseconds out cannot produce a near-immediate retry either.
 func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
 	header = strings.TrimSpace(header)
@@ -135,6 +146,16 @@ func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
 
 	var wait time.Duration
 	if seconds, err := strconv.Atoi(header); err == nil {
+		// Reject and cap in units of seconds, before converting to a Duration:
+		// seconds * time.Second overflows int64 for large magnitudes, and a
+		// large negative value would wrap to a positive duration that then
+		// looks like a legitimate wait.
+		if seconds <= 0 {
+			return 0, false
+		}
+		if seconds >= int(maxRetryAfter/time.Second) {
+			return maxRetryAfter, true
+		}
 		wait = time.Duration(seconds) * time.Second
 	} else {
 		t, parseErr := http.ParseTime(header)

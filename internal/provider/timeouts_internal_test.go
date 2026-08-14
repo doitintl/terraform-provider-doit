@@ -57,6 +57,25 @@ func TestTimeoutDefaults_ReadIsSmallestOperation(t *testing.T) {
 	}
 }
 
+// TestMaxRetryAfter_LeavesRetryBudget verifies a Retry-After honored at the cap
+// still leaves room for the retry it is waiting for. A cap equal to the
+// operation timeout would defeat its own purpose: the retry loop waits on the
+// context, so the operation would expire mid-wait and never retry at all.
+//
+// timeouts.go-style compile-time assertion covers this too; this is the readable
+// counterpart.
+func TestMaxRetryAfter_LeavesRetryBudget(t *testing.T) {
+	t.Parallel()
+
+	smallest := min(DefaultCreateTimeout, DefaultReadTimeout, DefaultUpdateTimeout, DefaultDeleteTimeout)
+
+	if got := smallest - maxRetryAfter; got < minRetryHeadroom {
+		t.Errorf("maxRetryAfter (%s) must be below the smallest operation default (%s) by at least %s, "+
+			"but the margin is %s — a wait at the cap would consume the whole operation budget",
+			maxRetryAfter, smallest, minRetryHeadroom, got)
+	}
+}
+
 // TestNewRetryBackOff_Config verifies the retry policy is configured from the
 // retry* constants. The DoiT API returns 429 without a Retry-After header, so
 // this policy governs the pace of nearly every retry.
@@ -144,8 +163,11 @@ func TestParseRetryAfter(t *testing.T) {
 	t.Parallel()
 
 	now := time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC)
-	future := now.Add(90 * time.Second)
+	// Comfortably inside [retryInitialInterval, maxRetryAfter] so these cases
+	// exercise date parsing rather than the clamps.
+	future := now.Add(30 * time.Second)
 	past := now.Add(-90 * time.Second)
+	farFuture := now.Add(10 * time.Minute)
 
 	tests := []struct {
 		name   string
@@ -161,12 +183,18 @@ func TestParseRetryAfter(t *testing.T) {
 		{"seconds above cap is clamped", "86400", maxRetryAfter, true},
 		{"zero seconds falls back", "0", 0, false},
 		{"negative seconds falls back", "-5", 0, false},
+		// A large negative value overflows seconds*time.Second and wraps to a
+		// positive duration, which would otherwise pass the non-positive check
+		// and be honored as a legitimate wait.
+		{"overflowing negative seconds falls back", "-10000000000", 0, false},
+		{"overflowing positive seconds is clamped", "10000000000", maxRetryAfter, true},
 
 		// HTTP-date, all three formats RFC 7231 permits
-		{"IMF-fixdate in future", future.Format(http.TimeFormat), 90 * time.Second, true},
-		{"RFC 850 in future", future.Format(time.RFC850), 90 * time.Second, true},
-		{"asctime in future", future.Format(time.ANSIC), 90 * time.Second, true},
+		{"IMF-fixdate in future", future.Format(http.TimeFormat), 30 * time.Second, true},
+		{"RFC 850 in future", future.Format(time.RFC850), 30 * time.Second, true},
+		{"asctime in future", future.Format(time.ANSIC), 30 * time.Second, true},
 		{"IMF-fixdate in past falls back", past.Format(http.TimeFormat), 0, false},
+		{"IMF-fixdate beyond cap is clamped", farFuture.Format(http.TimeFormat), maxRetryAfter, true},
 
 		// unusable
 		{"garbage falls back", "not-a-date", 0, false},

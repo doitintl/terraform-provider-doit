@@ -15,6 +15,7 @@ package timeoutcheck
 
 import (
 	"go/ast"
+	"go/types"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -67,15 +68,19 @@ func checkTimeoutDefaults(pass *analysis.Pass, insp *inspector.Inspector) {
 			return
 		}
 
-		// A named constant is a bare identifier. Anything else — a BasicLit or a
-		// BinaryExpr such as 2*time.Minute — is a literal duration.
-		if _, ok := call.Args[1].(*ast.Ident); ok {
-			return
+		// Accept only a reference to a declared constant. Checking for a bare
+		// identifier is not enough: a local variable holding a literal
+		// (timeout := 2*time.Minute) would slip through and defeat the point.
+		if ident, ok := call.Args[1].(*ast.Ident); ok {
+			if _, isConst := pass.TypesInfo.ObjectOf(ident).(*types.Const); isConst {
+				return
+			}
 		}
 
 		pass.Reportf(call.Args[1].Pos(),
 			"Timeouts.%s must use a named default timeout constant "+
-				"(e.g. Default%sTimeout from timeouts.go), not a literal duration",
+				"(e.g. Default%sTimeout from timeouts.go), not a literal duration "+
+				"or a variable holding one",
 			sel.Sel.Name, sel.Sel.Name)
 	})
 }

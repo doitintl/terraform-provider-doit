@@ -180,3 +180,14 @@ func namedTimeoutDefaults(ctx context.Context) {
 	_, _ = data.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	_, _ = data.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 }
+
+// BAD: a variable holding a literal duration is not a named constant.
+func variableTimeoutDefaults(ctx context.Context) {
+	var data modelWithTimeouts
+
+	timeout := 2 * time.Minute
+	_, _ = data.Timeouts.Read(ctx, timeout) // want "Timeouts.Read must use a named default timeout constant"
+
+	var deadline time.Duration = 5 * time.Minute
+	_, _ = data.Timeouts.Create(ctx, deadline) // want "Timeouts.Create must use a named default timeout constant"
+}
