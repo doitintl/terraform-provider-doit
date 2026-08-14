@@ -106,8 +106,9 @@ const (
 
 // The Retry-After cap is only meaningful if a capped wait still leaves room for
 // the retry itself. Enforced at compile time; see timeouts.go for the same
-// technique applied to the timeout defaults.
-const _ = uint(DefaultReadTimeout - maxRetryAfter - minRetryHeadroom)
+// technique applied to the timeout defaults, and for why this is uint64 rather
+// than uint.
+const _ = uint64(DefaultReadTimeout - maxRetryAfter - minRetryHeadroom)
 
 // newRetryBackOff builds the default exponential retry policy.
 //

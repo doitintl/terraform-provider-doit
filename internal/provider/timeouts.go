@@ -78,16 +78,21 @@ const (
 )
 
 // Compile-time enforcement of the ordering invariant. Converting a negative
-// constant to uint is not representable, so any edit that breaks the ordering
-// fails to compile with "constant -X overflows uint" pointing at the offending
-// line. TestTimeoutDefaults_Ordering asserts the same thing with a readable
-// failure message.
+// constant to an unsigned type is not representable, so any edit that breaks the
+// ordering fails to compile with "constant -X overflows uint64" pointing at the
+// offending line. TestTimeoutDefaults_Ordering asserts the same thing with a
+// readable failure message.
+//
+// uint64, not uint: these margins are Durations in nanoseconds, so a valid
+// 120-second margin is 120,000,000,000 — which does not fit in a 32-bit uint and
+// would break the 386 and arm release targets in .goreleaser.yml. uint64 holds
+// any time.Duration while still rejecting negative values.
 const (
-	_ = uint(DefaultRequestTimeout - cloudflareEdgeTimeout - minRetryHeadroom)
-	_ = uint(DefaultCreateTimeout - DefaultRequestTimeout - minRetryHeadroom)
-	_ = uint(DefaultReadTimeout - DefaultRequestTimeout - minRetryHeadroom)
-	_ = uint(DefaultUpdateTimeout - DefaultRequestTimeout - minRetryHeadroom)
-	_ = uint(DefaultDeleteTimeout - DefaultRequestTimeout - minRetryHeadroom)
+	_ = uint64(DefaultRequestTimeout - cloudflareEdgeTimeout - minRetryHeadroom)
+	_ = uint64(DefaultCreateTimeout - DefaultRequestTimeout - minRetryHeadroom)
+	_ = uint64(DefaultReadTimeout - DefaultRequestTimeout - minRetryHeadroom)
+	_ = uint64(DefaultUpdateTimeout - DefaultRequestTimeout - minRetryHeadroom)
+	_ = uint64(DefaultDeleteTimeout - DefaultRequestTimeout - minRetryHeadroom)
 )
 
 // requestTimeoutPath is the provider attribute both validation paths report against.
