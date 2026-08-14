@@ -198,6 +198,14 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 				statusVal = types.StringNull()
 			}
 
+			// Handle DeactivationReason nullable enum
+			var deactivationReasonVal types.String
+			if deactivationReason := nullableToPointer(anomaly.DeactivationReason); deactivationReason != nil {
+				deactivationReasonVal = types.StringValue(string(*deactivationReason))
+			} else {
+				deactivationReasonVal = types.StringNull()
+			}
+
 			// Map AcknowledgedAt (nullable.Nullable[time.Time])
 			var acknowledgedAtVal types.String
 			if acknowledgedAt := nullableToPointer(anomaly.AcknowledgedAt); acknowledgedAt != nil {
@@ -218,26 +226,27 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			anomalyVal, diags := datasource_anomalies.NewAnomaliesValue(
 				datasource_anomalies.AnomaliesValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"id":                types.StringPointerValue(anomaly.Id),
-					"acknowledged":      types.BoolPointerValue(anomaly.Acknowledged),
-					"acknowledged_at":   acknowledgedAtVal,
-					"acknowledged_by":   types.StringPointerValue(nullableToPointer(anomaly.AcknowledgedBy)),
-					"actual_cost":       types.Float64PointerValue(nullableToPointer(anomaly.ActualCost)),
-					"attribution":       types.StringValue(anomaly.Attribution),
-					"billing_account":   types.StringValue(anomaly.BillingAccount),
-					"cost_of_anomaly":   types.Float64Value(anomaly.CostOfAnomaly),
-					"end_time":          endTimeVal,
-					"expected_max_cost": types.Float64PointerValue(nullableToPointer(anomaly.ExpectedMaxCost)),
-					"notifications":     notificationsList,
-					"platform":          types.StringValue(anomaly.Platform),
-					"scope":             types.StringValue(anomaly.Scope),
-					"service_name":      types.StringValue(anomaly.ServiceName),
-					"severity_level":    types.StringValue(anomaly.SeverityLevel),
-					"start_time":        types.Int64Value(anomaly.StartTime),
-					"status":            statusVal,
-					"time_frame":        types.StringValue(anomaly.TimeFrame),
-					"resource_data":     resourceDataList,
-					"top3skus":          top3skusList,
+					"id":                  types.StringPointerValue(anomaly.Id),
+					"acknowledged":        types.BoolPointerValue(anomaly.Acknowledged),
+					"acknowledged_at":     acknowledgedAtVal,
+					"acknowledged_by":     types.StringPointerValue(nullableToPointer(anomaly.AcknowledgedBy)),
+					"actual_cost":         types.Float64PointerValue(nullableToPointer(anomaly.ActualCost)),
+					"attribution":         types.StringValue(anomaly.Attribution),
+					"billing_account":     types.StringValue(anomaly.BillingAccount),
+					"cost_of_anomaly":     types.Float64Value(anomaly.CostOfAnomaly),
+					"deactivation_reason": deactivationReasonVal,
+					"end_time":            endTimeVal,
+					"expected_max_cost":   types.Float64PointerValue(nullableToPointer(anomaly.ExpectedMaxCost)),
+					"notifications":       notificationsList,
+					"platform":            types.StringValue(anomaly.Platform),
+					"scope":               types.StringValue(anomaly.Scope),
+					"service_name":        types.StringValue(anomaly.ServiceName),
+					"severity_level":      types.StringValue(anomaly.SeverityLevel),
+					"start_time":          types.Int64Value(anomaly.StartTime),
+					"status":              statusVal,
+					"time_frame":          types.StringValue(anomaly.TimeFrame),
+					"resource_data":       resourceDataList,
+					"top3skus":            top3skusList,
 				},
 			)
 			resp.Diagnostics.Append(diags...)

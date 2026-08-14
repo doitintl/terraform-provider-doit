@@ -44,11 +44,12 @@ output "total_anomalies" {
 
 output "anomaly_summary" {
   value = [for a in data.doit_anomalies.all.anomalies : {
-    id          = a.id
-    service     = a.service_name
-    cost_impact = a.cost_of_anomaly
-    severity    = a.severity_level
-    status      = a.status
+    id                  = a.id
+    service             = a.service_name
+    cost_impact         = a.cost_of_anomaly
+    severity            = a.severity_level
+    status              = a.status
+    deactivation_reason = a.deactivation_reason
   }]
 }
 
@@ -290,6 +291,7 @@ Read-Only:
 - `attribution` (String) Attribution ID.
 - `billing_account` (String) Billing account ID.
 - `cost_of_anomaly` (Number) Excess cost over and above the expected normal cost.
+- `deactivation_reason` (String) Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
 - `end_time` (Number) End of the anomaly.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
 - `id` (String)

@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"sync"
 	"testing"
 
@@ -253,6 +254,55 @@ output "anomaly_notifications" {
       for n in a.notifications : n.channel
     ]
   ]
+}
+`
+}
+
+// TestAccAnomaliesDataSource_DeactivationReason verifies that the
+// deactivation_reason attribute is mapped to a non-null enum value on
+// anomalies list items. The test tenant's anomalies are all years-old and
+// deactivated (there's no reliably-active anomaly to test against), so
+// max_results = 1 deterministically returns exactly one deactivated anomaly
+// and we assert its actual mapped value rather than just checking presence.
+func TestAccAnomaliesDataSource_DeactivationReason(t *testing.T) {
+	anomalyCount := getAnomalyCount(t)
+	if anomalyCount < 1 {
+		t.Skip("Need at least 1 anomaly to test deactivation_reason mapping")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceDeactivationReasonConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomalies.deactivation_reason_test", "anomalies.#", "1"),
+					resource.TestMatchOutput("anomaly_deactivation_reason", regexp.MustCompile(`^(reverted|expired|unknown)$`)),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceDeactivationReasonConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceDeactivationReasonConfig() string {
+	return `
+data "doit_anomalies" "deactivation_reason_test" {
+  max_results = 1
+}
+
+output "anomaly_deactivation_reason" {
+  value = data.doit_anomalies.deactivation_reason_test.anomalies[0].deactivation_reason
 }
 `
 }

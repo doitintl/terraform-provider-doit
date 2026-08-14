@@ -3,6 +3,7 @@ package provider_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -113,6 +114,54 @@ func TestAccAnomalyDataSource_AcknowledgedFields(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestAccAnomalyDataSource_DeactivationReason verifies that the
+// deactivation_reason attribute is mapped to a non-null enum value.
+// TEST_ANOMALY_ID is a years-old anomaly in the test tenant that is always
+// deactivated (the tenant has no anomalies that stay reliably active), so
+// this asserts the actual mapped value rather than just checking presence.
+func TestAccAnomalyDataSource_DeactivationReason(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomalyDataSourceDeactivationReasonConfig(anomalyID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+					resource.TestMatchOutput("deactivation_reason", regexp.MustCompile(`^(reverted|expired|unknown)$`)),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomalyDataSourceDeactivationReasonConfig(anomalyID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceDeactivationReasonConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "deactivation_reason" {
+  value = data.doit_anomaly.test.deactivation_reason
+}
+`, id)
 }
 
 func testAccAnomalyDataSourceConfig(id string) string {
