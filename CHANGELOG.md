@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+### BREAKING CHANGES
+
+- **provider**: `request_timeout` values at or below `120s` are now rejected at validation time. The DoiT API's edge proxy answers requests still running after 120 seconds with a `524`, and a local timeout at or below that threshold cancels the request before that response can arrive — turning a definitive, fast failure into an opaque `context deadline exceeded` that is then retried. Configurations setting a lower value must raise it; the default is `150s`
+
+### ENHANCEMENTS
+
+- **provider**: The default `request_timeout` is now `150s` (was `120s`), so a slow request surfaces the API's own `524` response rather than racing it
+- **provider**: The default `read` and `delete` operation timeouts are now 5 minutes (were 2 minutes), matching `create` and `update`. Every operation default now exceeds `request_timeout`, so a single slow request can no longer consume the entire operation budget and leave no room to retry a transient failure
+- **provider**: Retry backoff for rate-limited (`429`) requests now starts at 2 seconds and doubles, up to 60 seconds. It previously started at 500ms with a 1.5x multiplier, issuing roughly five requests in the first four seconds against an API that had just asked the client to slow down. The DoiT API does not send `Retry-After`, so this policy governs the pace of nearly every retry
+- **provider**: `request_timeout` now emits a warning when it is not below the default operation timeout, since that leaves no room for retries
+
+### BUG FIXES
+
+- **provider**: A `524` response from the API is now reported as itself instead of being masked. Previously the default `request_timeout` of `120s` collided with the API's own 120-second edge timeout, so the request was usually cancelled locally first; that cancellation is indistinguishable from a network fault and was therefore retried, re-running an expensive query until the operation deadline expired. Affected slow reads such as `data-source/doit_report_result` against large reports
+- **provider**: A `Retry-After` header of `0`, a negative value, or a date already in the past no longer schedules an immediate retry. Such values were previously honored literally, producing a hot retry loop against a rate-limited API and pinning the backoff to a flat cadence that never grew
+- **provider**: `Retry-After` now accepts all three HTTP-date formats permitted by RFC 7231 (IMF-fixdate, RFC 850, and asctime); only IMF-fixdate was previously recognized
+- **provider**: An outsized `Retry-After` value is now capped at 60 seconds — the retry policy's own maximum interval — rather than being allowed to consume the whole operation budget. A large negative value is also rejected outright; it previously overflowed to a positive duration and was honored as a legitimate wait
+
+### INTERNAL
+
+- Timeout defaults are now defined once in `internal/provider/timeouts.go`, replacing literal durations at 136 call sites across 84 files. The file documents the ordering invariant between the layers and enforces it at compile time
+- The `timeoutcheck` linter now also rejects literal durations passed as a `Timeouts.*` default, so the defaults cannot drift back out of one place
+- Added unit coverage for the retry client's `429`, `524`, `404`, and `500` handling and for `Retry-After` parsing, none of which was previously tested
+
 ## v1.7.0 (2026-08-12)
 
 ### BREAKING CHANGES

@@ -1,13 +1,23 @@
-// Package timeoutcheck ensures that all CRUD methods on resources and Read
-// methods on data sources wrap their context with context.WithTimeout.
-// Enforces timeout support in CRUD methods.
+// Package timeoutcheck enforces two things about timeout handling in CRUD
+// methods.
 //
-// Methods are exempt if they contain no API calls (no StatusCode() or
-// WithResponse call), such as no-op Delete methods.
+// First, all CRUD methods on resources and Read methods on data sources must
+// wrap their context with context.WithTimeout. Methods are exempt if they
+// contain no API calls (no StatusCode() or WithResponse call), such as no-op
+// Delete methods.
+//
+// Second, the default passed to Timeouts.Create/Read/Update/Delete must be that
+// operation's Default<Op>Timeout constant from internal/provider/timeouts.go
+// rather than a literal duration. Literals had drifted into 136 call sites
+// across 84 files, which made the defaults impossible to change in one place and
+// let the timeout ordering invariant documented in timeouts.go be violated
+// silently. A resource with a genuine need for a different default can silence
+// this with //nolint:timeoutcheck and a comment explaining why.
 package timeoutcheck
 
 import (
 	"go/ast"
+	"go/types"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -33,6 +43,57 @@ var crudMethods = map[string]bool{
 func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
+	checkWithTimeout(pass, insp)
+	checkTimeoutDefaults(pass, insp)
+
+	return nil, nil
+}
+
+// checkTimeoutDefaults reports literal durations passed as the default to
+// Timeouts.Create/Read/Update/Delete. The default must be a named constant so
+// that internal/provider/timeouts.go stays the single source of truth.
+func checkTimeoutDefaults(pass *analysis.Pass, insp *inspector.Inspector) {
+	nodeFilter := []ast.Node{(*ast.CallExpr)(nil)}
+	insp.Preorder(nodeFilter, func(n ast.Node) {
+		call := n.(*ast.CallExpr)
+
+		// Match: <expr>.Timeouts.<Op>(ctx, <default>)
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || !crudMethods[sel.Sel.Name] {
+			return
+		}
+		recv, ok := sel.X.(*ast.SelectorExpr)
+		if !ok || recv.Sel.Name != "Timeouts" {
+			return
+		}
+		if len(call.Args) != 2 {
+			return
+		}
+
+		// Accept only the operation's own default constant, by name and as a
+		// declared constant. Weaker checks leave real holes: accepting any bare
+		// identifier lets a variable holding a literal through
+		// (timeout := 2*time.Minute), and accepting any constant lets both a
+		// locally declared literal (const short = 2*time.Minute) and another
+		// operation's default (Timeouts.Read(ctx, DefaultCreateTimeout)) pass —
+		// the latter being an easy copy-paste error between CRUD methods.
+		want := "Default" + sel.Sel.Name + "Timeout"
+		if ident, ok := call.Args[1].(*ast.Ident); ok && ident.Name == want {
+			if _, isConst := pass.TypesInfo.ObjectOf(ident).(*types.Const); isConst {
+				return
+			}
+		}
+
+		pass.Reportf(call.Args[1].Pos(),
+			"Timeouts.%s must use the %s constant from timeouts.go, not a literal "+
+				"duration, a variable, or another operation's default",
+			sel.Sel.Name, want)
+	})
+}
+
+// checkWithTimeout reports CRUD methods that make API calls without wrapping
+// their context with context.WithTimeout.
+func checkWithTimeout(pass *analysis.Pass, insp *inspector.Inspector) {
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
@@ -60,8 +121,6 @@ func run(pass *analysis.Pass) (any, error) {
 				fn.Name.Name)
 		}
 	})
-
-	return nil, nil
 }
 
 // hasAPICalls checks whether the function body contains API-related calls.

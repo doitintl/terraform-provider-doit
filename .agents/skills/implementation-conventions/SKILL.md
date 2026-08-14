@@ -240,8 +240,13 @@ All resources and data sources must include timeout support. This is a two-layer
 
 | Layer | Controls | Default |
 |-------|----------|---------|
-| **Request timeout** (provider `request_timeout`) | Individual HTTP request | 120s |
-| **Operation timeout** (resource `timeouts = {}`) | Entire Terraform operation incl. retries | CRUD: 5m, Read: 2m |
+| **Request timeout** (provider `request_timeout`) | Individual HTTP request | `DefaultRequestTimeout` |
+| **Operation timeout** (resource `timeouts = {}`) | Entire Terraform operation incl. retries | `Default{Create,Read,Update,Delete}Timeout` |
+
+> **Source of truth:** all five defaults are defined in `internal/provider/timeouts.go`, which
+> also documents the ordering invariant they must satisfy
+> (`operation timeout > request timeout > the API's 120s edge timeout`) and enforces it at compile
+> time. Never write a literal duration at a call site — read the values from there.
 
 ### For Resources (3 steps)
 
@@ -269,12 +274,15 @@ resp.Schema.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
 **Step 3:** Wrap CRUD methods with `context.WithTimeout`:
 
 ```go
-createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+createTimeout, diags := plan.Timeouts.Create(ctx, DefaultCreateTimeout)
 resp.Diagnostics.Append(diags...)
 if resp.Diagnostics.HasError() { return }
 ctx, cancel := context.WithTimeout(ctx, createTimeout)
 defer cancel()
 ```
+
+Use the matching constant for each operation: `DefaultCreateTimeout`, `DefaultReadTimeout`,
+`DefaultUpdateTimeout`, `DefaultDeleteTimeout`.
 
 ### For Data Sources
 
@@ -285,8 +293,12 @@ Same pattern, simpler — only Read timeout. Use `datasource/timeouts` import (n
 1. **Schema/struct mismatch** — model has `Timeouts` but schema doesn't → runtime error
 2. **Wrong import** — resources use `resource/timeouts`, data sources use `datasource/timeouts`
 3. **Nested attribute syntax** — users write `timeouts = { create = "10m" }` with `=`, not `timeouts { ... }`
+4. **Literal duration as the default** — never `plan.Timeouts.Create(ctx, 5*time.Minute)`. Use the
+   named constant from `internal/provider/timeouts.go` so the defaults stay changeable in one place
+   and the ordering invariant holds.
 
-> **Linter:** `timeoutcheck` — flags CRUD methods missing `context.WithTimeout`.
+> **Linter:** `timeoutcheck` — flags CRUD methods missing `context.WithTimeout`, and literal
+> durations passed as a `Timeouts.*` default.
 
 ## API Authentication
 

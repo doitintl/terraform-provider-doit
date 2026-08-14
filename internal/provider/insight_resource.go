@@ -300,7 +300,7 @@ func (r *insightResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	createTimeout, createDiags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	createTimeout, createDiags := plan.Timeouts.Create(ctx, DefaultCreateTimeout)
 	resp.Diagnostics.Append(createDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -360,7 +360,7 @@ func (r *insightResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	readTimeout, readDiags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, readDiags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(readDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -391,7 +391,7 @@ func (r *insightResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	resp.Diagnostics.Append(updateDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -453,7 +453,7 @@ func (r *insightResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	deleteTimeout, deleteDiags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	deleteTimeout, deleteDiags := state.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 	resp.Diagnostics.Append(deleteDiags...)
 	if resp.Diagnostics.HasError() {
 		return
