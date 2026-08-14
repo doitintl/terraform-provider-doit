@@ -35,4 +35,4 @@ provider "doit" {
 - `api_token` (String, Sensitive) API Token to access DoiT API. May also be provided by DOIT_API_TOKEN environment variable. Refer to https://developer.doit.com/docs/start
 - `customer_context` (String) Customer context. May also be provided by DOIT_CUSTOMER_CONTEXT environment variable. This field is required for DoiT employees only.
 - `host` (String) URI for DoiT API. May also be provided via DOIT_HOST environment variable. Defaults to https://api.doit.com.
-- `request_timeout` (String) Timeout for individual HTTP requests to the DoiT API, as a duration string (e.g. "30s", "2m"). Defaults to "120s". May also be provided via DOIT_REQUEST_TIMEOUT environment variable.
+- `request_timeout` (String) Timeout for individual HTTP requests to the DoiT API, as a duration string (e.g. "150s", "4m"). Defaults to "150s". Must be greater than "120s" so that slow requests surface the API's own timeout response instead of an opaque local deadline error, and should stay below the operation timeouts so retries remain possible. May also be provided via DOIT_REQUEST_TIMEOUT environment variable.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_sharing"
@@ -169,7 +168,7 @@ func (r *sharingResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	createTimeout, diags := plan.Timeouts.Create(ctx, DefaultCreateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -230,7 +229,7 @@ func (r *sharingResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -260,7 +259,7 @@ func (r *sharingResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	updateTimeout, diags := plan.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -321,7 +320,7 @@ func (r *sharingResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

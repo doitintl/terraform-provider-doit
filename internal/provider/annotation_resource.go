@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_annotation"
@@ -113,7 +112,7 @@ func (r *annotationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	createTimeout, createDiags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	createTimeout, createDiags := plan.Timeouts.Create(ctx, DefaultCreateTimeout)
 	resp.Diagnostics.Append(createDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -175,7 +174,7 @@ func (r *annotationResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	readTimeout, readDiags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, readDiags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(readDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -208,7 +207,7 @@ func (r *annotationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	resp.Diagnostics.Append(updateDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -278,7 +277,7 @@ func (r *annotationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	deleteTimeout, deleteDiags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	deleteTimeout, deleteDiags := state.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 	resp.Diagnostics.Append(deleteDiags...)
 	if resp.Diagnostics.HasError() {
 		return

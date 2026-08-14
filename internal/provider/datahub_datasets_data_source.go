@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_datahub_datasets"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -65,7 +64,7 @@ func (d *datahubDatasetsDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

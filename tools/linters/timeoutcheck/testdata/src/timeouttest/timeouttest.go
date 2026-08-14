@@ -1,6 +1,9 @@
 package timeouttest
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // Stubs
 type createRequest struct{}
@@ -129,4 +132,51 @@ func Create(ctx context.Context, req createRequest, resp *createResponse) {
 	if apiResp.StatusCode() != 200 {
 		resp.Diagnostics.AddError("Error", "failed")
 	}
+}
+
+// --- Timeouts default must be a named constant ---
+
+type timeoutsValue struct{}
+
+func (t timeoutsValue) Create(ctx context.Context, d time.Duration) (time.Duration, diagList) {
+	return d, diagList{}
+}
+func (t timeoutsValue) Read(ctx context.Context, d time.Duration) (time.Duration, diagList) {
+	return d, diagList{}
+}
+func (t timeoutsValue) Update(ctx context.Context, d time.Duration) (time.Duration, diagList) {
+	return d, diagList{}
+}
+func (t timeoutsValue) Delete(ctx context.Context, d time.Duration) (time.Duration, diagList) {
+	return d, diagList{}
+}
+
+type modelWithTimeouts struct{ Timeouts timeoutsValue }
+
+const (
+	DefaultCreateTimeout = 5 * time.Minute
+	DefaultReadTimeout   = 5 * time.Minute
+	DefaultUpdateTimeout = 5 * time.Minute
+	DefaultDeleteTimeout = 5 * time.Minute
+)
+
+// BAD: literal durations as the default.
+func literalTimeoutDefaults(ctx context.Context) {
+	var data modelWithTimeouts
+
+	_, _ = data.Timeouts.Create(ctx, 5*time.Minute) // want "Timeouts.Create must use a named default timeout constant"
+	_, _ = data.Timeouts.Read(ctx, 2*time.Minute)   // want "Timeouts.Read must use a named default timeout constant"
+	_, _ = data.Timeouts.Update(ctx, 5*time.Minute) // want "Timeouts.Update must use a named default timeout constant"
+	_, _ = data.Timeouts.Delete(ctx, 2*time.Minute) // want "Timeouts.Delete must use a named default timeout constant"
+	_, _ = data.Timeouts.Read(ctx, 0)               // want "Timeouts.Read must use a named default timeout constant"
+}
+
+// GOOD: named constants as the default.
+func namedTimeoutDefaults(ctx context.Context) {
+	var data modelWithTimeouts
+
+	_, _ = data.Timeouts.Create(ctx, DefaultCreateTimeout)
+	_, _ = data.Timeouts.Read(ctx, DefaultReadTimeout)
+	_, _ = data.Timeouts.Update(ctx, DefaultUpdateTimeout)
+	_, _ = data.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 }

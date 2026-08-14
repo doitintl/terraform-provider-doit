@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_asset"
@@ -140,7 +139,7 @@ func (r *assetResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	readTimeout, readDiags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, readDiags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(readDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -170,7 +169,7 @@ func (r *assetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	updateTimeout, updateDiags := plan.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	resp.Diagnostics.Append(updateDiags...)
 	if resp.Diagnostics.HasError() {
 		return

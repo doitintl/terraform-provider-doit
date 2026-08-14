@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_diagrams_statussheet"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -134,7 +133,7 @@ func (d *cloudDiagramsStatussheetDataSource) Read(ctx context.Context, req datas
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
