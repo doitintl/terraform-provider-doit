@@ -83,6 +83,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		data.TotalCount = types.Int64Unknown()
 		data.TotalCountExact = types.BoolUnknown()
 		data.Truncated = types.BoolUnknown()
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -163,6 +164,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
+		firstPage := true
 		for {
 			apiResp, err := d.client.ListAnomaliesWithResponse(ctx, params)
 			if err != nil {
@@ -183,9 +185,12 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 			result := apiResp.JSON200
 			allAnomalies = append(allAnomalies, result.Anomalies...)
-			finalSummary = result.AnomalySummary
-			totalCount = result.TotalCount
-			totalCountExact = result.TotalCountExact
+			if firstPage {
+				finalSummary = result.AnomalySummary
+				totalCount = result.TotalCount
+				totalCountExact = result.TotalCountExact
+				firstPage = false
+			}
 			// In auto mode, by definition all matching pages are fetched
 			truncated = false
 

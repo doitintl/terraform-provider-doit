@@ -22,7 +22,7 @@ data "doit_anomalies" "critical_by_cost" {
   sort_order = "desc"
 }
 
-# Filter by creation time window (epoch milliseconds)
+# Filter by usage start time window (epoch milliseconds)
 data "doit_anomalies" "recent" {
   min_creation_time = 1704067200000 # 2024-01-01T00:00:00Z
   max_creation_time = 1735689600000 # 2025-01-01T00:00:00Z
