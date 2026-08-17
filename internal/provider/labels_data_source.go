@@ -74,7 +74,7 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	defer cancel()
 
 	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	if data.Filter.IsUnknown() || data.NameContains.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Labels = types.ListUnknown(datasource_labels.LabelsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -83,6 +83,9 @@ func (d *labelsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	params := &models.ListLabelsParams{}
 	if !data.Filter.IsNull() {
 		params.Filter = new(data.Filter.ValueString())
+	}
+	if !data.NameContains.IsNull() {
+		params.NameContains = new(data.NameContains.ValueString())
 	}
 	if !data.SortBy.IsNull() {
 		params.SortBy = new(models.ListLabelsParamsSortBy(data.SortBy.ValueString()))

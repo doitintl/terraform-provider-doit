@@ -159,6 +159,58 @@ data "doit_reports" "test" {
 `
 }
 
+// TestAccReportsDataSource_NameContains tests filtering reports with name_contains
+// against both an existing report (via chained data source) and a non-existent name.
+func TestAccReportsDataSource_NameContains(t *testing.T) {
+	reportCount := getReportCount(t)
+	if reportCount < 1 {
+		t.Skipf("Need at least 1 report to test name_contains, got %d", reportCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportsDataSourceNameContainsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_reports.first", "reports.0.report_name"),
+					resource.TestCheckResourceAttrSet("data.doit_reports.filtered", "reports.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_reports.filtered", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_reports.empty", "reports.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_reports.empty", "row_count", "0"),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccReportsDataSourceNameContainsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportsDataSourceNameContainsConfig() string {
+	return `
+data "doit_reports" "first" {
+  max_results = "1"
+}
+
+data "doit_reports" "filtered" {
+  name_contains = data.doit_reports.first.reports.0.report_name
+}
+
+data "doit_reports" "empty" {
+  name_contains = "nonexistent-report-xyz-99999"
+}
+`
+}
+
 // Helper functions
 
 var (

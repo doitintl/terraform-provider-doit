@@ -179,6 +179,58 @@ data "doit_alerts" "test" {
 `
 }
 
+// TestAccAlertsDataSource_NameContains tests filtering alerts with name_contains
+// against both an existing alert (via chained data source) and a non-existent name.
+func TestAccAlertsDataSource_NameContains(t *testing.T) {
+	alertCount := getAlertCount(t)
+	if alertCount < 1 {
+		t.Skipf("Need at least 1 alert to test name_contains, got %d", alertCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertsDataSourceNameContainsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_alerts.first", "alerts.0.name"),
+					resource.TestCheckResourceAttrSet("data.doit_alerts.filtered", "alerts.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_alerts.filtered", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_alerts.empty", "alerts.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_alerts.empty", "row_count", "0"),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccAlertsDataSourceNameContainsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertsDataSourceNameContainsConfig() string {
+	return `
+data "doit_alerts" "first" {
+  max_results = "1"
+}
+
+data "doit_alerts" "filtered" {
+  name_contains = data.doit_alerts.first.alerts.0.name
+}
+
+data "doit_alerts" "empty" {
+  name_contains = "nonexistent-alert-xyz-99999"
+}
+`
+}
+
 // Helper functions
 
 var (

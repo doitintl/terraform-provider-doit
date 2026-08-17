@@ -118,6 +118,7 @@ paths:
           example: "name:test"
           schema:
             type: string
+        - $ref: "#/components/parameters/nameContains"
       responses:
         "200":
           description: >-
@@ -292,6 +293,7 @@ paths:
           example: type:custom
           schema:
             type: string
+        - $ref: "#/components/parameters/nameContains"
         - name: sortBy
           in: query
           description: A field by which the results will be sorted.
@@ -703,6 +705,7 @@ paths:
           example: name:budget
           schema:
             type: string
+        - $ref: "#/components/parameters/nameContains"
         - name: sortBy
           in: query
           description: A field by which the results will be sorted.
@@ -1181,9 +1184,11 @@ paths:
           in: query
           description: |-
             An expression for filtering the results of the request. The syntax is "key:[<value>]".
-            Available keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
+            Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
+          example: "budgetName:My Monthly Budget"
           schema:
             type: string
+        - $ref: "#/components/parameters/nameContains"
         - name: minCreationTime
           in: query
           description: Min value for reports creation time, in milliseconds since the
@@ -1792,6 +1797,7 @@ paths:
           example: "reportName:This Month vs. Last"
           schema:
             type: string
+        - $ref: "#/components/parameters/nameContains"
         - name: minCreationTime
           in: query
           description: Min value for reports creation time, in milliseconds since the
@@ -16071,6 +16077,14 @@ components:
       name: pageToken
       in: query
       description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    nameContains:
+      name: nameContains
+      in: query
+      description: >-
+        Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+      example: monthly spend
       schema:
         type: string
     includeRevoked:

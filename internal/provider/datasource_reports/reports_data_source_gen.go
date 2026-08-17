@@ -42,6 +42,12 @@ func ReportsDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.",
 				MarkdownDescription: "Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.",
 			},
+			"name_contains": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics.",
+				MarkdownDescription: "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics.",
+			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -133,6 +139,7 @@ type ReportsModel struct {
 	MaxCreationTime types.String `tfsdk:"max_creation_time"`
 	MaxResults      types.Int64  `tfsdk:"max_results"`
 	MinCreationTime types.String `tfsdk:"min_creation_time"`
+	NameContains    types.String `tfsdk:"name_contains"`
 	PageToken       types.String `tfsdk:"page_token"`
 	Reports         types.List   `tfsdk:"reports"`
 	RowCount        types.Int64  `tfsdk:"row_count"`

@@ -159,6 +159,58 @@ data "doit_labels" "test" {
 `
 }
 
+// TestAccLabelsDataSource_NameContains tests filtering labels with name_contains
+// against both an existing label (via chained data source) and a non-existent name.
+func TestAccLabelsDataSource_NameContains(t *testing.T) {
+	labelCount := getLabelCount(t)
+	if labelCount < 1 {
+		t.Skipf("Need at least 1 label to test name_contains, got %d", labelCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccLabelsDataSourceNameContainsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_labels.first", "labels.0.name"),
+					resource.TestCheckResourceAttrSet("data.doit_labels.filtered", "labels.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_labels.filtered", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_labels.empty", "labels.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_labels.empty", "row_count", "0"),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccLabelsDataSourceNameContainsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccLabelsDataSourceNameContainsConfig() string {
+	return `
+data "doit_labels" "first" {
+  max_results = "1"
+}
+
+data "doit_labels" "filtered" {
+  name_contains = data.doit_labels.first.labels.0.name
+}
+
+data "doit_labels" "empty" {
+  name_contains = "nonexistent-label-xyz-99999"
+}
+`
+}
+
 // Helper functions
 
 var (

@@ -163,6 +163,58 @@ data "doit_allocations" "test" {
 `
 }
 
+// TestAccAllocationsDataSource_NameContains tests filtering allocations with name_contains
+// against both an existing allocation (via chained data source) and a non-existent name.
+func TestAccAllocationsDataSource_NameContains(t *testing.T) {
+	allocationCount := getAllocationCount(t)
+	if allocationCount < 1 {
+		t.Skipf("Need at least 1 allocation to test name_contains, got %d", allocationCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationsDataSourceNameContainsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_allocations.first", "allocations.0.name"),
+					resource.TestCheckResourceAttrSet("data.doit_allocations.filtered", "allocations.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_allocations.filtered", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_allocations.empty", "allocations.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_allocations.empty", "row_count", "0"),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccAllocationsDataSourceNameContainsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationsDataSourceNameContainsConfig() string {
+	return `
+data "doit_allocations" "first" {
+  max_results = "1"
+}
+
+data "doit_allocations" "filtered" {
+  name_contains = data.doit_allocations.first.allocations.0.name
+}
+
+data "doit_allocations" "empty" {
+  name_contains = "nonexistent-allocation-xyz-99999"
+}
+`
+}
+
 // Helper functions
 
 var (

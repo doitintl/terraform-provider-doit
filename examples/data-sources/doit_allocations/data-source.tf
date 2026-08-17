@@ -6,6 +6,11 @@ data "doit_allocations" "groups" {
   filter = "allocationType:[group]"
 }
 
+# Filter by name substring
+data "doit_allocations" "production" {
+  name_contains = "production"
+}
+
 # Output allocation names
 output "total_allocations" {
   value = data.doit_allocations.all.row_count

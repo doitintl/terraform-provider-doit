@@ -164,6 +164,58 @@ func TestAccBudgetsDataSource_AutoPagination(t *testing.T) {
 	})
 }
 
+// TestAccBudgetsDataSource_NameContains tests filtering budgets with name_contains
+// against both an existing budget (via chained data source) and a non-existent name.
+func TestAccBudgetsDataSource_NameContains(t *testing.T) {
+	budgetCount := getBudgetCount(t)
+	if budgetCount < 1 {
+		t.Skipf("Need at least 1 budget to test name_contains, got %d", budgetCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetsDataSourceNameContainsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_budgets.first", "budgets.0.budget_name"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.filtered", "budgets.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.filtered", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_budgets.empty", "budgets.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_budgets.empty", "row_count", "0"),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccBudgetsDataSourceNameContainsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetsDataSourceNameContainsConfig() string {
+	return `
+data "doit_budgets" "first" {
+  max_results = "1"
+}
+
+data "doit_budgets" "filtered" {
+  name_contains = data.doit_budgets.first.budgets.0.budget_name
+}
+
+data "doit_budgets" "empty" {
+  name_contains = "nonexistent-budget-xyz-99999"
+}
+`
+}
+
 // Helper functions
 
 var (
