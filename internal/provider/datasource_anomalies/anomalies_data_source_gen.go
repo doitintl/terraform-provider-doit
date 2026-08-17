@@ -5,8 +5,10 @@ package datasource_anomalies
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -172,8 +174,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"severity_level": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Severity level: Information, Warning or Critical",
-							MarkdownDescription: "Severity level: Information, Warning or Critical",
+							Description:         "Severity level: `information`, `warning`, or `critical`.",
+							MarkdownDescription: "Severity level: `information`, `warning`, or `critical`.",
 						},
 						"start_time": schema.Int64Attribute{
 							Computed:            true,
@@ -215,13 +217,53 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 				},
-				Computed: true,
+				Computed:            true,
+				Description:         "Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies.",
+				MarkdownDescription: "Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies.",
+			},
+			"anomaly_summary": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"count_by_severity": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"critical": schema.Int64Attribute{
+								Computed: true,
+							},
+							"information": schema.Int64Attribute{
+								Computed: true,
+							},
+							"warning": schema.Int64Attribute{
+								Computed: true,
+							},
+						},
+						CustomType: CountBySeverityType{
+							ObjectType: types.ObjectType{
+								AttrTypes: CountBySeverityValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Count of matching anomalies per severity level. All three keys are always present, with zero counts included.",
+						MarkdownDescription: "Count of matching anomalies per severity level. All three keys are always present, with zero counts included.",
+					},
+					"total_cost_of_anomaly": schema.Float64Attribute{
+						Computed:            true,
+						Description:         "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.",
+						MarkdownDescription: "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.",
+					},
+				},
+				CustomType: AnomalySummaryType{
+					ObjectType: types.ObjectType{
+						AttrTypes: AnomalySummaryValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.",
+				MarkdownDescription: "Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.",
 			},
 			"filter": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "An expression for filtering the results of the request",
-				MarkdownDescription: "An expression for filtering the results of the request",
+				Description:         "An expression for filtering the results. The syntax is `key:value`. Multiple criteria can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nAvailable filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored.",
+				MarkdownDescription: "An expression for filtering the results. The syntax is `key:value`. Multiple criteria can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nAvailable filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored.",
 			},
 			"include_notifications": schema.BoolAttribute{
 				Optional:            true,
@@ -229,23 +271,23 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Include anomaly notifications from the subcollection. Defaults to false.",
 				MarkdownDescription: "Include anomaly notifications from the subcollection. Defaults to false.",
 			},
-			"max_creation_time": schema.StringAttribute{
+			"max_creation_time": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Max value for the anomaly detection time",
-				MarkdownDescription: "Max value for the anomaly detection time",
+				Description:         "Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.",
+				MarkdownDescription: "Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.",
 			},
 			"max_results": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The maximum number of results to return in a single page",
-				MarkdownDescription: "The maximum number of results to return in a single page",
+				Description:         "The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.",
+				MarkdownDescription: "The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.",
 			},
-			"min_creation_time": schema.StringAttribute{
+			"min_creation_time": schema.Int64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Min value for the anomaly detection time",
-				MarkdownDescription: "Min value for the anomaly detection time",
+				Description:         "Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.",
+				MarkdownDescription: "Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.",
 			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
@@ -254,7 +296,49 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
 			"row_count": schema.Int64Attribute{
-				Computed: true,
+				Computed:            true,
+				Description:         "Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`.",
+				MarkdownDescription: "Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`.",
+			},
+			"sort_by": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "A field by which the results will be sorted. Defaults to `startTime`.\nPossible values: `startTime`, `severityLevel`, `costOfAnomaly`",
+				MarkdownDescription: "A field by which the results will be sorted. Defaults to `startTime`.\nPossible values: `startTime`, `severityLevel`, `costOfAnomaly`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"startTime",
+						"severityLevel",
+						"costOfAnomaly",
+					),
+				},
+			},
+			"sort_order": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Sort order can be ascending or descending.\nPossible values: `asc`, `desc`",
+				MarkdownDescription: "Sort order can be ascending or descending.\nPossible values: `asc`, `desc`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"asc",
+						"desc",
+					),
+				},
+			},
+			"total_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence.",
+				MarkdownDescription: "Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence.",
+			},
+			"total_count_exact": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set.",
+				MarkdownDescription: "Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set.",
+			},
+			"truncated": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "`true` when filtered anomalies remain beyond this page. Derived from the same \"rows remain after the last returned row\" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`.",
+				MarkdownDescription: "`true` when filtered anomalies remain beyond this page. Derived from the same \"rows remain after the last returned row\" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`.",
 			},
 		},
 		Description:         "Monitor cost spikes in your cloud environment.",
@@ -263,14 +347,20 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AnomaliesModel struct {
-	Anomalies            types.List   `tfsdk:"anomalies"`
-	Filter               types.String `tfsdk:"filter"`
-	IncludeNotifications types.Bool   `tfsdk:"include_notifications"`
-	MaxCreationTime      types.String `tfsdk:"max_creation_time"`
-	MaxResults           types.Int64  `tfsdk:"max_results"`
-	MinCreationTime      types.String `tfsdk:"min_creation_time"`
-	PageToken            types.String `tfsdk:"page_token"`
-	RowCount             types.Int64  `tfsdk:"row_count"`
+	Anomalies            types.List          `tfsdk:"anomalies"`
+	AnomalySummary       AnomalySummaryValue `tfsdk:"anomaly_summary"`
+	Filter               types.String        `tfsdk:"filter"`
+	IncludeNotifications types.Bool          `tfsdk:"include_notifications"`
+	MaxCreationTime      types.Int64         `tfsdk:"max_creation_time"`
+	MaxResults           types.Int64         `tfsdk:"max_results"`
+	MinCreationTime      types.Int64         `tfsdk:"min_creation_time"`
+	PageToken            types.String        `tfsdk:"page_token"`
+	RowCount             types.Int64         `tfsdk:"row_count"`
+	SortBy               types.String        `tfsdk:"sort_by"`
+	SortOrder            types.String        `tfsdk:"sort_order"`
+	TotalCount           types.Int64         `tfsdk:"total_count"`
+	TotalCountExact      types.Bool          `tfsdk:"total_count_exact"`
+	Truncated            types.Bool          `tfsdk:"truncated"`
 }
 
 var _ basetypes.ObjectTypable = AnomaliesType{}
@@ -3518,5 +3608,878 @@ func (v Top3skusValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 	return map[string]attr.Type{
 		"cost": basetypes.Float64Type{},
 		"name": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = AnomalySummaryType{}
+
+type AnomalySummaryType struct {
+	basetypes.ObjectType
+}
+
+func (t AnomalySummaryType) Equal(o attr.Type) bool {
+	other, ok := o.(AnomalySummaryType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t AnomalySummaryType) String() string {
+	return "AnomalySummaryType"
+}
+
+func (t AnomalySummaryType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewAnomalySummaryValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAnomalySummaryValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	countBySeverityAttribute, ok := attributes["count_by_severity"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`count_by_severity is missing from object`)
+
+		return nil, diags
+	}
+
+	countBySeverityValuable, ok := countBySeverityAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count_by_severity expected to be basetypes.ObjectValuable, was: %T`, countBySeverityAttribute))
+
+		return nil, diags
+	}
+
+	countBySeverityObjVal, countBySeverityObjValDiags := countBySeverityValuable.ToObjectValue(ctx)
+	diags.Append(countBySeverityObjValDiags...)
+
+	countBySeverityTypable, ok := t.AttrTypes["count_by_severity"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count_by_severity expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["count_by_severity"]))
+
+		return nil, diags
+	}
+
+	countBySeverityConverted, countBySeverityConvertedDiags := countBySeverityTypable.ValueFromObject(ctx, countBySeverityObjVal)
+	diags.Append(countBySeverityConvertedDiags...)
+
+	countBySeverityVal, ok := countBySeverityConverted.(CountBySeverityValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count_by_severity expected to be CountBySeverityValue, was: %T`, countBySeverityConverted))
+	}
+
+	totalCostOfAnomalyAttribute, ok := attributes["total_cost_of_anomaly"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total_cost_of_anomaly is missing from object`)
+
+		return nil, diags
+	}
+
+	totalCostOfAnomalyVal, ok := totalCostOfAnomalyAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total_cost_of_anomaly expected to be basetypes.Float64Value, was: %T`, totalCostOfAnomalyAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return AnomalySummaryValue{
+		CountBySeverity:    countBySeverityVal,
+		TotalCostOfAnomaly: totalCostOfAnomalyVal,
+		state:              attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAnomalySummaryValueNull() AnomalySummaryValue {
+	return AnomalySummaryValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewAnomalySummaryValueUnknown() AnomalySummaryValue {
+	return AnomalySummaryValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewAnomalySummaryValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (AnomalySummaryValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing AnomalySummaryValue Attribute Value",
+				"While creating a AnomalySummaryValue value, a missing attribute value was detected. "+
+					"A AnomalySummaryValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AnomalySummaryValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid AnomalySummaryValue Attribute Type",
+				"While creating a AnomalySummaryValue value, an invalid attribute value was detected. "+
+					"A AnomalySummaryValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AnomalySummaryValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("AnomalySummaryValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra AnomalySummaryValue Attribute Value",
+				"While creating a AnomalySummaryValue value, an extra attribute value was detected. "+
+					"A AnomalySummaryValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra AnomalySummaryValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewAnomalySummaryValueUnknown(), diags
+	}
+
+	countBySeverityAttribute, ok := attributes["count_by_severity"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`count_by_severity is missing from object`)
+
+		return NewAnomalySummaryValueUnknown(), diags
+	}
+
+	countBySeverityVal, ok := countBySeverityAttribute.(CountBySeverityValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`count_by_severity expected to be CountBySeverityValue, was: %T`, countBySeverityAttribute))
+	}
+
+	totalCostOfAnomalyAttribute, ok := attributes["total_cost_of_anomaly"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total_cost_of_anomaly is missing from object`)
+
+		return NewAnomalySummaryValueUnknown(), diags
+	}
+
+	totalCostOfAnomalyVal, ok := totalCostOfAnomalyAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total_cost_of_anomaly expected to be basetypes.Float64Value, was: %T`, totalCostOfAnomalyAttribute))
+	}
+
+	if diags.HasError() {
+		return NewAnomalySummaryValueUnknown(), diags
+	}
+
+	return AnomalySummaryValue{
+		CountBySeverity:    countBySeverityVal,
+		TotalCostOfAnomaly: totalCostOfAnomalyVal,
+		state:              attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAnomalySummaryValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) AnomalySummaryValue {
+	object, diags := NewAnomalySummaryValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewAnomalySummaryValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t AnomalySummaryType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewAnomalySummaryValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewAnomalySummaryValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewAnomalySummaryValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewAnomalySummaryValueMust(AnomalySummaryValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t AnomalySummaryType) ValueType(ctx context.Context) attr.Value {
+	return AnomalySummaryValue{}
+}
+
+var _ basetypes.ObjectValuable = AnomalySummaryValue{}
+
+type AnomalySummaryValue struct {
+	CountBySeverity    CountBySeverityValue   `tfsdk:"count_by_severity"`
+	TotalCostOfAnomaly basetypes.Float64Value `tfsdk:"total_cost_of_anomaly"`
+	state              attr.ValueState
+}
+
+func (v AnomalySummaryValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["count_by_severity"] = CountBySeverityType{
+		basetypes.ObjectType{
+			AttrTypes: CountBySeverityValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["total_cost_of_anomaly"] = basetypes.Float64Type{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.CountBySeverity.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["count_by_severity"] = val
+
+		val, err = v.TotalCostOfAnomaly.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["total_cost_of_anomaly"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v AnomalySummaryValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v AnomalySummaryValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v AnomalySummaryValue) String() string {
+	return "AnomalySummaryValue"
+}
+
+func (v AnomalySummaryValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var countBySeverity attr.Value
+
+	{
+		countBySeverity = v.CountBySeverity
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"count_by_severity": CountBySeverityType{
+			basetypes.ObjectType{
+				AttrTypes: CountBySeverityValue{}.AttributeTypes(ctx),
+			},
+		},
+		"total_cost_of_anomaly": basetypes.Float64Type{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"count_by_severity":     countBySeverity,
+			"total_cost_of_anomaly": v.TotalCostOfAnomaly,
+		})
+
+	return objVal, diags
+}
+
+func (v AnomalySummaryValue) Equal(o attr.Value) bool {
+	other, ok := o.(AnomalySummaryValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.CountBySeverity.Equal(other.CountBySeverity) {
+		return false
+	}
+
+	if !v.TotalCostOfAnomaly.Equal(other.TotalCostOfAnomaly) {
+		return false
+	}
+
+	return true
+}
+
+func (v AnomalySummaryValue) Type(ctx context.Context) attr.Type {
+	return AnomalySummaryType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v AnomalySummaryValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"count_by_severity": CountBySeverityType{
+			basetypes.ObjectType{
+				AttrTypes: CountBySeverityValue{}.AttributeTypes(ctx),
+			},
+		},
+		"total_cost_of_anomaly": basetypes.Float64Type{},
+	}
+}
+
+var _ basetypes.ObjectTypable = CountBySeverityType{}
+
+type CountBySeverityType struct {
+	basetypes.ObjectType
+}
+
+func (t CountBySeverityType) Equal(o attr.Type) bool {
+	other, ok := o.(CountBySeverityType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CountBySeverityType) String() string {
+	return "CountBySeverityType"
+}
+
+func (t CountBySeverityType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCountBySeverityValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCountBySeverityValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	criticalAttribute, ok := attributes["critical"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`critical is missing from object`)
+
+		return nil, diags
+	}
+
+	criticalVal, ok := criticalAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`critical expected to be basetypes.Int64Value, was: %T`, criticalAttribute))
+	}
+
+	informationAttribute, ok := attributes["information"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`information is missing from object`)
+
+		return nil, diags
+	}
+
+	informationVal, ok := informationAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`information expected to be basetypes.Int64Value, was: %T`, informationAttribute))
+	}
+
+	warningAttribute, ok := attributes["warning"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`warning is missing from object`)
+
+		return nil, diags
+	}
+
+	warningVal, ok := warningAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`warning expected to be basetypes.Int64Value, was: %T`, warningAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CountBySeverityValue{
+		Critical:    criticalVal,
+		Information: informationVal,
+		Warning:     warningVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCountBySeverityValueNull() CountBySeverityValue {
+	return CountBySeverityValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCountBySeverityValueUnknown() CountBySeverityValue {
+	return CountBySeverityValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCountBySeverityValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CountBySeverityValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CountBySeverityValue Attribute Value",
+				"While creating a CountBySeverityValue value, a missing attribute value was detected. "+
+					"A CountBySeverityValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CountBySeverityValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CountBySeverityValue Attribute Type",
+				"While creating a CountBySeverityValue value, an invalid attribute value was detected. "+
+					"A CountBySeverityValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CountBySeverityValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CountBySeverityValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CountBySeverityValue Attribute Value",
+				"While creating a CountBySeverityValue value, an extra attribute value was detected. "+
+					"A CountBySeverityValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CountBySeverityValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCountBySeverityValueUnknown(), diags
+	}
+
+	criticalAttribute, ok := attributes["critical"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`critical is missing from object`)
+
+		return NewCountBySeverityValueUnknown(), diags
+	}
+
+	criticalVal, ok := criticalAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`critical expected to be basetypes.Int64Value, was: %T`, criticalAttribute))
+	}
+
+	informationAttribute, ok := attributes["information"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`information is missing from object`)
+
+		return NewCountBySeverityValueUnknown(), diags
+	}
+
+	informationVal, ok := informationAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`information expected to be basetypes.Int64Value, was: %T`, informationAttribute))
+	}
+
+	warningAttribute, ok := attributes["warning"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`warning is missing from object`)
+
+		return NewCountBySeverityValueUnknown(), diags
+	}
+
+	warningVal, ok := warningAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`warning expected to be basetypes.Int64Value, was: %T`, warningAttribute))
+	}
+
+	if diags.HasError() {
+		return NewCountBySeverityValueUnknown(), diags
+	}
+
+	return CountBySeverityValue{
+		Critical:    criticalVal,
+		Information: informationVal,
+		Warning:     warningVal,
+		state:       attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCountBySeverityValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CountBySeverityValue {
+	object, diags := NewCountBySeverityValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCountBySeverityValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CountBySeverityType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCountBySeverityValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCountBySeverityValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCountBySeverityValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCountBySeverityValueMust(CountBySeverityValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CountBySeverityType) ValueType(ctx context.Context) attr.Value {
+	return CountBySeverityValue{}
+}
+
+var _ basetypes.ObjectValuable = CountBySeverityValue{}
+
+type CountBySeverityValue struct {
+	Critical    basetypes.Int64Value `tfsdk:"critical"`
+	Information basetypes.Int64Value `tfsdk:"information"`
+	Warning     basetypes.Int64Value `tfsdk:"warning"`
+	state       attr.ValueState
+}
+
+func (v CountBySeverityValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["critical"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["information"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["warning"] = basetypes.Int64Type{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Critical.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["critical"] = val
+
+		val, err = v.Information.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["information"] = val
+
+		val, err = v.Warning.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["warning"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CountBySeverityValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CountBySeverityValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CountBySeverityValue) String() string {
+	return "CountBySeverityValue"
+}
+
+func (v CountBySeverityValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"critical":    basetypes.Int64Type{},
+		"information": basetypes.Int64Type{},
+		"warning":     basetypes.Int64Type{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"critical":    v.Critical,
+			"information": v.Information,
+			"warning":     v.Warning,
+		})
+
+	return objVal, diags
+}
+
+func (v CountBySeverityValue) Equal(o attr.Value) bool {
+	other, ok := o.(CountBySeverityValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Critical.Equal(other.Critical) {
+		return false
+	}
+
+	if !v.Information.Equal(other.Information) {
+		return false
+	}
+
+	if !v.Warning.Equal(other.Warning) {
+		return false
+	}
+
+	return true
+}
+
+func (v CountBySeverityValue) Type(ctx context.Context) attr.Type {
+	return CountBySeverityType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CountBySeverityValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"critical":    basetypes.Int64Type{},
+		"information": basetypes.Int64Type{},
+		"warning":     basetypes.Int64Type{},
 	}
 }

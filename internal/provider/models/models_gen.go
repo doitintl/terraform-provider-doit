@@ -3607,6 +3607,45 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for ListAnomaliesParamsSortBy.
+const (
+	CostOfAnomaly ListAnomaliesParamsSortBy = "costOfAnomaly"
+	SeverityLevel ListAnomaliesParamsSortBy = "severityLevel"
+	StartTime     ListAnomaliesParamsSortBy = "startTime"
+)
+
+// Valid indicates whether the value is a known member of the ListAnomaliesParamsSortBy enum.
+func (e ListAnomaliesParamsSortBy) Valid() bool {
+	switch e {
+	case CostOfAnomaly:
+		return true
+	case SeverityLevel:
+		return true
+	case StartTime:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListAnomaliesParamsSortOrder.
+const (
+	ListAnomaliesParamsSortOrderAsc  ListAnomaliesParamsSortOrder = "asc"
+	ListAnomaliesParamsSortOrderDesc ListAnomaliesParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListAnomaliesParamsSortOrder enum.
+func (e ListAnomaliesParamsSortOrder) Valid() bool {
+	switch e {
+	case ListAnomaliesParamsSortOrderAsc:
+		return true
+	case ListAnomaliesParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCloudDiagramComponentsParamsType.
 const (
 	GetCloudDiagramComponentsParamsTypeApplication    GetCloudDiagramComponentsParamsType = "application"
@@ -4264,9 +4303,42 @@ type AnnotationListItem struct {
 
 // AnomaliesResponse List of detected cloud cost anomalies.
 type AnomaliesResponse struct {
-	Anomalies *[]AnomalyItem `json:"anomalies,omitempty"`
-	PageToken *string        `json:"pageToken,omitempty"`
-	RowCount  *int64         `json:"rowCount,omitempty"`
+	// Anomalies Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies.
+	Anomalies []AnomalyItem `json:"anomalies"`
+
+	// AnomalySummary Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.
+	AnomalySummary AnomaliesResponseAnomalySummary `json:"anomalySummary"`
+
+	// PageToken Opaque token for the next page. Omitted when there is no next page.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`.
+	RowCount int64 `json:"rowCount"`
+
+	// TotalCount Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence.
+	TotalCount int64 `json:"totalCount"`
+
+	// TotalCountExact Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set.
+	TotalCountExact bool `json:"totalCountExact"`
+
+	// Truncated `true` when filtered anomalies remain beyond this page. Derived from the same "rows remain after the last returned row" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`.
+	Truncated bool `json:"truncated"`
+}
+
+// AnomaliesResponseAnomalySummary Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.
+type AnomaliesResponseAnomalySummary struct {
+	// CountBySeverity Count of matching anomalies per severity level. All three keys are always present, with zero counts included.
+	CountBySeverity AnomaliesResponseAnomalySummaryCountBySeverity `json:"countBySeverity"`
+
+	// TotalCostOfAnomaly Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.
+	TotalCostOfAnomaly float64 `json:"totalCostOfAnomaly"`
+}
+
+// AnomaliesResponseAnomalySummaryCountBySeverity Count of matching anomalies per severity level. All three keys are always present, with zero counts included.
+type AnomaliesResponseAnomalySummaryCountBySeverity struct {
+	Critical    int64 `json:"critical"`
+	Information int64 `json:"information"`
+	Warning     int64 `json:"warning"`
 }
 
 // AnomalyItem Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
@@ -4317,7 +4389,7 @@ type AnomalyItem struct {
 	// ServiceName Service name.
 	ServiceName string `json:"serviceName"`
 
-	// SeverityLevel Severity level: Information, Warning or Critical
+	// SeverityLevel Severity level: `information`, `warning`, or `critical`.
 	SeverityLevel string `json:"severityLevel"`
 
 	// StartTime Usage start time of the anomaly.
@@ -6980,7 +7052,7 @@ type GetAnomaly200Response struct {
 	// ServiceName Service name
 	ServiceName string `json:"serviceName"`
 
-	// SeverityLevel Severity level: Information, Warning or Critical
+	// SeverityLevel Severity level: `information`, `warning`, or `critical`.
 	SeverityLevel string `json:"severityLevel"`
 
 	// StartTime Usage start time of the anomaly
@@ -9173,16 +9245,23 @@ type GetReportParams struct {
 
 // ListAnomaliesParams defines parameters for ListAnomalies.
 type ListAnomaliesParams struct {
-	// MinCreationTime Min value for the anomaly detection time
-	MinCreationTime *string `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
+	// MinCreationTime Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
+	MinCreationTime *int64 `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
 
-	// MaxCreationTime Max value for the anomaly detection time
-	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
+	// MaxCreationTime Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
+	MaxCreationTime *int64 `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 
-	// Filter An expression for filtering the results of the request
+	// Filter An expression for filtering the results. The syntax is `key:value`. Multiple criteria can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+	// Available filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// MaxResults The maximum number of results to return in a single page
+	// SortBy A field by which the results will be sorted. Defaults to `startTime`.
+	SortBy *ListAnomaliesParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort order can be ascending or descending.
+	SortOrder *ListAnomaliesParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// MaxResults The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
 	// PageToken Page token, returned by a previous call, to request the next page of results
@@ -9191,6 +9270,12 @@ type ListAnomaliesParams struct {
 	// IncludeNotifications Include anomaly notifications from the subcollection. Defaults to false.
 	IncludeNotifications *bool `form:"includeNotifications,omitempty" json:"includeNotifications,omitempty"`
 }
+
+// ListAnomaliesParamsSortBy defines parameters for ListAnomalies.
+type ListAnomaliesParamsSortBy string
+
+// ListAnomaliesParamsSortOrder defines parameters for ListAnomalies.
+type ListAnomaliesParamsSortOrder string
 
 // IdOfAssetsParams defines parameters for IdOfAssets.
 type IdOfAssetsParams struct {
@@ -10752,8 +10837,10 @@ type ClientInterface interface {
 	// ListAnomalies List anomalies
 	//
 	// Returns a list of detected anomalies.
-	// Anomalies are returned in reverse chronological order by default.
+	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+	// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 	//
 	// Corresponds with GET /anomalies/v1 (the `ListAnomalies` operationId).
 	ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -12753,8 +12840,10 @@ func (c *Client) UpdateCustomTheme(ctx context.Context, id string, body UpdateCu
 // ListAnomalies List anomalies
 //
 // Returns a list of detected anomalies.
-// Anomalies are returned in reverse chronological order by default.
+// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 //
 // Corresponds with GET /anomalies/v1 (the `ListAnomalies` operationId).
 func (c *Client) ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -16834,7 +16923,7 @@ func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.
 
 		if params.MinCreationTime != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "minCreationTime", *params.MinCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "minCreationTime", *params.MinCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -16846,7 +16935,7 @@ func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.
 
 		if params.MaxCreationTime != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxCreationTime", *params.MaxCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxCreationTime", *params.MaxCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -16859,6 +16948,30 @@ func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortOrder", *params.SortOrder, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -20864,8 +20977,10 @@ type ClientWithResponsesInterface interface {
 	// ListAnomaliesWithResponse List anomalies
 	//
 	// Returns a list of detected anomalies.
-	// Anomalies are returned in reverse chronological order by default.
+	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+	// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -30346,8 +30461,10 @@ func (c *ClientWithResponses) UpdateCustomThemeWithResponse(ctx context.Context,
 // ListAnomaliesWithResponse List anomalies
 //
 // Returns a list of detected anomalies.
-// Anomalies are returned in reverse chronological order by default.
+// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 //
 // Returns a wrapper object for the known response body format(s).
 //

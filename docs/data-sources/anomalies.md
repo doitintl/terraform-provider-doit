@@ -15,9 +15,17 @@ Monitor cost spikes in your cloud environment.
 # Retrieve all anomalies
 data "doit_anomalies" "all" {}
 
-# Filter by severity
-data "doit_anomalies" "critical" {
-  filter = "severityLevel:critical"
+# Filter by severity and sort by cost descending
+data "doit_anomalies" "critical_by_cost" {
+  filter     = "severityLevel:critical"
+  sort_by    = "costOfAnomaly"
+  sort_order = "desc"
+}
+
+# Filter by creation time window (epoch milliseconds)
+data "doit_anomalies" "recent" {
+  min_creation_time = 1704067200000 # 2024-01-01T00:00:00Z
+  max_creation_time = 1735689600000 # 2025-01-01T00:00:00Z
 }
 
 # Include notification events for each anomaly
@@ -37,9 +45,22 @@ output "notification_audit" {
   }]
 }
 
-# Output anomaly details
+# Output anomaly counts and aggregate summary
 output "total_anomalies" {
   value = data.doit_anomalies.all.row_count
+}
+
+output "total_count" {
+  value = data.doit_anomalies.all.total_count
+}
+
+output "anomaly_summary_metrics" {
+  value = {
+    total_cost        = data.doit_anomalies.all.anomaly_summary.total_cost_of_anomaly
+    critical_count    = data.doit_anomalies.all.anomaly_summary.count_by_severity.critical
+    warning_count     = data.doit_anomalies.all.anomaly_summary.count_by_severity.warning
+    information_count = data.doit_anomalies.all.anomaly_summary.count_by_severity.information
+  }
 }
 
 output "anomaly_summary" {
@@ -258,18 +279,27 @@ output "acknowledgment_audit" {
 
 ### Optional
 
-- `filter` (String) An expression for filtering the results of the request
+- `filter` (String) An expression for filtering the results. The syntax is `key:value`. Multiple criteria can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+Available filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored.
 - `include_notifications` (Boolean) Include anomaly notifications from the subcollection. Defaults to false.
-- `max_creation_time` (String) Max value for the anomaly detection time
-- `max_results` (Number) The maximum number of results to return in a single page
-- `min_creation_time` (String) Min value for the anomaly detection time
+- `max_creation_time` (Number) Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
+- `max_results` (Number) The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.
+- `min_creation_time` (Number) Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
+- `sort_by` (String) A field by which the results will be sorted. Defaults to `startTime`.
+Possible values: `startTime`, `severityLevel`, `costOfAnomaly`
+- `sort_order` (String) Sort order can be ascending or descending.
+Possible values: `asc`, `desc`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
-- `anomalies` (Attributes List) (see [below for nested schema](#nestedatt--anomalies))
-- `row_count` (Number)
+- `anomalies` (Attributes List) Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies. (see [below for nested schema](#nestedatt--anomalies))
+- `anomaly_summary` (Attributes) Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence. (see [below for nested schema](#nestedatt--anomaly_summary))
+- `row_count` (Number) Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`.
+- `total_count` (Number) Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence.
+- `total_count_exact` (Boolean) Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set.
+- `truncated` (Boolean) `true` when filtered anomalies remain beyond this page. Derived from the same "rows remain after the last returned row" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -300,7 +330,7 @@ Read-Only:
 - `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--resource_data))
 - `scope` (String) Scope: Project or Account
 - `service_name` (String) Service name.
-- `severity_level` (String) Severity level: Information, Warning or Critical
+- `severity_level` (String) Severity level: `information`, `warning`, or `critical`.
 - `start_time` (Number) Usage start time of the anomaly.
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly
@@ -345,3 +375,22 @@ Read-Only:
 
 - `cost` (Number)
 - `name` (String)
+
+
+
+<a id="nestedatt--anomaly_summary"></a>
+### Nested Schema for `anomaly_summary`
+
+Read-Only:
+
+- `count_by_severity` (Attributes) Count of matching anomalies per severity level. All three keys are always present, with zero counts included. (see [below for nested schema](#nestedatt--anomaly_summary--count_by_severity))
+- `total_cost_of_anomaly` (Number) Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.
+
+<a id="nestedatt--anomaly_summary--count_by_severity"></a>
+### Nested Schema for `anomaly_summary.count_by_severity`
+
+Read-Only:
+
+- `critical` (Number)
+- `information` (Number)
+- `warning` (Number)

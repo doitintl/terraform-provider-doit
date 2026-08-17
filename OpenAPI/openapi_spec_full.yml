@@ -2398,28 +2398,60 @@ paths:
       summary: List anomalies
       description: |-
         Returns a list of detected anomalies.
-        Anomalies are returned in reverse chronological order by default.
+        Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+        The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
         The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+        **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
       operationId: listAnomalies
       parameters:
         - name: minCreationTime
           in: query
-          description: Min value for the anomaly detection time
+          description: >-
+            Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX
+            epoch. Despite the name, this filters the anomaly's usage start time, not the time the
+            anomaly document was created.
           schema:
-            type: string
+            type: integer
+            format: int64
         - name: maxCreationTime
           in: query
-          description: Max value for the anomaly detection time
+          description: >-
+            Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX
+            epoch. Despite the name, this filters the anomaly's usage start time, not the time the
+            anomaly document was created.
           schema:
-            type: string
+            type: integer
+            format: int64
         - name: filter
           in: query
-          description: An expression for filtering the results of the request
+          description: >-
+            An expression for filtering the results. The syntax is `key:value`. Multiple criteria
+            can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+
+            Available filter keys: **serviceName**, **billingAccount**, **platform**,
+            **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`,
+            `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with
+            `400` rather than ignored.
+          example: "severityLevel:critical"
           schema:
             type: string
+        - name: sortBy
+          in: query
+          description: >-
+            A field by which the results will be sorted. Defaults to `startTime`.
+          schema:
+            type: string
+            enum:
+              - startTime
+              - severityLevel
+              - costOfAnomaly
+            default: startTime
+        - $ref: "#/components/parameters/sortOrder"
         - name: maxResults
           in: query
-          description: The maximum number of results to return in a single page
+          description: >-
+            The maximum number of results to return in a single page. If omitted, all anomalies
+            matching the filters and time window are returned in a single page.
           schema:
             type: integer
             format: int64
@@ -2510,7 +2542,7 @@ paths:
                     description: Service name
                   severityLevel:
                     type: string
-                    description: "Severity level: Information, Warning or Critical"
+                    description: "Severity level: `information`, `warning`, or `critical`."
                   startTime:
                     type: integer
                     description: Usage start time of the anomaly
@@ -9015,16 +9047,86 @@ components:
     AnomaliesResponse:
       type: object
       description: List of detected cloud cost anomalies.
+      required:
+        - anomalies
+        - rowCount
+        - truncated
+        - totalCount
+        - totalCountExact
+        - anomalySummary
       properties:
         anomalies:
           type: array
+          description: >-
+            Anomalies in this page. Always an array; empty (`[]`) when there are no matching
+            anomalies.
           items:
             $ref: "#/components/schemas/AnomalyItem"
         pageToken:
           type: string
+          description: Opaque token for the next page. Omitted when there is no next page.
         rowCount:
           type: integer
           format: int64
+          description: >-
+            Number of items in this page (`anomalies.length`). This is not the total count across
+            all pages; the total across the full filtered result set is `totalCount`.
+        truncated:
+          type: boolean
+          description: >-
+            `true` when filtered anomalies remain beyond this page. Derived from the same "rows
+            remain after the last returned row" check as `pageToken`, so the two are never
+            contradictory: `pageToken` is present if and only if `truncated` is `true`.
+        totalCount:
+          type: integer
+          format: int64
+          description: >-
+            Total number of anomalies matching the filters and time window, across all pages. This
+            is a per-request snapshot: under concurrent writes, the value can differ between pages
+            fetched during the same pagination sequence.
+        totalCountExact:
+          type: boolean
+          description: >-
+            Whether `totalCount` is exact. Always `true` for this operation, because `totalCount`
+            is computed over the fully materialised filtered result set.
+        anomalySummary:
+          type: object
+          description: >-
+            Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete
+            filtered result set across all pages, not the returned page. Anomalies whose severity
+            cannot be determined (legacy documents) are counted in `totalCount` and
+            `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so
+            the three values can sum to less than `totalCount`. Computed as of this request; under
+            concurrent writes, values may differ between pages fetched during the same pagination
+            sequence.
+          required:
+            - countBySeverity
+            - totalCostOfAnomaly
+          properties:
+            countBySeverity:
+              type: object
+              description: >-
+                Count of matching anomalies per severity level. All three keys are always present,
+                with zero counts included.
+              required:
+                - information
+                - warning
+                - critical
+              properties:
+                information:
+                  type: integer
+                  format: int64
+                warning:
+                  type: integer
+                  format: int64
+                critical:
+                  type: integer
+                  format: int64
+            totalCostOfAnomaly:
+              type: number
+              format: double
+              description: >-
+                Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.
     AnomalyItem:
       required:
         - attribution
@@ -9076,7 +9178,7 @@ components:
           description: Service name.
         severityLevel:
           type: string
-          description: "Severity level: Information, Warning or Critical"
+          description: "Severity level: `information`, `warning`, or `critical`."
         startTime:
           type: integer
           description: Usage start time of the anomaly.
@@ -15874,7 +15976,7 @@ components:
                 description: Service name
               severityLevel:
                 type: string
-                description: "Severity level: Information, Warning or Critical"
+                description: "Severity level: `information`, `warning`, or `critical`."
               startTime:
                 type: integer
                 description: Usage start time of the anomaly
