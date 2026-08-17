@@ -15,6 +15,11 @@ Manage Cloud Analytics reports and get reports data in JSON format.
 # Retrieve all reports
 data "doit_reports" "all" {}
 
+# Filter reports by name substring
+data "doit_reports" "production" {
+  name_contains = "production"
+}
+
 # Use doit_current_user to filter reports owned by the current user
 data "doit_current_user" "me" {}
 
@@ -63,6 +68,7 @@ Possible filter keys: **reportName**, **owner**, **type**, **updateTime**, **fol
 - `max_creation_time` (String) Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
 - `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
+- `name_contains` (String) Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 

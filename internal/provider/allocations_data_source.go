@@ -74,7 +74,7 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	defer cancel()
 
 	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	if data.Filter.IsUnknown() || data.NameContains.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Allocations = types.ListUnknown(datasource_allocations.AllocationsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -83,6 +83,9 @@ func (d *allocationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	params := &models.ListAllocationsParams{}
 	if !data.Filter.IsNull() {
 		params.Filter = new(data.Filter.ValueString())
+	}
+	if !data.NameContains.IsNull() {
+		params.NameContains = new(data.NameContains.ValueString())
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate

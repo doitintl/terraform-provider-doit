@@ -6,6 +6,11 @@ data "doit_alerts" "aws_alerts" {
   filter = "name:[AWS]"
 }
 
+# Filter alerts by name substring
+data "doit_alerts" "production" {
+  name_contains = "production"
+}
+
 # Sort by last triggered time
 data "doit_alerts" "recent" {
   sort_by    = "lastAlerted"

@@ -335,6 +335,13 @@
 						}
 					},
 					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
+						}
+					},
+					{
 						"name": "alerts",
 						"list_nested": {
 							"computed_optional_required": "computed",
@@ -868,6 +875,13 @@
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "An expression for filtering the results.\nValid fields: **type**, **owner**, **name**, **folderId**."
+						}
+					},
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
 						}
 					},
 					{
@@ -2652,7 +2666,14 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results of the request. The syntax is \"key:[\u003cvalue\u003e]\".\nAvailable keys: owner, lastModified in ms (\u003elasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\"."
+							"description": "An expression for filtering the results of the request. The syntax is \"key:[\u003cvalue\u003e]\".\nAvailable keys: owner, budgetName, lastModified in ms (\u003elasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\"."
+						}
+					},
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
 						}
 					},
 					{
@@ -9746,6 +9767,13 @@
 						}
 					},
 					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
+						}
+					},
+					{
 						"name": "sort_by",
 						"string": {
 							"computed_optional_required": "computed_optional",
@@ -11985,6 +12013,13 @@
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "An expression for filtering the results.\nThe syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**"
+						}
+					},
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
 						}
 					},
 					{

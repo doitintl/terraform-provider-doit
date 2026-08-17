@@ -20,6 +20,11 @@ data "doit_allocations" "groups" {
   filter = "allocationType:[group]"
 }
 
+# Filter by name substring
+data "doit_allocations" "production" {
+  name_contains = "production"
+}
+
 # Output allocation names
 output "total_allocations" {
   value = data.doit_allocations.all.row_count
@@ -40,6 +45,7 @@ output "allocation_names" {
 - `filter` (String) An expression for filtering the results.
 Valid fields: **type**, **owner**, **name**, **folderId**.
 - `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `name_contains` (String) Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 Possible values: `id`, `name`, `owner`, `description`, `type`, `createTime`, `updateTime`

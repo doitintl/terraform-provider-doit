@@ -8865,6 +8865,9 @@ type ManagementAccountId = string
 // MaxResults defines model for maxResults.
 type MaxResults = int64
 
+// NameContains defines model for nameContains.
+type NameContains = string
+
 // PageToken defines model for pageToken.
 type PageToken = string
 
@@ -8951,6 +8954,9 @@ type ListAlertsParams struct {
 	// Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 	// Available filter keys: **owner**, **name**
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
 }
 
 // ListAlertsParamsSortBy defines parameters for ListAlerts.
@@ -8970,6 +8976,9 @@ type ListAllocationsParams struct {
 	// Filter An expression for filtering the results.
 	// Valid fields: **type**, **owner**, **name**, **folderId**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
 
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListAllocationsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
@@ -9018,8 +9027,11 @@ type ListBudgetsParams struct {
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results of the request. The syntax is "key:[<value>]".
-	// Available keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
+	// Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
 
 	// MinCreationTime Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
 	MinCreationTime *string `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
@@ -9108,6 +9120,9 @@ type ListLabelsParams struct {
 	// Valid fields: **name**, **type**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
+
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListLabelsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
@@ -9133,6 +9148,9 @@ type ListReportsParams struct {
 	// The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 	// Possible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
 
 	// MinCreationTime Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
 	MinCreationTime *string `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
@@ -14273,6 +14291,18 @@ func NewListAlertsRequest(server string, params *ListAlertsParams) (*http.Reques
 
 		}
 
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
@@ -14497,6 +14527,18 @@ func NewListAllocationsRequest(server string, params *ListAllocationsParams) (*h
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15038,6 +15080,18 @@ func NewListBudgetsRequest(server string, params *ListBudgetsParams) (*http.Requ
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15821,6 +15875,18 @@ func NewListLabelsRequest(server string, params *ListLabelsParams) (*http.Reques
 
 		}
 
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if params.SortBy != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
@@ -16150,6 +16216,18 @@ func NewListReportsRequest(server string, params *ListReportsParams) (*http.Requ
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {

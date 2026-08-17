@@ -1,6 +1,11 @@
 # Retrieve all reports
 data "doit_reports" "all" {}
 
+# Filter reports by name substring
+data "doit_reports" "production" {
+  name_contains = "production"
+}
+
 # Use doit_current_user to filter reports owned by the current user
 data "doit_current_user" "me" {}
 

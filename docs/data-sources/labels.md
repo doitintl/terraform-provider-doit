@@ -15,6 +15,11 @@ Create and manage labels to organize and categorize your cloud resources.
 # Retrieve all labels
 data "doit_labels" "all" {}
 
+# Filter labels by name substring
+data "doit_labels" "environment" {
+  name_contains = "env"
+}
+
 # Sort by name
 data "doit_labels" "sorted" {
   sort_by    = "name"
@@ -41,6 +46,7 @@ output "label_names" {
 - `filter` (String) An expression for filtering the results.
 Valid fields: **name**, **type**.
 - `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `name_contains` (String) Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 Possible values: `id`, `name`, `type`, `createTime`, `updateTime`
