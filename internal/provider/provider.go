@@ -277,6 +277,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewFolderDataSource,
 		NewRolesDataSource,
 		NewCurrentUserDataSource,
+		NewCustomerDataSource,
 		NewAccountTeamDataSource,
 		NewUsersDataSource,
 		NewReportResultDataSource,
@@ -352,5 +353,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewCustomThemeResource,
 		NewActiveThemeResource,
 		NewSupportRequestTagsResource,
+		NewCustomerResource,
 	}
 }

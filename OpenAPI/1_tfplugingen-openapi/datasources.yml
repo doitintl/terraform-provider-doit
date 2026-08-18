@@ -69,6 +69,10 @@ data_sources:
     read:
       path: /auth/v1/validate
       method: GET
+  customer:
+    read:
+      path: /customers/v1/customers
+      method: GET
   account_team:
     read:
       path: /customers/v1/accountTeam

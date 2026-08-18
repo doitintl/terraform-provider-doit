@@ -217,3 +217,13 @@ resources:
     delete:
       path: /support/v1/tickets/{ticketId}/tags
       method: DELETE
+  customer:
+    create:
+      path: /customers/v1/customers
+      method: PATCH
+    read:
+      path: /customers/v1/customers
+      method: GET
+    update:
+      path: /customers/v1/customers
+      method: PATCH

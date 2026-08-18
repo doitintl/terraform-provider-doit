@@ -1609,6 +1609,110 @@
 			}
 		},
 		{
+			"name": "customer",
+			"schema": {
+				"attributes": [
+					{
+						"name": "contact",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "emails",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Point-of-contact email addresses for the customer."
+									}
+								}
+							],
+							"description": "Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path."
+						}
+					},
+					{
+						"name": "settings",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "allowed_invite_domains",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Email domains allowed to self-invite into the customer. Updating this field requires the `UsersManager` permission in addition to `Settings`. An empty array clears the list."
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"description": "Currency code for monetary values.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"USD\",\n\"ILS\",\n\"EUR\",\n\"AUD\",\n\"CAD\",\n\"GBP\",\n\"DKK\",\n\"NOK\",\n\"SEK\",\n\"BRL\",\n\"SGD\",\n\"MXN\",\n\"CHF\",\n\"MYR\",\n\"TWD\",\n\"EGP\",\n\"ZAR\",\n\"JPY\",\n\"IDR\",\n\"AED\",\n\"THB\",\n\"COP\",\n)"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.\n\n`currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it."
+						}
+					},
+					{
+						"name": "url_slug",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The customer's URL display name. An explicit empty string removes the active slug; a non-empty value must be 3-12 characters of lowercase letters, digits, or dashes, starting and ending with a letter or digit, and must be unique across all customers."
+						}
+					},
+					{
+						"name": "domains",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Domains associated with the customer."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer ID."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer name."
+						}
+					},
+					{
+						"name": "primary_domain",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer's primary domain."
+						}
+					}
+				],
+				"description": "Read and update your organization's general settings.",
+				"markdown_description": "Read and update your organization's general settings."
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [

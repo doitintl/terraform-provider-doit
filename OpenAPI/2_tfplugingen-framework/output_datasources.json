@@ -8303,6 +8303,98 @@
 			}
 		},
 		{
+			"name": "customer",
+			"schema": {
+				"attributes": [
+					{
+						"name": "contact",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "emails",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Point-of-contact email addresses for the customer."
+									}
+								}
+							],
+							"description": "Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path."
+						}
+					},
+					{
+						"name": "domains",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Domains associated with the customer."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer ID."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer name."
+						}
+					},
+					{
+						"name": "primary_domain",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer's primary domain."
+						}
+					},
+					{
+						"name": "settings",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "allowed_invite_domains",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Email domains allowed to self-invite into the customer. Updating this field requires the `UsersManager` permission in addition to `Settings`. An empty array clears the list."
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Currency code for monetary values."
+									}
+								}
+							],
+							"description": "Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.\n\n`currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it."
+						}
+					},
+					{
+						"name": "url_slug",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The customer's active URL display name, used in Console URLs."
+						}
+					}
+				],
+				"description": "Read and update your organization's general settings.",
+				"markdown_description": "Read and update your organization's general settings."
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [
