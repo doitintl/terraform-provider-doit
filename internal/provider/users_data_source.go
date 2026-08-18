@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
@@ -77,7 +76,7 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

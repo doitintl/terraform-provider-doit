@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	ds "github.com/doitintl/terraform-provider-doit/internal/provider/datasource_support_request_comments"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -65,7 +64,7 @@ func (d *supportRequestCommentsDataSource) Read(ctx context.Context, req datasou
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

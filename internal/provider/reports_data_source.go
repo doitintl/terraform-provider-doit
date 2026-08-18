@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_reports"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -67,7 +66,7 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -76,7 +75,7 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	defer cancel()
 
 	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	if data.Filter.IsUnknown() || data.NameContains.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Reports = types.ListUnknown(datasource_reports.ReportsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -85,6 +84,9 @@ func (d *reportsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	params := &models.ListReportsParams{}
 	if !data.Filter.IsNull() {
 		params.Filter = new(data.Filter.ValueString())
+	}
+	if !data.NameContains.IsNull() {
+		params.NameContains = new(data.NameContains.ValueString())
 	}
 	if !data.MinCreationTime.IsNull() {
 		params.MinCreationTime = new(data.MinCreationTime.ValueString())

@@ -64,7 +64,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -82,6 +82,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.Attribution = types.StringUnknown()
 		data.BillingAccount = types.StringUnknown()
 		data.CostOfAnomaly = types.Float64Unknown()
+		data.DeactivationReason = types.StringUnknown()
 		data.EndTime = types.Int64Unknown()
 		data.ExpectedMaxCost = types.Float64Unknown()
 		data.Notifications = types.ListUnknown(datasource_anomaly.NotificationsValue{}.Type(ctx))
@@ -155,6 +156,13 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.Status = types.StringValue(string(*status))
 	} else {
 		data.Status = types.StringNull()
+	}
+
+	// DeactivationReason is nullable.Nullable[models.GetAnomaly200ResponseDeactivationReason]
+	if deactivationReason := nullableToPointer(anomaly.DeactivationReason); deactivationReason != nil {
+		data.DeactivationReason = types.StringValue(string(*deactivationReason))
+	} else {
+		data.DeactivationReason = types.StringNull()
 	}
 
 	// Map resource_data

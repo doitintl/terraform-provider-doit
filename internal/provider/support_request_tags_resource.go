@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -130,7 +129,7 @@ func (r *supportRequestTagsResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	createTimeout, diags := plan.Timeouts.Create(ctx, DefaultCreateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -179,7 +178,7 @@ func (r *supportRequestTagsResource) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -209,7 +208,7 @@ func (r *supportRequestTagsResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	updateTimeout, diags := plan.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -241,7 +240,7 @@ func (r *supportRequestTagsResource) Delete(ctx context.Context, req resource.De
 		return
 	}
 
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

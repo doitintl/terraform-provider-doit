@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
@@ -82,9 +81,6 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 	// there do not carry over. Re-attach the ones that must hold for both.
 	if attr, ok := dsConfigAttrs["metric"].(dsschema.SingleNestedAttribute); ok {
 		attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
-		// Workaround for https://github.com/doitintl/terraform-plugin-codegen-openapi/issues/5:
-		// the codegen fork drops the deprecation on allOf-composed properties.
-		attr.DeprecationMessage = "This attribute is deprecated."
 		dsConfigAttrs["metric"] = attr
 	}
 
@@ -186,7 +182,7 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

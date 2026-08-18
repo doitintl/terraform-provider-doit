@@ -149,8 +149,8 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 			"filter": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\".",
-				MarkdownDescription: "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\".",
+				Description:         "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\".",
+				MarkdownDescription: "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\".",
 			},
 			"max_creation_time": schema.StringAttribute{
 				Optional:            true,
@@ -169,6 +169,12 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.",
 				MarkdownDescription: "Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.",
+			},
+			"name_contains": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics.",
+				MarkdownDescription: "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics.",
 			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
@@ -193,6 +199,7 @@ type BudgetsModel struct {
 	MaxCreationTime types.String `tfsdk:"max_creation_time"`
 	MaxResults      types.Int64  `tfsdk:"max_results"`
 	MinCreationTime types.String `tfsdk:"min_creation_time"`
+	NameContains    types.String `tfsdk:"name_contains"`
 	PageToken       types.String `tfsdk:"page_token"`
 	RowCount        types.Int64  `tfsdk:"row_count"`
 }

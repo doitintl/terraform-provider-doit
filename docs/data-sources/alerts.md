@@ -20,6 +20,11 @@ data "doit_alerts" "aws_alerts" {
   filter = "name:[AWS]"
 }
 
+# Filter alerts by name substring
+data "doit_alerts" "production" {
+  name_contains = "production"
+}
+
 # Sort by last triggered time
 data "doit_alerts" "recent" {
   sort_by    = "lastAlerted"
@@ -56,6 +61,7 @@ output "alert_details" {
 - `filter` (String) An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 Available filter keys: **owner**, **name**
 - `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+- `name_contains` (String) Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 Possible values: `name`, `createTime`, `updateTime`, `lastAlerted`

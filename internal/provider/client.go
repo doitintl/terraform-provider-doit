@@ -14,12 +14,9 @@ import (
 
 	"github.com/cenkalti/backoff/v5"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/oauth2"
 )
-
-// DefaultRequestTimeout is the default timeout for individual HTTP requests
-// to the DoiT API. This matches the Google Cloud Terraform provider's default.
-const DefaultRequestTimeout = 120 * time.Second
 
 // DCIRetryClient wraps an HTTP client with retry logic tailored for the DoiT Console API (DCI).
 //
@@ -47,7 +44,8 @@ const DefaultRequestTimeout = 120 * time.Second
 //   - 503 (Service Unavailable): Temporary server overload
 //   - 504 (Gateway Timeout): Temporary timeout
 //
-// All other 4xx/5xx errors are treated as permanent failures (no retry).
+// All other 4xx/5xx errors are treated as permanent failures (no retry). This
+// deliberately includes 524 — see httpStatusCloudflareTimeout.
 //
 // # NOT Suitable For
 //
@@ -59,6 +57,119 @@ const DefaultRequestTimeout = 120 * time.Second
 // If you need a general-purpose retry client, use go-retryablehttp instead.
 type DCIRetryClient struct {
 	client *http.Client
+
+	// newBackOff builds the retry policy for a single Do call. When nil,
+	// newRetryBackOff is used. Tests inject a fast policy so they do not sleep
+	// for real — the backoff library's timer hook is unexported, so this is the
+	// only way to control retry timing.
+	//
+	// This is deliberately a factory rather than a backoff.BackOff value:
+	// ExponentialBackOff is not thread-safe and NextBackOff mutates its own
+	// state, while one DCIRetryClient is shared by every resource for the whole
+	// provider lifetime and Terraform runs operations concurrently. A shared
+	// instance would have concurrent Do calls resetting and advancing each
+	// other's intervals.
+	newBackOff func() backoff.BackOff
+}
+
+// httpStatusCloudflareTimeout is Cloudflare's non-standard 524 "A Timeout
+// Occurred" status, returned when the origin does not respond within the edge
+// timeout (see cloudflareEdgeTimeout). Go's net/http has no constant for it.
+//
+// It is intentionally NOT retryable: the query already ran for the full edge
+// timeout, so an immediate identical retry would only re-run an expensive query
+// that is going to time out again. Falling through to the permanent-error branch
+// turns it into one fast, self-explanatory failure.
+const httpStatusCloudflareTimeout = 524
+
+// Retry policy tuning. The DoiT API returns 429 without a Retry-After header,
+// so the exponential policy — not the server's guidance — governs the pace of
+// nearly every retry. It therefore starts conservatively: a 429 means the
+// backend is already under pressure, and retrying a few hundred milliseconds
+// later just sustains the condition.
+const (
+	retryInitialInterval = 2 * time.Second
+	retryMultiplier      = 2.0
+	retryMaxInterval     = 60 * time.Second
+
+	// maxRetryAfter caps how long a server-supplied Retry-After is honored.
+	// Without it, an outsized value (e.g. "86400") would sit and burn the whole
+	// operation budget doing nothing: the retry loop waits on the context, so
+	// once the wait reaches the operation timeout no retry can ever happen.
+	//
+	// It is deliberately tied to retryMaxInterval — we never wait longer than
+	// our own policy's ceiling — which also keeps it well inside the smallest
+	// operation default, so a capped wait still leaves budget for the retry it
+	// was waiting for.
+	maxRetryAfter = retryMaxInterval
+)
+
+// The Retry-After cap is only meaningful if a capped wait still leaves room for
+// the retry itself. Enforced at compile time; see timeouts.go for the same
+// technique applied to the timeout defaults, and for why this is uint64 rather
+// than uint.
+const _ = uint64(DefaultReadTimeout - maxRetryAfter - minRetryHeadroom)
+
+// newRetryBackOff builds the default exponential retry policy.
+//
+// It returns the concrete type rather than backoff.BackOff so tests can assert
+// on the configured fields directly.
+func newRetryBackOff() *backoff.ExponentialBackOff {
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = retryInitialInterval
+	b.Multiplier = retryMultiplier
+	b.MaxInterval = retryMaxInterval
+	return b
+}
+
+// parseRetryAfter interprets an HTTP Retry-After header value, returning the
+// duration to wait and whether the header was usable.
+//
+// Both forms from RFC 7231 are accepted: delay-seconds, and an HTTP-date (all
+// three date formats, via http.ParseTime). An absent, malformed, or already-past
+// value returns false, leaving the caller on exponential backoff.
+//
+// Non-positive values ("0", "-5", or a date already in the past) are rejected
+// rather than honored as "retry immediately". Honoring them would be actively
+// harmful twice over: it schedules a retry with no delay, and because the
+// backoff library resets the exponential policy whenever a Retry-After is
+// honored, a server repeatedly sending such a value would pin us to a flat
+// cadence that never grows. Falling back to exponential backoff instead keeps
+// the retries spreading out.
+//
+// An honored value is clamped to [retryInitialInterval, maxRetryAfter], so a
+// date a few milliseconds out cannot produce a near-immediate retry either.
+func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return 0, false
+	}
+
+	var wait time.Duration
+	if seconds, err := strconv.Atoi(header); err == nil {
+		// Reject and cap in units of seconds, before converting to a Duration:
+		// seconds * time.Second overflows int64 for large magnitudes, and a
+		// large negative value would wrap to a positive duration that then
+		// looks like a legitimate wait.
+		if seconds <= 0 {
+			return 0, false
+		}
+		if seconds >= int(maxRetryAfter/time.Second) {
+			return maxRetryAfter, true
+		}
+		wait = time.Duration(seconds) * time.Second
+	} else {
+		t, parseErr := http.ParseTime(header)
+		if parseErr != nil {
+			return 0, false
+		}
+		wait = t.Sub(now)
+	}
+
+	if wait <= 0 {
+		return 0, false
+	}
+	return min(max(wait, retryInitialInterval), maxRetryAfter), true
 }
 
 // Do executes an HTTP request with retry logic for transient errors.
@@ -76,11 +187,14 @@ type DCIRetryClient struct {
 // | 404 | Pass through - NOT an error (for Terraform resource semantics) |
 // | 429 | Retry with Retry-After or exponential backoff |
 // | 502, 503, 504 | Retry with exponential backoff |
+// | 524 | Permanent error - no retry (Cloudflare edge timeout) |
 // | Other 4xx/5xx | Permanent error - no retry |
 //
 // # Timeout
 //
-// Operations have a maximum elapsed time of 2 minutes, after which they fail.
+// The retry loop has no elapsed-time limit of its own (MaxElapsedTime is 0). It
+// defers entirely to the deadline on the request's context, which is the
+// Terraform operation timeout — see timeouts.go.
 func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 	// Preserve the original body for retries.
 	// If the request has a body, we need to be able to re-read it on retries.
@@ -121,23 +235,18 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 				log.Printf("[WARN] Error closing response body: %v", closeErr)
 			}
 
-			if retryAfter != "" {
-				// Try parsing as seconds (most common)
-				if seconds, parseErr := strconv.Atoi(retryAfter); parseErr == nil {
-					// Use backoff v5's integrated RetryAfter to respect the header
-					return nil, backoff.RetryAfter(seconds)
-				}
-				// Try parsing as HTTP-date (RFC 7231)
-				if t, parseErr := time.Parse(time.RFC1123, retryAfter); parseErr == nil {
-					waitDuration := time.Until(t)
-					if waitDuration > 0 {
-						// Round up to ensure we wait at least the requested time
-						seconds := int(waitDuration.Seconds()) + 1
-						return nil, backoff.RetryAfter(seconds)
-					}
-				}
-				// If parsing fails, fall back to exponential backoff
+			if wait, ok := parseRetryAfter(retryAfter, time.Now()); ok {
+				tflog.Debug(req.Context(), "Rate limited, honoring Retry-After", map[string]any{
+					"url":         req.URL.String(),
+					"retry_after": retryAfter,
+					"wait":        wait.String(),
+				})
+				return nil, &backoff.RetryAfterError{Duration: wait}
 			}
+			tflog.Debug(req.Context(), "Rate limited, falling back to exponential backoff", map[string]any{
+				"url":         req.URL.String(),
+				"retry_after": retryAfter,
+			})
 			return nil, fmt.Errorf("rate limit exceeded: %d", resp.StatusCode)
 
 		case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
@@ -160,6 +269,10 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 			// This includes:
 			// - 4xx client errors (400, 401, 403, etc.)
 			// - 5xx server errors that shouldn't be retried (500, 501, etc.)
+			// - 524 (httpStatusCloudflareTimeout): the edge already waited out
+			//   the full origin timeout, so retrying re-runs a query that will
+			//   time out again. Failing fast here is what surfaces the 524 to
+			//   the user instead of an opaque deadline error.
 			if resp.StatusCode >= 400 {
 				respBodyBytes, readErr := io.ReadAll(resp.Body)
 				closeErr := resp.Body.Close()
@@ -176,11 +289,18 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 		}
 	}
 
+	// A fresh policy per call: ExponentialBackOff is not thread-safe, and this
+	// client is shared across concurrent Terraform operations.
+	newBackOff := c.newBackOff
+	if newBackOff == nil {
+		newBackOff = func() backoff.BackOff { return newRetryBackOff() }
+	}
+
 	// Retry with exponential backoff. MaxElapsedTime is disabled (0) so the
 	// retry loop defers entirely to the provided context's deadline
 	// (e.g., Terraform's timeouts {} block).
 	return backoff.Retry(req.Context(), operation,
-		backoff.WithBackOff(backoff.NewExponentialBackOff()),
+		backoff.WithBackOff(newBackOff()),
 		backoff.WithMaxElapsedTime(0),
 	)
 }

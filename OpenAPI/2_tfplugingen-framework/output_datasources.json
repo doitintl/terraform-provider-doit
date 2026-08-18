@@ -335,6 +335,13 @@
 						}
 					},
 					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
+						}
+					},
+					{
 						"name": "alerts",
 						"list_nested": {
 							"computed_optional_required": "computed",
@@ -871,6 +878,13 @@
 						}
 					},
 					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
+						}
+					},
+					{
 						"name": "sort_by",
 						"string": {
 							"computed_optional_required": "computed_optional",
@@ -1247,30 +1261,68 @@
 				"attributes": [
 					{
 						"name": "min_creation_time",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
-							"description": "Min value for the anomaly detection time"
+							"description": "Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created."
 						}
 					},
 					{
 						"name": "max_creation_time",
-						"string": {
+						"int64": {
 							"computed_optional_required": "computed_optional",
-							"description": "Max value for the anomaly detection time"
+							"description": "Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created."
 						}
 					},
 					{
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results of the request"
+							"description": "An expression for filtering the results. The syntax is `key:value`. Multiple criteria can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nAvailable filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "A field by which the results will be sorted. Defaults to `startTime`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"startTime\",\n\"severityLevel\",\n\"costOfAnomaly\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort order can be ascending or descending.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
 						}
 					},
 					{
 						"name": "max_results",
 						"int64": {
 							"computed_optional_required": "computed_optional",
-							"description": "The maximum number of results to return in a single page"
+							"description": "The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page."
 						}
 					},
 					{
@@ -1340,6 +1392,13 @@
 										"float64": {
 											"computed_optional_required": "computed",
 											"description": "Excess cost over and above the expected normal cost."
+										}
+									},
+									{
+										"name": "deactivation_reason",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active."
 										}
 									},
 									{
@@ -1480,7 +1539,7 @@
 										"name": "severity_level",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Severity level: Information, Warning or Critical"
+											"description": "Severity level: `information`, `warning`, or `critical`."
 										}
 									},
 									{
@@ -1527,13 +1586,79 @@
 										}
 									}
 								]
-							}
+							},
+							"description": "Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies."
+						}
+					},
+					{
+						"name": "anomaly_summary",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "count_by_severity",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "critical",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "information",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "warning",
+												"int64": {
+													"computed_optional_required": "computed"
+												}
+											}
+										],
+										"description": "Count of matching anomalies per severity level. All three keys are always present, with zero counts included."
+									}
+								},
+								{
+									"name": "total_cost_of_anomaly",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents."
+									}
+								}
+							],
+							"description": "Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence."
 						}
 					},
 					{
 						"name": "row_count",
 						"int64": {
-							"computed_optional_required": "computed"
+							"computed_optional_required": "computed",
+							"description": "Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`."
+						}
+					},
+					{
+						"name": "total_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence."
+						}
+					},
+					{
+						"name": "total_count_exact",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set."
+						}
+					},
+					{
+						"name": "truncated",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "`true` when filtered anomalies remain beyond this page. Derived from the same \"rows remain after the last returned row\" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`."
 						}
 					}
 				],
@@ -1599,6 +1724,13 @@
 						"float64": {
 							"computed_optional_required": "computed",
 							"description": "The difference between the actual cost and the maximum cost in the normal range."
+						}
+					},
+					{
+						"name": "deactivation_reason",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active."
 						}
 					},
 					{
@@ -1733,7 +1865,7 @@
 						"name": "severity_level",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Severity level: Information, Warning or Critical"
+							"description": "Severity level: `information`, `warning`, or `critical`."
 						}
 					},
 					{
@@ -4100,7 +4232,14 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results of the request. The syntax is \"key:[\u003cvalue\u003e]\".\nAvailable keys: owner, lastModified in ms (\u003elasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\"."
+							"description": "An expression for filtering the results of the request. The syntax is \"key:[\u003cvalue\u003e]\".\nAvailable keys: owner, budgetName, lastModified in ms (\u003elasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\"."
+						}
+					},
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
 						}
 					},
 					{
@@ -9626,6 +9765,98 @@
 			}
 		},
 		{
+			"name": "customer",
+			"schema": {
+				"attributes": [
+					{
+						"name": "contact",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "emails",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Point-of-contact email addresses for the customer."
+									}
+								}
+							],
+							"description": "Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path."
+						}
+					},
+					{
+						"name": "domains",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Domains associated with the customer."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer ID."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer name."
+						}
+					},
+					{
+						"name": "primary_domain",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Customer's primary domain."
+						}
+					},
+					{
+						"name": "settings",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "allowed_invite_domains",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Email domains allowed to self-invite into the customer. Updating this field requires the `UsersManager` permission in addition to `Settings`. An empty array clears the list."
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Currency code for monetary values."
+									}
+								}
+							],
+							"description": "Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.\n\n`currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it."
+						}
+					},
+					{
+						"name": "url_slug",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The customer's active URL display name, used in Console URLs."
+						}
+					}
+				],
+				"description": "Read and update your organization's general settings.",
+				"markdown_description": "Read and update your organization's general settings."
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [
@@ -11191,6 +11422,13 @@
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "An expression for filtering the results.\nValid fields: **name**, **type**."
+						}
+					},
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
 						}
 					},
 					{
@@ -13075,6 +13313,7 @@
 												}
 											}
 										],
+										"deprecation_message": "This attribute is deprecated.",
 										"description": "Deprecated: Use 'metrics' instead."
 									}
 								},
@@ -13432,6 +13671,13 @@
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "An expression for filtering the results.\nThe syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).\nPossible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**"
+						}
+					},
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics."
 						}
 					},
 					{

@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -78,10 +79,19 @@ func (p *doitProvider) Schema(ctx context.Context, _ provider.SchemaRequest, res
 				Optional: true,
 			},
 			"request_timeout": schema.StringAttribute{
+				// Durations are spelled out rather than interpolated from the
+				// constants: Duration.String() would render 150s as "2m30s",
+				// which is not how a user writes the value.
 				Description: "Timeout for individual HTTP requests to the DoiT API, as a duration " +
-					"string (e.g. \"30s\", \"2m\"). Defaults to \"120s\". " +
+					"string (e.g. \"150s\", \"4m\"). Defaults to \"150s\". " +
+					"Must be greater than \"120s\" so that slow requests surface the API's own " +
+					"timeout response instead of an opaque local deadline error, and should stay " +
+					"below the operation timeouts so retries remain possible. " +
 					"May also be provided via DOIT_REQUEST_TIMEOUT environment variable.",
 				Optional: true,
+				Validators: []validator.String{
+					requestTimeoutValidator{},
+				},
 			},
 		},
 	}
@@ -203,7 +213,7 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 			resp.Diagnostics.AddAttributeError(
 				path.Root("request_timeout"),
 				"Invalid Request Timeout",
-				fmt.Sprintf("Could not parse request_timeout %q as a duration: %s. Use Go duration format, e.g. \"30s\", \"2m\", \"1h\".", config.RequestTimeout.ValueString(), err),
+				fmt.Sprintf("Could not parse request_timeout %q as a duration: %s. Use Go duration format, e.g. \"150s\", \"4m\", \"1h\".", config.RequestTimeout.ValueString(), err),
 			)
 		}
 	}
@@ -212,8 +222,13 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		resp.Diagnostics.AddAttributeError(
 			path.Root("request_timeout"),
 			"Invalid Request Timeout",
-			fmt.Sprintf("request_timeout must be a positive duration, got %q. Use Go duration format, e.g. \"30s\", \"2m\", \"1h\".", requestTimeout.String()),
+			fmt.Sprintf("request_timeout must be a positive duration, got %q. Use Go duration format, e.g. \"150s\", \"4m\", \"1h\".", requestTimeout.String()),
 		)
+	} else {
+		// Check the resolved value against the timeout ordering invariant. The
+		// schema validator covers the HCL attribute at validate time; this is
+		// the only path that also covers DOIT_REQUEST_TIMEOUT.
+		resp.Diagnostics.Append(validateRequestTimeout(requestTimeout)...)
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -263,6 +278,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewFolderDataSource,
 		NewRolesDataSource,
 		NewCurrentUserDataSource,
+		NewCustomerDataSource,
 		NewAccountTeamDataSource,
 		NewUsersDataSource,
 		NewReportResultDataSource,
@@ -338,5 +354,6 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewCustomThemeResource,
 		NewActiveThemeResource,
 		NewSupportRequestTagsResource,
+		NewCustomerResource,
 	}
 }

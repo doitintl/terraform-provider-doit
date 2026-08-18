@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
@@ -111,9 +110,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		if attr, ok := configAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnconfiguredMetricMirror())
 			attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
-			// Workaround for https://github.com/doitintl/terraform-plugin-codegen-openapi/issues/5:
-			// the codegen fork drops the deprecation on allOf-composed properties.
-			attr.DeprecationMessage = "This attribute is deprecated."
 			configAttr.Attributes["metric"] = attr
 		}
 		if attr, ok := configAttr.Attributes["metrics"].(schema.ListNestedAttribute); ok {
@@ -306,7 +302,7 @@ func (r *reportResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	createTimeout, diags := plan.Timeouts.Create(ctx, DefaultCreateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -374,7 +370,7 @@ func (r *reportResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -405,7 +401,7 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	updateTimeout, diags := plan.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -477,7 +473,7 @@ func (r *reportResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

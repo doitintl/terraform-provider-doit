@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_billing_explainer"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -62,7 +61,7 @@ func (ds *billingExplainerDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

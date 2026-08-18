@@ -74,6 +74,12 @@ func LabelsDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
 				MarkdownDescription: "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.",
 			},
+			"name_contains": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics.",
+				MarkdownDescription: "Case-insensitive substring match against the resource name. Combined with the \"filter\" parameter using AND semantics.",
+			},
 			"page_token": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -119,13 +125,14 @@ func LabelsDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type LabelsModel struct {
-	Filter     types.String `tfsdk:"filter"`
-	Labels     types.List   `tfsdk:"labels"`
-	MaxResults types.Int64  `tfsdk:"max_results"`
-	PageToken  types.String `tfsdk:"page_token"`
-	RowCount   types.Int64  `tfsdk:"row_count"`
-	SortBy     types.String `tfsdk:"sort_by"`
-	SortOrder  types.String `tfsdk:"sort_order"`
+	Filter       types.String `tfsdk:"filter"`
+	Labels       types.List   `tfsdk:"labels"`
+	MaxResults   types.Int64  `tfsdk:"max_results"`
+	NameContains types.String `tfsdk:"name_contains"`
+	PageToken    types.String `tfsdk:"page_token"`
+	RowCount     types.Int64  `tfsdk:"row_count"`
+	SortBy       types.String `tfsdk:"sort_by"`
+	SortOrder    types.String `tfsdk:"sort_order"`
 }
 
 var _ basetypes.ObjectTypable = LabelsType{}

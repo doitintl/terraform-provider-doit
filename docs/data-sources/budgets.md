@@ -15,6 +15,11 @@ Track actual cloud spend against planned spend.
 # List all budgets
 data "doit_budgets" "all" {}
 
+# Filter budgets by name substring
+data "doit_budgets" "production" {
+  name_contains = "production"
+}
+
 # Output total number of budgets
 output "total_budgets" {
   value = data.doit_budgets.all.row_count
@@ -34,10 +39,11 @@ output "budget_names" {
 ### Optional
 
 - `filter` (String) An expression for filtering the results of the request. The syntax is "key:[<value>]".
-Available keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
+Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
 - `max_creation_time` (String) Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
+- `name_contains` (String) Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 

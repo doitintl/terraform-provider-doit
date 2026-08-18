@@ -187,6 +187,27 @@ func (e AllocationListItemAllocationType) Valid() bool {
 	}
 }
 
+// Defines values for AnomalyItemDeactivationReason.
+const (
+	AnomalyItemDeactivationReasonExpired  AnomalyItemDeactivationReason = "expired"
+	AnomalyItemDeactivationReasonReverted AnomalyItemDeactivationReason = "reverted"
+	AnomalyItemDeactivationReasonUnknown  AnomalyItemDeactivationReason = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyItemDeactivationReason enum.
+func (e AnomalyItemDeactivationReason) Valid() bool {
+	switch e {
+	case AnomalyItemDeactivationReasonExpired:
+		return true
+	case AnomalyItemDeactivationReasonReverted:
+		return true
+	case AnomalyItemDeactivationReasonUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AnomalyItemStatus.
 const (
 	AnomalyItemStatusActive   AnomalyItemStatus = "active"
@@ -2215,6 +2236,27 @@ func (e ExternalSplitTargetType) Valid() bool {
 	}
 }
 
+// Defines values for GetAnomaly200ResponseDeactivationReason.
+const (
+	GetAnomaly200ResponseDeactivationReasonExpired  GetAnomaly200ResponseDeactivationReason = "expired"
+	GetAnomaly200ResponseDeactivationReasonReverted GetAnomaly200ResponseDeactivationReason = "reverted"
+	GetAnomaly200ResponseDeactivationReasonUnknown  GetAnomaly200ResponseDeactivationReason = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the GetAnomaly200ResponseDeactivationReason enum.
+func (e GetAnomaly200ResponseDeactivationReason) Valid() bool {
+	switch e {
+	case GetAnomaly200ResponseDeactivationReasonExpired:
+		return true
+	case GetAnomaly200ResponseDeactivationReasonReverted:
+		return true
+	case GetAnomaly200ResponseDeactivationReasonUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetAnomaly200ResponseStatus.
 const (
 	GetAnomaly200ResponseStatusActive   GetAnomaly200ResponseStatus = "active"
@@ -3565,6 +3607,45 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for ListAnomaliesParamsSortBy.
+const (
+	CostOfAnomaly ListAnomaliesParamsSortBy = "costOfAnomaly"
+	SeverityLevel ListAnomaliesParamsSortBy = "severityLevel"
+	StartTime     ListAnomaliesParamsSortBy = "startTime"
+)
+
+// Valid indicates whether the value is a known member of the ListAnomaliesParamsSortBy enum.
+func (e ListAnomaliesParamsSortBy) Valid() bool {
+	switch e {
+	case CostOfAnomaly:
+		return true
+	case SeverityLevel:
+		return true
+	case StartTime:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListAnomaliesParamsSortOrder.
+const (
+	ListAnomaliesParamsSortOrderAsc  ListAnomaliesParamsSortOrder = "asc"
+	ListAnomaliesParamsSortOrderDesc ListAnomaliesParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListAnomaliesParamsSortOrder enum.
+func (e ListAnomaliesParamsSortOrder) Valid() bool {
+	switch e {
+	case ListAnomaliesParamsSortOrderAsc:
+		return true
+	case ListAnomaliesParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCloudDiagramComponentsParamsType.
 const (
 	GetCloudDiagramComponentsParamsTypeApplication    GetCloudDiagramComponentsParamsType = "application"
@@ -4222,9 +4303,42 @@ type AnnotationListItem struct {
 
 // AnomaliesResponse List of detected cloud cost anomalies.
 type AnomaliesResponse struct {
-	Anomalies *[]AnomalyItem `json:"anomalies,omitempty"`
-	PageToken *string        `json:"pageToken,omitempty"`
-	RowCount  *int64         `json:"rowCount,omitempty"`
+	// Anomalies Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies.
+	Anomalies []AnomalyItem `json:"anomalies"`
+
+	// AnomalySummary Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.
+	AnomalySummary AnomaliesResponseAnomalySummary `json:"anomalySummary"`
+
+	// PageToken Opaque token for the next page. Omitted when there is no next page.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`.
+	RowCount int64 `json:"rowCount"`
+
+	// TotalCount Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence.
+	TotalCount int64 `json:"totalCount"`
+
+	// TotalCountExact Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set.
+	TotalCountExact bool `json:"totalCountExact"`
+
+	// Truncated `true` when filtered anomalies remain beyond this page. Derived from the same "rows remain after the last returned row" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`.
+	Truncated bool `json:"truncated"`
+}
+
+// AnomaliesResponseAnomalySummary Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.
+type AnomaliesResponseAnomalySummary struct {
+	// CountBySeverity Count of matching anomalies per severity level. All three keys are always present, with zero counts included.
+	CountBySeverity AnomaliesResponseAnomalySummaryCountBySeverity `json:"countBySeverity"`
+
+	// TotalCostOfAnomaly Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.
+	TotalCostOfAnomaly float64 `json:"totalCostOfAnomaly"`
+}
+
+// AnomaliesResponseAnomalySummaryCountBySeverity Count of matching anomalies per severity level. All three keys are always present, with zero counts included.
+type AnomaliesResponseAnomalySummaryCountBySeverity struct {
+	Critical    int64 `json:"critical"`
+	Information int64 `json:"information"`
+	Warning     int64 `json:"warning"`
 }
 
 // AnomalyItem Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
@@ -4250,6 +4364,9 @@ type AnomalyItem struct {
 	// CostOfAnomaly Excess cost over and above the expected normal cost.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
+	// DeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+	DeactivationReason nullable.Nullable[AnomalyItemDeactivationReason] `json:"deactivationReason,omitempty"`
+
 	// EndTime End of the anomaly.
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
 
@@ -4272,7 +4389,7 @@ type AnomalyItem struct {
 	// ServiceName Service name.
 	ServiceName string `json:"serviceName"`
 
-	// SeverityLevel Severity level: Information, Warning or Critical
+	// SeverityLevel Severity level: `information`, `warning`, or `critical`.
 	SeverityLevel string `json:"severityLevel"`
 
 	// StartTime Usage start time of the anomaly.
@@ -4285,6 +4402,9 @@ type AnomalyItem struct {
 	// Top3SKUs Array of SKU entries contributing to an anomaly.
 	Top3SKUs AnomalySKUArray `json:"top3SKUs"`
 }
+
+// AnomalyItemDeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+type AnomalyItemDeactivationReason string
 
 // AnomalyItemStatus defines model for AnomalyItem.Status.
 type AnomalyItemStatus string
@@ -6322,6 +6442,63 @@ type CustomTheme struct {
 	UpdateTime *time.Time `json:"updateTime,omitempty"`
 }
 
+// Customer Customer general settings, scoped to the authenticated tenant.
+type Customer struct {
+	// Contact Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+	Contact *CustomerContact `json:"contact,omitempty"`
+
+	// Domains Domains associated with the customer.
+	Domains *[]string `json:"domains,omitempty"`
+
+	// Id Customer ID.
+	Id string `json:"id"`
+
+	// Name Customer name.
+	Name *string `json:"name,omitempty"`
+
+	// PrimaryDomain Customer's primary domain.
+	PrimaryDomain *string `json:"primaryDomain,omitempty"`
+
+	// Settings Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+	//
+	// `currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it.
+	Settings *CustomerSettings `json:"settings,omitempty"`
+
+	// UrlSlug The customer's active URL display name, used in Console URLs.
+	UrlSlug *string `json:"urlSlug,omitempty"`
+}
+
+// CustomerContact Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+type CustomerContact struct {
+	// Emails Point-of-contact email addresses for the customer.
+	Emails *[]openapi_types.Email `json:"emails,omitempty"`
+}
+
+// CustomerSettings Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+//
+// `currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it.
+type CustomerSettings struct {
+	// AllowedInviteDomains Email domains allowed to self-invite into the customer. Updating this field requires the `UsersManager` permission in addition to `Settings`. An empty array clears the list.
+	AllowedInviteDomains *[]string `json:"allowedInviteDomains,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
+}
+
+// CustomerUpdate Partial update to a customer's general settings. Every field is optional; only fields present in the request body are changed. Fields are nested exactly as the `getCustomer` response nests them. See the operation description for `urlSlug`'s null-vs-absent semantics, which differ from every other field.
+type CustomerUpdate struct {
+	// Contact Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+	Contact *CustomerContact `json:"contact,omitempty"`
+
+	// Settings Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+	//
+	// `currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it.
+	Settings *CustomerSettings `json:"settings,omitempty"`
+
+	// UrlSlug The customer's URL display name. An explicit empty string removes the active slug; a non-empty value must be 3-12 characters of lowercase letters, digits, or dashes, starting and ending with a letter or digit, and must be unique across all customers.
+	UrlSlug *string `json:"urlSlug,omitempty"`
+}
+
 // DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
 type DeleteDatahubDataset200Response struct {
 	// Message Example: Dataset deleted successfully
@@ -7023,6 +7200,9 @@ type GetAnomaly200Response struct {
 	// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
+	// DeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+	DeactivationReason nullable.Nullable[GetAnomaly200ResponseDeactivationReason] `json:"deactivationReason,omitempty"`
+
 	// EndTime End of the anomaly
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
 
@@ -7044,7 +7224,7 @@ type GetAnomaly200Response struct {
 	// ServiceName Service name
 	ServiceName string `json:"serviceName"`
 
-	// SeverityLevel Severity level: Information, Warning or Critical
+	// SeverityLevel Severity level: `information`, `warning`, or `critical`.
 	SeverityLevel string `json:"severityLevel"`
 
 	// StartTime Usage start time of the anomaly
@@ -7057,6 +7237,9 @@ type GetAnomaly200Response struct {
 	// Top3SKUs Array of SKU entries contributing to an anomaly.
 	Top3SKUs AnomalySKUArray `json:"top3SKUs"`
 }
+
+// GetAnomaly200ResponseDeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+type GetAnomaly200ResponseDeactivationReason string
 
 // GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
 type GetAnomaly200ResponseStatus string
@@ -8929,6 +9112,9 @@ type ManagementAccountId = string
 // MaxResults defines model for maxResults.
 type MaxResults = int64
 
+// NameContains defines model for nameContains.
+type NameContains = string
+
 // PageToken defines model for pageToken.
 type PageToken = string
 
@@ -9015,6 +9201,9 @@ type ListAlertsParams struct {
 	// Filter An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
 	// Available filter keys: **owner**, **name**
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
 }
 
 // ListAlertsParamsSortBy defines parameters for ListAlerts.
@@ -9034,6 +9223,9 @@ type ListAllocationsParams struct {
 	// Filter An expression for filtering the results.
 	// Valid fields: **type**, **owner**, **name**, **folderId**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
 
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListAllocationsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
@@ -9082,8 +9274,11 @@ type ListBudgetsParams struct {
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results of the request. The syntax is "key:[<value>]".
-	// Available keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
+	// Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
 
 	// MinCreationTime Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
 	MinCreationTime *string `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
@@ -9172,6 +9367,9 @@ type ListLabelsParams struct {
 	// Valid fields: **name**, **type**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
+
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListLabelsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
@@ -9198,6 +9396,9 @@ type ListReportsParams struct {
 	// Possible filter keys: **reportName**, **owner**, **type**, **updateTime**, **folderId**
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
+	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+	NameContains *NameContains `form:"nameContains,omitempty" json:"nameContains,omitempty"`
+
 	// MinCreationTime Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
 	MinCreationTime *string `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
 
@@ -9219,16 +9420,23 @@ type GetReportParams struct {
 
 // ListAnomaliesParams defines parameters for ListAnomalies.
 type ListAnomaliesParams struct {
-	// MinCreationTime Min value for the anomaly detection time
-	MinCreationTime *string `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
+	// MinCreationTime Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
+	MinCreationTime *int64 `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
 
-	// MaxCreationTime Max value for the anomaly detection time
-	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
+	// MaxCreationTime Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
+	MaxCreationTime *int64 `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 
-	// Filter An expression for filtering the results of the request
+	// Filter An expression for filtering the results. The syntax is `key:value`. Multiple criteria can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+	// Available filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// MaxResults The maximum number of results to return in a single page
+	// SortBy A field by which the results will be sorted. Defaults to `startTime`.
+	SortBy *ListAnomaliesParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort order can be ascending or descending.
+	SortOrder *ListAnomaliesParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// MaxResults The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
 	// PageToken Page token, returned by a previous call, to request the next page of results
@@ -9237,6 +9445,12 @@ type ListAnomaliesParams struct {
 	// IncludeNotifications Include anomaly notifications from the subcollection. Defaults to false.
 	IncludeNotifications *bool `form:"includeNotifications,omitempty" json:"includeNotifications,omitempty"`
 }
+
+// ListAnomaliesParamsSortBy defines parameters for ListAnomalies.
+type ListAnomaliesParamsSortBy string
+
+// ListAnomaliesParamsSortOrder defines parameters for ListAnomalies.
+type ListAnomaliesParamsSortOrder string
 
 // IdOfAssetsParams defines parameters for IdOfAssets.
 type IdOfAssetsParams struct {
@@ -9477,6 +9691,40 @@ type ListServiceQuotasParams struct {
 // ListServiceQuotasParamsCloudProvider defines parameters for ListServiceQuotas.
 type ListServiceQuotasParamsCloudProvider string
 
+// GetCustomerParams defines parameters for GetCustomer.
+type GetCustomerParams struct {
+	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
+	// (DoiT API Design Standards §15).
+	//
+	// Resolution when the header is absent:
+	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+	//   optional.
+	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+	//   server does not guess across tenant scopes.
+	//
+	// When the header is present but conflicts with the tenant the key is scoped to, the request is
+	// rejected with `400` and code `tenant_id_mismatch`.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// UpdateCustomerParams defines parameters for UpdateCustomer.
+type UpdateCustomerParams struct {
+	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
+	// (DoiT API Design Standards §15).
+	//
+	// Resolution when the header is absent:
+	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
+	//   optional.
+	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
+	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
+	//   server does not guess across tenant scopes.
+	//
+	// When the header is present but conflicts with the tenant the key is scoped to, the request is
+	// rejected with `400` and code `tenant_id_mismatch`.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
 	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
@@ -9708,6 +9956,9 @@ type CreateAccountRoleJSONRequestBody = CreateAccountRoleRequestBody
 
 // UpdateAwsFeatureJSONRequestBody defines body for UpdateAwsFeature for application/json ContentType.
 type UpdateAwsFeatureJSONRequestBody = UpdateAwsFeatureRequestBody
+
+// UpdateCustomerApplicationMergePatchPlusJSONRequestBody defines body for UpdateCustomer for application/merge-patch+json ContentType.
+type UpdateCustomerApplicationMergePatchPlusJSONRequestBody = CustomerUpdate
 
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
@@ -10815,8 +11066,10 @@ type ClientInterface interface {
 	// ListAnomalies List anomalies
 	//
 	// Returns a list of detected anomalies.
-	// Anomalies are returned in reverse chronological order by default.
+	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+	// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 	//
 	// Corresponds with GET /anomalies/v1 (the `ListAnomalies` operationId).
 	ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -11148,6 +11401,39 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 	ListAccountTeam(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCustomer Get customer general settings
+	//
+	// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	//
+	// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
+	GetCustomer(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomerWithBody Update customer general settings
+	//
+	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	//
+	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+	//
+	// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+	UpdateCustomerWithBody(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer general settings
+	//
+	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	//
+	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+	//
+	// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+	//
+	// Takes a body of the `application/merge-patch+json` content type.
+	//
+	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+	UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDatahubDatasets List datasets
 	//
@@ -12823,8 +13109,10 @@ func (c *Client) UpdateCustomTheme(ctx context.Context, id string, body UpdateCu
 // ListAnomalies List anomalies
 //
 // Returns a list of detected anomalies.
-// Anomalies are returned in reverse chronological order by default.
+// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 //
 // Corresponds with GET /anomalies/v1 (the `ListAnomalies` operationId).
 func (c *Client) ListAnomalies(ctx context.Context, params *ListAnomaliesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -13527,6 +13815,69 @@ func (c *Client) ListServiceQuotas(ctx context.Context, params *ListServiceQuota
 // Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListAccountTeamRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCustomer Get customer general settings
+//
+// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+//
+// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
+func (c *Client) GetCustomer(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomerRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCustomerWithBody Update customer general settings
+//
+// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+//
+// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+//
+// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+func (c *Client) UpdateCustomerWithBody(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer general settings
+//
+// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+//
+// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+//
+// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+//
+// Takes a body of the `application/merge-patch+json` content type.
+//
+// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+func (c *Client) UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -14378,6 +14729,18 @@ func NewListAlertsRequest(server string, params *ListAlertsParams) (*http.Reques
 
 		}
 
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if encoded := queryValues.Encode(); encoded != "" {
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
@@ -14602,6 +14965,18 @@ func NewListAllocationsRequest(server string, params *ListAllocationsParams) (*h
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15143,6 +15518,18 @@ func NewListBudgetsRequest(server string, params *ListBudgetsParams) (*http.Requ
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -15926,6 +16313,18 @@ func NewListLabelsRequest(server string, params *ListLabelsParams) (*http.Reques
 
 		}
 
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
 		if params.SortBy != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
@@ -16255,6 +16654,18 @@ func NewListReportsRequest(server string, params *ListReportsParams) (*http.Requ
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -16861,7 +17272,7 @@ func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.
 
 		if params.MinCreationTime != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "minCreationTime", *params.MinCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "minCreationTime", *params.MinCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -16873,7 +17284,7 @@ func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.
 
 		if params.MaxCreationTime != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxCreationTime", *params.MaxCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxCreationTime", *params.MaxCreationTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -16886,6 +17297,30 @@ func NewListAnomaliesRequest(server string, params *ListAnomaliesParams) (*http.
 		if params.Filter != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortOrder", *params.SortOrder, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -18741,6 +19176,103 @@ func NewListAccountTeamRequest(server string) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCustomerRequest constructs an http.Request for the GetCustomer method
+func NewGetCustomerRequest(server string, params *GetCustomerParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/customers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateCustomer builder with application/merge-patch+json body
+func NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(server string, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCustomerRequestWithBody(server, params, "application/merge-patch+json", bodyReader)
+}
+
+// NewUpdateCustomerRequestWithBody constructs an http.Request for the UpdateCustomer method, with any body, and a specified content type
+func NewUpdateCustomerRequestWithBody(server string, params *UpdateCustomerParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/customers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
 	}
 
 	return req, nil
@@ -20940,8 +21472,10 @@ type ClientWithResponsesInterface interface {
 	// ListAnomaliesWithResponse List anomalies
 	//
 	// Returns a list of detected anomalies.
-	// Anomalies are returned in reverse chronological order by default.
+	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+	// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -21317,6 +21851,41 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 	ListAccountTeamWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAccountTeamResp, error)
+
+	// GetCustomerWithResponse Get customer general settings
+	//
+	// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
+	GetCustomerWithResponse(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*GetCustomerResp, error)
+
+	// UpdateCustomerWithBodyWithResponse Update customer general settings
+	//
+	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	//
+	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+	//
+	// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+	UpdateCustomerWithBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
+
+	// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer general settings
+	//
+	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	//
+	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+	//
+	// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+	//
+	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+	UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
 
 	// ListDatahubDatasetsWithResponse List datasets
 	//
@@ -27405,6 +27974,172 @@ func (r ListAccountTeamResp) ContentType() string {
 	return ""
 }
 
+type GetCustomerResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Customer
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCustomerResp) GetJSON200() *Customer {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetCustomerResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetCustomerResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetCustomerResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetCustomerResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetCustomerResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCustomerResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCustomerResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCustomerResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCustomerResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateCustomerResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Error
+	// JSON415 the response for an HTTP 415 `application/json` response
+	JSON415 *Error
+	// JSON422 the response for an HTTP 422 `application/json` response
+	JSON422 *Error
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r UpdateCustomerResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateCustomerResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r UpdateCustomerResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r UpdateCustomerResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r UpdateCustomerResp) GetJSON409() *Error {
+	return r.JSON409
+}
+
+// GetJSON415 returns the response for an HTTP 415 `application/json` response
+func (r UpdateCustomerResp) GetJSON415() *Error {
+	return r.JSON415
+}
+
+// GetJSON422 returns the response for an HTTP 422 `application/json` response
+func (r UpdateCustomerResp) GetJSON422() *Error {
+	return r.JSON422
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r UpdateCustomerResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateCustomerResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCustomerResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCustomerResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateCustomerResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListDatahubDatasetsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -30668,8 +31403,10 @@ func (c *ClientWithResponses) UpdateCustomThemeWithResponse(ctx context.Context,
 // ListAnomaliesWithResponse List anomalies
 //
 // Returns a list of detected anomalies.
-// Anomalies are returned in reverse chronological order by default.
+// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
+// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+// **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -31272,6 +32009,59 @@ func (c *ClientWithResponses) ListAccountTeamWithResponse(ctx context.Context, r
 		return nil, err
 	}
 	return ParseListAccountTeamResp(rsp)
+}
+
+// GetCustomerWithResponse Get customer general settings
+//
+// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
+func (c *ClientWithResponses) GetCustomerWithResponse(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*GetCustomerResp, error) {
+	rsp, err := c.GetCustomer(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomerResp(rsp)
+}
+
+// UpdateCustomerWithBodyWithResponse Update customer general settings
+//
+// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+//
+// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+//
+// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+func (c *ClientWithResponses) UpdateCustomerWithBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error) {
+	rsp, err := c.UpdateCustomerWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerResp(rsp)
+}
+
+// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer general settings
+//
+// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+//
+// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+//
+// Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+//
+// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
+func (c *ClientWithResponses) UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error) {
+	rsp, err := c.UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerResp(rsp)
 }
 
 // ListDatahubDatasetsWithResponse List datasets
@@ -36568,6 +37358,145 @@ func ParseListAccountTeamResp(rsp *http.Response) (*ListAccountTeamResp, error) 
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCustomerResp parses an HTTP response from a GetCustomerWithResponse call
+func ParseGetCustomerResp(rsp *http.Response) (*GetCustomerResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCustomerResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Customer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCustomerResp parses an HTTP response from a UpdateCustomerWithResponse call
+func ParseUpdateCustomerResp(rsp *http.Response) (*UpdateCustomerResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCustomerResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 415:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON415 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 

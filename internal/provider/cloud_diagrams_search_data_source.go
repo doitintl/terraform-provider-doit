@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_diagrams_search"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -121,7 +120,7 @@ func (d *cloudDiagramsSearchDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

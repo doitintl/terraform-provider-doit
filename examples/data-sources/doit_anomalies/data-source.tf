@@ -1,9 +1,17 @@
 # Retrieve all anomalies
 data "doit_anomalies" "all" {}
 
-# Filter by severity
-data "doit_anomalies" "critical" {
-  filter = "severityLevel:critical"
+# Filter by severity and sort by cost descending
+data "doit_anomalies" "critical_by_cost" {
+  filter     = "severityLevel:critical"
+  sort_by    = "costOfAnomaly"
+  sort_order = "desc"
+}
+
+# Filter by usage start time window (epoch milliseconds)
+data "doit_anomalies" "recent" {
+  min_creation_time = 1704067200000 # 2024-01-01T00:00:00Z
+  max_creation_time = 1735689600000 # 2025-01-01T00:00:00Z
 }
 
 # Include notification events for each anomaly
@@ -23,18 +31,32 @@ output "notification_audit" {
   }]
 }
 
-# Output anomaly details
+# Output anomaly counts and aggregate summary
 output "total_anomalies" {
   value = data.doit_anomalies.all.row_count
 }
 
+output "total_count" {
+  value = data.doit_anomalies.all.total_count
+}
+
+output "anomaly_summary_metrics" {
+  value = {
+    total_cost        = data.doit_anomalies.all.anomaly_summary.total_cost_of_anomaly
+    critical_count    = data.doit_anomalies.all.anomaly_summary.count_by_severity.critical
+    warning_count     = data.doit_anomalies.all.anomaly_summary.count_by_severity.warning
+    information_count = data.doit_anomalies.all.anomaly_summary.count_by_severity.information
+  }
+}
+
 output "anomaly_summary" {
   value = [for a in data.doit_anomalies.all.anomalies : {
-    id          = a.id
-    service     = a.service_name
-    cost_impact = a.cost_of_anomaly
-    severity    = a.severity_level
-    status      = a.status
+    id                  = a.id
+    service             = a.service_name
+    cost_impact         = a.cost_of_anomaly
+    severity            = a.severity_level
+    status              = a.status
+    deactivation_reason = a.deactivation_reason
   }]
 }
 

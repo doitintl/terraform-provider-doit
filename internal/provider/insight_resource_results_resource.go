@@ -685,7 +685,7 @@ func (r *insightResourceResultsResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	createTimeout, diags := plan.Timeouts.Create(ctx, DefaultCreateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -744,7 +744,7 @@ func (r *insightResourceResultsResource) Read(ctx context.Context, req resource.
 		}
 	}
 
-	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -844,7 +844,7 @@ func (r *insightResourceResultsResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	updateTimeout, diags := plan.Timeouts.Update(ctx, DefaultUpdateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -893,7 +893,7 @@ func (r *insightResourceResultsResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, 2*time.Minute)
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, DefaultDeleteTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_cloud_incident"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -62,7 +61,7 @@ func (ds *cloudIncidentDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := state.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_alerts"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -67,7 +66,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	readTimeout, diags := data.Timeouts.Read(ctx, 2*time.Minute)
+	readTimeout, diags := data.Timeouts.Read(ctx, DefaultReadTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -76,7 +75,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	defer cancel()
 
 	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
+	if data.Filter.IsUnknown() || data.NameContains.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Alerts = types.ListUnknown(datasource_alerts.AlertsValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -85,6 +84,9 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	params := &models.ListAlertsParams{}
 	if !data.Filter.IsNull() {
 		params.Filter = new(data.Filter.ValueString())
+	}
+	if !data.NameContains.IsNull() {
+		params.NameContains = new(data.NameContains.ValueString())
 	}
 	if !data.SortBy.IsNull() {
 		params.SortBy = new(models.ListAlertsParamsSortBy(data.SortBy.ValueString()))
