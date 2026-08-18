@@ -34,7 +34,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
 	github.com/buger/jsonparser v1.6.1 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
-	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260803110448-b278c1c91926 // indirect
+	github.com/doitintl/terraform-plugin-codegen-framework v0.0.0-20260813080312-7ad2e3340a3c // indirect
 	github.com/doitintl/terraform-plugin-codegen-openapi v0.0.0-20260813095637-f94a173612bf // indirect
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/fatih/color v1.19.0 // indirect

@@ -2282,6 +2282,1468 @@
 			}
 		},
 		{
+			"name": "billing_explainer",
+			"schema": {
+				"attributes": [
+					{
+						"name": "invoice_month",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Invoice month in `YYYY-MM` format.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\d{4}-(0[1-9]|1[0-2])$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "doit_credits",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "amount",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Decimal amount serialized at the currency's minor-unit precision."
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "ISO 4217 three-letter uppercase currency code."
+									}
+								}
+							],
+							"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+						}
+					},
+					{
+						"name": "invoice_adjustments",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "amount",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Decimal amount serialized at the currency's minor-unit precision."
+									}
+								},
+								{
+									"name": "currency",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "ISO 4217 three-letter uppercase currency code."
+									}
+								}
+							],
+							"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+						}
+					},
+					{
+						"name": "payers",
+						"map_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "account",
+										"map_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "aws",
+														"map_nested": {
+															"computed_optional_required": "computed",
+															"nested_object": {
+																"attributes": [
+																	{
+																		"name": "amount",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "Decimal amount serialized at the currency's minor-unit precision."
+																		}
+																	},
+																	{
+																		"name": "currency",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "ISO 4217 three-letter uppercase currency code."
+																		}
+																	}
+																]
+															}
+														}
+													},
+													{
+														"name": "doit",
+														"map_nested": {
+															"computed_optional_required": "computed",
+															"nested_object": {
+																"attributes": [
+																	{
+																		"name": "amount",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "Decimal amount serialized at the currency's minor-unit precision."
+																		}
+																	},
+																	{
+																		"name": "currency",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "ISO 4217 three-letter uppercase currency code."
+																		}
+																	}
+																]
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "friendly_name",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "payer_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "service",
+										"map_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "aws",
+														"map_nested": {
+															"computed_optional_required": "computed",
+															"nested_object": {
+																"attributes": [
+																	{
+																		"name": "amount",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "Decimal amount serialized at the currency's minor-unit precision."
+																		}
+																	},
+																	{
+																		"name": "currency",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "ISO 4217 three-letter uppercase currency code."
+																		}
+																	}
+																]
+															}
+														}
+													},
+													{
+														"name": "doit",
+														"map_nested": {
+															"computed_optional_required": "computed",
+															"nested_object": {
+																"attributes": [
+																	{
+																		"name": "amount",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "Decimal amount serialized at the currency's minor-unit precision."
+																		}
+																	},
+																	{
+																		"name": "currency",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "ISO 4217 three-letter uppercase currency code."
+																		}
+																	}
+																]
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									{
+										"name": "summary",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "aws",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "credits",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "discounts",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "other_charges",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "refunds",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "savings",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "service_charges",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "support_charges",
+																"single_nested": {
+																	"computed_optional_required": "computed",
+																	"attributes": [
+																		{
+																			"name": "cost",
+																			"single_nested": {
+																				"computed_optional_required": "computed",
+																				"attributes": [
+																					{
+																						"name": "amount",
+																						"string": {
+																							"computed_optional_required": "computed",
+																							"description": "Decimal amount serialized at the currency's minor-unit precision."
+																						}
+																					},
+																					{
+																						"name": "currency",
+																						"string": {
+																							"computed_optional_required": "computed",
+																							"description": "ISO 4217 three-letter uppercase currency code."
+																						}
+																					}
+																				],
+																				"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																			}
+																		},
+																		{
+																			"name": "details",
+																			"list_nested": {
+																				"computed_optional_required": "computed",
+																				"nested_object": {
+																					"attributes": [
+																						{
+																							"name": "base_cost",
+																							"single_nested": {
+																								"computed_optional_required": "computed",
+																								"attributes": [
+																									{
+																										"name": "amount",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "Decimal amount serialized at the currency's minor-unit precision."
+																										}
+																									},
+																									{
+																										"name": "currency",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "ISO 4217 three-letter uppercase currency code."
+																										}
+																									}
+																								],
+																								"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																							}
+																						},
+																						{
+																							"name": "cost",
+																							"single_nested": {
+																								"computed_optional_required": "computed",
+																								"attributes": [
+																									{
+																										"name": "amount",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "Decimal amount serialized at the currency's minor-unit precision."
+																										}
+																									},
+																									{
+																										"name": "currency",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "ISO 4217 three-letter uppercase currency code."
+																										}
+																									}
+																								],
+																								"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																							}
+																						},
+																						{
+																							"name": "description",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						},
+																						{
+																							"name": "project_id",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						},
+																						{
+																							"name": "service_description",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						}
+																					]
+																				}
+																			}
+																		}
+																	]
+																}
+															},
+															{
+																"name": "tax",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "total",
+																"single_nested": {
+																	"computed_optional_required": "computed",
+																	"attributes": [
+																		{
+																			"name": "amount",
+																			"string": {
+																				"computed_optional_required": "computed",
+																				"description": "Decimal amount serialized at the currency's minor-unit precision."
+																			}
+																		},
+																		{
+																			"name": "currency",
+																			"string": {
+																				"computed_optional_required": "computed",
+																				"description": "ISO 4217 three-letter uppercase currency code."
+																			}
+																		}
+																	],
+																	"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "aws_without_doit",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "credits",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "discounts",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "other_charges",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "refunds",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "savings",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "service_charges",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "support_charges",
+																"single_nested": {
+																	"computed_optional_required": "computed",
+																	"attributes": [
+																		{
+																			"name": "cost",
+																			"single_nested": {
+																				"computed_optional_required": "computed",
+																				"attributes": [
+																					{
+																						"name": "amount",
+																						"string": {
+																							"computed_optional_required": "computed",
+																							"description": "Decimal amount serialized at the currency's minor-unit precision."
+																						}
+																					},
+																					{
+																						"name": "currency",
+																						"string": {
+																							"computed_optional_required": "computed",
+																							"description": "ISO 4217 three-letter uppercase currency code."
+																						}
+																					}
+																				],
+																				"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																			}
+																		},
+																		{
+																			"name": "details",
+																			"list_nested": {
+																				"computed_optional_required": "computed",
+																				"nested_object": {
+																					"attributes": [
+																						{
+																							"name": "base_cost",
+																							"single_nested": {
+																								"computed_optional_required": "computed",
+																								"attributes": [
+																									{
+																										"name": "amount",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "Decimal amount serialized at the currency's minor-unit precision."
+																										}
+																									},
+																									{
+																										"name": "currency",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "ISO 4217 three-letter uppercase currency code."
+																										}
+																									}
+																								],
+																								"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																							}
+																						},
+																						{
+																							"name": "cost",
+																							"single_nested": {
+																								"computed_optional_required": "computed",
+																								"attributes": [
+																									{
+																										"name": "amount",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "Decimal amount serialized at the currency's minor-unit precision."
+																										}
+																									},
+																									{
+																										"name": "currency",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "ISO 4217 three-letter uppercase currency code."
+																										}
+																									}
+																								],
+																								"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																							}
+																						},
+																						{
+																							"name": "description",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						},
+																						{
+																							"name": "project_id",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						},
+																						{
+																							"name": "service_description",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						}
+																					]
+																				}
+																			}
+																		}
+																	]
+																}
+															},
+															{
+																"name": "tax",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "total",
+																"single_nested": {
+																	"computed_optional_required": "computed",
+																	"attributes": [
+																		{
+																			"name": "amount",
+																			"string": {
+																				"computed_optional_required": "computed",
+																				"description": "Decimal amount serialized at the currency's minor-unit precision."
+																			}
+																		},
+																		{
+																			"name": "currency",
+																			"string": {
+																				"computed_optional_required": "computed",
+																				"description": "ISO 4217 three-letter uppercase currency code."
+																			}
+																		}
+																	],
+																	"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "doit",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "credits",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "discounts",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "other_charges",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "refunds",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "savings",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "service_charges",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "support_charges",
+																"single_nested": {
+																	"computed_optional_required": "computed",
+																	"attributes": [
+																		{
+																			"name": "cost",
+																			"single_nested": {
+																				"computed_optional_required": "computed",
+																				"attributes": [
+																					{
+																						"name": "amount",
+																						"string": {
+																							"computed_optional_required": "computed",
+																							"description": "Decimal amount serialized at the currency's minor-unit precision."
+																						}
+																					},
+																					{
+																						"name": "currency",
+																						"string": {
+																							"computed_optional_required": "computed",
+																							"description": "ISO 4217 three-letter uppercase currency code."
+																						}
+																					}
+																				],
+																				"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																			}
+																		},
+																		{
+																			"name": "details",
+																			"list_nested": {
+																				"computed_optional_required": "computed",
+																				"nested_object": {
+																					"attributes": [
+																						{
+																							"name": "base_cost",
+																							"single_nested": {
+																								"computed_optional_required": "computed",
+																								"attributes": [
+																									{
+																										"name": "amount",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "Decimal amount serialized at the currency's minor-unit precision."
+																										}
+																									},
+																									{
+																										"name": "currency",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "ISO 4217 three-letter uppercase currency code."
+																										}
+																									}
+																								],
+																								"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																							}
+																						},
+																						{
+																							"name": "cost",
+																							"single_nested": {
+																								"computed_optional_required": "computed",
+																								"attributes": [
+																									{
+																										"name": "amount",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "Decimal amount serialized at the currency's minor-unit precision."
+																										}
+																									},
+																									{
+																										"name": "currency",
+																										"string": {
+																											"computed_optional_required": "computed",
+																											"description": "ISO 4217 three-letter uppercase currency code."
+																										}
+																									}
+																								],
+																								"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																							}
+																						},
+																						{
+																							"name": "description",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						},
+																						{
+																							"name": "project_id",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						},
+																						{
+																							"name": "service_description",
+																							"string": {
+																								"computed_optional_required": "computed"
+																							}
+																						}
+																					]
+																				}
+																			}
+																		}
+																	]
+																}
+															},
+															{
+																"name": "tax",
+																"list_nested": {
+																	"computed_optional_required": "computed",
+																	"nested_object": {
+																		"attributes": [
+																			{
+																				"name": "cost",
+																				"single_nested": {
+																					"computed_optional_required": "computed",
+																					"attributes": [
+																						{
+																							"name": "amount",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "Decimal amount serialized at the currency's minor-unit precision."
+																							}
+																						},
+																						{
+																							"name": "currency",
+																							"string": {
+																								"computed_optional_required": "computed",
+																								"description": "ISO 4217 three-letter uppercase currency code."
+																							}
+																						}
+																					],
+																					"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																				}
+																			},
+																			{
+																				"name": "cost_type",
+																				"string": {
+																					"computed_optional_required": "computed"
+																				}
+																			}
+																		]
+																	}
+																}
+															},
+															{
+																"name": "total",
+																"single_nested": {
+																	"computed_optional_required": "computed",
+																	"attributes": [
+																		{
+																			"name": "amount",
+																			"string": {
+																				"computed_optional_required": "computed",
+																				"description": "Decimal amount serialized at the currency's minor-unit precision."
+																			}
+																		},
+																		{
+																			"name": "currency",
+																			"string": {
+																				"computed_optional_required": "computed",
+																				"description": "ISO 4217 three-letter uppercase currency code."
+																			}
+																		}
+																	],
+																	"description": "Monetary value represented as a decimal string and an ISO 4217 currency code."
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Explain month-over-month changes in invoiced cloud costs.",
+				"markdown_description": "Explain month-over-month changes in invoiced cloud costs."
+			}
+		},
+		{
 			"name": "budget",
 			"schema": {
 				"attributes": [

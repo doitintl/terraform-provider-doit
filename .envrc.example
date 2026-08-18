@@ -14,6 +14,7 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # Optional - specific data source tests will be skipped if these are unset
 # export TEST_ATTRIBUTION_GROUP="your-attribution-group-id"
 # export TEST_INVOICE_ID="your-invoice-id"
+# export TEST_BILLING_EXPLAINER_INVOICE_MONTH="your-invoice-month"  # format YYYY-MM
 # export TEST_ANOMALY_ID="your-anomaly-id"
 # export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
 # export TEST_COMMITMENT_ID="your-commitment-id"
