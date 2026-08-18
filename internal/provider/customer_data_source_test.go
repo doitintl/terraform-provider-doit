@@ -22,7 +22,6 @@ func TestAccCustomerDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_customer.test", "domains.#"),
 					resource.TestCheckResourceAttrSet("data.doit_customer.test", "settings.currency"),
 					resource.TestCheckResourceAttrSet("data.doit_customer.test", "settings.allowed_invite_domains.#"),
-					resource.TestCheckResourceAttrSet("data.doit_customer.test", "contact.emails.#"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan

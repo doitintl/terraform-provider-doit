@@ -99,30 +99,15 @@ func (d *customerDataSource) Read(ctx context.Context, req datasource.ReadReques
 	data.Name = types.StringPointerValue(customer.Name)
 	data.PrimaryDomain = types.StringPointerValue(customer.PrimaryDomain)
 
-	if customer.Domains != nil && len(*customer.Domains) > 0 {
-		var d diag.Diagnostics
-		data.Domains, d = types.ListValueFrom(ctx, types.StringType, *customer.Domains)
-		resp.Diagnostics.Append(d...)
-	} else {
-		var d diag.Diagnostics
-		data.Domains, d = types.ListValueFrom(ctx, types.StringType, []string{})
-		resp.Diagnostics.Append(d...)
-	}
+	var domainsDiags diag.Diagnostics
+	data.Domains, domainsDiags = mapStringList(ctx, customer.Domains)
+	resp.Diagnostics.Append(domainsDiags...)
 
 	data.UrlSlug = types.StringPointerValue(customer.UrlSlug)
 
 	if customer.Settings != nil {
-		settingsAttrTypes := datasource_customer.SettingsValue{}.AttributeTypes(ctx)
-		var allowedInviteDomainsVal types.List
-		if customer.Settings.AllowedInviteDomains != nil && len(*customer.Settings.AllowedInviteDomains) > 0 {
-			var d diag.Diagnostics
-			allowedInviteDomainsVal, d = types.ListValueFrom(ctx, types.StringType, *customer.Settings.AllowedInviteDomains)
-			resp.Diagnostics.Append(d...)
-		} else {
-			var d diag.Diagnostics
-			allowedInviteDomainsVal, d = types.ListValueFrom(ctx, types.StringType, []string{})
-			resp.Diagnostics.Append(d...)
-		}
+		allowedInviteDomainsVal, settingsDiags := mapStringList(ctx, customer.Settings.AllowedInviteDomains)
+		resp.Diagnostics.Append(settingsDiags...)
 
 		var currencyVal types.String
 		if customer.Settings.Currency != nil {
@@ -131,37 +116,30 @@ func (d *customerDataSource) Read(ctx context.Context, req datasource.ReadReques
 			currencyVal = types.StringNull()
 		}
 
-		settingsVal, d := datasource_customer.NewSettingsValue(settingsAttrTypes, map[string]attr.Value{
+		settingsVal, newSettingsDiags := datasource_customer.NewSettingsValue(datasource_customer.SettingsValue{}.AttributeTypes(ctx), map[string]attr.Value{
 			"allowed_invite_domains": allowedInviteDomainsVal,
 			"currency":               currencyVal,
 		})
-		resp.Diagnostics.Append(d...)
+		resp.Diagnostics.Append(newSettingsDiags...)
 		data.Settings = settingsVal
 	} else {
 		data.Settings = datasource_customer.NewSettingsValueNull()
 	}
 
 	if customer.Contact != nil {
-		contactAttrTypes := datasource_customer.ContactValue{}.AttributeTypes(ctx)
-		var emailsVal types.List
-		if customer.Contact.Emails != nil && len(*customer.Contact.Emails) > 0 {
-			var emails []string
+		var emails []string
+		if customer.Contact.Emails != nil {
 			for _, email := range *customer.Contact.Emails {
 				emails = append(emails, string(email))
 			}
-			var d diag.Diagnostics
-			emailsVal, d = types.ListValueFrom(ctx, types.StringType, emails)
-			resp.Diagnostics.Append(d...)
-		} else {
-			var d diag.Diagnostics
-			emailsVal, d = types.ListValueFrom(ctx, types.StringType, []string{})
-			resp.Diagnostics.Append(d...)
 		}
+		emailsVal, contactDiags := mapStringList(ctx, &emails)
+		resp.Diagnostics.Append(contactDiags...)
 
-		contactVal, d := datasource_customer.NewContactValue(contactAttrTypes, map[string]attr.Value{
+		contactVal, newContactDiags := datasource_customer.NewContactValue(datasource_customer.ContactValue{}.AttributeTypes(ctx), map[string]attr.Value{
 			"emails": emailsVal,
 		})
-		resp.Diagnostics.Append(d...)
+		resp.Diagnostics.Append(newContactDiags...)
 		data.Contact = contactVal
 	} else {
 		data.Contact = datasource_customer.NewContactValueNull()

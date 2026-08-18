@@ -56,6 +56,11 @@ func TestAccCustomerResource_InvalidURLSlug(t *testing.T) {
 // TestAccCustomerResource_Import tests importing the customer resource and verifying drift.
 func TestAccCustomerResource_Import(t *testing.T) {
 	customer := testAccGetCustomer(t)
+	t.Cleanup(func() {
+		testAccRestoreCustomer(t, customer)
+	})
+
+	importConfig := testAccCustomerResourceRestoreConfig(customer)
 
 	// Singleton resource — cannot run in parallel with other customer tests.
 	resource.Test(t, resource.TestCase{ //nolint:paralleltest // singleton resource: parallel tests interfere via shared customer settings
@@ -65,16 +70,16 @@ func TestAccCustomerResource_Import(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: Import and persist state
 			{
-				Config:             testAccCustomerResourceConfig(""),
+				Config:             importConfig,
 				ResourceName:       "doit_customer.test",
 				ImportState:        true,
 				ImportStateId:      customer.Id,
 				ImportStatePersist: true,
 				ImportStateVerify:  false,
 			},
-			// Step 2: Verify fields are populated after import
+			// Step 2: Verify fields are populated after import without modifying them
 			{
-				Config: testAccCustomerResourceConfig(""),
+				Config: importConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", customer.Id),
 					resource.TestCheckResourceAttrSet("doit_customer.test", "name"),
@@ -83,7 +88,7 @@ func TestAccCustomerResource_Import(t *testing.T) {
 			},
 			// Step 3: Drift verification - re-apply should produce an empty plan
 			{
-				Config: testAccCustomerResourceConfig(""),
+				Config: importConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),

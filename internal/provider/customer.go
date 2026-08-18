@@ -52,15 +52,9 @@ func mapCustomerToModel(ctx context.Context, customer *models.Customer, state *c
 	state.Name = types.StringPointerValue(customer.Name)
 	state.PrimaryDomain = types.StringPointerValue(customer.PrimaryDomain)
 
-	if customer.Domains != nil && len(*customer.Domains) > 0 {
-		var d diag.Diagnostics
-		state.Domains, d = types.ListValueFrom(ctx, types.StringType, *customer.Domains)
-		diags.Append(d...)
-	} else {
-		var d diag.Diagnostics
-		state.Domains, d = types.ListValueFrom(ctx, types.StringType, []string{})
-		diags.Append(d...)
-	}
+	var d diag.Diagnostics
+	state.Domains, d = mapStringList(ctx, customer.Domains)
+	diags.Append(d...)
 
 	if customer.UrlSlug == nil && !state.UrlSlug.IsNull() && !state.UrlSlug.IsUnknown() && state.UrlSlug.ValueString() == "" {
 		state.UrlSlug = types.StringValue("")
@@ -69,17 +63,8 @@ func mapCustomerToModel(ctx context.Context, customer *models.Customer, state *c
 	}
 
 	if customer.Settings != nil {
-		settingsAttrTypes := resource_customer.SettingsValue{}.AttributeTypes(ctx)
-		var allowedInviteDomainsVal types.List
-		if customer.Settings.AllowedInviteDomains != nil && len(*customer.Settings.AllowedInviteDomains) > 0 {
-			var d diag.Diagnostics
-			allowedInviteDomainsVal, d = types.ListValueFrom(ctx, types.StringType, *customer.Settings.AllowedInviteDomains)
-			diags.Append(d...)
-		} else {
-			var d diag.Diagnostics
-			allowedInviteDomainsVal, d = types.ListValueFrom(ctx, types.StringType, []string{})
-			diags.Append(d...)
-		}
+		allowedInviteDomainsVal, d := mapStringList(ctx, customer.Settings.AllowedInviteDomains)
+		diags.Append(d...)
 
 		var currencyVal types.String
 		if customer.Settings.Currency != nil {
@@ -88,7 +73,7 @@ func mapCustomerToModel(ctx context.Context, customer *models.Customer, state *c
 			currencyVal = types.StringNull()
 		}
 
-		settingsVal, d := resource_customer.NewSettingsValue(settingsAttrTypes, map[string]attr.Value{
+		settingsVal, d := resource_customer.NewSettingsValue(resource_customer.SettingsValue{}.AttributeTypes(ctx), map[string]attr.Value{
 			"allowed_invite_domains": allowedInviteDomainsVal,
 			"currency":               currencyVal,
 		})
@@ -99,31 +84,28 @@ func mapCustomerToModel(ctx context.Context, customer *models.Customer, state *c
 	}
 
 	if customer.Contact != nil {
-		contactAttrTypes := resource_customer.ContactValue{}.AttributeTypes(ctx)
-		var emailsVal types.List
-		if customer.Contact.Emails != nil && len(*customer.Contact.Emails) > 0 {
-			var emails []string
+		var emails []string
+		if customer.Contact.Emails != nil {
 			for _, email := range *customer.Contact.Emails {
 				emails = append(emails, string(email))
 			}
-			var d diag.Diagnostics
-			emailsVal, d = types.ListValueFrom(ctx, types.StringType, emails)
-			diags.Append(d...)
-		} else {
-			var d diag.Diagnostics
-			emailsVal, d = types.ListValueFrom(ctx, types.StringType, []string{})
-			diags.Append(d...)
 		}
+		emailsVal, d := mapStringList(ctx, &emails)
+		diags.Append(d...)
 
-		contactVal, d := resource_customer.NewContactValue(contactAttrTypes, map[string]attr.Value{
+		contactVal, d := resource_customer.NewContactValue(resource_customer.ContactValue{}.AttributeTypes(ctx), map[string]attr.Value{
 			"emails": emailsVal,
 		})
 		diags.Append(d...)
 		state.Contact = contactVal
-	} else if !state.Contact.IsNull() && !state.Contact.IsUnknown() && !state.Contact.Emails.IsNull() && !state.Contact.Emails.IsUnknown() && len(state.Contact.Emails.Elements()) == 0 {
-		// API returns nil when no contact emails exist; preserve { emails: [] } if already in state.
 	} else {
-		state.Contact = resource_customer.NewContactValueNull()
+		isConfiguredEmpty := !state.Contact.IsNull() && !state.Contact.IsUnknown() &&
+			!state.Contact.Emails.IsNull() && !state.Contact.Emails.IsUnknown() &&
+			len(state.Contact.Emails.Elements()) == 0
+
+		if !isConfiguredEmpty {
+			state.Contact = resource_customer.NewContactValueNull()
+		}
 	}
 
 	return diags
