@@ -48,6 +48,8 @@ tags:
     description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
   - name: AccountTeam
     description: Find DoiT account managers assigned to your organization.
+  - name: Customers
+    description: Read and update your organization's general settings.
   - name: Contract Templates
     description: Manage contract templates for PartnerOps resellers (T1/T2).
   - name: Users
@@ -2483,6 +2485,88 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /customers/v1/customers:
+    get:
+      tags:
+        - Customers
+      summary: Get customer general settings
+      description: >-
+        Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+      operationId: getCustomer
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK - Customer general settings returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Customers
+      summary: Update customer general settings
+      description: >-
+        Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+
+
+        The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
+
+
+        Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
+      operationId: updateCustomer
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: OK - Customer general settings updated.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: >-
+            Conflict - The requested `urlSlug` is already assigned to another customer, or conflicts with an existing customer ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "415":
+          description: >-
+            Unsupported Media Type - The request `Content-Type` must be `application/merge-patch+json`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: >-
+            Unprocessable Entity - The customer has reached the limit of 5 previously-used URL slugs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
   /iam/v1/users:
     get:
       tags:
@@ -7614,6 +7698,85 @@ components:
           type: string
           format: date-time
           description: The time when the custom theme was last updated.
+    Customer:
+      type: object
+      description: Customer general settings, scoped to the authenticated tenant.
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Customer ID.
+          x-doit-confidentiality: customer-data
+        name:
+          type: string
+          description: Customer name.
+          x-doit-confidentiality: customer-data
+        primaryDomain:
+          type: string
+          description: Customer's primary domain.
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+        domains:
+          type: array
+          description: Domains associated with the customer.
+          items:
+            type: string
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+        urlSlug:
+          type: string
+          description: The customer's active URL display name, used in Console URLs.
+          x-doit-confidentiality: customer-data
+        settings:
+          $ref: "#/components/schemas/CustomerSettings"
+        contact:
+          $ref: "#/components/schemas/CustomerContact"
+    CustomerContact:
+      type: object
+      description: >-
+        Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+      properties:
+        emails:
+          type: array
+          description: Point-of-contact email addresses for the customer.
+          items:
+            type: string
+            format: email
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+    CustomerSettings:
+      type: object
+      description: >-
+        Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+
+
+        `currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it.
+      properties:
+        currency:
+          $ref: "#/components/schemas/Currency"
+        allowedInviteDomains:
+          type: array
+          description: >-
+            Email domains allowed to self-invite into the customer. Updating this field requires the `UsersManager` permission in addition to `Settings`. An empty array clears the list.
+          items:
+            type: string
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+    CustomerUpdate:
+      type: object
+      description: >-
+        Partial update to a customer's general settings. Every field is optional; only fields present in the request body are changed. Fields are nested exactly as the `getCustomer` response nests them. See the operation description for `urlSlug`'s null-vs-absent semantics, which differ from every other field.
+      properties:
+        urlSlug:
+          type: string
+          description: >-
+            The customer's URL display name. An explicit empty string removes the active slug; a non-empty value must be 3-12 characters of lowercase letters, digits, or dashes, starting and ending with a letter or digit, and must be unique across all customers.
+          x-doit-confidentiality: customer-data
+        settings:
+          $ref: "#/components/schemas/CustomerSettings"
+        contact:
+          $ref: "#/components/schemas/CustomerContact"
     DeleteDatahubDataset200Response:
       type: object
       properties:
