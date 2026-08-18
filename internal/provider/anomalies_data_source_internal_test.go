@@ -269,3 +269,46 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 		t.Errorf("total_cost_of_anomaly = %f, want 10.5 (from page 1 snapshot)", got)
 	}
 }
+
+func TestAnomaliesDataSource_EmptyAnomaliesList(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{
+			"anomalies": [],
+			"rowCount": 0,
+			"totalCount": 0,
+			"totalCountExact": true,
+			"truncated": false,
+			"anomalySummary": {
+				"countBySeverity": {
+					"critical": 0,
+					"warning": 0,
+					"information": 0
+				},
+				"totalCostOfAnomaly": 0.0
+			}
+		}`)
+	}))
+	defer server.Close()
+
+	data, _ := readAnomaliesHelper(t, server.URL, map[string]tftypes.Value{})
+
+	if data.Anomalies.IsNull() {
+		t.Errorf("expected Anomalies to not be null")
+	}
+	if data.Anomalies.IsUnknown() {
+		t.Errorf("expected Anomalies to not be unknown")
+	}
+	if got := len(data.Anomalies.Elements()); got != 0 {
+		t.Errorf("expected 0 anomalies in list, got %d", got)
+	}
+	if got := data.RowCount.ValueInt64(); got != 0 {
+		t.Errorf("expected row_count to be 0, got %d", got)
+	}
+	if got := data.TotalCount.ValueInt64(); got != 0 {
+		t.Errorf("expected total_count to be 0, got %d", got)
+	}
+}
