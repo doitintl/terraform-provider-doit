@@ -22,11 +22,11 @@ The DoiT Cloud Intelligence Terraform Provider lets you manage [DoiT Cloud Intel
 
 The provider supports four configuration options, all of which can be set via environment variables:
 
-| Attribute          | Environment Variable    | Required | Description                                                  |
-| ------------------ | ----------------------- | -------- | -------------------------------------------------------------- |
-| `api_token`        | `DOIT_API_TOKEN`        | Yes      | Your DoiT API key                                             |
-| `host`             | `DOIT_HOST`             | No       | API host (defaults to `https://api.doit.com`)                 |
-| `customer_context` | `DOIT_CUSTOMER_CONTEXT` | No\*     | Customer context (_required for DoiT employees only_)         |
+| Attribute          | Environment Variable    | Required | Description                                                     |
+| ------------------ | ----------------------- | -------- | --------------------------------------------------------------- |
+| `api_token`        | `DOIT_API_TOKEN`        | Yes      | Your DoiT API key                                               |
+| `host`             | `DOIT_HOST`             | No       | API host (defaults to `https://api.doit.com`)                   |
+| `customer_context` | `DOIT_CUSTOMER_CONTEXT` | No\*     | Customer context (_required for DoiT employees only_)           |
 | `request_timeout`  | `DOIT_REQUEST_TIMEOUT`  | No       | Timeout per HTTP request, e.g. `30s`, `2m` (defaults to `120s`) |
 
 ### Provider Configuration
@@ -59,23 +59,23 @@ provider "doit" {
 
 ### Resources
 
-| Resource                       | Description                                                       |
-| ------------------------------ | ----------------------------------------------------------------- |
-| `doit_active_theme`            | Active console theme (singleton)                                  |
-| `doit_alert`                   | Cost/usage alerts with threshold notifications                    |
-| `doit_allocation`              | Cost allocation rules and groups                                  |
-| `doit_annotation`              | Custom notes on cost data                                         |
-| `doit_asset`                   | Cloud assets (import-only; manage Google Workspace licenses)      |
-| `doit_budget`                  | Budget tracking with alerts and seasonal amounts                  |
-| `doit_cloudconnect_aws_account`| AWS CloudConnect account onboarding                               |
-| `doit_custom_theme`            | Custom console themes                                             |
-| `doit_datahub_dataset`         | DataHub dataset management                                        |
-| `doit_folder`                  | Cloud Analytics folders for organizing reports and allocations    |
-| `doit_label`                   | Labels for categorizing annotations                               |
-| `doit_label_assignments`       | Assign labels to resources                                        |
-| `doit_report`                  | Cloud Analytics reports with filters, metrics, and grouping       |
-| `doit_sharing`                 | Sharing permissions for reports, budgets, alerts, and allocations |
-| `doit_user`                    | Invite and manage platform users                                  |
+| Resource                        | Description                                                       |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `doit_active_theme`             | Active console theme (singleton)                                  |
+| `doit_alert`                    | Cost/usage alerts with threshold notifications                    |
+| `doit_allocation`               | Cost allocation rules and groups                                  |
+| `doit_annotation`               | Custom notes on cost data                                         |
+| `doit_asset`                    | Cloud assets (import-only; manage Google Workspace licenses)      |
+| `doit_budget`                   | Budget tracking with alerts and seasonal amounts                  |
+| `doit_cloudconnect_aws_account` | AWS CloudConnect account onboarding                               |
+| `doit_custom_theme`             | Custom console themes                                             |
+| `doit_datahub_dataset`          | DataHub dataset management                                        |
+| `doit_folder`                   | Cloud Analytics folders for organizing reports and allocations    |
+| `doit_label`                    | Labels for categorizing annotations                               |
+| `doit_label_assignments`        | Assign labels to resources                                        |
+| `doit_report`                   | Cloud Analytics reports with filters, metrics, and grouping       |
+| `doit_sharing`                  | Sharing permissions for reports, budgets, alerts, and allocations |
+| `doit_user`                     | Invite and manage platform users                                  |
 
 ### Data Sources
 
@@ -98,26 +98,26 @@ provider "doit" {
 <details>
 <summary><strong>Operations</strong> — anomalies, incidents, commitments, assets, invoices</summary>
 
-| Data Source                                      | Description                                   |
-| ------------------------------------------------ | --------------------------------------------- |
-| `doit_anomaly` / `doit_anomalies`                | Get or list cost anomalies                     |
-| `doit_cloud_diagrams`                            | Search cloud infrastructure diagrams           |
-| `doit_cloud_diagrams_activity_groups`             | List activity groups for a diagram             |
-| `doit_cloud_diagrams_export`                     | Export a cloud diagram                         |
-| `doit_cloud_diagrams_node_activities`             | List node activities for a diagram             |
-| `doit_cloud_diagrams_relationships`              | List relationships for a diagram               |
-| `doit_cloud_diagrams_schemes`                    | List available diagram color schemes           |
-| `doit_cloud_diagrams_search`                     | Search within a cloud diagram                  |
-| `doit_cloud_diagrams_snapshot`                   | Get a single diagram snapshot                  |
-| `doit_cloud_diagrams_snapshots`                  | List diagram snapshots                         |
-| `doit_cloud_diagrams_stats`                      | Get diagram statistics                         |
-| `doit_cloud_diagrams_statussheet`                | Get diagram status sheet                       |
-| `doit_cloud_incident` / `doit_cloud_incidents`   | Get or list cloud provider incidents           |
-| `doit_commitment` / `doit_commitments`           | Get or list commitments                        |
-| `doit_asset` / `doit_assets`                     | Get or list cloud assets                       |
-| `doit_invoice` / `doit_invoices`                 | Get or list invoices                           |
-| `doit_support_request` / `doit_support_requests` | Get or list support requests                   |
-| `doit_support_request_comments`                  | List comments on a support request             |
+| Data Source                                      | Description                          |
+| ------------------------------------------------ | ------------------------------------ |
+| `doit_anomaly` / `doit_anomalies`                | Get or list cost anomalies           |
+| `doit_cloud_diagrams`                            | Search cloud infrastructure diagrams |
+| `doit_cloud_diagrams_activity_groups`            | List activity groups for a diagram   |
+| `doit_cloud_diagrams_export`                     | Export a cloud diagram               |
+| `doit_cloud_diagrams_node_activities`            | List node activities for a diagram   |
+| `doit_cloud_diagrams_relationships`              | List relationships for a diagram     |
+| `doit_cloud_diagrams_schemes`                    | List available diagram color schemes |
+| `doit_cloud_diagrams_search`                     | Search within a cloud diagram        |
+| `doit_cloud_diagrams_snapshot`                   | Get a single diagram snapshot        |
+| `doit_cloud_diagrams_snapshots`                  | List diagram snapshots               |
+| `doit_cloud_diagrams_stats`                      | Get diagram statistics               |
+| `doit_cloud_diagrams_statussheet`                | Get diagram status sheet             |
+| `doit_cloud_incident` / `doit_cloud_incidents`   | Get or list cloud provider incidents |
+| `doit_commitment` / `doit_commitments`           | Get or list commitments              |
+| `doit_asset` / `doit_assets`                     | Get or list cloud assets             |
+| `doit_invoice` / `doit_invoices`                 | Get or list invoices                 |
+| `doit_support_request` / `doit_support_requests` | Get or list support requests         |
+| `doit_support_request_comments`                  | List comments on a support request   |
 
 </details>
 
@@ -218,21 +218,22 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 <details>
 <summary>Optional variables (specific data source tests are skipped if unset)</summary>
 
-| Variable                      | Description                                            |
-| ----------------------------- | ------------------------------------------------------ |
-| `TEST_ATTRIBUTION_GROUP`      | Attribution group ID for report tests                  |
-| `TEST_INVOICE_ID`             | Invoice ID for invoice data source tests               |
-| `TEST_ANOMALY_ID`             | Anomaly ID for anomaly data source tests               |
-| `TEST_CLOUD_INCIDENT_ID`      | Cloud incident ID for cloud incident data source tests |
-| `TEST_COMMITMENT_ID`          | Commitment ID for commitment data source tests         |
-| `TEST_ASSET_ID`               | Asset ID for asset data source tests (G Suite)         |
-| `TEST_ASSET_ID_AWS`           | AWS asset ID for asset data source tests               |
-| `TEST_CLOUD_DIAGRAM_RESOURCE` | Cloud resource ID for cloud diagrams data source tests |
-| `TEST_INVITE_EMAIL`           | Email address for user invite resource tests           |
-| `TEST_AWS_ACCOUNT_ID`         | AWS account ID for CloudConnect resource tests         |
-| `TEST_AWS_ROLE_ARN`           | IAM role ARN for CloudConnect resource tests           |
-| `TEST_AWS_S3_BUCKET`          | S3 bucket name for CloudConnect resource tests         |
-| `TEST_AWS_S3_BUCKET_REGION`   | S3 bucket region for CloudConnect resource tests       |
+| Variable                               | Description                                                  |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `TEST_ATTRIBUTION_GROUP`               | Attribution group ID for report tests                        |
+| `TEST_INVOICE_ID`                      | Invoice ID for invoice data source tests                     |
+| `TEST_ANOMALY_ID`                      | Anomaly ID for anomaly data source tests                     |
+| `TEST_CLOUD_INCIDENT_ID`               | Cloud incident ID for cloud incident data source tests       |
+| `TEST_COMMITMENT_ID`                   | Commitment ID for commitment data source tests               |
+| `TEST_ASSET_ID`                        | Asset ID for asset data source tests (G Suite)               |
+| `TEST_ASSET_ID_AWS`                    | AWS asset ID for asset data source tests                     |
+| `TEST_CLOUD_DIAGRAM_RESOURCE`          | Cloud resource ID for cloud diagrams data source tests       |
+| `TEST_INVITE_EMAIL`                    | Email address for user invite resource tests                 |
+| `TEST_AWS_ACCOUNT_ID`                  | AWS account ID for CloudConnect resource tests               |
+| `TEST_AWS_ROLE_ARN`                    | IAM role ARN for CloudConnect resource tests                 |
+| `TEST_AWS_S3_BUCKET`                   | S3 bucket name for CloudConnect resource tests               |
+| `TEST_AWS_S3_BUCKET_REGION`            | S3 bucket region for CloudConnect resource tests             |
+| `TEST_BILLING_EXPLAINER_INVOICE_MONTH` | Invoice month and year for the billing explainer data source |
 
 </details>
 
