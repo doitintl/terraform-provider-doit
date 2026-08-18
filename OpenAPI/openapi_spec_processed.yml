@@ -2350,53 +2350,6 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
-  "/billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber}":
-    get:
-      tags:
-        - Billing Explainer
-      summary: Retrieve an entity invoice explainer
-      description: Returns invoiced cost changes for an invoice owned by the specified billing profile in the authenticated tenant.
-      operationId: getEntityInvoiceExplainer
-      parameters:
-        - $ref: "#/components/parameters/tenantId"
-        - name: billingProfileId
-          in: path
-          required: true
-          description: Billing profile identifier shown on the invoice.
-          schema:
-            type: string
-            pattern: ^[A-Za-z0-9_-]{1,128}$
-            example: CUST-12345
-        - name: invoiceNumber
-          in: path
-          required: true
-          description: Customer-facing invoice number.
-          schema:
-            type: string
-            pattern: ^[A-Za-z0-9_-]{1,64}$
-            example: IN244004936
-      responses:
-        "200":
-          description: Billing explainer returned.
-          headers:
-            Request-Id:
-              $ref: "#/components/headers/RequestId"
-            Content-Language:
-              $ref: "#/components/headers/ContentLanguage"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EntityInvoiceExplainer"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
   /core/v1/service-quotas:
     get:
       tags:
@@ -8017,32 +7970,6 @@ components:
         - "upgrade needed"
         - "permissions needed"
       description: The display status of the insight.
-    EntityInvoiceExplainer:
-      type: object
-      required:
-        - summary
-        - service
-        - account
-        - customerId
-        - billingProfileId
-        - invoiceNumber
-        - invoiceMonth
-      properties:
-        summary:
-          $ref: "#/components/schemas/BillingExplainerSummary"
-        service:
-          $ref: "#/components/schemas/BillingExplainerCostDifferences"
-        account:
-          $ref: "#/components/schemas/BillingExplainerCostDifferences"
-        customerId:
-          type: string
-        billingProfileId:
-          type: string
-        invoiceNumber:
-          type: string
-        invoiceMonth:
-          type: string
-          pattern: ^\d{4}-(0[1-9]|1[0-2])$
     Error:
       type: object
       description: Standard error response structure.
