@@ -75,9 +75,15 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any filter/pagination input is unknown, return unknown list
-	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() || data.IncludeNotifications.IsUnknown() {
+	// If any filter/pagination input is unknown, return unknown list and unknown computed attributes
+	if data.Filter.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() || data.IncludeNotifications.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() {
 		data.Anomalies = types.ListUnknown(datasource_anomalies.AnomaliesValue{}.Type(ctx))
+		data.AnomalySummary = datasource_anomalies.NewAnomalySummaryValueUnknown()
+		data.RowCount = types.Int64Unknown()
+		data.TotalCount = types.Int64Unknown()
+		data.TotalCountExact = types.BoolUnknown()
+		data.Truncated = types.BoolUnknown()
+		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -87,19 +93,29 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		params.Filter = new(data.Filter.ValueString())
 	}
 	if !data.MinCreationTime.IsNull() {
-		params.MinCreationTime = new(data.MinCreationTime.ValueString())
+		params.MinCreationTime = new(data.MinCreationTime.ValueInt64())
 	}
 	if !data.MaxCreationTime.IsNull() {
-		params.MaxCreationTime = new(data.MaxCreationTime.ValueString())
+		params.MaxCreationTime = new(data.MaxCreationTime.ValueInt64())
 	}
 	if !data.IncludeNotifications.IsNull() {
 		params.IncludeNotifications = data.IncludeNotifications.ValueBoolPointer()
+	}
+	if !data.SortBy.IsNull() {
+		params.SortBy = new(models.ListAnomaliesParamsSortBy(data.SortBy.ValueString()))
+	}
+	if !data.SortOrder.IsNull() {
+		params.SortOrder = new(models.ListAnomaliesParamsSortOrder(data.SortOrder.ValueString()))
 	}
 
 	// Smart pagination: honor user-provided values, otherwise auto-paginate
 	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allAnomalies []models.AnomalyItem
+	var finalSummary models.AnomaliesResponseAnomalySummary
+	var totalCount int64
+	var totalCountExact bool
+	var truncated bool
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
@@ -126,23 +142,29 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		}
 
 		result := apiResp.JSON200
-		if result.Anomalies != nil {
-			allAnomalies = *result.Anomalies
-		}
+		allAnomalies = result.Anomalies
+		finalSummary = result.AnomalySummary
+		totalCount = result.TotalCount
+		totalCountExact = result.TotalCountExact
+		truncated = result.Truncated
 
 		// Preserve API's page_token for user to fetch next page
-		data.PageToken = types.StringPointerValue(result.PageToken)
-		if result.RowCount != nil {
-			data.RowCount = types.Int64Value(*result.RowCount)
+		if result.PageToken != nil && *result.PageToken != "" {
+			data.PageToken = types.StringValue(*result.PageToken)
 		} else {
-			data.RowCount = types.Int64Value(int64(len(allAnomalies)))
+			data.PageToken = types.StringNull()
 		}
+		data.RowCount = types.Int64Value(result.RowCount)
+		data.TotalCount = types.Int64Value(totalCount)
+		data.TotalCountExact = types.BoolValue(totalCountExact)
+		data.Truncated = types.BoolValue(truncated)
 		// max_results is already set by user, no change needed
 	} else {
 		// Auto mode: fetch all pages, honoring user-provided page_token as starting point
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
+		firstPage := true
 		for {
 			apiResp, err := d.client.ListAnomaliesWithResponse(ctx, params)
 			if err != nil {
@@ -162,9 +184,15 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			}
 
 			result := apiResp.JSON200
-			if result.Anomalies != nil {
-				allAnomalies = append(allAnomalies, *result.Anomalies...)
+			allAnomalies = append(allAnomalies, result.Anomalies...)
+			if firstPage {
+				finalSummary = result.AnomalySummary
+				totalCount = result.TotalCount
+				totalCountExact = result.TotalCountExact
+				firstPage = false
 			}
+			// In auto mode, by definition all matching pages are fetched
+			truncated = false
 
 			if result.PageToken == nil || *result.PageToken == "" {
 				break
@@ -175,8 +203,13 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		// Auto mode: set counts based on what we fetched
 		data.RowCount = types.Int64Value(int64(len(allAnomalies)))
 		data.PageToken = types.StringNull()
+		data.TotalCount = types.Int64Value(totalCount)
+		data.TotalCountExact = types.BoolValue(totalCountExact)
+		data.Truncated = types.BoolValue(truncated)
 		// max_results was not set; preserve null
 	}
+
+	data.AnomalySummary = mapAnomalySummary(ctx, finalSummary, &resp.Diagnostics)
 
 	// Map anomalies list
 	if len(allAnomalies) > 0 {
@@ -374,4 +407,28 @@ func mapAnomalyNotifications(ctx context.Context, notifications []models.Notific
 	list, diags := types.ListValueFrom(ctx, datasource_anomalies.NotificationsValue{}.Type(ctx), vals)
 	diagnostics.Append(diags...)
 	return list
+}
+
+// mapAnomalySummary maps API AnomaliesResponseAnomalySummary to Terraform AnomalySummaryValue.
+func mapAnomalySummary(ctx context.Context, summary models.AnomaliesResponseAnomalySummary, diagnostics *diag.Diagnostics) datasource_anomalies.AnomalySummaryValue {
+	countBySeverityVal, diags := datasource_anomalies.NewCountBySeverityValue(
+		datasource_anomalies.CountBySeverityValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"critical":    types.Int64Value(summary.CountBySeverity.Critical),
+			"information": types.Int64Value(summary.CountBySeverity.Information),
+			"warning":     types.Int64Value(summary.CountBySeverity.Warning),
+		},
+	)
+	diagnostics.Append(diags...)
+
+	summaryVal, diags := datasource_anomalies.NewAnomalySummaryValue(
+		datasource_anomalies.AnomalySummaryValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"count_by_severity":     countBySeverityVal,
+			"total_cost_of_anomaly": types.Float64Value(summary.TotalCostOfAnomaly),
+		},
+	)
+	diagnostics.Append(diags...)
+
+	return summaryVal
 }

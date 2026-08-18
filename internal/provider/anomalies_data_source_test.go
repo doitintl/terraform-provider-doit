@@ -30,6 +30,13 @@ func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "page_token"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.notifications.#"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "total_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "total_count_exact", "true"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "truncated", "true"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomaly_summary.count_by_severity.critical"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomaly_summary.count_by_severity.warning"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomaly_summary.count_by_severity.information"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomaly_summary.total_cost_of_anomaly"),
 				),
 			},
 			{
@@ -144,6 +151,13 @@ func TestAccAnomaliesDataSource_AutoPagination(t *testing.T) {
 					// Don't check specific values since parallel tests may change the count
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "row_count"),
 					resource.TestCheckNoResourceAttr("data.doit_anomalies.test", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "total_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.test", "total_count_exact", "true"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.test", "truncated", "false"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.count_by_severity.critical"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.count_by_severity.warning"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.count_by_severity.information"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.total_cost_of_anomaly"),
 				),
 			},
 		},
@@ -424,6 +438,204 @@ output "anomaly_expected_max_cost" {
 `
 }
 
+// TestAccAnomaliesDataSource_SortByAndSortOrder verifies that the sort_by and
+// sort_order parameters work without drift across different sort configurations.
+func TestAccAnomaliesDataSource_SortByAndSortOrder(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceSortConfig("startTime", "desc"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.sorted", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.sorted", "sort_by", "startTime"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.sorted", "sort_order", "desc"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceSortConfig("startTime", "desc"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			{
+				Config: testAccAnomaliesDataSourceSortConfig("costOfAnomaly", "asc"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.sorted", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.sorted", "sort_by", "costOfAnomaly"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.sorted", "sort_order", "asc"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceSortConfig("costOfAnomaly", "asc"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceSortConfig(sortBy, sortOrder string) string {
+	return fmt.Sprintf(`
+data "doit_anomalies" "sorted" {
+  max_results = 1
+  sort_by     = %[1]q
+  sort_order  = %[2]q
+}
+`, sortBy, sortOrder)
+}
+
+// TestAccAnomaliesDataSource_MinMaxCreationTime verifies that min_creation_time
+// and max_creation_time integer filters work without drift.
+func TestAccAnomaliesDataSource_MinMaxCreationTime(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceMinMaxTimeConfig(0, 4102444800000),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.timed", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.timed", "min_creation_time", "0"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.timed", "max_creation_time", "4102444800000"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceMinMaxTimeConfig(0, 4102444800000),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceMinMaxTimeConfig(minTime, maxTime int64) string {
+	return fmt.Sprintf(`
+data "doit_anomalies" "timed" {
+  max_results       = 1
+  min_creation_time = %d
+  max_creation_time = %d
+}
+`, minTime, maxTime)
+}
+
+// TestAccAnomaliesDataSource_AnomalySummary verifies that the anomaly_summary
+// nested object (count_by_severity and total_cost_of_anomaly) is accessible.
+func TestAccAnomaliesDataSource_AnomalySummary(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceSummaryConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.summary_test", "anomaly_summary.count_by_severity.critical"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.summary_test", "anomaly_summary.count_by_severity.warning"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.summary_test", "anomaly_summary.count_by_severity.information"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.summary_test", "anomaly_summary.total_cost_of_anomaly"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceSummaryConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceSummaryConfig() string {
+	return `
+data "doit_anomalies" "summary_test" {
+  max_results = 1
+}
+
+output "critical_count" {
+  value = data.doit_anomalies.summary_test.anomaly_summary.count_by_severity.critical
+}
+
+output "warning_count" {
+  value = data.doit_anomalies.summary_test.anomaly_summary.count_by_severity.warning
+}
+
+output "info_count" {
+  value = data.doit_anomalies.summary_test.anomaly_summary.count_by_severity.information
+}
+
+output "total_cost" {
+  value = data.doit_anomalies.summary_test.anomaly_summary.total_cost_of_anomaly
+}
+`
+}
+
+// TestAccAnomaliesDataSource_TotalCountAndTruncated verifies that total_count,
+// total_count_exact, and truncated attributes are mapped correctly.
+func TestAccAnomaliesDataSource_TotalCountAndTruncated(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceTotalCountConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.total_count_test", "total_count"),
+					resource.TestCheckResourceAttr("data.doit_anomalies.total_count_test", "total_count_exact", "true"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.total_count_test", "truncated"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceTotalCountConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceTotalCountConfig() string {
+	return `
+data "doit_anomalies" "total_count_test" {
+  max_results = 1
+}
+
+output "total_count" {
+  value = data.doit_anomalies.total_count_test.total_count
+}
+
+output "total_count_exact" {
+  value = data.doit_anomalies.total_count_test.total_count_exact
+}
+
+output "truncated" {
+  value = data.doit_anomalies.total_count_test.truncated
+}
+`
+}
+
 // Helper functions
 
 var (
@@ -452,10 +664,10 @@ func computeAnomalyCount(t *testing.T) int {
 		if err != nil {
 			t.Fatalf("Failed to list anomalies: %v", err)
 		}
-		if resp.JSON200 == nil || resp.JSON200.Anomalies == nil {
+		if resp.JSON200 == nil {
 			break
 		}
-		total += len(*resp.JSON200.Anomalies)
+		total += len(resp.JSON200.Anomalies)
 
 		if resp.JSON200.PageToken == nil || *resp.JSON200.PageToken == "" {
 			break

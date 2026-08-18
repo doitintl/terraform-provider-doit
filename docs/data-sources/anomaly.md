@@ -88,7 +88,7 @@ output "anomaly_deactivation_reason" {
 - `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--resource_data))
 - `scope` (String) Scope: Project or Account
 - `service_name` (String) Service name
-- `severity_level` (String) Severity level: Information, Warning or Critical
+- `severity_level` (String) Severity level: `information`, `warning`, or `critical`.
 - `start_time` (Number) Usage start time of the anomaly
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly

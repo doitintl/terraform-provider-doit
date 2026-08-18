@@ -171,8 +171,8 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"severity_level": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Severity level: Information, Warning or Critical",
-				MarkdownDescription: "Severity level: Information, Warning or Critical",
+				Description:         "Severity level: `information`, `warning`, or `critical`.",
+				MarkdownDescription: "Severity level: `information`, `warning`, or `critical`.",
 			},
 			"start_time": schema.Int64Attribute{
 				Computed:            true,
