@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -42,6 +41,8 @@ func (r *customerResource) Metadata(_ context.Context, req resource.MetadataRequ
 func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_customer.CustomerResourceSchema(ctx)
 
+	// Add UseStateForUnknown to stable Computed-only fields so they don't show
+	// as unknown in update plans when other attributes change.
 	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["id"] = attr
@@ -63,29 +64,24 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 	}
 
 	if attr, ok := s.Attributes["url_slug"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		attr.Validators = append(attr.Validators, customerURLSlug())
+		attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["url_slug"] = attr
 	}
 
+	// Category A: Clearable nested attributes.
 	if settingsAttr, ok := s.Attributes["settings"].(schema.SingleNestedAttribute); ok {
-		settingsAttr.PlanModifiers = append(settingsAttr.PlanModifiers, objectplanmodifier.UseStateForUnknown())
-		if currencyAttr, ok := settingsAttr.Attributes["currency"].(schema.StringAttribute); ok {
-			currencyAttr.PlanModifiers = append(currencyAttr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
-			settingsAttr.Attributes["currency"] = currencyAttr
-		}
-		if allowedInviteDomainsAttr, ok := settingsAttr.Attributes["allowed_invite_domains"].(schema.ListAttribute); ok {
-			allowedInviteDomainsAttr.PlanModifiers = append(allowedInviteDomainsAttr.PlanModifiers, listplanmodifier.UseStateForUnknown())
-			settingsAttr.Attributes["allowed_invite_domains"] = allowedInviteDomainsAttr
+		if attr, ok := settingsAttr.Attributes["allowed_invite_domains"].(schema.ListAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+			settingsAttr.Attributes["allowed_invite_domains"] = attr
 		}
 		s.Attributes["settings"] = settingsAttr
 	}
 
 	if contactAttr, ok := s.Attributes["contact"].(schema.SingleNestedAttribute); ok {
-		contactAttr.PlanModifiers = append(contactAttr.PlanModifiers, objectplanmodifier.UseStateForUnknown())
-		if emailsAttr, ok := contactAttr.Attributes["emails"].(schema.ListAttribute); ok {
-			emailsAttr.PlanModifiers = append(emailsAttr.PlanModifiers, listplanmodifier.UseStateForUnknown())
-			contactAttr.Attributes["emails"] = emailsAttr
+		if attr, ok := contactAttr.Attributes["emails"].(schema.ListAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+			contactAttr.Attributes["emails"] = attr
 		}
 		s.Attributes["contact"] = contactAttr
 	}
@@ -93,12 +89,9 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 	// Classify Optional+Computed attributes (clearableattr).
 	// Category B: Preserved settings when omitted from config.
 	acknowledgeNotClearable(s,
-		"url_slug",
 		"settings",
 		"settings.currency",
-		"settings.allowed_invite_domains",
 		"contact",
-		"contact.emails",
 	)
 
 	s.Description = "Manages customer general settings (URL slug, allowed invite domains, point-of-contact emails, currency) for the current tenant. " +

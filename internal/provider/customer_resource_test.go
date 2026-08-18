@@ -114,7 +114,10 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
   }
 `, testEmail, testDomain))
 
+	omittedConfig := testAccCustomerResourceConfig("")
+
 	clearedConfig := testAccCustomerResourceConfig(`
+  url_slug = ""
   contact = {
     emails = []
   }
@@ -158,16 +161,35 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 4: Clear contact emails and allowed_invite_domains
+			// Step 4: Clear by omitting contact and settings blocks (Category A plan modifiers)
 			{
-				Config: clearedConfig,
+				Config: omittedConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
 					resource.TestCheckResourceAttr("doit_customer.test", "contact.emails.#", "0"),
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.#", "0"),
 				),
 			},
-			// Step 5: Drift check after clear
+			// Step 5: Drift check after clearing via omission
+			{
+				Config: omittedConfig,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 6: Explicit empty values for contact emails, allowed_invite_domains, and url_slug
+			{
+				Config: clearedConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
+					resource.TestCheckResourceAttr("doit_customer.test", "url_slug", ""),
+					resource.TestCheckResourceAttr("doit_customer.test", "contact.emails.#", "0"),
+					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.#", "0"),
+				),
+			},
+			// Step 7: Drift check after explicit clear
 			{
 				Config: clearedConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -176,14 +198,14 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 6: Restore initial settings via HCL
+			// Step 8: Restore initial settings via HCL
 			{
 				Config: restoredConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
 				),
 			},
-			// Step 7: Final drift check on restored config
+			// Step 9: Final drift check on restored config
 			{
 				Config: restoredConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{

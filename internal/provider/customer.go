@@ -62,7 +62,11 @@ func mapCustomerToModel(ctx context.Context, customer *models.Customer, state *c
 		diags.Append(d...)
 	}
 
-	state.UrlSlug = types.StringPointerValue(customer.UrlSlug)
+	if customer.UrlSlug == nil && !state.UrlSlug.IsNull() && !state.UrlSlug.IsUnknown() && state.UrlSlug.ValueString() == "" {
+		state.UrlSlug = types.StringValue("")
+	} else {
+		state.UrlSlug = types.StringPointerValue(customer.UrlSlug)
+	}
 
 	if customer.Settings != nil {
 		settingsAttrTypes := resource_customer.SettingsValue{}.AttributeTypes(ctx)
@@ -179,28 +183,24 @@ func (plan *customerResourceModel) toUpdateRequest(ctx context.Context, config *
 	var diags diag.Diagnostics
 	req := models.CustomerUpdate{}
 
-	urlSlugConfig := plan.UrlSlug
-	if config != nil {
-		urlSlugConfig = config.UrlSlug
-	}
-	if !urlSlugConfig.IsNull() && !urlSlugConfig.IsUnknown() && !plan.UrlSlug.IsNull() && !plan.UrlSlug.IsUnknown() {
+	if !plan.UrlSlug.IsNull() && !plan.UrlSlug.IsUnknown() {
 		req.UrlSlug = new(plan.UrlSlug.ValueString())
 	}
 
-	settingsConfig := plan.Settings
-	if config != nil {
-		settingsConfig = config.Settings
-	}
-	if !settingsConfig.IsNull() && !settingsConfig.IsUnknown() && !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
+	if !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
 		hasSettings := false
 		settings := models.CustomerSettings{}
 
-		if !settingsConfig.Currency.IsNull() && !settingsConfig.Currency.IsUnknown() && !plan.Settings.Currency.IsNull() && !plan.Settings.Currency.IsUnknown() {
-			settings.Currency = new(models.Currency(plan.Settings.Currency.ValueString()))
-			hasSettings = true
+		// currency: Category B — only send when explicitly configured in HCL (not when defaulted/copied from prior state)
+		if config != nil && !config.Settings.IsNull() && !config.Settings.Currency.IsNull() && !config.Settings.Currency.IsUnknown() {
+			if !plan.Settings.Currency.IsNull() && !plan.Settings.Currency.IsUnknown() {
+				settings.Currency = new(models.Currency(plan.Settings.Currency.ValueString()))
+				hasSettings = true
+			}
 		}
 
-		if !settingsConfig.AllowedInviteDomains.IsNull() && !settingsConfig.AllowedInviteDomains.IsUnknown() && !plan.Settings.AllowedInviteDomains.IsNull() && !plan.Settings.AllowedInviteDomains.IsUnknown() {
+		// allowed_invite_domains: Category A — send planned list (including empty slice when cleared)
+		if !plan.Settings.AllowedInviteDomains.IsNull() && !plan.Settings.AllowedInviteDomains.IsUnknown() {
 			var domains []string
 			diags.Append(plan.Settings.AllowedInviteDomains.ElementsAs(ctx, &domains, false)...)
 			if domains == nil {
@@ -215,12 +215,9 @@ func (plan *customerResourceModel) toUpdateRequest(ctx context.Context, config *
 		}
 	}
 
-	contactConfig := plan.Contact
-	if config != nil {
-		contactConfig = config.Contact
-	}
-	if !contactConfig.IsNull() && !contactConfig.IsUnknown() && !plan.Contact.IsNull() && !plan.Contact.IsUnknown() {
-		if !contactConfig.Emails.IsNull() && !contactConfig.Emails.IsUnknown() && !plan.Contact.Emails.IsNull() && !plan.Contact.Emails.IsUnknown() {
+	if !plan.Contact.IsNull() && !plan.Contact.IsUnknown() {
+		// emails: Category A — send planned list (including empty slice when cleared)
+		if !plan.Contact.Emails.IsNull() && !plan.Contact.Emails.IsUnknown() {
 			var emails []string
 			diags.Append(plan.Contact.Emails.ElementsAs(ctx, &emails, false)...)
 			openapiEmails := make([]openapi_types.Email, 0, len(emails))
