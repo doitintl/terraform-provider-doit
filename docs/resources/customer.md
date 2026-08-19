@@ -16,6 +16,9 @@ Manages customer general settings (URL slug, allowed invite domains, point-of-co
 # First import the customer resource:
 #   terraform import doit_customer.main <customer-id>
 #
+# (Your customer ID can be found in the DoiT Console URL: https://console.doit.com/customers/<customer-id>
+# or in DoiT Console under Settings)
+#
 # Then manage customer general settings:
 resource "doit_customer" "main" {
   url_slug = "my-company"
@@ -23,6 +26,7 @@ resource "doit_customer" "main" {
   settings = {
     currency               = "USD"
     allowed_invite_domains = ["mycompany.com"]
+    mfa_required           = true
   }
 
   contact = {
@@ -45,6 +49,7 @@ resource "doit_customer" "main" {
 
 ### Read-Only
 
+- `customer_id` (String) Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.
 - `domains` (List of String) Domains associated with the customer.
 - `id` (String) Customer ID.
 - `name` (String) Customer name.
@@ -66,6 +71,7 @@ Optional:
 - `allowed_invite_domains` (List of String) Email domains allowed to self-invite into the customer. Updating this field requires the `UsersManager` permission in addition to `Settings`. An empty array clears the list.
 - `currency` (String) Currency code for monetary values.
 Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
+- `mfa_required` (Boolean) Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have.
 
 
 <a id="nestedatt--timeouts"></a>

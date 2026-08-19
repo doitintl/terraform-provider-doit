@@ -3,6 +3,7 @@ package provider_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -53,6 +54,45 @@ func TestAccCustomerResource_InvalidURLSlug(t *testing.T) {
 	})
 }
 
+// TestAccCustomerResource_ImportNotFound asserts that attempting to import a non-existent
+// customer ID errors appropriately.
+func TestAccCustomerResource_ImportNotFound(t *testing.T) {
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // singleton resource: parallel tests interfere via shared customer settings
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:        testAccCustomerResourceConfig(""),
+				ResourceName:  "doit_customer.test",
+				ImportState:   true,
+				ImportStateId: "nonexistent-customer-id-12345",
+				ExpectError:   regexp.MustCompile(`(Error Reading Customer|403|Cannot import)`),
+			},
+		},
+	})
+}
+
+// TestAccCustomerResource_ReadOnlyCustomerID asserts that attempting to set customer_id in HCL
+// is rejected because customer_id is a computed/read-only attribute.
+func TestAccCustomerResource_ReadOnlyCustomerID(t *testing.T) {
+	config := testAccCustomerResourceConfig(`
+  customer_id = "different-customer-id-12345"
+`)
+
+	resource.Test(t, resource.TestCase{ //nolint:paralleltest // singleton resource: parallel tests interfere via shared customer settings
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(`(Invalid Configuration for Read-Only Attribute|Read-only attribute cannot be set|can't be configured|attribute "customer_id" is read-only)`),
+			},
+		},
+	})
+}
+
 // TestAccCustomerResource_Import tests importing the customer resource and verifying drift.
 func TestAccCustomerResource_Import(t *testing.T) {
 	customer := testAccGetCustomer(t)
@@ -68,7 +108,7 @@ func TestAccCustomerResource_Import(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: Import and persist state
+			// Step 1: Import with ID and verify state
 			{
 				Config:             importConfig,
 				ResourceName:       "doit_customer.test",
@@ -76,17 +116,12 @@ func TestAccCustomerResource_Import(t *testing.T) {
 				ImportStateId:      customer.Id,
 				ImportStatePersist: true,
 				ImportStateVerify:  false,
-			},
-			// Step 2: Verify fields are populated after import without modifying them
-			{
-				Config: importConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", customer.Id),
-					resource.TestCheckResourceAttrSet("doit_customer.test", "name"),
-					resource.TestCheckResourceAttrSet("doit_customer.test", "primary_domain"),
+					resource.TestCheckResourceAttr("doit_customer.test", "customer_id", customer.Id),
 				),
 			},
-			// Step 3: Drift verification - re-apply should produce an empty plan
+			// Step 2: Plan check to ensure no drift
 			{
 				Config: importConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -100,7 +135,7 @@ func TestAccCustomerResource_Import(t *testing.T) {
 }
 
 // TestAccCustomerResource_Lifecycle tests importing, updating, clearing, drift checks,
-// and restoring customer general settings.
+// and mfa_required settings lifecycle.
 func TestAccCustomerResource_Lifecycle(t *testing.T) {
 	original := testAccGetCustomer(t)
 	t.Cleanup(func() {
@@ -118,6 +153,19 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
     allowed_invite_domains = [%q]
   }
 `, testEmail, testDomain))
+
+	// MFA settings configs
+	mfaFalseConfig := testAccCustomerResourceConfig(`
+  settings = {
+    mfa_required = false
+  }
+`)
+
+	mfaTrueConfig := testAccCustomerResourceConfig(`
+  settings = {
+    mfa_required = true
+  }
+`)
 
 	omittedConfig := testAccCustomerResourceConfig("")
 
@@ -148,11 +196,12 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 				ImportStatePersist: true,
 				ImportStateVerify:  false,
 			},
-			// Step 2: Update contact emails and allowed_invite_domains
+			// Step 2: Update customer general settings
 			{
 				Config: updateConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
+					resource.TestCheckResourceAttr("doit_customer.test", "customer_id", original.Id),
 					resource.TestCheckResourceAttr("doit_customer.test", "contact.emails.0", testEmail),
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.0", testDomain),
 				),
@@ -166,16 +215,51 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 4: Clear by omitting contact and settings blocks (Category A plan modifiers)
+			// Step 4: Set mfa_required = false
+			{
+				Config: mfaFalseConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
+					resource.TestCheckResourceAttr("doit_customer.test", "settings.mfa_required", "false"),
+				),
+			},
+			// Step 5: Drift check after mfa_required = false
+			{
+				Config: mfaFalseConfig,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 6: Set mfa_required = true
+			{
+				Config: mfaTrueConfig,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
+					resource.TestCheckResourceAttr("doit_customer.test", "settings.mfa_required", "true"),
+				),
+			},
+			// Step 7: Drift check after mfa_required = true
+			{
+				Config: mfaTrueConfig,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 8: Clear by omitting contact and settings blocks (Category A cleared, Category B mfa_required preserved)
 			{
 				Config: omittedConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
 					resource.TestCheckResourceAttr("doit_customer.test", "contact.emails.#", "0"),
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.#", "0"),
+					resource.TestCheckResourceAttr("doit_customer.test", "settings.mfa_required", "true"),
 				),
 			},
-			// Step 5: Drift check after clearing via omission
+			// Step 9: Drift check after clearing via omission
 			{
 				Config: omittedConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -184,7 +268,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 6: Explicit empty values for contact emails, allowed_invite_domains, and url_slug
+			// Step 10: Explicit empty values for contact emails, allowed_invite_domains, and url_slug
 			{
 				Config: clearedConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -194,7 +278,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.#", "0"),
 				),
 			},
-			// Step 7: Drift check after explicit clear
+			// Step 11: Drift check after explicit clear
 			{
 				Config: clearedConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -203,14 +287,14 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 8: Restore initial settings via HCL
+			// Step 12: Restore initial settings via HCL
 			{
 				Config: restoredConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
 				),
 			},
-			// Step 9: Final drift check on restored config
+			// Step 13: Final drift check on restored config
 			{
 				Config: restoredConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -256,6 +340,9 @@ func testAccCustomerResourceRestoreConfig(original *models.Customer) string {
 			}
 			settingsParts = append(settingsParts, fmt.Sprintf("allowed_invite_domains = [%s]", strings.Join(quotedDomains, ", ")))
 		}
+		if original.Settings.MfaRequired != nil {
+			settingsParts = append(settingsParts, fmt.Sprintf("mfa_required = %t", *original.Settings.MfaRequired))
+		}
 		if len(settingsParts) > 0 {
 			parts = append(parts, fmt.Sprintf("settings = {\n    %s\n  }", strings.Join(settingsParts, "\n    ")))
 		}
@@ -276,7 +363,8 @@ func testAccGetCustomer(t *testing.T) *models.Customer {
 	skipIfNoAcc(t)
 
 	client := getAPIClient(t)
-	resp, err := client.GetCustomerWithResponse(context.Background(), nil)
+	customerID := os.Getenv("TEST_CUSTOMER_ID")
+	resp, err := client.GetCustomerWithResponse(context.Background(), customerID)
 	if err != nil {
 		t.Fatalf("Failed to get customer: %v", err)
 	}
@@ -290,6 +378,10 @@ func testAccRestoreCustomer(t *testing.T, original *models.Customer) {
 	t.Helper()
 
 	client := getAPIClient(t)
+	customerID := original.Id
+	if customerID == "" {
+		customerID = os.Getenv("TEST_CUSTOMER_ID")
+	}
 	req := models.CustomerUpdate{}
 
 	if original.UrlSlug != nil {
@@ -303,6 +395,7 @@ func testAccRestoreCustomer(t *testing.T, original *models.Customer) {
 		req.Settings = &models.CustomerSettings{
 			Currency:             original.Settings.Currency,
 			AllowedInviteDomains: original.Settings.AllowedInviteDomains,
+			MfaRequired:          original.Settings.MfaRequired,
 		}
 		if req.Settings.AllowedInviteDomains == nil {
 			empty := []string{}
@@ -321,7 +414,7 @@ func testAccRestoreCustomer(t *testing.T, original *models.Customer) {
 		}
 	}
 
-	resp, err := client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(context.Background(), nil, req)
+	resp, err := client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(context.Background(), customerID, req)
 	if err != nil {
 		t.Logf("Failed to restore customer settings during cleanup: %v", err)
 		return

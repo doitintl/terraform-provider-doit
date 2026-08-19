@@ -1664,6 +1664,13 @@
 											}
 										]
 									}
+								},
+								{
+									"name": "mfa_required",
+									"bool": {
+										"computed_optional_required": "computed_optional",
+										"description": "Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have."
+									}
 								}
 							],
 							"description": "Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.\n\n`currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it."
@@ -1705,6 +1712,13 @@
 						"string": {
 							"computed_optional_required": "computed",
 							"description": "Customer's primary domain."
+						}
+					},
+					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`."
 						}
 					}
 				],

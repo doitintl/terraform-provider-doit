@@ -219,11 +219,11 @@ resources:
       method: DELETE
   customer:
     create:
-      path: /customers/v1/customers
+      path: /customers/v1/customers/{customerId}
       method: PATCH
     read:
-      path: /customers/v1/customers
+      path: /customers/v1/customers/{customerId}
       method: GET
     update:
-      path: /customers/v1/customers
+      path: /customers/v1/customers/{customerId}
       method: PATCH

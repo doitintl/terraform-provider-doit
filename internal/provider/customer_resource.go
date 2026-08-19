@@ -48,6 +48,12 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 		s.Attributes["id"] = attr
 	}
 
+	if attr, ok := s.Attributes["customer_id"].(schema.StringAttribute); ok {
+		attr.Optional = false
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["customer_id"] = attr
+	}
+
 	if attr, ok := s.Attributes["name"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["name"] = attr
@@ -91,6 +97,7 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 	acknowledgeNotClearable(s,
 		"settings",
 		"settings.currency",
+		"settings.mfa_required",
 		"contact",
 	)
 
@@ -169,13 +176,26 @@ func (r *customerResource) Update(ctx context.Context, req resource.UpdateReques
 	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
 	defer cancel()
 
+	customerID := state.Id.ValueString()
+	if customerID == "" {
+		customerID = state.CustomerId.ValueString()
+	}
+
+	if customerID == "" {
+		resp.Diagnostics.AddError(
+			"Error Updating Customer",
+			"Customer ID is required to update customer settings",
+		)
+		return
+	}
+
 	apiReq, d := plan.toUpdateRequest(ctx, &config)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	updateResp, err := r.client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx, nil, apiReq)
+	updateResp, err := r.client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx, customerID, apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Customer",
@@ -192,7 +212,7 @@ func (r *customerResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	customerResp, err := r.client.GetCustomerWithResponse(ctx, nil)
+	customerResp, err := r.client.GetCustomerWithResponse(ctx, customerID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Customer After Update",

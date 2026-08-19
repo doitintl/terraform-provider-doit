@@ -1,5 +1,10 @@
-# Retrieve general settings and details for the authenticated customer
-data "doit_customer" "current" {}
+# Retrieve general settings and details for the customer.
+# The customer_id can be found in the DoiT Console URL:
+#   https://console.doit.com/customers/<customer-id>
+# or in DoiT Console under Settings.
+data "doit_customer" "current" {
+  customer_id = "your-customer-id"
+}
 
 # Output customer details
 output "customer_id" {

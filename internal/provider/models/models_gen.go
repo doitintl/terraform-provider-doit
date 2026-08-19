@@ -6477,7 +6477,7 @@ type CustomTheme struct {
 	UpdateTime *time.Time `json:"updateTime,omitempty"`
 }
 
-// Customer Customer general settings, scoped to the authenticated tenant.
+// Customer Customer scoped to the authenticated tenant, including its settings and contact info.
 type Customer struct {
 	// Contact Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
 	Contact *CustomerContact `json:"contact,omitempty"`
@@ -6518,6 +6518,9 @@ type CustomerSettings struct {
 
 	// Currency Currency code for monetary values.
 	Currency *Currency `json:"currency,omitempty"`
+
+	// MfaRequired Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have.
+	MfaRequired *bool `json:"mfaRequired,omitempty"`
 }
 
 // CustomerUpdate Partial update to a customer's general settings. Every field is optional; only fields present in the request body are changed. Fields are nested exactly as the `getCustomer` response nests them. See the operation description for `urlSlug`'s null-vs-absent semantics, which differ from every other field.
@@ -9154,6 +9157,9 @@ type Value2 = int
 // BillingExplainerInvoiceMonth Example: 2026-06
 type BillingExplainerInvoiceMonth = string
 
+// CustomerId defines model for customerId.
+type CustomerId = string
+
 // ManagementAccountId Example: 123456789012
 type ManagementAccountId = string
 
@@ -9521,7 +9527,11 @@ type IdOfAssetsParams struct {
 // GetBillingExplainerPerPayerParams defines parameters for GetBillingExplainerPerPayer.
 type GetBillingExplainerPerPayerParams struct {
 	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15).
+	// (DoiT API Design Standards §15). Accepts the customer ID or the customer's
+	// URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
+	// server resolves to the customer ID. Endpoint groups that validate the
+	// tenant in their own middleware (e.g. CloudFlow) currently require the
+	// literal customer ID.
 	//
 	// Resolution when the header is absent:
 	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
@@ -9741,40 +9751,6 @@ type ListServiceQuotasParams struct {
 // ListServiceQuotasParamsCloudProvider defines parameters for ListServiceQuotas.
 type ListServiceQuotasParamsCloudProvider string
 
-// GetCustomerParams defines parameters for GetCustomer.
-type GetCustomerParams struct {
-	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15).
-	//
-	// Resolution when the header is absent:
-	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
-	//   optional.
-	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
-	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
-	//   server does not guess across tenant scopes.
-	//
-	// When the header is present but conflicts with the tenant the key is scoped to, the request is
-	// rejected with `400` and code `tenant_id_mismatch`.
-	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
-}
-
-// UpdateCustomerParams defines parameters for UpdateCustomer.
-type UpdateCustomerParams struct {
-	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15).
-	//
-	// Resolution when the header is absent:
-	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
-	//   optional.
-	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
-	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
-	//   server does not guess across tenant scopes.
-	//
-	// When the header is present but conflicts with the tenant the key is scoped to, the request is
-	// rejected with `400` and code `tenant_id_mismatch`.
-	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
-}
-
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
 	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
@@ -9863,7 +9839,11 @@ type ListAwsOrganizationsParams struct {
 	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
 	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15).
+	// (DoiT API Design Standards §15). Accepts the customer ID or the customer's
+	// URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
+	// server resolves to the customer ID. Endpoint groups that validate the
+	// tenant in their own middleware (e.g. CloudFlow) currently require the
+	// literal customer ID.
 	//
 	// Resolution when the header is absent:
 	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
@@ -9880,7 +9860,11 @@ type ListAwsOrganizationsParams struct {
 // GetAwsOrganizationParams defines parameters for GetAwsOrganization.
 type GetAwsOrganizationParams struct {
 	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15).
+	// (DoiT API Design Standards §15). Accepts the customer ID or the customer's
+	// URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
+	// server resolves to the customer ID. Endpoint groups that validate the
+	// tenant in their own middleware (e.g. CloudFlow) currently require the
+	// literal customer ID.
 	//
 	// Resolution when the header is absent:
 	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
@@ -11453,16 +11437,16 @@ type ClientInterface interface {
 	// Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 	ListAccountTeam(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCustomer Get customer general settings
+	// GetCustomer Get customer
 	//
-	// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
 	//
-	// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
-	GetCustomer(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
+	GetCustomer(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateCustomerWithBody Update customer general settings
+	// UpdateCustomerWithBody Update customer
 	//
-	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -11470,12 +11454,12 @@ type ClientInterface interface {
 	//
 	// Takes any type of body and a specified content type.
 	//
-	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-	UpdateCustomerWithBody(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+	UpdateCustomerWithBody(ctx context.Context, customerId CustomerId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer general settings
+	// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer
 	//
-	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -11483,8 +11467,8 @@ type ClientInterface interface {
 	//
 	// Takes a body of the `application/merge-patch+json` content type.
 	//
-	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-	UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+	UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDatahubDatasets List datasets
 	//
@@ -13877,13 +13861,13 @@ func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEdito
 	return c.Client.Do(req)
 }
 
-// GetCustomer Get customer general settings
+// GetCustomer Get customer
 //
-// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
 //
-// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
-func (c *Client) GetCustomer(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetCustomerRequest(c.Server, params)
+// Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
+func (c *Client) GetCustomer(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomerRequest(c.Server, customerId)
 	if err != nil {
 		return nil, err
 	}
@@ -13894,9 +13878,9 @@ func (c *Client) GetCustomer(ctx context.Context, params *GetCustomerParams, req
 	return c.Client.Do(req)
 }
 
-// UpdateCustomerWithBody Update customer general settings
+// UpdateCustomerWithBody Update customer
 //
-// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -13904,9 +13888,9 @@ func (c *Client) GetCustomer(ctx context.Context, params *GetCustomerParams, req
 //
 // Takes any type of body and a specified content type.
 //
-// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-func (c *Client) UpdateCustomerWithBody(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateCustomerRequestWithBody(c.Server, params, contentType, body)
+// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+func (c *Client) UpdateCustomerWithBody(ctx context.Context, customerId CustomerId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerRequestWithBody(c.Server, customerId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -13917,9 +13901,9 @@ func (c *Client) UpdateCustomerWithBody(ctx context.Context, params *UpdateCusto
 	return c.Client.Do(req)
 }
 
-// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer general settings
+// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer
 //
-// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -13927,9 +13911,9 @@ func (c *Client) UpdateCustomerWithBody(ctx context.Context, params *UpdateCusto
 //
 // Takes a body of the `application/merge-patch+json` content type.
 //
-// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-func (c *Client) UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(c.Server, params, body)
+// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+func (c *Client) UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(c.Server, customerId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -19234,15 +19218,22 @@ func NewListAccountTeamRequest(server string) (*http.Request, error) {
 }
 
 // NewGetCustomerRequest constructs an http.Request for the GetCustomer method
-func NewGetCustomerRequest(server string, params *GetCustomerParams) (*http.Request, error) {
+func NewGetCustomerRequest(server string, customerId CustomerId) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "customerId", customerId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/customers/v1/customers")
+	operationPath := fmt.Sprintf("/customers/v1/customers/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -19257,45 +19248,37 @@ func NewGetCustomerRequest(server string, params *GetCustomerParams) (*http.Requ
 		return nil, err
 	}
 
-	if params != nil {
-
-		if params.XTenantId != nil {
-			var headerParam0 string
-
-			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("X-Tenant-Id", headerParam0)
-		}
-
-	}
-
 	return req, nil
 }
 
 // NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateCustomer builder with application/merge-patch+json body
-func NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(server string, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+func NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(server string, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateCustomerRequestWithBody(server, params, "application/merge-patch+json", bodyReader)
+	return NewUpdateCustomerRequestWithBody(server, customerId, "application/merge-patch+json", bodyReader)
 }
 
 // NewUpdateCustomerRequestWithBody constructs an http.Request for the UpdateCustomer method, with any body, and a specified content type
-func NewUpdateCustomerRequestWithBody(server string, params *UpdateCustomerParams, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateCustomerRequestWithBody(server string, customerId CustomerId, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "customerId", customerId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/customers/v1/customers")
+	operationPath := fmt.Sprintf("/customers/v1/customers/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -19311,21 +19294,6 @@ func NewUpdateCustomerRequestWithBody(server string, params *UpdateCustomerParam
 	}
 
 	req.Header.Add("Content-Type", contentType)
-
-	if params != nil {
-
-		if params.XTenantId != nil {
-			var headerParam0 string
-
-			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("X-Tenant-Id", headerParam0)
-		}
-
-	}
 
 	return req, nil
 }
@@ -21905,18 +21873,18 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 	ListAccountTeamWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAccountTeamResp, error)
 
-	// GetCustomerWithResponse Get customer general settings
+	// GetCustomerWithResponse Get customer
 	//
-	// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
-	GetCustomerWithResponse(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*GetCustomerResp, error)
+	// Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
+	GetCustomerWithResponse(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*GetCustomerResp, error)
 
-	// UpdateCustomerWithBodyWithResponse Update customer general settings
+	// UpdateCustomerWithBodyWithResponse Update customer
 	//
-	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -21924,12 +21892,12 @@ type ClientWithResponsesInterface interface {
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-	UpdateCustomerWithBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
+	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+	UpdateCustomerWithBodyWithResponse(ctx context.Context, customerId CustomerId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
 
-	// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer general settings
+	// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer
 	//
-	// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -21937,8 +21905,8 @@ type ClientWithResponsesInterface interface {
 	//
 	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-	UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
+	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+	UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
 
 	// ListDatahubDatasetsWithResponse List datasets
 	//
@@ -32065,24 +32033,24 @@ func (c *ClientWithResponses) ListAccountTeamWithResponse(ctx context.Context, r
 	return ParseListAccountTeamResp(rsp)
 }
 
-// GetCustomerWithResponse Get customer general settings
+// GetCustomerWithResponse Get customer
 //
-// Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /customers/v1/customers (the `GetCustomer` operationId).
-func (c *ClientWithResponses) GetCustomerWithResponse(ctx context.Context, params *GetCustomerParams, reqEditors ...RequestEditorFn) (*GetCustomerResp, error) {
-	rsp, err := c.GetCustomer(ctx, params, reqEditors...)
+// Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
+func (c *ClientWithResponses) GetCustomerWithResponse(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*GetCustomerResp, error) {
+	rsp, err := c.GetCustomer(ctx, customerId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseGetCustomerResp(rsp)
 }
 
-// UpdateCustomerWithBodyWithResponse Update customer general settings
+// UpdateCustomerWithBodyWithResponse Update customer
 //
-// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -32090,18 +32058,18 @@ func (c *ClientWithResponses) GetCustomerWithResponse(ctx context.Context, param
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-func (c *ClientWithResponses) UpdateCustomerWithBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error) {
-	rsp, err := c.UpdateCustomerWithBody(ctx, params, contentType, body, reqEditors...)
+// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+func (c *ClientWithResponses) UpdateCustomerWithBodyWithResponse(ctx context.Context, customerId CustomerId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error) {
+	rsp, err := c.UpdateCustomerWithBody(ctx, customerId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUpdateCustomerResp(rsp)
 }
 
-// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer general settings
+// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer
 //
-// Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -32109,9 +32077,9 @@ func (c *ClientWithResponses) UpdateCustomerWithBodyWithResponse(ctx context.Con
 //
 // Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with PATCH /customers/v1/customers (the `UpdateCustomer` operationId).
-func (c *ClientWithResponses) UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, params *UpdateCustomerParams, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error) {
-	rsp, err := c.UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx, params, body, reqEditors...)
+// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
+func (c *ClientWithResponses) UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error) {
+	rsp, err := c.UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx, customerId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

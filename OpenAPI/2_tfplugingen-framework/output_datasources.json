@@ -9809,6 +9809,13 @@
 			"schema": {
 				"attributes": [
 					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`."
+						}
+					},
+					{
 						"name": "contact",
 						"single_nested": {
 							"computed_optional_required": "computed",
@@ -9878,6 +9885,13 @@
 									"string": {
 										"computed_optional_required": "computed",
 										"description": "Currency code for monetary values."
+									}
+								},
+								{
+									"name": "mfa_required",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have."
 									}
 								}
 							],

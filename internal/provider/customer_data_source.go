@@ -74,9 +74,20 @@ func (d *customerDataSource) Read(ctx context.Context, req datasource.ReadReques
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// No inputs to check for unknown — this is a singleton endpoint with no parameters.
+	// Return early with unknown values if any required inputs are unknown.
+	if data.CustomerId.IsUnknown() {
+		data.Id = types.StringUnknown()
+		data.Name = types.StringUnknown()
+		data.PrimaryDomain = types.StringUnknown()
+		data.Domains = types.ListUnknown(types.StringType)
+		data.UrlSlug = types.StringUnknown()
+		data.Settings = datasource_customer.NewSettingsValueUnknown()
+		data.Contact = datasource_customer.NewContactValueUnknown()
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 
-	customerResp, err := d.client.GetCustomerWithResponse(ctx, nil)
+	customerResp, err := d.client.GetCustomerWithResponse(ctx, data.CustomerId.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Customer",
@@ -96,6 +107,7 @@ func (d *customerDataSource) Read(ctx context.Context, req datasource.ReadReques
 	customer := customerResp.JSON200
 
 	data.Id = types.StringValue(customer.Id)
+	data.CustomerId = types.StringValue(customer.Id)
 	data.Name = types.StringPointerValue(customer.Name)
 	data.PrimaryDomain = types.StringPointerValue(customer.PrimaryDomain)
 
@@ -116,9 +128,17 @@ func (d *customerDataSource) Read(ctx context.Context, req datasource.ReadReques
 			currencyVal = types.StringNull()
 		}
 
+		var mfaRequiredVal types.Bool
+		if customer.Settings.MfaRequired != nil {
+			mfaRequiredVal = types.BoolValue(*customer.Settings.MfaRequired)
+		} else {
+			mfaRequiredVal = types.BoolNull()
+		}
+
 		settingsVal, newSettingsDiags := datasource_customer.NewSettingsValue(datasource_customer.SettingsValue{}.AttributeTypes(ctx), map[string]attr.Value{
 			"allowed_invite_domains": allowedInviteDomainsVal,
 			"currency":               currencyVal,
+			"mfa_required":           mfaRequiredVal,
 		})
 		resp.Diagnostics.Append(newSettingsDiags...)
 		data.Settings = settingsVal
