@@ -8438,6 +8438,8 @@ type RunReportResultResultMlFeatures string
 
 // SchemaField Schema of a report result column.
 type SchemaField struct {
+	// Id Stable allocation-group ID used to select the allocation dimension in report configurations. Omitted for other report columns.
+	Id   *string `json:"id,omitempty"`
 	Name *string `json:"name,omitempty"`
 	Type *string `json:"type,omitempty"`
 }

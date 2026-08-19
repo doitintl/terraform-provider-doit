@@ -38,7 +38,8 @@ data "doit_report_query" "cost_by_provider" {
 # Parse the JSON result
 locals {
   query_result = jsondecode(data.doit_report_query.cost_by_provider.result_json)
-  columns      = [for s in local.query_result.schema : s.name]
+  # Extract column names (each schema object has name, type, and optional allocation id)
+  columns = [for s in local.query_result.schema : s.name]
 }
 
 # Write results to a CSV file

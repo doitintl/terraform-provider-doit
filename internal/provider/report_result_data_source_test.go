@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -249,4 +250,113 @@ data "doit_report_result" "test" {
     id = "non-existent-report-id"
 }
 `
+}
+
+// TestAccReportResultDataSource_AllocationSchemaFieldID verifies that when a saved
+// report is configured with an allocation dimension, reading its results via the
+// data source returns the allocation's id in the schema metadata.
+func TestAccReportResultDataSource_AllocationSchemaFieldID(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tfacc-rr-alloc")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportResultDataSourceAllocationConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_allocation.group", "id"),
+					resource.TestCheckOutput("schema_id_matches_allocation", "true"),
+					func(s *terraform.State) error {
+						allocRes, ok := s.RootModule().Resources["doit_allocation.group"]
+						if !ok {
+							return fmt.Errorf("resource doit_allocation.group not found")
+						}
+						schemaID := s.RootModule().Outputs["allocation_schema_id"].Value.(string)
+						if schemaID != allocRes.Primary.ID {
+							return fmt.Errorf("expected schema id %q, got %q", allocRes.Primary.ID, schemaID)
+						}
+						return nil
+					},
+				),
+			},
+		},
+	})
+}
+
+func testAccReportResultDataSourceAllocationConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name              = "%[1]s-group"
+    description       = "test allocation group"
+    unallocated_costs = "%[1]s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%[1]s-rule"
+            formula = "A"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                }
+            ]
+        }
+    ]
+}
+
+resource "doit_report" "test" {
+    name        = "%[1]s-report"
+    description = "test report with allocation dimension read through report_result"
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        group = [
+          {
+            id   = doit_allocation.group.id
+            type = "allocation"
+          }
+        ]
+    }
+}
+
+data "doit_report_result" "test" {
+    id = doit_report.test.id
+}
+
+locals {
+  result_payload = jsondecode(data.doit_report_result.test.result_json)
+  allocation_fields = [
+    for field in local.result_payload.schema : field
+    if lookup(field, "id", "") == doit_allocation.group.id
+  ]
+}
+
+output "allocation_schema_id" {
+  value = length(local.allocation_fields) > 0 ? lookup(local.allocation_fields[0], "id", "") : ""
+}
+
+output "schema_id_matches_allocation" {
+  value = tostring(length(local.allocation_fields) > 0 && lookup(local.allocation_fields[0], "id", "") == doit_allocation.group.id)
+}
+`, name)
 }

@@ -1,12 +1,15 @@
 package provider_test
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -718,4 +721,107 @@ data "doit_report_query" "test" {
     }
 }
 `
+}
+
+// TestAccReportQueryDataSource_AllocationSchemaFieldID verifies that when a query
+// is configured with an allocation dimension, the returned schema contains the
+// allocation's id.
+func TestAccReportQueryDataSource_AllocationSchemaFieldID(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tfacc-rq-alloc")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceAllocationConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("doit_allocation.group", "id"),
+					resource.TestCheckOutput("schema_id_matches_allocation", "true"),
+					func(s *terraform.State) error {
+						allocRes, ok := s.RootModule().Resources["doit_allocation.group"]
+						if !ok {
+							return fmt.Errorf("resource doit_allocation.group not found")
+						}
+						schemaID := s.RootModule().Outputs["allocation_schema_id"].Value.(string)
+						if schemaID != allocRes.Primary.ID {
+							return fmt.Errorf("expected schema id %q, got %q", allocRes.Primary.ID, schemaID)
+						}
+						return nil
+					},
+				),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceAllocationConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+    name              = "%[1]s-group"
+    description       = "test allocation group"
+    unallocated_costs = "%[1]s-other"
+    rules = [
+        {
+            action  = "create"
+            name    = "%[1]s-rule"
+            formula = "A"
+            components = [
+                {
+                    key    = "country"
+                    mode   = "is"
+                    type   = "fixed"
+                    values = ["US"]
+                }
+            ]
+        }
+    ]
+}
+
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        group = [
+          {
+            id   = doit_allocation.group.id
+            type = "allocation"
+          }
+        ]
+    }
+}
+
+locals {
+  query_result = jsondecode(data.doit_report_query.test.result_json)
+  allocation_fields = [
+    for field in local.query_result.schema : field
+    if lookup(field, "id", "") == doit_allocation.group.id
+  ]
+}
+
+output "allocation_schema_id" {
+  value = length(local.allocation_fields) > 0 ? lookup(local.allocation_fields[0], "id", "") : ""
+}
+
+output "schema_id_matches_allocation" {
+  value = tostring(length(local.allocation_fields) > 0 && lookup(local.allocation_fields[0], "id", "") == doit_allocation.group.id)
+}
+`, name)
 }

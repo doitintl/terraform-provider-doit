@@ -6,7 +6,8 @@ description: |-
   Runs an ad-hoc Cloud Analytics query without persisting a report.
   The query is executed with the provided config and results are returned as a JSON string in result_json. Use Terraform's jsondecode() to parse.
   ~> Note: Query results are dynamic — they change over time as new billing data is ingested. Every terraform plan will re-execute the query.
-  The result_json field contains the full result object, including the following keys: schema (column definitions, including name and type), rows (data rows, where each row is an array of values), forecastRows (forecast data rows, if applicable), secondaryRows (secondary time range rows, if applicable), and cacheHit (whether results were served from cache).
+  The result_json field contains the full result object including:
+  schema: Array of column metadata objects (name, type, and optional id for allocation dimensions)rows: Array of data rows, where each row is an array of cell values (string, number, or null)forecastRows: Array of forecast data rows (if applicable)secondaryRows: Array of secondary time range rows (if applicable)cacheHit: Whether results were served from cache
 ---
 
 # doit_report_query (Data Source)
@@ -17,7 +18,12 @@ The query is executed with the provided config and results are returned as a JSO
 
 ~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query.
 
-The `result_json` field contains the full result object, including the following keys: `schema` (column definitions, including name and type), `rows` (data rows, where each row is an array of values), `forecastRows` (forecast data rows, if applicable), `secondaryRows` (secondary time range rows, if applicable), and `cacheHit` (whether results were served from cache).
+The `result_json` field contains the full result object including:
+- `schema`: Array of column metadata objects (`name`, `type`, and optional `id` for allocation dimensions)
+- `rows`: Array of data rows, where each row is an array of cell values (`string`, `number`, or `null`)
+- `forecastRows`: Array of forecast data rows (if applicable)
+- `secondaryRows`: Array of secondary time range rows (if applicable)
+- `cacheHit`: Whether results were served from cache
 
 ## Example Usage
 
@@ -62,7 +68,8 @@ data "doit_report_query" "cost_by_provider" {
 # Parse the JSON result
 locals {
   query_result = jsondecode(data.doit_report_query.cost_by_provider.result_json)
-  columns      = [for s in local.query_result.schema : s.name]
+  # Extract column names (each schema object has name, type, and optional allocation id)
+  columns = [for s in local.query_result.schema : s.name]
 }
 
 # Write results to a CSV file
@@ -93,7 +100,14 @@ output "row_count" {
 ### Read-Only
 
 - `cache_hit` (Boolean) If true, results were fetched from the cache.
-- `result_json` (String) The full query result as a JSON string. Contains `schema` (column definitions), `rows` (data), and metadata. Use `jsondecode()` to parse.
+- `result_json` (String) The full query result as a JSON string. Use `jsondecode()` to parse.
+
+Structure of the decoded JSON object:
+- `schema`: Array of column definitions: `name` (string), `type` (string), and `id` (optional string, present for allocation dimensions).
+- `rows`: Array of row arrays `[][string | number | null]` corresponding to the schema columns.
+- `forecastRows`: Array of forecast row arrays (if applicable).
+- `secondaryRows`: Array of secondary time range row arrays (if applicable).
+- `cacheHit`: Boolean indicating if the result was served from cache.
 - `row_count` (Number) The number of data rows in the result.
 
 <a id="nestedatt--config"></a>

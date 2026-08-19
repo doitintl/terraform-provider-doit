@@ -70,9 +70,9 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			" billing data is ingested. Every terraform plan will re-execute the" +
 			" report." +
 			"\n\nThe result_json field contains the full result object, including the" +
-			" schema (column definitions), rows (data), forecastRows (forecast data)," +
-			" secondaryRows (secondary time range data), and cacheHit (whether results" +
-			" were served from cache).",
+			" schema (column definitions: name, type, and optional id), rows (data)," +
+			" forecastRows (forecast data), secondaryRows (secondary time range data)," +
+			" and cacheHit (whether results were served from cache).",
 		MarkdownDescription: "Fetches the results of an existing Cloud Analytics report." +
 			"\n\nThe report is executed and the results are returned as a JSON string in" +
 			" `result_json`. Use Terraform's `jsondecode()` to parse the results." +
@@ -80,8 +80,8 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			" billing data is ingested. Every `terraform plan` will re-execute the" +
 			" report." +
 			"\n\nThe `result_json` field contains the full result object including:" +
-			"\n- `schema`: Column definitions (name and type)" +
-			"\n- `rows`: Data rows (each row is an array of values)" +
+			"\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `id` for allocation dimensions)" +
+			"\n- `rows`: Data rows (each row is an array of cell values: string, number, or null)" +
 			"\n- `forecastRows`: Forecast data rows (if applicable)" +
 			"\n- `secondaryRows`: Secondary time range rows (if applicable)" +
 			"\n- `cacheHit`: Whether results were served from cache",
@@ -135,11 +135,15 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			// --- Outputs ---
 			"result_json": schema.StringAttribute{
 				Description: "The full report result as a JSON string. " +
-					"Contains schema (column definitions), rows (data), and metadata. " +
+					"Contains schema (column definitions including name, type, and optional id), rows (data), and metadata. " +
 					"Use jsondecode() to parse.",
-				MarkdownDescription: "The full report result as a JSON string. " +
-					"Contains `schema` (column definitions), `rows` (data), and metadata. " +
-					"Use `jsondecode()` to parse.",
+				MarkdownDescription: "The full report result as a JSON string. Use `jsondecode()` to parse." +
+					"\n\nStructure of the decoded JSON object:" +
+					"\n- `schema`: Array of column definitions: `name` (string), `type` (string), and `id` (optional string, present for allocation dimensions)." +
+					"\n- `rows`: Array of row arrays `[][string | number | null]` corresponding to the schema columns." +
+					"\n- `forecastRows`: Array of forecast row arrays (if applicable)." +
+					"\n- `secondaryRows`: Array of secondary time range row arrays (if applicable)." +
+					"\n- `cacheHit`: Boolean indicating if the result was served from cache.",
 				Computed: true,
 			},
 			"report_name": schema.StringAttribute{
