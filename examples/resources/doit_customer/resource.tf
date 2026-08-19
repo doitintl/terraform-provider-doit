@@ -6,8 +6,7 @@
 #
 # Then manage customer general settings:
 resource "doit_customer" "main" {
-  customer_id = "your-customer-id" # Optional if imported; state populates it automatically
-  url_slug    = "my-company"
+  url_slug = "my-company"
 
   settings = {
     currency               = "USD"

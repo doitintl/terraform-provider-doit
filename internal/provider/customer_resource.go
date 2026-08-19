@@ -49,10 +49,8 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 	}
 
 	if attr, ok := s.Attributes["customer_id"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers,
-			stringplanmodifier.UseStateForUnknown(),
-			customerIDMatchesState(),
-		)
+		attr.Optional = false
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["customer_id"] = attr
 	}
 
@@ -97,7 +95,6 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 	// Classify Optional+Computed attributes (clearableattr).
 	// Category B: Preserved settings when omitted from config.
 	acknowledgeNotClearable(s,
-		"customer_id",
 		"settings",
 		"settings.currency",
 		"settings.mfa_required",
@@ -179,15 +176,9 @@ func (r *customerResource) Update(ctx context.Context, req resource.UpdateReques
 	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
 	defer cancel()
 
-	customerID := ""
-	if !state.Id.IsNull() && !state.Id.IsUnknown() {
-		customerID = state.Id.ValueString()
-	} else if !plan.Id.IsNull() && !plan.Id.IsUnknown() {
-		customerID = plan.Id.ValueString()
-	} else if !config.CustomerId.IsNull() && !config.CustomerId.IsUnknown() {
-		customerID = config.CustomerId.ValueString()
-	} else if !plan.CustomerId.IsNull() && !plan.CustomerId.IsUnknown() {
-		customerID = plan.CustomerId.ValueString()
+	customerID := state.Id.ValueString()
+	if customerID == "" {
+		customerID = state.CustomerId.ValueString()
 	}
 
 	if customerID == "" {

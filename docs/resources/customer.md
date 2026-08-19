@@ -21,8 +21,7 @@ Manages customer general settings (URL slug, allowed invite domains, point-of-co
 #
 # Then manage customer general settings:
 resource "doit_customer" "main" {
-  customer_id = "your-customer-id" # Optional if imported; state populates it automatically
-  url_slug    = "my-company"
+  url_slug = "my-company"
 
   settings = {
     currency               = "USD"
@@ -42,7 +41,6 @@ resource "doit_customer" "main" {
 ### Optional
 
 - `contact` (Attributes) Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path. (see [below for nested schema](#nestedatt--contact))
-- `customer_id` (String) Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.
 - `settings` (Attributes) Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
 
 `currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it. (see [below for nested schema](#nestedatt--settings))
@@ -51,6 +49,7 @@ resource "doit_customer" "main" {
 
 ### Read-Only
 
+- `customer_id` (String) Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.
 - `domains` (List of String) Domains associated with the customer.
 - `id` (String) Customer ID.
 - `name` (String) Customer name.

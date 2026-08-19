@@ -148,9 +148,7 @@ func overlayCustomerComputedFields(ctx context.Context, apiResp *models.Customer
 
 	// Phase 2: Overlay.
 	plan.Id = resolved.Id
-	if plan.CustomerId.IsUnknown() {
-		plan.CustomerId = resolved.CustomerId
-	}
+	plan.CustomerId = resolved.CustomerId
 	plan.Name = resolved.Name
 	plan.PrimaryDomain = resolved.PrimaryDomain
 	plan.Domains = resolved.Domains

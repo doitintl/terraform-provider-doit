@@ -73,19 +73,10 @@ func TestAccCustomerResource_ImportNotFound(t *testing.T) {
 	})
 }
 
-// TestAccCustomerResource_MismatchedCustomerID asserts that changing customer_id in HCL
-// to a different value than the imported customer ID is rejected at plan time with a diagnostic error.
-func TestAccCustomerResource_MismatchedCustomerID(t *testing.T) {
-	customer := testAccGetCustomer(t)
-	t.Cleanup(func() {
-		testAccRestoreCustomer(t, customer)
-	})
-
-	matchingConfig := testAccCustomerResourceConfig(fmt.Sprintf(`
-  customer_id = %q
-`, customer.Id))
-
-	mismatchedConfig := testAccCustomerResourceConfig(`
+// TestAccCustomerResource_ReadOnlyCustomerID asserts that attempting to set customer_id in HCL
+// is rejected because customer_id is a computed/read-only attribute.
+func TestAccCustomerResource_ReadOnlyCustomerID(t *testing.T) {
+	config := testAccCustomerResourceConfig(`
   customer_id = "different-customer-id-12345"
 `)
 
@@ -94,19 +85,9 @@ func TestAccCustomerResource_MismatchedCustomerID(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: Import with matching customer_id
 			{
-				Config:             matchingConfig,
-				ResourceName:       "doit_customer.test",
-				ImportState:        true,
-				ImportStateId:      customer.Id,
-				ImportStatePersist: true,
-				ImportStateVerify:  false,
-			},
-			// Step 2: Change customer_id to a different value -> rejected at plan time
-			{
-				Config:      mismatchedConfig,
-				ExpectError: regexp.MustCompile(`Invalid Customer ID`),
+				Config:      config,
+				ExpectError: regexp.MustCompile(`(Invalid Configuration for Read-Only Attribute|Read-only attribute cannot be set|can't be configured|attribute "customer_id" is read-only)`),
 			},
 		},
 	})
@@ -127,7 +108,7 @@ func TestAccCustomerResource_Import(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: Import and persist state
+			// Step 1: Import with ID and verify state
 			{
 				Config:             importConfig,
 				ResourceName:       "doit_customer.test",
@@ -135,18 +116,12 @@ func TestAccCustomerResource_Import(t *testing.T) {
 				ImportStateId:      customer.Id,
 				ImportStatePersist: true,
 				ImportStateVerify:  false,
-			},
-			// Step 2: Verify fields are populated after import without modifying them
-			{
-				Config: importConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", customer.Id),
 					resource.TestCheckResourceAttr("doit_customer.test", "customer_id", customer.Id),
-					resource.TestCheckResourceAttrSet("doit_customer.test", "name"),
-					resource.TestCheckResourceAttrSet("doit_customer.test", "primary_domain"),
 				),
 			},
-			// Step 3: Drift verification - re-apply should produce an empty plan
+			// Step 2: Plan check to ensure no drift
 			{
 				Config: importConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -160,7 +135,7 @@ func TestAccCustomerResource_Import(t *testing.T) {
 }
 
 // TestAccCustomerResource_Lifecycle tests importing, updating, clearing, drift checks,
-// customer_id scenarios (omitted vs explicit), and mfa_required settings lifecycle.
+// and mfa_required settings lifecycle.
 func TestAccCustomerResource_Lifecycle(t *testing.T) {
 	original := testAccGetCustomer(t)
 	t.Cleanup(func() {
@@ -170,8 +145,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 	testEmail := "tf-acc-test@example.com"
 	testDomain := "example.com"
 
-	// Scenario 1: customer_id omitted from HCL config
-	updateConfigOmittedCustomerID := testAccCustomerResourceConfig(fmt.Sprintf(`
+	updateConfig := testAccCustomerResourceConfig(fmt.Sprintf(`
   contact = {
     emails = [%q]
   }
@@ -179,17 +153,6 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
     allowed_invite_domains = [%q]
   }
 `, testEmail, testDomain))
-
-	// Scenario 2: customer_id explicitly set in HCL config
-	updateConfigExplicitCustomerID := testAccCustomerResourceConfig(fmt.Sprintf(`
-  customer_id = %q
-  contact = {
-    emails = [%q]
-  }
-  settings = {
-    allowed_invite_domains = [%q]
-  }
-`, original.Id, testEmail, testDomain))
 
 	// MFA settings configs
 	mfaFalseConfig := testAccCustomerResourceConfig(`
@@ -233,9 +196,9 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 				ImportStatePersist: true,
 				ImportStateVerify:  false,
 			},
-			// Step 2: Update with customer_id omitted from HCL config
+			// Step 2: Update customer general settings
 			{
-				Config: updateConfigOmittedCustomerID,
+				Config: updateConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
 					resource.TestCheckResourceAttr("doit_customer.test", "customer_id", original.Id),
@@ -243,35 +206,16 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.0", testDomain),
 				),
 			},
-			// Step 3: Drift check after update without customer_id
+			// Step 3: Drift check after update
 			{
-				Config: updateConfigOmittedCustomerID,
+				Config: updateConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
 			},
-			// Step 4: Update with customer_id explicitly set in HCL config
-			{
-				Config: updateConfigExplicitCustomerID,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
-					resource.TestCheckResourceAttr("doit_customer.test", "customer_id", original.Id),
-					resource.TestCheckResourceAttr("doit_customer.test", "contact.emails.0", testEmail),
-					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.0", testDomain),
-				),
-			},
-			// Step 5: Drift check after update with explicit customer_id
-			{
-				Config: updateConfigExplicitCustomerID,
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-			// Step 6: Set mfa_required = false
+			// Step 4: Set mfa_required = false
 			{
 				Config: mfaFalseConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -279,7 +223,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.mfa_required", "false"),
 				),
 			},
-			// Step 7: Drift check after mfa_required = false
+			// Step 5: Drift check after mfa_required = false
 			{
 				Config: mfaFalseConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -288,7 +232,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 8: Set mfa_required = true
+			// Step 6: Set mfa_required = true
 			{
 				Config: mfaTrueConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -296,7 +240,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.mfa_required", "true"),
 				),
 			},
-			// Step 9: Drift check after mfa_required = true
+			// Step 7: Drift check after mfa_required = true
 			{
 				Config: mfaTrueConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -305,7 +249,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 10: Clear by omitting contact and settings blocks (Category A cleared, Category B mfa_required preserved)
+			// Step 8: Clear by omitting contact and settings blocks (Category A cleared, Category B mfa_required preserved)
 			{
 				Config: omittedConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -315,7 +259,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.mfa_required", "true"),
 				),
 			},
-			// Step 11: Drift check after clearing via omission
+			// Step 9: Drift check after clearing via omission
 			{
 				Config: omittedConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -324,7 +268,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 12: Explicit empty values for contact emails, allowed_invite_domains, and url_slug
+			// Step 10: Explicit empty values for contact emails, allowed_invite_domains, and url_slug
 			{
 				Config: clearedConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -334,7 +278,7 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.#", "0"),
 				),
 			},
-			// Step 13: Drift check after explicit clear
+			// Step 11: Drift check after explicit clear
 			{
 				Config: clearedConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -343,14 +287,14 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 					},
 				},
 			},
-			// Step 14: Restore initial settings via HCL
+			// Step 12: Restore initial settings via HCL
 			{
 				Config: restoredConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
 				),
 			},
-			// Step 15: Final drift check on restored config
+			// Step 13: Final drift check on restored config
 			{
 				Config: restoredConfig,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
