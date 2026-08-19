@@ -40,6 +40,12 @@ func CustomerResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.",
 				MarkdownDescription: "Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.",
 			},
+			"customer_id": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.",
+				MarkdownDescription: "Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.",
+			},
 			"domains": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
@@ -102,6 +108,12 @@ func CustomerResourceSchema(ctx context.Context) schema.Schema {
 							),
 						},
 					},
+					"mfa_required": schema.BoolAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have.",
+						MarkdownDescription: "Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have.",
+					},
 				},
 				CustomType: SettingsType{
 					ObjectType: types.ObjectType{
@@ -127,6 +139,7 @@ func CustomerResourceSchema(ctx context.Context) schema.Schema {
 
 type CustomerModel struct {
 	Contact       ContactValue  `tfsdk:"contact"`
+	CustomerId    types.String  `tfsdk:"customer_id"`
 	Domains       types.List    `tfsdk:"domains"`
 	Id            types.String  `tfsdk:"id"`
 	Name          types.String  `tfsdk:"name"`
@@ -562,6 +575,24 @@ func (t SettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 			fmt.Sprintf(`currency expected to be basetypes.StringValue, was: %T`, currencyAttribute))
 	}
 
+	mfaRequiredAttribute, ok := attributes["mfa_required"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mfa_required is missing from object`)
+
+		return nil, diags
+	}
+
+	mfaRequiredVal, ok := mfaRequiredAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mfa_required expected to be basetypes.BoolValue, was: %T`, mfaRequiredAttribute))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -569,6 +600,7 @@ func (t SettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 	return SettingsValue{
 		AllowedInviteDomains: allowedInviteDomainsVal,
 		Currency:             currencyVal,
+		MfaRequired:          mfaRequiredVal,
 		state:                attr.ValueStateKnown,
 	}, diags
 }
@@ -672,6 +704,24 @@ func NewSettingsValue(attributeTypes map[string]attr.Type, attributes map[string
 			fmt.Sprintf(`currency expected to be basetypes.StringValue, was: %T`, currencyAttribute))
 	}
 
+	mfaRequiredAttribute, ok := attributes["mfa_required"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`mfa_required is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	mfaRequiredVal, ok := mfaRequiredAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`mfa_required expected to be basetypes.BoolValue, was: %T`, mfaRequiredAttribute))
+	}
+
 	if diags.HasError() {
 		return NewSettingsValueUnknown(), diags
 	}
@@ -679,6 +729,7 @@ func NewSettingsValue(attributeTypes map[string]attr.Type, attributes map[string
 	return SettingsValue{
 		AllowedInviteDomains: allowedInviteDomainsVal,
 		Currency:             currencyVal,
+		MfaRequired:          mfaRequiredVal,
 		state:                attr.ValueStateKnown,
 	}, diags
 }
@@ -753,11 +804,12 @@ var _ basetypes.ObjectValuable = SettingsValue{}
 type SettingsValue struct {
 	AllowedInviteDomains basetypes.ListValue   `tfsdk:"allowed_invite_domains"`
 	Currency             basetypes.StringValue `tfsdk:"currency"`
+	MfaRequired          basetypes.BoolValue   `tfsdk:"mfa_required"`
 	state                attr.ValueState
 }
 
 func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
@@ -766,12 +818,13 @@ func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
 	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["mfa_required"] = basetypes.BoolType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
+		vals := make(map[string]tftypes.Value, 3)
 
 		val, err = v.AllowedInviteDomains.ToTerraformValue(ctx)
 
@@ -788,6 +841,14 @@ func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 		}
 
 		vals["currency"] = val
+
+		val, err = v.MfaRequired.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["mfa_required"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -835,7 +896,8 @@ func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 			"allowed_invite_domains": basetypes.ListType{
 				ElemType: types.StringType,
 			},
-			"currency": basetypes.StringType{},
+			"currency":     basetypes.StringType{},
+			"mfa_required": basetypes.BoolType{},
 		}), diags
 	}
 
@@ -843,7 +905,8 @@ func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 		"allowed_invite_domains": basetypes.ListType{
 			ElemType: types.StringType,
 		},
-		"currency": basetypes.StringType{},
+		"currency":     basetypes.StringType{},
+		"mfa_required": basetypes.BoolType{},
 	}
 
 	if v.IsNull() {
@@ -859,6 +922,7 @@ func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 		map[string]attr.Value{
 			"allowed_invite_domains": allowedInviteDomainsVal,
 			"currency":               v.Currency,
+			"mfa_required":           v.MfaRequired,
 		})
 
 	return objVal, diags
@@ -887,6 +951,10 @@ func (v SettingsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.MfaRequired.Equal(other.MfaRequired) {
+		return false
+	}
+
 	return true
 }
 
@@ -903,6 +971,7 @@ func (v SettingsValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 		"allowed_invite_domains": basetypes.ListType{
 			ElemType: types.StringType,
 		},
-		"currency": basetypes.StringType{},
+		"currency":     basetypes.StringType{},
+		"mfa_required": basetypes.BoolType{},
 	}
 }

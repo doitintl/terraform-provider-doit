@@ -3803,21 +3803,23 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
-  /customers/v1/customers:
+  /customers/v1/customers/{customerId}:
     get:
       tags:
         - Customers
-      summary: Get customer general settings
+      summary: Get customer
       description: >-
-        Returns the general settings of the customer scoped to the authenticated tenant
-        (from the bearer token). Requires the `Settings` permission and DoiT API access
-        (`platform:externalApi`).
+        Returns the customer, including its general settings and contact info, scoped to
+        `{customerId}`. `{customerId}` must match the customer resolved from the bearer
+        token; a token scoped to a different customer gets `403`, even if that customer
+        would otherwise be reachable through a reseller/MTS relationship. Requires the
+        `Settings` permission and DoiT API access (`platform:externalApi`).
       operationId: getCustomer
       parameters:
-        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/customerId"
       responses:
         "200":
-          description: OK - Customer general settings returned.
+          description: OK - Customer returned.
           content:
             application/json:
               schema:
@@ -3835,12 +3837,14 @@ paths:
     patch:
       tags:
         - Customers
-      summary: Update customer general settings
+      summary: Update customer
       description: >-
-        Partially updates the general settings of the customer scoped to the authenticated
-        tenant (from the bearer token). Requires the `Settings` permission and DoiT API access
-        (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the
-        `UsersManager` permission.
+        Partially updates the general settings and contact info of the customer identified
+        by `{customerId}`. `{customerId}` must match the customer resolved from the bearer
+        token; a token scoped to a different customer gets `403`, even if that customer
+        would otherwise be reachable through a reseller/MTS relationship. Requires
+        the `Settings` permission and DoiT API access (`platform:externalApi`); updating
+        `allowedInviteDomains` additionally requires the `UsersManager` permission.
 
 
         The request body must use `application/merge-patch+json` (RFC 7396): an omitted field
@@ -3856,7 +3860,7 @@ paths:
         cleared with an empty array.
       operationId: updateCustomer
       parameters:
-        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/customerId"
       requestBody:
         required: true
         content:
@@ -3865,7 +3869,7 @@ paths:
               $ref: "#/components/schemas/CustomerUpdate"
       responses:
         "200":
-          description: OK - Customer general settings updated.
+          description: OK - Customer updated.
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -8476,7 +8480,9 @@ components:
           type: string
     Customer:
       type: object
-      description: Customer general settings, scoped to the authenticated tenant.
+      description: >-
+        Customer scoped to the authenticated tenant, including its settings and contact
+        info.
       required:
         - id
       properties:
@@ -8529,6 +8535,13 @@ components:
           items:
             type: string
           x-doit-pii: true
+          x-doit-confidentiality: customer-data
+        mfaRequired:
+          type: boolean
+          description: >-
+            Whether users of this customer are required to enroll in multi-factor
+            authentication. A missing value is treated as `true`. Disabling this does not
+            remove MFA enrollments existing users already have.
           x-doit-confidentiality: customer-data
     CustomerContact:
       type: object
@@ -16842,6 +16855,15 @@ components:
       required: true
       schema:
         type: string
+    customerId:
+      name: customerId
+      in: path
+      required: true
+      description: >-
+        Customer ID. Must match the customer resolved from the bearer token - a token
+        scoped to a different customer gets `403`.
+      schema:
+        type: string
     billingExplainerInvoiceMonth:
       name: invoiceMonth
       in: path
@@ -16857,7 +16879,11 @@ components:
       required: false
       description: |
         Tenant (customer) identifier that conveys the tenant scope for the request
-        (DoiT API Design Standards §15).
+        (DoiT API Design Standards §15). Accepts the customer ID or the customer's
+        URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
+        server resolves to the customer ID. Endpoint groups that validate the
+        tenant in their own middleware (e.g. CloudFlow) currently require the
+        literal customer ID.
 
         Resolution when the header is absent:
         - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
@@ -16954,7 +16980,11 @@ components:
       type: apiKey
       name: X-Tenant-Id
       description: |
-        Tenant (customer) ID that sets the request's customer context.
+        Tenant (customer) ID that sets the request's customer context. Also accepts
+        the customer's URL display name as shown in DoiT Console URLs (e.g. `omni`),
+        which the server resolves to the customer ID. Endpoint groups that validate
+        the tenant in their own middleware (e.g. CloudFlow) currently require the
+        literal customer ID.
 
         Required when the credential can access more than one tenant; omit when the
         credential is scoped to exactly one tenant (the server resolves that tenant

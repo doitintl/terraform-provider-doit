@@ -2446,6 +2446,9 @@ paths:
 
         Incidents are returned in reverse chronological order by default.
       operationId: listKnownIssues
+      x-cli-name: list-cloud-incidents
+      x-cli-aliases:
+        - list-known-issues
       parameters:
         - name: maxResults
           in: query
@@ -2494,6 +2497,9 @@ paths:
       summary: Retrieve a cloud incident
       description: Returns the specified cloud incident.
       operationId: getKnownIssue
+      x-cli-name: get-cloud-incident
+      x-cli-aliases:
+        - get-known-issue
       parameters:
         - name: id
           in: path
@@ -2536,19 +2542,19 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
-  /customers/v1/customers:
+  /customers/v1/customers/{customerId}:
     get:
       tags:
         - Customers
-      summary: Get customer general settings
+      summary: Get customer
       description: >-
-        Returns the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+        Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
       operationId: getCustomer
       parameters:
-        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/customerId"
       responses:
         "200":
-          description: OK - Customer general settings returned.
+          description: OK - Customer returned.
           content:
             application/json:
               schema:
@@ -2566,9 +2572,9 @@ paths:
     patch:
       tags:
         - Customers
-      summary: Update customer general settings
+      summary: Update customer
       description: >-
-        Partially updates the general settings of the customer scoped to the authenticated tenant (from the bearer token). Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+        Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 
 
         The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
@@ -2577,7 +2583,7 @@ paths:
         Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.
       operationId: updateCustomer
       parameters:
-        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/customerId"
       requestBody:
         required: true
         content:
@@ -2586,7 +2592,7 @@ paths:
               $ref: "#/components/schemas/CustomerUpdate"
       responses:
         "200":
-          description: OK - Customer general settings updated.
+          description: OK - Customer updated.
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3922,6 +3928,9 @@ paths:
         Use query parameters to filter by status, category, provider, or priority.
         Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResults
+      x-cli-name: list-insights
+      x-cli-aliases:
+        - get-insight-results
       parameters:
         - in: query
           name: searchTerm
@@ -4029,6 +4038,9 @@ paths:
         Returns the metadata and aggregate summary for a single insight identified by source and key.
         Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResult
+      x-cli-name: get-insight
+      x-cli-aliases:
+        - get-insight-result
       parameters:
         - in: path
           name: sourceID
@@ -4068,6 +4080,9 @@ paths:
         If an insight with the same key already exists for the source, it will be updated.
         Resource results are managed separately via the resource-results endpoint.
       operationId: postInsightResult
+      x-cli-name: create-insight
+      x-cli-aliases:
+        - post-insight-result
       parameters:
         - in: path
           name: sourceID
@@ -4112,6 +4127,9 @@ paths:
         Permanently deletes a single insight and all its associated resource results.
         Only insights created via the public API can be deleted.
       operationId: deleteInsightResult
+      x-cli-name: delete-insight
+      x-cli-aliases:
+        - delete-insight-result
       parameters:
         - in: path
           name: sourceID
@@ -4146,6 +4164,9 @@ paths:
         Each resource result represents a single cloud resource (e.g. an EC2 instance, a GCS bucket)
         affected by the insight, along with its risk scores or potential savings.
       operationId: getInsightResourceResults
+      x-cli-name: list-insight-resource-results
+      x-cli-aliases:
+        - get-insight-resource-results
       parameters:
         - in: path
           name: sourceID
@@ -4197,6 +4218,9 @@ paths:
         Replaces all resource results for the specified insight. Any existing unresolved resource results not present in the new set will be removed. The response includes server-computed fields (severity, resolved, enhancement) for each resource result. To delete all resource results, send an empty array.
 
       operationId: postInsightResourceResults
+      x-cli-name: replace-insight-resource-results
+      x-cli-aliases:
+        - post-insight-resource-results
       parameters:
         - in: path
           name: sourceID
@@ -7946,7 +7970,8 @@ components:
           description: The time when the custom theme was last updated.
     Customer:
       type: object
-      description: Customer general settings, scoped to the authenticated tenant.
+      description: >-
+        Customer scoped to the authenticated tenant, including its settings and contact info.
       required:
         - id
       properties:
@@ -8008,6 +8033,11 @@ components:
           items:
             type: string
           x-doit-pii: true
+          x-doit-confidentiality: customer-data
+        mfaRequired:
+          type: boolean
+          description: >-
+            Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have.
           x-doit-confidentiality: customer-data
     CustomerUpdate:
       type: object
@@ -11807,6 +11837,14 @@ components:
       required: true
       schema:
         type: string
+    customerId:
+      name: customerId
+      in: path
+      required: true
+      description: >-
+        Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.
+      schema:
+        type: string
     billingExplainerInvoiceMonth:
       name: invoiceMonth
       in: path
@@ -11822,7 +11860,11 @@ components:
       required: false
       description: |
         Tenant (customer) identifier that conveys the tenant scope for the request
-        (DoiT API Design Standards §15).
+        (DoiT API Design Standards §15). Accepts the customer ID or the customer's
+        URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
+        server resolves to the customer ID. Endpoint groups that validate the
+        tenant in their own middleware (e.g. CloudFlow) currently require the
+        literal customer ID.
 
         Resolution when the header is absent:
         - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
@@ -11919,7 +11961,11 @@ components:
       type: apiKey
       name: X-Tenant-Id
       description: |
-        Tenant (customer) ID that sets the request's customer context.
+        Tenant (customer) ID that sets the request's customer context. Also accepts
+        the customer's URL display name as shown in DoiT Console URLs (e.g. `omni`),
+        which the server resolves to the customer ID. Endpoint groups that validate
+        the tenant in their own middleware (e.g. CloudFlow) currently require the
+        literal customer ID.
 
         Required when the credential can access more than one tenant; omit when the
         credential is scoped to exactly one tenant (the server resolves that tenant

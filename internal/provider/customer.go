@@ -15,7 +15,22 @@ import (
 func (r *customerResource) populateState(ctx context.Context, state *customerResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	customerResp, err := r.client.GetCustomerWithResponse(ctx, nil)
+	customerID := ""
+	if !state.Id.IsNull() && !state.Id.IsUnknown() {
+		customerID = state.Id.ValueString()
+	} else if !state.CustomerId.IsNull() && !state.CustomerId.IsUnknown() {
+		customerID = state.CustomerId.ValueString()
+	}
+
+	if customerID == "" {
+		diags.AddError(
+			"Error Reading Customer",
+			"Customer ID is required to read customer settings",
+		)
+		return diags
+	}
+
+	customerResp, err := r.client.GetCustomerWithResponse(ctx, customerID)
 	if err != nil {
 		diags.AddError(
 			"Error Reading Customer",
@@ -26,6 +41,7 @@ func (r *customerResource) populateState(ctx context.Context, state *customerRes
 
 	if customerResp.StatusCode() == 404 {
 		state.Id = types.StringNull()
+		state.CustomerId = types.StringNull()
 		return diags
 	}
 
@@ -49,6 +65,7 @@ func mapCustomerToModel(ctx context.Context, customer *models.Customer, state *c
 	}
 
 	state.Id = types.StringValue(customer.Id)
+	state.CustomerId = types.StringValue(customer.Id)
 	state.Name = types.StringPointerValue(customer.Name)
 	state.PrimaryDomain = types.StringPointerValue(customer.PrimaryDomain)
 
@@ -73,9 +90,17 @@ func mapCustomerToModel(ctx context.Context, customer *models.Customer, state *c
 			currencyVal = types.StringNull()
 		}
 
+		var mfaRequiredVal types.Bool
+		if customer.Settings.MfaRequired != nil {
+			mfaRequiredVal = types.BoolValue(*customer.Settings.MfaRequired)
+		} else {
+			mfaRequiredVal = types.BoolNull()
+		}
+
 		settingsVal, d := resource_customer.NewSettingsValue(resource_customer.SettingsValue{}.AttributeTypes(ctx), map[string]attr.Value{
 			"allowed_invite_domains": allowedInviteDomainsVal,
 			"currency":               currencyVal,
+			"mfa_required":           mfaRequiredVal,
 		})
 		diags.Append(d...)
 		state.Settings = settingsVal
@@ -123,6 +148,9 @@ func overlayCustomerComputedFields(ctx context.Context, apiResp *models.Customer
 
 	// Phase 2: Overlay.
 	plan.Id = resolved.Id
+	if plan.CustomerId.IsUnknown() {
+		plan.CustomerId = resolved.CustomerId
+	}
 	plan.Name = resolved.Name
 	plan.PrimaryDomain = resolved.PrimaryDomain
 	plan.Domains = resolved.Domains
@@ -153,6 +181,9 @@ func overlayCustomerSettings(_ context.Context, resolved, plan *resource_custome
 	if plan.AllowedInviteDomains.IsUnknown() {
 		plan.AllowedInviteDomains = resolved.AllowedInviteDomains
 	}
+	if plan.MfaRequired.IsUnknown() {
+		plan.MfaRequired = resolved.MfaRequired
+	}
 }
 
 func overlayCustomerContact(_ context.Context, resolved, plan *resource_customer.ContactValue) {
@@ -167,6 +198,8 @@ func (plan *customerResourceModel) toUpdateRequest(ctx context.Context, config *
 
 	if !plan.UrlSlug.IsNull() && !plan.UrlSlug.IsUnknown() {
 		req.UrlSlug = new(plan.UrlSlug.ValueString())
+	} else if config == nil || config.UrlSlug.IsNull() {
+		req.UrlSlug = new("")
 	}
 
 	if !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
@@ -190,10 +223,28 @@ func (plan *customerResourceModel) toUpdateRequest(ctx context.Context, config *
 			}
 			settings.AllowedInviteDomains = &domains
 			hasSettings = true
+		} else if config == nil || config.Settings.IsNull() || config.Settings.AllowedInviteDomains.IsNull() {
+			domains := []string{}
+			settings.AllowedInviteDomains = &domains
+			hasSettings = true
+		}
+
+		// mfa_required: Category B — only send when explicitly configured in HCL (not when defaulted/copied from prior state)
+		if config != nil && !config.Settings.IsNull() && !config.Settings.MfaRequired.IsNull() && !config.Settings.MfaRequired.IsUnknown() {
+			if !plan.Settings.MfaRequired.IsNull() && !plan.Settings.MfaRequired.IsUnknown() {
+				settings.MfaRequired = plan.Settings.MfaRequired.ValueBoolPointer()
+				hasSettings = true
+			}
 		}
 
 		if hasSettings {
 			req.Settings = &settings
+		}
+	} else if config == nil || config.Settings.IsNull() {
+		// settings block omitted in HCL: clear Category A (allowed_invite_domains) while preserving Category B
+		domains := []string{}
+		req.Settings = &models.CustomerSettings{
+			AllowedInviteDomains: &domains,
 		}
 	}
 
@@ -209,6 +260,17 @@ func (plan *customerResourceModel) toUpdateRequest(ctx context.Context, config *
 			req.Contact = &models.CustomerContact{
 				Emails: &openapiEmails,
 			}
+		} else {
+			emptyEmails := []openapi_types.Email{}
+			req.Contact = &models.CustomerContact{
+				Emails: &emptyEmails,
+			}
+		}
+	} else if config == nil || config.Contact.IsNull() {
+		// contact block omitted in HCL: clear Category A (emails)
+		emptyEmails := []openapi_types.Email{}
+		req.Contact = &models.CustomerContact{
+			Emails: &emptyEmails,
 		}
 	}
 

@@ -48,6 +48,14 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 		s.Attributes["id"] = attr
 	}
 
+	if attr, ok := s.Attributes["customer_id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers,
+			stringplanmodifier.RequiresReplace(),
+			stringplanmodifier.UseStateForUnknown(),
+		)
+		s.Attributes["customer_id"] = attr
+	}
+
 	if attr, ok := s.Attributes["name"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["name"] = attr
@@ -89,8 +97,10 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 	// Classify Optional+Computed attributes (clearableattr).
 	// Category B: Preserved settings when omitted from config.
 	acknowledgeNotClearable(s,
+		"customer_id",
 		"settings",
 		"settings.currency",
+		"settings.mfa_required",
 		"contact",
 	)
 
@@ -169,13 +179,32 @@ func (r *customerResource) Update(ctx context.Context, req resource.UpdateReques
 	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
 	defer cancel()
 
+	customerID := ""
+	if !state.Id.IsNull() && !state.Id.IsUnknown() {
+		customerID = state.Id.ValueString()
+	} else if !plan.Id.IsNull() && !plan.Id.IsUnknown() {
+		customerID = plan.Id.ValueString()
+	} else if !config.CustomerId.IsNull() && !config.CustomerId.IsUnknown() {
+		customerID = config.CustomerId.ValueString()
+	} else if !plan.CustomerId.IsNull() && !plan.CustomerId.IsUnknown() {
+		customerID = plan.CustomerId.ValueString()
+	}
+
+	if customerID == "" {
+		resp.Diagnostics.AddError(
+			"Error Updating Customer",
+			"Customer ID is required to update customer settings",
+		)
+		return
+	}
+
 	apiReq, d := plan.toUpdateRequest(ctx, &config)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	updateResp, err := r.client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx, nil, apiReq)
+	updateResp, err := r.client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx, customerID, apiReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Customer",
@@ -192,7 +221,7 @@ func (r *customerResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	customerResp, err := r.client.GetCustomerWithResponse(ctx, nil)
+	customerResp, err := r.client.GetCustomerWithResponse(ctx, customerID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Customer After Update",
