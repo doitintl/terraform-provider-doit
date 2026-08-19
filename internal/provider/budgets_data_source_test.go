@@ -182,8 +182,12 @@ func TestAccBudgetsDataSource_FilterByRiskStatus(t *testing.T) {
 				Config: testAccBudgetsDataSourceFilterRiskStatusConfig("riskStatus:atRisk"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "row_count"),
+					// When filtering by riskStatus:atRisk, the filtered row_count matches the at_risk aggregate count
+					resource.TestCheckResourceAttrPair("data.doit_budgets.risk_filtered", "row_count", "data.doit_budgets.risk_filtered", "risk_aggregations.at_risk"),
+					// Returned budgets must have risk_status = "atRisk"
+					resource.TestCheckResourceAttr("data.doit_budgets.risk_filtered", "budgets.0.risk_status", "atRisk"),
+					// Risk aggregations breakdown is populated
 					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.total"),
-					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.at_risk"),
 					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.on_track"),
 					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.unknown"),
 				),
