@@ -77,6 +77,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	// If any filter/pagination input is unknown, return unknown list
 	if data.Filter.IsUnknown() || data.NameContains.IsUnknown() || data.MinCreationTime.IsUnknown() || data.MaxCreationTime.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Budgets = types.ListUnknown(datasource_budgets.BudgetsValue{}.Type(ctx))
+		data.RiskAggregations = datasource_budgets.NewRiskAggregationsValueUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -99,6 +100,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	userControlsPagination := !data.MaxResults.IsNull()
 
 	var allBudgets []models.BudgetListItem
+	var riskAggregations *models.RiskAggregations
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
@@ -128,6 +130,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		if result.Budgets != nil {
 			allBudgets = *result.Budgets
 		}
+		riskAggregations = result.RiskAggregations
 
 		// Preserve API's page_token for user to fetch next page
 		data.PageToken = types.StringPointerValue(result.PageToken)
@@ -164,6 +167,9 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			if result.Budgets != nil {
 				allBudgets = append(allBudgets, *result.Budgets...)
 			}
+			if result.RiskAggregations != nil {
+				riskAggregations = result.RiskAggregations
+			}
 
 			if result.PageToken == nil || *result.PageToken == "" {
 				break
@@ -177,6 +183,10 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		// max_results was not set by user; normalize to null
 		data.MaxResults = types.Int64Null()
 	}
+
+	riskAggVal, diags := mapRiskAggregations(ctx, riskAggregations)
+	resp.Diagnostics.Append(diags...)
+	data.RiskAggregations = riskAggVal
 
 	// Map budgets list
 	if len(allBudgets) > 0 {
@@ -221,6 +231,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 					"end_period":                  types.Int64PointerValue(budget.EndPeriod),
 					"time_interval":               types.StringPointerValue(budget.TimeInterval),
 					"url":                         types.StringPointerValue(budget.Url),
+					"risk_status":                 types.StringPointerValue((*string)(budget.RiskStatus)),
 					"alert_thresholds":            alertThresholdsList,
 					"scopes":                      scopesList,
 					"scope":                       scopeList,
@@ -315,4 +326,20 @@ func mapBudgetScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter)
 	}
 
 	return types.ListValueFrom(ctx, datasource_budgets.ScopesValue{}.Type(ctx), vals)
+}
+
+func mapRiskAggregations(ctx context.Context, riskAgg *models.RiskAggregations) (datasource_budgets.RiskAggregationsValue, diag.Diagnostics) {
+	if riskAgg == nil {
+		return datasource_budgets.NewRiskAggregationsValueNull(), nil
+	}
+
+	return datasource_budgets.NewRiskAggregationsValue(
+		datasource_budgets.RiskAggregationsValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"at_risk":  types.Int64Value(riskAgg.AtRisk),
+			"on_track": types.Int64Value(riskAgg.OnTrack),
+			"total":    types.Int64Value(riskAgg.Total),
+			"unknown":  types.Int64Value(riskAgg.Unknown),
+		},
+	)
 }

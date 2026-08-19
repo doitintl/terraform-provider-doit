@@ -310,6 +310,27 @@ func (e BudgetCreateUpdateRequestPublic) Valid() bool {
 	}
 }
 
+// Defines values for BudgetListItemRiskStatus.
+const (
+	BudgetListItemRiskStatusAtRisk  BudgetListItemRiskStatus = "atRisk"
+	BudgetListItemRiskStatusOnTrack BudgetListItemRiskStatus = "onTrack"
+	BudgetListItemRiskStatusUnknown BudgetListItemRiskStatus = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the BudgetListItemRiskStatus enum.
+func (e BudgetListItemRiskStatus) Valid() bool {
+	switch e {
+	case BudgetListItemRiskStatusAtRisk:
+		return true
+	case BudgetListItemRiskStatusOnTrack:
+		return true
+	case BudgetListItemRiskStatusUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BudgetSuggestionConfidence.
 const (
 	BudgetSuggestionConfidenceHigh   BudgetSuggestionConfidence = "high"
@@ -5055,6 +5076,12 @@ type BudgetListItem struct {
 	Id                        *string           `json:"id,omitempty"`
 	Owner                     *string           `json:"owner,omitempty"`
 
+	// RiskStatus Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.
+	// "atRisk" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.
+	// "onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
+	// "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
+	RiskStatus *BudgetListItemRiskStatus `json:"riskStatus,omitempty"`
+
 	// Scope List of allocations that define the budget scope.
 	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Scope *[]string `json:"scope,omitempty"`
@@ -5066,6 +5093,12 @@ type BudgetListItem struct {
 	UpdateTime   *int64                  `json:"updateTime,omitempty"`
 	Url          *string                 `json:"url,omitempty"`
 }
+
+// BudgetListItemRiskStatus Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.
+// "atRisk" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.
+// "onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
+// "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
+type BudgetListItemRiskStatus string
 
 // BudgetSuggestion An AI-generated budget recommendation.
 type BudgetSuggestion struct {
@@ -7829,6 +7862,9 @@ type ListBudgets200Response struct {
 	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *string `json:"pageToken,omitempty"`
 
+	// RiskAggregations Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page.
+	RiskAggregations *RiskAggregations `json:"riskAggregations,omitempty"`
+
 	// RowCount Budgets rows count
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
@@ -8349,6 +8385,14 @@ type ResultsBody struct {
 
 	// Results List of insight results.
 	Results *[]InsightResponse `json:"results,omitempty"`
+}
+
+// RiskAggregations Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page.
+type RiskAggregations struct {
+	AtRisk  int64 `json:"atRisk"`
+	OnTrack int64 `json:"onTrack"`
+	Total   int64 `json:"total"`
+	Unknown int64 `json:"unknown"`
 }
 
 // Role Definition and permissions assigned to a role.
@@ -9274,7 +9318,9 @@ type ListBudgetsParams struct {
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// Filter An expression for filtering the results of the request. The syntax is "key:[<value>]".
-	// Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
+	// Available keys: owner, budgetName, lastModified in ms (>lasModified), riskStatus (one of "atRisk", "onTrack", "unknown"). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR" (except riskStatus, where only the first occurrence is honored).
+	// A budget is "atRisk" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified "unknown". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.
+	// Because riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// NameContains Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
@@ -10652,6 +10698,7 @@ type ClientInterface interface {
 	// ListBudgets List budgets
 	//
 	// Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+	// Each budget includes a server-computed `riskStatus` (`atRisk`, `onTrack`, or `unknown`), and the response includes a `riskAggregations` summary of risk counts across the full filtered result set (all pages, not just the current page).
 	//
 	// Corresponds with GET /analytics/v1/budgets (the `ListBudgets` operationId).
 	ListBudgets(ctx context.Context, params *ListBudgetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -12215,6 +12262,7 @@ func (c *Client) ListBudgetSuggestions(ctx context.Context, reqEditors ...Reques
 // ListBudgets List budgets
 //
 // Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+// Each budget includes a server-computed `riskStatus` (`atRisk`, `onTrack`, or `unknown`), and the response includes a `riskAggregations` summary of risk counts across the full filtered result set (all pages, not just the current page).
 //
 // Corresponds with GET /analytics/v1/budgets (the `ListBudgets` operationId).
 func (c *Client) ListBudgets(ctx context.Context, params *ListBudgetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -21014,6 +21062,7 @@ type ClientWithResponsesInterface interface {
 	// ListBudgetsWithResponse List budgets
 	//
 	// Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+	// Each budget includes a server-computed `riskStatus` (`atRisk`, `onTrack`, or `unknown`), and the response includes a `riskAggregations` summary of risk counts across the full filtered result set (all pages, not just the current page).
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -30657,6 +30706,7 @@ func (c *ClientWithResponses) ListBudgetSuggestionsWithResponse(ctx context.Cont
 // ListBudgetsWithResponse List budgets
 //
 // Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+// Each budget includes a server-computed `riskStatus` (`atRisk`, `onTrack`, or `unknown`), and the response includes a `riskAggregations` summary of risk counts across the full filtered result set (all pages, not just the current page).
 //
 // Returns a wrapper object for the known response body format(s).
 //
