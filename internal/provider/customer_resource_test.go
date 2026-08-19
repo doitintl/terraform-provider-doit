@@ -74,8 +74,7 @@ func TestAccCustomerResource_ImportNotFound(t *testing.T) {
 }
 
 // TestAccCustomerResource_MismatchedCustomerID asserts that changing customer_id in HCL
-// to a different value than the imported customer ID triggers replacement and fails with
-// creation not supported.
+// to a different value than the imported customer ID is rejected at plan time with a diagnostic error.
 func TestAccCustomerResource_MismatchedCustomerID(t *testing.T) {
 	customer := testAccGetCustomer(t)
 	t.Cleanup(func() {
@@ -104,10 +103,10 @@ func TestAccCustomerResource_MismatchedCustomerID(t *testing.T) {
 				ImportStatePersist: true,
 				ImportStateVerify:  false,
 			},
-			// Step 2: Change customer_id to a different value -> triggers replacement -> Create fails
+			// Step 2: Change customer_id to a different value -> rejected at plan time
 			{
 				Config:      mismatchedConfig,
-				ExpectError: regexp.MustCompile(`Customer Creation Not Supported`),
+				ExpectError: regexp.MustCompile(`Invalid Customer ID`),
 			},
 		},
 	})

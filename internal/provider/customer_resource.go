@@ -50,8 +50,8 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 
 	if attr, ok := s.Attributes["customer_id"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers,
-			stringplanmodifier.RequiresReplace(),
 			stringplanmodifier.UseStateForUnknown(),
+			customerIDMatchesState(),
 		)
 		s.Attributes["customer_id"] = attr
 	}
