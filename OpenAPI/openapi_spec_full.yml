@@ -2694,6 +2694,9 @@ paths:
       summary: Ingest CSV file
       description: Sends a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
       operationId: datahubEventsCSVFile
+      x-cli-name: ingest-datahub-events-csv
+      x-cli-aliases:
+        - datahub-events-csv-file
       requestBody:
         required: true
         content:
@@ -2740,6 +2743,9 @@ paths:
       summary: Ingest JSON
       description: Sends a batch of events to DataHub.
       operationId: datahubEvents
+      x-cli-name: ingest-datahub-events
+      x-cli-aliases:
+        - datahub-events
       requestBody:
         required: true
         content:
@@ -3486,6 +3492,9 @@ paths:
 
         Incidents are returned in reverse chronological order by default.
       operationId: listKnownIssues
+      x-cli-name: list-cloud-incidents
+      x-cli-aliases:
+        - list-known-issues
       parameters:
         - name: maxResults
           in: query
@@ -3550,6 +3559,9 @@ paths:
       summary: Retrieve a cloud incident
       description: Returns the specified cloud incident.
       operationId: getKnownIssue
+      x-cli-name: get-cloud-incident
+      x-cli-aliases:
+        - get-known-issue
       parameters:
         - name: id
           in: path
@@ -5699,6 +5711,9 @@ paths:
       summary: Submit feedback
       description: Submit feedback on an Ava answer to help improve response quality.
       operationId: avaFeedback
+      x-cli-name: submit-ava-feedback
+      x-cli-aliases:
+        - ava-feedback
       requestBody:
         required: true
         content:
@@ -5751,6 +5766,9 @@ paths:
         Use query parameters to filter by status, category, provider, or priority.
         Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResults
+      x-cli-name: list-insights
+      x-cli-aliases:
+        - get-insight-results
       parameters:
         - in: query
           name: searchTerm
@@ -5860,6 +5878,9 @@ paths:
         For granular control over insight metadata and resource results independently,
         use the single-insight and resource-results endpoints instead.
       operationId: postInsightResults
+      x-cli-name: create-insights
+      x-cli-aliases:
+        - post-insight-results
       requestBody:
         content:
           application/json:
@@ -5893,6 +5914,9 @@ paths:
         This removes the insight and all its associated resource results.
         For single-insight deletion, use `DELETE /source/{sourceID}/insight/{insightKey}` instead.
       operationId: deleteInsightResults
+      x-cli-name: delete-insights
+      x-cli-aliases:
+        - delete-insight-results
       parameters:
         - in: query
           name: insightKey
@@ -5918,6 +5942,9 @@ paths:
         Returns the metadata and aggregate summary for a single insight identified by source and key.
         Does not include individual resource-level results — use the resource-results endpoint for those.
       operationId: getInsightResult
+      x-cli-name: get-insight
+      x-cli-aliases:
+        - get-insight-result
       parameters:
         - in: path
           name: sourceID
@@ -5957,6 +5984,9 @@ paths:
         If an insight with the same key already exists for the source, it will be updated.
         Resource results are managed separately via the resource-results endpoint.
       operationId: postInsightResult
+      x-cli-name: create-insight
+      x-cli-aliases:
+        - post-insight-result
       parameters:
         - in: path
           name: sourceID
@@ -6001,6 +6031,9 @@ paths:
         Permanently deletes a single insight and all its associated resource results.
         Only insights created via the public API can be deleted.
       operationId: deleteInsightResult
+      x-cli-name: delete-insight
+      x-cli-aliases:
+        - delete-insight-result
       parameters:
         - in: path
           name: sourceID
@@ -6080,6 +6113,9 @@ paths:
         Each resource result represents a single cloud resource (e.g. an EC2 instance, a GCS bucket)
         affected by the insight, along with its risk scores or potential savings.
       operationId: getInsightResourceResults
+      x-cli-name: list-insight-resource-results
+      x-cli-aliases:
+        - get-insight-resource-results
       parameters:
         - in: path
           name: sourceID
@@ -6133,6 +6169,9 @@ paths:
         The response includes server-computed fields (severity, resolved, enhancement) for each
         resource result. To delete all resource results, send an empty array.
       operationId: postInsightResourceResults
+      x-cli-name: replace-insight-resource-results
+      x-cli-aliases:
+        - post-insight-resource-results
       parameters:
         - in: path
           name: sourceID
