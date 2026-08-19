@@ -52,7 +52,9 @@ Optional:
 Read-Only:
 
 - `attachments` (Attributes List) File attachments on the comment. (see [below for nested schema](#nestedatt--comments--attachments))
-- `author` (String) Email address of the comment author.
+- `author` (String) Stable comment-author attribution. User callers are represented by
+their verified email address; service-account callers use
+`sa:<serviceAccountId>`.
 - `body` (String) The text content of the comment.
 - `created` (Number) The time when this comment was created, in milliseconds since the epoch.
 - `id` (Number) Comment ID.

@@ -14325,7 +14325,7 @@
 										"name": "author",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Email address of the comment author."
+											"description": "Stable comment-author attribution. User callers are represented by\ntheir verified email address; service-account callers use\n`sa:\u003cserviceAccountId\u003e`."
 										}
 									},
 									{

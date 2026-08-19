@@ -235,9 +235,9 @@ func computeSupportRequestCount(t *testing.T) int {
 	ctx := context.Background()
 
 	var total int
-	params := &models.IdOfTicketsParams{}
+	params := &models.ListTicketsParams{}
 	for {
-		resp, err := client.IdOfTicketsWithResponse(ctx, params)
+		resp, err := client.ListTicketsWithResponse(ctx, params)
 		if err != nil {
 			t.Fatalf("Failed to list support requests: %v", err)
 		}
@@ -260,7 +260,7 @@ func getSupportRequestFirstPageToken(t *testing.T, maxResults int64) string {
 	client := getAPIClient(t)
 	ctx := context.Background()
 
-	resp, err := client.IdOfTicketsWithResponse(ctx, &models.IdOfTicketsParams{
+	resp, err := client.ListTicketsWithResponse(ctx, &models.ListTicketsParams{
 		MaxResults: &maxResults,
 	})
 	if err != nil {

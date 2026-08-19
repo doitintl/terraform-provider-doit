@@ -46,8 +46,8 @@ func SupportRequestCommentsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"author": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Email address of the comment author.",
-							MarkdownDescription: "Email address of the comment author.",
+							Description:         "Stable comment-author attribution. User callers are represented by\ntheir verified email address; service-account callers use\n`sa:<serviceAccountId>`.",
+							MarkdownDescription: "Stable comment-author attribution. User callers are represented by\ntheir verified email address; service-account callers use\n`sa:<serviceAccountId>`.",
 						},
 						"body": schema.StringAttribute{
 							Computed:            true,

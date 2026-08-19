@@ -4558,7 +4558,7 @@ paths:
       description: |-
         Returns a list of all historical requests that your account has access to.
         Tickets are returned in reverse chronological order by default.
-      operationId: idOfTickets
+      operationId: listTickets
       x-cli-name: list-tickets
       x-cli-aliases:
         - id-of-tickets
@@ -4620,7 +4620,7 @@ paths:
         - Support Requests
       summary: Create a request
       description: Creates a new support request
-      operationId: idOfTicketsPost
+      operationId: createTicket
       x-cli-name: create-ticket
       x-cli-aliases:
         - id-of-tickets-post
@@ -4652,7 +4652,7 @@ paths:
         - Support Requests
       summary: Get a request
       description: Returns the details of a single support request by its ID.
-      operationId: idOfTicketGet
+      operationId: getTicket
       x-cli-name: get-ticket
       x-cli-aliases:
         - id-of-ticket-get
@@ -4697,7 +4697,7 @@ paths:
         email, resolved server-side to a Zendesk agent; an email that does not
         resolve to an active agent returns `400`. At least one mutable field
         must be present. The response echoes the fields that were applied.
-      operationId: idOfTicketUpdate
+      operationId: updateTicket
       x-cli-name: update-ticket
       x-cli-aliases:
         - id-of-ticket-update
@@ -4764,7 +4764,7 @@ paths:
         comments are returned. For DoiT employees, both public and private
         comments are returned. All comments are returned in a single response
         (no pagination).
-      operationId: idOfTicketCommentsList
+      operationId: listTicketComments
       x-cli-name: list-ticket-comments
       x-cli-aliases:
         - id-of-ticket-comments-list
@@ -4801,7 +4801,7 @@ paths:
         Adds a comment to an existing support request. For customers, comments
         are always public. For DoiT employees, comments can be marked as
         private (internal notes) by setting the `private` field to `true`.
-      operationId: idOfTicketCommentsPost
+      operationId: createTicketComment
       x-cli-name: create-ticket-comment
       x-cli-aliases:
         - id-of-ticket-comments-post
@@ -4887,7 +4887,7 @@ paths:
         prefix to prevent collisions with internal DoiT process tags. The
         response echoes the actual stored strings so callers can verify the
         transform.
-      operationId: idOfTicketTagsAdd
+      operationId: addTicketTags
       x-cli-name: add-ticket-tags
       x-cli-aliases:
         - id-of-ticket-tags-add
@@ -4933,7 +4933,7 @@ paths:
         For customers, the system applies the same `customer_tag/` namespace
         mapping as on add, so a customer who added `my_tag` (stored as
         `customer_tag/my_tag`) can remove it by sending `my_tag`.
-      operationId: idOfTicketTagsRemove
+      operationId: removeTicketTags
       x-cli-name: remove-ticket-tags
       x-cli-aliases:
         - id-of-ticket-tags-remove
@@ -12286,6 +12286,13 @@ components:
         product:
           type: string
           description: Ticket product details.
+        requester:
+          type: string
+          format: email
+          description: |-
+            Human contact email used as the Zendesk ticket requester. Required
+            when the caller is a service account. User callers must omit this
+            field; their verified email remains the requester.
         severity:
           type: string
           description: Ticket severity.
@@ -12503,7 +12510,10 @@ components:
           description: The text content of the comment.
         author:
           type: string
-          description: Email address of the comment author.
+          description: |-
+            Stable comment-author attribution. User callers are represented by
+            their verified email address; service-account callers use
+            `sa:<serviceAccountId>`.
         created:
           type: integer
           description: The time when this comment was created, in milliseconds since the epoch.

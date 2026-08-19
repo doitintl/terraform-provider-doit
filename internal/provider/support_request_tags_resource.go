@@ -254,11 +254,11 @@ func (r *supportRequestTagsResource) Delete(ctx context.Context, req resource.De
 	}
 
 	if len(tags) > 0 {
-		removeReq := models.IdOfTicketTagsRemoveJSONRequestBody{
+		removeReq := models.RemoveTicketTagsJSONRequestBody{
 			Tags: tags,
 		}
 
-		removeResp, err := r.client.IdOfTicketTagsRemoveWithResponse(ctx, state.TicketId.ValueInt64(), removeReq)
+		removeResp, err := r.client.RemoveTicketTagsWithResponse(ctx, state.TicketId.ValueInt64(), removeReq)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Deleting Support Request Tags",
