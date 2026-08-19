@@ -10611,6 +10611,9 @@ components:
       type: object
       description: Schema of a report result column.
       properties:
+        id:
+          type: string
+          description: Stable allocation-group ID used to select the allocation dimension in report configurations. Omitted for other report columns.
         name:
           type: string
         type:
