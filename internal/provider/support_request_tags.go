@@ -156,10 +156,10 @@ func (r *supportRequestTagsResource) syncTags(ctx context.Context, ticketId int6
 	toAdd, toRemove := diffTags(oldTags, desiredTags)
 
 	if len(toRemove) > 0 {
-		removeReq := models.IdOfTicketTagsRemoveJSONRequestBody{
+		removeReq := models.RemoveTicketTagsJSONRequestBody{
 			Tags: toRemove,
 		}
-		removeResp, err := r.client.IdOfTicketTagsRemoveWithResponse(ctx, ticketId, removeReq)
+		removeResp, err := r.client.RemoveTicketTagsWithResponse(ctx, ticketId, removeReq)
 		if err != nil {
 			diags.AddError("Error Syncing Tags", "Could not remove tags: "+err.Error())
 			return
@@ -174,10 +174,10 @@ func (r *supportRequestTagsResource) syncTags(ctx context.Context, ticketId int6
 	}
 
 	if len(toAdd) > 0 {
-		addReq := models.IdOfTicketTagsAddJSONRequestBody{
+		addReq := models.AddTicketTagsJSONRequestBody{
 			Tags: toAdd,
 		}
-		addResp, err := r.client.IdOfTicketTagsAddWithResponse(ctx, ticketId, addReq)
+		addResp, err := r.client.AddTicketTagsWithResponse(ctx, ticketId, addReq)
 		if err != nil {
 			diags.AddError("Error Syncing Tags", "Could not add tags: "+err.Error())
 			return

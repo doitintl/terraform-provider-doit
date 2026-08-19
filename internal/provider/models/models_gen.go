@@ -6096,7 +6096,9 @@ type CommentExtAPI struct {
 	// Attachments File attachments on the comment.
 	Attachments *[]CommentExtAPIAttachmentsItem `json:"attachments,omitempty"`
 
-	// Author Email address of the comment author.
+	// Author Stable comment-author attribution. User callers are represented by
+	// their verified email address; service-account callers use
+	// `sa:<serviceAccountId>`.
 	Author *string `json:"author,omitempty"`
 
 	// Body The text content of the comment.
@@ -9901,8 +9903,8 @@ type ListProductsParams struct {
 	Platform *string `form:"platform,omitempty" json:"platform,omitempty"`
 }
 
-// IdOfTicketsParams defines parameters for IdOfTickets.
-type IdOfTicketsParams struct {
+// ListTicketsParams defines parameters for ListTickets.
+type ListTicketsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 	MaxResults *int64 `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
@@ -10027,11 +10029,11 @@ type PostInsightResourceResultsJSONRequestBody = CreateResourceResultsBody
 // UpdateResourcePermissionJSONRequestBody defines body for UpdateResourcePermission for application/json ContentType.
 type UpdateResourcePermissionJSONRequestBody = UpdateResourcePermissionRequestBody
 
-// IdOfTicketTagsRemoveJSONRequestBody defines body for IdOfTicketTagsRemove for application/json ContentType.
-type IdOfTicketTagsRemoveJSONRequestBody = TagsRequest
+// RemoveTicketTagsJSONRequestBody defines body for RemoveTicketTags for application/json ContentType.
+type RemoveTicketTagsJSONRequestBody = TagsRequest
 
-// IdOfTicketTagsAddJSONRequestBody defines body for IdOfTicketTagsAdd for application/json ContentType.
-type IdOfTicketTagsAddJSONRequestBody = TagsRequest
+// AddTicketTagsJSONRequestBody defines body for AddTicketTags for application/json ContentType.
+type AddTicketTagsJSONRequestBody = TagsRequest
 
 // Getter for additional properties for ProblemDetails. Returns the specified
 // element and whether it was found
@@ -11748,32 +11750,32 @@ type ClientInterface interface {
 	// Corresponds with GET /support/v1/metadata/products (the `ListProducts` operationId).
 	ListProducts(ctx context.Context, params *ListProductsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// IdOfTickets List requests
+	// ListTickets List requests
 	//
 	// Returns a list of all historical requests that your account has access to.
 	// Tickets are returned in reverse chronological order by default.
 	//
-	// Corresponds with GET /support/v1/tickets (the `IdOfTickets` operationId).
-	IdOfTickets(ctx context.Context, params *IdOfTicketsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /support/v1/tickets (the `ListTickets` operationId).
+	ListTickets(ctx context.Context, params *ListTicketsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// IdOfTicketGet Get a request
+	// GetTicket Get a request
 	//
 	// Returns the details of a single support request by its ID.
 	//
-	// Corresponds with GET /support/v1/tickets/{ticketId} (the `IdOfTicketGet` operationId).
-	IdOfTicketGet(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /support/v1/tickets/{ticketId} (the `GetTicket` operationId).
+	GetTicket(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// IdOfTicketCommentsList List request comments
+	// ListTicketComments List request comments
 	//
 	// Returns all comments on a support request. For customers, only public
 	// comments are returned. For DoiT employees, both public and private
 	// comments are returned. All comments are returned in a single response
 	// (no pagination).
 	//
-	// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `IdOfTicketCommentsList` operationId).
-	IdOfTicketCommentsList(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `ListTicketComments` operationId).
+	ListTicketComments(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// IdOfTicketTagsRemoveWithBody Remove tags from a support request
+	// RemoveTicketTagsWithBody Remove tags from a support request
 	//
 	// Removes one or more tags from an existing support request. The operation
 	// is surgical — only the tags listed in the request are removed; tags not
@@ -11786,10 +11788,10 @@ type ClientInterface interface {
 	//
 	// Takes any type of body and a specified content type.
 	//
-	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-	IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+	RemoveTicketTagsWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// IdOfTicketTagsRemove Remove tags from a support request
+	// RemoveTicketTags Remove tags from a support request
 	//
 	// Removes one or more tags from an existing support request. The operation
 	// is surgical — only the tags listed in the request are removed; tags not
@@ -11802,8 +11804,8 @@ type ClientInterface interface {
 	//
 	// Takes a body of the `application/json` content type.
 	//
-	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-	IdOfTicketTagsRemove(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+	RemoveTicketTags(ctx context.Context, ticketId int64, body RemoveTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListTicketTags List tags on a support request
 	//
@@ -11819,7 +11821,7 @@ type ClientInterface interface {
 	// Corresponds with GET /support/v1/tickets/{ticketId}/tags (the `ListTicketTags` operationId).
 	ListTicketTags(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// IdOfTicketTagsAddWithBody Add tags to a support request
+	// AddTicketTagsWithBody Add tags to a support request
 	//
 	// Adds one or more tags to an existing support request. The operation is
 	// surgical — only the tags listed in the request are added; existing tags
@@ -11834,10 +11836,10 @@ type ClientInterface interface {
 	//
 	// Takes any type of body and a specified content type.
 	//
-	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-	IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+	AddTicketTagsWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// IdOfTicketTagsAdd Add tags to a support request
+	// AddTicketTags Add tags to a support request
 	//
 	// Adds one or more tags to an existing support request. The operation is
 	// surgical — only the tags listed in the request are added; existing tags
@@ -11852,8 +11854,8 @@ type ClientInterface interface {
 	//
 	// Takes a body of the `application/json` content type.
 	//
-	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-	IdOfTicketTagsAdd(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+	AddTicketTags(ctx context.Context, ticketId int64, body AddTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // ListAlerts List alerts
@@ -14502,14 +14504,14 @@ func (c *Client) ListProducts(ctx context.Context, params *ListProductsParams, r
 	return c.Client.Do(req)
 }
 
-// IdOfTickets List requests
+// ListTickets List requests
 //
 // Returns a list of all historical requests that your account has access to.
 // Tickets are returned in reverse chronological order by default.
 //
-// Corresponds with GET /support/v1/tickets (the `IdOfTickets` operationId).
-func (c *Client) IdOfTickets(ctx context.Context, params *IdOfTicketsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIdOfTicketsRequest(c.Server, params)
+// Corresponds with GET /support/v1/tickets (the `ListTickets` operationId).
+func (c *Client) ListTickets(ctx context.Context, params *ListTicketsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTicketsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -14520,13 +14522,13 @@ func (c *Client) IdOfTickets(ctx context.Context, params *IdOfTicketsParams, req
 	return c.Client.Do(req)
 }
 
-// IdOfTicketGet Get a request
+// GetTicket Get a request
 //
 // Returns the details of a single support request by its ID.
 //
-// Corresponds with GET /support/v1/tickets/{ticketId} (the `IdOfTicketGet` operationId).
-func (c *Client) IdOfTicketGet(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIdOfTicketGetRequest(c.Server, ticketId)
+// Corresponds with GET /support/v1/tickets/{ticketId} (the `GetTicket` operationId).
+func (c *Client) GetTicket(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetTicketRequest(c.Server, ticketId)
 	if err != nil {
 		return nil, err
 	}
@@ -14537,16 +14539,16 @@ func (c *Client) IdOfTicketGet(ctx context.Context, ticketId int64, reqEditors .
 	return c.Client.Do(req)
 }
 
-// IdOfTicketCommentsList List request comments
+// ListTicketComments List request comments
 //
 // Returns all comments on a support request. For customers, only public
 // comments are returned. For DoiT employees, both public and private
 // comments are returned. All comments are returned in a single response
 // (no pagination).
 //
-// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `IdOfTicketCommentsList` operationId).
-func (c *Client) IdOfTicketCommentsList(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIdOfTicketCommentsListRequest(c.Server, ticketId)
+// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `ListTicketComments` operationId).
+func (c *Client) ListTicketComments(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTicketCommentsRequest(c.Server, ticketId)
 	if err != nil {
 		return nil, err
 	}
@@ -14557,7 +14559,7 @@ func (c *Client) IdOfTicketCommentsList(ctx context.Context, ticketId int64, req
 	return c.Client.Do(req)
 }
 
-// IdOfTicketTagsRemoveWithBody Remove tags from a support request
+// RemoveTicketTagsWithBody Remove tags from a support request
 //
 // Removes one or more tags from an existing support request. The operation
 // is surgical — only the tags listed in the request are removed; tags not
@@ -14570,9 +14572,9 @@ func (c *Client) IdOfTicketCommentsList(ctx context.Context, ticketId int64, req
 //
 // Takes any type of body and a specified content type.
 //
-// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-func (c *Client) IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIdOfTicketTagsRemoveRequestWithBody(c.Server, ticketId, contentType, body)
+// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+func (c *Client) RemoveTicketTagsWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveTicketTagsRequestWithBody(c.Server, ticketId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -14583,7 +14585,7 @@ func (c *Client) IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int6
 	return c.Client.Do(req)
 }
 
-// IdOfTicketTagsRemove Remove tags from a support request
+// RemoveTicketTags Remove tags from a support request
 //
 // Removes one or more tags from an existing support request. The operation
 // is surgical — only the tags listed in the request are removed; tags not
@@ -14596,9 +14598,9 @@ func (c *Client) IdOfTicketTagsRemoveWithBody(ctx context.Context, ticketId int6
 //
 // Takes a body of the `application/json` content type.
 //
-// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-func (c *Client) IdOfTicketTagsRemove(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIdOfTicketTagsRemoveRequest(c.Server, ticketId, body)
+// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+func (c *Client) RemoveTicketTags(ctx context.Context, ticketId int64, body RemoveTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveTicketTagsRequest(c.Server, ticketId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -14633,7 +14635,7 @@ func (c *Client) ListTicketTags(ctx context.Context, ticketId int64, reqEditors 
 	return c.Client.Do(req)
 }
 
-// IdOfTicketTagsAddWithBody Add tags to a support request
+// AddTicketTagsWithBody Add tags to a support request
 //
 // Adds one or more tags to an existing support request. The operation is
 // surgical — only the tags listed in the request are added; existing tags
@@ -14648,9 +14650,9 @@ func (c *Client) ListTicketTags(ctx context.Context, ticketId int64, reqEditors 
 //
 // Takes any type of body and a specified content type.
 //
-// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-func (c *Client) IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIdOfTicketTagsAddRequestWithBody(c.Server, ticketId, contentType, body)
+// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+func (c *Client) AddTicketTagsWithBody(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddTicketTagsRequestWithBody(c.Server, ticketId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -14661,7 +14663,7 @@ func (c *Client) IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, 
 	return c.Client.Do(req)
 }
 
-// IdOfTicketTagsAdd Add tags to a support request
+// AddTicketTags Add tags to a support request
 //
 // Adds one or more tags to an existing support request. The operation is
 // surgical — only the tags listed in the request are added; existing tags
@@ -14676,9 +14678,9 @@ func (c *Client) IdOfTicketTagsAddWithBody(ctx context.Context, ticketId int64, 
 //
 // Takes a body of the `application/json` content type.
 //
-// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-func (c *Client) IdOfTicketTagsAdd(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIdOfTicketTagsAddRequest(c.Server, ticketId, body)
+// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+func (c *Client) AddTicketTags(ctx context.Context, ticketId int64, body AddTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddTicketTagsRequest(c.Server, ticketId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -20514,8 +20516,8 @@ func NewListProductsRequest(server string, params *ListProductsParams) (*http.Re
 	return req, nil
 }
 
-// NewIdOfTicketsRequest constructs an http.Request for the IdOfTickets method
-func NewIdOfTicketsRequest(server string, params *IdOfTicketsParams) (*http.Request, error) {
+// NewListTicketsRequest constructs an http.Request for the ListTickets method
+func NewListTicketsRequest(server string, params *ListTicketsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -20616,8 +20618,8 @@ func NewIdOfTicketsRequest(server string, params *IdOfTicketsParams) (*http.Requ
 	return req, nil
 }
 
-// NewIdOfTicketGetRequest constructs an http.Request for the IdOfTicketGet method
-func NewIdOfTicketGetRequest(server string, ticketId int64) (*http.Request, error) {
+// NewGetTicketRequest constructs an http.Request for the GetTicket method
+func NewGetTicketRequest(server string, ticketId int64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20650,8 +20652,8 @@ func NewIdOfTicketGetRequest(server string, ticketId int64) (*http.Request, erro
 	return req, nil
 }
 
-// NewIdOfTicketCommentsListRequest constructs an http.Request for the IdOfTicketCommentsList method
-func NewIdOfTicketCommentsListRequest(server string, ticketId int64) (*http.Request, error) {
+// NewListTicketCommentsRequest constructs an http.Request for the ListTicketComments method
+func NewListTicketCommentsRequest(server string, ticketId int64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20684,19 +20686,19 @@ func NewIdOfTicketCommentsListRequest(server string, ticketId int64) (*http.Requ
 	return req, nil
 }
 
-// NewIdOfTicketTagsRemoveRequest calls the generic IdOfTicketTagsRemove builder with application/json body
-func NewIdOfTicketTagsRemoveRequest(server string, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody) (*http.Request, error) {
+// NewRemoveTicketTagsRequest calls the generic RemoveTicketTags builder with application/json body
+func NewRemoveTicketTagsRequest(server string, ticketId int64, body RemoveTicketTagsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewIdOfTicketTagsRemoveRequestWithBody(server, ticketId, "application/json", bodyReader)
+	return NewRemoveTicketTagsRequestWithBody(server, ticketId, "application/json", bodyReader)
 }
 
-// NewIdOfTicketTagsRemoveRequestWithBody constructs an http.Request for the IdOfTicketTagsRemove method, with any body, and a specified content type
-func NewIdOfTicketTagsRemoveRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
+// NewRemoveTicketTagsRequestWithBody constructs an http.Request for the RemoveTicketTags method, with any body, and a specified content type
+func NewRemoveTicketTagsRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20765,19 +20767,19 @@ func NewListTicketTagsRequest(server string, ticketId int64) (*http.Request, err
 	return req, nil
 }
 
-// NewIdOfTicketTagsAddRequest calls the generic IdOfTicketTagsAdd builder with application/json body
-func NewIdOfTicketTagsAddRequest(server string, ticketId int64, body IdOfTicketTagsAddJSONRequestBody) (*http.Request, error) {
+// NewAddTicketTagsRequest calls the generic AddTicketTags builder with application/json body
+func NewAddTicketTagsRequest(server string, ticketId int64, body AddTicketTagsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewIdOfTicketTagsAddRequestWithBody(server, ticketId, "application/json", bodyReader)
+	return NewAddTicketTagsRequestWithBody(server, ticketId, "application/json", bodyReader)
 }
 
-// NewIdOfTicketTagsAddRequestWithBody constructs an http.Request for the IdOfTicketTagsAdd method, with any body, and a specified content type
-func NewIdOfTicketTagsAddRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
+// NewAddTicketTagsRequestWithBody constructs an http.Request for the AddTicketTags method, with any body, and a specified content type
+func NewAddTicketTagsRequestWithBody(server string, ticketId int64, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -22234,26 +22236,26 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /support/v1/metadata/products (the `ListProducts` operationId).
 	ListProductsWithResponse(ctx context.Context, params *ListProductsParams, reqEditors ...RequestEditorFn) (*ListProductsResp, error)
 
-	// IdOfTicketsWithResponse List requests
+	// ListTicketsWithResponse List requests
 	//
 	// Returns a list of all historical requests that your account has access to.
 	// Tickets are returned in reverse chronological order by default.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /support/v1/tickets (the `IdOfTickets` operationId).
-	IdOfTicketsWithResponse(ctx context.Context, params *IdOfTicketsParams, reqEditors ...RequestEditorFn) (*IdOfTicketsResp, error)
+	// Corresponds with GET /support/v1/tickets (the `ListTickets` operationId).
+	ListTicketsWithResponse(ctx context.Context, params *ListTicketsParams, reqEditors ...RequestEditorFn) (*ListTicketsResp, error)
 
-	// IdOfTicketGetWithResponse Get a request
+	// GetTicketWithResponse Get a request
 	//
 	// Returns the details of a single support request by its ID.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /support/v1/tickets/{ticketId} (the `IdOfTicketGet` operationId).
-	IdOfTicketGetWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketGetResp, error)
+	// Corresponds with GET /support/v1/tickets/{ticketId} (the `GetTicket` operationId).
+	GetTicketWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*GetTicketResp, error)
 
-	// IdOfTicketCommentsListWithResponse List request comments
+	// ListTicketCommentsWithResponse List request comments
 	//
 	// Returns all comments on a support request. For customers, only public
 	// comments are returned. For DoiT employees, both public and private
@@ -22262,10 +22264,10 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `IdOfTicketCommentsList` operationId).
-	IdOfTicketCommentsListWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsListResp, error)
+	// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `ListTicketComments` operationId).
+	ListTicketCommentsWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*ListTicketCommentsResp, error)
 
-	// IdOfTicketTagsRemoveWithBodyWithResponse Remove tags from a support request
+	// RemoveTicketTagsWithBodyWithResponse Remove tags from a support request
 	//
 	// Removes one or more tags from an existing support request. The operation
 	// is surgical — only the tags listed in the request are removed; tags not
@@ -22278,10 +22280,10 @@ type ClientWithResponsesInterface interface {
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-	IdOfTicketTagsRemoveWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error)
+	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+	RemoveTicketTagsWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveTicketTagsResp, error)
 
-	// IdOfTicketTagsRemoveWithResponse Remove tags from a support request
+	// RemoveTicketTagsWithResponse Remove tags from a support request
 	//
 	// Removes one or more tags from an existing support request. The operation
 	// is surgical — only the tags listed in the request are removed; tags not
@@ -22294,8 +22296,8 @@ type ClientWithResponsesInterface interface {
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-	IdOfTicketTagsRemoveWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error)
+	// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+	RemoveTicketTagsWithResponse(ctx context.Context, ticketId int64, body RemoveTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveTicketTagsResp, error)
 
 	// ListTicketTagsWithResponse List tags on a support request
 	//
@@ -22313,7 +22315,7 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /support/v1/tickets/{ticketId}/tags (the `ListTicketTags` operationId).
 	ListTicketTagsWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*ListTicketTagsResp, error)
 
-	// IdOfTicketTagsAddWithBodyWithResponse Add tags to a support request
+	// AddTicketTagsWithBodyWithResponse Add tags to a support request
 	//
 	// Adds one or more tags to an existing support request. The operation is
 	// surgical — only the tags listed in the request are added; existing tags
@@ -22328,10 +22330,10 @@ type ClientWithResponsesInterface interface {
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-	IdOfTicketTagsAddWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error)
+	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+	AddTicketTagsWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddTicketTagsResp, error)
 
-	// IdOfTicketTagsAddWithResponse Add tags to a support request
+	// AddTicketTagsWithResponse Add tags to a support request
 	//
 	// Adds one or more tags to an existing support request. The operation is
 	// surgical — only the tags listed in the request are added; existing tags
@@ -22346,8 +22348,8 @@ type ClientWithResponsesInterface interface {
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-	IdOfTicketTagsAddWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error)
+	// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+	AddTicketTagsWithResponse(ctx context.Context, ticketId int64, body AddTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*AddTicketTagsResp, error)
 }
 
 type ListAlertsResp struct {
@@ -29919,7 +29921,7 @@ func (r ListProductsResp) ContentType() string {
 	return ""
 }
 
-type IdOfTicketsResp struct {
+type ListTicketsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -29939,47 +29941,47 @@ type IdOfTicketsResp struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r IdOfTicketsResp) GetJSON200() *TicketsList {
+func (r ListTicketsResp) GetJSON200() *TicketsList {
 	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r IdOfTicketsResp) GetJSON400() *N400 {
+func (r ListTicketsResp) GetJSON400() *N400 {
 	return r.JSON400
 }
 
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r IdOfTicketsResp) GetJSON401() *N401 {
+func (r ListTicketsResp) GetJSON401() *N401 {
 	return r.JSON401
 }
 
 // GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r IdOfTicketsResp) GetJSON403() *N403 {
+func (r ListTicketsResp) GetJSON403() *N403 {
 	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r IdOfTicketsResp) GetJSON404() *N404 {
+func (r ListTicketsResp) GetJSON404() *N404 {
 	return r.JSON404
 }
 
 // GetJSON502 returns the response for an HTTP 502 `application/json` response
-func (r IdOfTicketsResp) GetJSON502() *N502 {
+func (r ListTicketsResp) GetJSON502() *N502 {
 	return r.JSON502
 }
 
 // GetJSON503 returns the response for an HTTP 503 `application/json` response
-func (r IdOfTicketsResp) GetJSON503() *N503 {
+func (r ListTicketsResp) GetJSON503() *N503 {
 	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
-func (r IdOfTicketsResp) GetBody() []byte {
+func (r ListTicketsResp) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r IdOfTicketsResp) Status() string {
+func (r ListTicketsResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -29987,7 +29989,7 @@ func (r IdOfTicketsResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r IdOfTicketsResp) StatusCode() int {
+func (r ListTicketsResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -29995,14 +29997,14 @@ func (r IdOfTicketsResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r IdOfTicketsResp) ContentType() string {
+func (r ListTicketsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-type IdOfTicketGetResp struct {
+type GetTicketResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -30022,47 +30024,47 @@ type IdOfTicketGetResp struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r IdOfTicketGetResp) GetJSON200() *TicketDetailExtAPI {
+func (r GetTicketResp) GetJSON200() *TicketDetailExtAPI {
 	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r IdOfTicketGetResp) GetJSON400() *N400 {
+func (r GetTicketResp) GetJSON400() *N400 {
 	return r.JSON400
 }
 
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r IdOfTicketGetResp) GetJSON401() *N401 {
+func (r GetTicketResp) GetJSON401() *N401 {
 	return r.JSON401
 }
 
 // GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r IdOfTicketGetResp) GetJSON403() *N403 {
+func (r GetTicketResp) GetJSON403() *N403 {
 	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r IdOfTicketGetResp) GetJSON404() *N404 {
+func (r GetTicketResp) GetJSON404() *N404 {
 	return r.JSON404
 }
 
 // GetJSON502 returns the response for an HTTP 502 `application/json` response
-func (r IdOfTicketGetResp) GetJSON502() *N502 {
+func (r GetTicketResp) GetJSON502() *N502 {
 	return r.JSON502
 }
 
 // GetJSON503 returns the response for an HTTP 503 `application/json` response
-func (r IdOfTicketGetResp) GetJSON503() *N503 {
+func (r GetTicketResp) GetJSON503() *N503 {
 	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
-func (r IdOfTicketGetResp) GetBody() []byte {
+func (r GetTicketResp) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r IdOfTicketGetResp) Status() string {
+func (r GetTicketResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -30070,7 +30072,7 @@ func (r IdOfTicketGetResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r IdOfTicketGetResp) StatusCode() int {
+func (r GetTicketResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -30078,14 +30080,14 @@ func (r IdOfTicketGetResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r IdOfTicketGetResp) ContentType() string {
+func (r GetTicketResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-type IdOfTicketCommentsListResp struct {
+type ListTicketCommentsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -30103,42 +30105,42 @@ type IdOfTicketCommentsListResp struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r IdOfTicketCommentsListResp) GetJSON200() *CommentsResponseExtAPI {
+func (r ListTicketCommentsResp) GetJSON200() *CommentsResponseExtAPI {
 	return r.JSON200
 }
 
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r IdOfTicketCommentsListResp) GetJSON401() *N401 {
+func (r ListTicketCommentsResp) GetJSON401() *N401 {
 	return r.JSON401
 }
 
 // GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r IdOfTicketCommentsListResp) GetJSON403() *N403 {
+func (r ListTicketCommentsResp) GetJSON403() *N403 {
 	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r IdOfTicketCommentsListResp) GetJSON404() *N404 {
+func (r ListTicketCommentsResp) GetJSON404() *N404 {
 	return r.JSON404
 }
 
 // GetJSON502 returns the response for an HTTP 502 `application/json` response
-func (r IdOfTicketCommentsListResp) GetJSON502() *N502 {
+func (r ListTicketCommentsResp) GetJSON502() *N502 {
 	return r.JSON502
 }
 
 // GetJSON503 returns the response for an HTTP 503 `application/json` response
-func (r IdOfTicketCommentsListResp) GetJSON503() *N503 {
+func (r ListTicketCommentsResp) GetJSON503() *N503 {
 	return r.JSON503
 }
 
 // GetBody returns the raw response body bytes
-func (r IdOfTicketCommentsListResp) GetBody() []byte {
+func (r ListTicketCommentsResp) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r IdOfTicketCommentsListResp) Status() string {
+func (r ListTicketCommentsResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -30146,7 +30148,7 @@ func (r IdOfTicketCommentsListResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r IdOfTicketCommentsListResp) StatusCode() int {
+func (r ListTicketCommentsResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -30154,14 +30156,14 @@ func (r IdOfTicketCommentsListResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r IdOfTicketCommentsListResp) ContentType() string {
+func (r ListTicketCommentsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
 	return ""
 }
 
-type IdOfTicketTagsRemoveResp struct {
+type RemoveTicketTagsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -30177,37 +30179,37 @@ type IdOfTicketTagsRemoveResp struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r IdOfTicketTagsRemoveResp) GetJSON200() *TagsResponse {
+func (r RemoveTicketTagsResp) GetJSON200() *TagsResponse {
 	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r IdOfTicketTagsRemoveResp) GetJSON400() *N400 {
+func (r RemoveTicketTagsResp) GetJSON400() *N400 {
 	return r.JSON400
 }
 
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r IdOfTicketTagsRemoveResp) GetJSON401() *N401 {
+func (r RemoveTicketTagsResp) GetJSON401() *N401 {
 	return r.JSON401
 }
 
 // GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r IdOfTicketTagsRemoveResp) GetJSON403() *N403 {
+func (r RemoveTicketTagsResp) GetJSON403() *N403 {
 	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r IdOfTicketTagsRemoveResp) GetJSON404() *N404 {
+func (r RemoveTicketTagsResp) GetJSON404() *N404 {
 	return r.JSON404
 }
 
 // GetBody returns the raw response body bytes
-func (r IdOfTicketTagsRemoveResp) GetBody() []byte {
+func (r RemoveTicketTagsResp) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r IdOfTicketTagsRemoveResp) Status() string {
+func (r RemoveTicketTagsResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -30215,7 +30217,7 @@ func (r IdOfTicketTagsRemoveResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r IdOfTicketTagsRemoveResp) StatusCode() int {
+func (r RemoveTicketTagsResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -30223,7 +30225,7 @@ func (r IdOfTicketTagsRemoveResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r IdOfTicketTagsRemoveResp) ContentType() string {
+func (r RemoveTicketTagsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -30299,7 +30301,7 @@ func (r ListTicketTagsResp) ContentType() string {
 	return ""
 }
 
-type IdOfTicketTagsAddResp struct {
+type AddTicketTagsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
@@ -30315,37 +30317,37 @@ type IdOfTicketTagsAddResp struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r IdOfTicketTagsAddResp) GetJSON200() *TagsResponse {
+func (r AddTicketTagsResp) GetJSON200() *TagsResponse {
 	return r.JSON200
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r IdOfTicketTagsAddResp) GetJSON400() *N400 {
+func (r AddTicketTagsResp) GetJSON400() *N400 {
 	return r.JSON400
 }
 
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r IdOfTicketTagsAddResp) GetJSON401() *N401 {
+func (r AddTicketTagsResp) GetJSON401() *N401 {
 	return r.JSON401
 }
 
 // GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r IdOfTicketTagsAddResp) GetJSON403() *N403 {
+func (r AddTicketTagsResp) GetJSON403() *N403 {
 	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r IdOfTicketTagsAddResp) GetJSON404() *N404 {
+func (r AddTicketTagsResp) GetJSON404() *N404 {
 	return r.JSON404
 }
 
 // GetBody returns the raw response body bytes
-func (r IdOfTicketTagsAddResp) GetBody() []byte {
+func (r AddTicketTagsResp) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r IdOfTicketTagsAddResp) Status() string {
+func (r AddTicketTagsResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -30353,7 +30355,7 @@ func (r IdOfTicketTagsAddResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r IdOfTicketTagsAddResp) StatusCode() int {
+func (r AddTicketTagsResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -30361,7 +30363,7 @@ func (r IdOfTicketTagsAddResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r IdOfTicketTagsAddResp) ContentType() string {
+func (r AddTicketTagsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -32592,38 +32594,38 @@ func (c *ClientWithResponses) ListProductsWithResponse(ctx context.Context, para
 	return ParseListProductsResp(rsp)
 }
 
-// IdOfTicketsWithResponse List requests
+// ListTicketsWithResponse List requests
 //
 // Returns a list of all historical requests that your account has access to.
 // Tickets are returned in reverse chronological order by default.
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /support/v1/tickets (the `IdOfTickets` operationId).
-func (c *ClientWithResponses) IdOfTicketsWithResponse(ctx context.Context, params *IdOfTicketsParams, reqEditors ...RequestEditorFn) (*IdOfTicketsResp, error) {
-	rsp, err := c.IdOfTickets(ctx, params, reqEditors...)
+// Corresponds with GET /support/v1/tickets (the `ListTickets` operationId).
+func (c *ClientWithResponses) ListTicketsWithResponse(ctx context.Context, params *ListTicketsParams, reqEditors ...RequestEditorFn) (*ListTicketsResp, error) {
+	rsp, err := c.ListTickets(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIdOfTicketsResp(rsp)
+	return ParseListTicketsResp(rsp)
 }
 
-// IdOfTicketGetWithResponse Get a request
+// GetTicketWithResponse Get a request
 //
 // Returns the details of a single support request by its ID.
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /support/v1/tickets/{ticketId} (the `IdOfTicketGet` operationId).
-func (c *ClientWithResponses) IdOfTicketGetWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketGetResp, error) {
-	rsp, err := c.IdOfTicketGet(ctx, ticketId, reqEditors...)
+// Corresponds with GET /support/v1/tickets/{ticketId} (the `GetTicket` operationId).
+func (c *ClientWithResponses) GetTicketWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*GetTicketResp, error) {
+	rsp, err := c.GetTicket(ctx, ticketId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIdOfTicketGetResp(rsp)
+	return ParseGetTicketResp(rsp)
 }
 
-// IdOfTicketCommentsListWithResponse List request comments
+// ListTicketCommentsWithResponse List request comments
 //
 // Returns all comments on a support request. For customers, only public
 // comments are returned. For DoiT employees, both public and private
@@ -32632,16 +32634,16 @@ func (c *ClientWithResponses) IdOfTicketGetWithResponse(ctx context.Context, tic
 //
 // Returns a wrapper object for the known response body format(s).
 //
-// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `IdOfTicketCommentsList` operationId).
-func (c *ClientWithResponses) IdOfTicketCommentsListWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*IdOfTicketCommentsListResp, error) {
-	rsp, err := c.IdOfTicketCommentsList(ctx, ticketId, reqEditors...)
+// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `ListTicketComments` operationId).
+func (c *ClientWithResponses) ListTicketCommentsWithResponse(ctx context.Context, ticketId int64, reqEditors ...RequestEditorFn) (*ListTicketCommentsResp, error) {
+	rsp, err := c.ListTicketComments(ctx, ticketId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIdOfTicketCommentsListResp(rsp)
+	return ParseListTicketCommentsResp(rsp)
 }
 
-// IdOfTicketTagsRemoveWithBodyWithResponse Remove tags from a support request
+// RemoveTicketTagsWithBodyWithResponse Remove tags from a support request
 //
 // Removes one or more tags from an existing support request. The operation
 // is surgical — only the tags listed in the request are removed; tags not
@@ -32654,16 +32656,16 @@ func (c *ClientWithResponses) IdOfTicketCommentsListWithResponse(ctx context.Con
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-func (c *ClientWithResponses) IdOfTicketTagsRemoveWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error) {
-	rsp, err := c.IdOfTicketTagsRemoveWithBody(ctx, ticketId, contentType, body, reqEditors...)
+// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+func (c *ClientWithResponses) RemoveTicketTagsWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveTicketTagsResp, error) {
+	rsp, err := c.RemoveTicketTagsWithBody(ctx, ticketId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIdOfTicketTagsRemoveResp(rsp)
+	return ParseRemoveTicketTagsResp(rsp)
 }
 
-// IdOfTicketTagsRemoveWithResponse Remove tags from a support request
+// RemoveTicketTagsWithResponse Remove tags from a support request
 //
 // Removes one or more tags from an existing support request. The operation
 // is surgical — only the tags listed in the request are removed; tags not
@@ -32676,13 +32678,13 @@ func (c *ClientWithResponses) IdOfTicketTagsRemoveWithBodyWithResponse(ctx conte
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsRemove` operationId).
-func (c *ClientWithResponses) IdOfTicketTagsRemoveWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsRemoveJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsRemoveResp, error) {
-	rsp, err := c.IdOfTicketTagsRemove(ctx, ticketId, body, reqEditors...)
+// Corresponds with DELETE /support/v1/tickets/{ticketId}/tags (the `RemoveTicketTags` operationId).
+func (c *ClientWithResponses) RemoveTicketTagsWithResponse(ctx context.Context, ticketId int64, body RemoveTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveTicketTagsResp, error) {
+	rsp, err := c.RemoveTicketTags(ctx, ticketId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIdOfTicketTagsRemoveResp(rsp)
+	return ParseRemoveTicketTagsResp(rsp)
 }
 
 // ListTicketTagsWithResponse List tags on a support request
@@ -32707,7 +32709,7 @@ func (c *ClientWithResponses) ListTicketTagsWithResponse(ctx context.Context, ti
 	return ParseListTicketTagsResp(rsp)
 }
 
-// IdOfTicketTagsAddWithBodyWithResponse Add tags to a support request
+// AddTicketTagsWithBodyWithResponse Add tags to a support request
 //
 // Adds one or more tags to an existing support request. The operation is
 // surgical — only the tags listed in the request are added; existing tags
@@ -32722,16 +32724,16 @@ func (c *ClientWithResponses) ListTicketTagsWithResponse(ctx context.Context, ti
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-func (c *ClientWithResponses) IdOfTicketTagsAddWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error) {
-	rsp, err := c.IdOfTicketTagsAddWithBody(ctx, ticketId, contentType, body, reqEditors...)
+// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+func (c *ClientWithResponses) AddTicketTagsWithBodyWithResponse(ctx context.Context, ticketId int64, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddTicketTagsResp, error) {
+	rsp, err := c.AddTicketTagsWithBody(ctx, ticketId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIdOfTicketTagsAddResp(rsp)
+	return ParseAddTicketTagsResp(rsp)
 }
 
-// IdOfTicketTagsAddWithResponse Add tags to a support request
+// AddTicketTagsWithResponse Add tags to a support request
 //
 // Adds one or more tags to an existing support request. The operation is
 // surgical — only the tags listed in the request are added; existing tags
@@ -32746,13 +32748,13 @@ func (c *ClientWithResponses) IdOfTicketTagsAddWithBodyWithResponse(ctx context.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `IdOfTicketTagsAdd` operationId).
-func (c *ClientWithResponses) IdOfTicketTagsAddWithResponse(ctx context.Context, ticketId int64, body IdOfTicketTagsAddJSONRequestBody, reqEditors ...RequestEditorFn) (*IdOfTicketTagsAddResp, error) {
-	rsp, err := c.IdOfTicketTagsAdd(ctx, ticketId, body, reqEditors...)
+// Corresponds with POST /support/v1/tickets/{ticketId}/tags (the `AddTicketTags` operationId).
+func (c *ClientWithResponses) AddTicketTagsWithResponse(ctx context.Context, ticketId int64, body AddTicketTagsJSONRequestBody, reqEditors ...RequestEditorFn) (*AddTicketTagsResp, error) {
+	rsp, err := c.AddTicketTags(ctx, ticketId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIdOfTicketTagsAddResp(rsp)
+	return ParseAddTicketTagsResp(rsp)
 }
 
 // ParseListAlertsResp parses an HTTP response from a ListAlertsWithResponse call
@@ -39088,15 +39090,15 @@ func ParseListProductsResp(rsp *http.Response) (*ListProductsResp, error) {
 	return response, nil
 }
 
-// ParseIdOfTicketsResp parses an HTTP response from a IdOfTicketsWithResponse call
-func ParseIdOfTicketsResp(rsp *http.Response) (*IdOfTicketsResp, error) {
+// ParseListTicketsResp parses an HTTP response from a ListTicketsWithResponse call
+func ParseListTicketsResp(rsp *http.Response) (*ListTicketsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &IdOfTicketsResp{
+	response := &ListTicketsResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -39156,15 +39158,15 @@ func ParseIdOfTicketsResp(rsp *http.Response) (*IdOfTicketsResp, error) {
 	return response, nil
 }
 
-// ParseIdOfTicketGetResp parses an HTTP response from a IdOfTicketGetWithResponse call
-func ParseIdOfTicketGetResp(rsp *http.Response) (*IdOfTicketGetResp, error) {
+// ParseGetTicketResp parses an HTTP response from a GetTicketWithResponse call
+func ParseGetTicketResp(rsp *http.Response) (*GetTicketResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &IdOfTicketGetResp{
+	response := &GetTicketResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -39224,15 +39226,15 @@ func ParseIdOfTicketGetResp(rsp *http.Response) (*IdOfTicketGetResp, error) {
 	return response, nil
 }
 
-// ParseIdOfTicketCommentsListResp parses an HTTP response from a IdOfTicketCommentsListWithResponse call
-func ParseIdOfTicketCommentsListResp(rsp *http.Response) (*IdOfTicketCommentsListResp, error) {
+// ParseListTicketCommentsResp parses an HTTP response from a ListTicketCommentsWithResponse call
+func ParseListTicketCommentsResp(rsp *http.Response) (*ListTicketCommentsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &IdOfTicketCommentsListResp{
+	response := &ListTicketCommentsResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -39285,15 +39287,15 @@ func ParseIdOfTicketCommentsListResp(rsp *http.Response) (*IdOfTicketCommentsLis
 	return response, nil
 }
 
-// ParseIdOfTicketTagsRemoveResp parses an HTTP response from a IdOfTicketTagsRemoveWithResponse call
-func ParseIdOfTicketTagsRemoveResp(rsp *http.Response) (*IdOfTicketTagsRemoveResp, error) {
+// ParseRemoveTicketTagsResp parses an HTTP response from a RemoveTicketTagsWithResponse call
+func ParseRemoveTicketTagsResp(rsp *http.Response) (*RemoveTicketTagsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &IdOfTicketTagsRemoveResp{
+	response := &RemoveTicketTagsResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -39393,15 +39395,15 @@ func ParseListTicketTagsResp(rsp *http.Response) (*ListTicketTagsResp, error) {
 	return response, nil
 }
 
-// ParseIdOfTicketTagsAddResp parses an HTTP response from a IdOfTicketTagsAddWithResponse call
-func ParseIdOfTicketTagsAddResp(rsp *http.Response) (*IdOfTicketTagsAddResp, error) {
+// ParseAddTicketTagsResp parses an HTTP response from a AddTicketTagsWithResponse call
+func ParseAddTicketTagsResp(rsp *http.Response) (*AddTicketTagsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &IdOfTicketTagsAddResp{
+	response := &AddTicketTagsResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

@@ -81,7 +81,7 @@ func (d *supportRequestCommentsDataSource) Read(ctx context.Context, req datasou
 	}
 
 	ticketId := data.TicketId.ValueInt64()
-	commentsResp, err := d.client.IdOfTicketCommentsListWithResponse(ctx, ticketId)
+	commentsResp, err := d.client.ListTicketCommentsWithResponse(ctx, ticketId)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading support request comments", err.Error())
 		return

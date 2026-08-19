@@ -81,7 +81,7 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 	// Build query parameters
-	params := &models.IdOfTicketsParams{}
+	params := &models.ListTicketsParams{}
 	if !data.Filter.IsNull() {
 		params.Filter = new(data.Filter.ValueString())
 	}
@@ -104,7 +104,7 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 			params.PageToken = new(data.PageToken.ValueString())
 		}
 
-		apiResp, err := d.client.IdOfTicketsWithResponse(ctx, params)
+		apiResp, err := d.client.ListTicketsWithResponse(ctx, params)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Support Requests",
@@ -140,7 +140,7 @@ func (d *supportRequestsDataSource) Read(ctx context.Context, req datasource.Rea
 			params.PageToken = new(data.PageToken.ValueString())
 		}
 		for {
-			apiResp, err := d.client.IdOfTicketsWithResponse(ctx, params)
+			apiResp, err := d.client.ListTicketsWithResponse(ctx, params)
 			if err != nil {
 				resp.Diagnostics.AddError(
 					"Error Reading Support Requests",

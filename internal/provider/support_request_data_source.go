@@ -93,7 +93,7 @@ func (ds *supportRequestDataSource) Read(ctx context.Context, req datasource.Rea
 	}
 
 	ticketId := state.TicketId.ValueInt64()
-	ticketResp, err := ds.client.IdOfTicketGetWithResponse(ctx, ticketId)
+	ticketResp, err := ds.client.GetTicketWithResponse(ctx, ticketId)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading support request", err.Error())
 		return
