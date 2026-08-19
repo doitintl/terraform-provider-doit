@@ -4232,7 +4232,7 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results of the request. The syntax is \"key:[\u003cvalue\u003e]\".\nAvailable keys: owner, budgetName, lastModified in ms (\u003elasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\"."
+							"description": "An expression for filtering the results of the request. The syntax is \"key:[\u003cvalue\u003e]\".\nAvailable keys: owner, budgetName, lastModified in ms (\u003elasModified), riskStatus (one of \"atRisk\", \"onTrack\", \"unknown\"). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\" (except riskStatus, where only the first occurrence is honored).\nA budget is \"atRisk\" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified \"unknown\". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.\nBecause riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination."
 						}
 					},
 					{
@@ -4339,6 +4339,13 @@
 										}
 									},
 									{
+										"name": "risk_status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.\n\"atRisk\" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.\n\"onTrack\" - the budget has forecast data and is neither over budget nor projected to breach.\n\"unknown\" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft."
+										}
+									},
+									{
 										"name": "scope",
 										"list": {
 											"computed_optional_required": "computed",
@@ -4439,6 +4446,39 @@
 								]
 							},
 							"description": "Array of Budgets"
+						}
+					},
+					{
+						"name": "risk_aggregations",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "at_risk",
+									"int64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "on_track",
+									"int64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "total",
+									"int64": {
+										"computed_optional_required": "computed"
+									}
+								},
+								{
+									"name": "unknown",
+									"int64": {
+										"computed_optional_required": "computed"
+									}
+								}
+							],
+							"description": "Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page."
 						}
 					},
 					{

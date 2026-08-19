@@ -1174,6 +1174,7 @@ paths:
       summary: List budgets
       description: |-
         Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+        Each budget includes a server-computed `riskStatus` (`atRisk`, `onTrack`, or `unknown`), and the response includes a `riskAggregations` summary of risk counts across the full filtered result set (all pages, not just the current page).
       operationId: listBudgets
       parameters:
         - name: maxResults
@@ -1188,8 +1189,10 @@ paths:
           in: query
           description: |-
             An expression for filtering the results of the request. The syntax is "key:[<value>]".
-            Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
-          example: "budgetName:My Monthly Budget"
+            Available keys: owner, budgetName, lastModified in ms (>lasModified), riskStatus (one of "atRisk", "onTrack", "unknown"). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR" (except riskStatus, where only the first occurrence is honored).
+            A budget is "atRisk" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified "unknown". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.
+            Because riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination.
+          example: "riskStatus:atRisk"
           schema:
             type: string
         - $ref: "#/components/parameters/nameContains"
@@ -1228,6 +1231,8 @@ paths:
                     type: integer
                     description: Budgets rows count
                     format: int64
+                  riskAggregations:
+                    $ref: "#/components/schemas/RiskAggregations"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -10206,6 +10211,14 @@ components:
           type: string
         owner:
           type: string
+        riskStatus:
+          type: string
+          description: |-
+            Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.
+            "atRisk" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.
+            "onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
+            "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
+          enum: ["atRisk", "onTrack", "unknown"]
         scope:
           type: array
           description: List of allocations that define the budget scope.
@@ -10227,6 +10240,27 @@ components:
           format: int64
         url:
           type: string
+    RiskAggregations:
+      type: object
+      description: Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page.
+      required:
+        - total
+        - atRisk
+        - onTrack
+        - unknown
+      properties:
+        total:
+          type: integer
+          format: int64
+        atRisk:
+          type: integer
+          format: int64
+        onTrack:
+          type: integer
+          format: int64
+        unknown:
+          type: integer
+          format: int64
     BudgetCreateUpdateAlert:
       type: object
       description: Threshold settings for budget alerts.

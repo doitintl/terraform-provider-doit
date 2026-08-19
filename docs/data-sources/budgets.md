@@ -20,14 +20,26 @@ data "doit_budgets" "production" {
   name_contains = "production"
 }
 
+# Filter budgets by risk status (atRisk, onTrack, unknown)
+data "doit_budgets" "at_risk" {
+  filter = "riskStatus:atRisk"
+}
+
 # Output total number of budgets
 output "total_budgets" {
   value = data.doit_budgets.all.row_count
 }
 
-# Output budget names
-output "budget_names" {
-  value = [for b in data.doit_budgets.all.budgets : b.budget_name]
+# Output risk aggregations across all budgets
+output "risk_summary" {
+  value = data.doit_budgets.all.risk_aggregations
+}
+
+# Output budget names and risk status
+output "budget_risks" {
+  value = {
+    for b in data.doit_budgets.all.budgets : b.budget_name => b.risk_status
+  }
 }
 ```
 
@@ -39,7 +51,9 @@ output "budget_names" {
 ### Optional
 
 - `filter` (String) An expression for filtering the results of the request. The syntax is "key:[<value>]".
-Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".
+Available keys: owner, budgetName, lastModified in ms (>lasModified), riskStatus (one of "atRisk", "onTrack", "unknown"). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR" (except riskStatus, where only the first occurrence is honored).
+A budget is "atRisk" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified "unknown". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.
+Because riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination.
 - `max_creation_time` (String) Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (String) Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
@@ -50,6 +64,7 @@ Available keys: owner, budgetName, lastModified in ms (>lasModified). Multiple f
 ### Read-Only
 
 - `budgets` (Attributes List) Array of Budgets (see [below for nested schema](#nestedatt--budgets))
+- `risk_aggregations` (Attributes) Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page. (see [below for nested schema](#nestedatt--risk_aggregations))
 - `row_count` (Number) Budgets rows count
 
 <a id="nestedatt--timeouts"></a>
@@ -75,6 +90,10 @@ Read-Only:
 - `forecasted_utilization_date` (Number)
 - `id` (String)
 - `owner` (String)
+- `risk_status` (String) Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.
+"atRisk" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.
+"onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
+"unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
 - `scope` (List of String, Deprecated) List of allocations that define the budget scope.
 - `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--budgets--scopes))
 - `start_period` (Number)
@@ -103,3 +122,15 @@ Read-Only:
 - `mode` (String) Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 - `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 - `values` (List of String) List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+
+
+
+<a id="nestedatt--risk_aggregations"></a>
+### Nested Schema for `risk_aggregations`
+
+Read-Only:
+
+- `at_risk` (Number)
+- `on_track` (Number)
+- `total` (Number)
+- `unknown` (Number)

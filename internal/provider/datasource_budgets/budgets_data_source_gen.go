@@ -66,6 +66,11 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 						"owner": schema.StringAttribute{
 							Computed: true,
 						},
+						"risk_status": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.\n\"atRisk\" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.\n\"onTrack\" - the budget has forecast data and is neither over budget nor projected to breach.\n\"unknown\" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.",
+							MarkdownDescription: "Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.\n\"atRisk\" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.\n\"onTrack\" - the budget has forecast data and is neither over budget nor projected to breach.\n\"unknown\" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.",
+						},
 						"scope": schema.ListAttribute{
 							ElementType:         types.StringType,
 							Computed:            true,
@@ -149,8 +154,8 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 			"filter": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\".",
-				MarkdownDescription: "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, budgetName, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\".",
+				Description:         "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, budgetName, lastModified in ms (>lasModified), riskStatus (one of \"atRisk\", \"onTrack\", \"unknown\"). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\" (except riskStatus, where only the first occurrence is honored).\nA budget is \"atRisk\" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified \"unknown\". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.\nBecause riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination.",
+				MarkdownDescription: "An expression for filtering the results of the request. The syntax is \"key:[<value>]\".\nAvailable keys: owner, budgetName, lastModified in ms (>lasModified), riskStatus (one of \"atRisk\", \"onTrack\", \"unknown\"). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in \"AND,\" while using the same key multiple times in the same filter results in \"OR\" (except riskStatus, where only the first occurrence is honored).\nA budget is \"atRisk\" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified \"unknown\". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.\nBecause riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination.",
 			},
 			"max_creation_time": schema.StringAttribute{
 				Optional:            true,
@@ -182,6 +187,30 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Page token, returned by a previous call, to request the next page of results",
 				MarkdownDescription: "Page token, returned by a previous call, to request the next page of results",
 			},
+			"risk_aggregations": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"at_risk": schema.Int64Attribute{
+						Computed: true,
+					},
+					"on_track": schema.Int64Attribute{
+						Computed: true,
+					},
+					"total": schema.Int64Attribute{
+						Computed: true,
+					},
+					"unknown": schema.Int64Attribute{
+						Computed: true,
+					},
+				},
+				CustomType: RiskAggregationsType{
+					ObjectType: types.ObjectType{
+						AttrTypes: RiskAggregationsValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page.",
+				MarkdownDescription: "Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page.",
+			},
 			"row_count": schema.Int64Attribute{
 				Computed:            true,
 				Description:         "Budgets rows count",
@@ -194,14 +223,15 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type BudgetsModel struct {
-	Budgets         types.List   `tfsdk:"budgets"`
-	Filter          types.String `tfsdk:"filter"`
-	MaxCreationTime types.String `tfsdk:"max_creation_time"`
-	MaxResults      types.Int64  `tfsdk:"max_results"`
-	MinCreationTime types.String `tfsdk:"min_creation_time"`
-	NameContains    types.String `tfsdk:"name_contains"`
-	PageToken       types.String `tfsdk:"page_token"`
-	RowCount        types.Int64  `tfsdk:"row_count"`
+	Budgets          types.List            `tfsdk:"budgets"`
+	Filter           types.String          `tfsdk:"filter"`
+	MaxCreationTime  types.String          `tfsdk:"max_creation_time"`
+	MaxResults       types.Int64           `tfsdk:"max_results"`
+	MinCreationTime  types.String          `tfsdk:"min_creation_time"`
+	NameContains     types.String          `tfsdk:"name_contains"`
+	PageToken        types.String          `tfsdk:"page_token"`
+	RiskAggregations RiskAggregationsValue `tfsdk:"risk_aggregations"`
+	RowCount         types.Int64           `tfsdk:"row_count"`
 }
 
 var _ basetypes.ObjectTypable = BudgetsType{}
@@ -417,6 +447,24 @@ func (t BudgetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`owner expected to be basetypes.StringValue, was: %T`, ownerAttribute))
 	}
 
+	riskStatusAttribute, ok := attributes["risk_status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`risk_status is missing from object`)
+
+		return nil, diags
+	}
+
+	riskStatusVal, ok := riskStatusAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`risk_status expected to be basetypes.StringValue, was: %T`, riskStatusAttribute))
+	}
+
 	scopeAttribute, ok := attributes["scope"]
 
 	if !ok {
@@ -540,6 +588,7 @@ func (t BudgetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		ForecastedUtilizationDate: forecastedUtilizationDateVal,
 		Id:                        idVal,
 		Owner:                     ownerVal,
+		RiskStatus:                riskStatusVal,
 		Scope:                     scopeVal,
 		Scopes:                    scopesVal,
 		StartPeriod:               startPeriodVal,
@@ -793,6 +842,24 @@ func NewBudgetsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`owner expected to be basetypes.StringValue, was: %T`, ownerAttribute))
 	}
 
+	riskStatusAttribute, ok := attributes["risk_status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`risk_status is missing from object`)
+
+		return NewBudgetsValueUnknown(), diags
+	}
+
+	riskStatusVal, ok := riskStatusAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`risk_status expected to be basetypes.StringValue, was: %T`, riskStatusAttribute))
+	}
+
 	scopeAttribute, ok := attributes["scope"]
 
 	if !ok {
@@ -916,6 +983,7 @@ func NewBudgetsValue(attributeTypes map[string]attr.Type, attributes map[string]
 		ForecastedUtilizationDate: forecastedUtilizationDateVal,
 		Id:                        idVal,
 		Owner:                     ownerVal,
+		RiskStatus:                riskStatusVal,
 		Scope:                     scopeVal,
 		Scopes:                    scopesVal,
 		StartPeriod:               startPeriodVal,
@@ -1004,6 +1072,7 @@ type BudgetsValue struct {
 	ForecastedUtilizationDate basetypes.Int64Value   `tfsdk:"forecasted_utilization_date"`
 	Id                        basetypes.StringValue  `tfsdk:"id"`
 	Owner                     basetypes.StringValue  `tfsdk:"owner"`
+	RiskStatus                basetypes.StringValue  `tfsdk:"risk_status"`
 	Scope                     basetypes.ListValue    `tfsdk:"scope"`
 	Scopes                    basetypes.ListValue    `tfsdk:"scopes"`
 	StartPeriod               basetypes.Int64Value   `tfsdk:"start_period"`
@@ -1014,7 +1083,7 @@ type BudgetsValue struct {
 }
 
 func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 16)
+	attrTypes := make(map[string]tftypes.Type, 17)
 
 	var val tftypes.Value
 	var err error
@@ -1031,6 +1100,7 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 	attrTypes["forecasted_utilization_date"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["owner"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["risk_status"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["scope"] = basetypes.ListType{
 		ElemType: types.StringType,
 	}.TerraformType(ctx)
@@ -1046,7 +1116,7 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 16)
+		vals := make(map[string]tftypes.Value, 17)
 
 		val, err = v.AlertThresholds.ToTerraformValue(ctx)
 
@@ -1127,6 +1197,14 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["owner"] = val
+
+		val, err = v.RiskStatus.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["risk_status"] = val
 
 		val, err = v.Scope.ToTerraformValue(ctx)
 
@@ -1243,6 +1321,7 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			"forecasted_utilization_date": basetypes.Int64Type{},
 			"id":                          basetypes.StringType{},
 			"owner":                       basetypes.StringType{},
+			"risk_status":                 basetypes.StringType{},
 			"scope": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -1269,6 +1348,7 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		"forecasted_utilization_date": basetypes.Int64Type{},
 		"id":                          basetypes.StringType{},
 		"owner":                       basetypes.StringType{},
+		"risk_status":                 basetypes.StringType{},
 		"scope": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -1302,6 +1382,7 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			"forecasted_utilization_date": v.ForecastedUtilizationDate,
 			"id":                          v.Id,
 			"owner":                       v.Owner,
+			"risk_status":                 v.RiskStatus,
 			"scope":                       scopeVal,
 			"scopes":                      scopes,
 			"start_period":                v.StartPeriod,
@@ -1368,6 +1449,10 @@ func (v BudgetsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.RiskStatus.Equal(other.RiskStatus) {
+		return false
+	}
+
 	if !v.Scope.Equal(other.Scope) {
 		return false
 	}
@@ -1417,6 +1502,7 @@ func (v BudgetsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"forecasted_utilization_date": basetypes.Int64Type{},
 		"id":                          basetypes.StringType{},
 		"owner":                       basetypes.StringType{},
+		"risk_status":                 basetypes.StringType{},
 		"scope": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -2508,5 +2594,502 @@ func (v ScopesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"values": basetypes.ListType{
 			ElemType: types.StringType,
 		},
+	}
+}
+
+var _ basetypes.ObjectTypable = RiskAggregationsType{}
+
+type RiskAggregationsType struct {
+	basetypes.ObjectType
+}
+
+func (t RiskAggregationsType) Equal(o attr.Type) bool {
+	other, ok := o.(RiskAggregationsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RiskAggregationsType) String() string {
+	return "RiskAggregationsType"
+}
+
+func (t RiskAggregationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewRiskAggregationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRiskAggregationsValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	atRiskAttribute, ok := attributes["at_risk"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`at_risk is missing from object`)
+
+		return nil, diags
+	}
+
+	atRiskVal, ok := atRiskAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`at_risk expected to be basetypes.Int64Value, was: %T`, atRiskAttribute))
+	}
+
+	onTrackAttribute, ok := attributes["on_track"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`on_track is missing from object`)
+
+		return nil, diags
+	}
+
+	onTrackVal, ok := onTrackAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`on_track expected to be basetypes.Int64Value, was: %T`, onTrackAttribute))
+	}
+
+	totalAttribute, ok := attributes["total"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total is missing from object`)
+
+		return nil, diags
+	}
+
+	totalVal, ok := totalAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total expected to be basetypes.Int64Value, was: %T`, totalAttribute))
+	}
+
+	unknownAttribute, ok := attributes["unknown"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`unknown is missing from object`)
+
+		return nil, diags
+	}
+
+	unknownVal, ok := unknownAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`unknown expected to be basetypes.Int64Value, was: %T`, unknownAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RiskAggregationsValue{
+		AtRisk:  atRiskVal,
+		OnTrack: onTrackVal,
+		Total:   totalVal,
+		Unknown: unknownVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRiskAggregationsValueNull() RiskAggregationsValue {
+	return RiskAggregationsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRiskAggregationsValueUnknown() RiskAggregationsValue {
+	return RiskAggregationsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRiskAggregationsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RiskAggregationsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RiskAggregationsValue Attribute Value",
+				"While creating a RiskAggregationsValue value, a missing attribute value was detected. "+
+					"A RiskAggregationsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RiskAggregationsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RiskAggregationsValue Attribute Type",
+				"While creating a RiskAggregationsValue value, an invalid attribute value was detected. "+
+					"A RiskAggregationsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RiskAggregationsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RiskAggregationsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RiskAggregationsValue Attribute Value",
+				"While creating a RiskAggregationsValue value, an extra attribute value was detected. "+
+					"A RiskAggregationsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RiskAggregationsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRiskAggregationsValueUnknown(), diags
+	}
+
+	atRiskAttribute, ok := attributes["at_risk"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`at_risk is missing from object`)
+
+		return NewRiskAggregationsValueUnknown(), diags
+	}
+
+	atRiskVal, ok := atRiskAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`at_risk expected to be basetypes.Int64Value, was: %T`, atRiskAttribute))
+	}
+
+	onTrackAttribute, ok := attributes["on_track"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`on_track is missing from object`)
+
+		return NewRiskAggregationsValueUnknown(), diags
+	}
+
+	onTrackVal, ok := onTrackAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`on_track expected to be basetypes.Int64Value, was: %T`, onTrackAttribute))
+	}
+
+	totalAttribute, ok := attributes["total"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`total is missing from object`)
+
+		return NewRiskAggregationsValueUnknown(), diags
+	}
+
+	totalVal, ok := totalAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`total expected to be basetypes.Int64Value, was: %T`, totalAttribute))
+	}
+
+	unknownAttribute, ok := attributes["unknown"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`unknown is missing from object`)
+
+		return NewRiskAggregationsValueUnknown(), diags
+	}
+
+	unknownVal, ok := unknownAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`unknown expected to be basetypes.Int64Value, was: %T`, unknownAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRiskAggregationsValueUnknown(), diags
+	}
+
+	return RiskAggregationsValue{
+		AtRisk:  atRiskVal,
+		OnTrack: onTrackVal,
+		Total:   totalVal,
+		Unknown: unknownVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRiskAggregationsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RiskAggregationsValue {
+	object, diags := NewRiskAggregationsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRiskAggregationsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RiskAggregationsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRiskAggregationsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRiskAggregationsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRiskAggregationsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRiskAggregationsValueMust(RiskAggregationsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RiskAggregationsType) ValueType(ctx context.Context) attr.Value {
+	return RiskAggregationsValue{}
+}
+
+var _ basetypes.ObjectValuable = RiskAggregationsValue{}
+
+type RiskAggregationsValue struct {
+	AtRisk  basetypes.Int64Value `tfsdk:"at_risk"`
+	OnTrack basetypes.Int64Value `tfsdk:"on_track"`
+	Total   basetypes.Int64Value `tfsdk:"total"`
+	Unknown basetypes.Int64Value `tfsdk:"unknown"`
+	state   attr.ValueState
+}
+
+func (v RiskAggregationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 4)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["at_risk"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["on_track"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["total"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["unknown"] = basetypes.Int64Type{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 4)
+
+		val, err = v.AtRisk.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["at_risk"] = val
+
+		val, err = v.OnTrack.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["on_track"] = val
+
+		val, err = v.Total.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["total"] = val
+
+		val, err = v.Unknown.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["unknown"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RiskAggregationsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RiskAggregationsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RiskAggregationsValue) String() string {
+	return "RiskAggregationsValue"
+}
+
+func (v RiskAggregationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"at_risk":  basetypes.Int64Type{},
+		"on_track": basetypes.Int64Type{},
+		"total":    basetypes.Int64Type{},
+		"unknown":  basetypes.Int64Type{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"at_risk":  v.AtRisk,
+			"on_track": v.OnTrack,
+			"total":    v.Total,
+			"unknown":  v.Unknown,
+		})
+
+	return objVal, diags
+}
+
+func (v RiskAggregationsValue) Equal(o attr.Value) bool {
+	other, ok := o.(RiskAggregationsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.AtRisk.Equal(other.AtRisk) {
+		return false
+	}
+
+	if !v.OnTrack.Equal(other.OnTrack) {
+		return false
+	}
+
+	if !v.Total.Equal(other.Total) {
+		return false
+	}
+
+	if !v.Unknown.Equal(other.Unknown) {
+		return false
+	}
+
+	return true
+}
+
+func (v RiskAggregationsValue) Type(ctx context.Context) attr.Type {
+	return RiskAggregationsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RiskAggregationsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"at_risk":  basetypes.Int64Type{},
+		"on_track": basetypes.Int64Type{},
+		"total":    basetypes.Int64Type{},
+		"unknown":  basetypes.Int64Type{},
 	}
 }

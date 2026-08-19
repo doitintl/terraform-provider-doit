@@ -39,6 +39,9 @@ func TestAccBudgetsDataSource_MaxResultsOnly(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_budgets.limited", "budgets.#", "2"),
 					// Verify page_token is returned (more pages exist)
 					resource.TestCheckResourceAttrSet("data.doit_budgets.limited", "page_token"),
+					// Verify risk attributes
+					resource.TestCheckResourceAttrSet("data.doit_budgets.limited", "budgets.0.risk_status"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.limited", "risk_aggregations.total"),
 				),
 			},
 			// Second apply should produce no diff (max_results preserved in state)
@@ -158,10 +161,52 @@ func TestAccBudgetsDataSource_AutoPagination(t *testing.T) {
 					// Don't check specific values since parallel tests may change the count
 					resource.TestCheckResourceAttrSet("data.doit_budgets.test", "row_count"),
 					resource.TestCheckNoResourceAttr("data.doit_budgets.test", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.test", "risk_aggregations.total"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.test", "risk_aggregations.at_risk"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.test", "risk_aggregations.on_track"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.test", "risk_aggregations.unknown"),
 				),
 			},
 		},
 	})
+}
+
+// TestAccBudgetsDataSource_FilterByRiskStatus tests filtering budgets with the riskStatus filter key.
+func TestAccBudgetsDataSource_FilterByRiskStatus(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetsDataSourceFilterRiskStatusConfig("riskStatus:atRisk"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.total"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.at_risk"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.on_track"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.risk_filtered", "risk_aggregations.unknown"),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccBudgetsDataSourceFilterRiskStatusConfig("riskStatus:atRisk"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetsDataSourceFilterRiskStatusConfig(filter string) string {
+	return fmt.Sprintf(`
+data "doit_budgets" "risk_filtered" {
+  filter = "%s"
+}
+`, filter)
 }
 
 // TestAccBudgetsDataSource_NameContains tests filtering budgets with name_contains
