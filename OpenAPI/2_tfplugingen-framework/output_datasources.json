@@ -11741,7 +11741,8 @@
 												{
 													"name": "date",
 													"string": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Calendar day (UTC) for this coverage row in format YYYY-MM-DD."
 													}
 												},
 												{
@@ -11763,7 +11764,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spend covered by DoiT Flexsave for the day."
 													}
 												},
 												{
@@ -11785,7 +11787,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "On-demand spend not covered by commitments for the day."
 													}
 												},
 												{
@@ -11807,7 +11810,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spend covered by Reserved Instances for the day."
 													}
 												},
 												{
@@ -11829,7 +11833,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spend covered by Savings Plans for the day."
 													}
 												},
 												{
@@ -11851,7 +11856,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spot Instance spend for the day."
 													}
 												}
 											]
@@ -11867,7 +11873,8 @@
 												{
 													"name": "date",
 													"string": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Calendar day (UTC) for this coverage row in format YYYY-MM-DD."
 													}
 												},
 												{
@@ -11889,7 +11896,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spend covered by DoiT Flexsave for the day."
 													}
 												},
 												{
@@ -11911,7 +11919,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "On-demand spend not covered by commitments for the day."
 													}
 												},
 												{
@@ -11933,7 +11942,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spend covered by Reserved Instances for the day."
 													}
 												},
 												{
@@ -11955,7 +11965,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spend covered by Savings Plans for the day."
 													}
 												},
 												{
@@ -11977,7 +11988,8 @@
 																	"description": "ISO 4217 currency code."
 																}
 															}
-														]
+														],
+														"description": "Spot Instance spend for the day."
 													}
 												}
 											]
@@ -11992,7 +12004,7 @@
 						"name": "display_name",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Human-readable account alias, if available."
+							"description": "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available."
 						}
 					},
 					{
@@ -12045,7 +12057,7 @@
 									}
 								}
 							],
-							"description": "Estimated monthly additional savings per SP type for this organization."
+							"description": "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection."
 						}
 					},
 					{
@@ -12086,13 +12098,14 @@
 													"name": "esr",
 													"float64": {
 														"computed_optional_required": "computed",
-														"description": "Effective Savings Rate for the month (0–1)."
+														"description": "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost."
 													}
 												},
 												{
 													"name": "month",
 													"string": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Calendar month in `YYYY-MM` form (UTC)."
 													}
 												},
 												{
@@ -12115,7 +12128,7 @@
 																}
 															}
 														],
-														"description": "Eligible on-demand cost for the month."
+														"description": "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment."
 													}
 												}
 											]
@@ -12155,13 +12168,14 @@
 													"name": "esr",
 													"float64": {
 														"computed_optional_required": "computed",
-														"description": "Effective Savings Rate for the month (0–1)."
+														"description": "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost."
 													}
 												},
 												{
 													"name": "month",
 													"string": {
-														"computed_optional_required": "computed"
+														"computed_optional_required": "computed",
+														"description": "Calendar month in `YYYY-MM` form (UTC)."
 													}
 												},
 												{
@@ -12184,7 +12198,7 @@
 																}
 															}
 														],
-														"description": "Eligible on-demand cost for the month."
+														"description": "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment."
 													}
 												}
 											]
@@ -12192,7 +12206,7 @@
 									}
 								}
 							],
-							"description": "Trailing 6 calendar months of organization stats, grouped by SP type."
+							"description": "Trailing 6 calendar months of AWS organization stats, grouped by SP type."
 						}
 					},
 					{
@@ -12209,7 +12223,7 @@
 												"name": "onboarding_started_at",
 												"string": {
 													"computed_optional_required": "computed",
-													"description": "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n"
+													"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
 												}
 											},
 											{
@@ -12219,8 +12233,7 @@
 													"description": "Current onboarding lifecycle stage for this product line."
 												}
 											}
-										],
-										"description": "Per-product-line PS4C onboarding state."
+										]
 									}
 								},
 								{
@@ -12232,7 +12245,7 @@
 												"name": "onboarding_started_at",
 												"string": {
 													"computed_optional_required": "computed",
-													"description": "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n"
+													"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
 												}
 											},
 											{
@@ -12242,19 +12255,18 @@
 													"description": "Current onboarding lifecycle stage for this product line."
 												}
 											}
-										],
-										"description": "Per-product-line PS4C onboarding state."
+										]
 									}
 								}
 							],
-							"description": "Per-product-line PS4C onboarding state for this organization."
+							"description": "PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available."
 						}
 					},
 					{
 						"name": "savings_plans_sync_time",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Timestamp of the last successful Savings Plan inventory sync."
+							"description": "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet."
 						}
 					},
 					{
@@ -12314,7 +12326,7 @@
 												}
 											}
 										],
-										"description": "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n"
+										"description": "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
 									}
 								},
 								{
@@ -12369,11 +12381,11 @@
 												}
 											}
 										],
-										"description": "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n"
+										"description": "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
 									}
 								}
 							],
-							"description": "Year-to-date and lifetime savings per SP type. Same figures the detail\nendpoint returns — surfaced on the list item so callers can compute\ncustomer-level totals (sum across organizations) without an extra\nround-trip per organization. Lifetime is bounded by each organization's PS4C\nonboarding start.\n"
+							"description": "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
 						}
 					},
 					{
@@ -12390,7 +12402,7 @@
 												"name": "esr",
 												"float64": {
 													"computed_optional_required": "computed",
-													"description": "Effective Savings Rate over the last 30 days (0–1)."
+													"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
 												}
 											},
 											{
@@ -12413,11 +12425,11 @@
 															}
 														}
 													],
-													"description": "Realized savings amount over the last 30 days."
+													"description": "Total savings realized over the last 30 days from active commitments (USD)."
 												}
 											}
 										],
-										"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n"
+										"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD."
 									}
 								},
 								{
@@ -12429,7 +12441,7 @@
 												"name": "esr",
 												"float64": {
 													"computed_optional_required": "computed",
-													"description": "Effective Savings Rate over the last 30 days (0–1)."
+													"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
 												}
 											},
 											{
@@ -12452,20 +12464,20 @@
 															}
 														}
 													],
-													"description": "Realized savings amount over the last 30 days."
+													"description": "Total savings realized over the last 30 days from active commitments (USD)."
 												}
 											}
 										],
-										"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n"
+										"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD."
 									}
 								}
 							],
-							"description": "Trailing 30-day aggregate metrics, broken down by SP type."
+							"description": "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
 						}
 					}
 				],
-				"description": "PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.",
-				"markdown_description": "PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases."
+				"description": "Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.",
+				"markdown_description": "Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments."
 			}
 		},
 		{
@@ -12476,7 +12488,7 @@
 						"name": "page_token",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Opaque cursor token returned by a previous list response. Omit to start from the beginning;\nan empty or absent token in a response means there are no more results. Do not parse it.\nA structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired\ncursor returns `400` with code `pagination_token_expired` — restart pagination from the\nbeginning.\n"
+							"description": "Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning."
 						}
 					},
 					{
@@ -12508,14 +12520,14 @@
 										"name": "display_name",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Human-readable account alias, if available."
+											"description": "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available."
 										}
 									},
 									{
 										"name": "management_account_id",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "12-digit account number of the organization's management (payer) account."
+											"description": "12-digit account number of the AWS organization's management (payer) account."
 										}
 									},
 									{
@@ -12568,7 +12580,7 @@
 													}
 												}
 											],
-											"description": "Estimated monthly additional savings per SP type for this organization."
+											"description": "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection."
 										}
 									},
 									{
@@ -12585,7 +12597,7 @@
 																"name": "onboarding_started_at",
 																"string": {
 																	"computed_optional_required": "computed",
-																	"description": "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n"
+																	"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
 																}
 															},
 															{
@@ -12595,8 +12607,7 @@
 																	"description": "Current onboarding lifecycle stage for this product line."
 																}
 															}
-														],
-														"description": "Per-product-line PS4C onboarding state."
+														]
 													}
 												},
 												{
@@ -12608,7 +12619,7 @@
 																"name": "onboarding_started_at",
 																"string": {
 																	"computed_optional_required": "computed",
-																	"description": "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n"
+																	"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
 																}
 															},
 															{
@@ -12618,19 +12629,18 @@
 																	"description": "Current onboarding lifecycle stage for this product line."
 																}
 															}
-														],
-														"description": "Per-product-line PS4C onboarding state."
+														]
 													}
 												}
 											],
-											"description": "Per-product-line PS4C onboarding state for this organization."
+											"description": "PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available."
 										}
 									},
 									{
 										"name": "savings_plans_sync_time",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Timestamp of the last successful Savings Plan inventory sync."
+											"description": "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet."
 										}
 									},
 									{
@@ -12690,7 +12700,7 @@
 																}
 															}
 														],
-														"description": "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n"
+														"description": "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
 													}
 												},
 												{
@@ -12745,11 +12755,11 @@
 																}
 															}
 														],
-														"description": "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n"
+														"description": "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
 													}
 												}
 											],
-											"description": "Year-to-date and lifetime savings per SP type. Same figures the detail\nendpoint returns — surfaced on the list item so callers can compute\ncustomer-level totals (sum across organizations) without an extra\nround-trip per organization. Lifetime is bounded by each organization's PS4C\nonboarding start.\n"
+											"description": "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
 										}
 									},
 									{
@@ -12766,7 +12776,7 @@
 																"name": "esr",
 																"float64": {
 																	"computed_optional_required": "computed",
-																	"description": "Effective Savings Rate over the last 30 days (0–1)."
+																	"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
 																}
 															},
 															{
@@ -12789,11 +12799,11 @@
 																			}
 																		}
 																	],
-																	"description": "Realized savings amount over the last 30 days."
+																	"description": "Total savings realized over the last 30 days from active commitments (USD)."
 																}
 															}
 														],
-														"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n"
+														"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD."
 													}
 												},
 												{
@@ -12805,7 +12815,7 @@
 																"name": "esr",
 																"float64": {
 																	"computed_optional_required": "computed",
-																	"description": "Effective Savings Rate over the last 30 days (0–1)."
+																	"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
 																}
 															},
 															{
@@ -12828,15 +12838,15 @@
 																			}
 																		}
 																	],
-																	"description": "Realized savings amount over the last 30 days."
+																	"description": "Total savings realized over the last 30 days from active commitments (USD)."
 																}
 															}
 														],
-														"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n"
+														"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD."
 													}
 												}
 											],
-											"description": "Trailing 30-day aggregate metrics, broken down by SP type."
+											"description": "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
 										}
 									}
 								]
@@ -12851,8 +12861,8 @@
 						}
 					}
 				],
-				"description": "PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.",
-				"markdown_description": "PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases."
+				"description": "Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.",
+				"markdown_description": "Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments."
 			}
 		},
 		{

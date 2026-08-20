@@ -34,11 +34,7 @@ output "organizations" {
 ### Optional
 
 - `max_results` (Number) Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
-- `page_token` (String) Opaque cursor token returned by a previous list response. Omit to start from the beginning;
-an empty or absent token in a response means there are no more results. Do not parse it.
-A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
-cursor returns `400` with code `pagination_token_expired` — restart pagination from the
-beginning.
+- `page_token` (String) Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
@@ -59,17 +55,13 @@ Optional:
 
 Read-Only:
 
-- `display_name` (String) Human-readable account alias, if available.
-- `management_account_id` (String) 12-digit account number of the organization's management (payer) account.
-- `monthly_potential_savings` (Attributes) Estimated monthly additional savings per SP type for this organization. (see [below for nested schema](#nestedatt--items--monthly_potential_savings))
-- `onboarding_status` (Attributes) Per-product-line PS4C onboarding state for this organization. (see [below for nested schema](#nestedatt--items--onboarding_status))
-- `savings_plans_sync_time` (String) Timestamp of the last successful Savings Plan inventory sync.
-- `savings_totals` (Attributes) Year-to-date and lifetime savings per SP type. Same figures the detail
-endpoint returns — surfaced on the list item so callers can compute
-customer-level totals (sum across organizations) without an extra
-round-trip per organization. Lifetime is bounded by each organization's PS4C
-onboarding start. (see [below for nested schema](#nestedatt--items--savings_totals))
-- `stats30d` (Attributes) Trailing 30-day aggregate metrics, broken down by SP type. (see [below for nested schema](#nestedatt--items--stats30d))
+- `display_name` (String) Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
+- `management_account_id` (String) 12-digit account number of the AWS organization's management (payer) account.
+- `monthly_potential_savings` (Attributes) Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection. (see [below for nested schema](#nestedatt--items--monthly_potential_savings))
+- `onboarding_status` (Attributes) PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available. (see [below for nested schema](#nestedatt--items--onboarding_status))
+- `savings_plans_sync_time` (String) Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.
+- `savings_totals` (Attributes) Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date. (see [below for nested schema](#nestedatt--items--savings_totals))
+- `stats30d` (Attributes) Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type. (see [below for nested schema](#nestedatt--items--stats30d))
 
 <a id="nestedatt--items--monthly_potential_savings"></a>
 ### Nested Schema for `items.monthly_potential_savings`
@@ -103,16 +95,15 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes) Per-product-line PS4C onboarding state. (see [below for nested schema](#nestedatt--items--onboarding_status--compute))
-- `database` (Attributes) Per-product-line PS4C onboarding state. (see [below for nested schema](#nestedatt--items--onboarding_status--database))
+- `compute` (Attributes) (see [below for nested schema](#nestedatt--items--onboarding_status--compute))
+- `database` (Attributes) (see [below for nested schema](#nestedatt--items--onboarding_status--database))
 
 <a id="nestedatt--items--onboarding_status--compute"></a>
 ### Nested Schema for `items.onboarding_status.compute`
 
 Read-Only:
 
-- `onboarding_started_at` (String) When PS4C first began tracking commitments for this product line. Used to bound
-lifetime savings totals and to render onboarding history in the DoiT Console.
+- `onboarding_started_at` (String) When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
 - `status` (String) Current onboarding lifecycle stage for this product line.
 
 
@@ -121,8 +112,7 @@ lifetime savings totals and to render onboarding history in the DoiT Console.
 
 Read-Only:
 
-- `onboarding_started_at` (String) When PS4C first began tracking commitments for this product line. Used to bound
-lifetime savings totals and to render onboarding history in the DoiT Console.
+- `onboarding_started_at` (String) When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
 - `status` (String) Current onboarding lifecycle stage for this product line.
 
 
@@ -132,12 +122,8 @@ lifetime savings totals and to render onboarding history in the DoiT Console.
 
 Read-Only:
 
-- `compute` (Attributes) Running savings figures derived server-side from the full monthly stats history
-(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
-start date and start of year). (see [below for nested schema](#nestedatt--items--savings_totals--compute))
-- `database` (Attributes) Running savings figures derived server-side from the full monthly stats history
-(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
-start date and start of year). (see [below for nested schema](#nestedatt--items--savings_totals--database))
+- `compute` (Attributes) Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated. (see [below for nested schema](#nestedatt--items--savings_totals--compute))
+- `database` (Attributes) Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated. (see [below for nested schema](#nestedatt--items--savings_totals--database))
 
 <a id="nestedatt--items--savings_totals--compute"></a>
 ### Nested Schema for `items.savings_totals.compute`
@@ -199,20 +185,16 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes) Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
-Responses are denominated in USD. Used by both AWS organization/member-account and GCP
-billing-account list items. (see [below for nested schema](#nestedatt--items--stats30d--compute))
-- `database` (Attributes) Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
-Responses are denominated in USD. Used by both AWS organization/member-account and GCP
-billing-account list items. (see [below for nested schema](#nestedatt--items--stats30d--database))
+- `compute` (Attributes) Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD. (see [below for nested schema](#nestedatt--items--stats30d--compute))
+- `database` (Attributes) Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD. (see [below for nested schema](#nestedatt--items--stats30d--database))
 
 <a id="nestedatt--items--stats30d--compute"></a>
 ### Nested Schema for `items.stats30d.compute`
 
 Read-Only:
 
-- `esr` (Number) Effective Savings Rate over the last 30 days (0–1).
-- `savings` (Attributes) Realized savings amount over the last 30 days. (see [below for nested schema](#nestedatt--items--stats30d--compute--savings))
+- `esr` (Number) Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
+- `savings` (Attributes) Total savings realized over the last 30 days from active commitments (USD). (see [below for nested schema](#nestedatt--items--stats30d--compute--savings))
 
 <a id="nestedatt--items--stats30d--compute--savings"></a>
 ### Nested Schema for `items.stats30d.compute.savings`
@@ -229,8 +211,8 @@ Read-Only:
 
 Read-Only:
 
-- `esr` (Number) Effective Savings Rate over the last 30 days (0–1).
-- `savings` (Attributes) Realized savings amount over the last 30 days. (see [below for nested schema](#nestedatt--items--stats30d--database--savings))
+- `esr` (Number) Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
+- `savings` (Attributes) Total savings realized over the last 30 days from active commitments (USD). (see [below for nested schema](#nestedatt--items--stats30d--database--savings))
 
 <a id="nestedatt--items--stats30d--database--savings"></a>
 ### Nested Schema for `items.stats30d.database.savings`

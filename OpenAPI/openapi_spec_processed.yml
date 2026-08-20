@@ -85,7 +85,7 @@ tags:
   - name: CloudFlow
     description: Manage CloudFlow.
   - name: PerfectScale for Commitments AWS
-    description: PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.
+    description: Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
   - name: Billing Transfer
     description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
 paths:
@@ -4394,19 +4394,14 @@ paths:
       tags:
         - PerfectScale for Commitments AWS
       summary: List AWS organizations
-      description: |-
-        Returns all AWS Organizations accessible to the authenticated tenant.
-        Each item includes metadata, trailing 30-day aggregate statistics, precomputed
-        YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
-        client-side by summing across organizations, and estimated monthly potential
-        savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+      description: "Returns all AWS organizations (accounts) accessible to the authenticated tenant. Use as the entry point to discover AWS organization account IDs, and organization-level onboarding status of the available commitment types and savings metrics. \n\nEach item includes metadata, trailing 30-day aggregate statistics, precomputed YTD/lifetime savings totals per Savings Plan (SP) type, and estimated monthly potential savings (`monthlyPotentialSavings`) per SP type from the latest projection. Sum across items for customer-level totals."
       parameters:
         - $ref: "#/components/parameters/tenantId"
         - $ref: "#/components/parameters/ps4cPageToken"
         - $ref: "#/components/parameters/ps4cMaxResults"
       responses:
         "200":
-          description: List of AWS Organizations.
+          description: List of AWS Organizations. One item per AWS organization.
           headers:
             Request-Id:
               $ref: "#/components/headers/RequestId"
@@ -4432,19 +4427,21 @@ paths:
       tags:
         - PerfectScale for Commitments AWS
       summary: Get an AWS organization
-      description: |
-        Returns a single AWS Organization including metadata, 30-day aggregates,
-        and the trailing-window stats that drive the customer Overview screen:
-        - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
-        - `dailyCoverage` — last 30 days of commitment coverage breakdown.
-        - `savingsTotals` — year-to-date and lifetime savings per SP type.
-        - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+      description: |-
+        Returns a single AWS organization with the same list-item fields as List AWS Organizations, plus the Overview time series. Use this when you need a single organization's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, monthly potential savings, and the data behind Cost Summary and Commitment Coverage charts) without fetching every organization.
+
+        Fields that drive the Overview tab in the DoiT console:
+        - `stats30d`: last 30 days ESR and realized savings per SP type (ESR and Savings cards).
+        - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per SP type (Cost Summary chart, and month-over-month card trends).
+        - `dailyCoverage`: last 30 days of commitment coverage breakdown per SP type (Commitment Coverage chart).
+        - `savingsTotals`: year-to-date and lifetime realized savings per SP type (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+        - `monthlyPotentialSavings`: estimated monthly additional savings per SP type from the latest purchase projection.
       parameters:
         - $ref: "#/components/parameters/tenantId"
         - $ref: "#/components/parameters/managementAccountId"
       responses:
         "200":
-          description: AWS Organization detail.
+          description: "Single AWS organization details (same list-item fields as provided for the organization through list AWS organization operation) and overview time series: 6 months stats and 30 days of commitment coverage."
           headers:
             Request-Id:
               $ref: "#/components/headers/RequestId"
@@ -5357,33 +5354,35 @@ components:
       type: object
       required:
         - date
-      description: |
-        One day of commitment-coverage breakdown. Money fields are wrapped objects
-        (`{amount, currency}`).
+      description: "One day of commitment-coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage type had no spend for the day."
       properties:
         date:
           type: string
           format: date
+          description: "Calendar day (UTC) for this coverage row in format YYYY-MM-DD."
         onDemandCost:
-          $ref: "#/components/schemas/Money"
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: On-demand spend not covered by commitments for the day.
         savingsPlanCost:
-          $ref: "#/components/schemas/Money"
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Savings Plans for the day.
         reservedInstCost:
-          $ref: "#/components/schemas/Money"
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Reserved Instances for the day.
         flexsaveCost:
-          $ref: "#/components/schemas/Money"
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by DoiT Flexsave for the day.
         spotCost:
-          $ref: "#/components/schemas/Money"
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spot Instance spend for the day.
     AwsMonthlyPotentialSavings:
       type: object
-      description: |
-        Estimated monthly additional savings per SP type, taken from the latest PS4C purchase
-        projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking
-        estimate of the monthly savings achievable if the recommended commitments were purchased. For
-        member accounts, the organization figure is attributed by each member account's share of
-        trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest
-        projection is missing, expired, or empty. The field is omitted entirely only for accounts that
-        have never had potential savings computed.
+      description: "Estimated monthly additional savings per Savings Plan (SP) type, taken from the latest PerfectScale for Commitments purchase projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking estimate of the monthly savings achievable if the recommended commitments are purchased. For member accounts, the AWS organization figure is attributed by each member account's share of trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest projection is missing, expired, or empty. The field is omitted entirely only for accounts that have never had potential savings computed."
       properties:
         compute:
           $ref: "#/components/schemas/Money"
@@ -5396,31 +5395,28 @@ components:
         - esr
         - onDemandCost
         - costWithSavings
-      description: |
-        One calendar-month aggregate for the organization. Money fields are wrapped
-        objects (`{amount, currency}`).
+      description: "One calendar-month aggregate for the AWS organization. Money fields are wrapped objects (`{amount, currency}`)."
       properties:
         month:
           type: string
           pattern: ^\d{4}-(0[1-9]|1[0-2])$
+          description: "Calendar month in `YYYY-MM` form (UTC)."
           example: 2025-06
         esr:
           type: number
           format: double
-          description: Effective Savings Rate for the month (0–1).
+          description: "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost."
         onDemandCost:
           allOf:
             - $ref: "#/components/schemas/Money"
-          description: Eligible on-demand cost for the month.
+          description: Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.
         costWithSavings:
           allOf:
             - $ref: "#/components/schemas/Money"
           description: Actual cost after commitments for the month.
     AwsOnboardingStatus:
       type: object
-      description: |
-        PS4C onboarding state grouped by product line. A product line is omitted when it
-        is not onboarded at all.
+      description: "PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available."
       properties:
         compute:
           $ref: "#/components/schemas/AwsOnboardingStatusEntry"
@@ -5430,22 +5426,24 @@ components:
       type: object
       required:
         - status
-      description: Per-product-line PS4C onboarding state.
       properties:
         status:
           type: string
-          description: Current onboarding lifecycle stage for this product line.
+          description: "Current onboarding lifecycle stage for this product line."
           enum:
             - not_started
             - onboarding
             - done
             - error
+          x-enumDescriptions:
+            not_started: This commitment type has not begun onboarding.
+            onboarding: Onboarding is in progress (inventory and models still initializing).
+            done: Onboarding completed, commitments and recommendations are available.
+            error: Onboarding failed, check the DoiT Console or contact support for remediation.
         onboardingStartedAt:
           type: string
           format: date-time
-          description: |
-            When PS4C first began tracking commitments for this product line. Used to bound
-            lifetime savings totals and to render onboarding history in the DoiT Console.
+          description: "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
           nullable: true
     AwsOrganization:
       type: object
@@ -5454,90 +5452,71 @@ components:
       properties:
         managementAccountId:
           type: string
-          description: 12-digit account number of the organization's management (payer) account.
+          description: "12-digit account number of the AWS organization's management (payer) account."
           example: "123456789012"
         displayName:
           type: string
-          description: Human-readable account alias, if available.
+          description: "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available."
           nullable: true
           example: Acme Prod
         onboardingStatus:
           allOf:
             - $ref: "#/components/schemas/AwsOnboardingStatus"
-          description: Per-product-line PS4C onboarding state for this organization.
         savingsPlansSyncTime:
           type: string
           format: date-time
-          description: Timestamp of the last successful Savings Plan inventory sync.
+          description: "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet."
           nullable: true
+          example: 2026-01-01T00:00:00Z
         stats30d:
-          description: Trailing 30-day aggregate metrics, broken down by SP type.
+          description: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationStats30d'
         savingsTotals:
-          description: |
-            Year-to-date and lifetime savings per SP type. Same figures the detail
-            endpoint returns — surfaced on the list item so callers can compute
-            customer-level totals (sum across organizations) without an extra
-            round-trip per organization. Lifetime is bounded by each organization's PS4C
-            onboarding start.
+          description: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationSavingsTotals'
         monthlyPotentialSavings:
           allOf:
             - $ref: "#/components/schemas/AwsMonthlyPotentialSavings"
-          description: Estimated monthly additional savings per SP type for this organization.
+          description: "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection."
     AwsOrganizationDetail:
-      description: |
-        Single AWS Organization detail. Adds the trailing-window stats that drive the
-        DoiT Console overview screen on top of the list-item shape:
-        - `monthlyStats` — last 6 calendar months per SP type
-        - `dailyCoverage` — last 30 days per SP type
-
-        `savingsTotals` (precomputed YTD and lifetime savings per SP type) and
-        `monthlyPotentialSavings` (estimated monthly additional savings per SP type) are
-        inherited from the list-item shape (`AwsOrganization`).
       type: object
       required:
         - managementAccountId
       properties:
         managementAccountId:
           type: string
-          description: 12-digit account number of the organization's management (payer) account.
+          description: "12-digit account number of the AWS organization's management (payer) account."
           example: "123456789012"
         displayName:
           type: string
-          description: Human-readable account alias, if available.
+          description: "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available."
           nullable: true
           example: Acme Prod
         onboardingStatus:
           allOf:
             - $ref: "#/components/schemas/AwsOnboardingStatus"
-          description: Per-product-line PS4C onboarding state for this organization.
         savingsPlansSyncTime:
           type: string
           format: date-time
-          description: Timestamp of the last successful Savings Plan inventory sync.
+          description: "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet."
           nullable: true
+          example: 2026-01-01T00:00:00Z
         stats30d:
-          description: Trailing 30-day aggregate metrics, broken down by SP type.
+          description: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationStats30d'
         savingsTotals:
-          description: |
-            Year-to-date and lifetime savings per SP type. Same figures the detail
-            endpoint returns — surfaced on the list item so callers can compute
-            customer-level totals (sum across organizations) without an extra
-            round-trip per organization. Lifetime is bounded by each organization's PS4C
-            onboarding start.
+          description: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationSavingsTotals'
         monthlyPotentialSavings:
           allOf:
             - $ref: "#/components/schemas/AwsMonthlyPotentialSavings"
-          description: Estimated monthly additional savings per SP type for this organization.
+          description: "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection."
         monthlyStats:
-          description: Trailing 6 calendar months of organization stats, grouped by SP type.
+          description: "Trailing 6 calendar months of AWS organization stats, grouped by SP type."
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationDetailAllOf1MonthlyStats'
         dailyCoverage:
@@ -5558,7 +5537,7 @@ components:
             $ref: "#/components/schemas/AwsDailyCoverageEntry"
     AwsOrganizationDetailAllOf1MonthlyStats:
       type: object
-      description: Trailing 6 calendar months of organization stats, grouped by SP type.
+      description: "Trailing 6 calendar months of AWS organization stats, grouped by SP type."
       properties:
         compute:
           type: array
@@ -5570,12 +5549,7 @@ components:
             $ref: "#/components/schemas/AwsMonthlyStatsEntry"
     AwsOrganizationSavingsTotals:
       type: object
-      description: |
-        Year-to-date and lifetime savings per SP type. Same figures the detail
-        endpoint returns — surfaced on the list item so callers can compute
-        customer-level totals (sum across organizations) without an extra
-        round-trip per organization. Lifetime is bounded by each organization's PS4C
-        onboarding start.
+      description: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
       properties:
         compute:
           $ref: "#/components/schemas/AwsSavingsTotals"
@@ -5583,7 +5557,7 @@ components:
           $ref: "#/components/schemas/AwsSavingsTotals"
     AwsOrganizationStats30d:
       type: object
-      description: Trailing 30-day aggregate metrics, broken down by SP type.
+      description: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
       properties:
         compute:
           $ref: "#/components/schemas/Stats30dSummary"
@@ -5594,10 +5568,7 @@ components:
       required:
         - ytd
         - lifetime
-      description: |
-        Running savings figures derived server-side from the full monthly stats history
-        (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
-        start date and start of year).
+      description: "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
       properties:
         ytd:
           allOf:
@@ -10086,6 +10057,7 @@ components:
           type: string
           pattern: ^-?(0|[1-9]\d*)(\.\d+)?$
           description: Decimal monetary amount at ISO 4217 minor-unit precision (string).
+          example: "100.00"
         currency:
           type: string
           pattern: ^[A-Z]{3}$
@@ -10797,21 +10769,18 @@ components:
       example: aws-trusted-advisor, aws-cost-optimization-hub, aws-security-hub, azure-advisor, custom, gcp-recommender
     Stats30dSummary:
       type: object
-      description: |
-        Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
-        Responses are denominated in USD. Used by both AWS organization/member-account and GCP
-        billing-account list items.
+      description: Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
       properties:
         esr:
           type: number
           format: double
-          description: Effective Savings Rate over the last 30 days (0–1).
+          description: "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
           nullable: true
           example: 0.187
         savings:
           allOf:
             - $ref: "#/components/schemas/Money"
-          description: Realized savings amount over the last 30 days.
+          description: "Total savings realized over the last 30 days from active commitments (USD)."
     Subscription:
       type: object
       description: Subscription details for a G Suite or Office 365 asset.
@@ -11615,7 +11584,7 @@ components:
                 code: validation_failed
                 retryable: false
             tenantIdRequired:
-              summary: Tenant scope not resolvable (§15)
+              summary: Tenant scope not resolvable
               value:
                 type: https://developer.doit.com/errors/tenant_id_required
                 title: Tenant ID required
@@ -11625,7 +11594,7 @@ components:
                 code: tenant_id_required
                 retryable: false
             tenantIdMismatch:
-              summary: Header conflicts with the key's tenant (§15)
+              summary: Header conflicts with the key's tenant
               value:
                 type: https://developer.doit.com/errors/tenant_id_mismatch
                 title: Tenant ID mismatch
@@ -11635,7 +11604,7 @@ components:
                 code: tenant_id_mismatch
                 retryable: false
             gcpServiceRequired:
-              summary: GCP region filter without product line
+              summary: GCP region filter without commitment type
               value:
                 type: https://developer.doit.com/errors/gcp_service_required
                 title: GCP service required
@@ -11645,7 +11614,7 @@ components:
                 code: gcp_service_required
                 retryable: false
             paginationTokenInvalid:
-              summary: Structurally invalid pagination cursor (§8)
+              summary: Structurally invalid pagination cursor
               value:
                 type: https://developer.doit.com/errors/pagination_token_invalid
                 title: Invalid pagination token
@@ -11655,7 +11624,7 @@ components:
                 code: pagination_token_invalid
                 retryable: false
             paginationTokenExpired:
-              summary: Expired pagination cursor (§8)
+              summary: Expired pagination cursor
               value:
                 type: https://developer.doit.com/errors/pagination_token_expired
                 title: Expired pagination token
@@ -11689,7 +11658,7 @@ components:
             code: unauthorized
             retryable: false
     Forbidden:
-      description: Authenticated but not authorised to access the requested resource.
+      description: Authenticated but not authorized to access this customer's PerfectScale for Commitments resources.
       headers:
         Request-Id:
           $ref: "#/components/headers/RequestId"
@@ -11858,23 +11827,12 @@ components:
       in: header
       name: X-Tenant-Id
       required: false
-      description: |
-        Tenant (customer) identifier that conveys the tenant scope for the request
-        (DoiT API Design Standards §15). Accepts the customer ID or the customer's
-        URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
-        server resolves to the customer ID. Endpoint groups that validate the
-        tenant in their own middleware (e.g. CloudFlow) currently require the
-        literal customer ID.
+      description: |-
+        Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
 
-        Resolution when the header is absent:
-        - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
-          optional.
-        - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
-          header. Without it the request is rejected with `400` and code `tenant_id_required` — the
-          server does not guess across tenant scopes.
+        **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 
-        When the header is present but conflicts with the tenant the key is scoped to, the request is
-        rejected with `400` and code `tenant_id_mismatch`.
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
       schema:
         type: string
         example: Kp2mN8qL4vR0sT1wX3yZ
@@ -11891,12 +11849,7 @@ components:
       in: query
       name: pageToken
       required: false
-      description: |
-        Opaque cursor token returned by a previous list response. Omit to start from the beginning;
-        an empty or absent token in a response means there are no more results. Do not parse it.
-        A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
-        cursor returns `400` with code `pagination_token_expired` — restart pagination from the
-        beginning.
+      description: "Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning."
       schema:
         type: string
     ps4cMaxResults:
@@ -11913,27 +11866,33 @@ components:
       in: query
       name: service
       required: false
-      description: Filter by PS4C product line (AWS planned purchases).
+      description: "Filter planned purchases by PerfectScale for Commitments commitment type. Omit to return all commitment types that have planned purchases for the AWS organization."
       schema:
         type: string
         enum:
           - compute
           - database
+        x-enumDescriptions:
+          compute: Compute commitment type (Savings Plans).
+          database: Database commitment type (Savings Plans).
     serviceId:
       in: path
       name: serviceId
       required: true
-      description: Service ID (compute|database).
+      description: "Commitment type whose recommendation to retrieve. Must be an onboarded commitment type for the AWS organization (`compute` or `database`)."
       schema:
         type: string
         enum:
           - compute
           - database
+        x-enumDescriptions:
+          compute: Compute commitment type (Savings Plans).
+          database: Database commitment type (Savings Plans).
     eligibleSpendGranularity:
       in: query
       name: granularity
       required: false
-      description: Time bucket for eligible spend data points.
+      description: "Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals."
       schema:
         type: string
         enum:
@@ -11942,6 +11901,11 @@ components:
           - week
           - month
         default: day
+        x-enumDescriptions:
+          hour: One point per hour (typically last 24 hours of eligible usage).
+          day: One point per day (typically last 21 days).
+          week: One point per week (typically last 16 weeks).
+          month: One point per month (typically last 6 months).
     memberAccountId:
       in: path
       name: memberAccountId
@@ -11960,23 +11924,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: |
-        Tenant (customer) ID that sets the request's customer context. Also accepts
-        the customer's URL display name as shown in DoiT Console URLs (e.g. `omni`),
-        which the server resolves to the customer ID. Endpoint groups that validate
-        the tenant in their own middleware (e.g. CloudFlow) currently require the
-        literal customer ID.
-
-        Required when the credential can access more than one tenant; omit when the
-        credential is scoped to exactly one tenant (the server resolves that tenant
-        automatically). If omitted for a multi-tenant credential, the request fails
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-        credential's tenant scope, the request fails with `400` and code
-        `tenant_id_mismatch`.
-
-        Use this header over the legacy `customerContext` query parameter, which
-        only applies to legacy API keys and is ignored by personal and service-account
-        API tokens.
+      description: "Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). Required when your credential can access more than one customer; otherwise the request fails with `400` and code `tenant_id_required`. A value outside your credential's tenants fails with `400` and code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens."
       in: header
     oauth2:
       type: oauth2
