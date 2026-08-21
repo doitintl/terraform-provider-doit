@@ -4596,59 +4596,59 @@ type AwsAccountResponse struct {
 	TimeLinked *string `json:"timeLinked,omitempty"`
 }
 
-// AwsDailyCoverageEntry One day of commitment-coverage breakdown. Money fields are wrapped objects
-// (`{amount, currency}`).
+// AwsDailyCoverageEntry One day of commitment-coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage type had no spend for the day.
 type AwsDailyCoverageEntry struct {
-	Date             openapi_types.Date `json:"date"`
-	FlexsaveCost     *Money             `json:"flexsaveCost,omitempty"`
-	OnDemandCost     *Money             `json:"onDemandCost,omitempty"`
-	ReservedInstCost *Money             `json:"reservedInstCost,omitempty"`
-	SavingsPlanCost  *Money             `json:"savingsPlanCost,omitempty"`
-	SpotCost         *Money             `json:"spotCost,omitempty"`
+	// Date Calendar day (UTC) for this coverage row in format YYYY-MM-DD.
+	Date openapi_types.Date `json:"date"`
+
+	// FlexsaveCost Spend covered by DoiT Flexsave for the day.
+	FlexsaveCost *Money `json:"flexsaveCost,omitempty"`
+
+	// OnDemandCost On-demand spend not covered by commitments for the day.
+	OnDemandCost *Money `json:"onDemandCost,omitempty"`
+
+	// ReservedInstCost Spend covered by Reserved Instances for the day.
+	ReservedInstCost *Money `json:"reservedInstCost,omitempty"`
+
+	// SavingsPlanCost Spend covered by Savings Plans for the day.
+	SavingsPlanCost *Money `json:"savingsPlanCost,omitempty"`
+
+	// SpotCost Spot Instance spend for the day.
+	SpotCost *Money `json:"spotCost,omitempty"`
 }
 
-// AwsMonthlyPotentialSavings Estimated monthly additional savings per SP type, taken from the latest PS4C purchase
-// projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking
-// estimate of the monthly savings achievable if the recommended commitments were purchased. For
-// member accounts, the organization figure is attributed by each member account's share of
-// trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest
-// projection is missing, expired, or empty. The field is omitted entirely only for accounts that
-// have never had potential savings computed.
+// AwsMonthlyPotentialSavings Estimated monthly additional savings per Savings Plan (SP) type, taken from the latest PerfectScale for Commitments purchase projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking estimate of the monthly savings achievable if the recommended commitments are purchased. For member accounts, the AWS organization figure is attributed by each member account's share of trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest projection is missing, expired, or empty. The field is omitted entirely only for accounts that have never had potential savings computed.
 type AwsMonthlyPotentialSavings struct {
 	Compute  *Money `json:"compute,omitempty"`
 	Database *Money `json:"database,omitempty"`
 }
 
-// AwsMonthlyStatsEntry One calendar-month aggregate for the organization. Money fields are wrapped
-// objects (`{amount, currency}`).
+// AwsMonthlyStatsEntry One calendar-month aggregate for the AWS organization. Money fields are wrapped objects (`{amount, currency}`).
 type AwsMonthlyStatsEntry struct {
 	// CostWithSavings Actual cost after commitments for the month.
 	CostWithSavings Money `json:"costWithSavings"`
 
-	// Esr Effective Savings Rate for the month (0–1).
+	// Esr Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.
 	Esr float64 `json:"esr"`
 
-	// Month Example: 2025-06
+	// Month Calendar month in `YYYY-MM` form (UTC).
+	//
+	// Example: 2025-06
 	Month string `json:"month"`
 
-	// OnDemandCost Eligible on-demand cost for the month.
+	// OnDemandCost Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.
 	OnDemandCost Money `json:"onDemandCost"`
 }
 
-// AwsOnboardingStatus PS4C onboarding state grouped by product line. A product line is omitted when it
-// is not onboarded at all.
+// AwsOnboardingStatus PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
 type AwsOnboardingStatus struct {
-	// Compute Per-product-line PS4C onboarding state.
-	Compute *AwsOnboardingStatusEntry `json:"compute,omitempty"`
-
-	// Database Per-product-line PS4C onboarding state.
+	Compute  *AwsOnboardingStatusEntry `json:"compute,omitempty"`
 	Database *AwsOnboardingStatusEntry `json:"database,omitempty"`
 }
 
-// AwsOnboardingStatusEntry Per-product-line PS4C onboarding state.
+// AwsOnboardingStatusEntry defines model for AwsOnboardingStatusEntry.
 type AwsOnboardingStatusEntry struct {
-	// OnboardingStartedAt When PS4C first began tracking commitments for this product line. Used to bound
-	// lifetime savings totals and to render onboarding history in the DoiT Console.
+	// OnboardingStartedAt When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
 	OnboardingStartedAt nullable.Nullable[time.Time] `json:"onboardingStartedAt,omitempty"`
 
 	// Status Current onboarding lifecycle stage for this product line.
@@ -4660,78 +4660,63 @@ type AwsOnboardingStatusEntryStatus string
 
 // AwsOrganization defines model for AwsOrganization.
 type AwsOrganization struct {
-	// DisplayName Human-readable account alias, if available.
+	// DisplayName Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
 	//
 	// Example: Acme Prod
 	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
 
-	// ManagementAccountId 12-digit account number of the organization's management (payer) account.
+	// ManagementAccountId 12-digit account number of the AWS organization's management (payer) account.
 	//
 	// Example: 123456789012
 	ManagementAccountId string `json:"managementAccountId"`
 
-	// MonthlyPotentialSavings Estimated monthly additional savings per SP type for this organization.
+	// MonthlyPotentialSavings Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection.
 	MonthlyPotentialSavings *AwsMonthlyPotentialSavings `json:"monthlyPotentialSavings,omitempty"`
+	OnboardingStatus        *AwsOnboardingStatus        `json:"onboardingStatus,omitempty"`
 
-	// OnboardingStatus Per-product-line PS4C onboarding state for this organization.
-	OnboardingStatus *AwsOnboardingStatus `json:"onboardingStatus,omitempty"`
-
-	// SavingsPlansSyncTime Timestamp of the last successful Savings Plan inventory sync.
+	// SavingsPlansSyncTime Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.
+	//
+	// Example: 2026-01-01T00:00:00Z
 	SavingsPlansSyncTime nullable.Nullable[time.Time] `json:"savingsPlansSyncTime,omitempty"`
 
-	// SavingsTotals Year-to-date and lifetime savings per SP type. Same figures the detail
-	// endpoint returns — surfaced on the list item so callers can compute
-	// customer-level totals (sum across organizations) without an extra
-	// round-trip per organization. Lifetime is bounded by each organization's PS4C
-	// onboarding start.
+	// SavingsTotals Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.
 	SavingsTotals *AwsOrganizationSavingsTotals `json:"savingsTotals,omitempty"`
 
-	// Stats30d Trailing 30-day aggregate metrics, broken down by SP type.
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.
 	Stats30d *AwsOrganizationStats30d `json:"stats30d,omitempty"`
 }
 
-// AwsOrganizationDetail Single AWS Organization detail. Adds the trailing-window stats that drive the
-// DoiT Console overview screen on top of the list-item shape:
-// - `monthlyStats` — last 6 calendar months per SP type
-// - `dailyCoverage` — last 30 days per SP type
-//
-// `savingsTotals` (precomputed YTD and lifetime savings per SP type) and
-// `monthlyPotentialSavings` (estimated monthly additional savings per SP type) are
-// inherited from the list-item shape (`AwsOrganization`).
+// AwsOrganizationDetail defines model for AwsOrganizationDetail.
 type AwsOrganizationDetail struct {
 	// DailyCoverage Trailing 30 days of commitment coverage, grouped by SP type.
 	DailyCoverage *AwsOrganizationDetailAllOf1DailyCoverage `json:"dailyCoverage,omitempty"`
 
-	// DisplayName Human-readable account alias, if available.
+	// DisplayName Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
 	//
 	// Example: Acme Prod
 	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
 
-	// ManagementAccountId 12-digit account number of the organization's management (payer) account.
+	// ManagementAccountId 12-digit account number of the AWS organization's management (payer) account.
 	//
 	// Example: 123456789012
 	ManagementAccountId string `json:"managementAccountId"`
 
-	// MonthlyPotentialSavings Estimated monthly additional savings per SP type for this organization.
+	// MonthlyPotentialSavings Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection.
 	MonthlyPotentialSavings *AwsMonthlyPotentialSavings `json:"monthlyPotentialSavings,omitempty"`
 
-	// MonthlyStats Trailing 6 calendar months of organization stats, grouped by SP type.
-	MonthlyStats *AwsOrganizationDetailAllOf1MonthlyStats `json:"monthlyStats,omitempty"`
+	// MonthlyStats Trailing 6 calendar months of AWS organization stats, grouped by SP type.
+	MonthlyStats     *AwsOrganizationDetailAllOf1MonthlyStats `json:"monthlyStats,omitempty"`
+	OnboardingStatus *AwsOnboardingStatus                     `json:"onboardingStatus,omitempty"`
 
-	// OnboardingStatus Per-product-line PS4C onboarding state for this organization.
-	OnboardingStatus *AwsOnboardingStatus `json:"onboardingStatus,omitempty"`
-
-	// SavingsPlansSyncTime Timestamp of the last successful Savings Plan inventory sync.
+	// SavingsPlansSyncTime Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.
+	//
+	// Example: 2026-01-01T00:00:00Z
 	SavingsPlansSyncTime nullable.Nullable[time.Time] `json:"savingsPlansSyncTime,omitempty"`
 
-	// SavingsTotals Year-to-date and lifetime savings per SP type. Same figures the detail
-	// endpoint returns — surfaced on the list item so callers can compute
-	// customer-level totals (sum across organizations) without an extra
-	// round-trip per organization. Lifetime is bounded by each organization's PS4C
-	// onboarding start.
+	// SavingsTotals Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.
 	SavingsTotals *AwsOrganizationSavingsTotals `json:"savingsTotals,omitempty"`
 
-	// Stats30d Trailing 30-day aggregate metrics, broken down by SP type.
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.
 	Stats30d *AwsOrganizationStats30d `json:"stats30d,omitempty"`
 }
 
@@ -4741,45 +4726,31 @@ type AwsOrganizationDetailAllOf1DailyCoverage struct {
 	Database *[]AwsDailyCoverageEntry `json:"database,omitempty"`
 }
 
-// AwsOrganizationDetailAllOf1MonthlyStats Trailing 6 calendar months of organization stats, grouped by SP type.
+// AwsOrganizationDetailAllOf1MonthlyStats Trailing 6 calendar months of AWS organization stats, grouped by SP type.
 type AwsOrganizationDetailAllOf1MonthlyStats struct {
 	Compute  *[]AwsMonthlyStatsEntry `json:"compute,omitempty"`
 	Database *[]AwsMonthlyStatsEntry `json:"database,omitempty"`
 }
 
-// AwsOrganizationSavingsTotals Year-to-date and lifetime savings per SP type. Same figures the detail
-// endpoint returns — surfaced on the list item so callers can compute
-// customer-level totals (sum across organizations) without an extra
-// round-trip per organization. Lifetime is bounded by each organization's PS4C
-// onboarding start.
+// AwsOrganizationSavingsTotals Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.
 type AwsOrganizationSavingsTotals struct {
-	// Compute Running savings figures derived server-side from the full monthly stats history
-	// (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
-	// start date and start of year).
+	// Compute Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
 	Compute *AwsSavingsTotals `json:"compute,omitempty"`
 
-	// Database Running savings figures derived server-side from the full monthly stats history
-	// (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
-	// start date and start of year).
+	// Database Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
 	Database *AwsSavingsTotals `json:"database,omitempty"`
 }
 
-// AwsOrganizationStats30d Trailing 30-day aggregate metrics, broken down by SP type.
+// AwsOrganizationStats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.
 type AwsOrganizationStats30d struct {
-	// Compute Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
-	// Responses are denominated in USD. Used by both AWS organization/member-account and GCP
-	// billing-account list items.
+	// Compute Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
 	Compute *Stats30dSummary `json:"compute,omitempty"`
 
-	// Database Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
-	// Responses are denominated in USD. Used by both AWS organization/member-account and GCP
-	// billing-account list items.
+	// Database Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
 	Database *Stats30dSummary `json:"database,omitempty"`
 }
 
-// AwsSavingsTotals Running savings figures derived server-side from the full monthly stats history
-// (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
-// start date and start of year).
+// AwsSavingsTotals Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
 type AwsSavingsTotals struct {
 	// Lifetime Lifetime realized savings since onboarding.
 	Lifetime Money `json:"lifetime"`
@@ -8007,6 +7978,8 @@ type MetricType = string
 // Money defines model for Money.
 type Money struct {
 	// Amount Decimal monetary amount at ISO 4217 minor-unit precision (string).
+	//
+	// Example: 100.00
 	Amount string `json:"amount"`
 
 	// Currency ISO 4217 currency code.
@@ -8564,16 +8537,14 @@ type SlackChannel struct {
 // Example: aws-trusted-advisor, aws-cost-optimization-hub, aws-security-hub, azure-advisor, custom, gcp-recommender
 type Source = string
 
-// Stats30dSummary Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
-// Responses are denominated in USD. Used by both AWS organization/member-account and GCP
-// billing-account list items.
+// Stats30dSummary Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
 type Stats30dSummary struct {
-	// Esr Effective Savings Rate over the last 30 days (0–1).
+	// Esr Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
 	//
 	// Example: 0.187
 	Esr nullable.Nullable[float64] `json:"esr,omitempty"`
 
-	// Savings Realized savings amount over the last 30 days.
+	// Savings Total savings realized over the last 30 days from active commitments (USD).
 	Savings *Money `json:"savings,omitempty"`
 }
 
@@ -9526,22 +9497,11 @@ type IdOfAssetsParams struct {
 
 // GetBillingExplainerPerPayerParams defines parameters for GetBillingExplainerPerPayer.
 type GetBillingExplainerPerPayerParams struct {
-	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15). Accepts the customer ID or the customer's
-	// URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
-	// server resolves to the customer ID. Endpoint groups that validate the
-	// tenant in their own middleware (e.g. CloudFlow) currently require the
-	// literal customer ID.
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
 	//
-	// Resolution when the header is absent:
-	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
-	//   optional.
-	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
-	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
-	//   server does not guess across tenant scopes.
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// When the header is present but conflicts with the tenant the key is scoped to, the request is
-	// rejected with `400` and code `tenant_id_mismatch`.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -9828,53 +9788,27 @@ type PostInsightResourceResultsParamsSourceID string
 
 // ListAwsOrganizationsParams defines parameters for ListAwsOrganizations.
 type ListAwsOrganizationsParams struct {
-	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning;
-	// an empty or absent token in a response means there are no more results. Do not parse it.
-	// A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired
-	// cursor returns `400` with code `pagination_token_expired` — restart pagination from the
-	// beginning.
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
 	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
 
 	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
 	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
-	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15). Accepts the customer ID or the customer's
-	// URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
-	// server resolves to the customer ID. Endpoint groups that validate the
-	// tenant in their own middleware (e.g. CloudFlow) currently require the
-	// literal customer ID.
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
 	//
-	// Resolution when the header is absent:
-	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
-	//   optional.
-	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
-	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
-	//   server does not guess across tenant scopes.
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// When the header is present but conflicts with the tenant the key is scoped to, the request is
-	// rejected with `400` and code `tenant_id_mismatch`.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
 // GetAwsOrganizationParams defines parameters for GetAwsOrganization.
 type GetAwsOrganizationParams struct {
-	// XTenantId Tenant (customer) identifier that conveys the tenant scope for the request
-	// (DoiT API Design Standards §15). Accepts the customer ID or the customer's
-	// URL display name as shown in DoiT Console URLs (e.g. `omni`), which the
-	// server resolves to the customer ID. Endpoint groups that validate the
-	// tenant in their own middleware (e.g. CloudFlow) currently require the
-	// literal customer ID.
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
 	//
-	// Resolution when the header is absent:
-	// - A key scoped to exactly one tenant resolves to that tenant automatically; the header is
-	//   optional.
-	// - A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the
-	//   header. Without it the request is rejected with `400` and code `tenant_id_required` — the
-	//   server does not guess across tenant scopes.
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// When the header is present but conflicts with the tenant the key is scoped to, the request is
-	// rejected with `400` and code `tenant_id_mismatch`.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -11673,23 +11607,23 @@ type ClientInterface interface {
 
 	// ListAwsOrganizations List AWS organizations
 	//
-	// Returns all AWS Organizations accessible to the authenticated tenant.
-	// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
-	// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
-	// client-side by summing across organizations, and estimated monthly potential
-	// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+	// Returns all AWS organizations (accounts) accessible to the authenticated tenant. Use as the entry point to discover AWS organization account IDs, and organization-level onboarding status of the available commitment types and savings metrics.
+	//
+	// Each item includes metadata, trailing 30-day aggregate statistics, precomputed YTD/lifetime savings totals per Savings Plan (SP) type, and estimated monthly potential savings (`monthlyPotentialSavings`) per SP type from the latest projection. Sum across items for customer-level totals.
 	//
 	// Corresponds with GET /ps4commitments/v1/aws/organizations (the `ListAwsOrganizations` operationId).
 	ListAwsOrganizations(ctx context.Context, params *ListAwsOrganizationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetAwsOrganization Get an AWS organization
 	//
-	// Returns a single AWS Organization including metadata, 30-day aggregates,
-	// and the trailing-window stats that drive the customer Overview screen:
-	// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
-	// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
-	// - `savingsTotals` — year-to-date and lifetime savings per SP type.
-	// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+	// Returns a single AWS organization with the same list-item fields as List AWS Organizations, plus the Overview time series. Use this when you need a single organization's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, monthly potential savings, and the data behind Cost Summary and Commitment Coverage charts) without fetching every organization.
+	//
+	// Fields that drive the Overview tab in the DoiT console:
+	// - `stats30d`: last 30 days ESR and realized savings per SP type (ESR and Savings cards).
+	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per SP type (Cost Summary chart, and month-over-month card trends).
+	// - `dailyCoverage`: last 30 days of commitment coverage breakdown per SP type (Commitment Coverage chart).
+	// - `savingsTotals`: year-to-date and lifetime realized savings per SP type (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+	// - `monthlyPotentialSavings`: estimated monthly additional savings per SP type from the latest purchase projection.
 	//
 	// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 	GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -14357,11 +14291,9 @@ func (c *Client) PostInsightResourceResults(ctx context.Context, sourceID PostIn
 
 // ListAwsOrganizations List AWS organizations
 //
-// Returns all AWS Organizations accessible to the authenticated tenant.
-// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
-// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
-// client-side by summing across organizations, and estimated monthly potential
-// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+// Returns all AWS organizations (accounts) accessible to the authenticated tenant. Use as the entry point to discover AWS organization account IDs, and organization-level onboarding status of the available commitment types and savings metrics.
+//
+// Each item includes metadata, trailing 30-day aggregate statistics, precomputed YTD/lifetime savings totals per Savings Plan (SP) type, and estimated monthly potential savings (`monthlyPotentialSavings`) per SP type from the latest projection. Sum across items for customer-level totals.
 //
 // Corresponds with GET /ps4commitments/v1/aws/organizations (the `ListAwsOrganizations` operationId).
 func (c *Client) ListAwsOrganizations(ctx context.Context, params *ListAwsOrganizationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -14378,12 +14310,14 @@ func (c *Client) ListAwsOrganizations(ctx context.Context, params *ListAwsOrgani
 
 // GetAwsOrganization Get an AWS organization
 //
-// Returns a single AWS Organization including metadata, 30-day aggregates,
-// and the trailing-window stats that drive the customer Overview screen:
-// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
-// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
-// - `savingsTotals` — year-to-date and lifetime savings per SP type.
-// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+// Returns a single AWS organization with the same list-item fields as List AWS Organizations, plus the Overview time series. Use this when you need a single organization's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, monthly potential savings, and the data behind Cost Summary and Commitment Coverage charts) without fetching every organization.
+//
+// Fields that drive the Overview tab in the DoiT console:
+// - `stats30d`: last 30 days ESR and realized savings per SP type (ESR and Savings cards).
+// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per SP type (Cost Summary chart, and month-over-month card trends).
+// - `dailyCoverage`: last 30 days of commitment coverage breakdown per SP type (Commitment Coverage chart).
+// - `savingsTotals`: year-to-date and lifetime realized savings per SP type (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+// - `monthlyPotentialSavings`: estimated monthly additional savings per SP type from the latest purchase projection.
 //
 // Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 func (c *Client) GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -22133,11 +22067,9 @@ type ClientWithResponsesInterface interface {
 
 	// ListAwsOrganizationsWithResponse List AWS organizations
 	//
-	// Returns all AWS Organizations accessible to the authenticated tenant.
-	// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
-	// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
-	// client-side by summing across organizations, and estimated monthly potential
-	// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+	// Returns all AWS organizations (accounts) accessible to the authenticated tenant. Use as the entry point to discover AWS organization account IDs, and organization-level onboarding status of the available commitment types and savings metrics.
+	//
+	// Each item includes metadata, trailing 30-day aggregate statistics, precomputed YTD/lifetime savings totals per Savings Plan (SP) type, and estimated monthly potential savings (`monthlyPotentialSavings`) per SP type from the latest projection. Sum across items for customer-level totals.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -22146,12 +22078,14 @@ type ClientWithResponsesInterface interface {
 
 	// GetAwsOrganizationWithResponse Get an AWS organization
 	//
-	// Returns a single AWS Organization including metadata, 30-day aggregates,
-	// and the trailing-window stats that drive the customer Overview screen:
-	// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
-	// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
-	// - `savingsTotals` — year-to-date and lifetime savings per SP type.
-	// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+	// Returns a single AWS organization with the same list-item fields as List AWS Organizations, plus the Overview time series. Use this when you need a single organization's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, monthly potential savings, and the data behind Cost Summary and Commitment Coverage charts) without fetching every organization.
+	//
+	// Fields that drive the Overview tab in the DoiT console:
+	// - `stats30d`: last 30 days ESR and realized savings per SP type (ESR and Savings cards).
+	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per SP type (Cost Summary chart, and month-over-month card trends).
+	// - `dailyCoverage`: last 30 days of commitment coverage breakdown per SP type (Commitment Coverage chart).
+	// - `savingsTotals`: year-to-date and lifetime realized savings per SP type (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+	// - `monthlyPotentialSavings`: estimated monthly additional savings per SP type from the latest purchase projection.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -32449,11 +32383,9 @@ func (c *ClientWithResponses) PostInsightResourceResultsWithResponse(ctx context
 
 // ListAwsOrganizationsWithResponse List AWS organizations
 //
-// Returns all AWS Organizations accessible to the authenticated tenant.
-// Each item includes metadata, trailing 30-day aggregate statistics, precomputed
-// YTD/lifetime savings totals per SP type so customer-level savings can be aggregated
-// client-side by summing across organizations, and estimated monthly potential
-// savings (`monthlyPotentialSavings`) per SP type from the latest projection.
+// Returns all AWS organizations (accounts) accessible to the authenticated tenant. Use as the entry point to discover AWS organization account IDs, and organization-level onboarding status of the available commitment types and savings metrics.
+//
+// Each item includes metadata, trailing 30-day aggregate statistics, precomputed YTD/lifetime savings totals per Savings Plan (SP) type, and estimated monthly potential savings (`monthlyPotentialSavings`) per SP type from the latest projection. Sum across items for customer-level totals.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -32468,12 +32400,14 @@ func (c *ClientWithResponses) ListAwsOrganizationsWithResponse(ctx context.Conte
 
 // GetAwsOrganizationWithResponse Get an AWS organization
 //
-// Returns a single AWS Organization including metadata, 30-day aggregates,
-// and the trailing-window stats that drive the customer Overview screen:
-// - `monthlyStats` — last 6 calendar months (ESR, on-demand cost, cost with savings).
-// - `dailyCoverage` — last 30 days of commitment coverage breakdown.
-// - `savingsTotals` — year-to-date and lifetime savings per SP type.
-// - `monthlyPotentialSavings` — estimated monthly additional savings per SP type from the latest projection.
+// Returns a single AWS organization with the same list-item fields as List AWS Organizations, plus the Overview time series. Use this when you need a single organization's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, monthly potential savings, and the data behind Cost Summary and Commitment Coverage charts) without fetching every organization.
+//
+// Fields that drive the Overview tab in the DoiT console:
+// - `stats30d`: last 30 days ESR and realized savings per SP type (ESR and Savings cards).
+// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per SP type (Cost Summary chart, and month-over-month card trends).
+// - `dailyCoverage`: last 30 days of commitment coverage breakdown per SP type (Commitment Coverage chart).
+// - `savingsTotals`: year-to-date and lifetime realized savings per SP type (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+// - `monthlyPotentialSavings`: estimated monthly additional savings per SP type from the latest purchase projection.
 //
 // Returns a wrapper object for the known response body format(s).
 //

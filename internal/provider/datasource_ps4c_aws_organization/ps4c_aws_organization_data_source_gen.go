@@ -27,7 +27,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"date": schema.StringAttribute{
-									Computed: true,
+									Computed:            true,
+									Description:         "Calendar day (UTC) for this coverage row in format YYYY-MM-DD.",
+									MarkdownDescription: "Calendar day (UTC) for this coverage row in format YYYY-MM-DD.",
 								},
 								"flexsave_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -47,7 +49,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: FlexsaveCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spend covered by DoiT Flexsave for the day.",
+									MarkdownDescription: "Spend covered by DoiT Flexsave for the day.",
 								},
 								"on_demand_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -67,7 +71,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: OnDemandCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "On-demand spend not covered by commitments for the day.",
+									MarkdownDescription: "On-demand spend not covered by commitments for the day.",
 								},
 								"reserved_inst_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -87,7 +93,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: ReservedInstCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spend covered by Reserved Instances for the day.",
+									MarkdownDescription: "Spend covered by Reserved Instances for the day.",
 								},
 								"savings_plan_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -107,7 +115,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: SavingsPlanCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spend covered by Savings Plans for the day.",
+									MarkdownDescription: "Spend covered by Savings Plans for the day.",
 								},
 								"spot_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -127,7 +137,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: SpotCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spot Instance spend for the day.",
+									MarkdownDescription: "Spot Instance spend for the day.",
 								},
 							},
 							CustomType: ComputeType{
@@ -142,7 +154,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"date": schema.StringAttribute{
-									Computed: true,
+									Computed:            true,
+									Description:         "Calendar day (UTC) for this coverage row in format YYYY-MM-DD.",
+									MarkdownDescription: "Calendar day (UTC) for this coverage row in format YYYY-MM-DD.",
 								},
 								"flexsave_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -162,7 +176,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: FlexsaveCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spend covered by DoiT Flexsave for the day.",
+									MarkdownDescription: "Spend covered by DoiT Flexsave for the day.",
 								},
 								"on_demand_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -182,7 +198,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: OnDemandCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "On-demand spend not covered by commitments for the day.",
+									MarkdownDescription: "On-demand spend not covered by commitments for the day.",
 								},
 								"reserved_inst_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -202,7 +220,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: ReservedInstCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spend covered by Reserved Instances for the day.",
+									MarkdownDescription: "Spend covered by Reserved Instances for the day.",
 								},
 								"savings_plan_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -222,7 +242,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: SavingsPlanCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spend covered by Savings Plans for the day.",
+									MarkdownDescription: "Spend covered by Savings Plans for the day.",
 								},
 								"spot_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -242,7 +264,9 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 											AttrTypes: SpotCostValue{}.AttributeTypes(ctx),
 										},
 									},
-									Computed: true,
+									Computed:            true,
+									Description:         "Spot Instance spend for the day.",
+									MarkdownDescription: "Spot Instance spend for the day.",
 								},
 							},
 							CustomType: DatabaseType{
@@ -265,8 +289,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"display_name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Human-readable account alias, if available.",
-				MarkdownDescription: "Human-readable account alias, if available.",
+				Description:         "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.",
+				MarkdownDescription: "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.",
 			},
 			"management_account_id": schema.StringAttribute{
 				Required:            true,
@@ -325,8 +349,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Estimated monthly additional savings per SP type for this organization.",
-				MarkdownDescription: "Estimated monthly additional savings per SP type for this organization.",
+				Description:         "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection.",
+				MarkdownDescription: "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection.",
 			},
 			"monthly_stats": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -357,11 +381,13 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"esr": schema.Float64Attribute{
 									Computed:            true,
-									Description:         "Effective Savings Rate for the month (0–1).",
-									MarkdownDescription: "Effective Savings Rate for the month (0–1).",
+									Description:         "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.",
+									MarkdownDescription: "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.",
 								},
 								"month": schema.StringAttribute{
-									Computed: true,
+									Computed:            true,
+									Description:         "Calendar month in `YYYY-MM` form (UTC).",
+									MarkdownDescription: "Calendar month in `YYYY-MM` form (UTC).",
 								},
 								"on_demand_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -382,8 +408,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									Computed:            true,
-									Description:         "Eligible on-demand cost for the month.",
-									MarkdownDescription: "Eligible on-demand cost for the month.",
+									Description:         "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.",
+									MarkdownDescription: "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.",
 								},
 							},
 							CustomType: MonthlyStatsComputeType{
@@ -421,11 +447,13 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 								"esr": schema.Float64Attribute{
 									Computed:            true,
-									Description:         "Effective Savings Rate for the month (0–1).",
-									MarkdownDescription: "Effective Savings Rate for the month (0–1).",
+									Description:         "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.",
+									MarkdownDescription: "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.",
 								},
 								"month": schema.StringAttribute{
-									Computed: true,
+									Computed:            true,
+									Description:         "Calendar month in `YYYY-MM` form (UTC).",
+									MarkdownDescription: "Calendar month in `YYYY-MM` form (UTC).",
 								},
 								"on_demand_cost": schema.SingleNestedAttribute{
 									Attributes: map[string]schema.Attribute{
@@ -446,8 +474,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 										},
 									},
 									Computed:            true,
-									Description:         "Eligible on-demand cost for the month.",
-									MarkdownDescription: "Eligible on-demand cost for the month.",
+									Description:         "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.",
+									MarkdownDescription: "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.",
 								},
 							},
 							CustomType: MonthlyStatsDatabaseType{
@@ -465,8 +493,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Trailing 6 calendar months of organization stats, grouped by SP type.",
-				MarkdownDescription: "Trailing 6 calendar months of organization stats, grouped by SP type.",
+				Description:         "Trailing 6 calendar months of AWS organization stats, grouped by SP type.",
+				MarkdownDescription: "Trailing 6 calendar months of AWS organization stats, grouped by SP type.",
 			},
 			"onboarding_status": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -474,8 +502,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 						Attributes: map[string]schema.Attribute{
 							"onboarding_started_at": schema.StringAttribute{
 								Computed:            true,
-								Description:         "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n",
-								MarkdownDescription: "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n",
+								Description:         "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
+								MarkdownDescription: "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
 							},
 							"status": schema.StringAttribute{
 								Computed:            true,
@@ -488,16 +516,14 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 								AttrTypes: OnboardingStatusComputeValue{}.AttributeTypes(ctx),
 							},
 						},
-						Computed:            true,
-						Description:         "Per-product-line PS4C onboarding state.",
-						MarkdownDescription: "Per-product-line PS4C onboarding state.",
+						Computed: true,
 					},
 					"database": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"onboarding_started_at": schema.StringAttribute{
 								Computed:            true,
-								Description:         "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n",
-								MarkdownDescription: "When PS4C first began tracking commitments for this product line. Used to bound\nlifetime savings totals and to render onboarding history in the DoiT Console.\n",
+								Description:         "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
+								MarkdownDescription: "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
 							},
 							"status": schema.StringAttribute{
 								Computed:            true,
@@ -510,9 +536,7 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 								AttrTypes: OnboardingStatusDatabaseValue{}.AttributeTypes(ctx),
 							},
 						},
-						Computed:            true,
-						Description:         "Per-product-line PS4C onboarding state.",
-						MarkdownDescription: "Per-product-line PS4C onboarding state.",
+						Computed: true,
 					},
 				},
 				CustomType: OnboardingStatusType{
@@ -521,13 +545,13 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Per-product-line PS4C onboarding state for this organization.",
-				MarkdownDescription: "Per-product-line PS4C onboarding state for this organization.",
+				Description:         "PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.",
+				MarkdownDescription: "PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.",
 			},
 			"savings_plans_sync_time": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Timestamp of the last successful Savings Plan inventory sync.",
-				MarkdownDescription: "Timestamp of the last successful Savings Plan inventory sync.",
+				Description:         "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.",
+				MarkdownDescription: "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.",
 			},
 			"savings_totals": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -584,8 +608,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n",
-						MarkdownDescription: "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n",
+						Description:         "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.",
+						MarkdownDescription: "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.",
 					},
 					"database": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
@@ -640,8 +664,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n",
-						MarkdownDescription: "Running savings figures derived server-side from the full monthly stats history\n(`onDemandCost - costWithSavings` per month, optionally bounded by onboarding\nstart date and start of year).\n",
+						Description:         "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.",
+						MarkdownDescription: "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.",
 					},
 				},
 				CustomType: SavingsTotalsType{
@@ -650,8 +674,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Year-to-date and lifetime savings per SP type. Same figures the detail\nendpoint returns — surfaced on the list item so callers can compute\ncustomer-level totals (sum across organizations) without an extra\nround-trip per organization. Lifetime is bounded by each organization's PS4C\nonboarding start.\n",
-				MarkdownDescription: "Year-to-date and lifetime savings per SP type. Same figures the detail\nendpoint returns — surfaced on the list item so callers can compute\ncustomer-level totals (sum across organizations) without an extra\nround-trip per organization. Lifetime is bounded by each organization's PS4C\nonboarding start.\n",
+				Description:         "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.",
+				MarkdownDescription: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.",
 			},
 			"stats30d": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
@@ -659,8 +683,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 						Attributes: map[string]schema.Attribute{
 							"esr": schema.Float64Attribute{
 								Computed:            true,
-								Description:         "Effective Savings Rate over the last 30 days (0–1).",
-								MarkdownDescription: "Effective Savings Rate over the last 30 days (0–1).",
+								Description:         "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
+								MarkdownDescription: "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
 							},
 							"savings": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
@@ -681,8 +705,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Realized savings amount over the last 30 days.",
-								MarkdownDescription: "Realized savings amount over the last 30 days.",
+								Description:         "Total savings realized over the last 30 days from active commitments (USD).",
+								MarkdownDescription: "Total savings realized over the last 30 days from active commitments (USD).",
 							},
 						},
 						CustomType: Stats30dComputeType{
@@ -691,15 +715,15 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n",
-						MarkdownDescription: "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n",
+						Description:         "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.",
+						MarkdownDescription: "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.",
 					},
 					"database": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"esr": schema.Float64Attribute{
 								Computed:            true,
-								Description:         "Effective Savings Rate over the last 30 days (0–1).",
-								MarkdownDescription: "Effective Savings Rate over the last 30 days (0–1).",
+								Description:         "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
+								MarkdownDescription: "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
 							},
 							"savings": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
@@ -720,8 +744,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Realized savings amount over the last 30 days.",
-								MarkdownDescription: "Realized savings amount over the last 30 days.",
+								Description:         "Total savings realized over the last 30 days from active commitments (USD).",
+								MarkdownDescription: "Total savings realized over the last 30 days from active commitments (USD).",
 							},
 						},
 						CustomType: Stats30dDatabaseType{
@@ -730,8 +754,8 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n",
-						MarkdownDescription: "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.\nResponses are denominated in USD. Used by both AWS organization/member-account and GCP\nbilling-account list items.\n",
+						Description:         "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.",
+						MarkdownDescription: "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.",
 					},
 				},
 				CustomType: Stats30dType{
@@ -740,12 +764,12 @@ func Ps4cAwsOrganizationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Trailing 30-day aggregate metrics, broken down by SP type.",
-				MarkdownDescription: "Trailing 30-day aggregate metrics, broken down by SP type.",
+				Description:         "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.",
+				MarkdownDescription: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.",
 			},
 		},
-		Description:         "PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.",
-		MarkdownDescription: "PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.",
+		Description:         "Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.",
+		MarkdownDescription: "Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.",
 	}
 }
 
