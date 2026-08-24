@@ -93,4 +93,24 @@ testacc-run:
 validate-examples:
 	./scripts/validate_examples.sh
 
-.PHONY: fmt lint lint-build lint-tools test testacc testacc-run build install generate docs validate-docs validate-examples
+# Apply diff from a specific upstream PR: make apply-pr PR=61514
+apply-pr:
+	@if [ -z "$(PR)" ]; then echo "Error: PR number required (e.g. make apply-pr PR=61514)"; exit 1; fi
+	gh pr diff $(PR) --repo doiteng/omni | \
+		sed 's|services/external-api/openapi\.yaml|OpenAPI/openapi_spec_full.yml|g' | \
+		git apply --include='OpenAPI/openapi_spec_full.yml' -v
+
+# Fetch full spec from a PR or ref: make sync-spec PR=61514 or make sync-spec REF=dev
+sync-spec:
+	@if [ -n "$(PR)" ]; then \
+		gh api "repos/doiteng/omni/contents/services/external-api/openapi.yaml?ref=pull/$(PR)/head" \
+			-H "Accept: application/vnd.github.raw" > OpenAPI/openapi_spec_full.yml && \
+		echo "Synced OpenAPI/openapi_spec_full.yml from doiteng/omni PR #$(PR)"; \
+	else \
+		REF=$${REF:-dev}; \
+		gh api "repos/doiteng/omni/contents/services/external-api/openapi.yaml?ref=$$REF" \
+			-H "Accept: application/vnd.github.raw" > OpenAPI/openapi_spec_full.yml && \
+		echo "Synced OpenAPI/openapi_spec_full.yml from doiteng/omni ref: $$REF"; \
+	fi
+
+.PHONY: fmt lint lint-build lint-tools test testacc testacc-run build install generate docs validate-docs validate-examples apply-pr sync-spec
