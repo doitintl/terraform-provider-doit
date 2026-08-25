@@ -473,3 +473,65 @@ func (v budgetScopeNAValidator) ValidateResource(ctx context.Context, req resour
 	}
 	warnNASentinels(ctx, basePath, valueLists, &resp.Diagnostics)
 }
+
+// budgetSlackChannelsValidator validates that customer_id and workspace
+// are required for each Slack channel recipient unless shared is true.
+type budgetSlackChannelsValidator struct{}
+
+var _ resource.ConfigValidator = budgetSlackChannelsValidator{}
+
+func (v budgetSlackChannelsValidator) Description(_ context.Context) string {
+	return "Validates that customer_id and workspace are required for Slack channels unless shared is true"
+}
+
+func (v budgetSlackChannelsValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `customer_id` and `workspace` are required for Slack channels unless `shared` is true"
+}
+
+func (v budgetSlackChannelsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var slackChannels types.List
+
+	diags := req.Config.GetAttribute(ctx, path.Root("recipients_slack_channels"), &slackChannels)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || slackChannels.IsNull() || slackChannels.IsUnknown() {
+		return
+	}
+
+	var channelVals []resource_budget.RecipientsSlackChannelsValue
+	diags = slackChannels.ElementsAs(ctx, &channelVals, false)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	for i, channel := range channelVals {
+		if channel.IsNull() || channel.IsUnknown() {
+			continue
+		}
+
+		if !channel.Shared.IsNull() && !channel.Shared.IsUnknown() && channel.Shared.ValueBool() {
+			continue
+		}
+		if channel.Shared.IsUnknown() {
+			continue
+		}
+
+		channelPath := path.Root("recipients_slack_channels").AtListIndex(i)
+
+		if channel.CustomerId.IsNull() || (!channel.CustomerId.IsUnknown() && channel.CustomerId.ValueString() == "") {
+			resp.Diagnostics.AddAttributeError(
+				channelPath.AtName("customer_id"),
+				"Missing Required Attribute",
+				"Attribute customer_id is required for Slack channels unless shared is true.",
+			)
+		}
+
+		if channel.Workspace.IsNull() || (!channel.Workspace.IsUnknown() && channel.Workspace.ValueString() == "") {
+			resp.Diagnostics.AddAttributeError(
+				channelPath.AtName("workspace"),
+				"Missing Required Attribute",
+				"Attribute workspace is required for Slack channels unless shared is true.",
+			)
+		}
+	}
+}

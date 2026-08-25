@@ -110,7 +110,6 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 
 		// recipients_slack_channels — API-populated Slack metadata
 		"recipients_slack_channels[*].customer_id", // API-populated
-		"recipients_slack_channels[*].id",          // API-populated
 		"recipients_slack_channels[*].name",        // API-populated
 		"recipients_slack_channels[*].shared",      // API-populated
 		"recipients_slack_channels[*].type",        // API-populated
@@ -157,6 +156,7 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		budgetRecipientsMinLengthValidator{},
 		budgetScopeMutuallyExclusiveValidator{},
 		budgetCollaboratorsOwnerValidator{},
+		budgetSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		budgetScopeNAValidator{},
 	}

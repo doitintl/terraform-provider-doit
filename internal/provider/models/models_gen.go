@@ -8522,10 +8522,10 @@ type SetActiveThemeRequest struct {
 	ThemeId string `json:"themeId"`
 }
 
-// SlackChannel Information of a Slack channel for notifications.
+// SlackChannel Information of a Slack channel for notifications. `customerId` and `workspace` are required unless `shared` is true.
 type SlackChannel struct {
 	CustomerId *string `json:"customerId,omitempty"`
-	Id         *string `json:"id,omitempty"`
+	Id         string  `json:"id"`
 	Name       *string `json:"name,omitempty"`
 	Shared     *bool   `json:"shared,omitempty"`
 	Type       *string `json:"type,omitempty"`

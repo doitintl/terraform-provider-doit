@@ -151,9 +151,6 @@ func overlayBudgetSlackChannel(_ context.Context, resolved, plan *resource_budge
 	if plan.CustomerId.IsUnknown() {
 		plan.CustomerId = resolved.CustomerId
 	}
-	if plan.Id.IsUnknown() {
-		plan.Id = resolved.Id
-	}
 	if plan.Name.IsUnknown() {
 		plan.Name = resolved.Name
 	}
@@ -270,7 +267,7 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 		for i, channel := range slackChannels {
 			reqSlackChannels[i] = models.SlackChannel{
 				CustomerId: channel.CustomerId.ValueStringPointer(),
-				Id:         channel.Id.ValueStringPointer(),
+				Id:         channel.Id.ValueString(),
 				Name:       channel.Name.ValueStringPointer(),
 				Shared:     channel.Shared.ValueBoolPointer(),
 				Workspace:  channel.Workspace.ValueStringPointer(),
@@ -497,7 +494,7 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		for i, slack := range *resp.RecipientsSlackChannels {
 			slackAttrs := map[string]attr.Value{
 				"customer_id": types.StringPointerValue(slack.CustomerId),
-				"id":          types.StringPointerValue(slack.Id),
+				"id":          types.StringValue(slack.Id),
 				"name":        types.StringPointerValue(slack.Name),
 				"shared":      types.BoolPointerValue(slack.Shared),
 				"type":        types.StringPointerValue(slack.Type),

@@ -11930,7 +11930,11 @@ components:
           type: string
     SlackChannel:
       type: object
-      description: Information of a Slack channel for notifications.
+      description: >-
+        Information of a Slack channel for notifications. `customerId` and
+        `workspace` are required unless `shared` is true.
+      required:
+        - id
       properties:
         customerId:
           type: string

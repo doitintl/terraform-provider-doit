@@ -201,8 +201,7 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"id": schema.StringAttribute{
-							Optional: true,
-							Computed: true,
+							Required: true,
 						},
 						"name": schema.StringAttribute{
 							Optional: true,
