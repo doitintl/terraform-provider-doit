@@ -11787,7 +11787,7 @@ components:
     sortOrder:
       name: sortOrder
       in: query
-      description: Sort order can be ascending or descending.
+      description: Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
       schema:
         type: string
         enum:

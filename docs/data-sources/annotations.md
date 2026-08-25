@@ -41,7 +41,7 @@ Valid fields: **content**, **timestamp**, **labels**.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
 - `sort_by` (String) A field by which the results will be sorted.
 Possible values: `id`, `content`, `timestamp`, `timeCreated`, `timeModified`
-- `sort_order` (String) Sort order can be ascending or descending.
+- `sort_order` (String) Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 Possible values: `asc`, `desc`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 

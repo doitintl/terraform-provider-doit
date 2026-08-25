@@ -136,8 +136,8 @@ func AllocationsDataSourceSchema(ctx context.Context) schema.Schema {
 			"sort_order": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Sort order can be ascending or descending.\nPossible values: `asc`, `desc`",
-				MarkdownDescription: "Sort order can be ascending or descending.\nPossible values: `asc`, `desc`",
+				Description:         "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).\nPossible values: `asc`, `desc`",
+				MarkdownDescription: "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).\nPossible values: `asc`, `desc`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"asc",

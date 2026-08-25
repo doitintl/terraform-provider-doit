@@ -298,7 +298,7 @@
 						"name": "sort_order",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Sort order can be ascending or descending.",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
 							"validators": [
 								{
 									"custom": {
@@ -907,7 +907,7 @@
 						"name": "sort_order",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Sort order can be ascending or descending.",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
 							"validators": [
 								{
 									"custom": {
@@ -1148,7 +1148,7 @@
 						"name": "sort_order",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Sort order can be ascending or descending.",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
 							"validators": [
 								{
 									"custom": {
@@ -1303,7 +1303,7 @@
 						"name": "sort_order",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Sort order can be ascending or descending.",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
 							"validators": [
 								{
 									"custom": {
@@ -9421,7 +9421,7 @@
 						"name": "sort_order",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Sort order can be ascending or descending.",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
 							"validators": [
 								{
 									"custom": {
@@ -10119,7 +10119,7 @@
 						"name": "sort_order",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Sort order can be ascending or descending.",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
 							"validators": [
 								{
 									"custom": {
@@ -11508,7 +11508,7 @@
 						"name": "sort_order",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "Sort order can be ascending or descending.",
+							"description": "Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).",
 							"validators": [
 								{
 									"custom": {

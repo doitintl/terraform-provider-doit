@@ -9214,7 +9214,7 @@ type ListAlertsParams struct {
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListAlertsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
-	// SortOrder Sort order can be ascending or descending.
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 	SortOrder *ListAlertsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 
 	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
@@ -9255,7 +9255,7 @@ type ListAllocationsParams struct {
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListAllocationsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
-	// SortOrder Sort order can be ascending or descending.
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 	SortOrder *ListAllocationsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 }
 
@@ -9280,7 +9280,7 @@ type ListAnnotationsParams struct {
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListAnnotationsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
-	// SortOrder Sort order can be ascending or descending.
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 	SortOrder *ListAnnotationsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 }
 
@@ -9319,7 +9319,7 @@ type ListCommitmentsParams struct {
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListCommitmentsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
-	// SortOrder Sort order can be ascending or descending.
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 	SortOrder *ListCommitmentsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 
 	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
@@ -9363,7 +9363,7 @@ type ListDimensionsParams struct {
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListDimensionsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
-	// SortOrder Sort order can be ascending or descending.
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 	SortOrder *ListDimensionsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 }
 
@@ -9400,7 +9400,7 @@ type ListLabelsParams struct {
 	// SortBy A field by which the results will be sorted.
 	SortBy *ListLabelsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
-	// SortOrder Sort order can be ascending or descending.
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 	SortOrder *ListLabelsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 }
 
@@ -9460,7 +9460,7 @@ type ListAnomaliesParams struct {
 	// SortBy A field by which the results will be sorted. Defaults to `startTime`.
 	SortBy *ListAnomaliesParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
-	// SortOrder Sort order can be ascending or descending.
+	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 	SortOrder *ListAnomaliesParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
 
 	// MaxResults The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.
