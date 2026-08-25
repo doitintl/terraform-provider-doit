@@ -122,9 +122,6 @@ func testAccPreCheckFunc(t *testing.T) func() {
 		if v := os.Getenv("TEST_ATTRIBUTION"); v == "" {
 			t.Fatal("TEST_ATTRIBUTION must be set for acceptance tests")
 		}
-		if v := os.Getenv("TEST_SLACK_CHAN"); v == "" {
-			t.Fatal("TEST_SLACK_CHAN must be set for acceptance tests")
-		}
 		if v := os.Getenv("TEST_PROJECT"); v == "" {
 			t.Fatal("TEST_PROJECT must be set for acceptance tests")
 		}

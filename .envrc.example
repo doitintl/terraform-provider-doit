@@ -7,13 +7,11 @@ export DOIT_HOST="https://api.doit.com"
 export TEST_USER="your-email@example.com"
 export TEST_USER_2="second-user@example.com"
 export TEST_ATTRIBUTION="your-attribution-id"
-export TEST_SLACK_CHAN="your-slack-channel-id"
 export TEST_PROJECT="your-project-id"
 export TEST_CUSTOMER_ID="your-customer-id"
 
-# Optional - specific data source tests will be skipped if these are unset
-# export TEST_ATTRIBUTION_GROUP="your-attribution-group-id"
-# export TEST_INVOICE_ID="your-invoice-id"
+# Optional - specific resource and data source tests will be skipped if these are unset
+# export TEST_SLACK_CHAN="your-slack-channel-id"
 # export TEST_BILLING_EXPLAINER_INVOICE_MONTH="your-invoice-month"  # format YYYY-MM
 # export TEST_ANOMALY_ID="your-anomaly-id"
 # export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
