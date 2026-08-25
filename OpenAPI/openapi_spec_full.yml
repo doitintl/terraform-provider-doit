@@ -6746,6 +6746,127 @@ paths:
           $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
+  # ============================================================
+  # CloudFlow export/import
+  # ============================================================
+  /cloudflow/v1/flows/{flowId}/export:
+    get:
+      tags:
+        - CloudFlow
+      summary: Export a flow as a portable bundle
+      description: |-
+        Serializes the flow — plus every flow it references through subflow nodes — into a
+        tenant-neutral, credential-free JSON bundle that can be imported into any tenant with
+        the import operation. Tenant-scoped references (connections, Datastore tables, global
+        variables) are declared as named requirements and rebound at import time; policy and
+        Slack-channel references cannot travel and are recorded as unsupported references.
+        The bundle never contains credentials, tenant identifiers, schedules, or execution state.
+      operationId: exportCloudflowFlow
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: The ID of the flow to export.
+          schema:
+            type: string
+        - name: includeVariableValues
+          in: query
+          required: false
+          description: |-
+            When `false`, local and global variable values are stripped from the bundle; names,
+            types, and required-ness always travel. Connection-typed variable values are
+            references, not values, and always travel as requirement tokens.
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: The flow bundle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowFlowBundle"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/422"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /cloudflow/v1/flows/actions/import:
+    post:
+      tags:
+        - CloudFlow
+      summary: Import a flow bundle
+      description: |-
+        Creates every flow of a previously exported bundle in the authenticated tenant.
+        Imports are create-only: each call creates new draft flows with new IDs — nothing is
+        published and no schedule is activated until the target tenant publishes.
+
+        Requirements declared by the bundle are resolved through `bindings` (requirement key →
+        target-tenant resource ID). Unbound connections and Datastore tables leave the
+        referencing nodes flagged incomplete; unbound global variables are auto-created. Pass
+        `options.createMissingTables: true` to create missing Datastore tables from the schemas
+        embedded in the bundle (structure only, never row data).
+
+        **Dry-run**: pass `?dryRun=true` to validate without writing. The response is an import
+        plan: per-requirement resolutions with candidate bindings in the target tenant, the
+        flows that would be created, and every validation issue at once.
+      operationId: importCloudflowFlow
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+            Re-submitting the same key with the same request returns the cached response without
+            re-executing side effects. The server retains the key for at least 24 hours.
+          schema:
+            type: string
+            maxLength: 255
+        - name: dryRun
+          in: query
+          required: false
+          description: |-
+            If `true`, validates the bundle and resolves its requirements against the tenant
+            without committing changes, returning the import plan.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudflowImportFlowsRequest"
+      responses:
+        "200":
+          description: Dry-run import plan (no writes performed).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowImportPlan"
+        "201":
+          description: Every flow in the bundle was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowImportFlowsResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/422"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /ps4commitments/v1/aws/organizations:
     get:
       operationId: listAwsOrganizations
@@ -7903,6 +8024,445 @@ components:
           type: integer
           nullable: true
           description: Always `null`. Row count is not computed for this endpoint.
+    CloudflowFlowBundle:
+      type: object
+      description: >-
+        Portable, tenant-neutral export of one or more flows. Contains no credentials,
+        tenant identifiers, schedules, or execution state; tenant-scoped references are
+        declared under `requirements` and appear inside node parameters as
+        `$req:<section>/<key>` tokens (subflow references as `$bundle:flows/<flowKey>`).
+      required:
+        - kind
+        - schemaVersion
+        - rootFlow
+        - flows
+      properties:
+        kind:
+          type: string
+          enum:
+            - cloudflow.doit.com/FlowBundle
+        schemaVersion:
+          type: integer
+          description: Bundle format version. The server exports the newest version and accepts every version it has ever shipped.
+          enum:
+            - 1
+        exportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Informational export timestamp; ignored on import.
+        rootFlow:
+          type: string
+          description: Key (into `flows`) of the flow that was exported; the rest are its subflows.
+        flows:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/CloudflowBundleFlow"
+        requirements:
+          $ref: "#/components/schemas/CloudflowBundleRequirements"
+    CloudflowBundleFlow:
+      type: object
+      required:
+        - key
+        - name
+        - firstNode
+        - nodes
+      properties:
+        key:
+          type: string
+          description: Bundle-local flow key. Opaque — the server generates new IDs at import.
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        triggerType:
+          type: string
+          nullable: true
+        firstNode:
+          type: string
+          description: Key of this flow's entry node.
+        nodes:
+          type: array
+          maxItems: 150
+          items:
+            $ref: "#/components/schemas/CloudflowBundleNode"
+        localVariables:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/CloudflowBundleVariable"
+        unsupportedReferences:
+          type: array
+          description: Tenant-scoped references removed at export (policy IDs, Slack channels); import flags the affected nodes incomplete.
+          items:
+            type: object
+            required:
+              - nodeKey
+              - kind
+            properties:
+              nodeKey:
+                type: string
+              kind:
+                type: string
+                enum:
+                  - policy
+                  - slackChannel
+              detail:
+                type: string
+    CloudflowBundleNode:
+      type: object
+      required:
+        - key
+        - name
+        - type
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          description: Node type (e.g. `triggerNode`, `actionNode`, `datastoreNode`). Validated against the supported node-type set at import.
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Node parameters with tenant-scoped scalar references replaced by `$req:`/`$bundle:` tokens.
+        approval:
+          type: object
+          description: Approval configuration without recipients (recipients are tenant-scoped and removed at export).
+          properties:
+            required:
+              type: boolean
+            message: {}
+            rejectApprovalAfterTime:
+              type: boolean
+            rejectTimeValue:
+              type: integer
+            rejectTimeUnit:
+              type: string
+        transitions:
+          type: array
+          items:
+            type: object
+            required:
+              - target
+            properties:
+              target:
+                type: string
+                description: Key of the node this transition points at.
+              label:
+                type: string
+                nullable: true
+              pathId:
+                type: string
+                nullable: true
+    CloudflowBundleVariable:
+      type: object
+      required:
+        - key
+        - name
+        - type
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        required:
+          type: boolean
+        type:
+          type: string
+        elementType:
+          type: string
+        value:
+          description: Present unless the export stripped variable values. Connection-typed values are `$req:connections/<key>` tokens.
+    CloudflowBundleRequirements:
+      type: object
+      description: Tenant-scoped resources the bundle needs; each is bound to a target-tenant resource at import.
+      properties:
+        connections:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+              - key
+              - provider
+              - name
+            properties:
+              key:
+                type: string
+              provider:
+                type: string
+                description: Cloud provider the bound connection must have (e.g. `amazon-web-services`).
+              name:
+                type: string
+                description: The source connection's display name, as a matching hint.
+              usedByNodes:
+                type: array
+                items:
+                  type: string
+        datastoreTables:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+              - key
+              - name
+              - fields
+            properties:
+              key:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              fields:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CloudflowBundleTableField"
+              usedByNodes:
+                type: array
+                items:
+                  type: string
+        globalVariables:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+              - key
+              - name
+              - type
+            properties:
+              key:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              type:
+                type: string
+              elementType:
+                type: string
+              value:
+                description: Present unless the export stripped variable values.
+              usedByNodes:
+                type: array
+                items:
+                  type: string
+    CloudflowBundleTableField:
+      type: object
+      required:
+        - name
+        - dataType
+      properties:
+        name:
+          type: string
+        dataType:
+          type: string
+        isUnique:
+          type: boolean
+        description:
+          type: string
+    CloudflowImportFlowsRequest:
+      type: object
+      required:
+        - bundle
+      properties:
+        bundle:
+          $ref: "#/components/schemas/CloudflowFlowBundle"
+        bindings:
+          type: object
+          description: Requirement key → target-tenant resource ID. Keys must be declared in the bundle's requirements. Run with `?dryRun=true` first to list required keys and candidate IDs.
+          properties:
+            connections:
+              type: object
+              additionalProperties:
+                type: string
+            datastoreTables:
+              type: object
+              additionalProperties:
+                type: string
+            globalVariables:
+              type: object
+              additionalProperties:
+                type: string
+        options:
+          type: object
+          properties:
+            createMissingTables:
+              type: boolean
+              default: false
+              description: Create unbound Datastore tables from the schemas embedded in the bundle (structure only, never row data). A same-named existing table with an incompatible schema is a validation error.
+            namePrefix:
+              type: string
+              description: Optional prefix for every created flow's name.
+    CloudflowImportPlan:
+      type: object
+      description: Dry-run result — what an import of this request would do, with every validation issue reported at once.
+      required:
+        - valid
+        - requirements
+        - flowsToCreate
+        - errors
+      properties:
+        valid:
+          type: boolean
+        requirements:
+          type: array
+          items:
+            type: object
+            required:
+              - section
+              - key
+              - resolution
+            properties:
+              section:
+                type: string
+                enum:
+                  - connections
+                  - datastoreTables
+                  - globalVariables
+              key:
+                type: string
+              resolution:
+                type: string
+                enum:
+                  - bound
+                  - suggested
+                  - willCreate
+                  - unbound
+              boundTo:
+                type: string
+              candidates:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    provider:
+                      type: string
+              consequenceIfUnbound:
+                type: string
+        flowsToCreate:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              name:
+                type: string
+              nodeCount:
+                type: integer
+              incompleteNodeCount:
+                type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+              - message
+            properties:
+              code:
+                type: string
+                enum:
+                  - bundle_schema_invalid
+                  - bundle_version_unsupported
+                  - bundle_limits_exceeded
+                  - binding_not_found
+                  - binding_provider_mismatch
+                  - table_schema_incompatible
+                  - global_variable_type_conflict
+                  - internal_field_rejected
+              field:
+                type: string
+              message:
+                type: string
+    CloudflowImportFlowsResult:
+      type: object
+      required:
+        - flows
+      properties:
+        flows:
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - id
+              - name
+              - status
+            properties:
+              key:
+                type: string
+              id:
+                type: string
+                description: The created flow's ID in the target tenant.
+              name:
+                type: string
+              status:
+                type: string
+                enum:
+                  - draft
+              incompleteNodes:
+                type: array
+                description: Nodes whose tenant-scoped references could not be bound; fix them in the builder before publishing.
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    reason:
+                      type: string
+                      enum:
+                        - connection_cleared
+                        - datastore_table_cleared
+                        - policy_cleared
+                        - slack_channel_cleared
+        createdTables:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowImportCreatedResource"
+        createdGlobalVariables:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowImportCreatedResource"
+        orphanedResources:
+          type: array
+          description: Side resources created before a failed import that best-effort rollback could not remove.
+          items:
+            $ref: "#/components/schemas/CloudflowImportCreatedResource"
+    CloudflowImportCreatedResource:
+      type: object
+      required:
+        - key
+        - id
+      properties:
+        key:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
     CloudflowTemplateListResponse:
       type: object
       description: Cursor-paginated list of CloudFlow templates.
@@ -14233,6 +14793,9 @@ components:
             - auto
             - manual
             - fixed
+        doitInvoicingEnabled:
+          type: boolean
+          description: Whether DoiT generates invoices for this contract.
         currentVersionNumber:
           type: integer
           nullable: true
@@ -14288,6 +14851,9 @@ components:
                   contractUpdatesEmail:
                     type: string
                     format: email
+                  doitInvoicingEnabled:
+                    type: boolean
+                    description: Whether DoiT generates invoices for this contract.
                   managementAccounts:
                     type: array
                     items:
@@ -14311,9 +14877,6 @@ components:
         - name
         - startDate
         - renewalPolicy
-        - invoicesEmail
-        - contractUpdatesEmail
-        - billingProfile
       properties:
         name:
           type: string
@@ -14330,15 +14893,30 @@ components:
             - auto
             - manual
             - fixed
+        doitInvoicingEnabled:
+          type: boolean
+          default: true
+          description: >-
+            Whether DoiT generates invoices for this contract. Disabling suppresses invoice
+            generation from that point forward while billing calculations and pipeline outputs
+            continue. Omitting the field leaves invoicing enabled.
         invoicesEmail:
           type: string
           format: email
+          description: >-
+            Required for an end-customer contract with doitInvoicingEnabled set to true;
+            optional otherwise.
         contractUpdatesEmail:
           type: string
           format: email
+          description: >-
+            Required for an end-customer contract with doitInvoicingEnabled set to true;
+            optional otherwise.
         billingProfile:
           type: object
-          description: The billing profile (name, country, state, city, address, zip).
+          description: >-
+            The billing profile (name, country, state, city, address, zip). Required for an
+            end-customer contract with doitInvoicingEnabled set to true; optional otherwise.
         managementAccounts:
           type: array
           items:
@@ -16538,6 +17116,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    "422":
+      description: Unprocessable Entity - The request is well-formed but semantically invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     "422_billing_transfer_batch_validation":
       description: >-
         Unprocessable Entity - One or more items in the batch failed validation before any
@@ -16889,7 +17473,7 @@ components:
     sortOrder:
       name: sortOrder
       in: query
-      description: Sort order can be ascending or descending.
+      description: Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
       schema:
         type: string
         enum:
