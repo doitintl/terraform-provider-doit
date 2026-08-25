@@ -141,6 +141,10 @@ func testSlackChannel() string {
 	return os.Getenv("TEST_SLACK_CHAN")
 }
 
+func testSlackWorkspace() string {
+	return os.Getenv("TEST_SLACK_WORKSPACE")
+}
+
 func testCustomerID() string {
 	return os.Getenv("TEST_CUSTOMER_ID")
 }
@@ -601,6 +605,13 @@ resource "doit_budget" "this" {
 }
 
 func TestAccBudget_SlackChannel(t *testing.T) {
+	if testSlackChannel() == "" {
+		t.Skip("TEST_SLACK_CHAN is not set, skipping Slack channel test")
+	}
+	if testSlackWorkspace() == "" {
+		t.Skip("TEST_SLACK_WORKSPACE is not set, skipping Slack channel test")
+	}
+
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -632,6 +643,14 @@ func TestAccBudget_SlackChannel(t *testing.T) {
 						})),
 				},
 			},
+			{
+				Config: testAccBudgetSlackChannel(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -653,6 +672,7 @@ resource "doit_budget" "this" {
     {
       id          = "%s"
       customer_id = "%s"
+      workspace   = "%s"
     }
   ]
 
@@ -665,7 +685,7 @@ resource "doit_budget" "this" {
     },
   ]
 }
-`, budgetStartPeriod(), i, testSlackChannel(), testCustomerID(), testAttribution(), testUser())
+`, budgetStartPeriod(), i, testSlackChannel(), testCustomerID(), testSlackWorkspace(), testAttribution(), testUser())
 }
 
 // TestAccBudget_Disappears verifies that Terraform correctly handles

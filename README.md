@@ -22,11 +22,11 @@ The DoiT Cloud Intelligence Terraform Provider lets you manage [DoiT Cloud Intel
 
 The provider supports four configuration options, all of which can be set via environment variables:
 
-| Attribute          | Environment Variable    | Required | Description                                                  |
-| ------------------ | ----------------------- | -------- | -------------------------------------------------------------- |
-| `api_token`        | `DOIT_API_TOKEN`        | Yes      | Your DoiT API key                                             |
-| `host`             | `DOIT_HOST`             | No       | API host (defaults to `https://api.doit.com`)                 |
-| `customer_context` | `DOIT_CUSTOMER_CONTEXT` | No\*     | Customer context (_required for DoiT employees only_)         |
+| Attribute          | Environment Variable    | Required | Description                                                                                                                                                                                                 |
+| ------------------ | ----------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api_token`        | `DOIT_API_TOKEN`        | Yes      | Your DoiT API key                                                                                                                                                                                           |
+| `host`             | `DOIT_HOST`             | No       | API host (defaults to `https://api.doit.com`)                                                                                                                                                               |
+| `customer_context` | `DOIT_CUSTOMER_CONTEXT` | No\*     | Customer context (_required for DoiT employees only_)                                                                                                                                                       |
 | `request_timeout`  | `DOIT_REQUEST_TIMEOUT`  | No       | Timeout per HTTP request, e.g. `150s`, `4m` (defaults to `150s`). Must be greater than `120s` — see the [Timeouts guide](https://registry.terraform.io/providers/doitintl/doit/latest/docs/guides/timeouts) |
 
 ### Provider Configuration
@@ -211,15 +211,16 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `TEST_USER`        | Email for test budget collaborators/recipients |
 | `TEST_USER_2`      | Second user email for resource sharing tests   |
 | `TEST_ATTRIBUTION` | Attribution ID for test budget scope           |
-| `TEST_SLACK_CHAN`  | Slack channel ID for notification tests        |
 | `TEST_PROJECT`     | Project ID for allocation rule tests           |
-| `TEST_CUSTOMER_ID` | Customer ID for Slack channel recipient        |
+| `TEST_CUSTOMER_ID` | Customer ID for tests                          |
 
 <details>
-<summary>Optional variables (specific data source tests are skipped if unset)</summary>
+<summary>Optional variables (specific resource and data source tests are skipped if unset)</summary>
 
 | Variable                               | Description                                                  |
 | -------------------------------------- | ------------------------------------------------------------ |
+| `TEST_SLACK_CHAN`                      | Slack channel ID for notification tests                      |
+| `TEST_SLACK_WORKSPACE`                 | Slack workspace for notification tests                       |
 | `TEST_ATTRIBUTION_GROUP`               | Attribution group ID for report tests                        |
 | `TEST_INVOICE_ID`                      | Invoice ID for invoice data source tests                     |
 | `TEST_ANOMALY_ID`                      | Anomaly ID for anomaly data source tests                     |

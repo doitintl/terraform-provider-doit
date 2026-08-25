@@ -235,7 +235,7 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		for i, slack := range *budget.RecipientsSlackChannels {
 			slackAttrs := map[string]attr.Value{
 				"customer_id": types.StringPointerValue(slack.CustomerId),
-				"id":          types.StringPointerValue(slack.Id),
+				"id":          types.StringValue(slack.Id),
 				"name":        types.StringPointerValue(slack.Name),
 				"shared":      types.BoolPointerValue(slack.Shared),
 				"type":        types.StringPointerValue(slack.Type),

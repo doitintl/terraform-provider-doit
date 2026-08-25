@@ -4394,7 +4394,10 @@ paths:
       tags:
         - PerfectScale for Commitments AWS
       summary: List AWS organizations
-      description: "Returns all AWS organizations (accounts) accessible to the authenticated tenant. Use as the entry point to discover AWS organization account IDs, and organization-level onboarding status of the available commitment types and savings metrics. \n\nEach item includes metadata, trailing 30-day aggregate statistics, precomputed YTD/lifetime savings totals per Savings Plan (SP) type, and estimated monthly potential savings (`monthlyPotentialSavings`) per SP type from the latest projection. Sum across items for customer-level totals."
+      description: |-
+        Returns all AWS organizations (accounts) accessible to the authenticated tenant. Use as the entry point to discover AWS organization account IDs, and organization-level onboarding status of the available commitment types and savings metrics.
+
+        Each item includes metadata, trailing 30-day aggregate statistics, precomputed YTD/lifetime savings totals per Savings Plan (SP) type, and estimated monthly potential savings (`monthlyPotentialSavings`) per SP type from the latest projection. Sum across items for customer-level totals.
       parameters:
         - $ref: "#/components/parameters/tenantId"
         - $ref: "#/components/parameters/ps4cPageToken"
@@ -10749,7 +10752,10 @@ components:
             default.
     SlackChannel:
       type: object
-      description: Information of a Slack channel for notifications.
+      description: >-
+        Information of a Slack channel for notifications. `customerId` and `workspace` are required unless `shared` is true.
+      required:
+        - id
       properties:
         customerId:
           type: string

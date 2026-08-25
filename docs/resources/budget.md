@@ -225,10 +225,13 @@ Optional:
 <a id="nestedatt--recipients_slack_channels"></a>
 ### Nested Schema for `recipients_slack_channels`
 
+Required:
+
+- `id` (String)
+
 Optional:
 
 - `customer_id` (String)
-- `id` (String)
 - `name` (String)
 - `shared` (Boolean)
 - `type` (String)
