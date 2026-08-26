@@ -38,7 +38,7 @@ data "doit_report_query" "cost_by_provider" {
 # Parse the JSON result
 locals {
   query_result = jsondecode(data.doit_report_query.cost_by_provider.result_json)
-  # Extract column names (each schema object has name, type, and optional allocation id)
+  # Extract column names (schema objects contain name, type, and optional unit, currency, aggregation, id)
   columns = [for s in local.query_result.schema : s.name]
 }
 

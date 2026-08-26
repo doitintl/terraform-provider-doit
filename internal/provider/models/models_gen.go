@@ -273,16 +273,16 @@ func (e BudgetAPIPublic) Valid() bool {
 
 // Defines values for BudgetCreateUpdateRequestMetric.
 const (
-	AmortizedCost BudgetCreateUpdateRequestMetric = "amortized_cost"
-	Cost          BudgetCreateUpdateRequestMetric = "cost"
+	BudgetCreateUpdateRequestMetricAmortizedCost BudgetCreateUpdateRequestMetric = "amortized_cost"
+	BudgetCreateUpdateRequestMetricCost          BudgetCreateUpdateRequestMetric = "cost"
 )
 
 // Valid indicates whether the value is a known member of the BudgetCreateUpdateRequestMetric enum.
 func (e BudgetCreateUpdateRequestMetric) Valid() bool {
 	switch e {
-	case AmortizedCost:
+	case BudgetCreateUpdateRequestMetricAmortizedCost:
 		return true
-	case Cost:
+	case BudgetCreateUpdateRequestMetricCost:
 		return true
 	default:
 		return false
@@ -1257,76 +1257,76 @@ func (e CreateLabelRequestColor) Valid() bool {
 
 // Defines values for Currency.
 const (
-	AED Currency = "AED"
-	AUD Currency = "AUD"
-	BRL Currency = "BRL"
-	CAD Currency = "CAD"
-	CHF Currency = "CHF"
-	COP Currency = "COP"
-	DKK Currency = "DKK"
-	EGP Currency = "EGP"
-	EUR Currency = "EUR"
-	GBP Currency = "GBP"
-	IDR Currency = "IDR"
-	ILS Currency = "ILS"
-	JPY Currency = "JPY"
-	MXN Currency = "MXN"
-	MYR Currency = "MYR"
-	NOK Currency = "NOK"
-	SEK Currency = "SEK"
-	SGD Currency = "SGD"
-	THB Currency = "THB"
-	TWD Currency = "TWD"
-	USD Currency = "USD"
-	ZAR Currency = "ZAR"
+	CurrencyAED Currency = "AED"
+	CurrencyAUD Currency = "AUD"
+	CurrencyBRL Currency = "BRL"
+	CurrencyCAD Currency = "CAD"
+	CurrencyCHF Currency = "CHF"
+	CurrencyCOP Currency = "COP"
+	CurrencyDKK Currency = "DKK"
+	CurrencyEGP Currency = "EGP"
+	CurrencyEUR Currency = "EUR"
+	CurrencyGBP Currency = "GBP"
+	CurrencyIDR Currency = "IDR"
+	CurrencyILS Currency = "ILS"
+	CurrencyJPY Currency = "JPY"
+	CurrencyMXN Currency = "MXN"
+	CurrencyMYR Currency = "MYR"
+	CurrencyNOK Currency = "NOK"
+	CurrencySEK Currency = "SEK"
+	CurrencySGD Currency = "SGD"
+	CurrencyTHB Currency = "THB"
+	CurrencyTWD Currency = "TWD"
+	CurrencyUSD Currency = "USD"
+	CurrencyZAR Currency = "ZAR"
 )
 
 // Valid indicates whether the value is a known member of the Currency enum.
 func (e Currency) Valid() bool {
 	switch e {
-	case AED:
+	case CurrencyAED:
 		return true
-	case AUD:
+	case CurrencyAUD:
 		return true
-	case BRL:
+	case CurrencyBRL:
 		return true
-	case CAD:
+	case CurrencyCAD:
 		return true
-	case CHF:
+	case CurrencyCHF:
 		return true
-	case COP:
+	case CurrencyCOP:
 		return true
-	case DKK:
+	case CurrencyDKK:
 		return true
-	case EGP:
+	case CurrencyEGP:
 		return true
-	case EUR:
+	case CurrencyEUR:
 		return true
-	case GBP:
+	case CurrencyGBP:
 		return true
-	case IDR:
+	case CurrencyIDR:
 		return true
-	case ILS:
+	case CurrencyILS:
 		return true
-	case JPY:
+	case CurrencyJPY:
 		return true
-	case MXN:
+	case CurrencyMXN:
 		return true
-	case MYR:
+	case CurrencyMYR:
 		return true
-	case NOK:
+	case CurrencyNOK:
 		return true
-	case SEK:
+	case CurrencySEK:
 		return true
-	case SGD:
+	case CurrencySGD:
 		return true
-	case THB:
+	case CurrencyTHB:
 		return true
-	case TWD:
+	case CurrencyTWD:
 		return true
-	case USD:
+	case CurrencyUSD:
 		return true
-	case ZAR:
+	case CurrencyZAR:
 		return true
 	default:
 		return false
@@ -1512,22 +1512,22 @@ func (e DimensionsTypes) Valid() bool {
 
 // Defines values for DismissalDetailsReason.
 const (
-	InaccurateOptimizationOpportunities DismissalDetailsReason = "inaccurate optimization opportunities"
-	NotEnoughInformation                DismissalDetailsReason = "not enough information"
-	NotRelevant                         DismissalDetailsReason = "not relevant"
-	NotWorthTheEffort                   DismissalDetailsReason = "not worth the effort"
+	DismissalDetailsReasonInaccurateOptimizationOpportunities DismissalDetailsReason = "inaccurate optimization opportunities"
+	DismissalDetailsReasonNotEnoughInformation                DismissalDetailsReason = "not enough information"
+	DismissalDetailsReasonNotRelevant                         DismissalDetailsReason = "not relevant"
+	DismissalDetailsReasonNotWorthTheEffort                   DismissalDetailsReason = "not worth the effort"
 )
 
 // Valid indicates whether the value is a known member of the DismissalDetailsReason enum.
 func (e DismissalDetailsReason) Valid() bool {
 	switch e {
-	case InaccurateOptimizationOpportunities:
+	case DismissalDetailsReasonInaccurateOptimizationOpportunities:
 		return true
-	case NotEnoughInformation:
+	case DismissalDetailsReasonNotEnoughInformation:
 		return true
-	case NotRelevant:
+	case DismissalDetailsReasonNotRelevant:
 		return true
-	case NotWorthTheEffort:
+	case DismissalDetailsReasonNotWorthTheEffort:
 		return true
 	default:
 		return false
@@ -1569,28 +1569,28 @@ func (e DisplayStatus) Valid() bool {
 
 // Defines values for ExternalConfigAggregation.
 const (
-	Count          ExternalConfigAggregation = "count"
-	PercentCol     ExternalConfigAggregation = "percent_col"
-	PercentRow     ExternalConfigAggregation = "percent_row"
-	PercentTotal   ExternalConfigAggregation = "percent_total"
-	Total          ExternalConfigAggregation = "total"
-	TotalOverTotal ExternalConfigAggregation = "total_over_total"
+	ExternalConfigAggregationCount          ExternalConfigAggregation = "count"
+	ExternalConfigAggregationPercentCol     ExternalConfigAggregation = "percent_col"
+	ExternalConfigAggregationPercentRow     ExternalConfigAggregation = "percent_row"
+	ExternalConfigAggregationPercentTotal   ExternalConfigAggregation = "percent_total"
+	ExternalConfigAggregationTotal          ExternalConfigAggregation = "total"
+	ExternalConfigAggregationTotalOverTotal ExternalConfigAggregation = "total_over_total"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigAggregation enum.
 func (e ExternalConfigAggregation) Valid() bool {
 	switch e {
-	case Count:
+	case ExternalConfigAggregationCount:
 		return true
-	case PercentCol:
+	case ExternalConfigAggregationPercentCol:
 		return true
-	case PercentRow:
+	case ExternalConfigAggregationPercentRow:
 		return true
-	case PercentTotal:
+	case ExternalConfigAggregationPercentTotal:
 		return true
-	case Total:
+	case ExternalConfigAggregationTotal:
 		return true
-	case TotalOverTotal:
+	case ExternalConfigAggregationTotalOverTotal:
 		return true
 	default:
 		return false
@@ -1803,16 +1803,16 @@ func (e ExternalConfigFilterMode) Valid() bool {
 
 // Defines values for ExternalConfigMetricFilterOperand.
 const (
-	SeriesTotal ExternalConfigMetricFilterOperand = "series_total"
-	SingleValue ExternalConfigMetricFilterOperand = "single_value"
+	ExternalConfigMetricFilterOperandSeriesTotal ExternalConfigMetricFilterOperand = "series_total"
+	ExternalConfigMetricFilterOperandSingleValue ExternalConfigMetricFilterOperand = "single_value"
 )
 
 // Valid indicates whether the value is a known member of the ExternalConfigMetricFilterOperand enum.
 func (e ExternalConfigMetricFilterOperand) Valid() bool {
 	switch e {
-	case SeriesTotal:
+	case ExternalConfigMetricFilterOperandSeriesTotal:
 		return true
-	case SingleValue:
+	case ExternalConfigMetricFilterOperandSingleValue:
 		return true
 	default:
 		return false
@@ -1932,16 +1932,16 @@ func (e ExternalDisplaySettingsNumberScale) Valid() bool {
 
 // Defines values for ExternalForecastSettingsMode.
 const (
-	Grouping ExternalForecastSettingsMode = "grouping"
-	Totals   ExternalForecastSettingsMode = "totals"
+	ExternalForecastSettingsModeGrouping ExternalForecastSettingsMode = "grouping"
+	ExternalForecastSettingsModeTotals   ExternalForecastSettingsMode = "totals"
 )
 
 // Valid indicates whether the value is a known member of the ExternalForecastSettingsMode enum.
 func (e ExternalForecastSettingsMode) Valid() bool {
 	switch e {
-	case Grouping:
+	case ExternalForecastSettingsModeGrouping:
 		return true
-	case Totals:
+	case ExternalForecastSettingsModeTotals:
 		return true
 	default:
 		return false
@@ -1950,16 +1950,16 @@ func (e ExternalForecastSettingsMode) Valid() bool {
 
 // Defines values for ExternalLimitByChangeChangeType.
 const (
-	Absolute   ExternalLimitByChangeChangeType = "absolute"
-	Percentage ExternalLimitByChangeChangeType = "percentage"
+	ExternalLimitByChangeChangeTypeAbsolute   ExternalLimitByChangeChangeType = "absolute"
+	ExternalLimitByChangeChangeTypePercentage ExternalLimitByChangeChangeType = "percentage"
 )
 
 // Valid indicates whether the value is a known member of the ExternalLimitByChangeChangeType enum.
 func (e ExternalLimitByChangeChangeType) Valid() bool {
 	switch e {
-	case Absolute:
+	case ExternalLimitByChangeChangeTypeAbsolute:
 		return true
-	case Percentage:
+	case ExternalLimitByChangeChangeTypePercentage:
 		return true
 	default:
 		return false
@@ -1968,28 +1968,28 @@ func (e ExternalLimitByChangeChangeType) Valid() bool {
 
 // Defines values for ExternalLimitByChangeOperator.
 const (
-	Between          ExternalLimitByChangeOperator = "between"
-	GreaterThan      ExternalLimitByChangeOperator = ">"
-	GreaterThanEqual ExternalLimitByChangeOperator = ">="
-	LessThan         ExternalLimitByChangeOperator = "<"
-	LessThanEqual    ExternalLimitByChangeOperator = "<="
-	NotBetween       ExternalLimitByChangeOperator = "not_between"
+	ExternalLimitByChangeOperatorBetween          ExternalLimitByChangeOperator = "between"
+	ExternalLimitByChangeOperatorGreaterThan      ExternalLimitByChangeOperator = ">"
+	ExternalLimitByChangeOperatorGreaterThanEqual ExternalLimitByChangeOperator = ">="
+	ExternalLimitByChangeOperatorLessThan         ExternalLimitByChangeOperator = "<"
+	ExternalLimitByChangeOperatorLessThanEqual    ExternalLimitByChangeOperator = "<="
+	ExternalLimitByChangeOperatorNotBetween       ExternalLimitByChangeOperator = "not_between"
 )
 
 // Valid indicates whether the value is a known member of the ExternalLimitByChangeOperator enum.
 func (e ExternalLimitByChangeOperator) Valid() bool {
 	switch e {
-	case Between:
+	case ExternalLimitByChangeOperatorBetween:
 		return true
-	case GreaterThan:
+	case ExternalLimitByChangeOperatorGreaterThan:
 		return true
-	case GreaterThanEqual:
+	case ExternalLimitByChangeOperatorGreaterThanEqual:
 		return true
-	case LessThan:
+	case ExternalLimitByChangeOperatorLessThan:
 		return true
-	case LessThanEqual:
+	case ExternalLimitByChangeOperatorLessThanEqual:
 		return true
-	case NotBetween:
+	case ExternalLimitByChangeOperatorNotBetween:
 		return true
 	default:
 		return false
@@ -2067,58 +2067,58 @@ func (e ExternalOriginType) Valid() bool {
 
 // Defines values for ExternalRenderer.
 const (
-	AreaChart          ExternalRenderer = "area_chart"
-	AreaSplineChart    ExternalRenderer = "area_spline_chart"
-	BarChart           ExternalRenderer = "bar_chart"
-	ColumnChart        ExternalRenderer = "column_chart"
-	CsvExport          ExternalRenderer = "csv_export"
-	LineChart          ExternalRenderer = "line_chart"
-	SheetsExport       ExternalRenderer = "sheets_export"
-	SplineChart        ExternalRenderer = "spline_chart"
-	StackedAreaChart   ExternalRenderer = "stacked_area_chart"
-	StackedBarChart    ExternalRenderer = "stacked_bar_chart"
-	StackedColumnChart ExternalRenderer = "stacked_column_chart"
-	Table              ExternalRenderer = "table"
-	TableColHeatmap    ExternalRenderer = "table_col_heatmap"
-	TableHeatmap       ExternalRenderer = "table_heatmap"
-	TableRowHeatmap    ExternalRenderer = "table_row_heatmap"
-	TreemapChart       ExternalRenderer = "treemap_chart"
+	ExternalRendererAreaChart          ExternalRenderer = "area_chart"
+	ExternalRendererAreaSplineChart    ExternalRenderer = "area_spline_chart"
+	ExternalRendererBarChart           ExternalRenderer = "bar_chart"
+	ExternalRendererColumnChart        ExternalRenderer = "column_chart"
+	ExternalRendererCsvExport          ExternalRenderer = "csv_export"
+	ExternalRendererLineChart          ExternalRenderer = "line_chart"
+	ExternalRendererSheetsExport       ExternalRenderer = "sheets_export"
+	ExternalRendererSplineChart        ExternalRenderer = "spline_chart"
+	ExternalRendererStackedAreaChart   ExternalRenderer = "stacked_area_chart"
+	ExternalRendererStackedBarChart    ExternalRenderer = "stacked_bar_chart"
+	ExternalRendererStackedColumnChart ExternalRenderer = "stacked_column_chart"
+	ExternalRendererTable              ExternalRenderer = "table"
+	ExternalRendererTableColHeatmap    ExternalRenderer = "table_col_heatmap"
+	ExternalRendererTableHeatmap       ExternalRenderer = "table_heatmap"
+	ExternalRendererTableRowHeatmap    ExternalRenderer = "table_row_heatmap"
+	ExternalRendererTreemapChart       ExternalRenderer = "treemap_chart"
 )
 
 // Valid indicates whether the value is a known member of the ExternalRenderer enum.
 func (e ExternalRenderer) Valid() bool {
 	switch e {
-	case AreaChart:
+	case ExternalRendererAreaChart:
 		return true
-	case AreaSplineChart:
+	case ExternalRendererAreaSplineChart:
 		return true
-	case BarChart:
+	case ExternalRendererBarChart:
 		return true
-	case ColumnChart:
+	case ExternalRendererColumnChart:
 		return true
-	case CsvExport:
+	case ExternalRendererCsvExport:
 		return true
-	case LineChart:
+	case ExternalRendererLineChart:
 		return true
-	case SheetsExport:
+	case ExternalRendererSheetsExport:
 		return true
-	case SplineChart:
+	case ExternalRendererSplineChart:
 		return true
-	case StackedAreaChart:
+	case ExternalRendererStackedAreaChart:
 		return true
-	case StackedBarChart:
+	case ExternalRendererStackedBarChart:
 		return true
-	case StackedColumnChart:
+	case ExternalRendererStackedColumnChart:
 		return true
-	case Table:
+	case ExternalRendererTable:
 		return true
-	case TableColHeatmap:
+	case ExternalRendererTableColHeatmap:
 		return true
-	case TableHeatmap:
+	case ExternalRendererTableHeatmap:
 		return true
-	case TableRowHeatmap:
+	case ExternalRendererTableRowHeatmap:
 		return true
-	case TreemapChart:
+	case ExternalRendererTreemapChart:
 		return true
 	default:
 		return false
@@ -2397,19 +2397,19 @@ func (e GetReportResponseResultMlFeatures) Valid() bool {
 
 // Defines values for GroupAllocationRuleAction.
 const (
-	Create GroupAllocationRuleAction = "create"
-	Select GroupAllocationRuleAction = "select"
-	Update GroupAllocationRuleAction = "update"
+	GroupAllocationRuleActionCreate GroupAllocationRuleAction = "create"
+	GroupAllocationRuleActionSelect GroupAllocationRuleAction = "select"
+	GroupAllocationRuleActionUpdate GroupAllocationRuleAction = "update"
 )
 
 // Valid indicates whether the value is a known member of the GroupAllocationRuleAction enum.
 func (e GroupAllocationRuleAction) Valid() bool {
 	switch e {
-	case Create:
+	case GroupAllocationRuleActionCreate:
 		return true
-	case Select:
+	case GroupAllocationRuleActionSelect:
 		return true
-	case Update:
+	case GroupAllocationRuleActionUpdate:
 		return true
 	default:
 		return false
@@ -2661,19 +2661,19 @@ func (e MetricFilterText) Valid() bool {
 
 // Defines values for NotificationEventChannel.
 const (
-	Email   NotificationEventChannel = "email"
-	Msteams NotificationEventChannel = "msteams"
-	Slack   NotificationEventChannel = "slack"
+	NotificationEventChannelEmail   NotificationEventChannel = "email"
+	NotificationEventChannelMsteams NotificationEventChannel = "msteams"
+	NotificationEventChannelSlack   NotificationEventChannel = "slack"
 )
 
 // Valid indicates whether the value is a known member of the NotificationEventChannel enum.
 func (e NotificationEventChannel) Valid() bool {
 	switch e {
-	case Email:
+	case NotificationEventChannelEmail:
 		return true
-	case Msteams:
+	case NotificationEventChannelMsteams:
 		return true
-	case Slack:
+	case NotificationEventChannelSlack:
 		return true
 	default:
 		return false
@@ -2833,6 +2833,81 @@ func (e RunReportResultResultMlFeatures) Valid() bool {
 	}
 }
 
+// Defines values for SchemaFieldAggregation.
+const (
+	SchemaFieldAggregationCount          SchemaFieldAggregation = "count"
+	SchemaFieldAggregationPercentCol     SchemaFieldAggregation = "percent_col"
+	SchemaFieldAggregationPercentRow     SchemaFieldAggregation = "percent_row"
+	SchemaFieldAggregationPercentTotal   SchemaFieldAggregation = "percent_total"
+	SchemaFieldAggregationTotal          SchemaFieldAggregation = "total"
+	SchemaFieldAggregationTotalOverTotal SchemaFieldAggregation = "total_over_total"
+)
+
+// Valid indicates whether the value is a known member of the SchemaFieldAggregation enum.
+func (e SchemaFieldAggregation) Valid() bool {
+	switch e {
+	case SchemaFieldAggregationCount:
+		return true
+	case SchemaFieldAggregationPercentCol:
+		return true
+	case SchemaFieldAggregationPercentRow:
+		return true
+	case SchemaFieldAggregationPercentTotal:
+		return true
+	case SchemaFieldAggregationTotal:
+		return true
+	case SchemaFieldAggregationTotalOverTotal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SchemaFieldType.
+const (
+	SchemaFieldTypeFloat     SchemaFieldType = "float"
+	SchemaFieldTypeInteger   SchemaFieldType = "integer"
+	SchemaFieldTypeString    SchemaFieldType = "string"
+	SchemaFieldTypeTimestamp SchemaFieldType = "timestamp"
+)
+
+// Valid indicates whether the value is a known member of the SchemaFieldType enum.
+func (e SchemaFieldType) Valid() bool {
+	switch e {
+	case SchemaFieldTypeFloat:
+		return true
+	case SchemaFieldTypeInteger:
+		return true
+	case SchemaFieldTypeString:
+		return true
+	case SchemaFieldTypeTimestamp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SchemaFieldUnit.
+const (
+	SchemaFieldUnitCurrency SchemaFieldUnit = "currency"
+	SchemaFieldUnitNumber   SchemaFieldUnit = "number"
+	SchemaFieldUnitPercent  SchemaFieldUnit = "percent"
+)
+
+// Valid indicates whether the value is a known member of the SchemaFieldUnit enum.
+func (e SchemaFieldUnit) Valid() bool {
+	switch e {
+	case SchemaFieldUnitCurrency:
+		return true
+	case SchemaFieldUnitNumber:
+		return true
+	case SchemaFieldUnitPercent:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ServiceQuotaCloudProvider.
 const (
 	ServiceQuotaCloudProviderAws ServiceQuotaCloudProvider = "aws"
@@ -2853,19 +2928,19 @@ func (e ServiceQuotaCloudProvider) Valid() bool {
 
 // Defines values for ServiceQuotaStatus.
 const (
-	Exceeded ServiceQuotaStatus = "exceeded"
-	Ok       ServiceQuotaStatus = "ok"
-	Warning  ServiceQuotaStatus = "warning"
+	ServiceQuotaStatusExceeded ServiceQuotaStatus = "exceeded"
+	ServiceQuotaStatusOk       ServiceQuotaStatus = "ok"
+	ServiceQuotaStatusWarning  ServiceQuotaStatus = "warning"
 )
 
 // Valid indicates whether the value is a known member of the ServiceQuotaStatus enum.
 func (e ServiceQuotaStatus) Valid() bool {
 	switch e {
-	case Exceeded:
+	case ServiceQuotaStatusExceeded:
 		return true
-	case Ok:
+	case ServiceQuotaStatusOk:
 		return true
-	case Warning:
+	case ServiceQuotaStatusWarning:
 		return true
 	default:
 		return false
@@ -3630,19 +3705,19 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 
 // Defines values for ListAnomaliesParamsSortBy.
 const (
-	CostOfAnomaly ListAnomaliesParamsSortBy = "costOfAnomaly"
-	SeverityLevel ListAnomaliesParamsSortBy = "severityLevel"
-	StartTime     ListAnomaliesParamsSortBy = "startTime"
+	ListAnomaliesParamsSortByCostOfAnomaly ListAnomaliesParamsSortBy = "costOfAnomaly"
+	ListAnomaliesParamsSortBySeverityLevel ListAnomaliesParamsSortBy = "severityLevel"
+	ListAnomaliesParamsSortByStartTime     ListAnomaliesParamsSortBy = "startTime"
 )
 
 // Valid indicates whether the value is a known member of the ListAnomaliesParamsSortBy enum.
 func (e ListAnomaliesParamsSortBy) Valid() bool {
 	switch e {
-	case CostOfAnomaly:
+	case ListAnomaliesParamsSortByCostOfAnomaly:
 		return true
-	case SeverityLevel:
+	case ListAnomaliesParamsSortBySeverityLevel:
 		return true
-	case StartTime:
+	case ListAnomaliesParamsSortByStartTime:
 		return true
 	default:
 		return false
@@ -7357,6 +7432,8 @@ type GetKnownIssue200ResponsePlatform string
 type GetKnownIssue200ResponseStatus string
 
 // GetReportResponse Results returned when running a report; includes schema and rows.
+//
+// Example: {"createTime":1704067200000,"id":"rpt_dummy001abc","labels":[],"owner":"customer@example.com","reportName":"Monthly Cost by Service","result":{"cacheHit":true,"rows":[["Amazon Elastic Compute Cloud",4821.37,12450],["Cloud Storage",912.05,893021],["BigQuery",356.88,42]],"schema":[{"name":"service_description","type":"string"},{"aggregation":"total","currency":"USD","name":"cost","type":"float","unit":"currency"},{"aggregation":"total","name":"usage","type":"float","unit":"number"}]},"type":"custom","updateTime":1706745600000,"urlUI":"https://console.doit.com/customers/cust_dummy123/analyze/reports/rpt_dummy001abc"}
 type GetReportResponse struct {
 	// CreateTime The creation time of the report, in milliseconds since the epoch.
 	CreateTime *int64 `json:"createTime,omitempty"`
@@ -8392,6 +8469,8 @@ type Role struct {
 }
 
 // RunReportResult Results returned when running a report; includes schema and rows.
+//
+// Example: {"result":{"cacheHit":false,"rows":[["Amazon Elastic Compute Cloud",4821.37],["Cloud Storage",912.05],["BigQuery",356.88]],"schema":[{"name":"service_description","type":"string"},{"aggregation":"total","currency":"USD","name":"cost","type":"float","unit":"currency"}]}}
 type RunReportResult struct {
 	Result *RunReportResultResult `json:"result,omitempty"`
 }
@@ -8414,11 +8493,35 @@ type RunReportResultResultMlFeatures string
 
 // SchemaField Schema of a report result column.
 type SchemaField struct {
+	// Aggregation Authoritative aggregation applied to this metric column.
+	Aggregation *SchemaFieldAggregation `json:"aggregation,omitempty"`
+
+	// Currency Effective ISO 4217 currency code when unit is currency.
+	//
+	// Example: USD
+	Currency *string `json:"currency,omitempty"`
+
 	// Id Stable allocation-group ID used to select the allocation dimension in report configurations. Omitted for other report columns.
-	Id   *string `json:"id,omitempty"`
+	Id *string `json:"id,omitempty"`
+
+	// Name Column name. Matches the corresponding value position in each row.
 	Name *string `json:"name,omitempty"`
-	Type *string `json:"type,omitempty"`
+
+	// Type Wire-format type of the column values. Dimension columns use string; metric columns use float (cost, usage, saving, custom, and extended metrics) or integer (count aggregation). Time-series reports include a timestamp column.
+	Type *SchemaFieldType `json:"type,omitempty"`
+
+	// Unit Semantic unit of the column values.
+	Unit *SchemaFieldUnit `json:"unit,omitempty"`
 }
+
+// SchemaFieldAggregation Authoritative aggregation applied to this metric column.
+type SchemaFieldAggregation string
+
+// SchemaFieldType Wire-format type of the column values. Dimension columns use string; metric columns use float (cost, usage, saving, custom, and extended metrics) or integer (count aggregation). Time-series reports include a timestamp column.
+type SchemaFieldType string
+
+// SchemaFieldUnit Semantic unit of the column values.
+type SchemaFieldUnit string
 
 // Seats Licensing seat counts for a subscription.
 type Seats struct {

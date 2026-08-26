@@ -5,8 +5,8 @@ data "doit_report_result" "example" {
 
 # Parse the JSON results
 locals {
-  result  = jsondecode(data.doit_report_result.example.result_json)
-  # Extract column names (each schema object has name, type, and optional allocation id)
+  result = jsondecode(data.doit_report_result.example.result_json)
+  # Extract column names (schema objects contain name, type, and optional unit, currency, aggregation, id)
   columns = [for s in local.result.schema : s.name]
 }
 

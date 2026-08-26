@@ -360,3 +360,89 @@ output "schema_id_matches_allocation" {
 }
 `, name)
 }
+
+// TestAccReportResultDataSource_SchemaFieldMetadata verifies that reading a report's
+// results returns column metadata (name, type, unit, currency, aggregation) in result_json.schema.
+func TestAccReportResultDataSource_SchemaFieldMetadata(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tfacc-rr-meta")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportResultDataSourceSchemaFieldMetadataConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckOutput("cost_field_name", "cost"),
+					resource.TestCheckOutput("cost_field_type", "float"),
+					resource.TestCheckOutput("cost_field_unit", "currency"),
+					resource.TestCheckOutput("cost_field_currency", "USD"),
+					resource.TestCheckOutput("cost_field_aggregation", "total"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportResultDataSourceSchemaFieldMetadataConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = "%[1]s-report"
+    description = "test report schema field metadata"
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 1
+          unit            = "month"
+          include_current = false
+        }
+    }
+}
+
+data "doit_report_result" "test" {
+    id = doit_report.test.id
+}
+
+locals {
+  result_payload = jsondecode(data.doit_report_result.test.result_json)
+  cost_fields = [
+    for field in local.result_payload.schema : field
+    if lookup(field, "name", "") == "cost"
+  ]
+  cost_field = length(local.cost_fields) > 0 ? local.cost_fields[0] : {}
+}
+
+output "cost_field_name" {
+  value = lookup(local.cost_field, "name", "")
+}
+
+output "cost_field_type" {
+  value = lookup(local.cost_field, "type", "")
+}
+
+output "cost_field_unit" {
+  value = lookup(local.cost_field, "unit", "")
+}
+
+output "cost_field_currency" {
+  value = lookup(local.cost_field, "currency", "")
+}
+
+output "cost_field_aggregation" {
+  value = lookup(local.cost_field, "aggregation", "")
+}
+`, name)
+}

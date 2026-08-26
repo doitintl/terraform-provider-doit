@@ -4,6 +4,8 @@ output: models_gen.go
 generate:
   models: true
   client: true
+compatibility:
+  always-prefix-enum-values: true
 output-options:
   response-type-suffix: Resp
   nullable-type: true
