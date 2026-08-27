@@ -52,6 +52,7 @@ go mod tidy
 ```
 
 Verify the build compiles successfully:
+
 ```bash
 go build ./...
 ```
@@ -60,14 +61,14 @@ go build ./...
 
 For each **direct** dependency in `go.mod` (the first `require` block), check the release notes for breaking changes:
 
-| Dependency | Check for |
-|---|---|
-| `hashicorp/terraform-plugin-framework` | [Changelog](https://github.com/hashicorp/terraform-plugin-framework/blob/main/CHANGELOG.md) — breaking API changes, deprecations |
-| `hashicorp/terraform-plugin-testing` | [Changelog](https://github.com/hashicorp/terraform-plugin-testing/blob/main/CHANGELOG.md) — new test helper patterns |
-| `hashicorp/terraform-plugin-go` | [Changelog](https://github.com/hashicorp/terraform-plugin-go/blob/main/CHANGELOG.md) — protocol changes |
-| `hashicorp/terraform-plugin-framework-validators` | [Changelog](https://github.com/hashicorp/terraform-plugin-framework-validators/blob/main/CHANGELOG.md) — new validators |
-| `oapi-codegen/runtime` | [Releases](https://github.com/oapi-codegen/runtime/releases) — request/response handling changes |
-| `cenkalti/backoff/v5` | [Releases](https://github.com/cenkalti/backoff/releases) — retry behaviour changes |
+| Dependency                                        | Check for                                                                                                                        |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `hashicorp/terraform-plugin-framework`            | [Changelog](https://github.com/hashicorp/terraform-plugin-framework/blob/main/CHANGELOG.md) — breaking API changes, deprecations |
+| `hashicorp/terraform-plugin-testing`              | [Changelog](https://github.com/hashicorp/terraform-plugin-testing/blob/main/CHANGELOG.md) — new test helper patterns             |
+| `hashicorp/terraform-plugin-go`                   | [Changelog](https://github.com/hashicorp/terraform-plugin-go/blob/main/CHANGELOG.md) — protocol changes                          |
+| `hashicorp/terraform-plugin-framework-validators` | [Changelog](https://github.com/hashicorp/terraform-plugin-framework-validators/blob/main/CHANGELOG.md) — new validators          |
+| `oapi-codegen/runtime`                            | [Releases](https://github.com/oapi-codegen/runtime/releases) — request/response handling changes                                 |
+| `cenkalti/backoff/v5`                             | [Releases](https://github.com/cenkalti/backoff/releases) — retry behaviour changes                                               |
 
 Report any relevant findings to the user before proceeding.
 
@@ -87,6 +88,7 @@ go mod tidy
 ```
 
 Verify code generation still works:
+
 ```bash
 make generate
 make docs
@@ -107,17 +109,19 @@ Check the [latest release](https://github.com/gotestyourself/gotestsum/releases)
 
 Check for newer versions of all GitHub Actions used in `.github/workflows/`:
 
-| Action | Current | Check |
-|---|---|---|
-| `actions/checkout` | Check current pinned hash | [Releases](https://github.com/actions/checkout/releases) |
-| `actions/setup-go` | Check current pinned hash | [Releases](https://github.com/actions/setup-go/releases) |
-| `hashicorp/setup-terraform` | Check current pinned hash | [Releases](https://github.com/hashicorp/setup-terraform/releases) |
-| `goreleaser/goreleaser-action` | Check current pinned hash | [Releases](https://github.com/goreleaser/goreleaser-action/releases) |
+| Action                          | Current                   | Check                                                                 |
+| ------------------------------- | ------------------------- | --------------------------------------------------------------------- |
+| `actions/checkout`              | Check current pinned hash | [Releases](https://github.com/actions/checkout/releases)              |
+| `actions/setup-go`              | Check current pinned hash | [Releases](https://github.com/actions/setup-go/releases)              |
+| `hashicorp/setup-terraform`     | Check current pinned hash | [Releases](https://github.com/hashicorp/setup-terraform/releases)     |
+| `goreleaser/goreleaser-action`  | Check current pinned hash | [Releases](https://github.com/goreleaser/goreleaser-action/releases)  |
 | `crazy-max/ghaction-import-gpg` | Check current pinned hash | [Releases](https://github.com/crazy-max/ghaction-import-gpg/releases) |
 | `golangci/golangci-lint-action` | Check current pinned hash | [Releases](https://github.com/golangci/golangci-lint-action/releases) |
-| `mikepenz/action-junit-report` | Check current pinned hash | [Releases](https://github.com/mikepenz/action-junit-report/releases) |
+| `mikepenz/action-junit-report`  | Check current pinned hash | [Releases](https://github.com/mikepenz/action-junit-report/releases)  |
+| `dorny/paths-filter`            | Check current pinned hash | [Releases](https://github.com/dorny/paths-filter/releases)            |
 
 ### Update procedure for each action:
+
 1. Find the latest release tag (e.g., `v6.1.0`).
 2. Get the full commit SHA for that tag:
    ```bash
@@ -140,12 +144,13 @@ Check for newer versions of all GitHub Actions used in `.github/workflows/`:
 
 Check for newer versions of pre-commit hook repos in `.pre-commit-config.yaml`:
 
-| Hook repo | Check |
-|---|---|
-| `golangci/golangci-lint` | [Releases](https://github.com/golangci/golangci-lint/releases) — update `rev:` |
+| Hook repo                     | Check                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------- |
+| `golangci/golangci-lint`      | [Releases](https://github.com/golangci/golangci-lint/releases) — update `rev:`      |
 | `pre-commit/pre-commit-hooks` | [Releases](https://github.com/pre-commit/pre-commit-hooks/releases) — update `rev:` |
 
 **Important:** If `golangci-lint` is updated, also update:
+
 - `.pre-commit-config.yaml` — the `rev:` field
 - `.github/workflows/golangci-lint.yml` — the `version:` field in the golangci-lint-action step
 - `flake.nix` — the comment referencing the version (and nixpkgs pin if needed)
@@ -159,6 +164,7 @@ Compare the local `.goreleaser.yml` against the upstream HashiCorp scaffolding f
 **Reference:** https://github.com/hashicorp/terraform-provider-scaffolding-framework/blob/main/.goreleaser.yml
 
 Fetch the latest reference and diff:
+
 ```bash
 curl -sL https://raw.githubusercontent.com/hashicorp/terraform-provider-scaffolding-framework/main/.goreleaser.yml > /tmp/goreleaser-upstream.yml
 diff .goreleaser.yml /tmp/goreleaser-upstream.yml
@@ -171,20 +177,25 @@ If there are meaningful differences (not just whitespace), update `.goreleaser.y
 ## Step 7: Verify Documentation is Up to Date
 
 ### README.md
+
 Check and update:
+
 - [ ] Go version requirement matches `go.mod`
 - [ ] Nix flake tool versions match `flake.nix` (Go, Terraform, golangci-lint versions)
 - [ ] The `# Requirements` section matches current tool versions
 - [ ] The environment variables tables match `.envrc.example`
 
 ### .envrc.example
+
 Check and update:
+
 - [ ] All required env vars from `README.md` are present
 - [ ] All optional env vars from `README.md` are present
 - [ ] Any new env vars added since the last release are included
 - [ ] Compare against the actual `.envrc.local` (but do NOT commit `.envrc.local`)
 
 ### Cross-check environment variables
+
 - [ ] The environment variables in `.envrc.example` match what `README.md` documents
 
 ### DCI API Status Document
@@ -192,6 +203,7 @@ Check and update:
 Update `.test/Current Status of DCI API.md`:
 
 1. **Check open Jira tickets:** For each ticket listed in the "Open API Issues" section that is NOT in the "Resolved Issues" table, fetch the current status from Jira using the Atlassian MCP:
+
    ```
    getJiraIssue(cloudId: "doitintl.atlassian.net", issueIdOrKey: "CMP-XXXXX", fields: ["summary", "status"])
    ```
@@ -234,27 +246,34 @@ Write a new changelog entry at the top of `CHANGELOG.md` following the existing 
 ## v<VERSION> (<YYYY-MM-DD>)
 
 ### BREAKING CHANGES
+
 (only if applicable)
 
 ### FEATURES
+
 - **resource/doit_xxx**: Description ([#PR](url))
 
 ### ENHANCEMENTS
+
 - Description ([#PR](url))
 
 ### BUG FIXES
+
 - Description ([#PR](url))
 
 ### DOCUMENTATION
+
 - Description
 
 ### INTERNAL
+
 - Upgraded Go to X.XX
 - Upgraded dependencies: list key upgrades
 - Upgraded CI workflow actions (list versions)
 ```
 
 **Categories to use** (omit empty ones):
+
 - `BREAKING CHANGES` — only for user-facing breaking changes
 - `FEATURES` — new resources or data sources
 - `ENHANCEMENTS` — additions to existing resources
@@ -289,6 +308,7 @@ make test
 
 If acceptance tests are desired (this makes real API calls against the live
 tenant — see the `testing` skill for interpreting flaky reruns and output):
+
 ```bash
 make testacc
 ```
@@ -314,6 +334,7 @@ chore: prepare release v<VERSION>
 ```
 
 Create a PR. After merge, tag the release:
+
 ```bash
 git tag v<VERSION>
 git push origin v<VERSION>

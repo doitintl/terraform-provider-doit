@@ -6,12 +6,38 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    outputs:
+      lint: ${{ steps.filter.outputs.lint }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            lint:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - 'tools/**'
+              - '.golangci.yml'
+              - '.custom-gcl.yml'
+              - 'GNUmakefile'
+              - '.github/workflows/golangci-lint.yml'
+
   golangci:
     name: lint
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    needs: changes
+    if: |
+      github.event.pull_request.draft == false &&
+      needs.changes.outputs.lint == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -27,6 +53,20 @@ jobs:
         with:
           version: v2.12.2
           install-only: true
+
+      # Lint the linter source code itself with stock golangci-lint.
+      - name: Lint custom linters
+        run: make lint-tools
+
+      # Run unit tests for custom analyzers.
+      - name: Test custom linters
+        run: |
+          cd tools/linters
+          go test -v ./...
+
+      # Run unit tests for schema extraction tools.
+      - name: Test schema tools
+        run: go test -v ./tools/extract-inline-schemas/...
 
       # Build custom binary and run linting (same as local `make lint`)
       - name: golangci-lint (custom)

@@ -10,22 +10,52 @@ on:
     # Run daily at 5am UTC
     - cron: "0 5 * * *"
 
-# Acceptance tests mutate shared remote resources, so only one run of this
-# workflow may execute at a time. A single fixed group key serializes runs
-# across all branches/PRs. cancel-in-progress: false queues new runs behind
-# the in-progress one instead of cancelling it.
-concurrency:
-  group: acceptance-tests
-  cancel-in-progress: false
-
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      docs: ${{ steps.filter.outputs.docs }}
+      examples: ${{ steps.filter.outputs.examples }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'internal/**'
+              - 'main.go'
+              - 'go.mod'
+              - 'go.sum'
+              - 'GNUmakefile'
+              - '.github/workflows/tests.yml'
+            docs:
+              - 'docs/**'
+              - 'templates/**'
+              - '**/*.md'
+              - '.github/workflows/tests.yml'
+            examples:
+              - 'examples/**'
+              - 'scripts/validate_examples.sh'
+              - '.github/workflows/tests.yml'
+
   validate-examples:
     name: Validate Examples
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    needs: changes
+    if: |
+      github.event.pull_request.draft == false &&
+      (github.event_name == 'schedule' ||
+       github.event_name == 'push' ||
+       needs.changes.outputs.examples == 'true' ||
+       needs.changes.outputs.code == 'true')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -44,7 +74,14 @@ jobs:
   validate-docs:
     name: Validate Docs
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    needs: changes
+    if: |
+      github.event.pull_request.draft == false &&
+      (github.event_name == 'schedule' ||
+       github.event_name == 'push' ||
+       needs.changes.outputs.docs == 'true' ||
+       needs.changes.outputs.examples == 'true' ||
+       needs.changes.outputs.code == 'true')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -63,7 +100,17 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    needs: changes
+    if: |
+      github.event.pull_request.draft == false &&
+      (github.event_name == 'schedule' ||
+       github.event_name == 'push' ||
+       needs.changes.outputs.code == 'true')
+    # Acceptance tests mutate shared remote resources, so only one test run
+    # may execute at a time across all branches and PRs.
+    concurrency:
+      group: acceptance-tests
+      cancel-in-progress: false
     permissions:
       contents: read
       checks: write # allow the JUnit reporter to publish a check run
