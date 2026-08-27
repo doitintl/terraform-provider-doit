@@ -30,8 +30,8 @@ jobs:
         with:
           filters: |
             code:
-              - '**/*.go'
-              - '!tools/linters/**'
+              - 'internal/**'
+              - 'main.go'
               - 'go.mod'
               - 'go.sum'
               - 'GNUmakefile'
@@ -80,6 +80,7 @@ jobs:
       (github.event_name == 'schedule' ||
        github.event_name == 'push' ||
        needs.changes.outputs.docs == 'true' ||
+       needs.changes.outputs.examples == 'true' ||
        needs.changes.outputs.code == 'true')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
