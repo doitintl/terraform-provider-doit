@@ -18,9 +18,9 @@ custom-gcl: .custom-gcl.yml .golangci.yml go.sum tools/linters/go.mod tools/lint
 
 lint-build: custom-gcl
 
-# Lint the linter source code itself with stock golangci-lint.
-lint-tools:
-	cd tools/linters && golangci-lint run
+# Lint the linter source code itself with stock linters via custom-gcl.
+lint-tools: lint-build
+	cd tools/linters && $(CURDIR)/custom-gcl run
 
 # Generate OpenAPI models and Terraform resource schemas
 # Must be run in order: extract-inline-schemas -> openapi -> framework -> models
