@@ -825,3 +825,81 @@ output "schema_id_matches_allocation" {
 }
 `, name)
 }
+
+// TestAccReportQueryDataSource_SchemaFieldMetadata verifies that executing a query
+// returns column metadata (name, type, unit, currency, aggregation) in result_json.schema.
+func TestAccReportQueryDataSource_SchemaFieldMetadata(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceSchemaFieldMetadataConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckOutput("cost_field_name", "cost"),
+					resource.TestCheckOutput("cost_field_type", "float"),
+					resource.TestCheckOutput("cost_field_unit", "currency"),
+					resource.TestCheckOutput("cost_field_currency", "USD"),
+					resource.TestCheckOutput("cost_field_aggregation", "total"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceSchemaFieldMetadataConfig() string {
+	return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 1
+          unit            = "month"
+          include_current = false
+        }
+    }
+}
+
+locals {
+  query_result = jsondecode(data.doit_report_query.test.result_json)
+  cost_fields = [
+    for field in local.query_result.schema : field
+    if lookup(field, "name", "") == "cost"
+  ]
+  cost_field = length(local.cost_fields) > 0 ? local.cost_fields[0] : {}
+}
+
+output "cost_field_name" {
+  value = lookup(local.cost_field, "name", "")
+}
+
+output "cost_field_type" {
+  value = lookup(local.cost_field, "type", "")
+}
+
+output "cost_field_unit" {
+  value = lookup(local.cost_field, "unit", "")
+}
+
+output "cost_field_currency" {
+  value = lookup(local.cost_field, "currency", "")
+}
+
+output "cost_field_aggregation" {
+  value = lookup(local.cost_field, "aggregation", "")
+}
+`
+}

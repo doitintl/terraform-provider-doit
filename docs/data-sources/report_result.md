@@ -7,7 +7,7 @@ description: |-
   The report is executed and the results are returned as a JSON string in result_json. Use Terraform's jsondecode() to parse the results.
   ~> Note: Report results are dynamic — they change over time as new billing data is ingested. Every terraform plan will re-execute the report.
   The result_json field contains the full result object including:
-  schema: Array of column metadata objects (name, type, and optional id for allocation dimensions)rows: Data rows (each row is an array of cell values: string, number, or null)forecastRows: Forecast data rows (if applicable)secondaryRows: Secondary time range rows (if applicable)cacheHit: Whether results were served from cache
+  schema: Array of column metadata objects (name, type, and optional unit, currency, aggregation, and id for allocation dimensions)rows: Data rows (each row is an array of cell values: string, number, or null)forecastRows: Forecast data rows (if applicable)secondaryRows: Secondary time range rows (if applicable)cacheHit: Whether results were served from cache
 ---
 
 # doit_report_result (Data Source)
@@ -19,7 +19,7 @@ The report is executed and the results are returned as a JSON string in `result_
 ~> **Note:** Report results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the report.
 
 The `result_json` field contains the full result object including:
-- `schema`: Array of column metadata objects (`name`, `type`, and optional `id` for allocation dimensions)
+- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)
 - `rows`: Data rows (each row is an array of cell values: string, number, or null)
 - `forecastRows`: Forecast data rows (if applicable)
 - `secondaryRows`: Secondary time range rows (if applicable)
@@ -35,8 +35,8 @@ data "doit_report_result" "example" {
 
 # Parse the JSON results
 locals {
-  result  = jsondecode(data.doit_report_result.example.result_json)
-  # Extract column names (each schema object has name, type, and optional allocation id)
+  result = jsondecode(data.doit_report_result.example.result_json)
+  # Extract column names (schema objects contain name, type, and optional unit, currency, aggregation, id)
   columns = [for s in local.result.schema : s.name]
 }
 
@@ -84,7 +84,7 @@ data "doit_report_result" "last_week" {
 - `result_json` (String) The full report result as a JSON string. Use `jsondecode()` to parse.
 
 Structure of the decoded JSON object:
-- `schema`: Array of column definitions: `name` (string), `type` (string), and `id` (optional string, present for allocation dimensions).
+- `schema`: Array of column definitions: `name` (string), `type` (string: `string`, `float`, `integer`, `timestamp`), and optional fields `unit` (`currency`, `number`, `percent`), `currency` (ISO 4217 code), `aggregation` (`total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`), and `id` (present for allocation dimensions).
 - `rows`: Array of row arrays `[][string | number | null]` corresponding to the schema columns.
 - `forecastRows`: Array of forecast row arrays (if applicable).
 - `secondaryRows`: Array of secondary time range row arrays (if applicable).

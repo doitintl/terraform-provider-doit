@@ -1801,7 +1801,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			fs.HistoricalTimeIntervals != nil ||
 			fs.FutureCustomDateRange != nil ||
 			fs.HistoricalCustomDateRange != nil ||
-			(fs.Mode != nil && *fs.Mode == models.Grouping)) {
+			(fs.Mode != nil && *fs.Mode == models.ExternalForecastSettingsModeGrouping)) {
 		fsMap := map[string]attr.Value{
 			"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
 			"future_time_intervals":        types.Int64Null(),

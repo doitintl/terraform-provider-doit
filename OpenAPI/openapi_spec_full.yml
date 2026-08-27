@@ -12384,6 +12384,33 @@ components:
             cacheHit:
               type: boolean
               description: If true, results were fetched from the cache.
+      example:
+        id: rpt_dummy001abc
+        reportName: Monthly Cost by Service
+        owner: customer@example.com
+        type: custom
+        createTime: 1704067200000
+        updateTime: 1706745600000
+        urlUI: https://console.doit.com/customers/cust_dummy123/analyze/reports/rpt_dummy001abc
+        labels: []
+        result:
+          schema:
+            - name: service_description
+              type: string
+            - name: cost
+              type: float
+              unit: currency
+              currency: USD
+              aggregation: total
+            - name: usage
+              type: float
+              unit: number
+              aggregation: total
+          rows:
+            - ["Amazon Elastic Compute Cloud", 4821.37, 12450]
+            - ["Cloud Storage", 912.05, 893021]
+            - ["BigQuery", 356.88, 42]
+          cacheHit: true
     Report:
       type: object
       description: Report metadata and the console URL.
@@ -12477,6 +12504,21 @@ components:
             cacheHit:
               type: boolean
               description: If true, results were fetched from the cache.
+      example:
+        result:
+          schema:
+            - name: service_description
+              type: string
+            - name: cost
+              type: float
+              unit: currency
+              currency: USD
+              aggregation: total
+          rows:
+            - ["Amazon Elastic Compute Cloud", 4821.37]
+            - ["Cloud Storage", 912.05]
+            - ["BigQuery", 356.88]
+          cacheHit: false
     SchemaField:
       type: object
       description: Schema of a report result column.
@@ -12486,8 +12528,40 @@ components:
           description: Stable allocation-group ID used to select the allocation dimension in report configurations. Omitted for other report columns.
         name:
           type: string
+          description: Column name. Matches the corresponding value position in each row.
         type:
           type: string
+          description: >-
+            Wire-format type of the column values. Dimension columns use string;
+            metric columns use float (cost, usage, saving, custom, and extended
+            metrics) or integer (count aggregation). Time-series reports include
+            a timestamp column.
+          enum:
+            - string
+            - float
+            - integer
+            - timestamp
+        unit:
+          type: string
+          description: Semantic unit of the column values.
+          enum:
+            - currency
+            - number
+            - percent
+        currency:
+          type: string
+          description: Effective ISO 4217 currency code when unit is currency.
+          example: USD
+        aggregation:
+          type: string
+          description: Authoritative aggregation applied to this metric column.
+          enum:
+            - total
+            - percent_total
+            - percent_col
+            - percent_row
+            - total_over_total
+            - count
     SlackChannel:
       type: object
       description: >-

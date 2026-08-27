@@ -250,8 +250,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 					idVal := planRules[i].Id.ValueString()
 					if idVal != "" {
 						rule.Id = &idVal
-						if rule.Action == models.Create || rule.Action == "create" {
-							rule.Action = models.Update
+						if rule.Action == models.GroupAllocationRuleActionCreate || rule.Action == "create" {
+							rule.Action = models.GroupAllocationRuleActionUpdate
 						}
 					}
 				}
