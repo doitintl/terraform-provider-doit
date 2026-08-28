@@ -9936,6 +9936,13 @@
 						}
 					},
 					{
+						"name": "logo_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo."
+						}
+					},
+					{
 						"name": "records",
 						"int64": {
 							"computed_optional_required": "computed",
@@ -9976,6 +9983,13 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "The timestamp of the last update."
+										}
+									},
+									{
+										"name": "logo_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo."
 										}
 									},
 									{

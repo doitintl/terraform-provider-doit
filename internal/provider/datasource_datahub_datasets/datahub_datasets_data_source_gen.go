@@ -31,6 +31,11 @@ func DatahubDatasetsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "The timestamp of the last update.",
 							MarkdownDescription: "The timestamp of the last update.",
 						},
+						"logo_name": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.",
+							MarkdownDescription: "The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.",
+						},
 						"name": schema.StringAttribute{
 							Computed:            true,
 							Description:         "The name of the dataset.",
@@ -134,6 +139,24 @@ func (t DatasetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 			fmt.Sprintf(`last_updated expected to be basetypes.StringValue, was: %T`, lastUpdatedAttribute))
 	}
 
+	logoNameAttribute, ok := attributes["logo_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`logo_name is missing from object`)
+
+		return nil, diags
+	}
+
+	logoNameVal, ok := logoNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`logo_name expected to be basetypes.StringValue, was: %T`, logoNameAttribute))
+	}
+
 	nameAttribute, ok := attributes["name"]
 
 	if !ok {
@@ -195,6 +218,7 @@ func (t DatasetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 	return DatasetsValue{
 		Description: descriptionVal,
 		LastUpdated: lastUpdatedVal,
+		LogoName:    logoNameVal,
 		Name:        nameVal,
 		Records:     recordsVal,
 		UpdatedBy:   updatedByVal,
@@ -301,6 +325,24 @@ func NewDatasetsValue(attributeTypes map[string]attr.Type, attributes map[string
 			fmt.Sprintf(`last_updated expected to be basetypes.StringValue, was: %T`, lastUpdatedAttribute))
 	}
 
+	logoNameAttribute, ok := attributes["logo_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`logo_name is missing from object`)
+
+		return NewDatasetsValueUnknown(), diags
+	}
+
+	logoNameVal, ok := logoNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`logo_name expected to be basetypes.StringValue, was: %T`, logoNameAttribute))
+	}
+
 	nameAttribute, ok := attributes["name"]
 
 	if !ok {
@@ -362,6 +404,7 @@ func NewDatasetsValue(attributeTypes map[string]attr.Type, attributes map[string
 	return DatasetsValue{
 		Description: descriptionVal,
 		LastUpdated: lastUpdatedVal,
+		LogoName:    logoNameVal,
 		Name:        nameVal,
 		Records:     recordsVal,
 		UpdatedBy:   updatedByVal,
@@ -439,6 +482,7 @@ var _ basetypes.ObjectValuable = DatasetsValue{}
 type DatasetsValue struct {
 	Description basetypes.StringValue `tfsdk:"description"`
 	LastUpdated basetypes.StringValue `tfsdk:"last_updated"`
+	LogoName    basetypes.StringValue `tfsdk:"logo_name"`
 	Name        basetypes.StringValue `tfsdk:"name"`
 	Records     basetypes.Int64Value  `tfsdk:"records"`
 	UpdatedBy   basetypes.StringValue `tfsdk:"updated_by"`
@@ -446,13 +490,14 @@ type DatasetsValue struct {
 }
 
 func (v DatasetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
 
 	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["last_updated"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["logo_name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["records"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["updated_by"] = basetypes.StringType{}.TerraformType(ctx)
@@ -461,7 +506,7 @@ func (v DatasetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
 
 		val, err = v.Description.ToTerraformValue(ctx)
 
@@ -478,6 +523,14 @@ func (v DatasetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 		}
 
 		vals["last_updated"] = val
+
+		val, err = v.LogoName.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["logo_name"] = val
 
 		val, err = v.Name.ToTerraformValue(ctx)
 
@@ -535,6 +588,7 @@ func (v DatasetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 	attributeTypes := map[string]attr.Type{
 		"description":  basetypes.StringType{},
 		"last_updated": basetypes.StringType{},
+		"logo_name":    basetypes.StringType{},
 		"name":         basetypes.StringType{},
 		"records":      basetypes.Int64Type{},
 		"updated_by":   basetypes.StringType{},
@@ -553,6 +607,7 @@ func (v DatasetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 		map[string]attr.Value{
 			"description":  v.Description,
 			"last_updated": v.LastUpdated,
+			"logo_name":    v.LogoName,
 			"name":         v.Name,
 			"records":      v.Records,
 			"updated_by":   v.UpdatedBy,
@@ -584,6 +639,10 @@ func (v DatasetsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.LogoName.Equal(other.LogoName) {
+		return false
+	}
+
 	if !v.Name.Equal(other.Name) {
 		return false
 	}
@@ -611,6 +670,7 @@ func (v DatasetsValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 	return map[string]attr.Type{
 		"description":  basetypes.StringType{},
 		"last_updated": basetypes.StringType{},
+		"logo_name":    basetypes.StringType{},
 		"name":         basetypes.StringType{},
 		"records":      basetypes.Int64Type{},
 		"updated_by":   basetypes.StringType{},

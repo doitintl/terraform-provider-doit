@@ -55,6 +55,8 @@ func TestAccDatahubDatasetDataSource_Basic(t *testing.T) {
 				Config: testAccDatahubDatasetDataSourceConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "name", rName),
+					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "description", "Created by acceptance test for data source verification"),
+					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "logo_name", "aws"),
 					resource.TestCheckResourceAttrSet("data.doit_datahub_dataset.test", "last_updated"),
 				),
 			},
@@ -76,6 +78,7 @@ func testAccDatahubDatasetDataSourceConfig(name string) string {
 resource "doit_datahub_dataset" "dep" {
   name        = %[1]q
   description = "Created by acceptance test for data source verification"
+  logo_name   = "aws"
 }
 
 data "doit_datahub_dataset" "test" {
