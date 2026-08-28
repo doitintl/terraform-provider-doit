@@ -39,6 +39,7 @@ output "dataset_details" {
   value = [for ds in data.doit_datahub_datasets.all.datasets : {
     name        = ds.name
     description = ds.description
+    logo_name   = ds.logo_name
     records     = ds.records
   }]
 }
@@ -70,6 +71,7 @@ Read-Only:
 
 - `description` (String) The description of the dataset.
 - `last_updated` (String) The timestamp of the last update.
+- `logo_name` (String) The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
 - `name` (String) The name of the dataset.
 - `records` (Number) The number of records in the dataset.
 - `updated_by` (String) The email of the user who last updated the dataset.

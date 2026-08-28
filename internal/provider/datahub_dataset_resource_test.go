@@ -34,14 +34,31 @@ func TestAccDatahubDatasetResource(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccDatahubDatasetResource(rName, "Updated description"),
+				Config: testAccDatahubDatasetResourceFull(rName, "Updated description", "aws"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "name", rName),
 					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "description", "Updated description"),
+					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "logo_name", "aws"),
 				),
 			},
 			{
-				Config: testAccDatahubDatasetResource(rName, "Updated description"),
+				Config: testAccDatahubDatasetResourceFull(rName, "Updated description", "aws"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			{
+				Config: testAccDatahubDatasetResourceFull(rName, "Updated description", "gcp"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "name", rName),
+					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "description", "Updated description"),
+					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "logo_name", "gcp"),
+				),
+			},
+			{
+				Config: testAccDatahubDatasetResourceFull(rName, "Updated description", "gcp"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -123,20 +140,23 @@ func TestAccDatahubDatasetResource_Disappears(t *testing.T) {
 }
 
 func testAccDatahubDatasetResource(name, description string) string {
-	if description != "" {
-		return fmt.Sprintf(`
-resource "doit_datahub_dataset" "test" {
-  name        = %[1]q
-  description = %[2]q
+	return testAccDatahubDatasetResourceFull(name, description, "")
 }
-`, name, description)
+
+func testAccDatahubDatasetResourceFull(name, description, logoName string) string {
+	var body string
+	if description != "" {
+		body += fmt.Sprintf("  description = %q\n", description)
+	}
+	if logoName != "" {
+		body += fmt.Sprintf("  logo_name   = %q\n", logoName)
 	}
 
 	return fmt.Sprintf(`
 resource "doit_datahub_dataset" "test" {
   name = %[1]q
-}
-`, name)
+%[2]s}
+`, name, body)
 }
 
 // TestAccDatahubDatasetResource_ClearDescription tests that setting a description
@@ -171,8 +191,6 @@ func TestAccDatahubDatasetResource_ClearDescription(t *testing.T) {
 				Config: testAccDatahubDatasetResource(rName, ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						// If issue #233 is real, this will be empty (old value sticks).
-						// If the attribute CAN be cleared, this should be non-empty.
 						plancheck.ExpectNonEmptyPlan(),
 					},
 				},
@@ -180,6 +198,54 @@ func TestAccDatahubDatasetResource_ClearDescription(t *testing.T) {
 			// Step 4: Drift check — cleared value should produce no drift
 			{
 				Config: testAccDatahubDatasetResource(rName, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccDatahubDatasetResource_ClearLogoName tests that setting logo_name
+// and then removing it from config clears the value with no drift (Category A).
+func TestAccDatahubDatasetResource_ClearLogoName(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-dataset")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with logo_name set
+			{
+				Config: testAccDatahubDatasetResourceFull(rName, "some description", "aws"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_datahub_dataset.test", "logo_name", "aws"),
+				),
+			},
+			// Step 2: Drift check
+			{
+				Config: testAccDatahubDatasetResourceFull(rName, "some description", "aws"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear logo_name by omitting it
+			{
+				Config: testAccDatahubDatasetResource(rName, "some description"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Drift check — cleared value should produce no drift
+			{
+				Config: testAccDatahubDatasetResource(rName, "some description"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),

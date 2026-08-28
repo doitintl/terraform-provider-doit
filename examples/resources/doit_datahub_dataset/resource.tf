@@ -2,10 +2,15 @@
 resource "doit_datahub_dataset" "example" {
   name        = "My Custom Dataset"
   description = "Dataset for tracking custom business metrics"
+  logo_name   = "aws"
 }
 
 output "dataset_name" {
   value = doit_datahub_dataset.example.name
+}
+
+output "dataset_logo_name" {
+  value = doit_datahub_dataset.example.logo_name
 }
 
 output "dataset_records" {

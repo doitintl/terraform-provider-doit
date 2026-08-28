@@ -37,14 +37,15 @@ func (r *datahubDatasetResource) populateState(ctx context.Context, state *datah
 		}
 	}
 
-	mapDatahubDatasetToModel(datasetResp.JSON200.Name, datasetResp.JSON200.Description, datasetResp.JSON200.Records, datasetResp.JSON200.UpdatedBy, datasetResp.JSON200.LastUpdated, state)
+	mapDatahubDatasetToModel(datasetResp.JSON200.Name, datasetResp.JSON200.Description, datasetResp.JSON200.LogoName, datasetResp.JSON200.Records, datasetResp.JSON200.UpdatedBy, datasetResp.JSON200.LastUpdated, state)
 	return nil
 }
 
 // mapDatahubDatasetToModel maps the API response to the Terraform model.
-func mapDatahubDatasetToModel(name, description *string, records *int64, updatedBy, lastUpdated *string, state *datahubDatasetResourceModel) {
+func mapDatahubDatasetToModel(name, description, logoName *string, records *int64, updatedBy, lastUpdated *string, state *datahubDatasetResourceModel) {
 	state.Name = types.StringPointerValue(name)
 	state.Description = types.StringPointerValue(description)
+	state.LogoName = types.StringPointerValue(logoName)
 	state.Records = types.Int64PointerValue(records)
 	state.UpdatedBy = types.StringPointerValue(updatedBy)
 	state.LastUpdated = types.StringPointerValue(lastUpdated)
@@ -52,10 +53,10 @@ func mapDatahubDatasetToModel(name, description *string, records *int64, updated
 
 // overlayDatahubDatasetComputedFields uses the two-phase overlay pattern to
 // reconcile the Terraform plan with the API response after Create/Update.
-func overlayDatahubDatasetComputedFields(name, description *string, records *int64, updatedBy, lastUpdated *string, plan *datahubDatasetResourceModel) {
+func overlayDatahubDatasetComputedFields(name, description, logoName *string, records *int64, updatedBy, lastUpdated *string, plan *datahubDatasetResourceModel) {
 	// Phase 1: Build fully-resolved state from API response.
 	resolved := *plan
-	mapDatahubDatasetToModel(name, description, records, updatedBy, lastUpdated, &resolved)
+	mapDatahubDatasetToModel(name, description, logoName, records, updatedBy, lastUpdated, &resolved)
 
 	// Phase 2: Overlay.
 	// Name: Required — never touch.
@@ -68,6 +69,11 @@ func overlayDatahubDatasetComputedFields(name, description *string, records *int
 	if plan.Description.IsUnknown() {
 		plan.Description = resolved.Description
 	}
+
+	// LogoName: Optional+Computed — resolve when Unknown.
+	if plan.LogoName.IsUnknown() {
+		plan.LogoName = resolved.LogoName
+	}
 }
 
 // toCreateRequest converts the TF model to a CreateDatahubDatasetRequestBody.
@@ -78,6 +84,9 @@ func (plan *datahubDatasetResourceModel) toCreateRequest() models.CreateDatahubD
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
 		req.Description = new(plan.Description.ValueString())
 	}
+	if !plan.LogoName.IsNull() && !plan.LogoName.IsUnknown() {
+		req.LogoName = new(models.CreateDatahubDatasetRequestBodyLogoName(plan.LogoName.ValueString()))
+	}
 	return req
 }
 
@@ -86,6 +95,9 @@ func (plan *datahubDatasetResourceModel) toUpdateRequest() models.UpdateDatahubD
 	req := models.UpdateDatahubDatasetRequestBody{}
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
 		req.Description = new(plan.Description.ValueString())
+	}
+	if !plan.LogoName.IsNull() && !plan.LogoName.IsUnknown() {
+		req.LogoName = new(models.UpdateDatahubDatasetRequestBodyLogoName(plan.LogoName.ValueString()))
 	}
 	return req
 }

@@ -75,6 +75,7 @@ func (ds *datahubDatasetDataSource) Read(ctx context.Context, req datasource.Rea
 	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Name.IsUnknown() {
 		state.Description = types.StringUnknown()
+		state.LogoName = types.StringUnknown()
 		state.Records = types.Int64Unknown()
 		state.UpdatedBy = types.StringUnknown()
 		state.LastUpdated = types.StringUnknown()
@@ -104,6 +105,7 @@ func (ds *datahubDatasetDataSource) Read(ctx context.Context, req datasource.Rea
 
 	state.Name = types.StringPointerValue(dataset.Name)
 	state.Description = types.StringPointerValue(dataset.Description)
+	state.LogoName = types.StringPointerValue(dataset.LogoName)
 	state.Records = types.Int64PointerValue(dataset.Records)
 	state.UpdatedBy = types.StringPointerValue(dataset.UpdatedBy)
 	state.LastUpdated = types.StringPointerValue(dataset.LastUpdated)

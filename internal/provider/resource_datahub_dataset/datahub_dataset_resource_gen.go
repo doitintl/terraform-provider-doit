@@ -26,6 +26,34 @@ func DatahubDatasetResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The timestamp of the last update.",
 				MarkdownDescription: "The timestamp of the last update.",
 			},
+			"logo_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "An optional preset logo shown next to the dataset in the DoiT console.\nPossible values: `anthropic`, `atlassian`, `aws`, `azure`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`",
+				MarkdownDescription: "An optional preset logo shown next to the dataset in the DoiT console.\nPossible values: `anthropic`, `atlassian`, `aws`, `azure`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"anthropic",
+						"atlassian",
+						"aws",
+						"azure",
+						"chatgpt",
+						"cloudflare",
+						"copilot",
+						"figma",
+						"gcp",
+						"github",
+						"gitlab",
+						"hotjar",
+						"jira",
+						"litellm",
+						"miro",
+						"notion",
+						"slack",
+						"wordpress",
+					),
+				},
+			},
 			"name": schema.StringAttribute{
 				Required:            true,
 				Description:         "The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words.",
@@ -53,6 +81,7 @@ func DatahubDatasetResourceSchema(ctx context.Context) schema.Schema {
 type DatahubDatasetModel struct {
 	Description types.String `tfsdk:"description"`
 	LastUpdated types.String `tfsdk:"last_updated"`
+	LogoName    types.String `tfsdk:"logo_name"`
 	Name        types.String `tfsdk:"name"`
 	Records     types.Int64  `tfsdk:"records"`
 	UpdatedBy   types.String `tfsdk:"updated_by"`

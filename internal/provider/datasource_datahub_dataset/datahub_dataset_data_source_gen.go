@@ -22,6 +22,11 @@ func DatahubDatasetDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The timestamp of the last update.",
 				MarkdownDescription: "The timestamp of the last update.",
 			},
+			"logo_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.",
+				MarkdownDescription: "The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.",
+			},
 			"name": schema.StringAttribute{
 				Required:            true,
 				Description:         "The name of the dataset to retrieve.",
@@ -46,6 +51,7 @@ func DatahubDatasetDataSourceSchema(ctx context.Context) schema.Schema {
 type DatahubDatasetModel struct {
 	Description types.String `tfsdk:"description"`
 	LastUpdated types.String `tfsdk:"last_updated"`
+	LogoName    types.String `tfsdk:"logo_name"`
 	Name        types.String `tfsdk:"name"`
 	Records     types.Int64  `tfsdk:"records"`
 	UpdatedBy   types.String `tfsdk:"updated_by"`

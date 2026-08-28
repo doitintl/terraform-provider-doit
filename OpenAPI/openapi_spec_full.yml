@@ -2939,6 +2939,10 @@ paths:
                           type: string
                           description: The timestamp of the last update.
                           example: "2024-03-10T23:00:00Z"
+                        logoName:
+                          type: string
+                          description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                          example: "litellm"
         "401":
           $ref: "#/components/responses/401"
         "403":
@@ -2969,6 +2973,29 @@ paths:
                   type: string
                   description: An optional description for the dataset.
                   example: "Dataset for tracking custom business metrics"
+                logoName:
+                  type: string
+                  description: An optional preset logo shown next to the dataset in the DoiT console.
+                  example: "litellm"
+                  enum:
+                    - anthropic
+                    - atlassian
+                    - aws
+                    - azure
+                    - chatgpt
+                    - cloudflare
+                    - copilot
+                    - figma
+                    - gcp
+                    - github
+                    - gitlab
+                    - hotjar
+                    - jira
+                    - litellm
+                    - miro
+                    - notion
+                    - slack
+                    - wordpress
       responses:
         "201":
           description: Created - Dataset created successfully.
@@ -2999,6 +3026,10 @@ paths:
                     type: string
                     description: The timestamp of the last update.
                     example: "2024-03-10T23:00:00Z"
+                  logoName:
+                    type: string
+                    description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                    example: "litellm"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3091,6 +3122,10 @@ paths:
                     type: string
                     description: The timestamp of the last update.
                     example: "2024-03-10T23:00:00Z"
+                  logoName:
+                    type: string
+                    description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                    example: "litellm"
         "401":
           $ref: "#/components/responses/401"
         "403":
@@ -3139,7 +3174,8 @@ paths:
         - DataHub
       summary: Update dataset
       description: |-
-        Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+        Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+        Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
         The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
         If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
       operationId: updateDatahubDataset
@@ -3165,8 +3201,32 @@ paths:
                   example: "My Custom Dataset"
                 description:
                   type: string
-                  description: The new description for the dataset.
+                  description: The new description for the dataset. Omit to keep the current description; send an empty string to clear it.
                   example: "Updated description for the dataset"
+                logoName:
+                  type: string
+                  description: The preset logo shown next to the dataset in the DoiT console. Omit to keep the current logo; send an empty string to clear it.
+                  example: "litellm"
+                  enum:
+                    - ""
+                    - anthropic
+                    - atlassian
+                    - aws
+                    - azure
+                    - chatgpt
+                    - cloudflare
+                    - copilot
+                    - figma
+                    - gcp
+                    - github
+                    - gitlab
+                    - hotjar
+                    - jira
+                    - litellm
+                    - miro
+                    - notion
+                    - slack
+                    - wordpress
       responses:
         "200":
           description: OK - Dataset updated successfully.
@@ -3197,6 +3257,10 @@ paths:
                     type: string
                     description: The timestamp of the last update.
                     example: "2024-03-10T23:00:00Z"
+                  logoName:
+                    type: string
+                    description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                    example: "litellm"
         "400":
           $ref: "#/components/responses/400"
         "401":

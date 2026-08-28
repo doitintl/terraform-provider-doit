@@ -1210,6 +1210,72 @@ func (e CreateCategory) Valid() bool {
 	}
 }
 
+// Defines values for CreateDatahubDatasetRequestBodyLogoName.
+const (
+	CreateDatahubDatasetRequestBodyLogoNameAnthropic  CreateDatahubDatasetRequestBodyLogoName = "anthropic"
+	CreateDatahubDatasetRequestBodyLogoNameAtlassian  CreateDatahubDatasetRequestBodyLogoName = "atlassian"
+	CreateDatahubDatasetRequestBodyLogoNameAws        CreateDatahubDatasetRequestBodyLogoName = "aws"
+	CreateDatahubDatasetRequestBodyLogoNameAzure      CreateDatahubDatasetRequestBodyLogoName = "azure"
+	CreateDatahubDatasetRequestBodyLogoNameChatgpt    CreateDatahubDatasetRequestBodyLogoName = "chatgpt"
+	CreateDatahubDatasetRequestBodyLogoNameCloudflare CreateDatahubDatasetRequestBodyLogoName = "cloudflare"
+	CreateDatahubDatasetRequestBodyLogoNameCopilot    CreateDatahubDatasetRequestBodyLogoName = "copilot"
+	CreateDatahubDatasetRequestBodyLogoNameFigma      CreateDatahubDatasetRequestBodyLogoName = "figma"
+	CreateDatahubDatasetRequestBodyLogoNameGcp        CreateDatahubDatasetRequestBodyLogoName = "gcp"
+	CreateDatahubDatasetRequestBodyLogoNameGithub     CreateDatahubDatasetRequestBodyLogoName = "github"
+	CreateDatahubDatasetRequestBodyLogoNameGitlab     CreateDatahubDatasetRequestBodyLogoName = "gitlab"
+	CreateDatahubDatasetRequestBodyLogoNameHotjar     CreateDatahubDatasetRequestBodyLogoName = "hotjar"
+	CreateDatahubDatasetRequestBodyLogoNameJira       CreateDatahubDatasetRequestBodyLogoName = "jira"
+	CreateDatahubDatasetRequestBodyLogoNameLitellm    CreateDatahubDatasetRequestBodyLogoName = "litellm"
+	CreateDatahubDatasetRequestBodyLogoNameMiro       CreateDatahubDatasetRequestBodyLogoName = "miro"
+	CreateDatahubDatasetRequestBodyLogoNameNotion     CreateDatahubDatasetRequestBodyLogoName = "notion"
+	CreateDatahubDatasetRequestBodyLogoNameSlack      CreateDatahubDatasetRequestBodyLogoName = "slack"
+	CreateDatahubDatasetRequestBodyLogoNameWordpress  CreateDatahubDatasetRequestBodyLogoName = "wordpress"
+)
+
+// Valid indicates whether the value is a known member of the CreateDatahubDatasetRequestBodyLogoName enum.
+func (e CreateDatahubDatasetRequestBodyLogoName) Valid() bool {
+	switch e {
+	case CreateDatahubDatasetRequestBodyLogoNameAnthropic:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameAtlassian:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameAws:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameAzure:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameChatgpt:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameCloudflare:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameCopilot:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameFigma:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameGcp:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameGithub:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameGitlab:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameHotjar:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameJira:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameLitellm:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameMiro:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameNotion:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameSlack:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameWordpress:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CreateLabelRequestColor.
 const (
 	CreateLabelRequestColorApricot    CreateLabelRequestColor = "apricot"
@@ -3103,6 +3169,75 @@ func (e TimeSettingsSecondaryUnit) Valid() bool {
 	case TimeSettingsSecondaryUnitQuarter:
 		return true
 	case TimeSettingsSecondaryUnitYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateDatahubDatasetRequestBodyLogoName.
+const (
+	UpdateDatahubDatasetRequestBodyLogoNameAnthropic  UpdateDatahubDatasetRequestBodyLogoName = "anthropic"
+	UpdateDatahubDatasetRequestBodyLogoNameAtlassian  UpdateDatahubDatasetRequestBodyLogoName = "atlassian"
+	UpdateDatahubDatasetRequestBodyLogoNameAws        UpdateDatahubDatasetRequestBodyLogoName = "aws"
+	UpdateDatahubDatasetRequestBodyLogoNameAzure      UpdateDatahubDatasetRequestBodyLogoName = "azure"
+	UpdateDatahubDatasetRequestBodyLogoNameChatgpt    UpdateDatahubDatasetRequestBodyLogoName = "chatgpt"
+	UpdateDatahubDatasetRequestBodyLogoNameCloudflare UpdateDatahubDatasetRequestBodyLogoName = "cloudflare"
+	UpdateDatahubDatasetRequestBodyLogoNameCopilot    UpdateDatahubDatasetRequestBodyLogoName = "copilot"
+	UpdateDatahubDatasetRequestBodyLogoNameEmpty      UpdateDatahubDatasetRequestBodyLogoName = ""
+	UpdateDatahubDatasetRequestBodyLogoNameFigma      UpdateDatahubDatasetRequestBodyLogoName = "figma"
+	UpdateDatahubDatasetRequestBodyLogoNameGcp        UpdateDatahubDatasetRequestBodyLogoName = "gcp"
+	UpdateDatahubDatasetRequestBodyLogoNameGithub     UpdateDatahubDatasetRequestBodyLogoName = "github"
+	UpdateDatahubDatasetRequestBodyLogoNameGitlab     UpdateDatahubDatasetRequestBodyLogoName = "gitlab"
+	UpdateDatahubDatasetRequestBodyLogoNameHotjar     UpdateDatahubDatasetRequestBodyLogoName = "hotjar"
+	UpdateDatahubDatasetRequestBodyLogoNameJira       UpdateDatahubDatasetRequestBodyLogoName = "jira"
+	UpdateDatahubDatasetRequestBodyLogoNameLitellm    UpdateDatahubDatasetRequestBodyLogoName = "litellm"
+	UpdateDatahubDatasetRequestBodyLogoNameMiro       UpdateDatahubDatasetRequestBodyLogoName = "miro"
+	UpdateDatahubDatasetRequestBodyLogoNameNotion     UpdateDatahubDatasetRequestBodyLogoName = "notion"
+	UpdateDatahubDatasetRequestBodyLogoNameSlack      UpdateDatahubDatasetRequestBodyLogoName = "slack"
+	UpdateDatahubDatasetRequestBodyLogoNameWordpress  UpdateDatahubDatasetRequestBodyLogoName = "wordpress"
+)
+
+// Valid indicates whether the value is a known member of the UpdateDatahubDatasetRequestBodyLogoName enum.
+func (e UpdateDatahubDatasetRequestBodyLogoName) Valid() bool {
+	switch e {
+	case UpdateDatahubDatasetRequestBodyLogoNameAnthropic:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameAtlassian:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameAws:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameAzure:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameChatgpt:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameCloudflare:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameCopilot:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameEmpty:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameFigma:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameGcp:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameGithub:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameGitlab:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameHotjar:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameJira:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameLitellm:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameMiro:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameNotion:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameSlack:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameWordpress:
 		return true
 	default:
 		return false
@@ -6412,6 +6547,11 @@ type CreateDatahubDataset201Response struct {
 	// Example: 2024-03-10T23:00:00Z
 	LastUpdated *string `json:"lastUpdated,omitempty"`
 
+	// LogoName The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+	//
+	// Example: litellm
+	LogoName *string `json:"logoName,omitempty"`
+
 	// Name The name of the dataset.
 	//
 	// Example: My Custom Dataset
@@ -6433,11 +6573,21 @@ type CreateDatahubDatasetRequestBody struct {
 	// Example: Dataset for tracking custom business metrics
 	Description *string `json:"description,omitempty"`
 
+	// LogoName An optional preset logo shown next to the dataset in the DoiT console.
+	//
+	// Example: litellm
+	LogoName *CreateDatahubDatasetRequestBodyLogoName `json:"logoName,omitempty"`
+
 	// Name The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words.
 	//
 	// Example: My Custom Dataset
 	Name string `json:"name"`
 }
+
+// CreateDatahubDatasetRequestBodyLogoName An optional preset logo shown next to the dataset in the DoiT console.
+//
+// Example: litellm
+type CreateDatahubDatasetRequestBodyLogoName string
 
 // CreateFolderRequest Request body for creating a folder.
 type CreateFolderRequest struct {
@@ -7340,6 +7490,11 @@ type GetDatahubDataset200Response struct {
 	// Example: 2024-03-10T23:00:00Z
 	LastUpdated *string `json:"lastUpdated,omitempty"`
 
+	// LogoName The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+	//
+	// Example: litellm
+	LogoName *string `json:"logoName,omitempty"`
+
 	// Name The name of the dataset.
 	//
 	// Example: My Custom Dataset
@@ -7945,6 +8100,11 @@ type ListDatahubDatasets200ResponseDatasetsItem struct {
 	//
 	// Example: 2024-03-10T23:00:00Z
 	LastUpdated *string `json:"lastUpdated,omitempty"`
+
+	// LogoName The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+	//
+	// Example: litellm
+	LogoName *string `json:"logoName,omitempty"`
 
 	// Name The name of the dataset.
 	//
@@ -9003,6 +9163,11 @@ type UpdateDatahubDataset200Response struct {
 	// Example: 2024-03-10T23:00:00Z
 	LastUpdated *string `json:"lastUpdated,omitempty"`
 
+	// LogoName The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+	//
+	// Example: litellm
+	LogoName *string `json:"logoName,omitempty"`
+
 	// Name The name of the dataset.
 	//
 	// Example: My Custom Dataset
@@ -9021,16 +9186,26 @@ type UpdateDatahubDataset200Response struct {
 
 // UpdateDatahubDatasetRequestBody defines model for UpdateDatahubDatasetRequestBody.
 type UpdateDatahubDatasetRequestBody struct {
-	// Description The new description for the dataset.
+	// Description The new description for the dataset. Omit to keep the current description; send an empty string to clear it.
 	//
 	// Example: Updated description for the dataset
 	Description *string `json:"description,omitempty"`
+
+	// LogoName The preset logo shown next to the dataset in the DoiT console. Omit to keep the current logo; send an empty string to clear it.
+	//
+	// Example: litellm
+	LogoName *UpdateDatahubDatasetRequestBodyLogoName `json:"logoName,omitempty"`
 
 	// Name Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed.
 	//
 	// Example: My Custom Dataset
 	Name *string `json:"name,omitempty"`
 }
+
+// UpdateDatahubDatasetRequestBodyLogoName The preset logo shown next to the dataset in the DoiT console. Omit to keep the current logo; send an empty string to clear it.
+//
+// Example: litellm
+type UpdateDatahubDatasetRequestBodyLogoName string
 
 // UpdateFolderRequest Request body for updating a folder. All fields are optional; only fields
 // the caller wants to change should be set.
@@ -11548,7 +11723,8 @@ type ClientInterface interface {
 
 	// UpdateDatahubDatasetWithBody Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
@@ -11559,7 +11735,8 @@ type ClientInterface interface {
 
 	// UpdateDatahubDataset Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
@@ -14052,7 +14229,8 @@ func (c *Client) GetDatahubDataset(ctx context.Context, name string, reqEditors 
 
 // UpdateDatahubDatasetWithBody Update dataset
 //
-// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 // The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //
@@ -14073,7 +14251,8 @@ func (c *Client) UpdateDatahubDatasetWithBody(ctx context.Context, name string, 
 
 // UpdateDatahubDataset Update dataset
 //
-// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 // The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //
@@ -21992,7 +22171,8 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateDatahubDatasetWithBodyWithResponse Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
@@ -22003,7 +22183,8 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateDatahubDatasetWithResponse Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
@@ -32200,7 +32381,8 @@ func (c *ClientWithResponses) GetDatahubDatasetWithResponse(ctx context.Context,
 
 // UpdateDatahubDatasetWithBodyWithResponse Update dataset
 //
-// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 // The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //
@@ -32217,7 +32399,8 @@ func (c *ClientWithResponses) UpdateDatahubDatasetWithBodyWithResponse(ctx conte
 
 // UpdateDatahubDatasetWithResponse Update dataset
 //
-// Updates an existing DataHub dataset's metadata. Only the description field can be updated.
+// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
 // The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //

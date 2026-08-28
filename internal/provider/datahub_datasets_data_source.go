@@ -105,6 +105,7 @@ func (d *datahubDatasetsDataSource) Read(ctx context.Context, req datasource.Rea
 				map[string]attr.Value{
 					"name":         types.StringPointerValue(ds.Name),
 					"description":  types.StringPointerValue(ds.Description),
+					"logo_name":    types.StringPointerValue(ds.LogoName),
 					"records":      types.Int64PointerValue(ds.Records),
 					"updated_by":   types.StringPointerValue(ds.UpdatedBy),
 					"last_updated": types.StringPointerValue(ds.LastUpdated),

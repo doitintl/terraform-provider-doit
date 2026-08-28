@@ -17,10 +17,15 @@ Manages a DataHub dataset.
 resource "doit_datahub_dataset" "example" {
   name        = "My Custom Dataset"
   description = "Dataset for tracking custom business metrics"
+  logo_name   = "aws"
 }
 
 output "dataset_name" {
   value = doit_datahub_dataset.example.name
+}
+
+output "dataset_logo_name" {
+  value = doit_datahub_dataset.example.logo_name
 }
 
 output "dataset_records" {
@@ -38,6 +43,8 @@ output "dataset_records" {
 ### Optional
 
 - `description` (String) An optional description for the dataset.
+- `logo_name` (String) An optional preset logo shown next to the dataset in the DoiT console.
+Possible values: `anthropic`, `atlassian`, `aws`, `azure`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only

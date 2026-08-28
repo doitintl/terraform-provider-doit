@@ -24,6 +24,7 @@ output "dataset_details" {
   value = [for ds in data.doit_datahub_datasets.all.datasets : {
     name        = ds.name
     description = ds.description
+    logo_name   = ds.logo_name
     records     = ds.records
   }]
 }

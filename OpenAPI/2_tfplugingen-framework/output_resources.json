@@ -1738,6 +1738,25 @@
 						}
 					},
 					{
+						"name": "logo_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "An optional preset logo shown next to the dataset in the DoiT console.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"anthropic\",\n\"atlassian\",\n\"aws\",\n\"azure\",\n\"chatgpt\",\n\"cloudflare\",\n\"copilot\",\n\"figma\",\n\"gcp\",\n\"github\",\n\"gitlab\",\n\"hotjar\",\n\"jira\",\n\"litellm\",\n\"miro\",\n\"notion\",\n\"slack\",\n\"wordpress\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
 						"name": "name",
 						"string": {
 							"computed_optional_required": "required",

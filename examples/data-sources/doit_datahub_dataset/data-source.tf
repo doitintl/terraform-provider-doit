@@ -8,6 +8,10 @@ output "dataset_description" {
   value = data.doit_datahub_dataset.example.description
 }
 
+output "dataset_logo_name" {
+  value = data.doit_datahub_dataset.example.logo_name
+}
+
 output "dataset_records" {
   value = data.doit_datahub_dataset.example.records
 }
