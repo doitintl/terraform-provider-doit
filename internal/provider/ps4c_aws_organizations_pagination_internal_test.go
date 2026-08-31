@@ -24,7 +24,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		t.Parallel()
 
 		var requests []*http.Request
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requests = append(requests, r)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -39,7 +39,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		}))
 		defer server.Close()
 
-		state := readPs4cAwsOrganizations(t, server.URL, map[string]tftypes.Value{
+		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"max_results": tftypes.NewValue(tftypes.Number, 2.0),
 		})
 
@@ -74,7 +74,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		t.Parallel()
 
 		var requests []*http.Request
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requests = append(requests, r)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -94,7 +94,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		}))
 		defer server.Close()
 
-		state := readPs4cAwsOrganizations(t, server.URL, map[string]tftypes.Value{
+		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"page_token": tftypes.NewValue(tftypes.String, "start-token"),
 		})
 
@@ -122,7 +122,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		t.Parallel()
 
 		var requests []*http.Request
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requests = append(requests, r)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -134,7 +134,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		}))
 		defer server.Close()
 
-		state := readPs4cAwsOrganizations(t, server.URL, map[string]tftypes.Value{
+		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"max_results": tftypes.NewValue(tftypes.Number, 1.0),
 			"page_token":  tftypes.NewValue(tftypes.String, "second-page-token"),
 		})
@@ -163,12 +163,12 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 }
 
 // readPs4cAwsOrganizations builds a ps4cAwsOrganizationsDataSource backed by
-// a client pointed at serverURL, invokes Read with the given config overrides
+// a client pointed at server, invokes Read with the given config overrides
 // (all other schema attributes left null), and returns the resulting state.
-func readPs4cAwsOrganizations(t *testing.T, serverURL string, overrides map[string]tftypes.Value) tfsdk.State {
+func readPs4cAwsOrganizations(t *testing.T, server *httptest.Server, overrides map[string]tftypes.Value) tfsdk.State {
 	t.Helper()
 
-	client, err := models.NewClientWithResponses(serverURL)
+	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}

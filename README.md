@@ -157,7 +157,7 @@ provider "doit" {
 
 ### Building the Provider
 
-Requires [Go](https://golang.org/doc/install) >= 1.26.
+Requires [Go](https://golang.org/doc/install) >= 1.27.
 
 ```shell
 git clone https://github.com/doitintl/terraform-provider-doit.git

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -305,9 +306,11 @@ func constantBackOff(d time.Duration) func() backoff.BackOff {
 
 // newTestRetryClient builds a DCIRetryClient with an injected backoff policy
 // for unit testing retry behavior.
-func newTestRetryClient(requestTimeout time.Duration, newBackOff func() backoff.BackOff) *DCIRetryClient {
+func newTestRetryClient(server *httptest.Server, requestTimeout time.Duration, newBackOff func() backoff.BackOff) *DCIRetryClient {
+	c := server.Client()
+	c.Timeout = requestTimeout
 	return &DCIRetryClient{
-		client:     &http.Client{Timeout: requestTimeout},
+		client:     c,
 		newBackOff: newBackOff,
 	}
 }

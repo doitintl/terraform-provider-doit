@@ -14,7 +14,7 @@
           config.allowUnfree = true;
         };
 
-        go = pkgs.go_1_26;                # Go 1.26.0
+        go = pkgs.go_1_27;                # Go 1.27.0
 
         buildInputs = with pkgs; [
           go

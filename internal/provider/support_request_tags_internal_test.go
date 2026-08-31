@@ -203,7 +203,7 @@ func TestSupportRequestTagsCreate_Reconciles(t *testing.T) {
 			var mu sync.Mutex
 			var added, removed []string
 
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				switch r.Method {
 				case http.MethodGet:
@@ -227,7 +227,7 @@ func TestSupportRequestTagsCreate_Reconciles(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -338,14 +338,14 @@ func TestSupportRequestTagsPopulateState_Normalization(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
