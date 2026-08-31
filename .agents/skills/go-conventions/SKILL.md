@@ -97,11 +97,11 @@ params.Filter = new(data.Filter.ValueString())
 
 Generated API models use `nullable.Nullable[T]` (from `github.com/oapi-codegen/nullable`) instead of `*T` for fields where explicit `null` clearing is or will be supported. Three generic helpers in `nullable_helpers.go` bridge between Terraform types and nullable fields:
 
-| Helper | Signature | Use Case |
-|--------|-----------|----------|
+| Helper              | Signature                   | Use Case                                                                               |
+| ------------------- | --------------------------- | -------------------------------------------------------------------------------------- |
 | `nullableToPointer` | `nullable.Nullable[T] → *T` | **Read path** — convert nullable response fields to `*T` for `types.XxxPointerValue()` |
-| `valueToNullable` | `T → nullable.Nullable[T]` | **Write path** — wrap a concrete value for a nullable request field (preferred) |
-| `pointerToNullable` | `*T → nullable.Nullable[T]` | **Write path** — wrap a `ValueXxxPointer()` result for a nullable request field |
+| `valueToNullable`   | `T → nullable.Nullable[T]`  | **Write path** — wrap a concrete value for a nullable request field (preferred)        |
+| `pointerToNullable` | `*T → nullable.Nullable[T]` | **Write path** — wrap a `ValueXxxPointer()` result for a nullable request field        |
 
 ### Read path (API response → TF state)
 
@@ -162,6 +162,28 @@ req.Rules = &rules
 ### Why nullable types?
 
 Not all API fields are `*T` pointers now — only fields where the API supports or will support explicit `null` clearing use `nullable.Nullable[T]`. This distinction matters for nested objects where sending the zero value (`{}`) is interpreted as "set defaults" rather than "clear." The API is gradually adding `null` acceptance per endpoint.
+
+## Embedded Struct Composite Literals (Go 1.27+)
+
+Go 1.27 allows initializing fields promoted from embedded (anonymous) structs directly in composite literals without writing the intermediate struct type.
+
+Always omit the redundant embedded struct type wrapper when initializing composite literals:
+
+```go
+// BAD — redundant embedded struct type wrapper (flagged by modernize/embedlit)
+SupportedFeaturesType{
+    ObjectType: types.ObjectType{
+        AttrTypes: resource_cloudconnect_aws_account.SupportedFeaturesValue{}.AttributeTypes(ctx),
+    },
+}
+
+// GOOD — flattened promoted field initialization
+SupportedFeaturesType{
+    AttrTypes: resource_cloudconnect_aws_account.SupportedFeaturesValue{}.AttributeTypes(ctx),
+}
+```
+
+> **Linter:** `modernize` (`embedlit`) — flags redundant embedded struct type wrappers in composite literals.
 
 ## .gitignore Check
 
