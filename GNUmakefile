@@ -50,12 +50,12 @@ validate-docs: docs
 fmt:
 	gofmt -s -w -e .
 
-# Unit suite only. TF_ACC is explicitly cleared so a developer with TF_ACC=1 in
-# their environment (e.g. sourced from .envrc.local) does not accidentally run the
-# acceptance tests against the live tenant here — matching CI, which runs this
-# target without TF_ACC.
+# Unit suite only. All provider credentials, host configs, and TF_ACC are
+# explicitly cleared so unit tests execute in a cleanroom environment even if
+# .envrc.local is loaded in the developer's shell.
 test:
-	TF_ACC= go test -v -cover -timeout=120s -parallel=10 ./...
+	TF_ACC= DOIT_API_TOKEN= DOIT_HOST= DOIT_CUSTOMER_CONTEXT= DOIT_REQUEST_TIMEOUT= \
+	go test -v -cover -timeout=120s -parallel=10 ./...
 
 # gotestsum wraps `go test` and automatically reruns individual failed tests,
 # which tames acceptance-test flakiness caused by the upstream API. Pinned and
@@ -75,7 +75,7 @@ testacc:
 		--rerun-fails-report=/tmp/testacc-reruns.txt \
 		--packages='./...' \
 		--junitfile test-results.xml \
-		-- -cover -timeout 120m
+		-- -cover -timeout 120m -run '^TestAcc'
 
 # Run a specific acceptance test
 # Usage: make testacc-run TEST=TestAccBudget

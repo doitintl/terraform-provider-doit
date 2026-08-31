@@ -11,17 +11,9 @@ import (
 	"time"
 )
 
-// newTimeoutTestServer creates an httptest.Server that returns 200 for the
-// /auth/v1/validate endpoint (required by NewClient) and delegates all other
-// requests to the provided handler.
+// newTimeoutTestServer creates an httptest.Server for the provided handler.
 func newTimeoutTestServer(handler http.HandlerFunc) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/auth/v1/validate") {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		handler(w, r)
-	}))
+	return httptest.NewServer(handler)
 }
 
 // countingServer returns a test server wrapping handler with a request counter.
@@ -357,7 +349,6 @@ func TestNewClient_CustomTimeout(t *testing.T) {
 	defer server.Close()
 
 	client, err := NewClient(
-		context.Background(),
 		server.URL, "test-token", "", "1.0.0", "dev", 42*time.Second,
 	)
 	if err != nil {
@@ -379,7 +370,6 @@ func TestNewClient_DefaultTimeout(t *testing.T) {
 	defer server.Close()
 
 	client, err := NewClient(
-		context.Background(),
 		server.URL, "test-token", "", "1.0.0", "dev", DefaultRequestTimeout,
 	)
 	if err != nil {
