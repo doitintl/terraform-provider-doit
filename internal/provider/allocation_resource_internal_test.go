@@ -106,21 +106,19 @@ func modifyPlanTestModel(t *testing.T, rules []attr.Value, tv timeouts.Value) al
 	t.Helper()
 	ctx := context.Background()
 	return allocationResourceModel{
-		AllocationModel: resource_allocation.AllocationModel{
-			Id:               types.StringValue("group-123"),
-			Name:             types.StringValue("group-alloc"),
-			Description:      types.StringValue("desc"),
-			Rules:            types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), rules),
-			AllocationType:   types.StringValue("group"),
-			AnomalyDetection: types.BoolValue(false),
-			CreateTime:       types.Int64Value(100),
-			UpdateTime:       types.Int64Value(200),
-			FolderId:         types.StringNull(),
-			Rule:             resource_allocation.NewRuleValueNull(),
-			Type:             types.StringNull(),
-			UnallocatedCosts: types.StringNull(),
-		},
-		Timeouts: tv,
+		Id:               types.StringValue("group-123"),
+		Name:             types.StringValue("group-alloc"),
+		Description:      types.StringValue("desc"),
+		Rules:            types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), rules),
+		AllocationType:   types.StringValue("group"),
+		AnomalyDetection: types.BoolValue(false),
+		CreateTime:       types.Int64Value(100),
+		UpdateTime:       types.Int64Value(200),
+		FolderId:         types.StringNull(),
+		Rule:             resource_allocation.NewRuleValueNull(),
+		Type:             types.StringNull(),
+		UnallocatedCosts: types.StringNull(),
+		Timeouts:         tv,
 	}
 }
 

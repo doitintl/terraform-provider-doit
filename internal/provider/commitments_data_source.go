@@ -164,9 +164,7 @@ func (d *commitmentsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// Map commitment items with proper diagnostics.
 	commitmentsType := datasource_commitments.CommitmentsType{
-		ObjectType: types.ObjectType{
-			AttrTypes: datasource_commitments.CommitmentsValue{}.AttributeTypes(ctx),
-		},
+		AttrTypes: datasource_commitments.CommitmentsValue{}.AttributeTypes(ctx),
 	}
 
 	if len(allCommitments) == 0 {
@@ -305,9 +303,7 @@ func mapCommitmentsListPeriods(ctx context.Context, periods *[]models.Commitment
 	var diags diag.Diagnostics
 
 	periodsType := datasource_commitments.PeriodsType{
-		ObjectType: types.ObjectType{
-			AttrTypes: datasource_commitments.PeriodsValue{}.AttributeTypes(ctx),
-		},
+		AttrTypes: datasource_commitments.PeriodsValue{}.AttributeTypes(ctx),
 	}
 
 	if periods == nil || len(*periods) == 0 {

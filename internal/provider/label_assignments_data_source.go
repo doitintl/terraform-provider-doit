@@ -78,9 +78,7 @@ func (d *labelAssignmentsDataSource) Read(ctx context.Context, req datasource.Re
 	// but set computed list attributes to Unknown and preserve state during planning.
 	if data.Id.IsUnknown() {
 		elemType := datasource_label_assignments.AssignmentsType{
-			ObjectType: types.ObjectType{
-				AttrTypes: datasource_label_assignments.AssignmentsValue{}.AttributeTypes(ctx),
-			},
+			AttrTypes: datasource_label_assignments.AssignmentsValue{}.AttributeTypes(ctx),
 		}
 		data.Assignments = types.ListUnknown(elemType)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -115,9 +113,7 @@ func (d *labelAssignmentsDataSource) Read(ctx context.Context, req datasource.Re
 
 	// Map assignments from API response to Terraform state
 	elemType := datasource_label_assignments.AssignmentsType{
-		ObjectType: types.ObjectType{
-			AttrTypes: datasource_label_assignments.AssignmentsValue{}.AttributeTypes(ctx),
-		},
+		AttrTypes: datasource_label_assignments.AssignmentsValue{}.AttributeTypes(ctx),
 	}
 
 	if apiResp.JSON200.Assignments != nil && len(*apiResp.JSON200.Assignments) > 0 {

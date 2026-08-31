@@ -18,7 +18,7 @@
 
         buildInputs = with pkgs; [
           go
-          golangci-lint  # Go linter v2.12.2
+          golangci-lint  # Go linter v2.13.2
           terraform      # v1.13.3
         ];
 
