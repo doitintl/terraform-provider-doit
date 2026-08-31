@@ -1,6 +1,6 @@
 module github.com/doitintl/terraform-provider-doit/tools/linters
 
-go 1.26.3
+go 1.27.0
 
 require (
 	github.com/golangci/plugin-module-register v0.1.2

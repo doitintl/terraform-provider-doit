@@ -14,11 +14,11 @@
           config.allowUnfree = true;
         };
 
-        go = pkgs.go_1_26;                # Go 1.26.0
+        go = pkgs.go_1_27;                # Go 1.27.0
 
         buildInputs = with pkgs; [
           go
-          golangci-lint  # Go linter v2.12.2
+          golangci-lint  # Go linter v2.13.2
           terraform      # v1.13.3
         ];
 

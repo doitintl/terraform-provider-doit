@@ -46,7 +46,7 @@ func TestAvaDataSource_Read_ErrorHandling(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				if tt.responseBody != "" {
@@ -55,7 +55,7 @@ func TestAvaDataSource_Read_ErrorHandling(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}

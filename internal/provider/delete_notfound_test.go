@@ -64,7 +64,7 @@ func TestBudgetResourceDelete_NotFound(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock server that returns the specified status code
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
 					w.Header().Set("Content-Type", "application/json")
@@ -74,7 +74,7 @@ func TestBudgetResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -178,7 +178,7 @@ func TestAllocationResourceDelete_NotFound(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock server
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
 					w.Header().Set("Content-Type", "application/json")
@@ -188,7 +188,7 @@ func TestAllocationResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -276,7 +276,7 @@ func TestReportResourceDelete_NotFound(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock server
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
 					w.Header().Set("Content-Type", "application/json")
@@ -286,7 +286,7 @@ func TestReportResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -400,7 +400,7 @@ func TestIs404Error(t *testing.T) {
 // (not converted to errors like other 4xx codes).
 func TestBudgetDelete_WithDCIRetryClient_404(t *testing.T) {
 	// Create a mock server that returns 404
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`{"message": "Budget not found"}`))
@@ -409,7 +409,7 @@ func TestBudgetDelete_WithDCIRetryClient_404(t *testing.T) {
 
 	// Create client with DCIRetryClient (like the real provider does)
 	retryClient := &DCIRetryClient{
-		client: &http.Client{},
+		client: server.Client(),
 	}
 
 	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(retryClient))
@@ -468,7 +468,7 @@ func TestBudgetResourceRead_NotFound(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock server
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -478,7 +478,7 @@ func TestBudgetResourceRead_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -587,7 +587,7 @@ func TestAllocationResourceRead_NotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -596,7 +596,7 @@ func TestAllocationResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -693,7 +693,7 @@ func TestReportResourceRead_NotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -702,7 +702,7 @@ func TestReportResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -795,7 +795,7 @@ func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock server
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if tt.responseBody != "" {
 					w.Header().Set("Content-Type", "application/json")
 				}
@@ -808,7 +808,7 @@ func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 
 			// Create client WITH DCIRetryClient (as in production)
 			retryClient := &DCIRetryClient{
-				client: &http.Client{},
+				client: server.Client(),
 			}
 
 			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(retryClient))
@@ -904,7 +904,7 @@ func TestLabelResourceDelete_NotFound(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock server that returns the specified status code
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
 					w.Header().Set("Content-Type", "application/json")
@@ -914,7 +914,7 @@ func TestLabelResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -1005,7 +1005,7 @@ func TestLabelResourceRead_NotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -1014,7 +1014,7 @@ func TestLabelResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -1113,7 +1113,7 @@ func TestAnnotationResourceDelete_NotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
 					w.Header().Set("Content-Type", "application/json")
@@ -1122,7 +1122,7 @@ func TestAnnotationResourceDelete_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -1206,7 +1206,7 @@ func TestAnnotationResourceRead_NotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -1215,7 +1215,7 @@ func TestAnnotationResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -1314,7 +1314,7 @@ func TestAlertResourceDelete_NotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
 					w.Header().Set("Content-Type", "application/json")
@@ -1323,7 +1323,7 @@ func TestAlertResourceDelete_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -1401,7 +1401,7 @@ func TestAlertResourceRead_NotFound(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -1410,7 +1410,7 @@ func TestAlertResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -1507,7 +1507,7 @@ func TestAnnotationDataSource_Read_ErrorHandling(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -1516,7 +1516,7 @@ func TestAnnotationDataSource_Read_ErrorHandling(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}
@@ -1606,7 +1606,7 @@ func TestAlertDataSource_Read_ErrorHandling(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
@@ -1615,7 +1615,7 @@ func TestAlertDataSource_Read_ErrorHandling(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL)
+			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
 				t.Fatalf("Failed to create client: %v", err)
 			}

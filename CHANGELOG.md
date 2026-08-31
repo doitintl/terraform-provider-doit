@@ -22,6 +22,7 @@
 
 ### INTERNAL
 
+- Upgraded Go to 1.27.0 and adopted `httptest.NewTestServer` for in-memory mock testing
 - Timeout defaults are now defined once in `internal/provider/timeouts.go`, replacing literal durations at 136 call sites across 84 files. The file documents the ordering invariant between the layers and enforces it at compile time
 - The `timeoutcheck` linter now also rejects literal durations passed as a `Timeouts.*` default, so the defaults cannot drift back out of one place
 - Added unit coverage for the retry client's `429`, `524`, `404`, and `500` handling and for `Retry-After` parsing, none of which was previously tested

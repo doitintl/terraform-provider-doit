@@ -16,11 +16,11 @@ import (
 )
 
 // readAnomaliesHelper builds an anomaliesDataSource backed by a client pointed at
-// serverURL, invokes Read with the given config overrides, and returns the resulting state and diagnostics.
-func readAnomaliesHelper(t *testing.T, serverURL string, overrides map[string]tftypes.Value) (anomaliesDataSourceModel, tfsdk.State) {
+// server, invokes Read with the given config overrides, and returns the resulting state and diagnostics.
+func readAnomaliesHelper(t *testing.T, server *httptest.Server, overrides map[string]tftypes.Value) (anomaliesDataSourceModel, tfsdk.State) {
 	t.Helper()
 
-	client, err := models.NewClientWithResponses(serverURL)
+	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -131,13 +131,13 @@ func TestAnomaliesDataSource_UnknownInputs(t *testing.T) {
 			t.Parallel()
 
 			var requestCount atomic.Int32
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				requestCount.Add(1)
 				w.WriteHeader(http.StatusOK)
 			}))
 			defer server.Close()
 
-			data, _ := readAnomaliesHelper(t, server.URL, tc.overrides)
+			data, _ := readAnomaliesHelper(t, server, tc.overrides)
 
 			if reqs := requestCount.Load(); reqs != 0 {
 				t.Errorf("expected 0 API requests when inputs are unknown, got %d", reqs)
@@ -172,7 +172,7 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 	t.Parallel()
 
 	var pageRequests atomic.Int32
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqNum := pageRequests.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -235,7 +235,7 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 	defer server.Close()
 
 	// Zero overrides = auto-pagination mode
-	data, _ := readAnomaliesHelper(t, server.URL, map[string]tftypes.Value{})
+	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
 
 	if reqs := pageRequests.Load(); reqs != 2 {
 		t.Fatalf("expected 2 API requests in auto-pagination mode, got %d", reqs)
@@ -273,7 +273,7 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 func TestAnomaliesDataSource_EmptyAnomaliesList(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprint(w, `{
@@ -294,7 +294,7 @@ func TestAnomaliesDataSource_EmptyAnomaliesList(t *testing.T) {
 	}))
 	defer server.Close()
 
-	data, _ := readAnomaliesHelper(t, server.URL, map[string]tftypes.Value{})
+	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
 
 	if data.Anomalies.IsNull() {
 		t.Errorf("expected Anomalies to not be null")

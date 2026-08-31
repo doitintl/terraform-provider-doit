@@ -284,7 +284,7 @@ func mapRRResponseToModel(ctx context.Context, results []models.ResourceResult, 
 
 	if len(results) == 0 {
 		emptyList, emptyDiags := types.ListValueFrom(ctx, rr.ResourceResultsType{
-			ObjectType: types.ObjectType{AttrTypes: rr.ResourceResultsValue{}.AttributeTypes(ctx)},
+			AttrTypes: rr.ResourceResultsValue{}.AttributeTypes(ctx),
 		}, []rr.ResourceResultsValue{})
 		diags.Append(emptyDiags...)
 		state.ResourceResults = emptyList
@@ -403,7 +403,7 @@ func mapRRResponseToModel(ctx context.Context, results []models.ResourceResult, 
 	}
 
 	rrList, listDiags := types.ListValueFrom(ctx, rr.ResourceResultsType{
-		ObjectType: types.ObjectType{AttrTypes: rr.ResourceResultsValue{}.AttributeTypes(ctx)},
+		AttrTypes: rr.ResourceResultsValue{}.AttributeTypes(ctx),
 	}, resultValues)
 	diags.Append(listDiags...)
 	state.ResourceResults = rrList
@@ -830,7 +830,7 @@ func preservePriorSeverity(ctx context.Context, priorElems []rr.ResourceResultsV
 
 	if changed {
 		rrList, listDiags := types.ListValueFrom(ctx, rr.ResourceResultsType{
-			ObjectType: types.ObjectType{AttrTypes: rr.ResourceResultsValue{}.AttributeTypes(ctx)},
+			AttrTypes: rr.ResourceResultsValue{}.AttributeTypes(ctx),
 		}, newElems)
 		diags.Append(listDiags...)
 		state.ResourceResults = rrList

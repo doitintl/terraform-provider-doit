@@ -49,9 +49,7 @@ func createRulesListValue(ctx context.Context, rules []resource_allocation.Rules
 
 	// Get the RulesType from a RulesValue
 	rulesType := resource_allocation.RulesType{
-		ObjectType: basetypes.ObjectType{
-			AttrTypes: resource_allocation.RulesValue{}.AttributeTypes(ctx),
-		},
+		AttrTypes: resource_allocation.RulesValue{}.AttributeTypes(ctx),
 	}
 
 	listVal, diags := types.ListValue(rulesType, elements)
@@ -194,9 +192,7 @@ func TestAllocationRulesValidator_NullAndUnknown(t *testing.T) {
 
 	t.Run("null list skips validation", func(t *testing.T) {
 		rulesType := resource_allocation.RulesType{
-			ObjectType: basetypes.ObjectType{
-				AttrTypes: resource_allocation.RulesValue{}.AttributeTypes(ctx),
-			},
+			AttrTypes: resource_allocation.RulesValue{}.AttributeTypes(ctx),
 		}
 		req := validator.ListRequest{
 			Path:        path.Root("rules"),
@@ -212,9 +208,7 @@ func TestAllocationRulesValidator_NullAndUnknown(t *testing.T) {
 
 	t.Run("unknown list skips validation", func(t *testing.T) {
 		rulesType := resource_allocation.RulesType{
-			ObjectType: basetypes.ObjectType{
-				AttrTypes: resource_allocation.RulesValue{}.AttributeTypes(ctx),
-			},
+			AttrTypes: resource_allocation.RulesValue{}.AttributeTypes(ctx),
 		}
 		req := validator.ListRequest{
 			Path:        path.Root("rules"),

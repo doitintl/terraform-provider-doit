@@ -121,6 +121,14 @@ After `make generate`, grep for every constructor call and add the new key:
 grep -rn "NewConfigValue(" internal/provider/   # update each (incl. *_test.go)
 ```
 
+### Unit Test HTTP Mocking with `httptest.NewTestServer`
+
+When writing unit tests that mock DoiT API responses (e.g. `*_internal_test.go`, `delete_notfound_test.go`):
+
+1. **Always use `httptest.NewTestServer(t, handler)`** instead of `httptest.NewServer(handler)` to use the in-memory fake network and avoid OS TCP port allocations. Server cleanup is handled automatically by the test framework.
+2. **Always pass `models.WithHTTPClient(server.Client())`** when instantiating the generated client (`models.NewClientWithResponses`). Because `NewTestServer` does not bind a local TCP port, failing to pass `server.Client()` will cause connection errors.
+3. **Use `testing/synctest` for timeout and retry testing**: Wrap asynchronous timing/backoff tests in `synctest.Run(func() { ... })` and use `synctest.Sleep` / virtual time rather than sleeping in real wall-clock time.
+
 ---
 
 ## Drift Verification

@@ -315,10 +315,17 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 // The TF_APPEND_USER_AGENT environment variable is also respected, allowing
 // users to append custom identifiers (e.g., CI system, org name).
 func NewClient(host, apiToken, customerContext, terraformVersion, providerVersion string, requestTimeout time.Duration) (*models.ClientWithResponses, error) {
+	return newClientWithHTTPClient(host, apiToken, customerContext, terraformVersion, providerVersion, &http.Client{
+		Timeout: requestTimeout,
+	})
+}
+
+// newClientWithHTTPClient creates a client using an explicit *http.Client.
+// This allows test servers (such as httptest.NewTestServer) to route in-memory
+// without TCP listeners.
+func newClientWithHTTPClient(host, apiToken, customerContext, terraformVersion, providerVersion string, httpClient *http.Client) (*models.ClientWithResponses, error) {
 	retryClient := &DCIRetryClient{
-		client: &http.Client{
-			Timeout: requestTimeout,
-		},
+		client: httpClient,
 	}
 
 	ts := oauth2.StaticTokenSource(

@@ -12,15 +12,15 @@ import (
 )
 
 // newTimeoutTestServer creates an httptest.Server for the provided handler.
-func newTimeoutTestServer(handler http.HandlerFunc) *httptest.Server {
-	return httptest.NewServer(handler)
+func newTimeoutTestServer(t *testing.T, handler http.HandlerFunc) *httptest.Server {
+	return httptest.NewTestServer(t, handler)
 }
 
 // countingServer returns a test server wrapping handler with a request counter.
 // The counter is incremented before handler runs, so it reflects requests that
 // reached the server even if the client later abandons them.
-func countingServer(count *atomic.Int64, handler http.HandlerFunc) *httptest.Server {
-	return newTimeoutTestServer(func(w http.ResponseWriter, r *http.Request) {
+func countingServer(t *testing.T, count *atomic.Int64, handler http.HandlerFunc) *httptest.Server {
+	return newTimeoutTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		count.Add(1)
 		handler(w, r)
 	})
@@ -69,10 +69,10 @@ func TestDCIRetryClient_RequestTimeout(t *testing.T) {
 	)
 
 	var requestCount atomic.Int64
-	server := countingServer(&requestCount, respondAfter(serverDelay, http.StatusOK))
+	server := countingServer(t, &requestCount, respondAfter(serverDelay, http.StatusOK))
 	defer server.Close()
 
-	client := newTestRetryClient(clientTimeout, constantBackOff(time.Millisecond))
+	client := newTestRetryClient(server, clientTimeout, constantBackOff(time.Millisecond))
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -105,10 +105,10 @@ func TestDCIRetryClient_ContextCancellation(t *testing.T) {
 		parentTimeout = 300 * time.Millisecond // the real bound
 	)
 
-	server := newTimeoutTestServer(respondAfter(5*time.Second, http.StatusOK))
+	server := newTimeoutTestServer(t, respondAfter(5*time.Second, http.StatusOK))
 	defer server.Close()
 
-	client := newTestRetryClient(clientTimeout, constantBackOff(time.Millisecond))
+	client := newTestRetryClient(server, clientTimeout, constantBackOff(time.Millisecond))
 
 	ctx, cancel := context.WithTimeout(context.Background(), parentTimeout)
 	defer cancel()
@@ -137,12 +137,12 @@ func TestDCIRetryClient_RetryRespectsContextDeadline(t *testing.T) {
 	const contextDeadline = 300 * time.Millisecond
 
 	var requestCount atomic.Int64
-	server := countingServer(&requestCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable) // 503 triggers retry
 	})
 	defer server.Close()
 
-	client := newTestRetryClient(10*time.Second, constantBackOff(25*time.Millisecond))
+	client := newTestRetryClient(server, 10*time.Second, constantBackOff(25*time.Millisecond))
 
 	ctx, cancel := context.WithTimeout(context.Background(), contextDeadline)
 	defer cancel()
@@ -176,13 +176,13 @@ func TestDCIRetryClient_CloudflareTimeoutIsPermanent(t *testing.T) {
 	t.Parallel()
 
 	var requestCount atomic.Int64
-	server := countingServer(&requestCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(httpStatusCloudflareTimeout)
 		_, _ = w.Write([]byte("error code: 524"))
 	})
 	defer server.Close()
 
-	client := newTestRetryClient(10*time.Second, constantBackOff(10*time.Second))
+	client := newTestRetryClient(server, 10*time.Second, constantBackOff(10*time.Second))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -211,7 +211,7 @@ func TestDCIRetryClient_429NoRetryAfter_Retries(t *testing.T) {
 	const failures = 2
 
 	var requestCount atomic.Int64
-	server := countingServer(&requestCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
 		if requestCount.Load() <= failures {
 			w.WriteHeader(http.StatusTooManyRequests) // deliberately no Retry-After
 			return
@@ -220,7 +220,7 @@ func TestDCIRetryClient_429NoRetryAfter_Retries(t *testing.T) {
 	})
 	defer server.Close()
 
-	client := newTestRetryClient(10*time.Second, constantBackOff(time.Millisecond))
+	client := newTestRetryClient(server, 10*time.Second, constantBackOff(time.Millisecond))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -250,7 +250,7 @@ func TestDCIRetryClient_429WithRetryAfter_Honored(t *testing.T) {
 	retryAfter := retryInitialInterval
 
 	var requestCount atomic.Int64
-	server := countingServer(&requestCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
 		if requestCount.Load() == 1 {
 			w.Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds())))
 			w.WriteHeader(http.StatusTooManyRequests)
@@ -260,7 +260,7 @@ func TestDCIRetryClient_429WithRetryAfter_Honored(t *testing.T) {
 	})
 	defer server.Close()
 
-	client := newTestRetryClient(10*time.Second, constantBackOff(10*time.Second))
+	client := newTestRetryClient(server, 10*time.Second, constantBackOff(10*time.Second))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -293,12 +293,12 @@ func TestDCIRetryClient_404PassesThrough(t *testing.T) {
 	t.Parallel()
 
 	var requestCount atomic.Int64
-	server := countingServer(&requestCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 	defer server.Close()
 
-	client := newTestRetryClient(10*time.Second, constantBackOff(10*time.Second))
+	client := newTestRetryClient(server, 10*time.Second, constantBackOff(10*time.Second))
 
 	resp, err := doGet(context.Background(), t, client, server.URL)
 
@@ -319,12 +319,12 @@ func TestDCIRetryClient_500NotRetried(t *testing.T) {
 	t.Parallel()
 
 	var requestCount atomic.Int64
-	server := countingServer(&requestCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 	defer server.Close()
 
-	client := newTestRetryClient(10*time.Second, constantBackOff(10*time.Second))
+	client := newTestRetryClient(server, 10*time.Second, constantBackOff(10*time.Second))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -345,7 +345,7 @@ func TestNewClient_CustomTimeout(t *testing.T) {
 	t.Parallel()
 
 	var reqCount atomic.Int64
-	server := countingServer(&reqCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &reqCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 	defer server.Close()
@@ -370,7 +370,7 @@ func TestNewClient_DefaultTimeout(t *testing.T) {
 	t.Parallel()
 
 	var reqCount atomic.Int64
-	server := countingServer(&reqCount, func(w http.ResponseWriter, _ *http.Request) {
+	server := countingServer(t, &reqCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 	defer server.Close()

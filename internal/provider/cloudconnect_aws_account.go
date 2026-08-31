@@ -105,9 +105,7 @@ func mapCloudConnectAwsAccountToModel(ctx context.Context, resp *models.AwsAccou
 	}
 
 	featList, listDiags := types.ListValueFrom(ctx, resource_cloudconnect_aws_account.SupportedFeaturesType{
-		ObjectType: types.ObjectType{
-			AttrTypes: resource_cloudconnect_aws_account.SupportedFeaturesValue{}.AttributeTypes(ctx),
-		},
+		AttrTypes: resource_cloudconnect_aws_account.SupportedFeaturesValue{}.AttributeTypes(ctx),
 	}, featElems)
 	diags.Append(listDiags...)
 	if listDiags.HasError() {

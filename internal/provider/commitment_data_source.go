@@ -195,9 +195,7 @@ func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPerio
 	var diags diag.Diagnostics
 
 	periodsType := datasource_commitment.PeriodsType{
-		ObjectType: types.ObjectType{
-			AttrTypes: datasource_commitment.PeriodsValue{}.AttributeTypes(ctx),
-		},
+		AttrTypes: datasource_commitment.PeriodsValue{}.AttributeTypes(ctx),
 	}
 	if periods == nil || len(*periods) == 0 {
 		emptyList, d := types.ListValueFrom(ctx, periodsType, []datasource_commitment.PeriodsValue{})

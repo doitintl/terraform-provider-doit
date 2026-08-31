@@ -16,7 +16,7 @@ func captureUserAgent(t *testing.T) (*httptest.Server, func() string) {
 		mu sync.Mutex
 		ua string
 	)
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		ua = r.Header.Get("User-Agent")
 		mu.Unlock()
@@ -38,7 +38,7 @@ func TestNewClient_UserAgent(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
+	client, err := newClientWithHTTPClient(server.URL, "test-token", "", "1.9.0", "1.0.0", server.Client())
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
@@ -66,7 +66,7 @@ func TestNewClient_UserAgentDev(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(server.URL, "test-token", "", "1.9.0", "dev", DefaultRequestTimeout)
+	client, err := newClientWithHTTPClient(server.URL, "test-token", "", "1.9.0", "dev", server.Client())
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
@@ -94,7 +94,7 @@ func TestNewClient_UserAgentAppend(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
+	client, err := newClientWithHTTPClient(server.URL, "test-token", "", "1.9.0", "1.0.0", server.Client())
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
