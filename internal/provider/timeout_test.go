@@ -339,11 +339,13 @@ func TestDCIRetryClient_500NotRetried(t *testing.T) {
 	}
 }
 
-// TestNewClient_CustomTimeout verifies that NewClient accepts a custom timeout.
+// TestNewClient_CustomTimeout verifies that NewClient accepts a custom timeout
+// and performs zero network I/O during initialization.
 func TestNewClient_CustomTimeout(t *testing.T) {
 	t.Parallel()
 
-	server := newTimeoutTestServer(func(w http.ResponseWriter, _ *http.Request) {
+	var reqCount atomic.Int64
+	server := countingServer(&reqCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 	defer server.Close()
@@ -357,14 +359,18 @@ func TestNewClient_CustomTimeout(t *testing.T) {
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
 	}
+	if got := reqCount.Load(); got != 0 {
+		t.Errorf("NewClient() made %d HTTP requests, want 0", got)
+	}
 }
 
 // TestNewClient_DefaultTimeout verifies that DefaultRequestTimeout is a valid
-// configuration value.
+// configuration value and performs zero network I/O during initialization.
 func TestNewClient_DefaultTimeout(t *testing.T) {
 	t.Parallel()
 
-	server := newTimeoutTestServer(func(w http.ResponseWriter, _ *http.Request) {
+	var reqCount atomic.Int64
+	server := countingServer(&reqCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 	defer server.Close()
@@ -377,5 +383,8 @@ func TestNewClient_DefaultTimeout(t *testing.T) {
 	}
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
+	}
+	if got := reqCount.Load(); got != 0 {
+		t.Errorf("NewClient() made %d HTTP requests, want 0", got)
 	}
 }

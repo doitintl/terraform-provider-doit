@@ -86,12 +86,12 @@ See `.envrc.example` for the full list. Key variables:
 
 ## Unit Tests (run these too — CI does)
 
-`make testacc` and `make testacc-run TEST=...` strictly run acceptance tests
-matching `-run '^TestAcc'`; they **skip the package's unit tests**
-(`*_internal_test.go` and other non-`TestAcc` tests). The unit suite (`make test`)
-runs in a hermetic cleanroom environment where all credentials and `TF_ACC` are
-explicitly cleared. CI runs both `make test` (credential-free) and `make testacc`
-in separate jobs. **Before pushing, always run the unit suite:**
+`make testacc` automatically runs acceptance tests using `-run '^TestAcc'`,
+skipping the package's unit tests (`*_internal_test.go` and other non-`TestAcc` tests).
+`make testacc-run TEST=...` forwards your specific test regex (`-run '$(TEST)'`).
+The unit suite (`make test`) runs in a hermetic cleanroom environment where all
+credentials and `TF_ACC` are explicitly cleared. CI runs both `make test` (credential-free)
+and `make testacc` in separate jobs. **Before pushing, always run the unit suite:**
 
 ```bash
 make test          # full credential-free unit suite (clears TF_ACC and DOIT_* envs)
