@@ -41,7 +41,7 @@ echo "exit: $?"   # WITHOUT pipefail this prints tee's status (0), not the test 
 
 - **exit 0** = every test ultimately passed. Some may have needed a rerun (flaky),
   but none is a real failure.
-- **non-zero** = at least one test failed on its *final* attempt.
+- **non-zero** = at least one test failed on its _final_ attempt.
 
 To tell a genuine failure from a test that merely flaked, read the rerun report —
 the targets write one line per reran test to `/tmp/testacc-reruns.txt`:
@@ -57,15 +57,15 @@ Flaky (recovered) tests are not blocking, but are worth reporting (see
 
 Do **not** infer real-vs-flaky from `(re-run N)` markers in the log: a test can fail
 `(re-run 1)` and still pass on `(re-run 2)`. The `=== Failed` block lists every
-failed *attempt*, including attempts of tests that later recovered — use it to read
-failure *output*, not to decide pass/fail:
+failed _attempt_, including attempts of tests that later recovered — use it to read
+failure _output_, not to decide pass/fail:
 
 ```bash
 sed -n '/^=== Failed/,$p' /tmp/test-output.txt   # failure output (may include recovered flakies)
 ```
 
 **Do NOT trust `test-results.xml` for pass/fail.** gotestsum writes one `<testcase>`
-per *attempt*, so a recovered flaky still carries a `<failure>` node even on a green
+per _attempt_, so a recovered flaky still carries a `<failure>` node even on a green
 run — a naive parse reports false failures. That file exists only to feed the CI
 JUnit check (which sets `check_retries: true` to compensate). Locally, rely on the
 exit code and `/tmp/testacc-reruns.txt`.
@@ -74,25 +74,27 @@ exit code and `/tmp/testacc-reruns.txt`.
 
 See `.envrc.example` for the full list. Key variables:
 
-| Variable | Description |
-|----------|-------------|
-| `TF_ACC` | Set to `1` to enable acceptance tests |
-| `DOIT_API_TOKEN` | Your DoiT API token |
-| `DOIT_HOST` | API host (e.g., `https://api.doit.com`) |
-| `TEST_USER` | Email for test budget collaborators |
-| `TEST_ATTRIBUTION` | Attribution ID for test budget scope |
+| Variable           | Description                             |
+| ------------------ | --------------------------------------- |
+| `TF_ACC`           | Set to `1` to enable acceptance tests   |
+| `DOIT_API_TOKEN`   | Your DoiT API token                     |
+| `DOIT_HOST`        | API host (e.g., `https://api.doit.com`) |
+| `TEST_USER`        | Email for test budget collaborators     |
+| `TEST_ATTRIBUTION` | Attribution ID for test budget scope    |
 
 ---
 
 ## Unit Tests (run these too — CI does)
 
-`make testacc-run TEST=...` only runs the acceptance tests you name; the `-run`
-filter **skips the package's unit tests** (`*_internal_test.go` and other
-non-`TestAcc` tests). CI runs the full unit suite (`make test`, no `TF_ACC`), so a
-green acceptance run is not enough. **Before pushing, run the unit suite:**
+`make testacc` automatically runs acceptance tests using `-run '^TestAcc'`,
+skipping the package's unit tests (`*_internal_test.go` and other non-`TestAcc` tests).
+`make testacc-run TEST=...` forwards your specific test regex (`-run '$(TEST)'`).
+The unit suite (`make test`) runs in a hermetic cleanroom environment where all
+credentials and `TF_ACC` are explicitly cleared. CI runs both `make test` (credential-free)
+and `make testacc` in separate jobs. **Before pushing, always run the unit suite:**
 
 ```bash
-make test          # full unit suite (no TF_ACC), same as CI
+make test          # full credential-free unit suite (clears TF_ACC and DOIT_* envs)
 ```
 
 Targeted unit tests (which need no API env) may use `go test` directly — the
@@ -148,12 +150,12 @@ All acceptance tests for resources should verify that re-applying the same confi
 
 ### Required Test Coverage
 
-| Test Type | Drift Step | Reason |
-|-----------|-----------|--------|
-| Main tests | ✅ Required | Update step catches drift from create |
-| Feature tests | ✅ Required | Feature-specific attributes |
-| Import tests | ❌ Not needed | Tests import, not drift |
-| Validation/Disappears | ❌ Not needed | Tests error handling |
+| Test Type             | Drift Step    | Reason                                |
+| --------------------- | ------------- | ------------------------------------- |
+| Main tests            | ✅ Required   | Update step catches drift from create |
+| Feature tests         | ✅ Required   | Feature-specific attributes           |
+| Import tests          | ❌ Not needed | Tests import, not drift               |
+| Validation/Disappears | ❌ Not needed | Tests error handling                  |
 
 ### Known API Issues
 
@@ -169,17 +171,17 @@ When an API bug causes legitimate drift, skip the drift step with a TODO:
 
 Every plan-first resource must have these test categories:
 
-| Test | What It Verifies |
-|------|------------------|
-| **Create + drift check** | Create, then re-apply with `ExpectEmptyPlan()` |
-| **Update + drift check** | Create, modify, then re-apply with `ExpectEmptyPlan()` |
-| **Import + drift check** | Create, import, then re-apply with `ExpectEmptyPlan()` |
-| **Omitted Optional+Computed** | Omit each field, verify no drift after API assigns defaults |
-| **null↔[] consistency (non-clearable)** | Omit list fields, assert `ListSizeExact(0)` on Create AND drift-check |
-| **null↔[] consistency (clearable)** | Omit clearable list fields, assert `knownvalue.ListExact([]knownvalue.Check{})` on Create AND drift-check |
-| **Clearing lifecycle** | Set a clearable attribute → drift check → clear it → drift check (see [Clearing Optional+Computed Attributes](../implement-resource/SKILL.md#clearing-optionalcomputed-attributes)) |
-| **API normalization** | Use values the API will normalize, verify user value preserved |
-| **Value with boolean flags** | Omit booleans, verify they resolve to `false` not `Unknown` |
+| Test                                    | What It Verifies                                                                                                                                                                    |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Create + drift check**                | Create, then re-apply with `ExpectEmptyPlan()`                                                                                                                                      |
+| **Update + drift check**                | Create, modify, then re-apply with `ExpectEmptyPlan()`                                                                                                                              |
+| **Import + drift check**                | Create, import, then re-apply with `ExpectEmptyPlan()`                                                                                                                              |
+| **Omitted Optional+Computed**           | Omit each field, verify no drift after API assigns defaults                                                                                                                         |
+| **null↔[] consistency (non-clearable)** | Omit list fields, assert `ListSizeExact(0)` on Create AND drift-check                                                                                                               |
+| **null↔[] consistency (clearable)**     | Omit clearable list fields, assert `knownvalue.ListExact([]knownvalue.Check{})` on Create AND drift-check                                                                           |
+| **Clearing lifecycle**                  | Set a clearable attribute → drift check → clear it → drift check (see [Clearing Optional+Computed Attributes](../implement-resource/SKILL.md#clearing-optionalcomputed-attributes)) |
+| **API normalization**                   | Use values the API will normalize, verify user value preserved                                                                                                                      |
+| **Value with boolean flags**            | Omit booleans, verify they resolve to `false` not `Unknown`                                                                                                                         |
 
 ---
 

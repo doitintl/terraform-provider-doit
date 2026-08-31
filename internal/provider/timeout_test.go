@@ -11,17 +11,9 @@ import (
 	"time"
 )
 
-// newTimeoutTestServer creates an httptest.Server that returns 200 for the
-// /auth/v1/validate endpoint (required by NewClient) and delegates all other
-// requests to the provided handler.
+// newTimeoutTestServer creates an httptest.Server for the provided handler.
 func newTimeoutTestServer(handler http.HandlerFunc) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/auth/v1/validate") {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		handler(w, r)
-	}))
+	return httptest.NewServer(handler)
 }
 
 // countingServer returns a test server wrapping handler with a request counter.
@@ -347,17 +339,18 @@ func TestDCIRetryClient_500NotRetried(t *testing.T) {
 	}
 }
 
-// TestNewClient_CustomTimeout verifies that NewClient accepts a custom timeout.
+// TestNewClient_CustomTimeout verifies that NewClient accepts a custom timeout
+// and performs zero network I/O during initialization.
 func TestNewClient_CustomTimeout(t *testing.T) {
 	t.Parallel()
 
-	server := newTimeoutTestServer(func(w http.ResponseWriter, _ *http.Request) {
+	var reqCount atomic.Int64
+	server := countingServer(&reqCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 	defer server.Close()
 
 	client, err := NewClient(
-		context.Background(),
 		server.URL, "test-token", "", "1.0.0", "dev", 42*time.Second,
 	)
 	if err != nil {
@@ -366,20 +359,23 @@ func TestNewClient_CustomTimeout(t *testing.T) {
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
 	}
+	if got := reqCount.Load(); got != 0 {
+		t.Errorf("NewClient() made %d HTTP requests, want 0", got)
+	}
 }
 
 // TestNewClient_DefaultTimeout verifies that DefaultRequestTimeout is a valid
-// configuration value.
+// configuration value and performs zero network I/O during initialization.
 func TestNewClient_DefaultTimeout(t *testing.T) {
 	t.Parallel()
 
-	server := newTimeoutTestServer(func(w http.ResponseWriter, _ *http.Request) {
+	var reqCount atomic.Int64
+	server := countingServer(&reqCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 	defer server.Close()
 
 	client, err := NewClient(
-		context.Background(),
 		server.URL, "test-token", "", "1.0.0", "dev", DefaultRequestTimeout,
 	)
 	if err != nil {
@@ -387,5 +383,8 @@ func TestNewClient_DefaultTimeout(t *testing.T) {
 	}
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
+	}
+	if got := reqCount.Load(); got != 0 {
+		t.Errorf("NewClient() made %d HTTP requests, want 0", got)
 	}
 }

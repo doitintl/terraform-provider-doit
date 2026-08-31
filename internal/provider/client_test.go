@@ -38,12 +38,20 @@ func TestNewClient_UserAgent(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
+	client, err := NewClient(server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
+	}
+
+	resp, err := client.Validate(context.Background())
+	if err != nil {
+		t.Fatalf("client.Validate() error = %v", err)
+	}
+	if resp != nil && resp.Body != nil {
+		_ = resp.Body.Close()
 	}
 
 	expected := "Terraform/1.9.0 terraform-provider-doit/1.0.0"
@@ -58,12 +66,20 @@ func TestNewClient_UserAgentDev(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "dev", DefaultRequestTimeout)
+	client, err := NewClient(server.URL, "test-token", "", "1.9.0", "dev", DefaultRequestTimeout)
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
+	}
+
+	resp, err := client.Validate(context.Background())
+	if err != nil {
+		t.Fatalf("client.Validate() error = %v", err)
+	}
+	if resp != nil && resp.Body != nil {
+		_ = resp.Body.Close()
 	}
 
 	expected := "Terraform/1.9.0 terraform-provider-doit/dev"
@@ -78,12 +94,20 @@ func TestNewClient_UserAgentAppend(t *testing.T) {
 
 	server, getUA := captureUserAgent(t)
 
-	client, err := NewClient(context.Background(), server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
+	client, err := NewClient(server.URL, "test-token", "", "1.9.0", "1.0.0", DefaultRequestTimeout)
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
 	}
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
+	}
+
+	resp, err := client.Validate(context.Background())
+	if err != nil {
+		t.Fatalf("client.Validate() error = %v", err)
+	}
+	if resp != nil && resp.Body != nil {
+		_ = resp.Body.Close()
 	}
 
 	expected := "Terraform/1.9.0 terraform-provider-doit/1.0.0 my-ci-system/2.0"

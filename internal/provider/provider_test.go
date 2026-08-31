@@ -47,7 +47,6 @@ func sweepOrphanedAllocations() {
 	}
 
 	client, err := provider.NewClient(
-		context.Background(),
 		host, token, customerCtx,
 		"test", "dev", provider.DefaultRequestTimeout,
 	)
@@ -148,8 +147,8 @@ func skipIfNoAcc(t *testing.T) {
 // the API directly (e.g., counting resources, deleting a resource mid-test).
 func getAPIClient(t *testing.T) *models.ClientWithResponses {
 	t.Helper()
+	skipIfNoAcc(t)
 	client, err := provider.NewClient(
-		context.Background(),
 		os.Getenv("DOIT_HOST"),
 		os.Getenv("DOIT_API_TOKEN"),
 		os.Getenv("DOIT_CUSTOMER_CONTEXT"),

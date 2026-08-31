@@ -303,8 +303,8 @@ func constantBackOff(d time.Duration) func() backoff.BackOff {
 	}
 }
 
-// newTestRetryClient builds a DCIRetryClient with an injected backoff policy,
-// bypassing NewClient (and its /auth/v1/validate handshake).
+// newTestRetryClient builds a DCIRetryClient with an injected backoff policy
+// for unit testing retry behavior.
 func newTestRetryClient(requestTimeout time.Duration, newBackOff func() backoff.BackOff) *DCIRetryClient {
 	return &DCIRetryClient{
 		client:     &http.Client{Timeout: requestTimeout},

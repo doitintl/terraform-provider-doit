@@ -238,7 +238,7 @@ func (p *doitProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	tflog.Debug(ctx, "Request timeout configured", map[string]any{"timeout": requestTimeout.String()})
 
 	// Create a new DoiT client using the configuration values
-	client, err := NewClient(ctx, host, doiTAPIToken, customerContext, req.TerraformVersion, p.version, requestTimeout)
+	client, err := NewClient(host, doiTAPIToken, customerContext, req.TerraformVersion, p.version, requestTimeout)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Create DoiT API Client",

@@ -314,7 +314,7 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 //
 // The TF_APPEND_USER_AGENT environment variable is also respected, allowing
 // users to append custom identifiers (e.g., CI system, org name).
-func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVersion, providerVersion string, requestTimeout time.Duration) (*models.ClientWithResponses, error) {
+func NewClient(host, apiToken, customerContext, terraformVersion, providerVersion string, requestTimeout time.Duration) (*models.ClientWithResponses, error) {
 	retryClient := &DCIRetryClient{
 		client: &http.Client{
 			Timeout: requestTimeout,
@@ -330,7 +330,7 @@ func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVe
 		userAgent += " " + add
 	}
 
-	client, err := models.NewClientWithResponses(host,
+	return models.NewClientWithResponses(host,
 		models.WithHTTPClient(retryClient),
 		models.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
 			token, err := ts.Token()
@@ -347,19 +347,4 @@ func NewClient(ctx context.Context, host, apiToken, customerContext, terraformVe
 			}
 			return nil
 		}))
-	if err != nil {
-		return nil, err
-	}
-	// Validate the API token with a bounded context derived from
-	// requestTimeout so initialization does not hang indefinitely.
-	validateCtx, validateCancel := context.WithTimeout(ctx, requestTimeout)
-	defer validateCancel()
-	validateResp, err := client.Validate(validateCtx)
-	if validateResp != nil && validateResp.Body != nil {
-		validateResp.Body.Close()
-	}
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
 }
