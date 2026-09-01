@@ -60,7 +60,7 @@ func (m useEmptyForUnknownWhenConfigNullModifier) PlanModifyString(_ context.Con
 // useEmptyForUnknownWhenConfigNull: it proposes the zero value (false) rather
 // than null when the config value is null and a prior state value exists.
 //
-// Use this — not useNullForUnknownBoolWhenConfigNull — when the API clears the
+// Use this when the API clears the
 // field via an explicit false and ignores an explicit null. doit_allocation's
 // anomaly_detection is such a field: PATCH {"anomalyDetection": null} returns
 // 200 but leaves the stored value untouched, while PATCH

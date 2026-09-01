@@ -49,10 +49,8 @@ var Analyzer = &analysis.Analyzer{
 // convention for plan modifier functions that mark an attribute as clearable.
 // Typed variants exist for each Terraform type:
 //   - useEmptyForUnknownWhenConfigNull        (string — proposes "")
-//   - useNullForUnknownBoolWhenConfigNull     (bool)
-//   - useNullForUnknownInt64WhenConfigNull    (int64)
-//   - useNullForUnknownFloat64WhenConfigNull  (float64)
-//   - useNullForUnknownListWhenConfigNull     (list)
+//   - useEmptyForUnknownBoolWhenConfigNull    (bool — proposes false)
+//   - useNullForUnknownListWhenConfigNull     (list — proposes null)
 //   - useNullForUnknownStringWhenConfigNull   (string — proposes null)
 const (
 	clearableModifierPrefixEmpty = "useEmptyForUnknown"

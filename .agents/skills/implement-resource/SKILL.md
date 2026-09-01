@@ -173,11 +173,11 @@ Not all Optional+Computed attributes should be clearable. **Every Optional+Compu
 
 Apply the `useEmptyForUnknownWhenConfigNull()` plan modifier. Null config means "clear this value." Use typed variants for non-string types:
 
-| Type                                                  | Modifier                                |
-| ----------------------------------------------------- | --------------------------------------- |
-| `schema.StringAttribute`                              | `useEmptyForUnknownWhenConfigNull()`    |
-| `schema.BoolAttribute`                                | `useNullForUnknownBoolWhenConfigNull()` |
-| `schema.ListAttribute` / `schema.ListNestedAttribute` | `useNullForUnknownListWhenConfigNull()` |
+| Type                                                  | Modifier                                 |
+| ----------------------------------------------------- | ---------------------------------------- |
+| `schema.StringAttribute`                              | `useEmptyForUnknownWhenConfigNull()`     |
+| `schema.BoolAttribute`                                | `useEmptyForUnknownBoolWhenConfigNull()` |
+| `schema.ListAttribute` / `schema.ListNestedAttribute` | `useNullForUnknownListWhenConfigNull()`  |
 
 Examples of clearable attributes:
 
