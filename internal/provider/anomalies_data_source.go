@@ -270,6 +270,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 					"deactivation_reason": deactivationReasonVal,
 					"end_time":            endTimeVal,
 					"expected_max_cost":   types.Float64PointerValue(nullableToPointer(anomaly.ExpectedMaxCost)),
+					"monitor_level":       types.StringValue(string(anomaly.MonitorLevel)),
 					"notifications":       notificationsList,
 					"platform":            types.StringValue(anomaly.Platform),
 					"scope":               types.StringValue(anomaly.Scope),

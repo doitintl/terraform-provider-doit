@@ -69,6 +69,7 @@ output "anomaly_summary" {
     service             = a.service_name
     cost_impact         = a.cost_of_anomaly
     severity            = a.severity_level
+    monitor_level       = a.monitor_level
     status              = a.status
     deactivation_reason = a.deactivation_reason
   }]
@@ -325,6 +326,7 @@ Read-Only:
 - `end_time` (Number) End of the anomaly.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
 - `id` (String)
+- `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--anomalies--notifications))
 - `platform` (String) Cloud Provider name.
 - `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--resource_data))

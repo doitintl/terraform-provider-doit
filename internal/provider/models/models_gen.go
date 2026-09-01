@@ -208,6 +208,24 @@ func (e AnomalyItemDeactivationReason) Valid() bool {
 	}
 }
 
+// Defines values for AnomalyItemMonitorLevel.
+const (
+	AnomalyItemMonitorLevelService AnomalyItemMonitorLevel = "service"
+	AnomalyItemMonitorLevelSku     AnomalyItemMonitorLevel = "sku"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyItemMonitorLevel enum.
+func (e AnomalyItemMonitorLevel) Valid() bool {
+	switch e {
+	case AnomalyItemMonitorLevelService:
+		return true
+	case AnomalyItemMonitorLevelSku:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AnomalyItemStatus.
 const (
 	AnomalyItemStatusActive   AnomalyItemStatus = "active"
@@ -2338,6 +2356,24 @@ func (e GetAnomaly200ResponseDeactivationReason) Valid() bool {
 	case GetAnomaly200ResponseDeactivationReasonReverted:
 		return true
 	case GetAnomaly200ResponseDeactivationReasonUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetAnomaly200ResponseMonitorLevel.
+const (
+	GetAnomaly200ResponseMonitorLevelService GetAnomaly200ResponseMonitorLevel = "service"
+	GetAnomaly200ResponseMonitorLevelSku     GetAnomaly200ResponseMonitorLevel = "sku"
+)
+
+// Valid indicates whether the value is a known member of the GetAnomaly200ResponseMonitorLevel enum.
+func (e GetAnomaly200ResponseMonitorLevel) Valid() bool {
+	switch e {
+	case GetAnomaly200ResponseMonitorLevelService:
+		return true
+	case GetAnomaly200ResponseMonitorLevelSku:
 		return true
 	default:
 		return false
@@ -4605,6 +4641,9 @@ type AnomalyItem struct {
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 	Id              *string                    `json:"id,omitempty"`
 
+	// MonitorLevel Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
+	MonitorLevel AnomalyItemMonitorLevel `json:"monitorLevel"`
+
 	// Notifications Chronologically ordered notification dispatch events.
 	Notifications NotificationEventArray `json:"notifications"`
 
@@ -4636,6 +4675,9 @@ type AnomalyItem struct {
 
 // AnomalyItemDeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
 type AnomalyItemDeactivationReason string
+
+// AnomalyItemMonitorLevel Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
+type AnomalyItemMonitorLevel string
 
 // AnomalyItemStatus defines model for AnomalyItem.Status.
 type AnomalyItemStatus string
@@ -7443,6 +7485,9 @@ type GetAnomaly200Response struct {
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 
+	// MonitorLevel Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
+	MonitorLevel GetAnomaly200ResponseMonitorLevel `json:"monitorLevel"`
+
 	// Notifications Chronologically ordered notification dispatch events.
 	Notifications NotificationEventArray `json:"notifications"`
 
@@ -7474,6 +7519,9 @@ type GetAnomaly200Response struct {
 
 // GetAnomaly200ResponseDeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
 type GetAnomaly200ResponseDeactivationReason string
+
+// GetAnomaly200ResponseMonitorLevel Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
+type GetAnomaly200ResponseMonitorLevel string
 
 // GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
 type GetAnomaly200ResponseStatus string

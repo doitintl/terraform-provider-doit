@@ -1422,6 +1422,13 @@
 										}
 									},
 									{
+										"name": "monitor_level",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`)."
+										}
+									},
+									{
 										"name": "notifications",
 										"list_nested": {
 											"computed_optional_required": "computed",
@@ -1745,6 +1752,13 @@
 						"float64": {
 							"computed_optional_required": "computed",
 							"description": "Maximum cost within the expected normal range."
+						}
+					},
+					{
+						"name": "monitor_level",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`)."
 						}
 					},
 					{

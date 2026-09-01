@@ -30,6 +30,7 @@ func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "page_token"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.notifications.#"),
+					resource.TestMatchResourceAttr("data.doit_anomalies.limited", "anomalies.0.monitor_level", regexp.MustCompile(`^(service|sku)$`)),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "total_count"),
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "total_count_exact", "true"),
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "truncated", "true"),
@@ -632,6 +633,51 @@ output "total_count_exact" {
 
 output "truncated" {
   value = data.doit_anomalies.total_count_test.truncated
+}
+`
+}
+
+// TestAccAnomaliesDataSource_MonitorLevel verifies that the monitor_level attribute
+// is mapped to a valid enum value ("service" or "sku") on anomalies list items.
+func TestAccAnomaliesDataSource_MonitorLevel(t *testing.T) {
+	anomalyCount := getAnomalyCount(t)
+	if anomalyCount < 1 {
+		t.Skip("Need at least 1 anomaly to test monitor_level mapping")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceMonitorLevelConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomalies.monitor_level_test", "anomalies.#", "1"),
+					resource.TestMatchOutput("anomaly_monitor_level", regexp.MustCompile(`^(service|sku)$`)),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceMonitorLevelConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceMonitorLevelConfig() string {
+	return `
+data "doit_anomalies" "monitor_level_test" {
+  max_results = 1
+}
+
+output "anomaly_monitor_level" {
+  value = data.doit_anomalies.monitor_level_test.anomalies[0].monitor_level
 }
 `
 }
