@@ -14,7 +14,7 @@
 // re-marked "known after apply" when absent from config and drift perpetually
 // (needing A or C); others behave like a Cat B leaf, so acknowledgement suffices.
 // Single-nested objects are checked at any depth, including top level (e.g.
-// insight.dismissal_details). Only list containers and objects nested inside a
+// allocation.rule). Only list containers and objects nested inside a
 // list element are checked at their leaves only (the list clears as a whole via
 // [], and Category C cannot target an individual element).
 //
@@ -257,7 +257,7 @@ func collectUnclassified(attrs map[string]*schemaparser.AttrInfo, prefix, schema
 				}
 			case !info.IsList && !hasListAncestor:
 				// Single-nested object container (the count/forecast_settings shape),
-				// at any depth including top level (e.g. insight.dismissal_details).
+				// at any depth including top level (e.g. allocation.rule).
 				// Exempt only objects with a list ancestor — a list clears as a whole
 				// (via [] ) and Category C cannot target an individual element, so the
 				// list, not its element sub-objects, is the clearable unit. Their

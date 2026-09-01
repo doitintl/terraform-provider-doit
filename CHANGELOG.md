@@ -4,6 +4,7 @@
 
 ### BREAKING CHANGES
 
+- **resource/doit_insight, resource/doit_insight_resource_results, data-source/doit_insight, data-source/doit_insights, data-source/doit_insight_resource_results**: Removed all resources and data sources for the Insights API as the upstream service has been deprecated and is no longer being maintained. A replacement API is being worked on upstream.
 - **provider**: `request_timeout` values at or below `120s` are now rejected at validation time. The DoiT API's edge proxy answers requests still running after 120 seconds with a `524`, and a local timeout at or below that threshold cancels the request before that response can arrive — turning a definitive, fast failure into an opaque `context deadline exceeded` that is then retried. Configurations setting a lower value must raise it; the default is `150s`
 
 ### ENHANCEMENTS
