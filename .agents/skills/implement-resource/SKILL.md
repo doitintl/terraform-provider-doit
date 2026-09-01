@@ -173,13 +173,14 @@ Not all Optional+Computed attributes should be clearable. **Every Optional+Compu
 
 Apply the `useEmptyForUnknownWhenConfigNull()` plan modifier. Null config means "clear this value." Use typed variants for non-string types:
 
-| Type | Modifier |
-|------|----------|
-| `schema.StringAttribute` | `useEmptyForUnknownWhenConfigNull()` |
-| `schema.BoolAttribute` | `useNullForUnknownBoolWhenConfigNull()` |
-| `schema.ListAttribute` / `schema.ListNestedAttribute` | `useNullForUnknownListWhenConfigNull()` |
+| Type                                                  | Modifier                                 |
+| ----------------------------------------------------- | ---------------------------------------- |
+| `schema.StringAttribute`                              | `useEmptyForUnknownWhenConfigNull()`     |
+| `schema.BoolAttribute`                                | `useEmptyForUnknownBoolWhenConfigNull()` |
+| `schema.ListAttribute` / `schema.ListNestedAttribute` | `useNullForUnknownListWhenConfigNull()`  |
 
 Examples of clearable attributes:
+
 - User-authored content: `description`, `labels`, `reports`, `metadata`
 - Explicit associations: `external_id`, `external_url`, `report_url`
 - Resources with PUT (full-replacement) semantics where omitting means "remove"
@@ -249,14 +250,14 @@ if plan.Labels.IsNull() || (plan.Labels.IsKnown() && len(plan.Labels.Elements())
 }
 ```
 
-| Scenario | Modifier proposes | Overlay produces | Read produces | Stable? |
-|----------|-------------------|------------------|---------------|---------|
-| Create, list omitted | `[]` | `[]` (from API) | `[]` | ✅ |
-| Create, list set | `["a"]` (plan) | `["a"]` (plan wins) | `["a"]` | ✅ |
-| Clear (remove from config) | `[]` | `[]` (plan wins) | `[]` | ✅ |
-| Import, no values | n/a | n/a | `[]` | ✅ |
-| Import, has values | n/a | n/a | `["a"]` | ✅ |
-| Explicit empty `[]` | `[]` (plan) | `[]` (plan wins) | `[]` | ✅ |
+| Scenario                   | Modifier proposes | Overlay produces    | Read produces | Stable? |
+| -------------------------- | ----------------- | ------------------- | ------------- | ------- |
+| Create, list omitted       | `[]`              | `[]` (from API)     | `[]`          | ✅      |
+| Create, list set           | `["a"]` (plan)    | `["a"]` (plan wins) | `["a"]`       | ✅      |
+| Clear (remove from config) | `[]`              | `[]` (plan wins)    | `[]`          | ✅      |
+| Import, no values          | n/a               | n/a                 | `[]`          | ✅      |
+| Import, has values         | n/a               | n/a                 | `["a"]`       | ✅      |
+| Explicit empty `[]`        | `[]` (plan)       | `[]` (plan wins)    | `[]`          | ✅      |
 
 > **Note on Computed-only fields:** When the list clearing modifier triggers an Update, Computed-only timestamp fields like `update_time` must be guarded with `IsUnknown()` in the overlay to avoid "inconsistent result" errors. On Create the field is Unknown (overlay sets it); on modifier-triggered Updates the field is Known (overlay preserves it; the next Read fetches the new value).
 
@@ -350,6 +351,7 @@ acknowledgeNotClearable(s,
 ```
 
 **Path syntax:**
+
 - Top-level: `"currency"`
 - Nested (SingleNested): `"config.currency"`
 - List element (ListNested): `"scopes[*].inverse"`
@@ -418,7 +420,7 @@ The linter reads the `requiresReplaceWhenCleared` path from `ModifyPlan`, so a
 Category-C **object** needs no `acknowledgeNotClearable` entry; a Category-C **scalar**
 still does (it is not user-clearable in place). The check applies to single-nested
 objects at **any depth, including top level** (e.g. `config` on `doit_report`,
-`dismissal_details` on `doit_insight`, `rule` on `doit_allocation`) — an always-present
+`rule` on `doit_allocation`) — an always-present
 wrapper still needs a conscious `acknowledgeNotClearable("<obj>")`. The container check
 is skipped (only leaves are checked) for list containers and any object nested inside a
 **list element** (e.g. `config.group[*].limit`) — a list clears as a whole via `[]` and
@@ -427,14 +429,14 @@ sub-objects, is the clearable unit.
 
 #### Classification rules
 
-| Question                                                                                             | If yes →                       |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Is `null`/absent a valid, stable state in the API? (API stores null, doesn't replace with a default) | **Category A** — clearable     |
-| Is the field purely user-authored content with no server-side semantics?                             | **Category A** — clearable     |
-| Does the API assign a non-null default when the field is omitted from the request?                   | **Category B** — not clearable |
-| Does the API always return a value regardless of what was sent?                                      | **Category B** — not clearable |
-| Is it a nested object that is silently preserved on removal (verified: no permadiff)?                 | **Category B** — acknowledge the object path |
-| Can the API not clear it at all (PATCH merge, no null repr) AND removal must take effect / it drifts if left? | **Category C** — replace-on-clear |
+| Question                                                                                                      | If yes →                                     |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Is `null`/absent a valid, stable state in the API? (API stores null, doesn't replace with a default)          | **Category A** — clearable                   |
+| Is the field purely user-authored content with no server-side semantics?                                      | **Category A** — clearable                   |
+| Does the API assign a non-null default when the field is omitted from the request?                            | **Category B** — not clearable               |
+| Does the API always return a value regardless of what was sent?                                               | **Category B** — not clearable               |
+| Is it a nested object that is silently preserved on removal (verified: no permadiff)?                         | **Category B** — acknowledge the object path |
+| Can the API not clear it at all (PATCH merge, no null repr) AND removal must take effect / it drifts if left? | **Category C** — replace-on-clear            |
 
 #### Testing requirements
 
@@ -514,10 +516,10 @@ Check `models/models_gen.go` when compilation fails. You may need `&slice` for r
 
 Fields that support explicit `null` clearing use `nullable.Nullable[T]` instead of `*T`. Check `models_gen.go` for the actual field type — both variants coexist:
 
-| Field Type | Read (response → state) | Write (plan → request) |
-|------------|------------------------|----------------------|
-| `*T` | `types.StringPointerValue(resp.Field)` | `req.Field = new(plan.Field.ValueString())` |
-| `nullable.Nullable[T]` | `types.StringPointerValue(nullableToPointer(resp.Field))` | `req.Field = valueToNullable(plan.Field.ValueString())` |
-| `nullable.Nullable[StructT]` | `if s := nullableToPointer(resp.Field); s != nil { ... }` | `req.Field.Set(structVal)` |
+| Field Type                   | Read (response → state)                                   | Write (plan → request)                                  |
+| ---------------------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| `*T`                         | `types.StringPointerValue(resp.Field)`                    | `req.Field = new(plan.Field.ValueString())`             |
+| `nullable.Nullable[T]`       | `types.StringPointerValue(nullableToPointer(resp.Field))` | `req.Field = valueToNullable(plan.Field.ValueString())` |
+| `nullable.Nullable[StructT]` | `if s := nullableToPointer(resp.Field); s != nil { ... }` | `req.Field.Set(structVal)`                              |
 
 See the [go-conventions](../go-conventions/SKILL.md#nullable-type-helpers-nullablenullablet) skill for the full helper reference.
