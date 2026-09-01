@@ -73,6 +73,11 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "A unique identifier of the anomaly.",
 				MarkdownDescription: "A unique identifier of the anomaly.",
 			},
+			"monitor_level": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).",
+				MarkdownDescription: "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).",
+			},
 			"notifications": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -225,6 +230,7 @@ type AnomalyModel struct {
 	EndTime            types.Int64   `tfsdk:"end_time"`
 	ExpectedMaxCost    types.Float64 `tfsdk:"expected_max_cost"`
 	Id                 types.String  `tfsdk:"id"`
+	MonitorLevel       types.String  `tfsdk:"monitor_level"`
 	Notifications      types.List    `tfsdk:"notifications"`
 	Platform           types.String  `tfsdk:"platform"`
 	ResourceData       types.List    `tfsdk:"resource_data"`

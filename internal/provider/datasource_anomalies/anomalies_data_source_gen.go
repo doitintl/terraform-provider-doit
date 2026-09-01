@@ -76,6 +76,11 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						"id": schema.StringAttribute{
 							Computed: true,
 						},
+						"monitor_level": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).",
+							MarkdownDescription: "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).",
+						},
 						"notifications": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -594,6 +599,24 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	monitorLevelAttribute, ok := attributes["monitor_level"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`monitor_level is missing from object`)
+
+		return nil, diags
+	}
+
+	monitorLevelVal, ok := monitorLevelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`monitor_level expected to be basetypes.StringValue, was: %T`, monitorLevelAttribute))
+	}
+
 	notificationsAttribute, ok := attributes["notifications"]
 
 	if !ok {
@@ -790,6 +813,7 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		EndTime:            endTimeVal,
 		ExpectedMaxCost:    expectedMaxCostVal,
 		Id:                 idVal,
+		MonitorLevel:       monitorLevelVal,
 		Notifications:      notificationsVal,
 		Platform:           platformVal,
 		ResourceData:       resourceDataVal,
@@ -1065,6 +1089,24 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	monitorLevelAttribute, ok := attributes["monitor_level"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`monitor_level is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	monitorLevelVal, ok := monitorLevelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`monitor_level expected to be basetypes.StringValue, was: %T`, monitorLevelAttribute))
+	}
+
 	notificationsAttribute, ok := attributes["notifications"]
 
 	if !ok {
@@ -1261,6 +1303,7 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 		EndTime:            endTimeVal,
 		ExpectedMaxCost:    expectedMaxCostVal,
 		Id:                 idVal,
+		MonitorLevel:       monitorLevelVal,
 		Notifications:      notificationsVal,
 		Platform:           platformVal,
 		ResourceData:       resourceDataVal,
@@ -1354,6 +1397,7 @@ type AnomaliesValue struct {
 	EndTime            basetypes.Int64Value   `tfsdk:"end_time"`
 	ExpectedMaxCost    basetypes.Float64Value `tfsdk:"expected_max_cost"`
 	Id                 basetypes.StringValue  `tfsdk:"id"`
+	MonitorLevel       basetypes.StringValue  `tfsdk:"monitor_level"`
 	Notifications      basetypes.ListValue    `tfsdk:"notifications"`
 	Platform           basetypes.StringValue  `tfsdk:"platform"`
 	ResourceData       basetypes.ListValue    `tfsdk:"resource_data"`
@@ -1368,7 +1412,7 @@ type AnomaliesValue struct {
 }
 
 func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 21)
+	attrTypes := make(map[string]tftypes.Type, 22)
 
 	var val tftypes.Value
 	var err error
@@ -1384,6 +1428,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 	attrTypes["end_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["expected_max_cost"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["monitor_level"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["notifications"] = basetypes.ListType{
 		ElemType: NotificationsValue{}.Type(ctx),
 	}.TerraformType(ctx)
@@ -1405,7 +1450,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 21)
+		vals := make(map[string]tftypes.Value, 22)
 
 		val, err = v.Acknowledged.ToTerraformValue(ctx)
 
@@ -1494,6 +1539,14 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["id"] = val
+
+		val, err = v.MonitorLevel.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["monitor_level"] = val
 
 		val, err = v.Notifications.ToTerraformValue(ctx)
 
@@ -1634,6 +1687,7 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		"end_time":            basetypes.Int64Type{},
 		"expected_max_cost":   basetypes.Float64Type{},
 		"id":                  basetypes.StringType{},
+		"monitor_level":       basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},
@@ -1674,6 +1728,7 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 			"end_time":            v.EndTime,
 			"expected_max_cost":   v.ExpectedMaxCost,
 			"id":                  v.Id,
+			"monitor_level":       v.MonitorLevel,
 			"notifications":       notifications,
 			"platform":            v.Platform,
 			"resource_data":       resourceData,
@@ -1748,6 +1803,10 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.MonitorLevel.Equal(other.MonitorLevel) {
+		return false
+	}
+
 	if !v.Notifications.Equal(other.Notifications) {
 		return false
 	}
@@ -1812,6 +1871,7 @@ func (v AnomaliesValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"end_time":            basetypes.Int64Type{},
 		"expected_max_cost":   basetypes.Float64Type{},
 		"id":                  basetypes.StringType{},
+		"monitor_level":       basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},

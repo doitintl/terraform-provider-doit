@@ -20,6 +20,11 @@ output "anomaly_severity" {
   value = data.doit_anomaly.example.severity_level
 }
 
+output "anomaly_monitor_level" {
+  description = "Detection scope: service or sku"
+  value       = data.doit_anomaly.example.monitor_level
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
 # ─────────────────────────────────────────────────────────────────────────────

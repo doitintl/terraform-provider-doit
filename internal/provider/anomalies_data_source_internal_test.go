@@ -186,7 +186,8 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 						"serviceName": "AmazonEC2",
 						"costOfAnomaly": 10.5,
 						"startTime": 1704067200000,
-						"severityLevel": "critical"
+						"severityLevel": "critical",
+						"monitorLevel": "service"
 					}
 				],
 				"pageToken": "page-2-token",
@@ -214,7 +215,8 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 					"serviceName": "CloudStorage",
 					"costOfAnomaly": 20.0,
 					"startTime": 1704070800000,
-					"severityLevel": "warning"
+					"severityLevel": "warning",
+					"monitorLevel": "sku"
 				}
 			],
 			"pageToken": null,

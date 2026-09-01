@@ -27,6 +27,7 @@ func TestAccAnomalyDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "platform"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "service_name"),
+					resource.TestMatchResourceAttr("data.doit_anomaly.test", "monitor_level", regexp.MustCompile(`^(service|sku)$`)),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "resource_data.#"),
 					// acknowledged is always a bool (true/false), never null
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "acknowledged"),
@@ -252,6 +253,51 @@ output "actual_cost" {
 
 output "expected_max_cost" {
   value = data.doit_anomaly.test.expected_max_cost != null ? data.doit_anomaly.test.expected_max_cost : 0.0
+}
+`, id)
+}
+
+// TestAccAnomalyDataSource_MonitorLevel verifies that the monitor_level attribute
+// is mapped to a valid enum value ("service" or "sku").
+func TestAccAnomalyDataSource_MonitorLevel(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomalyDataSourceMonitorLevelConfig(anomalyID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+					resource.TestMatchOutput("monitor_level", regexp.MustCompile(`^(service|sku)$`)),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomalyDataSourceMonitorLevelConfig(anomalyID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceMonitorLevelConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "monitor_level" {
+  value = data.doit_anomaly.test.monitor_level
 }
 `, id)
 }

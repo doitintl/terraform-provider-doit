@@ -35,6 +35,11 @@ output "anomaly_severity" {
   value = data.doit_anomaly.example.severity_level
 }
 
+output "anomaly_monitor_level" {
+  description = "Detection scope: service or sku"
+  value       = data.doit_anomaly.example.monitor_level
+}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
 # ─────────────────────────────────────────────────────────────────────────────
@@ -83,6 +88,7 @@ output "anomaly_deactivation_reason" {
 - `deactivation_reason` (String) Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
 - `end_time` (Number) End of the anomaly
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
+- `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--notifications))
 - `platform` (String) Cloud Provider name
 - `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--resource_data))
