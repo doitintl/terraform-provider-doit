@@ -4297,7 +4297,7 @@ type AnomaliesResponseAnomalySummary struct {
 	// CountBySeverity Count of matching anomalies per severity level. All three keys are always present, with zero counts included.
 	CountBySeverity AnomaliesResponseAnomalySummaryCountBySeverity `json:"countBySeverity"`
 
-	// TotalCostOfAnomaly Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.
+	// TotalCostOfAnomaly Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every matching anomaly contributes, linked ones included, so a single cost spike described at more than one level of detail contributes once per anomaly describing it.
 	TotalCostOfAnomaly float64 `json:"totalCostOfAnomaly"`
 }
 
@@ -4346,6 +4346,9 @@ type AnomalyItem struct {
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 	Id              *string                    `json:"id,omitempty"`
+
+	// LinkedAnomalies IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
+	LinkedAnomalies LinkedAnomalies `json:"linkedAnomalies"`
 
 	// MonitorLevel Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 	MonitorLevel AnomalyItemMonitorLevel `json:"monitorLevel"`
@@ -7178,6 +7181,9 @@ type GetAnomaly200Response struct {
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 
+	// LinkedAnomalies IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
+	LinkedAnomalies *LinkedAnomalies `json:"linkedAnomalies,omitempty"`
+
 	// MonitorLevel Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 	MonitorLevel GetAnomaly200ResponseMonitorLevel `json:"monitorLevel"`
 
@@ -7640,6 +7646,9 @@ type Limit struct {
 
 // LimitSort Sort order for ranking results.
 type LimitSort string
+
+// LinkedAnomalies IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
+type LinkedAnomalies = []string
 
 // ListAccountTeam200Response defines model for ListAccountTeam200Response.
 type ListAccountTeam200Response struct {

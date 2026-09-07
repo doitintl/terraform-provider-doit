@@ -40,6 +40,11 @@ output "anomaly_provider_display_name" {
   value       = data.doit_anomaly.example.provider_display_name
 }
 
+output "anomaly_linked_anomalies" {
+  description = "IDs of other related anomalies in the same service around the same time"
+  value       = data.doit_anomaly.example.linked_anomalies
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status

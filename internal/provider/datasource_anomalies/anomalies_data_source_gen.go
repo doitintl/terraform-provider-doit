@@ -86,6 +86,12 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						"id": schema.StringAttribute{
 							Computed: true,
 						},
+						"linked_anomalies": schema.ListAttribute{
+							ElementType:         types.StringType,
+							Computed:            true,
+							Description:         "IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.",
+							MarkdownDescription: "IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.",
+						},
 						"monitor_level": schema.StringAttribute{
 							Computed:            true,
 							Description:         "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).",
@@ -266,8 +272,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"total_cost_of_anomaly": schema.Float64Attribute{
 						Computed:            true,
-						Description:         "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.",
-						MarkdownDescription: "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.",
+						Description:         "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every matching anomaly contributes, linked ones included, so a single cost spike described at more than one level of detail contributes once per anomaly describing it.",
+						MarkdownDescription: "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every matching anomaly contributes, linked ones included, so a single cost spike described at more than one level of detail contributes once per anomaly describing it.",
 					},
 				},
 				CustomType: AnomalySummaryType{
@@ -650,6 +656,24 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	linkedAnomaliesAttribute, ok := attributes["linked_anomalies"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`linked_anomalies is missing from object`)
+
+		return nil, diags
+	}
+
+	linkedAnomaliesVal, ok := linkedAnomaliesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`linked_anomalies expected to be basetypes.ListValue, was: %T`, linkedAnomaliesAttribute))
+	}
+
 	monitorLevelAttribute, ok := attributes["monitor_level"]
 
 	if !ok {
@@ -884,6 +908,7 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		EntityName:          entityNameVal,
 		ExpectedMaxCost:     expectedMaxCostVal,
 		Id:                  idVal,
+		LinkedAnomalies:     linkedAnomaliesVal,
 		MonitorLevel:        monitorLevelVal,
 		Notifications:       notificationsVal,
 		Platform:            platformVal,
@@ -1197,6 +1222,24 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
+	linkedAnomaliesAttribute, ok := attributes["linked_anomalies"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`linked_anomalies is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	linkedAnomaliesVal, ok := linkedAnomaliesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`linked_anomalies expected to be basetypes.ListValue, was: %T`, linkedAnomaliesAttribute))
+	}
+
 	monitorLevelAttribute, ok := attributes["monitor_level"]
 
 	if !ok {
@@ -1431,6 +1474,7 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 		EntityName:          entityNameVal,
 		ExpectedMaxCost:     expectedMaxCostVal,
 		Id:                  idVal,
+		LinkedAnomalies:     linkedAnomaliesVal,
 		MonitorLevel:        monitorLevelVal,
 		Notifications:       notificationsVal,
 		Platform:            platformVal,
@@ -1528,6 +1572,7 @@ type AnomaliesValue struct {
 	EntityName          basetypes.StringValue  `tfsdk:"entity_name"`
 	ExpectedMaxCost     basetypes.Float64Value `tfsdk:"expected_max_cost"`
 	Id                  basetypes.StringValue  `tfsdk:"id"`
+	LinkedAnomalies     basetypes.ListValue    `tfsdk:"linked_anomalies"`
 	MonitorLevel        basetypes.StringValue  `tfsdk:"monitor_level"`
 	Notifications       basetypes.ListValue    `tfsdk:"notifications"`
 	Platform            basetypes.StringValue  `tfsdk:"platform"`
@@ -1544,7 +1589,7 @@ type AnomaliesValue struct {
 }
 
 func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 25)
+	attrTypes := make(map[string]tftypes.Type, 26)
 
 	var val tftypes.Value
 	var err error
@@ -1562,6 +1607,9 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 	attrTypes["entity_name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["expected_max_cost"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["linked_anomalies"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
 	attrTypes["monitor_level"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["notifications"] = basetypes.ListType{
 		ElemType: NotificationsValue{}.Type(ctx),
@@ -1585,7 +1633,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 25)
+		vals := make(map[string]tftypes.Value, 26)
 
 		val, err = v.Acknowledged.ToTerraformValue(ctx)
 
@@ -1690,6 +1738,14 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["id"] = val
+
+		val, err = v.LinkedAnomalies.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["linked_anomalies"] = val
 
 		val, err = v.MonitorLevel.ToTerraformValue(ctx)
 
@@ -1834,6 +1890,57 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		top3skus = v.Top3skus
 	}
 
+	var linkedAnomaliesVal basetypes.ListValue
+	switch {
+	case v.LinkedAnomalies.IsUnknown():
+		linkedAnomaliesVal = types.ListUnknown(types.StringType)
+	case v.LinkedAnomalies.IsNull():
+		linkedAnomaliesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		linkedAnomaliesVal, d = types.ListValue(types.StringType, v.LinkedAnomalies.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"acknowledged":        basetypes.BoolType{},
+			"acknowledged_at":     basetypes.StringType{},
+			"acknowledged_by":     basetypes.StringType{},
+			"actual_cost":         basetypes.Float64Type{},
+			"attribution":         basetypes.StringType{},
+			"billing_account":     basetypes.StringType{},
+			"cost_of_anomaly":     basetypes.Float64Type{},
+			"deactivation_reason": basetypes.StringType{},
+			"end_time":            basetypes.Int64Type{},
+			"entity_label":        basetypes.StringType{},
+			"entity_name":         basetypes.StringType{},
+			"expected_max_cost":   basetypes.Float64Type{},
+			"id":                  basetypes.StringType{},
+			"linked_anomalies": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"monitor_level": basetypes.StringType{},
+			"notifications": basetypes.ListType{
+				ElemType: NotificationsValue{}.Type(ctx),
+			},
+			"platform":              basetypes.StringType{},
+			"provider_display_name": basetypes.StringType{},
+			"resource_data": basetypes.ListType{
+				ElemType: ResourceDataValue{}.Type(ctx),
+			},
+			"scope":          basetypes.StringType{},
+			"service_name":   basetypes.StringType{},
+			"severity_level": basetypes.StringType{},
+			"start_time":     basetypes.Int64Type{},
+			"status":         basetypes.StringType{},
+			"time_frame":     basetypes.StringType{},
+			"top3skus": basetypes.ListType{
+				ElemType: Top3skusValue{}.Type(ctx),
+			},
+		}), diags
+	}
+
 	attributeTypes := map[string]attr.Type{
 		"acknowledged":        basetypes.BoolType{},
 		"acknowledged_at":     basetypes.StringType{},
@@ -1848,7 +1955,10 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		"entity_name":         basetypes.StringType{},
 		"expected_max_cost":   basetypes.Float64Type{},
 		"id":                  basetypes.StringType{},
-		"monitor_level":       basetypes.StringType{},
+		"linked_anomalies": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"monitor_level": basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},
@@ -1892,6 +2002,7 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 			"entity_name":           v.EntityName,
 			"expected_max_cost":     v.ExpectedMaxCost,
 			"id":                    v.Id,
+			"linked_anomalies":      linkedAnomaliesVal,
 			"monitor_level":         v.MonitorLevel,
 			"notifications":         notifications,
 			"platform":              v.Platform,
@@ -1976,6 +2087,10 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.LinkedAnomalies.Equal(other.LinkedAnomalies) {
+		return false
+	}
+
 	if !v.MonitorLevel.Equal(other.MonitorLevel) {
 		return false
 	}
@@ -2050,7 +2165,10 @@ func (v AnomaliesValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"entity_name":         basetypes.StringType{},
 		"expected_max_cost":   basetypes.Float64Type{},
 		"id":                  basetypes.StringType{},
-		"monitor_level":       basetypes.StringType{},
+		"linked_anomalies": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"monitor_level": basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},

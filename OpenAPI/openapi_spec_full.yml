@@ -2630,6 +2630,8 @@ paths:
                     nullable: true
                   notifications:
                     $ref: "#/components/schemas/NotificationEventArray"
+                  linkedAnomalies:
+                    $ref: "#/components/schemas/LinkedAnomalies"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -10156,7 +10158,9 @@ components:
               type: number
               format: double
               description: >-
-                Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.
+                Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every
+                matching anomaly contributes, linked ones included, so a single cost spike described at
+                more than one level of detail contributes once per anomaly describing it.
     AnomalyItem:
       required:
         - attribution
@@ -10171,6 +10175,7 @@ components:
         - top3SKUs
         - monitorLevel
         - notifications
+        - linkedAnomalies
       type: object
       description: >-
         Detailed information about a detected anomaly. The `notifications` array is always present; list responses
@@ -10282,6 +10287,17 @@ components:
           nullable: true
         notifications:
           $ref: "#/components/schemas/NotificationEventArray"
+        linkedAnomalies:
+          $ref: "#/components/schemas/LinkedAnomalies"
+
+    LinkedAnomalies:
+      type: array
+      description: >-
+        IDs of the other related anomalies in the same service around same time. Always the complete
+        group: the filters, time window, and pagination of the request that returned this anomaly do
+        not narrow it, so an ID here may not appear among the anomalies of that same response.
+      items:
+        type: string
 
     AnomalySKU:
       type: object

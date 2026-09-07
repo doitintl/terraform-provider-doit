@@ -398,3 +398,122 @@ func TestAnomaliesDataSource_EntityFieldsMapping(t *testing.T) {
 		t.Errorf("expected provider_display_name to be null, got %v", second.ProviderDisplayName)
 	}
 }
+
+func TestAnomaliesDataSource_LinkedAnomalies(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{
+			"anomalies": [
+				{
+					"id": "anomaly-1",
+					"platform": "google-cloud",
+					"scope": "project-1",
+					"serviceName": "BigQuery",
+					"costOfAnomaly": 100.0,
+					"startTime": 1704067200000,
+					"severityLevel": "critical",
+					"monitorLevel": "service",
+					"timeFrame": "day",
+					"linkedAnomalies": ["anomaly-2", "anomaly-3"]
+				},
+				{
+					"id": "anomaly-2",
+					"platform": "google-cloud",
+					"scope": "project-1",
+					"serviceName": "BigQuery",
+					"costOfAnomaly": 50.0,
+					"startTime": 1704067200000,
+					"severityLevel": "warning",
+					"monitorLevel": "sku",
+					"timeFrame": "day",
+					"linkedAnomalies": []
+				},
+				{
+					"id": "anomaly-3",
+					"platform": "amazon-web-services",
+					"scope": "123456789012",
+					"serviceName": "AmazonEC2",
+					"costOfAnomaly": 25.0,
+					"startTime": 1704067200000,
+					"severityLevel": "warning",
+					"monitorLevel": "service",
+					"timeFrame": "day"
+				}
+			],
+			"rowCount": 3,
+			"totalCount": 3,
+			"totalCountExact": true,
+			"truncated": false,
+			"anomalySummary": {
+				"countBySeverity": {
+					"critical": 1,
+					"warning": 2,
+					"information": 0
+				},
+				"totalCostOfAnomaly": 175.0
+			}
+		}`)
+	}))
+	defer server.Close()
+
+	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
+
+	if got := len(data.Anomalies.Elements()); got != 3 {
+		t.Fatalf("expected 3 anomalies, got %d", got)
+	}
+
+	// First anomaly: populated linked_anomalies
+	first, ok := data.Anomalies.Elements()[0].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[0])
+	}
+	if first.LinkedAnomalies.IsNull() {
+		t.Error("expected first anomaly LinkedAnomalies not to be null")
+	}
+	if first.LinkedAnomalies.IsUnknown() {
+		t.Error("expected first anomaly LinkedAnomalies not to be unknown")
+	}
+	var firstElements []string
+	if d := first.LinkedAnomalies.ElementsAs(context.Background(), &firstElements, false); d.HasError() {
+		t.Fatalf("ElementsAs() returned diagnostics: %v", d)
+	}
+	if len(firstElements) != 2 {
+		t.Fatalf("expected 2 linked anomalies, got %d", len(firstElements))
+	}
+	if firstElements[0] != "anomaly-2" || firstElements[1] != "anomaly-3" {
+		t.Errorf("expected [\"anomaly-2\", \"anomaly-3\"], got %v", firstElements)
+	}
+
+	// Second anomaly: empty linked_anomalies
+	second, ok := data.Anomalies.Elements()[1].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[1])
+	}
+	if second.LinkedAnomalies.IsNull() {
+		t.Error("expected second anomaly LinkedAnomalies not to be null")
+	}
+	if second.LinkedAnomalies.IsUnknown() {
+		t.Error("expected second anomaly LinkedAnomalies not to be unknown")
+	}
+	if got := len(second.LinkedAnomalies.Elements()); got != 0 {
+		t.Errorf("expected empty LinkedAnomalies, got %d elements", got)
+	}
+
+	// Third anomaly: omitted linked_anomalies
+	third, ok := data.Anomalies.Elements()[2].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[2])
+	}
+	if third.LinkedAnomalies.IsNull() {
+		t.Error("expected third anomaly LinkedAnomalies not to be null (computed list convention)")
+	}
+	if third.LinkedAnomalies.IsUnknown() {
+		t.Error("expected third anomaly LinkedAnomalies not to be unknown")
+	}
+	if got := len(third.LinkedAnomalies.Elements()); got != 0 {
+		t.Errorf("expected empty LinkedAnomalies fallback, got %d elements", got)
+	}
+}

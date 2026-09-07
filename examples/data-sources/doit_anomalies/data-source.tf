@@ -59,6 +59,7 @@ output "anomaly_summary" {
     entity_label          = a.entity_label
     entity_name           = a.entity_name
     provider_display_name = a.provider_display_name
+    linked_anomalies      = a.linked_anomalies
     status                = a.status
     deactivation_reason   = a.deactivation_reason
   }]

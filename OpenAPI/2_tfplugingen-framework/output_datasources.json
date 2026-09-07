@@ -1436,6 +1436,16 @@
 										}
 									},
 									{
+										"name": "linked_anomalies",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response."
+										}
+									},
+									{
 										"name": "monitor_level",
 										"string": {
 											"computed_optional_required": "computed",
@@ -1654,7 +1664,7 @@
 									"name": "total_cost_of_anomaly",
 									"float64": {
 										"computed_optional_required": "computed",
-										"description": "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents."
+										"description": "Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every matching anomaly contributes, linked ones included, so a single cost spike described at more than one level of detail contributes once per anomaly describing it."
 									}
 								}
 							],
@@ -1787,6 +1797,16 @@
 						"float64": {
 							"computed_optional_required": "computed",
 							"description": "Maximum cost within the expected normal range."
+						}
+					},
+					{
+						"name": "linked_anomalies",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response."
 						}
 					},
 					{

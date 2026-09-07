@@ -159,6 +159,7 @@ func TestAccAnomaliesDataSource_AutoPagination(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.count_by_severity.warning"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.count_by_severity.information"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.total_cost_of_anomaly"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomalies.0.linked_anomalies.#"),
 				),
 			},
 		},
@@ -787,6 +788,46 @@ output "anomaly_entity_name" {
 
 output "anomaly_provider_display_name" {
   value = [for a in data.doit_anomalies.entity_test.anomalies : a.provider_display_name != null ? a.provider_display_name : ""]
+}
+`
+}
+
+// TestAccAnomaliesDataSource_LinkedAnomalies verifies that the linked_anomalies
+// attribute is accessible on anomalies list items and produces an empty plan on drift check.
+func TestAccAnomaliesDataSource_LinkedAnomalies(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceLinkedConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.linked_test", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.linked_test", "anomalies.0.linked_anomalies.#"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceLinkedConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceLinkedConfig() string {
+	return `
+data "doit_anomalies" "linked_test" {
+  max_results = 1
+}
+
+output "anomaly_linked_anomalies" {
+  value = [for a in data.doit_anomalies.linked_test.anomalies : a.linked_anomalies]
 }
 `
 }

@@ -32,6 +32,7 @@ func TestAccAnomalyDataSource_Basic(t *testing.T) {
 					// acknowledged is always a bool (true/false), never null
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "acknowledged"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "notifications.#"),
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "linked_anomalies.#"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -350,6 +351,53 @@ output "entity_name" {
 
 output "provider_display_name" {
   value = data.doit_anomaly.test.provider_display_name != null ? data.doit_anomaly.test.provider_display_name : ""
+}
+`, id)
+}
+
+// TestAccAnomalyDataSource_LinkedAnomalies verifies that the linked_anomalies
+// attribute is accessible and produces an empty plan on drift check.
+func TestAccAnomalyDataSource_LinkedAnomalies(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	config := testAccAnomalyDataSourceLinkedConfig(anomalyID)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "id"),
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "linked_anomalies.#"),
+				),
+			},
+			// Drift verification
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceLinkedConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "linked_anomalies" {
+  value = data.doit_anomaly.test.linked_anomalies
 }
 `, id)
 }
