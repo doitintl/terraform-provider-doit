@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_anomalies"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -312,5 +313,88 @@ func TestAnomaliesDataSource_EmptyAnomaliesList(t *testing.T) {
 	}
 	if got := data.TotalCount.ValueInt64(); got != 0 {
 		t.Errorf("expected total_count to be 0, got %d", got)
+	}
+}
+
+func TestAnomaliesDataSource_EntityFieldsMapping(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{
+			"anomalies": [
+				{
+					"id": "anomaly-populated",
+					"serviceName": "Anthropic Claude",
+					"costOfAnomaly": 150.0,
+					"startTime": 1704067200000,
+					"severityLevel": "critical",
+					"monitorLevel": "service",
+					"scope": "user_12345",
+					"entityLabel": "User",
+					"entityName": "alice@example.com",
+					"providerDisplayName": "Anthropic (Analytics API)"
+				},
+				{
+					"id": "anomaly-omitted",
+					"serviceName": "AmazonEC2",
+					"costOfAnomaly": 50.0,
+					"startTime": 1704067200000,
+					"severityLevel": "warning",
+					"monitorLevel": "service",
+					"scope": "123456789012"
+				}
+			],
+			"rowCount": 2,
+			"totalCount": 2,
+			"totalCountExact": true,
+			"truncated": false,
+			"anomalySummary": {
+				"countBySeverity": {
+					"critical": 1,
+					"warning": 1,
+					"information": 0
+				},
+				"totalCostOfAnomaly": 200.0
+			}
+		}`)
+	}))
+	defer server.Close()
+
+	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
+
+	if got := len(data.Anomalies.Elements()); got != 2 {
+		t.Fatalf("expected 2 anomalies, got %d", got)
+	}
+
+	// First anomaly: entity fields populated
+	first, ok := data.Anomalies.Elements()[0].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[0])
+	}
+	if got := first.EntityLabel.ValueString(); got != "User" {
+		t.Errorf("entity_label = %q, want \"User\"", got)
+	}
+	if got := first.EntityName.ValueString(); got != "alice@example.com" {
+		t.Errorf("entity_name = %q, want \"alice@example.com\"", got)
+	}
+	if got := first.ProviderDisplayName.ValueString(); got != "Anthropic (Analytics API)" {
+		t.Errorf("provider_display_name = %q, want \"Anthropic (Analytics API)\"", got)
+	}
+
+	// Second anomaly: entity fields omitted (null)
+	second, ok := data.Anomalies.Elements()[1].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[1])
+	}
+	if !second.EntityLabel.IsNull() {
+		t.Errorf("expected entity_label to be null, got %v", second.EntityLabel)
+	}
+	if !second.EntityName.IsNull() {
+		t.Errorf("expected entity_name to be null, got %v", second.EntityName)
+	}
+	if !second.ProviderDisplayName.IsNull() {
+		t.Errorf("expected provider_display_name to be null, got %v", second.ProviderDisplayName)
 	}
 }

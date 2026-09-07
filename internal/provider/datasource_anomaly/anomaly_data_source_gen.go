@@ -63,6 +63,16 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "End of the anomaly",
 				MarkdownDescription: "End of the anomaly",
 			},
+			"entity_label": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Connector-declared name for what `scope` identifies, for example \"Project\", \"Account\" or \"User\". Absent when the provider publishes no display profile.",
+				MarkdownDescription: "Connector-declared name for what `scope` identifies, for example \"Project\", \"Account\" or \"User\". Absent when the provider publishes no display profile.",
+			},
+			"entity_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.",
+				MarkdownDescription: "Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.",
+			},
 			"expected_max_cost": schema.Float64Attribute{
 				Computed:            true,
 				Description:         "Maximum cost within the expected normal range.",
@@ -106,6 +116,11 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "Cloud Provider name",
 				MarkdownDescription: "Cloud Provider name",
+			},
+			"provider_display_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Connector-declared display name for the provider, for example \"Anthropic (Analytics API)\". Absent when the provider publishes no display profile.",
+				MarkdownDescription: "Connector-declared display name for the provider, for example \"Anthropic (Analytics API)\". Absent when the provider publishes no display profile.",
 			},
 			"resource_data": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -166,8 +181,8 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"scope": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Scope: Project or Account",
-				MarkdownDescription: "Scope: Project or Account",
+				Description:         "The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.",
+				MarkdownDescription: "The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.",
 			},
 			"service_name": schema.StringAttribute{
 				Computed:            true,
@@ -219,28 +234,31 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AnomalyModel struct {
-	Acknowledged       types.Bool    `tfsdk:"acknowledged"`
-	AcknowledgedAt     types.String  `tfsdk:"acknowledged_at"`
-	AcknowledgedBy     types.String  `tfsdk:"acknowledged_by"`
-	ActualCost         types.Float64 `tfsdk:"actual_cost"`
-	Attribution        types.String  `tfsdk:"attribution"`
-	BillingAccount     types.String  `tfsdk:"billing_account"`
-	CostOfAnomaly      types.Float64 `tfsdk:"cost_of_anomaly"`
-	DeactivationReason types.String  `tfsdk:"deactivation_reason"`
-	EndTime            types.Int64   `tfsdk:"end_time"`
-	ExpectedMaxCost    types.Float64 `tfsdk:"expected_max_cost"`
-	Id                 types.String  `tfsdk:"id"`
-	MonitorLevel       types.String  `tfsdk:"monitor_level"`
-	Notifications      types.List    `tfsdk:"notifications"`
-	Platform           types.String  `tfsdk:"platform"`
-	ResourceData       types.List    `tfsdk:"resource_data"`
-	Scope              types.String  `tfsdk:"scope"`
-	ServiceName        types.String  `tfsdk:"service_name"`
-	SeverityLevel      types.String  `tfsdk:"severity_level"`
-	StartTime          types.Int64   `tfsdk:"start_time"`
-	Status             types.String  `tfsdk:"status"`
-	TimeFrame          types.String  `tfsdk:"time_frame"`
-	Top3skus           types.List    `tfsdk:"top3skus"`
+	Acknowledged        types.Bool    `tfsdk:"acknowledged"`
+	AcknowledgedAt      types.String  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy      types.String  `tfsdk:"acknowledged_by"`
+	ActualCost          types.Float64 `tfsdk:"actual_cost"`
+	Attribution         types.String  `tfsdk:"attribution"`
+	BillingAccount      types.String  `tfsdk:"billing_account"`
+	CostOfAnomaly       types.Float64 `tfsdk:"cost_of_anomaly"`
+	DeactivationReason  types.String  `tfsdk:"deactivation_reason"`
+	EndTime             types.Int64   `tfsdk:"end_time"`
+	EntityLabel         types.String  `tfsdk:"entity_label"`
+	EntityName          types.String  `tfsdk:"entity_name"`
+	ExpectedMaxCost     types.Float64 `tfsdk:"expected_max_cost"`
+	Id                  types.String  `tfsdk:"id"`
+	MonitorLevel        types.String  `tfsdk:"monitor_level"`
+	Notifications       types.List    `tfsdk:"notifications"`
+	Platform            types.String  `tfsdk:"platform"`
+	ProviderDisplayName types.String  `tfsdk:"provider_display_name"`
+	ResourceData        types.List    `tfsdk:"resource_data"`
+	Scope               types.String  `tfsdk:"scope"`
+	ServiceName         types.String  `tfsdk:"service_name"`
+	SeverityLevel       types.String  `tfsdk:"severity_level"`
+	StartTime           types.Int64   `tfsdk:"start_time"`
+	Status              types.String  `tfsdk:"status"`
+	TimeFrame           types.String  `tfsdk:"time_frame"`
+	Top3skus            types.List    `tfsdk:"top3skus"`
 }
 
 var _ basetypes.ObjectTypable = NotificationsType{}

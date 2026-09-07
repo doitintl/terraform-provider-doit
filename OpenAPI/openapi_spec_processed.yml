@@ -4755,7 +4755,20 @@ components:
           description: Cloud Provider name.
         scope:
           type: string
-          description: "Scope: Project or Account"
+          description: >-
+            The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.
+        entityLabel:
+          type: string
+          description: >-
+            Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
+        entityName:
+          type: string
+          description: >-
+            Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
+        providerDisplayName:
+          type: string
+          description: >-
+            Connector-declared display name for the provider, for example "Anthropic (Analytics API)". Absent when the provider publishes no display profile.
         serviceName:
           type: string
           description: Service name.
@@ -8743,7 +8756,20 @@ components:
           description: Cloud Provider name
         scope:
           type: string
-          description: "Scope: Project or Account"
+          description: >-
+            The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.
+        entityLabel:
+          type: string
+          description: >-
+            Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
+        entityName:
+          type: string
+          description: >-
+            Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
+        providerDisplayName:
+          type: string
+          description: >-
+            Connector-declared display name for the provider, for example "Anthropic (Analytics API)". Absent when the provider publishes no display profile.
         serviceName:
           type: string
           description: Service name

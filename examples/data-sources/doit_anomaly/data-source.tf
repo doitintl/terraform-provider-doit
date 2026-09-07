@@ -25,6 +25,22 @@ output "anomaly_monitor_level" {
   value       = data.doit_anomaly.example.monitor_level
 }
 
+output "anomaly_entity_label" {
+  description = "Connector-declared name for what scope identifies (e.g. Project, Account, User)"
+  value       = data.doit_anomaly.example.entity_label
+}
+
+output "anomaly_entity_name" {
+  description = "Human-readable value for scope when available"
+  value       = data.doit_anomaly.example.entity_name
+}
+
+output "anomaly_provider_display_name" {
+  description = "Connector-declared display name for the provider"
+  value       = data.doit_anomaly.example.provider_display_name
+}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
 # ─────────────────────────────────────────────────────────────────────────────

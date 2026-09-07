@@ -301,3 +301,55 @@ output "monitor_level" {
 }
 `, id)
 }
+
+// TestAccAnomalyDataSource_EntityFields verifies that the entity_label,
+// entity_name, and provider_display_name attributes are accessible without drift.
+func TestAccAnomalyDataSource_EntityFields(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomalyDataSourceEntityConfig(anomalyID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomalyDataSourceEntityConfig(anomalyID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceEntityConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "entity_label" {
+  value = data.doit_anomaly.test.entity_label != null ? data.doit_anomaly.test.entity_label : ""
+}
+
+output "entity_name" {
+  value = data.doit_anomaly.test.entity_name != null ? data.doit_anomaly.test.entity_name : ""
+}
+
+output "provider_display_name" {
+  value = data.doit_anomaly.test.provider_display_name != null ? data.doit_anomaly.test.provider_display_name : ""
+}
+`, id)
+}

@@ -4337,6 +4337,12 @@ type AnomalyItem struct {
 	// EndTime End of the anomaly.
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
 
+	// EntityLabel Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
+	EntityLabel *string `json:"entityLabel,omitempty"`
+
+	// EntityName Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
+	EntityName *string `json:"entityName,omitempty"`
+
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 	Id              *string                    `json:"id,omitempty"`
@@ -4350,10 +4356,13 @@ type AnomalyItem struct {
 	// Platform Cloud Provider name.
 	Platform string `json:"platform"`
 
+	// ProviderDisplayName Connector-declared display name for the provider, for example "Anthropic (Analytics API)". Absent when the provider publishes no display profile.
+	ProviderDisplayName *string `json:"providerDisplayName,omitempty"`
+
 	// ResourceData Array of resources contributing to an anomaly.
 	ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
 
-	// Scope Scope: Project or Account
+	// Scope The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.
 	Scope string `json:"scope"`
 
 	// ServiceName Service name.
@@ -7150,6 +7159,12 @@ type GetAnomaly200Response struct {
 	// EndTime End of the anomaly
 	EndTime nullable.Nullable[int] `json:"endTime,omitempty"`
 
+	// EntityLabel Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
+	EntityLabel *string `json:"entityLabel,omitempty"`
+
+	// EntityName Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
+	EntityName *string `json:"entityName,omitempty"`
+
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 
@@ -7162,10 +7177,13 @@ type GetAnomaly200Response struct {
 	// Platform Cloud Provider name
 	Platform string `json:"platform"`
 
+	// ProviderDisplayName Connector-declared display name for the provider, for example "Anthropic (Analytics API)". Absent when the provider publishes no display profile.
+	ProviderDisplayName *string `json:"providerDisplayName,omitempty"`
+
 	// ResourceData Array of resources contributing to an anomaly.
 	ResourceData *AnomalyResourceArray `json:"resourceData,omitempty"`
 
-	// Scope Scope: Project or Account
+	// Scope The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.
 	Scope string `json:"scope"`
 
 	// ServiceName Service name
