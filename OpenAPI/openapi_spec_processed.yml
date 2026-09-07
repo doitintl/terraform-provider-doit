@@ -8533,12 +8533,13 @@ components:
         - area_spline_chart
         - stacked_area_chart
         - treemap_chart
+        - sankey_chart
         - table
         - table_heatmap
         - table_row_heatmap
         - table_col_heatmap
-        - csv_export
-        - sheets_export
+        - column_and_line_chart
+        - trend_board
     ExternalReport:
       required:
         - name

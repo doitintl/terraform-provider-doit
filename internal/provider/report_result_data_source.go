@@ -80,7 +80,7 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			" billing data is ingested. Every `terraform plan` will re-execute the" +
 			" report." +
 			"\n\nThe `result_json` field contains the full result object including:" +
-			"\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
+			"\n\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
 			"\n- `rows`: Data rows (each row is an array of cell values: string, number, or null)" +
 			"\n- `forecastRows`: Forecast data rows (if applicable)" +
 			"\n- `secondaryRows`: Secondary time range rows (if applicable)" +
@@ -139,7 +139,7 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 					"Use jsondecode() to parse.",
 				MarkdownDescription: "The full report result as a JSON string. Use `jsondecode()` to parse." +
 					"\n\nStructure of the decoded JSON object:" +
-					"\n- `schema`: Array of column definitions: `name` (string), `type` (string: `string`, `float`, `integer`, `timestamp`), and optional fields `unit` (`currency`, `number`, `percent`), `currency` (ISO 4217 code), `aggregation` (`total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`), and `id` (present for allocation dimensions)." +
+					"\n\n- `schema`: Array of column definitions: `name` (string), `type` (string: `string`, `float`, `integer`, `timestamp`), and optional fields `unit` (`currency`, `number`, `percent`), `currency` (ISO 4217 code), `aggregation` (`total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`), and `id` (present for allocation dimensions)." +
 					"\n- `rows`: Array of row arrays `[][string | number | null]` corresponding to the schema columns." +
 					"\n- `forecastRows`: Array of forecast row arrays (if applicable)." +
 					"\n- `secondaryRows`: Array of secondary time range row arrays (if applicable)." +

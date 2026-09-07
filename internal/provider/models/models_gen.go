@@ -2049,10 +2049,10 @@ const (
 	ExternalRendererAreaChart          ExternalRenderer = "area_chart"
 	ExternalRendererAreaSplineChart    ExternalRenderer = "area_spline_chart"
 	ExternalRendererBarChart           ExternalRenderer = "bar_chart"
+	ExternalRendererColumnAndLineChart ExternalRenderer = "column_and_line_chart"
 	ExternalRendererColumnChart        ExternalRenderer = "column_chart"
-	ExternalRendererCsvExport          ExternalRenderer = "csv_export"
 	ExternalRendererLineChart          ExternalRenderer = "line_chart"
-	ExternalRendererSheetsExport       ExternalRenderer = "sheets_export"
+	ExternalRendererSankeyChart        ExternalRenderer = "sankey_chart"
 	ExternalRendererSplineChart        ExternalRenderer = "spline_chart"
 	ExternalRendererStackedAreaChart   ExternalRenderer = "stacked_area_chart"
 	ExternalRendererStackedBarChart    ExternalRenderer = "stacked_bar_chart"
@@ -2062,6 +2062,7 @@ const (
 	ExternalRendererTableHeatmap       ExternalRenderer = "table_heatmap"
 	ExternalRendererTableRowHeatmap    ExternalRenderer = "table_row_heatmap"
 	ExternalRendererTreemapChart       ExternalRenderer = "treemap_chart"
+	ExternalRendererTrendBoard         ExternalRenderer = "trend_board"
 )
 
 // Valid indicates whether the value is a known member of the ExternalRenderer enum.
@@ -2073,13 +2074,13 @@ func (e ExternalRenderer) Valid() bool {
 		return true
 	case ExternalRendererBarChart:
 		return true
-	case ExternalRendererColumnChart:
+	case ExternalRendererColumnAndLineChart:
 		return true
-	case ExternalRendererCsvExport:
+	case ExternalRendererColumnChart:
 		return true
 	case ExternalRendererLineChart:
 		return true
-	case ExternalRendererSheetsExport:
+	case ExternalRendererSankeyChart:
 		return true
 	case ExternalRendererSplineChart:
 		return true
@@ -2098,6 +2099,8 @@ func (e ExternalRenderer) Valid() bool {
 	case ExternalRendererTableRowHeatmap:
 		return true
 	case ExternalRendererTreemapChart:
+		return true
+	case ExternalRendererTrendBoard:
 		return true
 	default:
 		return false
