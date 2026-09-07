@@ -267,3 +267,7 @@ data_sources:
     read:
       path: /analytics/v1/budget-suggestions
       method: GET
+  cloudconnect_supported_features:
+    read:
+      path: /core/v1/cloudconnect/supportedFeatures/{accountID}
+      method: GET

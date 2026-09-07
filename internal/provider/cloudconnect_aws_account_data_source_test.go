@@ -6,8 +6,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccCloudconnectAwsAccountDataSource_Basic(t *testing.T) {
@@ -23,6 +26,13 @@ func TestAccCloudconnectAwsAccountDataSource_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCloudconnectAwsAccountDataSourceConfig(accountID, roleArn),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValuePairs(
+						"data.doit_cloudconnect_aws_account.test", tfjsonpath.New("supported_features"),
+						"data.doit_cloudconnect_supported_features.test", tfjsonpath.New("supported_features"),
+						compare.ValuesSame(),
+					),
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(
 						"data.doit_cloudconnect_aws_account.test", "account_id",
@@ -73,6 +83,10 @@ resource "doit_cloudconnect_aws_account" "test" {
 }
 
 data "doit_cloudconnect_aws_account" "test" {
+  account_id = doit_cloudconnect_aws_account.test.account_id
+}
+
+data "doit_cloudconnect_supported_features" "test" {
   account_id = doit_cloudconnect_aws_account.test.account_id
 }
 `, accountID, roleArn)

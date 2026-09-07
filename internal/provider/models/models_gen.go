@@ -8308,6 +8308,25 @@ type SubscriptionPlanCommitmentInterval struct {
 	StartTime *int64 `json:"startTime,omitempty"`
 }
 
+// SupportedFeature A feature supported by a CloudConnect account.
+type SupportedFeature struct {
+	// HasRequiredPermissions Whether the connected account has the required permissions for this feature.
+	//
+	// Example: true
+	HasRequiredPermissions *bool `json:"hasRequiredPermissions,omitempty"`
+
+	// Name The name of the feature.
+	//
+	// Example: sandbox
+	Name *string `json:"name,omitempty"`
+}
+
+// SupportedFeaturesResponse Response containing the supported features for a CloudConnect account.
+type SupportedFeaturesResponse struct {
+	// SupportedFeatures List of features and their permission status.
+	SupportedFeatures *[]SupportedFeature `json:"supportedFeatures,omitempty"`
+}
+
 // TagsGetResponse Response body for GET /support/v1/tickets/{ticketId}/tags. Contains
 // the current tags visible to the caller.
 type TagsGetResponse struct {
@@ -10993,6 +11012,14 @@ type ClientInterface interface {
 	// Corresponds with PUT /core/v1/cloudconnect/aws/accounts/{accountID} (the `UpdateAwsFeature` operationId).
 	UpdateAwsFeature(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetCloudConnectSupportedFeatures Get supported features for a connected account
+	//
+	// Returns the list of supported features and their permission status for a cloud account connected via CloudConnect.
+	// The account must belong to the authenticated customer. Supports AWS and Azure accounts.
+	//
+	// Corresponds with GET /core/v1/cloudconnect/supportedFeatures/{accountID} (the `GetCloudConnectSupportedFeatures` operationId).
+	GetCloudConnectSupportedFeatures(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListKnownIssues List cloud incidents
 	//
 	// Returns a list of all the active and historical cloud incidents for Google Cloud and Amazon Web Services.
@@ -13295,6 +13322,24 @@ func (c *Client) UpdateAwsFeatureWithBody(ctx context.Context, accountID string,
 // Corresponds with PUT /core/v1/cloudconnect/aws/accounts/{accountID} (the `UpdateAwsFeature` operationId).
 func (c *Client) UpdateAwsFeature(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateAwsFeatureRequest(c.Server, accountID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCloudConnectSupportedFeatures Get supported features for a connected account
+//
+// Returns the list of supported features and their permission status for a cloud account connected via CloudConnect.
+// The account must belong to the authenticated customer. Supports AWS and Azure accounts.
+//
+// Corresponds with GET /core/v1/cloudconnect/supportedFeatures/{accountID} (the `GetCloudConnectSupportedFeatures` operationId).
+func (c *Client) GetCloudConnectSupportedFeatures(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudConnectSupportedFeaturesRequest(c.Server, accountID)
 	if err != nil {
 		return nil, err
 	}
@@ -18327,6 +18372,40 @@ func NewUpdateAwsFeatureRequestWithBody(server string, accountID string, content
 	return req, nil
 }
 
+// NewGetCloudConnectSupportedFeaturesRequest constructs an http.Request for the GetCloudConnectSupportedFeatures method
+func NewGetCloudConnectSupportedFeaturesRequest(server string, accountID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "accountID", accountID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/core/v1/cloudconnect/supportedFeatures/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListKnownIssuesRequest constructs an http.Request for the ListKnownIssues method
 func NewListKnownIssuesRequest(server string, params *ListKnownIssuesParams) (*http.Request, error) {
 	var err error
@@ -20725,6 +20804,16 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /core/v1/cloudconnect/aws/accounts/{accountID} (the `UpdateAwsFeature` operationId).
 	UpdateAwsFeatureWithResponse(ctx context.Context, accountID string, body UpdateAwsFeatureJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAwsFeatureResp, error)
+
+	// GetCloudConnectSupportedFeaturesWithResponse Get supported features for a connected account
+	//
+	// Returns the list of supported features and their permission status for a cloud account connected via CloudConnect.
+	// The account must belong to the authenticated customer. Supports AWS and Azure accounts.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /core/v1/cloudconnect/supportedFeatures/{accountID} (the `GetCloudConnectSupportedFeatures` operationId).
+	GetCloudConnectSupportedFeaturesWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*GetCloudConnectSupportedFeaturesResp, error)
 
 	// ListKnownIssuesWithResponse List cloud incidents
 	//
@@ -26538,6 +26627,82 @@ func (r UpdateAwsFeatureResp) ContentType() string {
 	return ""
 }
 
+type GetCloudConnectSupportedFeaturesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SupportedFeaturesResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Error
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCloudConnectSupportedFeaturesResp) GetJSON200() *SupportedFeaturesResponse {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetCloudConnectSupportedFeaturesResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetCloudConnectSupportedFeaturesResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetCloudConnectSupportedFeaturesResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetCloudConnectSupportedFeaturesResp) GetJSON404() *Error {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetCloudConnectSupportedFeaturesResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCloudConnectSupportedFeaturesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudConnectSupportedFeaturesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudConnectSupportedFeaturesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCloudConnectSupportedFeaturesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListKnownIssuesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -30359,6 +30524,22 @@ func (c *ClientWithResponses) UpdateAwsFeatureWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParseUpdateAwsFeatureResp(rsp)
+}
+
+// GetCloudConnectSupportedFeaturesWithResponse Get supported features for a connected account
+//
+// Returns the list of supported features and their permission status for a cloud account connected via CloudConnect.
+// The account must belong to the authenticated customer. Supports AWS and Azure accounts.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /core/v1/cloudconnect/supportedFeatures/{accountID} (the `GetCloudConnectSupportedFeatures` operationId).
+func (c *ClientWithResponses) GetCloudConnectSupportedFeaturesWithResponse(ctx context.Context, accountID string, reqEditors ...RequestEditorFn) (*GetCloudConnectSupportedFeaturesResp, error) {
+	rsp, err := c.GetCloudConnectSupportedFeatures(ctx, accountID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudConnectSupportedFeaturesResp(rsp)
 }
 
 // ListKnownIssuesWithResponse List cloud incidents
@@ -35427,6 +35608,67 @@ func ParseUpdateAwsFeatureResp(rsp *http.Response) (*UpdateAwsFeatureResp, error
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudConnectSupportedFeaturesResp parses an HTTP response from a GetCloudConnectSupportedFeaturesWithResponse call
+func ParseGetCloudConnectSupportedFeaturesResp(rsp *http.Response) (*GetCloudConnectSupportedFeaturesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudConnectSupportedFeaturesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SupportedFeaturesResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500

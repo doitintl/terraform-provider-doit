@@ -112,6 +112,7 @@ provider "doit" {
 | `doit_cloud_diagrams_snapshots`                  | List diagram snapshots               |
 | `doit_cloud_diagrams_stats`                      | Get diagram statistics               |
 | `doit_cloud_diagrams_statussheet`                | Get diagram status sheet             |
+| `doit_cloudconnect_supported_features` | Read AWS CloudConnect feature permissions |
 | `doit_cloud_incident` / `doit_cloud_incidents`   | Get or list cloud provider incidents |
 | `doit_commitment` / `doit_commitments`           | Get or list commitments              |
 | `doit_asset` / `doit_assets`                     | Get or list cloud assets             |

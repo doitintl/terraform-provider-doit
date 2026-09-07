@@ -9318,6 +9318,47 @@
 			}
 		},
 		{
+			"name": "cloudconnect_supported_features",
+			"schema": {
+				"attributes": [
+					{
+						"name": "account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The cloud provider account ID (AWS account ID or Azure tenant ID)."
+						}
+					},
+					{
+						"name": "supported_features",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "has_required_permissions",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the connected account has the required permissions for this feature."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The name of the feature."
+										}
+									}
+								]
+							},
+							"description": "List of features and their permission status."
+						}
+					}
+				],
+				"description": "Manage cloud provider connections and check feature availability for connected accounts.",
+				"markdown_description": "Manage cloud provider connections and check feature availability for connected accounts."
+			}
+		},
+		{
 			"name": "commitment",
 			"schema": {
 				"attributes": [

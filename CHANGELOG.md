@@ -9,6 +9,8 @@
 
 ### ENHANCEMENTS
 
+- **data-source/doit_cloudconnect_supported_features**: Read supported features and permission status for connected AWS accounts. Document the public schema’s unsupported Azure claim.
+
 - **provider**: The default `request_timeout` is now `150s` (was `120s`), so a slow request surfaces the API's own `524` response rather than racing it
 - **provider**: The default `read` and `delete` operation timeouts are now 5 minutes (were 2 minutes), matching `create` and `update`. Every operation default now exceeds `request_timeout`, so a single slow request can no longer consume the entire operation budget and leave no room to retry a transient failure
 - **provider**: Retry backoff for rate-limited (`429`) requests now starts at 2 seconds and doubles, up to 60 seconds. It previously started at 500ms with a 1.5x multiplier, issuing roughly five requests in the first four seconds against an API that had just asked the client to slow down. The DoiT API does not send `Retry-After`, so this policy governs the pace of nearly every retry
