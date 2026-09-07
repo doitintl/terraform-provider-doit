@@ -31,3 +31,10 @@ data "doit_report_result" "last_week" {
   id         = "your-report-id"
   time_range = "P7D"
 }
+
+# Wait for a long-running report without a single long HTTP request
+data "doit_report_result" "async" {
+  id       = "your-report-id"
+  async    = true
+  timeouts = { read = "15m" }
+}

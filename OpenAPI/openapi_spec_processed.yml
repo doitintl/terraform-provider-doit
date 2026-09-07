@@ -1924,6 +1924,295 @@ paths:
           $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
+  /analytics/v1/reports/actions/run:
+    post:
+      tags:
+        - Reports
+      summary: Run a report asynchronously
+      description: >-
+        Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
+      operationId: asyncRunInline
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: >-
+            Unique key for this submission. Required on every request. Deduplication is based on config content, not this key.
+        - name: dryRun
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: >-
+            If true, validates the request and returns 200 without creating an operation or submitting a job. The response body will have status "dry_run" and no operationId.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsyncRunInlineRequestBody'
+            example:
+              config:
+                metrics:
+                  - type: basic
+                    value: cost
+                timeRange:
+                  mode: last
+                  amount: 1
+                  unit: month
+                timeInterval: month
+      responses:
+        "202":
+          description: >-
+            Accepted — async operation created. The Location header contains the URL to poll for status.
+          headers:
+            Location:
+              description: URL to poll for operation status.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncOperationResponse"
+        "200":
+          description: >-
+            OK — dry-run only; no operation was created. The X-Dry-Run response header is set to "true".
+          headers:
+            X-Dry-Run:
+              description: Present and set to "true" on dry-run responses.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncOperationResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+      x-codegen-request-body-name: Body
+  "/analytics/v1/reports/operations/{operationId}":
+    get:
+      tags:
+        - Reports
+      summary: Poll an async report run operation
+      description: >-
+        Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+      operationId: getAsyncOperation
+      parameters:
+        - name: operationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique ID of the async operation to poll.
+      responses:
+        "200":
+          description: >-
+            OK — current operation state. The Retry-After response header is present only on pending/running responses.
+          headers:
+            Retry-After:
+              description: >-
+                Suggested number of seconds to wait before polling again. Grows the longer the operation has been running (1s up to 30s) so long-running reports aren't polled too frequently. Present only when status is "pending" or "running".
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncOperationPollResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  /analytics/v1/reports/{id}/actions/run:
+    post:
+      tags:
+        - Reports
+      summary: Run a saved report asynchronously
+      description: >-
+        Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+      operationId: asyncRunReportById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The saved report ID.
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Unique key for this submission. Required on every request.
+        - name: dryRun
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: >-
+            If true, validates the request and returns 200 without creating an operation or submitting a job.
+        - name: timeRange
+          in: query
+          description: >-
+            An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n]. Cannot be combined with startDate/endDate.
+          schema:
+            type: string
+            pattern: "^P(\\d+Y)?(\\d+M)?(\\d+D)?$"
+            example: P7D
+        - name: startDate
+          in: query
+          description: >-
+            An optional parameter to override the report time settings. Must be provided together with endDate. Format: yyyy-mm-dd
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: endDate
+          in: query
+          description: >-
+            An optional parameter to override the report time settings. Must be provided together with startDate. Format: yyyy-mm-dd
+          schema:
+            type: string
+            format: date
+            example: "2025-01-31"
+      responses:
+        "202":
+          description: >-
+            Accepted — async operation created. The Location header contains the URL to poll for status.
+          headers:
+            Location:
+              description: URL to poll for operation status.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncOperationResponse"
+        "200":
+          description: >-
+            OK — dry-run only; no operation was created. The X-Dry-Run response header is set to "true".
+          headers:
+            X-Dry-Run:
+              description: Present and set to "true" on dry-run responses.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncOperationResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  "/analytics/v1/reports/operations/{operationId}/actions/cancel":
+    post:
+      tags:
+        - Reports
+      summary: Cancel an async report run operation
+      description: >-
+        Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+      operationId: cancelAsyncOperation
+      parameters:
+        - name: operationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique ID of the async operation to cancel.
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: >-
+            Unique key for this submission. Required on every request.
+        - name: dryRun
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: >-
+            If true, validates the request and returns 200 without modifying any state. The response body will have status "dry_run" and the X-Dry-Run response header will be set to "true".
+      responses:
+        "200":
+          description: >-
+            OK — operation state returned. On dry-run, the X-Dry-Run response header is set to "true" and status is "dry_run".
+          headers:
+            X-Dry-Run:
+              description: Present and set to "true" on dry-run responses.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncOperationResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  "/analytics/v1/reports/operations/{operationId}/results":
+    get:
+      tags:
+        - Reports
+      summary: Get results of an async report run operation
+      description: >-
+        Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+      operationId: getAsyncOperationResults
+      parameters:
+        - name: operationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique ID of the async operation.
+      responses:
+        "200":
+          description: >-
+            OK — the operation succeeded; body is the report result, plus report metadata when the operation was started against a saved report.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAsyncOperationResults200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "422":
+          $ref: "#/components/responses/422"
+        "425":
+          $ref: "#/components/responses/425"
+        "500":
+          $ref: "#/components/responses/500"
   "/sharing/v1/{resourceType}/{resourceId}":
     get:
       tags:
@@ -4963,6 +5252,86 @@ components:
           items:
             $ref: "#/components/schemas/LabelAssignmentObject"
           description: Array of objects to unassign from the label.
+    AsyncOperationError:
+      type: object
+      description: >-
+        Error describing why an async operation failed. Present only when status is "failed".
+      required:
+        - title
+        - code
+        - status
+      properties:
+        title:
+          type: string
+          example: Query result set is too large
+        code:
+          type: string
+          description: Stable machine-readable error code.
+          example: result_too_large
+        status:
+          type: integer
+          example: 413
+        detail:
+          type: string
+    AsyncOperationPollResponse:
+      type: object
+      description: >-
+        Response envelope for polling an async report operation. Does not include result data — once status is "succeeded", fetch the result from the operation's results endpoint.
+      required:
+        - operationId
+        - status
+        - createTime
+        - expireBy
+      properties:
+        operationId:
+          type: string
+          description: Unique identifier for the operation.
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - succeeded
+            - failed
+            - canceled
+          description: Current lifecycle status of the operation.
+        createTime:
+          type: string
+          format: date-time
+          description: Time the operation was created.
+        expireBy:
+          type: string
+          format: date-time
+          description: Time after which the operation record may be deleted.
+        error:
+          $ref: "#/components/schemas/AsyncOperationError"
+    AsyncOperationResponse:
+      type: object
+      description: >-
+        Response envelope for an async report operation. Returned on 202 (new operation) and 200 (dry-run). On dry-run, operationId is absent and status is "dry_run".
+      properties:
+        operationId:
+          type: string
+          description: Unique identifier for the operation. Absent on dry-run responses.
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - succeeded
+            - failed
+            - canceled
+            - dry_run
+          description: Current lifecycle status of the operation.
+        createTime:
+          type: string
+          format: date-time
+          description: Time the operation was created (absent on dry-run).
+    AsyncRunInlineRequestBody:
+      type: object
+      properties:
+        config:
+          $ref: "#/components/schemas/ExternalConfig"
     AvaAskSyncRequest:
       type: object
       properties:
@@ -8841,6 +9210,82 @@ components:
           $ref: "#/components/schemas/NotificationEventArray"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
+    GetAsyncOperationResults200Response:
+      type: object
+      properties:
+        id:
+          type: string
+          description: >-
+            The report's id. Present only when the operation was started against a saved report (run by id); omitted for ad hoc runs against an inline config.
+        reportName:
+          type: string
+          description: >-
+            The report's current name, looked up at read time (not a snapshot from when the operation started). Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+        owner:
+          type: string
+          description: >-
+            Email address of the report owner, looked up at read time. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+        type:
+          type: string
+          enum:
+            - custom
+            - preset
+          description: >-
+            Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+        createTime:
+          type: integer
+          format: int64
+          description: >-
+            The creation time of the report, in milliseconds since the epoch. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+        updateTime:
+          type: integer
+          format: int64
+          description: >-
+            The time when the report was last updated, in milliseconds since the epoch, looked up at read time. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+        urlUI:
+          type: string
+          description: >-
+            The URL of the report in DoiT console. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+        result:
+          $ref: '#/components/schemas/GetAsyncOperationResults200ResponseResult'
+    GetAsyncOperationResults200ResponseResult:
+      type: object
+      properties:
+        schema:
+          type: array
+          items:
+            $ref: "#/components/schemas/SchemaField"
+        mlFeatures:
+          type: array
+          items:
+            type: string
+            enum:
+              - increasing
+              - decreasing
+              - none
+              - forecast
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/Value"
+        secondaryRows:
+          type: array
+          description: Secondary time range rows.
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/Value"
+        forecastRows:
+          type: array
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/Value"
+        cacheHit:
+          type: boolean
+          description: If true, results were fetched from the cache.
     GetDatahubDataset200Response:
       type: object
       properties:
@@ -11001,6 +11446,19 @@ components:
     "404":
       description: >-
         Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "422":
+      description: Unprocessable Entity - The request is well-formed but semantically invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "425":
+      description: >-
+        Too Early - The operation has not yet reached a terminal state. Poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds.
       content:
         application/json:
           schema:

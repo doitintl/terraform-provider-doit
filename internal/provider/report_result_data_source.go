@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -43,6 +44,7 @@ type reportResultDataSource struct {
 
 // reportResultDataSourceModel is the Terraform state model.
 type reportResultDataSourceModel struct {
+	Async types.Bool `tfsdk:"async"`
 	// Inputs
 	Id        types.String `tfsdk:"id"`
 	TimeRange types.String `tfsdk:"time_range"`
@@ -86,6 +88,7 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			"\n- `secondaryRows`: Secondary time range rows (if applicable)" +
 			"\n- `cacheHit`: Whether results were served from cache",
 		Attributes: map[string]schema.Attribute{
+			"async": asyncReportAttribute(),
 			// --- Inputs ---
 			"id": schema.StringAttribute{
 				Description:         "The ID of the report to fetch results for.",
@@ -202,7 +205,7 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	// If ID or any query parameter is unknown, return early
 	// with all computed attributes set to unknown.
-	if data.Id.IsUnknown() || data.TimeRange.IsUnknown() || data.StartDate.IsUnknown() || data.EndDate.IsUnknown() {
+	if data.Async.IsUnknown() || data.Id.IsUnknown() || data.TimeRange.IsUnknown() || data.StartDate.IsUnknown() || data.EndDate.IsUnknown() {
 		data.ResultJSON = types.StringUnknown()
 		data.ReportName = types.StringUnknown()
 		data.CacheHit = types.BoolUnknown()
@@ -237,6 +240,23 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 			return
 		}
 		params.EndDate = &openapi_types.Date{Time: endDate}
+	}
+
+	if data.Async.ValueBool() {
+		result, asyncDiags := runAsyncReport(ctx, d.client, nil, data.Id.ValueString(), params)
+		resp.Diagnostics.Append(asyncDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		data.ReportName = types.StringPointerValue(result.ReportName)
+		var outputDiags diag.Diagnostics
+		data.ResultJSON, data.CacheHit, data.RowCount, outputDiags = asyncReportOutputs(result.Result)
+		resp.Diagnostics.Append(outputDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
 	}
 
 	// Call the API. The GetReportResponse type is a flat struct (no allOf

@@ -11,3 +11,13 @@ paths:
   # report_query_data_source.go uses QueryWithResponse (POST /analytics/v1/reports/query)
   - path: /analytics/v1/reports/query
     method: POST
+  - path: /analytics/v1/reports/actions/run
+    method: POST
+  - path: /analytics/v1/reports/{id}/actions/run
+    method: POST
+  - path: /analytics/v1/reports/operations/{operationId}
+    method: GET
+  - path: /analytics/v1/reports/operations/{operationId}/results
+    method: GET
+  - path: /analytics/v1/reports/operations/{operationId}/actions/cancel
+    method: POST

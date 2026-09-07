@@ -1,5 +1,7 @@
 # Fetch the last 3 months of cost data grouped by cloud provider
 data "doit_report_query" "cost_by_provider" {
+  async    = true
+  timeouts = { read = "15m" }
   config = {
     metrics = [
       {

@@ -30,6 +30,8 @@ The `result_json` field contains the full result object including:
 ```terraform
 # Fetch the last 3 months of cost data grouped by cloud provider
 data "doit_report_query" "cost_by_provider" {
+  async    = true
+  timeouts = { read = "15m" }
   config = {
     metrics = [
       {
@@ -95,6 +97,7 @@ output "row_count" {
 
 ### Optional
 
+- `async` (Boolean) Execute asynchronously by submitting a job and polling for results. Defaults to false. The read timeout covers submission, polling and results. On interruption or timeout, the provider attempts to cancel the known operation. Identical concurrent queries may share an operation, so cancellation can affect another reader using the same account. The async API does not currently expose details.valueAliases.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only

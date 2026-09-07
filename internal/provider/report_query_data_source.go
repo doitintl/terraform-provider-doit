@@ -43,6 +43,7 @@ type reportQueryDataSource struct {
 
 // reportQueryDataSourceModel is the Terraform state model.
 type reportQueryDataSourceModel struct {
+	Async types.Bool `tfsdk:"async"`
 	// Input: reuses the generated ConfigValue type from the report resource.
 	Config resource_report.ConfigValue `tfsdk:"config"`
 
@@ -106,6 +107,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			"\n- `secondaryRows`: Array of secondary time range rows (if applicable)" +
 			"\n- `cacheHit`: Whether results were served from cache",
 		Attributes: map[string]dsschema.Attribute{
+			"async": asyncReportAttribute(),
 			// --- Input ---
 			"config": dsschema.SingleNestedAttribute{
 				Attributes:          dsConfigAttrs,
@@ -211,6 +213,22 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 	externalConfig, diags := toExternalConfig(ctx, data.Config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.Async.ValueBool() {
+		result, asyncDiags := runAsyncReport(ctx, d.client, externalConfig, "", nil)
+		resp.Diagnostics.Append(asyncDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		var outputDiags diag.Diagnostics
+		data.ResultJSON, data.CacheHit, data.RowCount, outputDiags = asyncReportOutputs(result.Result)
+		resp.Diagnostics.Append(outputDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
