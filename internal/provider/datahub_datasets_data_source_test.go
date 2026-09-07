@@ -12,7 +12,7 @@ import (
 )
 
 // TestAccDatahubDatasetsDataSource_Basic tests basic DataHub datasets list retrieval.
-// Creates a dataset with a logo via the resource, then verifies the plural data source includes it.
+// Creates a dataset with a logo and display name via the resource, then verifies the plural data source includes it.
 func TestAccDatahubDatasetsDataSource_Basic(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-ds-list")
 
@@ -25,7 +25,7 @@ func TestAccDatahubDatasetsDataSource_Basic(t *testing.T) {
 				Config: testAccDatahubDatasetsDataSourceBasicConfig(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_datahub_datasets.test", "datasets.#"),
-					testCheckDatahubDatasetsContains("data.doit_datahub_datasets.test", rName, "aws"),
+					testCheckDatahubDatasetsContains("data.doit_datahub_datasets.test", rName, "aws", "Datasets List Test Display Name"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -41,7 +41,7 @@ func TestAccDatahubDatasetsDataSource_Basic(t *testing.T) {
 	})
 }
 
-func testCheckDatahubDatasetsContains(dataSourceName, datasetName, expectedLogoName string) resource.TestCheckFunc {
+func testCheckDatahubDatasetsContains(dataSourceName, datasetName, expectedLogoName, expectedDisplayName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[dataSourceName]
 		if !ok {
@@ -59,6 +59,16 @@ func testCheckDatahubDatasetsContains(dataSourceName, datasetName, expectedLogoN
 				if actualLogo != expectedLogoName {
 					return fmt.Errorf("expected %s to be %q, got %q", logoKey, expectedLogoName, actualLogo)
 				}
+				if expectedDisplayName != "" {
+					dnKey := prefix + ".display_name"
+					actualDN, ok := rs.Primary.Attributes[dnKey]
+					if !ok {
+						return fmt.Errorf("attribute %s not found in state", dnKey)
+					}
+					if actualDN != expectedDisplayName {
+						return fmt.Errorf("expected %s to be %q, got %q", dnKey, expectedDisplayName, actualDN)
+					}
+				}
 				return nil
 			}
 		}
@@ -69,9 +79,10 @@ func testCheckDatahubDatasetsContains(dataSourceName, datasetName, expectedLogoN
 func testAccDatahubDatasetsDataSourceBasicConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_datahub_dataset" "dep" {
-  name        = %[1]q
-  description = "Created by acceptance test for datasets list verification"
-  logo_name   = "aws"
+  name         = %[1]q
+  description  = "Created by acceptance test for datasets list verification"
+  display_name = "Datasets List Test Display Name"
+  logo_name    = "aws"
 }
 
 data "doit_datahub_datasets" "test" {
@@ -95,6 +106,7 @@ func TestAccDatahubDatasetDataSource_Basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "name", rName),
 					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "description", "Created by acceptance test for data source verification"),
+					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "display_name", "Single Dataset Test Display Name"),
 					resource.TestCheckResourceAttr("data.doit_datahub_dataset.test", "logo_name", "aws"),
 					resource.TestCheckResourceAttrSet("data.doit_datahub_dataset.test", "last_updated"),
 				),
@@ -115,9 +127,10 @@ func TestAccDatahubDatasetDataSource_Basic(t *testing.T) {
 func testAccDatahubDatasetDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_datahub_dataset" "dep" {
-  name        = %[1]q
-  description = "Created by acceptance test for data source verification"
-  logo_name   = "aws"
+  name         = %[1]q
+  description  = "Created by acceptance test for data source verification"
+  display_name = "Single Dataset Test Display Name"
+  logo_name    = "aws"
 }
 
 data "doit_datahub_dataset" "test" {

@@ -1738,6 +1738,25 @@
 						}
 					},
 					{
+						"name": "display_name",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtMost(64)"
+									}
+								}
+							]
+						}
+					},
+					{
 						"name": "logo_name",
 						"string": {
 							"computed_optional_required": "computed_optional",

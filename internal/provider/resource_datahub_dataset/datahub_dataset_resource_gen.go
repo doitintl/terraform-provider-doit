@@ -21,6 +21,15 @@ func DatahubDatasetResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "An optional description for the dataset.",
 				MarkdownDescription: "An optional description for the dataset.",
 			},
+			"display_name": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.",
+				MarkdownDescription: "Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(64),
+				},
+			},
 			"last_updated": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The timestamp of the last update.",
@@ -80,6 +89,7 @@ func DatahubDatasetResourceSchema(ctx context.Context) schema.Schema {
 
 type DatahubDatasetModel struct {
 	Description types.String `tfsdk:"description"`
+	DisplayName types.String `tfsdk:"display_name"`
 	LastUpdated types.String `tfsdk:"last_updated"`
 	LogoName    types.String `tfsdk:"logo_name"`
 	Name        types.String `tfsdk:"name"`
