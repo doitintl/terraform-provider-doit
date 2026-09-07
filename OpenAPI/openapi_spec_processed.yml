@@ -2225,9 +2225,9 @@ paths:
         - DataHub
       summary: Update dataset
       description: |-
-        Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+        Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
         Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-        The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+        The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
         If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
       operationId: updateDatahubDataset
       parameters:
@@ -7461,6 +7461,10 @@ components:
           type: string
           description: The timestamp of the last update.
           example: "2024-03-10T23:00:00Z"
+        displayName:
+          type: string
+          description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+          example: "Datadog (prod)"
         logoName:
           type: string
           description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
@@ -7479,6 +7483,11 @@ components:
           type: string
           description: An optional description for the dataset.
           example: "Dataset for tracking custom business metrics"
+        displayName:
+          type: string
+          description: Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.
+          example: "Datadog (prod)"
+          maxLength: 64
         logoName:
           type: string
           description: An optional preset logo shown next to the dataset in the DoiT console.
@@ -8851,6 +8860,10 @@ components:
           type: string
           description: The timestamp of the last update.
           example: "2024-03-10T23:00:00Z"
+        displayName:
+          type: string
+          description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+          example: "Datadog (prod)"
         logoName:
           type: string
           description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
@@ -9495,6 +9508,10 @@ components:
           type: string
           description: The timestamp of the last update.
           example: "2024-03-10T23:00:00Z"
+        displayName:
+          type: string
+          description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+          example: "Datadog (prod)"
         logoName:
           type: string
           description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
@@ -9972,6 +9989,22 @@ components:
         cacheHit:
           type: boolean
           description: If true, results were fetched from the cache.
+        details:
+          description: Optional metadata about the result.
+          allOf:
+            - $ref: '#/components/schemas/RunReportResultResultDetails'
+    RunReportResultResultDetails:
+      type: object
+      description: Optional metadata about the result.
+      properties:
+        valueAliases:
+          type: object
+          description: >-
+            Display aliases for values that appear in `rows`, keyed by dimension id and then by the stored value (for example `{"fixed:cloud_provider": {"datadog_prod": "Datadog (prod)"}}`). Rows keep the stored values so they can be fed back into filters; apply the alias only when presenting a value. Present only when the customer has renamed a DataHub dataset whose dimension is part of the report.
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
     SchemaField:
       type: object
       description: Schema of a report result column.
@@ -10638,6 +10671,10 @@ components:
           type: string
           description: The timestamp of the last update.
           example: "2024-03-10T23:00:00Z"
+        displayName:
+          type: string
+          description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+          example: "Datadog (prod)"
         logoName:
           type: string
           description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
@@ -10654,6 +10691,11 @@ components:
           type: string
           description: The new description for the dataset. Omit to keep the current description; send an empty string to clear it.
           example: "Updated description for the dataset"
+        displayName:
+          type: string
+          description: Human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Omit to keep the current display name; send an empty string to clear it and fall back to `name`.
+          example: "Datadog (prod)"
+          maxLength: 64
         logoName:
           type: string
           description: The preset logo shown next to the dataset in the DoiT console. Omit to keep the current logo; send an empty string to clear it.

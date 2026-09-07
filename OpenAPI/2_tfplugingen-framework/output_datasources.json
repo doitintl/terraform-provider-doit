@@ -9985,6 +9985,13 @@
 						}
 					},
 					{
+						"name": "display_name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider."
+						}
+					},
+					{
 						"name": "last_updated",
 						"string": {
 							"computed_optional_required": "computed",
@@ -10032,6 +10039,13 @@
 										"string": {
 											"computed_optional_required": "computed",
 											"description": "The description of the dataset."
+										}
+									},
+									{
+										"name": "display_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider."
 										}
 									},
 									{

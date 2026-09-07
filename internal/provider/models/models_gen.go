@@ -6282,6 +6282,11 @@ type CreateDatahubDataset201Response struct {
 	// Example: Dataset for tracking custom business metrics
 	Description *string `json:"description,omitempty"`
 
+	// DisplayName Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+	//
+	// Example: Datadog (prod)
+	DisplayName *string `json:"displayName,omitempty"`
+
 	// LastUpdated The timestamp of the last update.
 	//
 	// Example: 2024-03-10T23:00:00Z
@@ -6312,6 +6317,11 @@ type CreateDatahubDatasetRequestBody struct {
 	//
 	// Example: Dataset for tracking custom business metrics
 	Description *string `json:"description,omitempty"`
+
+	// DisplayName Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.
+	//
+	// Example: Datadog (prod)
+	DisplayName *string `json:"displayName,omitempty"`
 
 	// LogoName An optional preset logo shown next to the dataset in the DoiT console.
 	//
@@ -7219,6 +7229,11 @@ type GetDatahubDataset200Response struct {
 	// Example: Dataset for tracking custom business metrics
 	Description *string `json:"description,omitempty"`
 
+	// DisplayName Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+	//
+	// Example: Datadog (prod)
+	DisplayName *string `json:"displayName,omitempty"`
+
 	// LastUpdated The timestamp of the last update.
 	//
 	// Example: 2024-03-10T23:00:00Z
@@ -7705,6 +7720,11 @@ type ListDatahubDatasets200ResponseDatasetsItem struct {
 	// Example: Dataset for tracking custom business metrics
 	Description *string `json:"description,omitempty"`
 
+	// DisplayName Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+	//
+	// Example: Datadog (prod)
+	DisplayName *string `json:"displayName,omitempty"`
+
 	// LastUpdated The timestamp of the last update.
 	//
 	// Example: 2024-03-10T23:00:00Z
@@ -8045,7 +8065,10 @@ type RunReportResult struct {
 // RunReportResultResult defines model for RunReportResultResult.
 type RunReportResultResult struct {
 	// CacheHit If true, results were fetched from the cache.
-	CacheHit     *bool                              `json:"cacheHit,omitempty"`
+	CacheHit *bool `json:"cacheHit,omitempty"`
+
+	// Details Optional metadata about the result.
+	Details      *RunReportResultResultDetails      `json:"details,omitempty"`
 	ForecastRows *[][]nullable.Nullable[Value]      `json:"forecastRows,omitempty"`
 	MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
 	Rows         *[][]nullable.Nullable[Value]      `json:"rows,omitempty"`
@@ -8057,6 +8080,12 @@ type RunReportResultResult struct {
 
 // RunReportResultResultMlFeatures defines model for RunReportResultResult.MlFeatures.
 type RunReportResultResultMlFeatures string
+
+// RunReportResultResultDetails Optional metadata about the result.
+type RunReportResultResultDetails struct {
+	// ValueAliases Display aliases for values that appear in `rows`, keyed by dimension id and then by the stored value (for example `{"fixed:cloud_provider": {"datadog_prod": "Datadog (prod)"}}`). Rows keep the stored values so they can be fed back into filters; apply the alias only when presenting a value. Present only when the customer has renamed a DataHub dataset whose dimension is part of the report.
+	ValueAliases *map[string]map[string]string `json:"valueAliases,omitempty"`
+}
 
 // SchemaField Schema of a report result column.
 type SchemaField struct {
@@ -8560,6 +8589,11 @@ type UpdateDatahubDataset200Response struct {
 	// Example: Updated description for the dataset
 	Description *string `json:"description,omitempty"`
 
+	// DisplayName Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+	//
+	// Example: Datadog (prod)
+	DisplayName *string `json:"displayName,omitempty"`
+
 	// LastUpdated The timestamp of the last update.
 	//
 	// Example: 2024-03-10T23:00:00Z
@@ -8592,6 +8626,11 @@ type UpdateDatahubDatasetRequestBody struct {
 	//
 	// Example: Updated description for the dataset
 	Description *string `json:"description,omitempty"`
+
+	// DisplayName Human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Omit to keep the current display name; send an empty string to clear it and fall back to `name`.
+	//
+	// Example: Datadog (prod)
+	DisplayName *string `json:"displayName,omitempty"`
 
 	// LogoName The preset logo shown next to the dataset in the DoiT console. Omit to keep the current logo; send an empty string to clear it.
 	//
@@ -11050,9 +11089,9 @@ type ClientInterface interface {
 
 	// UpdateDatahubDatasetWithBody Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+	// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
 	// Takes any type of body and a specified content type.
@@ -11062,9 +11101,9 @@ type ClientInterface interface {
 
 	// UpdateDatahubDataset Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+	// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
 	// Takes a body of the `application/json` content type.
@@ -13482,9 +13521,9 @@ func (c *Client) GetDatahubDataset(ctx context.Context, name string, reqEditors 
 
 // UpdateDatahubDatasetWithBody Update dataset
 //
-// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 // Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //
 // Takes any type of body and a specified content type.
@@ -13504,9 +13543,9 @@ func (c *Client) UpdateDatahubDatasetWithBody(ctx context.Context, name string, 
 
 // UpdateDatahubDataset Update dataset
 //
-// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 // Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //
 // Takes a body of the `application/json` content type.
@@ -20799,9 +20838,9 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateDatahubDatasetWithBodyWithResponse Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+	// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -20811,9 +20850,9 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateDatahubDatasetWithResponse Update dataset
 	//
-	// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+	// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 	// Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-	// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+	// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 	// If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
@@ -30506,9 +30545,9 @@ func (c *ClientWithResponses) GetDatahubDatasetWithResponse(ctx context.Context,
 
 // UpdateDatahubDatasetWithBodyWithResponse Update dataset
 //
-// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 // Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -30524,9 +30563,9 @@ func (c *ClientWithResponses) UpdateDatahubDatasetWithBodyWithResponse(ctx conte
 
 // UpdateDatahubDatasetWithResponse Update dataset
 //
-// Updates an existing DataHub dataset's metadata. The `description` and `logoName` fields can be updated.
+// Updates an existing DataHub dataset's metadata. The `description`, `displayName` and `logoName` fields can be updated.
 // Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
-// The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+// The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 // If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).

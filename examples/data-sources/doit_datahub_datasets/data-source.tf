@@ -22,9 +22,10 @@ locals {
 output "dataset_details" {
   description = "All datasets with their record counts"
   value = [for ds in data.doit_datahub_datasets.all.datasets : {
-    name        = ds.name
-    description = ds.description
-    logo_name   = ds.logo_name
-    records     = ds.records
+    name         = ds.name
+    description  = ds.description
+    display_name = ds.display_name
+    logo_name    = ds.logo_name
+    records      = ds.records
   }]
 }

@@ -23,6 +23,10 @@ output "dataset_description" {
   value = data.doit_datahub_dataset.example.description
 }
 
+output "dataset_display_name" {
+  value = data.doit_datahub_dataset.example.display_name
+}
+
 output "dataset_logo_name" {
   value = data.doit_datahub_dataset.example.logo_name
 }
@@ -54,6 +58,7 @@ output "dataset_last_updated" {
 ### Read-Only
 
 - `description` (String) The description of the dataset.
+- `display_name` (String) Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
 - `last_updated` (String) The timestamp of the last update.
 - `logo_name` (String) The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
 - `records` (Number) The number of records in the dataset.

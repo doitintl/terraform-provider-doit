@@ -17,6 +17,11 @@ func DatahubDatasetDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The description of the dataset.",
 				MarkdownDescription: "The description of the dataset.",
 			},
+			"display_name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.",
+				MarkdownDescription: "Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.",
+			},
 			"last_updated": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The timestamp of the last update.",
@@ -50,6 +55,7 @@ func DatahubDatasetDataSourceSchema(ctx context.Context) schema.Schema {
 
 type DatahubDatasetModel struct {
 	Description types.String `tfsdk:"description"`
+	DisplayName types.String `tfsdk:"display_name"`
 	LastUpdated types.String `tfsdk:"last_updated"`
 	LogoName    types.String `tfsdk:"logo_name"`
 	Name        types.String `tfsdk:"name"`

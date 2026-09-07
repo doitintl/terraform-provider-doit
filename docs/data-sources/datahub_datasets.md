@@ -37,10 +37,11 @@ locals {
 output "dataset_details" {
   description = "All datasets with their record counts"
   value = [for ds in data.doit_datahub_datasets.all.datasets : {
-    name        = ds.name
-    description = ds.description
-    logo_name   = ds.logo_name
-    records     = ds.records
+    name         = ds.name
+    description  = ds.description
+    display_name = ds.display_name
+    logo_name    = ds.logo_name
+    records      = ds.records
   }]
 }
 ```
@@ -70,6 +71,7 @@ Optional:
 Read-Only:
 
 - `description` (String) The description of the dataset.
+- `display_name` (String) Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
 - `last_updated` (String) The timestamp of the last update.
 - `logo_name` (String) The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
 - `name` (String) The name of the dataset.

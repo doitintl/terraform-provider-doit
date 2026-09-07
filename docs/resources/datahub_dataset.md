@@ -15,13 +15,18 @@ Manages a DataHub dataset.
 ```terraform
 # Create a DataHub dataset
 resource "doit_datahub_dataset" "example" {
-  name        = "My Custom Dataset"
-  description = "Dataset for tracking custom business metrics"
-  logo_name   = "aws"
+  name         = "My Custom Dataset"
+  description  = "Dataset for tracking custom business metrics"
+  display_name = "Business Metrics"
+  logo_name    = "aws"
 }
 
 output "dataset_name" {
   value = doit_datahub_dataset.example.name
+}
+
+output "dataset_display_name" {
+  value = doit_datahub_dataset.example.display_name
 }
 
 output "dataset_logo_name" {
@@ -43,6 +48,7 @@ output "dataset_records" {
 ### Optional
 
 - `description` (String) An optional description for the dataset.
+- `display_name` (String) Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.
 - `logo_name` (String) An optional preset logo shown next to the dataset in the DoiT console.
 Possible values: `anthropic`, `atlassian`, `aws`, `azure`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
