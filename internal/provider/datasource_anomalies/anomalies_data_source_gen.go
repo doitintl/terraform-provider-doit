@@ -68,6 +68,16 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "End of the anomaly.",
 							MarkdownDescription: "End of the anomaly.",
 						},
+						"entity_label": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Connector-declared name for what `scope` identifies, for example \"Project\", \"Account\" or \"User\". Absent when the provider publishes no display profile.",
+							MarkdownDescription: "Connector-declared name for what `scope` identifies, for example \"Project\", \"Account\" or \"User\". Absent when the provider publishes no display profile.",
+						},
+						"entity_name": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.",
+							MarkdownDescription: "Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.",
+						},
 						"expected_max_cost": schema.Float64Attribute{
 							Computed:            true,
 							Description:         "Maximum cost within the expected normal range.",
@@ -109,6 +119,11 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed:            true,
 							Description:         "Cloud Provider name.",
 							MarkdownDescription: "Cloud Provider name.",
+						},
+						"provider_display_name": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Connector-declared display name for the provider, for example \"Anthropic (Analytics API)\". Absent when the provider publishes no display profile.",
+							MarkdownDescription: "Connector-declared display name for the provider, for example \"Anthropic (Analytics API)\". Absent when the provider publishes no display profile.",
 						},
 						"resource_data": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
@@ -169,8 +184,8 @@ func AnomaliesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"scope": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Scope: Project or Account",
-							MarkdownDescription: "Scope: Project or Account",
+							Description:         "The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.",
+							MarkdownDescription: "The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.",
 						},
 						"service_name": schema.StringAttribute{
 							Computed:            true,
@@ -563,6 +578,42 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 			fmt.Sprintf(`end_time expected to be basetypes.Int64Value, was: %T`, endTimeAttribute))
 	}
 
+	entityLabelAttribute, ok := attributes["entity_label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`entity_label is missing from object`)
+
+		return nil, diags
+	}
+
+	entityLabelVal, ok := entityLabelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`entity_label expected to be basetypes.StringValue, was: %T`, entityLabelAttribute))
+	}
+
+	entityNameAttribute, ok := attributes["entity_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`entity_name is missing from object`)
+
+		return nil, diags
+	}
+
+	entityNameVal, ok := entityNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`entity_name expected to be basetypes.StringValue, was: %T`, entityNameAttribute))
+	}
+
 	expectedMaxCostAttribute, ok := attributes["expected_max_cost"]
 
 	if !ok {
@@ -651,6 +702,24 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`platform expected to be basetypes.StringValue, was: %T`, platformAttribute))
+	}
+
+	providerDisplayNameAttribute, ok := attributes["provider_display_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`provider_display_name is missing from object`)
+
+		return nil, diags
+	}
+
+	providerDisplayNameVal, ok := providerDisplayNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`provider_display_name expected to be basetypes.StringValue, was: %T`, providerDisplayNameAttribute))
 	}
 
 	resourceDataAttribute, ok := attributes["resource_data"]
@@ -802,29 +871,32 @@ func (t AnomaliesType) ValueFromObject(ctx context.Context, in basetypes.ObjectV
 	}
 
 	return AnomaliesValue{
-		Acknowledged:       acknowledgedVal,
-		AcknowledgedAt:     acknowledgedAtVal,
-		AcknowledgedBy:     acknowledgedByVal,
-		ActualCost:         actualCostVal,
-		Attribution:        attributionVal,
-		BillingAccount:     billingAccountVal,
-		CostOfAnomaly:      costOfAnomalyVal,
-		DeactivationReason: deactivationReasonVal,
-		EndTime:            endTimeVal,
-		ExpectedMaxCost:    expectedMaxCostVal,
-		Id:                 idVal,
-		MonitorLevel:       monitorLevelVal,
-		Notifications:      notificationsVal,
-		Platform:           platformVal,
-		ResourceData:       resourceDataVal,
-		Scope:              scopeVal,
-		ServiceName:        serviceNameVal,
-		SeverityLevel:      severityLevelVal,
-		StartTime:          startTimeVal,
-		Status:             statusVal,
-		TimeFrame:          timeFrameVal,
-		Top3skus:           top3skusVal,
-		state:              attr.ValueStateKnown,
+		Acknowledged:        acknowledgedVal,
+		AcknowledgedAt:      acknowledgedAtVal,
+		AcknowledgedBy:      acknowledgedByVal,
+		ActualCost:          actualCostVal,
+		Attribution:         attributionVal,
+		BillingAccount:      billingAccountVal,
+		CostOfAnomaly:       costOfAnomalyVal,
+		DeactivationReason:  deactivationReasonVal,
+		EndTime:             endTimeVal,
+		EntityLabel:         entityLabelVal,
+		EntityName:          entityNameVal,
+		ExpectedMaxCost:     expectedMaxCostVal,
+		Id:                  idVal,
+		MonitorLevel:        monitorLevelVal,
+		Notifications:       notificationsVal,
+		Platform:            platformVal,
+		ProviderDisplayName: providerDisplayNameVal,
+		ResourceData:        resourceDataVal,
+		Scope:               scopeVal,
+		ServiceName:         serviceNameVal,
+		SeverityLevel:       severityLevelVal,
+		StartTime:           startTimeVal,
+		Status:              statusVal,
+		TimeFrame:           timeFrameVal,
+		Top3skus:            top3skusVal,
+		state:               attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1053,6 +1125,42 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 			fmt.Sprintf(`end_time expected to be basetypes.Int64Value, was: %T`, endTimeAttribute))
 	}
 
+	entityLabelAttribute, ok := attributes["entity_label"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`entity_label is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	entityLabelVal, ok := entityLabelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`entity_label expected to be basetypes.StringValue, was: %T`, entityLabelAttribute))
+	}
+
+	entityNameAttribute, ok := attributes["entity_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`entity_name is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	entityNameVal, ok := entityNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`entity_name expected to be basetypes.StringValue, was: %T`, entityNameAttribute))
+	}
+
 	expectedMaxCostAttribute, ok := attributes["expected_max_cost"]
 
 	if !ok {
@@ -1141,6 +1249,24 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`platform expected to be basetypes.StringValue, was: %T`, platformAttribute))
+	}
+
+	providerDisplayNameAttribute, ok := attributes["provider_display_name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`provider_display_name is missing from object`)
+
+		return NewAnomaliesValueUnknown(), diags
+	}
+
+	providerDisplayNameVal, ok := providerDisplayNameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`provider_display_name expected to be basetypes.StringValue, was: %T`, providerDisplayNameAttribute))
 	}
 
 	resourceDataAttribute, ok := attributes["resource_data"]
@@ -1292,29 +1418,32 @@ func NewAnomaliesValue(attributeTypes map[string]attr.Type, attributes map[strin
 	}
 
 	return AnomaliesValue{
-		Acknowledged:       acknowledgedVal,
-		AcknowledgedAt:     acknowledgedAtVal,
-		AcknowledgedBy:     acknowledgedByVal,
-		ActualCost:         actualCostVal,
-		Attribution:        attributionVal,
-		BillingAccount:     billingAccountVal,
-		CostOfAnomaly:      costOfAnomalyVal,
-		DeactivationReason: deactivationReasonVal,
-		EndTime:            endTimeVal,
-		ExpectedMaxCost:    expectedMaxCostVal,
-		Id:                 idVal,
-		MonitorLevel:       monitorLevelVal,
-		Notifications:      notificationsVal,
-		Platform:           platformVal,
-		ResourceData:       resourceDataVal,
-		Scope:              scopeVal,
-		ServiceName:        serviceNameVal,
-		SeverityLevel:      severityLevelVal,
-		StartTime:          startTimeVal,
-		Status:             statusVal,
-		TimeFrame:          timeFrameVal,
-		Top3skus:           top3skusVal,
-		state:              attr.ValueStateKnown,
+		Acknowledged:        acknowledgedVal,
+		AcknowledgedAt:      acknowledgedAtVal,
+		AcknowledgedBy:      acknowledgedByVal,
+		ActualCost:          actualCostVal,
+		Attribution:         attributionVal,
+		BillingAccount:      billingAccountVal,
+		CostOfAnomaly:       costOfAnomalyVal,
+		DeactivationReason:  deactivationReasonVal,
+		EndTime:             endTimeVal,
+		EntityLabel:         entityLabelVal,
+		EntityName:          entityNameVal,
+		ExpectedMaxCost:     expectedMaxCostVal,
+		Id:                  idVal,
+		MonitorLevel:        monitorLevelVal,
+		Notifications:       notificationsVal,
+		Platform:            platformVal,
+		ProviderDisplayName: providerDisplayNameVal,
+		ResourceData:        resourceDataVal,
+		Scope:               scopeVal,
+		ServiceName:         serviceNameVal,
+		SeverityLevel:       severityLevelVal,
+		StartTime:           startTimeVal,
+		Status:              statusVal,
+		TimeFrame:           timeFrameVal,
+		Top3skus:            top3skusVal,
+		state:               attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1386,33 +1515,36 @@ func (t AnomaliesType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = AnomaliesValue{}
 
 type AnomaliesValue struct {
-	Acknowledged       basetypes.BoolValue    `tfsdk:"acknowledged"`
-	AcknowledgedAt     basetypes.StringValue  `tfsdk:"acknowledged_at"`
-	AcknowledgedBy     basetypes.StringValue  `tfsdk:"acknowledged_by"`
-	ActualCost         basetypes.Float64Value `tfsdk:"actual_cost"`
-	Attribution        basetypes.StringValue  `tfsdk:"attribution"`
-	BillingAccount     basetypes.StringValue  `tfsdk:"billing_account"`
-	CostOfAnomaly      basetypes.Float64Value `tfsdk:"cost_of_anomaly"`
-	DeactivationReason basetypes.StringValue  `tfsdk:"deactivation_reason"`
-	EndTime            basetypes.Int64Value   `tfsdk:"end_time"`
-	ExpectedMaxCost    basetypes.Float64Value `tfsdk:"expected_max_cost"`
-	Id                 basetypes.StringValue  `tfsdk:"id"`
-	MonitorLevel       basetypes.StringValue  `tfsdk:"monitor_level"`
-	Notifications      basetypes.ListValue    `tfsdk:"notifications"`
-	Platform           basetypes.StringValue  `tfsdk:"platform"`
-	ResourceData       basetypes.ListValue    `tfsdk:"resource_data"`
-	Scope              basetypes.StringValue  `tfsdk:"scope"`
-	ServiceName        basetypes.StringValue  `tfsdk:"service_name"`
-	SeverityLevel      basetypes.StringValue  `tfsdk:"severity_level"`
-	StartTime          basetypes.Int64Value   `tfsdk:"start_time"`
-	Status             basetypes.StringValue  `tfsdk:"status"`
-	TimeFrame          basetypes.StringValue  `tfsdk:"time_frame"`
-	Top3skus           basetypes.ListValue    `tfsdk:"top3skus"`
-	state              attr.ValueState
+	Acknowledged        basetypes.BoolValue    `tfsdk:"acknowledged"`
+	AcknowledgedAt      basetypes.StringValue  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy      basetypes.StringValue  `tfsdk:"acknowledged_by"`
+	ActualCost          basetypes.Float64Value `tfsdk:"actual_cost"`
+	Attribution         basetypes.StringValue  `tfsdk:"attribution"`
+	BillingAccount      basetypes.StringValue  `tfsdk:"billing_account"`
+	CostOfAnomaly       basetypes.Float64Value `tfsdk:"cost_of_anomaly"`
+	DeactivationReason  basetypes.StringValue  `tfsdk:"deactivation_reason"`
+	EndTime             basetypes.Int64Value   `tfsdk:"end_time"`
+	EntityLabel         basetypes.StringValue  `tfsdk:"entity_label"`
+	EntityName          basetypes.StringValue  `tfsdk:"entity_name"`
+	ExpectedMaxCost     basetypes.Float64Value `tfsdk:"expected_max_cost"`
+	Id                  basetypes.StringValue  `tfsdk:"id"`
+	MonitorLevel        basetypes.StringValue  `tfsdk:"monitor_level"`
+	Notifications       basetypes.ListValue    `tfsdk:"notifications"`
+	Platform            basetypes.StringValue  `tfsdk:"platform"`
+	ProviderDisplayName basetypes.StringValue  `tfsdk:"provider_display_name"`
+	ResourceData        basetypes.ListValue    `tfsdk:"resource_data"`
+	Scope               basetypes.StringValue  `tfsdk:"scope"`
+	ServiceName         basetypes.StringValue  `tfsdk:"service_name"`
+	SeverityLevel       basetypes.StringValue  `tfsdk:"severity_level"`
+	StartTime           basetypes.Int64Value   `tfsdk:"start_time"`
+	Status              basetypes.StringValue  `tfsdk:"status"`
+	TimeFrame           basetypes.StringValue  `tfsdk:"time_frame"`
+	Top3skus            basetypes.ListValue    `tfsdk:"top3skus"`
+	state               attr.ValueState
 }
 
 func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 22)
+	attrTypes := make(map[string]tftypes.Type, 25)
 
 	var val tftypes.Value
 	var err error
@@ -1426,6 +1558,8 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 	attrTypes["cost_of_anomaly"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["deactivation_reason"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["end_time"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["entity_label"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["entity_name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["expected_max_cost"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["monitor_level"] = basetypes.StringType{}.TerraformType(ctx)
@@ -1433,6 +1567,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		ElemType: NotificationsValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["platform"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["provider_display_name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["resource_data"] = basetypes.ListType{
 		ElemType: ResourceDataValue{}.Type(ctx),
 	}.TerraformType(ctx)
@@ -1450,7 +1585,7 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 22)
+		vals := make(map[string]tftypes.Value, 25)
 
 		val, err = v.Acknowledged.ToTerraformValue(ctx)
 
@@ -1524,6 +1659,22 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 
 		vals["end_time"] = val
 
+		val, err = v.EntityLabel.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["entity_label"] = val
+
+		val, err = v.EntityName.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["entity_name"] = val
+
 		val, err = v.ExpectedMaxCost.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -1563,6 +1714,14 @@ func (v AnomaliesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, er
 		}
 
 		vals["platform"] = val
+
+		val, err = v.ProviderDisplayName.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["provider_display_name"] = val
 
 		val, err = v.ResourceData.ToTerraformValue(ctx)
 
@@ -1685,13 +1844,16 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 		"cost_of_anomaly":     basetypes.Float64Type{},
 		"deactivation_reason": basetypes.StringType{},
 		"end_time":            basetypes.Int64Type{},
+		"entity_label":        basetypes.StringType{},
+		"entity_name":         basetypes.StringType{},
 		"expected_max_cost":   basetypes.Float64Type{},
 		"id":                  basetypes.StringType{},
 		"monitor_level":       basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},
-		"platform": basetypes.StringType{},
+		"platform":              basetypes.StringType{},
+		"provider_display_name": basetypes.StringType{},
 		"resource_data": basetypes.ListType{
 			ElemType: ResourceDataValue{}.Type(ctx),
 		},
@@ -1717,28 +1879,31 @@ func (v AnomaliesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValu
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"acknowledged":        v.Acknowledged,
-			"acknowledged_at":     v.AcknowledgedAt,
-			"acknowledged_by":     v.AcknowledgedBy,
-			"actual_cost":         v.ActualCost,
-			"attribution":         v.Attribution,
-			"billing_account":     v.BillingAccount,
-			"cost_of_anomaly":     v.CostOfAnomaly,
-			"deactivation_reason": v.DeactivationReason,
-			"end_time":            v.EndTime,
-			"expected_max_cost":   v.ExpectedMaxCost,
-			"id":                  v.Id,
-			"monitor_level":       v.MonitorLevel,
-			"notifications":       notifications,
-			"platform":            v.Platform,
-			"resource_data":       resourceData,
-			"scope":               v.Scope,
-			"service_name":        v.ServiceName,
-			"severity_level":      v.SeverityLevel,
-			"start_time":          v.StartTime,
-			"status":              v.Status,
-			"time_frame":          v.TimeFrame,
-			"top3skus":            top3skus,
+			"acknowledged":          v.Acknowledged,
+			"acknowledged_at":       v.AcknowledgedAt,
+			"acknowledged_by":       v.AcknowledgedBy,
+			"actual_cost":           v.ActualCost,
+			"attribution":           v.Attribution,
+			"billing_account":       v.BillingAccount,
+			"cost_of_anomaly":       v.CostOfAnomaly,
+			"deactivation_reason":   v.DeactivationReason,
+			"end_time":              v.EndTime,
+			"entity_label":          v.EntityLabel,
+			"entity_name":           v.EntityName,
+			"expected_max_cost":     v.ExpectedMaxCost,
+			"id":                    v.Id,
+			"monitor_level":         v.MonitorLevel,
+			"notifications":         notifications,
+			"platform":              v.Platform,
+			"provider_display_name": v.ProviderDisplayName,
+			"resource_data":         resourceData,
+			"scope":                 v.Scope,
+			"service_name":          v.ServiceName,
+			"severity_level":        v.SeverityLevel,
+			"start_time":            v.StartTime,
+			"status":                v.Status,
+			"time_frame":            v.TimeFrame,
+			"top3skus":              top3skus,
 		})
 
 	return objVal, diags
@@ -1795,6 +1960,14 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.EntityLabel.Equal(other.EntityLabel) {
+		return false
+	}
+
+	if !v.EntityName.Equal(other.EntityName) {
+		return false
+	}
+
 	if !v.ExpectedMaxCost.Equal(other.ExpectedMaxCost) {
 		return false
 	}
@@ -1812,6 +1985,10 @@ func (v AnomaliesValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Platform.Equal(other.Platform) {
+		return false
+	}
+
+	if !v.ProviderDisplayName.Equal(other.ProviderDisplayName) {
 		return false
 	}
 
@@ -1869,13 +2046,16 @@ func (v AnomaliesValue) AttributeTypes(ctx context.Context) map[string]attr.Type
 		"cost_of_anomaly":     basetypes.Float64Type{},
 		"deactivation_reason": basetypes.StringType{},
 		"end_time":            basetypes.Int64Type{},
+		"entity_label":        basetypes.StringType{},
+		"entity_name":         basetypes.StringType{},
 		"expected_max_cost":   basetypes.Float64Type{},
 		"id":                  basetypes.StringType{},
 		"monitor_level":       basetypes.StringType{},
 		"notifications": basetypes.ListType{
 			ElemType: NotificationsValue{}.Type(ctx),
 		},
-		"platform": basetypes.StringType{},
+		"platform":              basetypes.StringType{},
+		"provider_display_name": basetypes.StringType{},
 		"resource_data": basetypes.ListType{
 			ElemType: ResourceDataValue{}.Type(ctx),
 		},

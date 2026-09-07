@@ -65,13 +65,16 @@ output "anomaly_summary_metrics" {
 
 output "anomaly_summary" {
   value = [for a in data.doit_anomalies.all.anomalies : {
-    id                  = a.id
-    service             = a.service_name
-    cost_impact         = a.cost_of_anomaly
-    severity            = a.severity_level
-    monitor_level       = a.monitor_level
-    status              = a.status
-    deactivation_reason = a.deactivation_reason
+    id                    = a.id
+    service               = a.service_name
+    cost_impact           = a.cost_of_anomaly
+    severity              = a.severity_level
+    monitor_level         = a.monitor_level
+    entity_label          = a.entity_label
+    entity_name           = a.entity_name
+    provider_display_name = a.provider_display_name
+    status                = a.status
+    deactivation_reason   = a.deactivation_reason
   }]
 }
 
@@ -324,13 +327,16 @@ Read-Only:
 - `cost_of_anomaly` (Number) Excess cost over and above the expected normal cost.
 - `deactivation_reason` (String) Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
 - `end_time` (Number) End of the anomaly.
+- `entity_label` (String) Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
+- `entity_name` (String) Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
 - `id` (String)
 - `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--anomalies--notifications))
 - `platform` (String) Cloud Provider name.
+- `provider_display_name` (String) Connector-declared display name for the provider, for example "Anthropic (Analytics API)". Absent when the provider publishes no display profile.
 - `resource_data` (Attributes List) Array of resources contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--resource_data))
-- `scope` (String) Scope: Project or Account
+- `scope` (String) The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.
 - `service_name` (String) Service name.
 - `severity_level` (String) Severity level: `information`, `warning`, or `critical`.
 - `start_time` (Number) Usage start time of the anomaly.

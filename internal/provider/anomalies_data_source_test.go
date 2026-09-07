@@ -743,3 +743,50 @@ func getAnomalyFirstPageToken(t *testing.T, maxResults int64) string {
 	}
 	return *resp.JSON200.PageToken
 }
+
+// TestAccAnomaliesDataSource_EntityFields verifies that entity_label,
+// entity_name, and provider_display_name are accessible on anomalies list items without drift.
+func TestAccAnomaliesDataSource_EntityFields(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceEntityConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.entity_test", "row_count"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceEntityConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceEntityConfig() string {
+	return `
+data "doit_anomalies" "entity_test" {
+  max_results = 1
+}
+
+output "anomaly_entity_label" {
+  value = [for a in data.doit_anomalies.entity_test.anomalies : a.entity_label != null ? a.entity_label : ""]
+}
+
+output "anomaly_entity_name" {
+  value = [for a in data.doit_anomalies.entity_test.anomalies : a.entity_name != null ? a.entity_name : ""]
+}
+
+output "anomaly_provider_display_name" {
+  value = [for a in data.doit_anomalies.entity_test.anomalies : a.provider_display_name != null ? a.provider_display_name : ""]
+}
+`
+}
