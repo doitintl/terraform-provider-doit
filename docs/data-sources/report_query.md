@@ -7,7 +7,7 @@ description: |-
   The query is executed with the provided config and results are returned as a JSON string in result_json. Use Terraform's jsondecode() to parse.
   ~> Note: Query results are dynamic — they change over time as new billing data is ingested. Every terraform plan will re-execute the query.
   The result_json field contains the full result object including:
-  schema: Array of column metadata objects (name, type, and optional unit, currency, aggregation, and id for allocation dimensions)rows: Array of data rows, where each row is an array of cell values (string, number, or null)forecastRows: Array of forecast data rows (if applicable)secondaryRows: Array of secondary time range rows (if applicable)cacheHit: Whether results were served from cache
+  schema: Array of column metadata objects (name, type, and optional unit, currency, aggregation, and id for allocation dimensions)rows: Array of data rows, where each row is an array of cell values (string, number, or null)forecastRows: Array of forecast data rows (if applicable)secondaryRows: Array of secondary time range rows (if applicable)cacheHit: Whether results were served from cachedetails.valueAliases: Optional display names keyed by dimension ID and stored value. Rows retain their original values for use in filters.
 ---
 
 # doit_report_query (Data Source)
@@ -24,6 +24,7 @@ The `result_json` field contains the full result object including:
 - `forecastRows`: Array of forecast data rows (if applicable)
 - `secondaryRows`: Array of secondary time range rows (if applicable)
 - `cacheHit`: Whether results were served from cache
+- `details.valueAliases`: Optional display names keyed by dimension ID and stored value. Rows retain their original values for use in filters.
 
 ## Example Usage
 
@@ -108,6 +109,7 @@ Structure of the decoded JSON object:
 - `forecastRows`: Array of forecast row arrays (if applicable).
 - `secondaryRows`: Array of secondary time range row arrays (if applicable).
 - `cacheHit`: Boolean indicating if the result was served from cache.
+- `details.valueAliases`: Optional maps of stored values to display names, keyed by dimension ID (for example, `fixed:cloud_provider`). Apply aliases when displaying results; keep the original row values when building filters.
 - `row_count` (Number) The number of data rows in the result.
 
 <a id="nestedatt--config"></a>
@@ -135,7 +137,7 @@ Possible values: `actuals_only`, `absolute_change`, `percentage_change`, `absolu
 If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
 - `include_subtotals` (Boolean) Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
 - `layout` (String) Type of visualization or output format.
-Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`
+Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `sankey_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `column_and_line_chart`, `trend_board`
 - `limit_aggregation` (String) Controls how rows excluded by limits are rendered. Applies when any limit type is active
 (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
 at most two of those three limit types — not all three. When `displayValues` is not

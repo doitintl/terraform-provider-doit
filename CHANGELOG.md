@@ -4,10 +4,16 @@
 
 ### BREAKING CHANGES
 
+- **resource/doit_report, data-source/doit_report_query**: `config.layout` no longer accepts `csv_export` or `sheets_export`, matching the public API. Use a visualization layout such as `table`; exports are separate operations. See the [unreleased upgrade notes](docs/guides/unreleased_upgrade.md) for layout and Insights migration guidance.
+
 - **resource/doit_insight, resource/doit_insight_resource_results, data-source/doit_insight, data-source/doit_insights, data-source/doit_insight_resource_results**: Removed all resources and data sources for the Insights API as the upstream service has been deprecated and is no longer being maintained. A replacement API is being worked on upstream.
 - **provider**: `request_timeout` values at or below `120s` are now rejected at validation time. The DoiT API's edge proxy answers requests still running after 120 seconds with a `524`, and a local timeout at or below that threshold cancels the request before that response can arrive — turning a definitive, fast failure into an opaque `context deadline exceeded` that is then retried. Configurations setting a lower value must raise it; the default is `150s`
 
 ### ENHANCEMENTS
+
+- **resource/doit_report, data-source/doit_report_query**: Accept `sankey_chart`, `column_and_line_chart`, and `trend_board` layouts by synchronizing the renderer enum from upstream [omni#63122](https://github.com/doiteng/omni/pull/63122).
+- **resource/doit_datahub_dataset, data-source/doit_datahub_dataset, data-source/doit_datahub_datasets**: Support dataset `display_name`, including clearing it on update ([#316](https://github.com/doitintl/terraform-provider-doit/pull/316)).
+- **data-source/doit_anomaly, doit_anomalies**: Expose `entity_label`, `entity_name`, `provider_display_name`, and `linked_anomalies` ([#315](https://github.com/doitintl/terraform-provider-doit/pull/315), [#319](https://github.com/doitintl/terraform-provider-doit/pull/319)).
 
 - **provider**: The default `request_timeout` is now `150s` (was `120s`), so a slow request surfaces the API's own `524` response rather than racing it
 - **provider**: The default `read` and `delete` operation timeouts are now 5 minutes (were 2 minutes), matching `create` and `update`. Every operation default now exceeds `request_timeout`, so a single slow request can no longer consume the entire operation budget and leave no room to retry a transient failure
@@ -20,6 +26,11 @@
 - **provider**: A `Retry-After` header of `0`, a negative value, or a date already in the past no longer schedules an immediate retry. Such values were previously honored literally, producing a hot retry loop against a rate-limited API and pinning the backoff to a flat cadence that never grew
 - **provider**: `Retry-After` now accepts all three HTTP-date formats permitted by RFC 7231 (IMF-fixdate, RFC 850, and asctime); only IMF-fixdate was previously recognized
 - **provider**: An outsized `Retry-After` value is now capped at 60 seconds — the retry policy's own maximum interval — rather than being allowed to consume the whole operation budget. A large negative value is also rejected outright; it previously overflowed to a positive duration and was honored as a legitimate wait
+
+### DOCUMENTATION
+
+- Document `details.valueAliases` in the existing `doit_report_query.result_json` output, with regression coverage for absent, empty, and populated aliases and unchanged raw row values.
+- Add upgrade guidance for removed Insights types, clarify their presence in the public API reference, and explain the supported report layouts.
 
 ### INTERNAL
 
