@@ -83,6 +83,12 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "A unique identifier of the anomaly.",
 				MarkdownDescription: "A unique identifier of the anomaly.",
 			},
+			"linked_anomalies": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.",
+				MarkdownDescription: "IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.",
+			},
 			"monitor_level": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).",
@@ -247,6 +253,7 @@ type AnomalyModel struct {
 	EntityName          types.String  `tfsdk:"entity_name"`
 	ExpectedMaxCost     types.Float64 `tfsdk:"expected_max_cost"`
 	Id                  types.String  `tfsdk:"id"`
+	LinkedAnomalies     types.List    `tfsdk:"linked_anomalies"`
 	MonitorLevel        types.String  `tfsdk:"monitor_level"`
 	Notifications       types.List    `tfsdk:"notifications"`
 	Platform            types.String  `tfsdk:"platform"`

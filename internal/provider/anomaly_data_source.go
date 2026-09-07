@@ -87,6 +87,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.EntityLabel = types.StringUnknown()
 		data.EntityName = types.StringUnknown()
 		data.ExpectedMaxCost = types.Float64Unknown()
+		data.LinkedAnomalies = types.ListUnknown(types.StringType)
 		data.MonitorLevel = types.StringUnknown()
 		data.Notifications = types.ListUnknown(datasource_anomaly.NotificationsValue{}.Type(ctx))
 		data.Platform = types.StringUnknown()
@@ -227,6 +228,17 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	// Map notifications
 	data.Notifications = mapAnomalyNotificationsForAnomaly(ctx, anomaly.Notifications, &resp.Diagnostics)
+
+	// Map linked_anomalies
+	if anomaly.LinkedAnomalies != nil && len(*anomaly.LinkedAnomalies) > 0 {
+		linkedAnomaliesList, d := types.ListValueFrom(ctx, types.StringType, *anomaly.LinkedAnomalies)
+		resp.Diagnostics.Append(d...)
+		data.LinkedAnomalies = linkedAnomaliesList
+	} else {
+		emptyList, d := types.ListValueFrom(ctx, types.StringType, []string{})
+		resp.Diagnostics.Append(d...)
+		data.LinkedAnomalies = emptyList
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -55,6 +55,11 @@ output "anomaly_provider_display_name" {
   value       = data.doit_anomaly.example.provider_display_name
 }
 
+output "anomaly_linked_anomalies" {
+  description = "IDs of other related anomalies in the same service around the same time"
+  value       = data.doit_anomaly.example.linked_anomalies
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
@@ -106,6 +111,7 @@ output "anomaly_deactivation_reason" {
 - `entity_label` (String) Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
 - `entity_name` (String) Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
+- `linked_anomalies` (List of String) IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 - `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--notifications))
 - `platform` (String) Cloud Provider name

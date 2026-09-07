@@ -73,6 +73,7 @@ output "anomaly_summary" {
     entity_label          = a.entity_label
     entity_name           = a.entity_name
     provider_display_name = a.provider_display_name
+    linked_anomalies      = a.linked_anomalies
     status                = a.status
     deactivation_reason   = a.deactivation_reason
   }]
@@ -331,6 +332,7 @@ Read-Only:
 - `entity_name` (String) Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
 - `id` (String)
+- `linked_anomalies` (List of String) IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 - `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--anomalies--notifications))
 - `platform` (String) Cloud Provider name.
@@ -392,7 +394,7 @@ Read-Only:
 Read-Only:
 
 - `count_by_severity` (Attributes) Count of matching anomalies per severity level. All three keys are always present, with zero counts included. (see [below for nested schema](#nestedatt--anomaly_summary--count_by_severity))
-- `total_cost_of_anomaly` (Number) Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents.
+- `total_cost_of_anomaly` (Number) Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every matching anomaly contributes, linked ones included, so a single cost spike described at more than one level of detail contributes once per anomaly describing it.
 
 <a id="nestedatt--anomaly_summary--count_by_severity"></a>
 ### Nested Schema for `anomaly_summary.count_by_severity`
