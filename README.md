@@ -11,8 +11,6 @@ The DoiT Cloud Intelligence Terraform Provider lets you manage [DoiT Cloud Intel
 > [!IMPORTANT]
 > **Upgrading from v0.x?** Version 1.0.0 contains breaking changes. See the [v1.0.0 Upgrade Guide](docs/guides/version_1_upgrade.md) for migration instructions.
 
-> **Changes after v1.7.0:** The development branch removes Insights types and export layout values. Read the [unreleased upgrade notes](docs/guides/unreleased_upgrade.md) before upgrading to a release containing these changes.
-
 ## Getting Started
 
 ### Prerequisites

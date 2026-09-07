@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+  Runs an ad-hoc Cloud Analytics query and returns its results as JSON.
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile (printf "examples/data-sources/%s/data-source.tf" .Name) }}
+
+{{ .SchemaMarkdown | trimspace }}

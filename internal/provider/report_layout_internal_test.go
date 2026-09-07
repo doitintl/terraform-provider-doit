@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// TestReportLayoutValidation exercises the resource and ad-hoc query schema validators:
+// supported visualization layouts pass; removed export layouts and unknown values fail.
 func TestReportLayoutValidation(t *testing.T) {
 	ctx := t.Context()
 	var resourceSchema resource.SchemaResponse
@@ -66,6 +68,9 @@ func TestReportLayoutValidation(t *testing.T) {
 	}
 }
 
+// TestReportLayoutRoundTrip verifies that each newly supported layout survives API-to-state
+// and state-to-request mapping, including the saved-report configuration data source.
+// It does not execute reports or test chart rendering.
 func TestReportLayoutRoundTrip(t *testing.T) {
 	for _, layout := range []string{"sankey_chart", "column_and_line_chart", "trend_board"} {
 		t.Run(layout, func(t *testing.T) {

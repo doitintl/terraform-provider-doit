@@ -93,19 +93,18 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			"\n\nThe result_json field contains the full result object, including the" +
 			" schema (column definitions: name, type, and optional unit, currency, aggregation, and id)," +
 			" rows (data), forecastRows (forecast data), secondaryRows (secondary time range data)," +
-			" cacheHit (whether results were served from cache), and optional details.valueAliases (display names keyed by dimension ID and stored value).",
+			" and cacheHit (whether results were served from cache).",
 		MarkdownDescription: "Runs an ad-hoc Cloud Analytics query without persisting a report." +
 			"\n\nThe query is executed with the provided config and results are returned" +
 			" as a JSON string in `result_json`. Use Terraform's `jsondecode()` to parse." +
 			"\n\n~> **Note:** Query results are dynamic — they change over time as new" +
 			" billing data is ingested. Every `terraform plan` will re-execute the query." +
 			"\n\nThe `result_json` field contains the full result object including:" +
-			"\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
+			"\n\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
 			"\n- `rows`: Array of data rows, where each row is an array of cell values (`string`, `number`, or `null`)" +
 			"\n- `forecastRows`: Array of forecast data rows (if applicable)" +
 			"\n- `secondaryRows`: Array of secondary time range rows (if applicable)" +
-			"\n- `cacheHit`: Whether results were served from cache" +
-			"\n- `details.valueAliases`: Optional display names keyed by dimension ID and stored value. Rows retain their original values for use in filters.",
+			"\n- `cacheHit`: Whether results were served from cache",
 		Attributes: map[string]dsschema.Attribute{
 			// --- Input ---
 			"config": dsschema.SingleNestedAttribute{
@@ -123,12 +122,11 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 					"Use jsondecode() to parse.",
 				MarkdownDescription: "The full query result as a JSON string. Use `jsondecode()` to parse." +
 					"\n\nStructure of the decoded JSON object:" +
-					"\n- `schema`: Array of column definitions: `name` (string), `type` (string: `string`, `float`, `integer`, `timestamp`), and optional fields `unit` (`currency`, `number`, `percent`), `currency` (ISO 4217 code), `aggregation` (`total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`), and `id` (present for allocation dimensions)." +
+					"\n\n- `schema`: Array of column definitions: `name` (string), `type` (string: `string`, `float`, `integer`, `timestamp`), and optional fields `unit` (`currency`, `number`, `percent`), `currency` (ISO 4217 code), `aggregation` (`total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`), and `id` (present for allocation dimensions)." +
 					"\n- `rows`: Array of row arrays `[][string | number | null]` corresponding to the schema columns." +
 					"\n- `forecastRows`: Array of forecast row arrays (if applicable)." +
 					"\n- `secondaryRows`: Array of secondary time range row arrays (if applicable)." +
-					"\n- `cacheHit`: Boolean indicating if the result was served from cache." +
-					"\n- `details.valueAliases`: Optional maps of stored values to display names, keyed by dimension ID (for example, `fixed:cloud_provider`). Apply aliases when displaying results; keep the original row values when building filters.",
+					"\n- `cacheHit`: Boolean indicating if the result was served from cache.",
 				Computed: true,
 			},
 			"cache_hit": dsschema.BoolAttribute{
