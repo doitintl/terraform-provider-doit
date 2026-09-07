@@ -253,6 +253,9 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportCustomTimeRangeUnitValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
+		// cumulative_comparison requires daily datetime dimensions, total aggregation,
+		// one metric, secondary time range, and no comparative or forecast.
+		reportCumulativeComparisonValidator{},
 	}
 }
 

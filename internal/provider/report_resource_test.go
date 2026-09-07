@@ -6210,3 +6210,200 @@ resource "doit_report" "cfg_clear" {
 }
 `, i)
 }
+
+func TestAccReport_Layout_CumulativeComparison_Validation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportCumulativeComparisonMissingSecondary(n),
+				ExpectError: regexp.MustCompile(`Missing Secondary Time Range`),
+			},
+			{
+				Config:      testAccReportCumulativeComparisonMissingDimensions(n),
+				ExpectError: regexp.MustCompile(`Invalid Dimensions Configuration`),
+			},
+			{
+				Config:      testAccReportCumulativeComparisonComparativeDisplayValues(n),
+				ExpectError: regexp.MustCompile(`Conflicting Comparative Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCumulativeComparisonMissingSecondary(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_missing_sec" {
+  name = "test-cc-missing-sec-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+func testAccReportCumulativeComparisonMissingDimensions(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_missing_dims" {
+  name = "test-cc-missing-dims-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+func testAccReportCumulativeComparisonComparativeDisplayValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_comparative" {
+  name = "test-cc-comparative-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    display_values = "percentage_change"
+    data_source    = "billing"
+    layout         = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+func TestAccReport_Layout_CumulativeComparison(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.layout", "cumulative_comparison"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.aggregation", "total"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.#", "3"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.0.id", "year"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.1.id", "month"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.2.id", "day"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportCumulativeComparisonValid(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_valid" {
+  name = "test-cc-valid-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}

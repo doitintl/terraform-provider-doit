@@ -370,8 +370,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"layout": schema.StringAttribute{
 						Computed:            true,
-						Description:         "Type of visualization or output format.",
-						MarkdownDescription: "Type of visualization or output format.",
+						Description:         "Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.",
+						MarkdownDescription: "Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.",
 					},
 					"limit_aggregation": schema.StringAttribute{
 						Computed:            true,

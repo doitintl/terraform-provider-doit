@@ -8521,7 +8521,8 @@ components:
             - unallocated
     ExternalRenderer:
       type: string
-      description: Type of visualization or output format.
+      description: >-
+        Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.
       enum:
         - column_chart
         - stacked_column_chart
@@ -8540,6 +8541,7 @@ components:
         - table_col_heatmap
         - column_and_line_chart
         - trend_board
+        - cumulative_comparison
     ExternalReport:
       required:
         - name

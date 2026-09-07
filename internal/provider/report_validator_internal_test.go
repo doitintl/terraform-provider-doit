@@ -6,6 +6,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -660,5 +661,447 @@ func TestToExternalConfig_ForecastFalseWithSettings(t *testing.T) {
 	}
 	if ext.AdvancedAnalysis == nil || ext.AdvancedAnalysis.Forecast == nil || *ext.AdvancedAnalysis.Forecast {
 		t.Fatalf("expected serialized request to carry advanced_analysis.forecast=false alongside forecast_settings")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestReportCumulativeComparisonValidator
+// ---------------------------------------------------------------------------
+
+func buildReportConfigWithMap(ctx context.Context, t *testing.T, configMap map[string]attr.Value) tfsdk.Config {
+	t.Helper()
+	schema := resource_report.ReportResourceSchema(ctx)
+	configVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
+	if diags.HasError() {
+		t.Fatalf("NewConfigValue: %v", diags)
+	}
+
+	schemaType := schema.Type().TerraformType(ctx)
+	objType, ok := schemaType.(tftypes.Object)
+	if !ok {
+		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
+	}
+
+	attrValues := make(map[string]tftypes.Value, len(objType.AttributeTypes))
+	for name, attrType := range objType.AttributeTypes {
+		attrValues[name] = tftypes.NewValue(attrType, nil)
+	}
+
+	configTFVal, err := configVal.ToTerraformValue(ctx)
+	if err != nil {
+		t.Fatalf("Config ToTerraformValue: %v", err)
+	}
+	attrValues["config"] = configTFVal
+
+	rawValue := tftypes.NewValue(schemaType, attrValues)
+	return tfsdk.Config{
+		Schema: schema,
+		Raw:    rawValue,
+	}
+}
+
+func validCumulativeComparisonConfigMap(ctx context.Context, t *testing.T) map[string]attr.Value {
+	t.Helper()
+
+	dim1 := resource_report.NewDimensionsValueMust(resource_report.DimensionsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("year"),
+		"type": types.StringValue("datetime"),
+	})
+	dim2 := resource_report.NewDimensionsValueMust(resource_report.DimensionsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("month"),
+		"type": types.StringValue("datetime"),
+	})
+	dim3 := resource_report.NewDimensionsValueMust(resource_report.DimensionsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("day"),
+		"type": types.StringValue("datetime"),
+	})
+	dimsVal, diags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dim1, dim2, dim3})
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom dimensions: %v", diags)
+	}
+
+	m1 := resource_report.NewMetricsValueMust(resource_report.MetricsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"type":  types.StringValue("basic"),
+		"value": types.StringValue("cost"),
+	})
+	metricsVal, diags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{m1})
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom metrics: %v", diags)
+	}
+
+	secTrVal := resource_report.NewSecondaryTimeRangeValueMust(resource_report.SecondaryTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"amount":            types.Int64Value(1),
+		"custom_time_range": resource_report.NewCustomTimeRangeValueNull(),
+		"include_current":   types.BoolValue(false),
+		"unit":              types.StringValue("month"),
+	})
+
+	return map[string]attr.Value{
+		"aggregation":                 types.StringValue("total"),
+		"currency":                    types.StringNull(),
+		"data_source":                 types.StringNull(),
+		"display_values":              types.StringNull(),
+		"include_promotional_credits": types.BoolNull(),
+		"include_subtotals":           types.BoolNull(),
+		"layout":                      types.StringValue("cumulative_comparison"),
+		"limit_aggregation":           types.StringNull(),
+		"sort_dimensions":             types.StringNull(),
+		"sort_groups":                 types.StringNull(),
+		"time_interval":               types.StringNull(),
+		"forecast_settings":           resource_report.NewForecastSettingsValueNull(),
+		"custom_time_range":           resource_report.NewCustomTimeRangeValueNull(),
+		"secondary_time_range":        secTrVal,
+		"time_range":                  resource_report.NewTimeRangeValueNull(),
+		"advanced_analysis":           resource_report.NewAdvancedAnalysisValueNull(),
+		"display_settings":            resource_report.NewDisplaySettingsValueNull(),
+		"metric":                      resource_report.NewMetricValueNull(),
+		"metric_filter":               resource_report.NewMetricFilterValueNull(),
+		"limit_by_change":             resource_report.NewLimitByChangeValueNull(),
+		"dimensions":                  dimsVal,
+		"filters":                     types.ListNull(resource_report.FiltersValue{}.Type(ctx)),
+		"group":                       types.ListNull(resource_report.GroupValue{}.Type(ctx)),
+		"metrics":                     metricsVal,
+		"splits":                      types.ListNull(resource_report.SplitsValue{}.Type(ctx)),
+		"count":                       resource_report.NewCountValueNull(),
+	}
+}
+
+func TestReportCumulativeComparisonValidator(t *testing.T) {
+	ctx := context.Background()
+
+	dimAttrTypes := resource_report.DimensionsValue{}.AttributeTypes(ctx)
+	dimYear := resource_report.NewDimensionsValueMust(dimAttrTypes, map[string]attr.Value{
+		"id":   types.StringValue("year"),
+		"type": types.StringValue("datetime"),
+	})
+	dimMonth := resource_report.NewDimensionsValueMust(dimAttrTypes, map[string]attr.Value{
+		"id":   types.StringValue("month"),
+		"type": types.StringValue("datetime"),
+	})
+	dimDay := resource_report.NewDimensionsValueMust(dimAttrTypes, map[string]attr.Value{
+		"id":   types.StringValue("day"),
+		"type": types.StringValue("datetime"),
+	})
+	dimWeek := resource_report.NewDimensionsValueMust(dimAttrTypes, map[string]attr.Value{
+		"id":   types.StringValue("week"),
+		"type": types.StringValue("datetime"),
+	})
+	dimFixedYear := resource_report.NewDimensionsValueMust(dimAttrTypes, map[string]attr.Value{
+		"id":   types.StringValue("year"),
+		"type": types.StringValue("fixed"),
+	})
+	dimService := resource_report.NewDimensionsValueMust(dimAttrTypes, map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+
+	metricAttrTypes := resource_report.MetricsValue{}.AttributeTypes(ctx)
+	m1 := resource_report.NewMetricsValueMust(metricAttrTypes, map[string]attr.Value{
+		"type":  types.StringValue("basic"),
+		"value": types.StringValue("cost"),
+	})
+	m2 := resource_report.NewMetricsValueMust(metricAttrTypes, map[string]attr.Value{
+		"type":  types.StringValue("basic"),
+		"value": types.StringValue("usage"),
+	})
+
+	tests := []struct {
+		name      string
+		mutate    func(cfg map[string]attr.Value)
+		expectErr bool
+	}{
+		{
+			name:      "valid cumulative comparison configuration",
+			mutate:    func(cfg map[string]attr.Value) {},
+			expectErr: false,
+		},
+		{
+			name: "non-cumulative layout table with missing requirements",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["layout"] = types.StringValue("table")
+				cfg["dimensions"] = types.ListNull(resource_report.DimensionsValue{}.Type(ctx))
+				cfg["aggregation"] = types.StringNull()
+				cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+			},
+			expectErr: false,
+		},
+		{
+			name: "layout is null",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["layout"] = types.StringNull()
+				cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+			},
+			expectErr: false,
+		},
+		{
+			name: "layout is unknown",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["layout"] = types.StringUnknown()
+				cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+			},
+			expectErr: false,
+		},
+		{
+			name: "missing dimensions (null)",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["dimensions"] = types.ListNull(resource_report.DimensionsValue{}.Type(ctx))
+			},
+			expectErr: true,
+		},
+		{
+			name: "empty dimensions list",
+			mutate: func(cfg map[string]attr.Value) {
+				emptyDims, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom emptyDims: %v", d)
+				}
+				cfg["dimensions"] = emptyDims
+			},
+			expectErr: true,
+		},
+		{
+			name: "insufficient dimensions (only year and month)",
+			mutate: func(cfg map[string]attr.Value) {
+				twoDims, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dimYear, dimMonth})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom twoDims: %v", d)
+				}
+				cfg["dimensions"] = twoDims
+			},
+			expectErr: true,
+		},
+		{
+			name: "excess dimensions (4 dimensions)",
+			mutate: func(cfg map[string]attr.Value) {
+				fourDims, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dimYear, dimMonth, dimDay, dimService})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom fourDims: %v", d)
+				}
+				cfg["dimensions"] = fourDims
+			},
+			expectErr: true,
+		},
+		{
+			name: "wrong dimension type (year of type fixed)",
+			mutate: func(cfg map[string]attr.Value) {
+				wrongTypeDims, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dimFixedYear, dimMonth, dimDay})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom wrongTypeDims: %v", d)
+				}
+				cfg["dimensions"] = wrongTypeDims
+			},
+			expectErr: true,
+		},
+		{
+			name: "wrong dimension id (year, month, week)",
+			mutate: func(cfg map[string]attr.Value) {
+				wrongIdDims, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dimYear, dimMonth, dimWeek})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom wrongIdDims: %v", d)
+				}
+				cfg["dimensions"] = wrongIdDims
+			},
+			expectErr: true,
+		},
+		{
+			name: "wrong dimension order (day, month, year)",
+			mutate: func(cfg map[string]attr.Value) {
+				wrongOrderDims, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dimDay, dimMonth, dimYear})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom wrongOrderDims: %v", d)
+				}
+				cfg["dimensions"] = wrongOrderDims
+			},
+			expectErr: true,
+		},
+		{
+			name: "missing aggregation (null)",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["aggregation"] = types.StringNull()
+			},
+			expectErr: true,
+		},
+		{
+			name: "wrong aggregation (percent_total)",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["aggregation"] = types.StringValue("percent_total")
+			},
+			expectErr: true,
+		},
+		{
+			name: "multiple metrics (2 metrics)",
+			mutate: func(cfg map[string]attr.Value) {
+				twoMetrics, d := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{m1, m2})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom twoMetrics: %v", d)
+				}
+				cfg["metrics"] = twoMetrics
+			},
+			expectErr: true,
+		},
+		{
+			name: "missing secondary time range (null)",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+			},
+			expectErr: true,
+		},
+		{
+			name: "comparative display values percentage_change",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["display_values"] = types.StringValue("percentage_change")
+			},
+			expectErr: true,
+		},
+		{
+			name: "comparative display values absolute_change",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["display_values"] = types.StringValue("absolute_change")
+			},
+			expectErr: true,
+		},
+		{
+			name: "comparative display values absolute_and_percentage",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["display_values"] = types.StringValue("absolute_and_percentage")
+			},
+			expectErr: true,
+		},
+		{
+			name: "valid display values actuals_only",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["display_values"] = types.StringValue("actuals_only")
+			},
+			expectErr: false,
+		},
+		{
+			name: "forecast settings set",
+			mutate: func(cfg map[string]attr.Value) {
+				fsVal, diags := resource_report.NewForecastSettingsValue(resource_report.ForecastSettingsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+					"future_custom_date_range":     resource_report.NewFutureCustomDateRangeValueNull(),
+					"future_time_intervals":        types.Int64Value(6),
+					"historical_custom_date_range": resource_report.NewHistoricalCustomDateRangeValueNull(),
+					"historical_time_intervals":    types.Int64Null(),
+					"mode":                         types.StringValue("totals"),
+				})
+				if diags.HasError() {
+					t.Fatalf("NewForecastSettingsValue: %v", diags)
+				}
+				cfg["forecast_settings"] = fsVal
+			},
+			expectErr: true,
+		},
+		{
+			name: "advanced analysis forecast is true",
+			mutate: func(cfg map[string]attr.Value) {
+				advVal, diags := resource_report.NewAdvancedAnalysisValue(resource_report.AdvancedAnalysisValue{}.AttributeTypes(ctx), map[string]attr.Value{
+					"forecast":      types.BoolValue(true),
+					"not_trending":  types.BoolNull(),
+					"trending_down": types.BoolNull(),
+					"trending_up":   types.BoolNull(),
+				})
+				if diags.HasError() {
+					t.Fatalf("NewAdvancedAnalysisValue: %v", diags)
+				}
+				cfg["advanced_analysis"] = advVal
+			},
+			expectErr: true,
+		},
+		{
+			name: "advanced analysis forecast is false",
+			mutate: func(cfg map[string]attr.Value) {
+				advVal, diags := resource_report.NewAdvancedAnalysisValue(resource_report.AdvancedAnalysisValue{}.AttributeTypes(ctx), map[string]attr.Value{
+					"forecast":      types.BoolValue(false),
+					"not_trending":  types.BoolNull(),
+					"trending_down": types.BoolNull(),
+					"trending_up":   types.BoolNull(),
+				})
+				if diags.HasError() {
+					t.Fatalf("NewAdvancedAnalysisValue: %v", diags)
+				}
+				cfg["advanced_analysis"] = advVal
+			},
+			expectErr: false,
+		},
+		{
+			name: "unknown dimensions deferred",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["dimensions"] = types.ListUnknown(resource_report.DimensionsValue{}.Type(ctx))
+			},
+			expectErr: false,
+		},
+		{
+			name: "unknown dimension element deferred",
+			mutate: func(cfg map[string]attr.Value) {
+				unknownDim := resource_report.NewDimensionsValueUnknown()
+				dimsWithUnknown, d := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dimYear, dimMonth, unknownDim})
+				if d.HasError() {
+					t.Fatalf("ListValueFrom dimsWithUnknown: %v", d)
+				}
+				cfg["dimensions"] = dimsWithUnknown
+			},
+			expectErr: false,
+		},
+		{
+			name: "unknown aggregation deferred",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["aggregation"] = types.StringUnknown()
+			},
+			expectErr: false,
+		},
+		{
+			name: "unknown secondary time range deferred",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueUnknown()
+			},
+			expectErr: false,
+		},
+		{
+			name: "unknown display values deferred",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["display_values"] = types.StringUnknown()
+			},
+			expectErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+			tt.mutate(cfgMap)
+			config := buildReportConfigWithMap(ctx, t, cfgMap)
+
+			// Test resource validator
+			v := reportCumulativeComparisonValidator{}
+			req := resource.ValidateConfigRequest{Config: config}
+			resp := &resource.ValidateConfigResponse{}
+			v.ValidateResource(ctx, req, resp)
+
+			if tt.expectErr {
+				if !resp.Diagnostics.HasError() {
+					t.Fatalf("expected validation error but got none")
+				}
+			} else {
+				if resp.Diagnostics.HasError() {
+					t.Fatalf("expected no validation error but got: %v", resp.Diagnostics)
+				}
+			}
+
+			// Test data source validator counterpart shares identical behavior
+			dsv := reportCumulativeComparisonDataSourceValidator{}
+			dsReq := datasource.ValidateConfigRequest{Config: config}
+			dsResp := &datasource.ValidateConfigResponse{}
+			dsv.ValidateDataSource(ctx, dsReq, dsResp)
+
+			if tt.expectErr {
+				if !dsResp.Diagnostics.HasError() {
+					t.Fatalf("expected data source validator error but got none")
+				}
+			} else {
+				if dsResp.Diagnostics.HasError() {
+					t.Fatalf("expected no data source validator error but got: %v", dsResp.Diagnostics)
+				}
+			}
+		})
 	}
 }

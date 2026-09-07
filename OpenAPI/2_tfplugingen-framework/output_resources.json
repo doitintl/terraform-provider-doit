@@ -2661,7 +2661,7 @@
 									"name": "layout",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "Type of visualization or output format.",
+										"description": "Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.",
 										"validators": [
 											{
 												"custom": {
@@ -2670,7 +2670,7 @@
 															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 														}
 													],
-													"schema_definition": "stringvalidator.OneOf(\n\"column_chart\",\n\"stacked_column_chart\",\n\"bar_chart\",\n\"stacked_bar_chart\",\n\"line_chart\",\n\"spline_chart\",\n\"area_chart\",\n\"area_spline_chart\",\n\"stacked_area_chart\",\n\"treemap_chart\",\n\"sankey_chart\",\n\"table\",\n\"table_heatmap\",\n\"table_row_heatmap\",\n\"table_col_heatmap\",\n\"column_and_line_chart\",\n\"trend_board\",\n)"
+													"schema_definition": "stringvalidator.OneOf(\n\"column_chart\",\n\"stacked_column_chart\",\n\"bar_chart\",\n\"stacked_bar_chart\",\n\"line_chart\",\n\"spline_chart\",\n\"area_chart\",\n\"area_spline_chart\",\n\"stacked_area_chart\",\n\"treemap_chart\",\n\"sankey_chart\",\n\"table\",\n\"table_heatmap\",\n\"table_row_heatmap\",\n\"table_col_heatmap\",\n\"column_and_line_chart\",\n\"trend_board\",\n\"cumulative_comparison\",\n)"
 												}
 											}
 										]

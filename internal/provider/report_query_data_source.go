@@ -149,6 +149,9 @@ func (d *reportQueryDataSource) ConfigValidators(_ context.Context) []datasource
 		// Same empty-range / RFC3339 checks as the resource; the query config
 		// reuses the report resource's config types.
 		reportTimestampDataSourceValidator{},
+		// cumulative_comparison requires daily datetime dimensions, total aggregation,
+		// one metric, secondary time range, and no comparative or forecast.
+		reportCumulativeComparisonDataSourceValidator{},
 	}
 }
 
