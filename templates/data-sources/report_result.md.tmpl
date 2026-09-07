@@ -2,7 +2,11 @@
 page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
 subcategory: ""
 description: |-
-  Executes an existing Cloud Analytics report and returns its results as JSON.
+  Fetches the results of an existing Cloud Analytics report.
+  The report is executed and results are returned as a raw JSON string in result_json. Use Terraform's jsondecode() to parse the results.
+  Results are dynamic: they change over time as new billing data is ingested. Every terraform plan re-executes the report.
+  The result_json object includes schema (column definitions: name, type, and optional unit, currency, aggregation, and id), rows (data), forecastRows (forecast data), secondaryRows (secondary time range data), and cacheHit (whether results were served from cache).
+  Each row contains string, number, or null values corresponding to the schema columns.
 ---
 
 # {{.Name}} ({{.Type}})
