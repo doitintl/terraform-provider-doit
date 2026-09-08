@@ -289,6 +289,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCustomThemeDataSource,
 		NewActiveThemeDataSource,
 		NewCloudconnectAwsAccountDataSource,
+		NewCloudconnectSupportedFeaturesDataSource,
 		NewPs4cAwsOrganizationDataSource,
 		// List data sources
 		NewBudgetsDataSource,

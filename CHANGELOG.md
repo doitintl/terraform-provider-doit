@@ -11,6 +11,7 @@
 
 ### ENHANCEMENTS
 
+- **data-source/doit_cloudconnect_supported_features**: Read supported features and permission status for connected AWS accounts. Document the public schema’s unsupported Azure claim.
 - **resource/doit_report, data-source/doit_report_query**: Accept `sankey_chart`, `column_and_line_chart`, and `trend_board` layouts by synchronizing the renderer enum from upstream [omni#63122](https://github.com/doiteng/omni/pull/63122).
 
 - **provider**: The default `request_timeout` is now `150s` (was `120s`), so a slow request surfaces the API's own `524` response rather than racing it
