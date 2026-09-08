@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -281,15 +282,40 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 // value sticks with no drift), matching the default Category B behavior for
 // unclearable leaves, so forcing a replace would be gratuitously destructive.
 func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	// Skip on create (no prior state) and destroy (no plan).
-	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+	// Skip on destroy (no plan).
+	if req.Plan.Raw.IsNull() {
 		return
 	}
 
-	requiresReplaceWhenCleared[resource_report.CountValue](ctx, req, resp, path.Root("config").AtName("count"))
-	requiresReplaceWhenCleared[resource_report.LimitByChangeValue](ctx, req, resp, path.Root("config").AtName("limit_by_change"))
-	requiresReplaceWhenCleared[resource_report.MetricFilterValue](ctx, req, resp, path.Root("config").AtName("metric_filter"))
-	requiresReplaceWhenCleared[resource_report.CustomTimeRangeValue](ctx, req, resp, path.Root("config").AtName("custom_time_range"))
+	if !req.State.Raw.IsNull() {
+		requiresReplaceWhenCleared[resource_report.CountValue](ctx, req, resp, path.Root("config").AtName("count"))
+		requiresReplaceWhenCleared[resource_report.LimitByChangeValue](ctx, req, resp, path.Root("config").AtName("limit_by_change"))
+		requiresReplaceWhenCleared[resource_report.MetricFilterValue](ctx, req, resp, path.Root("config").AtName("metric_filter"))
+		requiresReplaceWhenCleared[resource_report.CustomTimeRangeValue](ctx, req, resp, path.Root("config").AtName("custom_time_range"))
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
+	// Determine effective layout: use plan layout if known; otherwise inherit from state
+	// since the API retains the stored layout when omitted from an update config.
+	var layout types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if (layout.IsUnknown() || layout.IsNull()) && !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
+	// Validate proposed plan when effective layout is cumulative_comparison. This prevents
+	// updates where layout is omitted from config (inheriting cumulative_comparison
+	// from state) from bypassing validation with invalid dimensions, comparative display
+	// values, or forecast settings.
+	validateReportCumulativeComparisonWithLayout(ctx, req.Plan, layout, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

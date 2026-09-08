@@ -6362,8 +6362,81 @@ func TestAccReport_Layout_CumulativeComparison(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.2.id", "day"),
 				),
 			},
+			// Drift check: ensure re-applying same configuration produces empty plan
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
+}
+
+// TestAccReport_Layout_CumulativeComparison_UpdateInheritedValidation verifies that
+// when an existing resource with layout = "cumulative_comparison" is updated and
+// layout is omitted from config, ModifyPlan still catches configuration violations
+// (e.g., changing dimensions to invalid set) at plan time rather than failing at apply.
+func TestAccReport_Layout_CumulativeComparison_UpdateInheritedValidation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report with layout = "cumulative_comparison"
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+			},
+			// Step 2: Update config omitting layout and setting only 2 dimensions.
+			// ModifyPlan must reject this at plan time.
+			{
+				Config:      testAccReportCumulativeComparisonOmittedLayoutInvalidDimensions(n),
+				ExpectError: regexp.MustCompile(`Invalid Dimensions Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCumulativeComparisonOmittedLayoutInvalidDimensions(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_valid" {
+  name = "test-cc-valid-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    # layout is intentionally omitted
+  }
+}
+`, i)
 }
 
 func testAccReportCumulativeComparisonValid(i int) string {

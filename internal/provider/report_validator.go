@@ -543,20 +543,37 @@ func (v reportCumulativeComparisonDataSourceValidator) ValidateDataSource(ctx co
 	validateReportCumulativeComparison(ctx, req.Config, &resp.Diagnostics)
 }
 
+// attributeGetter abstracts GetAttribute across tfsdk.Config and tfsdk.Plan,
+// allowing shared validation logic to run both in ConfigValidators and ModifyPlan.
+type attributeGetter interface {
+	GetAttribute(ctx context.Context, path path.Path, target any) diag.Diagnostics
+}
+
 // validateReportCumulativeComparison is the shared validation logic for both the
 // report resource and the report_query data source when layout = "cumulative_comparison".
 // Unknown values are deferred so references validate once resolved during plan.
-func validateReportCumulativeComparison(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
+func validateReportCumulativeComparison(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
 	var layout types.String
-	d := config.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)
 	diags.Append(d...)
-	if d.HasError() || layout.IsNull() || layout.IsUnknown() || layout.ValueString() != "cumulative_comparison" {
+	if d.HasError() {
+		return
+	}
+	validateReportCumulativeComparisonWithLayout(ctx, getter, layout, diags)
+}
+
+// validateReportCumulativeComparisonWithLayout validates the proposed config/plan attributes
+// against the rules for layout = "cumulative_comparison". It accepts an explicitly resolved layout,
+// enabling ModifyPlan to validate plans that inherit cumulative_comparison from prior state when
+// layout is omitted in config on update.
+func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter attributeGetter, layout types.String, diags *diag.Diagnostics) {
+	if layout.IsNull() || layout.IsUnknown() || layout.ValueString() != "cumulative_comparison" {
 		return
 	}
 
 	// 1. Daily datetime dimensions (year, month, day)
 	var dimensions types.List
-	d = config.GetAttribute(ctx, path.Root("config").AtName("dimensions"), &dimensions)
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("dimensions"), &dimensions)
 	diags.Append(d...)
 	if !d.HasError() {
 		if !dimensions.IsUnknown() {
@@ -604,7 +621,7 @@ func validateReportCumulativeComparison(ctx context.Context, config tfsdk.Config
 
 	// 2. Total aggregation
 	var aggregation types.String
-	d = config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
 	diags.Append(d...)
 	if !d.HasError() && !aggregation.IsUnknown() {
 		if aggregation.IsNull() || aggregation.ValueString() != "total" {
@@ -622,21 +639,32 @@ func validateReportCumulativeComparison(ctx context.Context, config tfsdk.Config
 
 	// 3. One metric
 	var metrics types.List
-	d = config.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
 	diags.Append(d...)
-	if !d.HasError() && !metrics.IsUnknown() && !metrics.IsNull() {
-		if len(metrics.Elements()) != 1 {
-			diags.AddAttributeError(
-				path.Root("config").AtName("metrics"),
-				"Invalid Metrics Configuration",
-				fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", len(metrics.Elements())),
-			)
+
+	var metric resource_report.MetricValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("metric"), &metric)
+	diags.Append(d...)
+
+	if !d.HasError() {
+		hasSingleMetricObj := !metric.IsNull() && !metric.IsUnknown()
+		if !metrics.IsUnknown() && !metrics.IsNull() {
+			numMetrics := len(metrics.Elements())
+			if numMetrics == 0 && hasSingleMetricObj {
+				// Metric was configured via the singular "metric" block; valid 1 metric.
+			} else if numMetrics != 1 {
+				diags.AddAttributeError(
+					path.Root("config").AtName("metrics"),
+					"Invalid Metrics Configuration",
+					fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
+				)
+			}
 		}
 	}
 
 	// 4. Secondary time range
 	var secondaryTimeRange resource_report.SecondaryTimeRangeValue
-	d = config.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondaryTimeRange)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondaryTimeRange)
 	diags.Append(d...)
 	if !d.HasError() && !secondaryTimeRange.IsUnknown() {
 		if secondaryTimeRange.IsNull() {
@@ -650,7 +678,7 @@ func validateReportCumulativeComparison(ctx context.Context, config tfsdk.Config
 
 	// 5. No comparative
 	var displayValues types.String
-	d = config.GetAttribute(ctx, path.Root("config").AtName("display_values"), &displayValues)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("display_values"), &displayValues)
 	diags.Append(d...)
 	if !d.HasError() && !displayValues.IsUnknown() && !displayValues.IsNull() {
 		if displayValues.ValueString() != "actuals_only" {
@@ -664,7 +692,7 @@ func validateReportCumulativeComparison(ctx context.Context, config tfsdk.Config
 
 	// 6. No forecast
 	var forecastSettings resource_report.ForecastSettingsValue
-	d = config.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &forecastSettings)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &forecastSettings)
 	diags.Append(d...)
 	if !d.HasError() && !forecastSettings.IsUnknown() && !forecastSettings.IsNull() {
 		diags.AddAttributeError(
@@ -675,7 +703,7 @@ func validateReportCumulativeComparison(ctx context.Context, config tfsdk.Config
 	}
 
 	var forecast types.Bool
-	d = config.GetAttribute(ctx, path.Root("config").AtName("advanced_analysis").AtName("forecast"), &forecast)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("advanced_analysis").AtName("forecast"), &forecast)
 	diags.Append(d...)
 	if !d.HasError() && !forecast.IsUnknown() && !forecast.IsNull() && forecast.ValueBool() {
 		diags.AddAttributeError(

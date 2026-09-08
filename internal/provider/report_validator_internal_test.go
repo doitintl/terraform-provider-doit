@@ -1102,6 +1102,71 @@ func TestReportCumulativeComparisonValidator(t *testing.T) {
 					t.Fatalf("expected no data source validator error but got: %v", dsResp.Diagnostics)
 				}
 			}
+
+			// Test plan validation (used in ModifyPlan) shares identical behavior
+			plan := tfsdk.Plan(config)
+			var planDiags diag.Diagnostics
+			validateReportCumulativeComparison(ctx, plan, &planDiags)
+			if tt.expectErr {
+				if !planDiags.HasError() {
+					t.Fatalf("expected plan validation error but got none")
+				}
+			} else {
+				if planDiags.HasError() {
+					t.Fatalf("expected no plan validation error but got: %v", planDiags)
+				}
+			}
 		})
+	}
+}
+
+func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
+	ctx := context.Background()
+
+	// Prior state has layout = "cumulative_comparison" and valid config
+	validMap := validCumulativeComparisonConfigMap(ctx, t)
+	stateCfg := buildReportConfigWithMap(ctx, t, validMap)
+	state := tfsdk.State(stateCfg)
+
+	// Proposed plan has layout omitted/unknown (inheriting cumulative_comparison from state)
+	// but invalid dimensions (only 1 dimension)
+	invalidMap := validCumulativeComparisonConfigMap(ctx, t)
+	invalidMap["layout"] = types.StringUnknown()
+	dim1 := resource_report.NewDimensionsValueMust(resource_report.DimensionsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("year"),
+		"type": types.StringValue("datetime"),
+	})
+	dimsVal, diags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dim1})
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom dimensions: %v", diags)
+	}
+	invalidMap["dimensions"] = dimsVal
+
+	planCfg := buildReportConfigWithMap(ctx, t, invalidMap)
+	plan := tfsdk.Plan(planCfg)
+
+	r := &reportResource{}
+	req := resource.ModifyPlanRequest{
+		State:  state,
+		Config: stateCfg,
+		Plan:   plan,
+	}
+	resp := &resource.ModifyPlanResponse{}
+
+	r.ModifyPlan(ctx, req, resp)
+
+	if !resp.Diagnostics.HasError() {
+		t.Fatal("expected ModifyPlan to fail on invalid dimensions when layout is cumulative_comparison in plan")
+	}
+
+	foundExpectedError := false
+	for _, d := range resp.Diagnostics.Errors() {
+		if d.Summary() == "Invalid Dimensions Configuration" {
+			foundExpectedError = true
+			break
+		}
+	}
+	if !foundExpectedError {
+		t.Fatalf("expected 'Invalid Dimensions Configuration' error, got: %v", resp.Diagnostics)
 	}
 }
