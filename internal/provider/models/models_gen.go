@@ -2046,23 +2046,24 @@ func (e ExternalOriginType) Valid() bool {
 
 // Defines values for ExternalRenderer.
 const (
-	ExternalRendererAreaChart          ExternalRenderer = "area_chart"
-	ExternalRendererAreaSplineChart    ExternalRenderer = "area_spline_chart"
-	ExternalRendererBarChart           ExternalRenderer = "bar_chart"
-	ExternalRendererColumnAndLineChart ExternalRenderer = "column_and_line_chart"
-	ExternalRendererColumnChart        ExternalRenderer = "column_chart"
-	ExternalRendererLineChart          ExternalRenderer = "line_chart"
-	ExternalRendererSankeyChart        ExternalRenderer = "sankey_chart"
-	ExternalRendererSplineChart        ExternalRenderer = "spline_chart"
-	ExternalRendererStackedAreaChart   ExternalRenderer = "stacked_area_chart"
-	ExternalRendererStackedBarChart    ExternalRenderer = "stacked_bar_chart"
-	ExternalRendererStackedColumnChart ExternalRenderer = "stacked_column_chart"
-	ExternalRendererTable              ExternalRenderer = "table"
-	ExternalRendererTableColHeatmap    ExternalRenderer = "table_col_heatmap"
-	ExternalRendererTableHeatmap       ExternalRenderer = "table_heatmap"
-	ExternalRendererTableRowHeatmap    ExternalRenderer = "table_row_heatmap"
-	ExternalRendererTreemapChart       ExternalRenderer = "treemap_chart"
-	ExternalRendererTrendBoard         ExternalRenderer = "trend_board"
+	ExternalRendererAreaChart            ExternalRenderer = "area_chart"
+	ExternalRendererAreaSplineChart      ExternalRenderer = "area_spline_chart"
+	ExternalRendererBarChart             ExternalRenderer = "bar_chart"
+	ExternalRendererColumnAndLineChart   ExternalRenderer = "column_and_line_chart"
+	ExternalRendererColumnChart          ExternalRenderer = "column_chart"
+	ExternalRendererCumulativeComparison ExternalRenderer = "cumulative_comparison"
+	ExternalRendererLineChart            ExternalRenderer = "line_chart"
+	ExternalRendererSankeyChart          ExternalRenderer = "sankey_chart"
+	ExternalRendererSplineChart          ExternalRenderer = "spline_chart"
+	ExternalRendererStackedAreaChart     ExternalRenderer = "stacked_area_chart"
+	ExternalRendererStackedBarChart      ExternalRenderer = "stacked_bar_chart"
+	ExternalRendererStackedColumnChart   ExternalRenderer = "stacked_column_chart"
+	ExternalRendererTable                ExternalRenderer = "table"
+	ExternalRendererTableColHeatmap      ExternalRenderer = "table_col_heatmap"
+	ExternalRendererTableHeatmap         ExternalRenderer = "table_heatmap"
+	ExternalRendererTableRowHeatmap      ExternalRenderer = "table_row_heatmap"
+	ExternalRendererTreemapChart         ExternalRenderer = "treemap_chart"
+	ExternalRendererTrendBoard           ExternalRenderer = "trend_board"
 )
 
 // Valid indicates whether the value is a known member of the ExternalRenderer enum.
@@ -2077,6 +2078,8 @@ func (e ExternalRenderer) Valid() bool {
 	case ExternalRendererColumnAndLineChart:
 		return true
 	case ExternalRendererColumnChart:
+		return true
+	case ExternalRendererCumulativeComparison:
 		return true
 	case ExternalRendererLineChart:
 		return true
@@ -6698,7 +6701,7 @@ type ExternalConfig struct {
 	// IncludeSubtotals Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
 	IncludeSubtotals *bool `json:"includeSubtotals,omitempty"`
 
-	// Layout Type of visualization or output format.
+	// Layout Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.
 	Layout *ExternalRenderer `json:"layout,omitempty"`
 
 	// LimitAggregation Controls how rows excluded by limits are rendered. Applies when any limit type is active
@@ -6998,7 +7001,7 @@ type ExternalOrigin struct {
 // Example: attribution
 type ExternalOriginType string
 
-// ExternalRenderer Type of visualization or output format.
+// ExternalRenderer Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.
 type ExternalRenderer string
 
 // ExternalReport Configuration and metadata of a stored report.
