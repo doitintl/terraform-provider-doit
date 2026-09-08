@@ -7326,6 +7326,66 @@ type GetAnomaly200ResponseMonitorLevel string
 // GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
 type GetAnomaly200ResponseStatus string
 
+// GetAnomalyExplanation200Response defines model for GetAnomalyExplanation200Response.
+type GetAnomalyExplanation200Response struct {
+	// Evidence Customer-scoped identifiers the explanation was grounded in.
+	Evidence []GetAnomalyExplanation200ResponseEvidenceItem `json:"evidence"`
+
+	// Explanation The AI-generated portion of the response.
+	Explanation GetAnomalyExplanation200ResponseExplanation `json:"explanation"`
+
+	// Facts Deterministic facts about the anomaly, not AI-generated.
+	Facts GetAnomalyExplanation200ResponseFacts `json:"facts"`
+}
+
+// GetAnomalyExplanation200ResponseEvidenceItem defines model for GetAnomalyExplanation200ResponseEvidenceItem.
+type GetAnomalyExplanation200ResponseEvidenceItem struct {
+	// Id Identifier of the referenced evidence.
+	Id string `json:"id"`
+
+	// Type The kind of evidence this reference points to.
+	Type string `json:"type"`
+}
+
+// GetAnomalyExplanation200ResponseExplanation The AI-generated portion of the response.
+type GetAnomalyExplanation200ResponseExplanation struct {
+	// AiGenerated Always true; present so consumers can identify AI-generated content explicitly.
+	AiGenerated bool `json:"aiGenerated"`
+
+	// GeneratedBy Identifies the system that generated the explanation.
+	GeneratedBy string `json:"generatedBy"`
+
+	// Text Concise, likely-cause explanation of the anomaly.
+	Text string `json:"text"`
+}
+
+// GetAnomalyExplanation200ResponseFacts Deterministic facts about the anomaly, not AI-generated.
+type GetAnomalyExplanation200ResponseFacts struct {
+	// ActualCost Observed (actual) cost of the anomaly.
+	ActualCost nullable.Nullable[float64] `json:"actualCost,omitempty"`
+
+	// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
+	CostOfAnomaly float64 `json:"costOfAnomaly"`
+
+	// ExpectedMaxCost Maximum cost within the expected normal range.
+	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
+
+	// Platform Cloud Provider name
+	Platform string `json:"platform"`
+
+	// Scope Scope: Project or Account
+	Scope string `json:"scope"`
+
+	// ServiceName Service name
+	ServiceName string `json:"serviceName"`
+
+	// SeverityLevel Severity level: `information`, `warning`, or `critical`.
+	SeverityLevel string `json:"severityLevel"`
+
+	// Top3SKUs Array of SKU entries contributing to an anomaly.
+	Top3SKUs AnomalySKUArray `json:"top3SKUs"`
+}
+
 // GetAsyncOperationResults200Response defines model for GetAsyncOperationResults200Response.
 type GetAsyncOperationResults200Response struct {
 	// CreateTime The creation time of the report, in milliseconds since the epoch. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
@@ -8986,6 +9046,9 @@ type N422 = Error
 
 // N425 Standard error response structure.
 type N425 = Error
+
+// N429 Standard error response structure.
+type N429 = Error
 
 // N500 Standard error response structure.
 type N500 = Error
@@ -10822,6 +10885,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /anomalies/v1/{id} (the `GetAnomaly` operationId).
 	GetAnomaly(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAnomalyExplanation Explain an anomaly
+	//
+	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+	//
+	// Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
+	GetAnomalyExplanation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// Validate Validate a user
 	//
@@ -12862,6 +12932,23 @@ func (c *Client) ListAnomalies(ctx context.Context, params *ListAnomaliesParams,
 // Corresponds with GET /anomalies/v1/{id} (the `GetAnomaly` operationId).
 func (c *Client) GetAnomaly(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAnomalyRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetAnomalyExplanation Explain an anomaly
+//
+// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+//
+// Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
+func (c *Client) GetAnomalyExplanation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAnomalyExplanationRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -17215,6 +17302,40 @@ func NewGetAnomalyRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewGetAnomalyExplanationRequest constructs an http.Request for the GetAnomalyExplanation method
+func NewGetAnomalyExplanationRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/anomalies/v1/%s/explanation", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewValidateRequest constructs an http.Request for the Validate method
 func NewValidateRequest(server string) (*http.Request, error) {
 	var err error
@@ -20864,6 +20985,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /anomalies/v1/{id} (the `GetAnomaly` operationId).
 	GetAnomalyWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAnomalyResp, error)
+
+	// GetAnomalyExplanationWithResponse Explain an anomaly
+	//
+	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
+	GetAnomalyExplanationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAnomalyExplanationResp, error)
 
 	// ValidateWithResponse Validate a user
 	//
@@ -25561,6 +25691,103 @@ func (r GetAnomalyResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetAnomalyResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetAnomalyExplanationResp503Headers the declared response headers of an HTTP 503 response for GetAnomalyExplanation
+type GetAnomalyExplanationResp503Headers struct {
+	RetryAfter *string
+}
+
+type GetAnomalyExplanationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GetAnomalyExplanation200Response
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON429 the response for an HTTP 429 `application/json` response
+	JSON429 *N429
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Error
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetAnomalyExplanationResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON200() *GetAnomalyExplanation200Response {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON429 returns the response for an HTTP 429 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON429() *N429 {
+	return r.JSON429
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r GetAnomalyExplanationResp) GetJSON503() *Error {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetAnomalyExplanationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAnomalyExplanationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAnomalyExplanationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetAnomalyExplanationResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -30749,6 +30976,21 @@ func (c *ClientWithResponses) GetAnomalyWithResponse(ctx context.Context, id str
 	return ParseGetAnomalyResp(rsp)
 }
 
+// GetAnomalyExplanationWithResponse Explain an anomaly
+//
+// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
+func (c *ClientWithResponses) GetAnomalyExplanationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetAnomalyExplanationResp, error) {
+	rsp, err := c.GetAnomalyExplanation(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAnomalyExplanationResp(rsp)
+}
+
 // ValidateWithResponse Validate a user
 //
 // Returns the domain and email of the current API user.
@@ -35064,6 +35306,94 @@ func ParseGetAnomalyResp(rsp *http.Response) (*GetAnomalyResp, error) {
 		}
 		response.JSON404 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseGetAnomalyExplanationResp parses an HTTP response from a GetAnomalyExplanationWithResponse call
+func ParseGetAnomalyExplanationResp(rsp *http.Response) (*GetAnomalyExplanationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAnomalyExplanationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetAnomalyExplanation200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest N429
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 503:
+		var headers GetAnomalyExplanationResp503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil
