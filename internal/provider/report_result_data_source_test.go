@@ -139,11 +139,11 @@ func TestAccReportResultDataSource_WithTimeout(t *testing.T) {
 				Config: testAccReportResultDataSourceConfigWithTimeout(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"data.doit_report_result.test",
+						"data.doit_report_result.with_timeout",
 						tfjsonpath.New("result_json"),
 						knownvalue.NotNull()),
 					statecheck.ExpectKnownValue(
-						"data.doit_report_result.test",
+						"data.doit_report_result.with_timeout",
 						tfjsonpath.New("report_name"),
 						knownvalue.StringExact(rName)),
 				},

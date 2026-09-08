@@ -282,6 +282,11 @@ func asyncTimedOut(
 	cancelResp, err := client.CancelAsyncOperationWithResponse(cancelCtx, operationID,
 		&models.CancelAsyncOperationParams{IdempotencyKey: newIdempotencyKey()})
 
+	// outcome describes what actually became of the operation, and is appended
+	// to the timeout error. It stays empty when cancellation did not demonstrably
+	// happen, so the error never claims an outcome the warning contradicts.
+	var outcome string
+
 	switch {
 	case err != nil:
 		diags.AddWarning(
@@ -298,18 +303,35 @@ func asyncTimedOut(
 				operationID, cancelResp.StatusCode(), string(cancelResp.Body)),
 		)
 	default:
-		tflog.Debug(ctx, "Canceled async report operation after timeout", map[string]any{
+		// Cancelling is idempotent: an operation that already reached a terminal
+		// state comes back unchanged rather than as "canceled". Report the state
+		// the API returned instead of assuming the cancel took effect.
+		outcome = fmt.Sprintf("A cancellation request was accepted for operation %s.", operationID)
+		if cancelResp.JSON200 != nil && cancelResp.JSON200.Status != nil {
+			status := *cancelResp.JSON200.Status
+			if status == models.AsyncOperationResponseStatusCanceled {
+				outcome = fmt.Sprintf("Operation %s was canceled.", operationID)
+			} else {
+				outcome = fmt.Sprintf("Operation %s had already finished (%s) and was left as-is.",
+					operationID, status)
+			}
+		}
+		tflog.Debug(ctx, "Requested cancellation of async report operation after timeout", map[string]any{
 			"operation_id": operationID,
+			"outcome":      outcome,
 		})
+	}
+
+	if outcome == "" {
+		outcome = fmt.Sprintf("Operation %s may still be running.", operationID)
 	}
 
 	diags.AddError(
 		"Timed Out Running "+what,
-		fmt.Sprintf("The %s did not finish within the read timeout: %s. "+
-			"Operation %s was canceled.\n\n"+
+		fmt.Sprintf("The %s did not finish within the read timeout: %s. %s\n\n"+
 			"Increase the timeout for slow reports, for example:\n\n"+
 			"  timeouts = {\n    read = \"30m\"\n  }",
-			what, ctx.Err(), operationID),
+			what, ctx.Err(), outcome),
 	)
 	return diags
 }

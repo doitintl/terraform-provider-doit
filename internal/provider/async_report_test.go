@@ -41,9 +41,10 @@ type asyncTestServer struct {
 	failureError  *models.AsyncOperationError
 	resultsStatus []int // consumed one per results call; last value repeats
 	submitStatus  int
-	submitEmpty   int  // number of initial submits answered with an empty 202
-	cancelStatus  int  // status returned by the cancel endpoint
-	pollNotFound  bool // poll returns 404
+	submitEmpty   int    // number of initial submits answered with an empty 202
+	cancelStatus  int    // status returned by the cancel endpoint
+	cancelOpState string // operation status reported in the cancel response body
+	pollNotFound  bool   // poll returns 404
 
 	// observations
 	submitKeys  []string
@@ -62,6 +63,9 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 	}
 	if s.cancelStatus == 0 {
 		s.cancelStatus = http.StatusOK
+	}
+	if s.cancelOpState == "" {
+		s.cancelOpState = "canceled"
 	}
 	if len(s.resultsStatus) == 0 {
 		s.resultsStatus = []int{http.StatusOK}
@@ -163,7 +167,7 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 		s.cancelKeys = append(s.cancelKeys, r.Header.Get("Idempotency-Key"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(s.cancelStatus)
-		_, _ = w.Write([]byte(`{"operationId":"op-1","status":"canceled"}`))
+		_, _ = fmt.Fprintf(w, `{"operationId":"op-1","status":%q}`, s.cancelOpState)
 	})
 
 	s.Server = httptest.NewTestServer(t, mux)
@@ -458,6 +462,40 @@ func TestAwaitAsyncReport_TimeoutDuringResultsDoesNotCancel(t *testing.T) {
 	})
 }
 
+// TestAwaitAsyncReport_TimeoutRaceWithCompletion covers the race where the
+// operation finishes just as the deadline expires. Cancelling is idempotent, so
+// the API returns the terminal state unchanged — the diagnostic must report what
+// actually happened rather than claiming a cancellation.
+func TestAwaitAsyncReport_TimeoutRaceWithCompletion(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{
+			pollStatuses:  []string{"running"},
+			pollRetryHdr:  "5",
+			cancelOpState: "succeeded", // finished before the cancel landed
+		})
+		client := newAsyncTestClient(t, srv.Server)
+
+		ctx, stop := context.WithTimeout(t.Context(), 20*time.Second)
+		defer stop()
+
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		if !diags.HasError() {
+			t.Fatal("expected a timeout error")
+		}
+
+		detail := diags.Errors()[0].Detail()
+		if strings.Contains(detail, "was canceled") {
+			t.Errorf("claimed cancellation for an operation that had already finished:\n%s", detail)
+		}
+		if !strings.Contains(detail, "already finished (succeeded)") {
+			t.Errorf("detail should report the state the API returned:\n%s", detail)
+		}
+		if diags.WarningsCount() != 0 {
+			t.Errorf("warnings = %d, want 0 — the cancel request itself succeeded", diags.WarningsCount())
+		}
+	})
+}
+
 func TestAwaitAsyncReport_CancelFailureDoesNotMaskTimeout(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		srv := newAsyncTestServer(t, &asyncTestServer{
@@ -483,6 +521,15 @@ func TestAwaitAsyncReport_CancelFailureDoesNotMaskTimeout(t *testing.T) {
 		}
 		if !strings.Contains(diags.Warnings()[0].Detail(), "op-1") {
 			t.Errorf("cancel warning should name the operation: %s", diags.Warnings()[0].Detail())
+		}
+
+		// The error must not claim an outcome the warning just contradicted.
+		detail := diags.Errors()[0].Detail()
+		if strings.Contains(detail, "was canceled") {
+			t.Errorf("error claims the operation was canceled while the warning says it could not be:\n%s", detail)
+		}
+		if !strings.Contains(detail, "may still be running") {
+			t.Errorf("error should say the operation may still be running:\n%s", detail)
 		}
 	})
 }
