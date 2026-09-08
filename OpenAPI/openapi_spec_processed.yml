@@ -4115,6 +4115,43 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  "/core/v1/cloudconnect/supportedFeatures/{accountID}":
+    get:
+      tags:
+        - Cloud Connect
+      summary: Get supported features for a connected account
+      description: |-
+        Returns the list of supported features and their permission status for a cloud account connected via CloudConnect.
+        The account must belong to the authenticated customer. Supports AWS and Azure accounts.
+      operationId: getCloudConnectSupportedFeatures
+      parameters:
+        - name: accountID
+          in: path
+          description: The cloud provider account ID (AWS account ID or Azure tenant ID).
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Supported features returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportedFeaturesResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Not Found - No CloudConnect document found for this account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
   /core/v1/cloudconnect/aws/accounts:
     post:
       tags:
@@ -10449,6 +10486,27 @@ components:
           type: integer
           description: The start time of the commitment interval, in milliseconds since the epoch.
           format: int64
+    SupportedFeature:
+      type: object
+      description: A feature supported by a CloudConnect account.
+      properties:
+        name:
+          type: string
+          description: The name of the feature.
+          example: "sandbox"
+        hasRequiredPermissions:
+          type: boolean
+          description: Whether the connected account has the required permissions for this feature.
+          example: true
+    SupportedFeaturesResponse:
+      type: object
+      description: Response containing the supported features for a CloudConnect account.
+      properties:
+        supportedFeatures:
+          type: array
+          description: List of features and their permission status.
+          items:
+            $ref: "#/components/schemas/SupportedFeature"
     TagsGetResponse:
       type: object
       description: |-
