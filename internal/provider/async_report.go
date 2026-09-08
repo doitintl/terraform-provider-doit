@@ -59,56 +59,44 @@ func newIdempotencyKey() string {
 
 // submitAsyncReport submits a report run and returns the operation ID.
 //
-// The retry here is narrow and deliberate. DCIRetryClient retries 502/503/504
-// beneath this layer, reusing the same Idempotency-Key, and the API answers a
-// replayed key with 202 carrying an empty body and no Location header. Left
-// alone that strands a running BigQuery job we can neither poll nor cancel.
-//
-// Re-submitting with a fresh key recovers it: deduplication is content-based
-// rather than key-based, so an identical config attaches to the operation
-// already in flight instead of starting a second one. Exactly one extra attempt
-// is made — a replay that repeats is a server-side problem, not something to
-// hammer.
+// Every submission carries a fresh Idempotency-Key. The key only guards against
+// a submission being applied twice; deduplication itself is content-based, so an
+// identical config issued concurrently attaches to the operation already in
+// flight rather than starting a second one.
 func submitAsyncReport(ctx context.Context, what string, submit asyncSubmitFunc) (string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	for attempt := range 2 {
-		sub, err := submit(ctx, newIdempotencyKey())
-		if err != nil {
-			diags.AddError(
-				"Error Running "+what,
-				fmt.Sprintf("Could not submit the %s run: %s", what, err.Error()),
-			)
-			return "", diags
-		}
-
-		if sub.StatusCode != http.StatusAccepted && sub.StatusCode != http.StatusOK {
-			diags.AddError(
-				"Error Running "+what,
-				asyncSubmitErrorDetail(what, sub),
-			)
-			return "", diags
-		}
-
-		if sub.OperationID != "" {
-			return sub.OperationID, diags
-		}
-
-		// Empty accepted response: the idempotent-replay case described above.
-		tflog.Warn(ctx, "Async submit returned no operation ID; re-submitting with a fresh Idempotency-Key", map[string]any{
-			"what":    what,
-			"attempt": attempt + 1,
-			"status":  sub.StatusCode,
-		})
+	sub, err := submit(ctx, newIdempotencyKey())
+	if err != nil {
+		diags.AddError(
+			"Error Running "+what,
+			fmt.Sprintf("Could not submit the %s run: %s", what, err.Error()),
+		)
+		return "", diags
 	}
 
-	diags.AddError(
-		"Error Running "+what,
-		fmt.Sprintf("The API accepted the %s run but returned no operation ID, twice. "+
-			"This happens when a submission is replayed against an already-used Idempotency-Key. "+
-			"The report may still be running server-side; retry shortly.", what),
-	)
-	return "", diags
+	if sub.StatusCode != http.StatusAccepted && sub.StatusCode != http.StatusOK {
+		diags.AddError(
+			"Error Running "+what,
+			asyncSubmitErrorDetail(what, sub),
+		)
+		return "", diags
+	}
+
+	// An accepted submission always carries an operation ID, including on a
+	// replayed Idempotency-Key. Without one there is nothing to poll or cancel,
+	// so report it rather than leaving a run we cannot reach.
+	if sub.OperationID == "" {
+		diags.AddError(
+			"Error Running "+what,
+			fmt.Sprintf("The API accepted the %s run but returned no operation ID, status: %d, body: %s. "+
+				"The report may be running server-side without the provider being able to track it.",
+				what, sub.StatusCode, string(sub.Body)),
+		)
+		return "", diags
+	}
+
+	return sub.OperationID, diags
 }
 
 // asyncSubmitErrorDetail builds the detail for a failed submit, always

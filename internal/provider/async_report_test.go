@@ -41,7 +41,7 @@ type asyncTestServer struct {
 	failureError  *models.AsyncOperationError
 	resultsStatus []int // consumed one per results call; last value repeats
 	submitStatus  int
-	submitEmpty   int    // number of initial submits answered with an empty 202
+	submitEmpty   int    // number of initial submits answered with a 202 carrying no operation ID
 	cancelStatus  int    // status returned by the cancel endpoint
 	cancelOpState string // operation status reported in the cancel response body
 	pollNotFound  bool   // poll returns 404
@@ -86,12 +86,11 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 			return
 		}
 
-		// The idempotent-replay case, reproduced as the live API sends it: 202
-		// with no body, no Location, and no Content-Type. Deliberately not
-		// JSON-typed — an empty body labelled application/json would fail to
-		// unmarshal, which is a different failure mode than the one under test.
+		// A contract-violating 202: accepted, but with no operation ID for the
+		// caller to track. No Content-Type, so the body is genuinely absent
+		// rather than an empty document that fails to unmarshal — the latter is
+		// a different failure mode than the one under test.
 		if len(s.submitKeys) <= s.submitEmpty {
-			w.Header().Set("Idempotency-Replayed", "true")
 			w.WriteHeader(http.StatusAccepted)
 			return
 		}
@@ -633,12 +632,9 @@ func TestAwaitAsyncReport_Results425ThenSucceeds(t *testing.T) {
 	})
 }
 
-// TestSubmitAsyncReport_EmptyIdempotentReplayResubmits covers the API returning
-// 202 with no body when a key is replayed — recoverable only because dedup is
-// content-based, so a fresh key attaches to the same in-flight operation.
-func TestSubmitAsyncReport_EmptyIdempotentReplayResubmits(t *testing.T) {
+func TestSubmitAsyncReport_Succeeds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		srv := newAsyncTestServer(t, &asyncTestServer{submitEmpty: 1})
+		srv := newAsyncTestServer(t, &asyncTestServer{})
 		client := newAsyncTestClient(t, srv.Server)
 
 		operationID, err := submitViaInline(t.Context(), client)
@@ -650,32 +646,35 @@ func TestSubmitAsyncReport_EmptyIdempotentReplayResubmits(t *testing.T) {
 		}
 
 		submits, _, _, _, _ := srv.snapshot()
-		if len(submits) != 2 {
-			t.Fatalf("submits = %d, want exactly 2", len(submits))
+		if len(submits) != 1 {
+			t.Fatalf("submits = %d, want exactly 1", len(submits))
 		}
-		if submits[0] == submits[1] {
-			t.Error("re-submit reused the Idempotency-Key; it must be fresh")
-		}
-		for i, key := range submits {
-			if key == "" {
-				t.Errorf("submit %d carried no Idempotency-Key", i)
-			}
+		if submits[0] == "" {
+			t.Error("submit carried no Idempotency-Key")
 		}
 	})
 }
 
-func TestSubmitAsyncReport_EmptyReplayResubmitsOnlyOnce(t *testing.T) {
+// TestSubmitAsyncReport_AcceptedWithoutOperationID pins the contract: an
+// accepted submission must carry an operation ID. Without one there is nothing
+// to poll or cancel, so this surfaces as an error rather than being guessed
+// around — a silent re-submit would hide a real API regression.
+func TestSubmitAsyncReport_AcceptedWithoutOperationID(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		srv := newAsyncTestServer(t, &asyncTestServer{submitEmpty: 99})
 		client := newAsyncTestClient(t, srv.Server)
 
-		if _, err := submitViaInline(t.Context(), client); err == nil {
-			t.Fatal("expected an error when the replay repeats")
+		_, err := submitViaInline(t.Context(), client)
+		if err == nil {
+			t.Fatal("expected an error when the response carries no operation ID")
+		}
+		if !strings.Contains(err.Error(), "no operation ID") {
+			t.Errorf("unexpected error: %v", err)
 		}
 
 		submits, _, _, _, _ := srv.snapshot()
-		if len(submits) != 2 {
-			t.Errorf("submits = %d, want exactly 2 — must not retry indefinitely", len(submits))
+		if len(submits) != 1 {
+			t.Errorf("submits = %d, want exactly 1 — the run must not be re-submitted", len(submits))
 		}
 	})
 }

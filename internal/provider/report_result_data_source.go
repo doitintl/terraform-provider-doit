@@ -252,7 +252,7 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Submit the run, then poll to completion. The Idempotency-Key is supplied
-	// per attempt by submitAsyncReport, which owns the replay recovery.
+	// by submitAsyncReport.
 	reportID := data.Id.ValueString()
 	operationID, submitDiags := submitAsyncReport(ctx, "report results",
 		func(ctx context.Context, idempotencyKey string) (asyncSubmission, error) {
