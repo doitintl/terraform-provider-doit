@@ -15,6 +15,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -75,16 +76,20 @@ func submitAsyncReport(
 
 	sub, err := submit(ctx, idempotencyKey)
 	if err != nil {
+		detail := fmt.Sprintf("Could not submit the %s run: %s", what, err.Error())
 		if ctx.Err() != nil {
 			// The server may have accepted the submission before we stopped
 			// waiting for its response, leaving a run we never learned the ID
-			// of. Recover it before reporting the failure.
-			diags.Append(cleanUpAbandonedSubmit(ctx, client, idempotencyKey, submit)...)
+			// of. Recover it before reporting the failure, and say what became
+			// of it — the user is being told the submit failed, so a run that
+			// was created and stopped is part of that story.
+			outcome, cleanUpDiags := cleanUpAbandonedSubmit(ctx, client, idempotencyKey, submit)
+			diags.Append(cleanUpDiags...)
+			if outcome != "" {
+				detail += " " + outcome
+			}
 		}
-		diags.AddError(
-			"Error Running "+what,
-			fmt.Sprintf("Could not submit the %s run: %s", what, err.Error()),
-		)
+		diags.AddError("Error Running "+what, detail)
 		return "", diags
 	}
 
@@ -124,12 +129,14 @@ func submitAsyncReport(
 // as a fresh submission and creates an operation — which is then cancelled here
 // anyway. That trades a briefly-created run for the guarantee that nothing is
 // left executing, which is the better failure mode of the two.
+// It returns a phrase describing what became of the recovered operation, empty
+// when there was nothing to recover.
 func cleanUpAbandonedSubmit(
 	ctx context.Context,
 	client *models.ClientWithResponses,
 	idempotencyKey string,
 	submit asyncSubmitFunc,
-) diag.Diagnostics {
+) (string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	recoverCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), asyncCancelGrace)
@@ -143,11 +150,11 @@ func cleanUpAbandonedSubmit(
 		tflog.Debug(ctx, "Could not determine whether an abandoned submission created an operation", map[string]any{
 			"error": err,
 		})
-		return diags
+		return "", diags
 	}
 
-	_, cancelDiags := cancelAsyncOperation(ctx, client, sub.OperationID)
-	return append(diags, cancelDiags...)
+	outcome, cancelDiags := cancelAsyncOperation(ctx, client, sub.OperationID)
+	return outcome, append(diags, cancelDiags...)
 }
 
 // cancelAsyncOperation issues a best-effort cancel for operationID on a context
@@ -248,7 +255,7 @@ func awaitAsyncReport(
 		pollResp, err := client.GetAsyncOperationWithResponse(ctx, operationID)
 		if err != nil {
 			if ctx.Err() != nil {
-				return nil, asyncTimedOut(ctx, client, what, operationID)
+				return nil, asyncRunAborted(ctx, client, what, operationID)
 			}
 			diags.AddError(
 				"Error Running "+what,
@@ -323,7 +330,7 @@ func awaitAsyncReport(
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return nil, asyncTimedOut(ctx, client, what, operationID)
+			return nil, asyncRunAborted(ctx, client, what, operationID)
 		case <-timer.C:
 		}
 	}
@@ -384,12 +391,15 @@ func fetchAsyncReportResults(
 	}
 }
 
-// asyncTimedOut cancels a still-running operation and reports the timeout.
+// asyncRunAborted cancels a still-running operation and reports why the wait
+// ended, distinguishing an exhausted read timeout from a deliberate interrupt.
+// Only the former warrants advice about raising the timeout; offering it to
+// someone who pressed Ctrl-C points them at the wrong thing.
 //
-// A cancel that fails is reported as a warning rather than an error: the timeout
-// is what the user needs to act on, and the warning names the operation so it
-// can be cancelled from the console.
-func asyncTimedOut(
+// A cancel that fails is reported as a warning rather than an error: the reason
+// the run stopped is what the user needs to act on, and the warning names the
+// operation so it can be cancelled from the console.
+func asyncRunAborted(
 	ctx context.Context,
 	client *models.ClientWithResponses,
 	what, operationID string,
@@ -399,6 +409,14 @@ func asyncTimedOut(
 		// Cancellation did not demonstrably happen, so say only what is known.
 		// The accompanying warning explains why.
 		outcome = fmt.Sprintf("Operation %s may still be running.", operationID)
+	}
+
+	if errors.Is(ctx.Err(), context.Canceled) {
+		diags.AddError(
+			"Canceled Running "+what,
+			fmt.Sprintf("Running the %s was interrupted: %s. %s", what, ctx.Err(), outcome),
+		)
+		return diags
 	}
 
 	diags.AddError(

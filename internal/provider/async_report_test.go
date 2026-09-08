@@ -456,6 +456,20 @@ func TestAwaitAsyncReport_ContextCancellationCancelsOperation(t *testing.T) {
 		if len(cancels) != 1 {
 			t.Errorf("cancel calls = %d, want exactly 1", len(cancels))
 		}
+
+		// An interrupt is not a timeout: telling the user to raise a timeout
+		// they never hit sends them after the wrong thing.
+		summary := diags.Errors()[0].Summary()
+		detail := diags.Errors()[0].Detail()
+		if strings.Contains(summary, "Timed Out") {
+			t.Errorf("summary reports a timeout for an interrupted run: %q", summary)
+		}
+		if strings.Contains(detail, "read timeout") || strings.Contains(detail, `read = "30m"`) {
+			t.Errorf("detail offers timeout guidance for an interrupted run:\n%s", detail)
+		}
+		if !strings.Contains(detail, "op-1") {
+			t.Errorf("detail should name the operation:\n%s", detail)
+		}
 	})
 }
 
@@ -742,8 +756,18 @@ func TestSubmitAsyncReport_AbandonedSubmitIsCleanedUp(t *testing.T) {
 		ctx, stop := context.WithTimeout(t.Context(), 5*time.Second)
 		defer stop()
 
-		if _, err := submitViaInline(ctx, client); err == nil {
+		_, err := submitViaInline(ctx, client)
+		if err == nil {
 			t.Fatal("expected the submit to fail once the context expired")
+		}
+
+		// Cleaning up silently is not enough: the user is told the submit
+		// failed, so they also need to know a run was created and stopped.
+		if !strings.Contains(err.Error(), "op-1") {
+			t.Errorf("error should name the operation that was cleaned up: %v", err)
+		}
+		if !strings.Contains(err.Error(), "canceled") {
+			t.Errorf("error should say the operation was canceled: %v", err)
 		}
 
 		submits, cancels, _, _, _ := srv.snapshot()
