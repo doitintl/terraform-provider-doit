@@ -635,6 +635,50 @@ func TestAwaitAsyncReport_TerminalStatesAndErrors(t *testing.T) {
 	}
 }
 
+// TestAwaitAsyncReport_UnrecognizedStatus pins what happens to a status the
+// provider does not know. Generated enums are plain strings with no unmarshal
+// validation, so an unexpected value would otherwise be treated as non-terminal
+// — polling until the read timeout and then cancelling, rather than failing
+// immediately with something the user can act on.
+//
+// This also pins the inverse: pending and running are the only statuses that
+// should keep the loop going, so a terminal state added upstream cannot be
+// silently spun on.
+func TestAwaitAsyncReport_UnrecognizedStatus(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{
+			pollStatuses: []string{"disintegrating"},
+			pollRetryHdr: "5",
+		})
+		client := newAsyncTestClient(t, srv.Server)
+
+		ctx, stop := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer stop()
+
+		start := time.Now()
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		elapsed := time.Since(start)
+
+		if !diags.HasError() {
+			t.Fatal("expected an error")
+		}
+		if detail := diags.Errors()[0].Detail(); !strings.Contains(detail, "disintegrating") {
+			t.Errorf("error should name the unrecognized status:\n%s", detail)
+		}
+		if elapsed != 0 {
+			t.Errorf("elapsed = %v, want 0 — must fail on the first poll, not burn the read timeout", elapsed)
+		}
+
+		_, cancels, polls, _, _ := srv.snapshot()
+		if polls != 1 {
+			t.Errorf("polls = %d, want 1", polls)
+		}
+		if len(cancels) != 0 {
+			t.Errorf("cancel calls = %d, want 0 — nothing timed out", len(cancels))
+		}
+	})
+}
+
 // TestAwaitAsyncReport_Results425ThenSucceeds covers the window where the
 // operation reports success before its result is readable.
 func TestAwaitAsyncReport_Results425ThenSucceeds(t *testing.T) {

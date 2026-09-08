@@ -158,10 +158,11 @@ func cleanUpAbandonedSubmit(
 // cancellation did not demonstrably happen, plus a warning in that case.
 //
 // Note that operations coalesce by config content, so concurrent reads of the
-// same report share one, and cancelling it fails every caller awaiting it — the
-// 202 carries no signal distinguishing "created" from "attached", so ownership
-// cannot be established here. Reported upstream; narrow enough in practice to
-// live with, but check before widening where this is called from.
+// same report share one, and cancelling it fails every caller awaiting it. This
+// is intentional API behavior, confirmed with the API team: the 202 carries no
+// signal distinguishing "created" from "attached", so ownership is not something
+// a client can establish. Worth re-checking before widening where this is
+// called from.
 func cancelAsyncOperation(
 	ctx context.Context,
 	client *models.ClientWithResponses,
@@ -287,6 +288,22 @@ func awaitAsyncReport(
 			diags.AddError(
 				"Error Running "+what,
 				fmt.Sprintf("Operation %s was canceled before it produced a result.", operationID),
+			)
+			return nil, diags
+
+		case models.AsyncOperationPollResponseStatusPending,
+			models.AsyncOperationPollResponseStatusRunning:
+			// Non-terminal; fall through to the wait below.
+
+		default:
+			// Generated enums are plain strings with no unmarshal validation, so
+			// an unexpected value lands here rather than being rejected earlier.
+			// Treating it as non-terminal would poll until the read timeout and
+			// then cancel, turning a contract violation into a silent stall.
+			diags.AddError(
+				"Error Running "+what,
+				fmt.Sprintf("Operation %s reported an unrecognized status %q, status: %d, body: %s",
+					operationID, pollResp.JSON200.Status, pollResp.StatusCode(), string(pollResp.Body)),
 			)
 			return nil, diags
 		}
