@@ -36,6 +36,9 @@ import (
 //
 // Standard retry libraries would block or error on 404, breaking Terraform semantics.
 //
+// 425 is passed through for a different reason: it means "ask again shortly",
+// and the caller polling an async operation owns that cadence. See Do.
+//
 // # Retry Strategy
 //
 // Only specific transient errors trigger retries:
@@ -44,8 +47,9 @@ import (
 //   - 503 (Service Unavailable): Temporary server overload
 //   - 504 (Gateway Timeout): Temporary timeout
 //
-// All other 4xx/5xx errors are treated as permanent failures (no retry). This
-// deliberately includes 524 — see httpStatusCloudflareTimeout.
+// Apart from the 404 and 425 passthroughs described above and below, all other
+// 4xx/5xx errors are treated as permanent failures (no retry). This deliberately
+// includes 524 — see httpStatusCloudflareTimeout.
 //
 // # NOT Suitable For
 //
@@ -198,6 +202,7 @@ func parseRetryAfterBounded(header string, now time.Time, minWait, maxWait time.
 // |-------------|----------|
 // | 200, 201, 202, 204 | Success - return response |
 // | 404 | Pass through - NOT an error (for Terraform resource semantics) |
+// | 425 | Pass through - NOT an error (caller owns the retry cadence) |
 // | 429 | Retry with Retry-After or exponential backoff |
 // | 502, 503, 504 | Retry with exponential backoff |
 // | 524 | Permanent error - no retry (Cloudflare edge timeout) |

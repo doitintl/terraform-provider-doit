@@ -338,10 +338,12 @@ func awaitAsyncReport(
 
 // fetchAsyncReportResults retrieves the result of a succeeded operation.
 //
-// A 425 is possible even after the poll reports success: the operation record
-// and the stored result are updated separately, so the result can lag by a
-// moment. The API documents a Retry-After on that response but does not
-// actually send one, so fall back to the standard poll interval.
+// 425 is a declared response of this endpoint, so it is retried rather than
+// failed on. It is not expected here: the result is stored before the operation
+// transitions to succeeded, so by the time this is called the result should
+// exist. Retrying briefly costs little and beats failing a report that has
+// already finished. The spec documents a Retry-After on a 425 but none is sent,
+// so the standard poll interval applies.
 func fetchAsyncReportResults(
 	ctx context.Context,
 	client *models.ClientWithResponses,

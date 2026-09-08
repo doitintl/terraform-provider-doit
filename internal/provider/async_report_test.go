@@ -693,8 +693,10 @@ func TestAwaitAsyncReport_UnrecognizedStatus(t *testing.T) {
 	})
 }
 
-// TestAwaitAsyncReport_Results425ThenSucceeds covers the window where the
-// operation reports success before its result is readable.
+// TestAwaitAsyncReport_Results425ThenSucceeds pins how the declared 425
+// response is handled: retried on the standard interval, not failed on. The
+// endpoint should not return it once the operation has succeeded, so this
+// guards the declared contract rather than an observed behavior.
 func TestAwaitAsyncReport_Results425ThenSucceeds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		srv := newAsyncTestServer(t, &asyncTestServer{
