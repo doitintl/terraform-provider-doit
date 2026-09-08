@@ -6505,6 +6505,15 @@ func TestAccReport_Layout_CumulativeComparison_DynamicTransition(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.#", "2"),
 				),
 			},
+			// Step 3: Verify subsequent plan produces no diff
+			{
+				Config: testAccReportDynamicTransitionToTable(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -6568,6 +6577,15 @@ func TestAccReport_Layout_CumulativeComparison_DynamicMetric(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.layout", "cumulative_comparison"),
 					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.metric.value", "cost"),
 				),
+			},
+			// Step 2: Verify subsequent plan produces no diff
+			{
+				Config: testAccReportDynamicMetric(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
@@ -6642,6 +6660,15 @@ func TestAccReport_Layout_CumulativeComparison_SecondaryTimeRange_NotClearable(t
 					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.layout", "cumulative_comparison"),
 					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.secondary_time_range.amount", "1"),
 				),
+			},
+			// Step 3: Verify subsequent plan produces no diff
+			{
+				Config: testAccReportCumulativeComparisonOmittedSecondaryTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
