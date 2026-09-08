@@ -4,10 +4,25 @@
 # The extract-inline-schemas tool reads this file (via -extra-paths) to ensure
 # these operations and their schemas are retained when pruning the OpenAPI spec.
 paths:
-  # report_result_data_source.go uses GetReportWithResponse (GET /analytics/v1/reports/{id})
-  - path: /analytics/v1/reports/{id}
-    method: GET
+  # Async report execution (CMP-44423), used by async_report.go and both report
+  # data sources. Submit returns 202 with an operation handle; the caller polls
+  # to a terminal state, fetches the result, and cancels on timeout.
+  #
+  # Reports run behind these endpoints are not bound by the API's ~120s edge
+  # timeout, because no single request stays open while the report executes.
+  #
+  # report_query_data_source.go submits via AsyncRunInlineWithResponse
+  - path: /analytics/v1/reports/actions/run
+    method: POST
 
-  # report_query_data_source.go uses QueryWithResponse (POST /analytics/v1/reports/query)
-  - path: /analytics/v1/reports/query
+  # report_result_data_source.go submits via AsyncRunReportByIdWithResponse
+  - path: "/analytics/v1/reports/{id}/actions/run"
+    method: POST
+
+  # Shared poll / fetch / cancel
+  - path: "/analytics/v1/reports/operations/{operationId}"
+    method: GET
+  - path: "/analytics/v1/reports/operations/{operationId}/results"
+    method: GET
+  - path: "/analytics/v1/reports/operations/{operationId}/actions/cancel"
     method: POST

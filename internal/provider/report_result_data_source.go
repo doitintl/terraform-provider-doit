@@ -183,6 +183,40 @@ func (d *reportResultDataSource) Configure(_ context.Context, req datasource.Con
 	d.client = client
 }
 
+// timeOverrides converts the optional time-range attributes into API query
+// parameters, reporting a diagnostic and returning ok=false on a malformed date.
+func (d *reportResultDataSource) timeOverrides(
+	data *reportResultDataSourceModel,
+	resp *datasource.ReadResponse,
+) (timeRange *string, startDate, endDate *openapi_types.Date, ok bool) {
+	if !data.TimeRange.IsNull() && !data.TimeRange.IsUnknown() {
+		timeRange = new(data.TimeRange.ValueString())
+	}
+	if !data.StartDate.IsNull() && !data.StartDate.IsUnknown() {
+		parsed, err := time.Parse(time.DateOnly, data.StartDate.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid Start Date",
+				fmt.Sprintf("Could not parse start_date as yyyy-mm-dd: %s", err.Error()),
+			)
+			return nil, nil, nil, false
+		}
+		startDate = &openapi_types.Date{Time: parsed}
+	}
+	if !data.EndDate.IsNull() && !data.EndDate.IsUnknown() {
+		parsed, err := time.Parse(time.DateOnly, data.EndDate.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Invalid End Date",
+				fmt.Sprintf("Could not parse end_date as yyyy-mm-dd: %s", err.Error()),
+			)
+			return nil, nil, nil, false
+		}
+		endDate = &openapi_types.Date{Time: parsed}
+	}
+	return timeRange, startDate, endDate, true
+}
+
 func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data reportResultDataSourceModel
 
@@ -211,66 +245,46 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	// Build query parameters from optional time range overrides
-	params := &models.GetReportParams{}
-	if !data.TimeRange.IsNull() && !data.TimeRange.IsUnknown() {
-		params.TimeRange = new(data.TimeRange.ValueString())
-	}
-	if !data.StartDate.IsNull() && !data.StartDate.IsUnknown() {
-		startDate, err := time.Parse(time.DateOnly, data.StartDate.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Invalid Start Date",
-				fmt.Sprintf("Could not parse start_date as yyyy-mm-dd: %s", err.Error()),
-			)
-			return
-		}
-		params.StartDate = &openapi_types.Date{Time: startDate}
-	}
-	if !data.EndDate.IsNull() && !data.EndDate.IsUnknown() {
-		endDate, err := time.Parse(time.DateOnly, data.EndDate.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Invalid End Date",
-				fmt.Sprintf("Could not parse end_date as yyyy-mm-dd: %s", err.Error()),
-			)
-			return
-		}
-		params.EndDate = &openapi_types.Date{Time: endDate}
-	}
-
-	// Call the API. The GetReportResponse type is a flat struct (no allOf
-	// composition), and Value is a json.RawMessage union that correctly
-	// handles mixed-type cells (string, number, null).
-	reportResp, err := d.client.GetReportWithResponse(ctx, data.Id.ValueString(), params)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Report Results",
-			"Could not read results for report ID "+data.Id.ValueString()+": "+err.Error(),
-		)
+	// Build query parameters from the optional time range overrides.
+	timeRange, startDate, endDate, ok := d.timeOverrides(&data, resp)
+	if !ok {
 		return
 	}
 
-	if reportResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Reading Report Results",
-			fmt.Sprintf("Could not read results for report ID %s, status: %d, body: %s",
-				data.Id.ValueString(), reportResp.StatusCode(), string(reportResp.Body)),
-		)
+	// Submit the run, then poll to completion. The Idempotency-Key is supplied
+	// per attempt by submitAsyncReport, which owns the replay recovery.
+	reportID := data.Id.ValueString()
+	operationID, submitDiags := submitAsyncReport(ctx, "report results",
+		func(ctx context.Context, idempotencyKey string) (asyncSubmission, error) {
+			runResp, err := d.client.AsyncRunReportByIdWithResponse(ctx, reportID,
+				&models.AsyncRunReportByIdParams{
+					IdempotencyKey: idempotencyKey,
+					TimeRange:      timeRange,
+					StartDate:      startDate,
+					EndDate:        endDate,
+				})
+			if err != nil {
+				return asyncSubmission{}, err
+			}
+			return asyncSubmission{
+				StatusCode:  runResp.StatusCode(),
+				OperationID: asyncOperationID(runResp.JSON202, runResp.JSON200),
+				Body:        runResp.Body,
+			}, nil
+		})
+	resp.Diagnostics.Append(submitDiags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if reportResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Report Results",
-			"Received empty response body for report ID "+data.Id.ValueString(),
-		)
+	report, awaitDiags := awaitAsyncReport(ctx, d.client, "report results", operationID)
+	resp.Diagnostics.Append(awaitDiags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	report := reportResp.JSON200
-
-	// Map metadata to typed attributes
+	// Map metadata to typed attributes. The results endpoint returns the report
+	// metadata alongside the result for a run started against a saved report.
 	data.ReportName = types.StringPointerValue(report.ReportName)
 
 	// Map result to JSON string

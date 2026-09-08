@@ -56,6 +56,33 @@ const (
 	minRetryHeadroom = 30 * time.Second
 )
 
+// Async report operation polling. These bound how often the provider polls a
+// long-running report operation (see async_report.go), and are deliberately NOT
+// the retry constants in client.go: retryInitialInterval/maxRetryAfter (2s/60s)
+// are tuned for backing off a rate-limited request, and would both round the
+// API's own "Retry-After: 1" up to 2s and permit a 60s gap the API never asks
+// for. These instead mirror the pacing the API documents for its poll endpoint.
+//
+// Note that no operation-timeout invariant applies here: polling is bounded by
+// the caller's Read timeout, and a poll that is still waiting when that expires
+// is cancelled along with the operation itself.
+const (
+	// asyncPollInitialInterval is the wait used when the poll response carries
+	// no usable Retry-After. It matches the API's own initial guidance.
+	asyncPollInitialInterval = 1 * time.Second
+
+	// asyncPollMaxInterval caps an API-supplied Retry-After, matching the
+	// documented ceiling the API grows its own guidance to.
+	asyncPollMaxInterval = 30 * time.Second
+
+	// asyncCancelGrace bounds the best-effort cancel issued when the Read
+	// timeout expires. It is deliberately small: the operation timeout has
+	// already been exceeded, so this is borrowed time on a detached context and
+	// must not delay the error the user is waiting for. It sits well inside
+	// DefaultRequestTimeout, so this grace — not the HTTP client — governs.
+	asyncCancelGrace = 10 * time.Second
+)
+
 // Default timeouts. See the ordering invariant above before changing these.
 const (
 	// DefaultRequestTimeout bounds a single HTTP request to the DoiT API.

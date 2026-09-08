@@ -217,36 +217,35 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	// Call the query API
-	queryResp, err := d.client.QueryWithResponse(ctx, models.QueryJSONRequestBody{
-		Config: externalConfig,
-	})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Running Query",
-			"Could not execute report query: "+err.Error(),
-		)
+	// Submit the query, then poll to completion. The Idempotency-Key is supplied
+	// per attempt by submitAsyncReport, which owns the replay recovery.
+	operationID, submitDiags := submitAsyncReport(ctx, "query",
+		func(ctx context.Context, idempotencyKey string) (asyncSubmission, error) {
+			runResp, err := d.client.AsyncRunInlineWithResponse(ctx,
+				&models.AsyncRunInlineParams{IdempotencyKey: idempotencyKey},
+				models.AsyncRunInlineJSONRequestBody{Config: externalConfig},
+			)
+			if err != nil {
+				return asyncSubmission{}, err
+			}
+			return asyncSubmission{
+				StatusCode:  runResp.StatusCode(),
+				OperationID: asyncOperationID(runResp.JSON202, runResp.JSON200),
+				Body:        runResp.Body,
+			}, nil
+		})
+	resp.Diagnostics.Append(submitDiags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if queryResp.StatusCode() != 200 {
-		resp.Diagnostics.AddError(
-			"Error Running Query",
-			fmt.Sprintf("Query failed, status: %d, body: %s",
-				queryResp.StatusCode(), string(queryResp.Body)),
-		)
+	// An inline run has no saved report behind it, so the results envelope
+	// carries only the result — no report metadata.
+	result, awaitDiags := awaitAsyncReport(ctx, d.client, "query", operationID)
+	resp.Diagnostics.Append(awaitDiags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	if queryResp.JSON200 == nil {
-		resp.Diagnostics.AddError(
-			"Error Running Query",
-			"Received empty response body from query API",
-		)
-		return
-	}
-
-	result := queryResp.JSON200
 
 	// Map result to outputs
 	if result.Result != nil {

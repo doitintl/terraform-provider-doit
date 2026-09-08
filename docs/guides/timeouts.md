@@ -133,11 +133,31 @@ This error means a timeout was exceeded. Check which level caused it:
 
 ### `status: 524`
 
-A `524` comes from the DoiT API's edge proxy and means the API did not finish the request within its own 120-second limit. The provider reports it immediately and **does not retry** — the query already ran for the full edge timeout, so an identical retry would only re-run expensive work that is going to time out again.
+A `524` comes from the DoiT API's edge proxy and means the API did not finish the request within its own 120-second limit. The provider reports it immediately and **does not retry** — the request already ran for the full edge timeout, so an identical retry would only re-run expensive work that is going to time out again.
 
-Raising `request_timeout` will not help, because the limit is enforced upstream rather than locally. Reduce the amount of work in the request instead — for example, narrow a report's time range, or add filters to reduce the number of rows.
+Raising `request_timeout` will not help, because the limit is enforced upstream rather than locally. Reduce the amount of work in the request instead — for example, add filters to reduce the number of rows.
 
 Seeing `context deadline exceeded` instead of `524` on a request you expect to be slow is a sign that `request_timeout` is at or below 120 seconds.
+
+-> The `doit_report_result` and `doit_report_query` data sources are **not** subject to this limit. They run reports asynchronously and are bounded by their own `read` timeout instead — see [Long-Running Reports](#long-running-reports).
+
+### Long-Running Reports
+
+The `doit_report_result` and `doit_report_query` data sources execute reports **asynchronously**: the provider submits the run, then polls until it finishes and fetches the result. Because no single HTTP request stays open for the duration, these two data sources are not affected by the API's 120-second edge timeout, and `request_timeout` has essentially no bearing on them.
+
+What bounds them instead is the data source's own `read` timeout, which covers the entire submit-poll-fetch cycle and defaults to 5 minutes. A report that needs longer needs a larger value:
+
+```hcl
+data "doit_report_result" "large" {
+  id = doit_report.large.id
+
+  timeouts = {
+    read = "30m"
+  }
+}
+```
+
+When the `read` timeout is reached, the provider **cancels the report run** before returning the error, so an abandoned query does not keep consuming capacity. The same applies if you interrupt Terraform with Ctrl-C. The error names the operation that was cancelled; if the cancellation itself fails, a warning reports the operation ID so you can cancel it from the DoiT console.
 
 ### Large Allocations
 
