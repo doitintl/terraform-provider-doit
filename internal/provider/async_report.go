@@ -156,6 +156,12 @@ func cleanUpAbandonedSubmit(
 //
 // It returns a phrase describing what became of the operation, empty when
 // cancellation did not demonstrably happen, plus a warning in that case.
+//
+// Note that operations coalesce by config content, so concurrent reads of the
+// same report share one, and cancelling it fails every caller awaiting it — the
+// 202 carries no signal distinguishing "created" from "attached", so ownership
+// cannot be established here. Reported upstream; narrow enough in practice to
+// live with, but check before widening where this is called from.
 func cancelAsyncOperation(
 	ctx context.Context,
 	client *models.ClientWithResponses,
