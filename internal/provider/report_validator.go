@@ -647,18 +647,31 @@ func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter at
 	diags.Append(d...)
 
 	if !d.HasError() {
-		hasSingleMetricObj := !metric.IsNull() && !metric.IsUnknown()
-		if !metrics.IsUnknown() && !metrics.IsNull() {
-			numMetrics := len(metrics.Elements())
-			if numMetrics == 0 && hasSingleMetricObj {
-				// Metric was configured via the singular "metric" block; valid 1 metric.
-			} else if numMetrics != 1 {
-				diags.AddAttributeError(
-					path.Root("config").AtName("metrics"),
-					"Invalid Metrics Configuration",
-					fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
-				)
+		if metric.IsUnknown() || metrics.IsUnknown() {
+			return
+		}
+		if !metrics.IsNull() {
+			for _, elem := range metrics.Elements() {
+				if elem.IsUnknown() {
+					return
+				}
 			}
+		}
+
+		hasSingleMetricObj := !metric.IsNull()
+		numMetrics := 0
+		if !metrics.IsNull() {
+			numMetrics = len(metrics.Elements())
+		}
+
+		if numMetrics == 0 && hasSingleMetricObj {
+			// Metric was configured via the singular "metric" block; valid 1 metric.
+		} else if numMetrics != 1 {
+			diags.AddAttributeError(
+				path.Root("config").AtName("metrics"),
+				"Invalid Metrics Configuration",
+				fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
+			)
 		}
 	}
 

@@ -1145,10 +1145,15 @@ func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
 	planCfg := buildReportConfigWithMap(ctx, t, invalidMap)
 	plan := tfsdk.Plan(planCfg)
 
+	// Config on update has layout omitted (null)
+	omittedMap := validCumulativeComparisonConfigMap(ctx, t)
+	omittedMap["layout"] = types.StringNull()
+	configCfg := buildReportConfigWithMap(ctx, t, omittedMap)
+
 	r := &reportResource{}
 	req := resource.ModifyPlanRequest{
 		State:  state,
-		Config: stateCfg,
+		Config: configCfg,
 		Plan:   plan,
 	}
 	resp := &resource.ModifyPlanResponse{}
@@ -1168,5 +1173,78 @@ func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
 	}
 	if !foundExpectedError {
 		t.Fatalf("expected 'Invalid Dimensions Configuration' error, got: %v", resp.Diagnostics)
+	}
+}
+
+// TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred reproduces Copilot comment 1:
+// An explicitly unknown planned layout (e.g. from a dynamic expression in HCL) must defer validation
+// rather than substituting the prior state's layout, so transitions away from cumulative_comparison
+// are not falsely rejected before the layout is known.
+func TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred(t *testing.T) {
+	ctx := context.Background()
+
+	// Prior state has layout = "cumulative_comparison" and valid config
+	validMap := validCumulativeComparisonConfigMap(ctx, t)
+	stateCfg := buildReportConfigWithMap(ctx, t, validMap)
+	state := tfsdk.State(stateCfg)
+
+	// In config and plan, layout is explicitly UNKNOWN (e.g. referencing an unknown dynamic output)
+	// Dimensions only has 1 dimension (valid for other layouts, but invalid for cumulative_comparison)
+	unknownLayoutMap := validCumulativeComparisonConfigMap(ctx, t)
+	unknownLayoutMap["layout"] = types.StringUnknown()
+	dim1 := resource_report.NewDimensionsValueMust(resource_report.DimensionsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("year"),
+		"type": types.StringValue("datetime"),
+	})
+	dimsVal, diags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), []resource_report.DimensionsValue{dim1})
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom dimensions: %v", diags)
+	}
+	unknownLayoutMap["dimensions"] = dimsVal
+
+	cfg := buildReportConfigWithMap(ctx, t, unknownLayoutMap)
+	plan := tfsdk.Plan(cfg)
+
+	r := &reportResource{}
+	req := resource.ModifyPlanRequest{
+		State:  state,
+		Config: cfg,
+		Plan:   plan,
+	}
+	resp := &resource.ModifyPlanResponse{}
+
+	r.ModifyPlan(ctx, req, resp)
+
+	// Since layout is unknown in config, validation must be deferred and NO errors should be produced.
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("expected unknown layout to defer validation without errors, but got: %v", resp.Diagnostics)
+	}
+}
+
+// TestReportCumulativeComparison_UnknownSingularMetricDeferred reproduces Copilot comment 2:
+// When config/plan specifies an unknown singular metric and empty metrics list (as produced by
+// useEmptyForUnconfiguredMetricsMirror), validation must defer rather than rejecting with "0 metrics were configured".
+func TestReportCumulativeComparison_UnknownSingularMetricDeferred(t *testing.T) {
+	ctx := context.Background()
+
+	cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+	// metrics is empty list (from useEmptyForUnconfiguredMetricsMirror)
+	emptyMetrics, diags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom metrics: %v", diags)
+	}
+	cfgMap["metrics"] = emptyMetrics
+
+	// metric is unknown object
+	cfgMap["metric"] = resource_report.NewMetricValueUnknown()
+
+	cfg := buildReportConfigWithMap(ctx, t, cfgMap)
+	plan := tfsdk.Plan(cfg)
+
+	var planDiags diag.Diagnostics
+	validateReportCumulativeComparison(ctx, plan, &planDiags)
+
+	if planDiags.HasError() {
+		t.Fatalf("expected unknown singular metric to defer validation without errors, but got: %v", planDiags)
 	}
 }

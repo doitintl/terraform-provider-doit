@@ -297,15 +297,24 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		}
 	}
 
-	// Determine effective layout: use plan layout if known; otherwise inherit from state
-	// since the API retains the stored layout when omitted from an update config.
-	var layout types.String
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)...)
+	// Determine effective layout: use plan layout if known. If layout was omitted from
+	// config on update (configLayout.IsNull()), inherit the stored layout from state
+	// because the API retains it. If layout is explicitly unknown in config (e.g. dynamic reference),
+	// do not substitute the prior state layout so validation remains deferred.
+	var configLayout types.String
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("config").AtName("layout"), &configLayout)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if (layout.IsUnknown() || layout.IsNull()) && !req.State.Raw.IsNull() {
+
+	var layout types.String
+	if configLayout.IsNull() && !req.State.Raw.IsNull() {
 		resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	} else {
+		resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}

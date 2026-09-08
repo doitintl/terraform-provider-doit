@@ -6480,3 +6480,141 @@ resource "doit_report" "cc_valid" {
 }
 `, i)
 }
+
+// TestAccReport_Layout_CumulativeComparison_DynamicTransition reproduces Copilot comment 1 in an acceptance test:
+// Updating a report from layout = "cumulative_comparison" to a dynamic layout (e.g. from terraform_data)
+// with fewer dimensions must defer validation instead of incorrectly inheriting cumulative_comparison
+// from prior state and failing at plan time.
+func TestAccReport_Layout_CumulativeComparison_DynamicTransition(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report with layout = "cumulative_comparison"
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+			},
+			// Step 2: Transition layout dynamically to "table" with 2 dimensions.
+			{
+				Config: testAccReportDynamicTransitionToTable(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.layout", "table"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.#", "2"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportDynamicTransitionToTable(i int) string {
+	return fmt.Sprintf(`
+resource "terraform_data" "target_layout" {
+  input = "table"
+}
+
+resource "doit_report" "cc_valid" {
+  name = "test-cc-valid-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = terraform_data.target_layout.output
+  }
+}
+`, i)
+}
+
+// TestAccReport_Layout_CumulativeComparison_DynamicMetric reproduces Copilot comment 2 in an acceptance test:
+// Configuring a report with an unknown singular metric object (from terraform_data) when layout = "cumulative_comparison"
+// must defer validation instead of incorrectly counting 0 metrics and failing at plan time.
+func TestAccReport_Layout_CumulativeComparison_DynamicMetric(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportDynamicMetric(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.layout", "cumulative_comparison"),
+					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.metric.value", "cost"),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportDynamicMetric(i int) string {
+	return fmt.Sprintf(`
+resource "terraform_data" "metric" {
+  input = {
+    type  = "basic"
+    value = "cost"
+  }
+}
+
+resource "doit_report" "cc_dynamic_metric" {
+  name = "test-cc-dyn-metric-%d"
+  config = {
+    metric      = terraform_data.metric.output
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
