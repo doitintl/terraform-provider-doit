@@ -37,6 +37,10 @@ data_sources:
     read:
       path: /anomalies/v1/{id}
       method: GET
+  anomaly_explanation:
+    read:
+      path: /anomalies/v1/{id}/explanation
+      method: GET
   invoice:
     read:
       path: /billing/v1/invoices/{id}

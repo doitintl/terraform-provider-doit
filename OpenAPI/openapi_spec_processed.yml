@@ -2288,6 +2288,52 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+  "/anomalies/v1/{id}/explanation":
+    get:
+      tags:
+        - Anomalies
+      summary: Explain an anomaly
+      description: >-
+        Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+      operationId: getAnomalyExplanation
+      parameters:
+        - name: id
+          in: path
+          description: A unique identifier of the anomaly.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Anomaly explanation returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAnomalyExplanation200Response'
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "429":
+          $ref: "#/components/responses/429"
+        "500":
+          $ref: "#/components/responses/500"
+        "503":
+          description: >-
+            Service Unavailable — minting the ephemeral console-iam token or calling Ava failed. This is a dependency-availability failure, not a client error: retry after the interval indicated by the Retry-After header.
+          headers:
+            Retry-After:
+              description: Suggested number of seconds to wait before retrying.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /auth/v1/validate:
     get:
       tags:
@@ -9157,6 +9203,94 @@ components:
           $ref: "#/components/schemas/NotificationEventArray"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
+    GetAnomalyExplanation200Response:
+      required:
+        - facts
+        - evidence
+        - explanation
+      type: object
+      properties:
+        facts:
+          description: Deterministic facts about the anomaly, not AI-generated.
+          allOf:
+            - $ref: '#/components/schemas/GetAnomalyExplanation200ResponseFacts'
+        evidence:
+          type: array
+          description: Customer-scoped identifiers the explanation was grounded in.
+          items:
+            $ref: '#/components/schemas/GetAnomalyExplanation200ResponseEvidenceItem'
+        explanation:
+          description: The AI-generated portion of the response.
+          allOf:
+            - $ref: '#/components/schemas/GetAnomalyExplanation200ResponseExplanation'
+    GetAnomalyExplanation200ResponseEvidenceItem:
+      type: object
+      required:
+        - type
+        - id
+      properties:
+        type:
+          type: string
+          description: The kind of evidence this reference points to.
+        id:
+          type: string
+          description: Identifier of the referenced evidence.
+    GetAnomalyExplanation200ResponseExplanation:
+      type: object
+      description: The AI-generated portion of the response.
+      required:
+        - text
+        - generatedBy
+        - aiGenerated
+      properties:
+        text:
+          type: string
+          description: Concise, likely-cause explanation of the anomaly.
+        generatedBy:
+          type: string
+          description: Identifies the system that generated the explanation.
+        aiGenerated:
+          type: boolean
+          description: Always true; present so consumers can identify AI-generated content explicitly.
+    GetAnomalyExplanation200ResponseFacts:
+      type: object
+      description: Deterministic facts about the anomaly, not AI-generated.
+      required:
+        - serviceName
+        - platform
+        - scope
+        - severityLevel
+        - costOfAnomaly
+        - top3SKUs
+      properties:
+        serviceName:
+          type: string
+          description: Service name
+        platform:
+          type: string
+          description: Cloud Provider name
+        scope:
+          type: string
+          description: "Scope: Project or Account"
+        severityLevel:
+          type: string
+          description: "Severity level: `information`, `warning`, or `critical`."
+        costOfAnomaly:
+          type: number
+          format: double
+          description: The difference between the actual cost and the maximum cost in the normal range.
+        actualCost:
+          type: number
+          format: double
+          nullable: true
+          description: Observed (actual) cost of the anomaly.
+        expectedMaxCost:
+          type: number
+          format: double
+          nullable: true
+          description: Maximum cost within the expected normal range.
+        top3SKUs:
+          $ref: "#/components/schemas/AnomalySKUArray"
     GetAsyncOperationResults200Response:
       type: object
       properties:
@@ -11246,6 +11380,13 @@ components:
     "425":
       description: >-
         Too Early - The operation has not yet reached a terminal state. Poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "429":
+      description: >-
+        Too Many Requests.
       content:
         application/json:
           schema:
