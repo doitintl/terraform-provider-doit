@@ -343,6 +343,17 @@ Optional:
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Read operations occur during any refresh or planning operation when refresh is enabled.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 
+## Managing Group Memberships
+
+### Removing Selected Member Allocations from a Group
+
+!> **Warning** Single allocations selected into a group allocation (`action = "select"`) cannot be removed from the group and destroyed in the same `terraform apply`. The DoiT API enforces referential integrity: it rejects deleting any single allocation that is currently referenced by a group allocation with `409 Conflict`. Because Terraform executes resource updates and destroys concurrently without cross-resource ordering between update and destroy nodes, the single allocation's deletion may be attempted before the group allocation's update completes.
+
+To safely remove and destroy a selected member allocation, perform a **two-step apply**:
+
+1. **Unlink the member from the group**: In your Terraform configuration, remove the member's rule (`action = "select"`) from the group allocation's `rules` list, but **keep** the single allocation resource block in configuration. Run `terraform apply` to commit the unlinking in the DoiT platform.
+2. **Destroy the member**: Remove the single allocation resource block from your Terraform configuration and run `terraform apply`. The allocation is now unreferenced and will be deleted cleanly.
+
 ## Import
 
 Import is supported using the following syntax:

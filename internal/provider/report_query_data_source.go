@@ -100,7 +100,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			"\n\n~> **Note:** Query results are dynamic — they change over time as new" +
 			" billing data is ingested. Every `terraform plan` will re-execute the query." +
 			"\n\nThe `result_json` field contains the full result object including:" +
-			"\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
+			"\n\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
 			"\n- `rows`: Array of data rows, where each row is an array of cell values (`string`, `number`, or `null`)" +
 			"\n- `forecastRows`: Array of forecast data rows (if applicable)" +
 			"\n- `secondaryRows`: Array of secondary time range rows (if applicable)" +
@@ -122,7 +122,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 					"Use jsondecode() to parse.",
 				MarkdownDescription: "The full query result as a JSON string. Use `jsondecode()` to parse." +
 					"\n\nStructure of the decoded JSON object:" +
-					"\n- `schema`: Array of column definitions: `name` (string), `type` (string: `string`, `float`, `integer`, `timestamp`), and optional fields `unit` (`currency`, `number`, `percent`), `currency` (ISO 4217 code), `aggregation` (`total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`), and `id` (present for allocation dimensions)." +
+					"\n\n- `schema`: Array of column definitions: `name` (string), `type` (string: `string`, `float`, `integer`, `timestamp`), and optional fields `unit` (`currency`, `number`, `percent`), `currency` (ISO 4217 code), `aggregation` (`total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`), and `id` (present for allocation dimensions)." +
 					"\n- `rows`: Array of row arrays `[][string | number | null]` corresponding to the schema columns." +
 					"\n- `forecastRows`: Array of forecast row arrays (if applicable)." +
 					"\n- `secondaryRows`: Array of secondary time range row arrays (if applicable)." +
@@ -149,6 +149,9 @@ func (d *reportQueryDataSource) ConfigValidators(_ context.Context) []datasource
 		// Same empty-range / RFC3339 checks as the resource; the query config
 		// reuses the report resource's config types.
 		reportTimestampDataSourceValidator{},
+		// cumulative_comparison requires daily datetime dimensions, total aggregation,
+		// one metric, secondary time range, and no comparative or forecast.
+		reportCumulativeComparisonDataSourceValidator{},
 	}
 }
 

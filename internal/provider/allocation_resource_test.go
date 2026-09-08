@@ -3926,3 +3926,421 @@ resource "doit_allocation" "anomaly_group" {
 }
 `, rName, rName, rName)
 }
+
+// TestAccAllocation_Group_RemoveSelectedMember tests removing a single allocation
+// that was selected by a group allocation using the documented two-step apply workflow (Issue #318).
+// Step 1: Unlink member from group rules while keeping the member in config.
+// Step 2: Remove the member allocation from config.
+func TestAccAllocation_Group_RemoveSelectedMember(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create two single allocations and a group selecting both.
+			{
+				Config: testAccAllocationGroupTwoSelectedMembers(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_a",
+							plancheck.ResourceActionCreate,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_b",
+							plancheck.ResourceActionCreate,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules"),
+						knownvalue.ListSizeExact(2)),
+				},
+			},
+			// Step 2: Drift verification on initial state.
+			{
+				Config: testAccAllocationGroupTwoSelectedMembers(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3 (Two-step apply, Step 1): Unlink member_b from group rules, keeping member_b in config.
+			{
+				Config: testAccAllocationGroupUnlinkedMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_a",
+							plancheck.ResourceActionNoop,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_b",
+							plancheck.ResourceActionNoop,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 4: Drift verification after unlinking member_b.
+			{
+				Config: testAccAllocationGroupUnlinkedMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 5 (Two-step apply, Step 2): Remove member_b from config now that it is unlinked.
+			{
+				Config: testAccAllocationGroupOneSelectedMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_b",
+							plancheck.ResourceActionDestroy,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionNoop,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_a",
+							plancheck.ResourceActionNoop,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules"),
+						knownvalue.ListSizeExact(1)),
+				},
+			},
+			// Step 6: Drift verification after member_b deletion.
+			{
+				Config: testAccAllocationGroupOneSelectedMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccAllocation_Group_SelectToInlineAndDestroy tests converting a selected member rule
+// into an in-line rule and destroying the single allocation using the two-step apply workflow (Issue #318).
+// Step 1: Update group to replace select rule with inline rule, keeping the member in config.
+// Step 2: Remove the member allocation from config.
+func TestAccAllocation_Group_SelectToInlineAndDestroy(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create single allocation and a group selecting it.
+			{
+				Config: testAccAllocationGroupOneSelectedMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_a",
+							plancheck.ResourceActionCreate,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+			},
+			// Step 2: Drift verification.
+			{
+				Config: testAccAllocationGroupOneSelectedMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3 (Two-step apply, Step 1): Replace select rule with inline rule while keeping member_a in config.
+			{
+				Config: testAccAllocationGroupInlineWithMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_a",
+							plancheck.ResourceActionNoop,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 4: Drift verification.
+			{
+				Config: testAccAllocationGroupInlineWithMember(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 5 (Two-step apply, Step 2): Remove member_a from config now that group has replaced select rule.
+			{
+				Config: testAccAllocationGroupInlineOnly(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.member_a",
+							plancheck.ResourceActionDestroy,
+						),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionNoop,
+						),
+					},
+				},
+			},
+			// Step 6: Drift verification.
+			{
+				Config: testAccAllocationGroupInlineOnly(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupTwoSelectedMembers(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "member_a" {
+  name        = "%s-member-a"
+  description = "member a for select group test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "member_b" {
+  name        = "%s-member-b"
+  description = "member b for select group test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["US"]
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test allocation group for select member removal"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action = "select"
+      id     = doit_allocation.member_a.id
+    },
+    {
+      action = "select"
+      id     = doit_allocation.member_b.id
+    }
+  ]
+}
+`, rName, rName, rName, rName)
+}
+
+func testAccAllocationGroupUnlinkedMember(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "member_a" {
+  name        = "%s-member-a"
+  description = "member a for select group test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "member_b" {
+  name        = "%s-member-b"
+  description = "member b for select group test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["US"]
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test allocation group for select member removal"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action = "select"
+      id     = doit_allocation.member_a.id
+    }
+  ]
+}
+`, rName, rName, rName, rName)
+}
+
+func testAccAllocationGroupOneSelectedMember(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "member_a" {
+  name        = "%s-member-a"
+  description = "member a for select group test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test allocation group for select member removal"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action = "select"
+      id     = doit_allocation.member_a.id
+    }
+  ]
+}
+`, rName, rName, rName)
+}
+
+func testAccAllocationGroupInlineWithMember(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "member_a" {
+  name        = "%s-member-a"
+  description = "member a for select group test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test allocation group with inline rule"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action  = "create"
+      name    = "%s-inline-rule"
+      formula = "A"
+      components = [
+        {
+          key    = "country"
+          mode   = "is"
+          type   = "fixed"
+          values = ["JP"]
+        }
+      ]
+    }
+  ]
+}
+`, rName, rName, rName, rName)
+}
+
+func testAccAllocationGroupInlineOnly(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test allocation group with inline rule"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action  = "create"
+      name    = "%s-inline-rule"
+      formula = "A"
+      components = [
+        {
+          key    = "country"
+          mode   = "is"
+          type   = "fixed"
+          values = ["JP"]
+        }
+      ]
+    }
+  ]
+}
+`, rName, rName, rName)
+}

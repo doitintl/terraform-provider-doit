@@ -12595,7 +12595,7 @@
 									"name": "layout",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Type of visualization or output format."
+										"description": "Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast."
 									}
 								},
 								{

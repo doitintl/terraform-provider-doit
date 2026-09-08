@@ -498,3 +498,216 @@ func warnNAFilterValues(ctx context.Context, filterVals []resource_report.Filter
 	}
 	warnNASentinels(ctx, path.Root("config").AtName("filters"), valueLists, diags)
 }
+
+// reportCumulativeComparisonDataSourceValidator validates that layout = "cumulative_comparison"
+// satisfies required dimensions, aggregation, metric, secondary time range, and forecast/comparative constraints
+// on the doit_report_query data source:
+//   - daily datetime dimensions (year, month, day in order, all with type "datetime")
+//   - total aggregation (aggregation = "total")
+//   - one metric (metrics has 1 item, or single metric block)
+//   - a secondary time range (secondary_time_range is configured)
+//   - no comparative (display_values is null or "actuals_only")
+//   - no forecast (forecast_settings is not set, advanced_analysis.forecast is not true)
+//
+// Resource-level validation is evaluated in ModifyPlan on the effective plan so that
+// Category B unclearable attributes (like secondary_time_range) can be preserved from prior state on update.
+type reportCumulativeComparisonDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportCumulativeComparisonDataSourceValidator{}
+
+func (v reportCumulativeComparisonDataSourceValidator) Description(_ context.Context) string {
+	return "Validates that layout = \"cumulative_comparison\" satisfies required dimensions, aggregation, metric, secondary time range, and forecast/comparative constraints"
+}
+
+func (v reportCumulativeComparisonDataSourceValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `layout = \"cumulative_comparison\"` satisfies required dimensions, aggregation, metric, secondary time range, and forecast/comparative constraints"
+}
+
+func (v reportCumulativeComparisonDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportCumulativeComparison(ctx, req.Config, &resp.Diagnostics)
+}
+
+// attributeGetter abstracts GetAttribute across tfsdk.Config and tfsdk.Plan,
+// allowing shared validation logic to run both in ConfigValidators and ModifyPlan.
+type attributeGetter interface {
+	GetAttribute(ctx context.Context, path path.Path, target any) diag.Diagnostics
+}
+
+// validateReportCumulativeComparison is the shared validation logic for both the
+// report resource and the report_query data source when layout = "cumulative_comparison".
+// Unknown values are deferred so references validate once resolved during plan.
+func validateReportCumulativeComparison(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+	var layout types.String
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("layout"), &layout)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	validateReportCumulativeComparisonWithLayout(ctx, getter, layout, diags)
+}
+
+// validateReportCumulativeComparisonWithLayout validates the proposed config/plan attributes
+// against the rules for layout = "cumulative_comparison". It accepts an explicitly resolved layout,
+// enabling ModifyPlan to validate plans that inherit cumulative_comparison from prior state when
+// layout is omitted in config on update.
+func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter attributeGetter, layout types.String, diags *diag.Diagnostics) {
+	if layout.IsNull() || layout.IsUnknown() || layout.ValueString() != "cumulative_comparison" {
+		return
+	}
+
+	// 1. Daily datetime dimensions (year, month, day)
+	var dimensions types.List
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("dimensions"), &dimensions)
+	diags.Append(d...)
+	if !d.HasError() {
+		if !dimensions.IsUnknown() {
+			if dimensions.IsNull() {
+				diags.AddAttributeError(
+					path.Root("config").AtName("dimensions"),
+					"Invalid Dimensions Configuration",
+					"`layout = \"cumulative_comparison\"` requires daily datetime dimensions (`year`, `month`, `day`), but `dimensions` is not set.",
+				)
+			} else {
+				var dimVals []resource_report.DimensionsValue
+				d = dimensions.ElementsAs(ctx, &dimVals, false)
+				diags.Append(d...)
+				if !d.HasError() {
+					anyUnknown := false
+					for _, dim := range dimVals {
+						if dim.IsUnknown() || dim.Id.IsUnknown() || dim.DimensionsType.IsUnknown() {
+							anyUnknown = true
+							break
+						}
+					}
+					if !anyUnknown {
+						expected := []string{"year", "month", "day"}
+						valid := len(dimVals) == 3
+						if valid {
+							for i, exp := range expected {
+								if dimVals[i].Id.ValueString() != exp || dimVals[i].DimensionsType.ValueString() != "datetime" {
+									valid = false
+									break
+								}
+							}
+						}
+						if !valid {
+							diags.AddAttributeError(
+								path.Root("config").AtName("dimensions"),
+								"Invalid Dimensions Configuration",
+								"`layout = \"cumulative_comparison\"` requires daily datetime dimensions (`year`, `month`, `day`) in order with `type = \"datetime\"`.",
+							)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// 2. Total aggregation
+	var aggregation types.String
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	diags.Append(d...)
+	if !d.HasError() && !aggregation.IsUnknown() {
+		if aggregation.IsNull() || aggregation.ValueString() != "total" {
+			detail := "`layout = \"cumulative_comparison\"` requires `aggregation = \"total\"`."
+			if !aggregation.IsNull() {
+				detail = fmt.Sprintf("`layout = \"cumulative_comparison\"` requires `aggregation = \"total\"`, but got %q.", aggregation.ValueString())
+			}
+			diags.AddAttributeError(
+				path.Root("config").AtName("aggregation"),
+				"Invalid Aggregation Configuration",
+				detail,
+			)
+		}
+	}
+
+	// 3. One metric
+	var metrics types.List
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
+	diags.Append(d...)
+
+	var metric resource_report.MetricValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("metric"), &metric)
+	diags.Append(d...)
+
+	if !d.HasError() {
+		skipMetricCheck := metric.IsUnknown() || metrics.IsUnknown()
+		if !skipMetricCheck && !metrics.IsNull() {
+			for _, elem := range metrics.Elements() {
+				if elem.IsUnknown() {
+					skipMetricCheck = true
+					break
+				}
+			}
+		}
+
+		if !skipMetricCheck {
+			hasSingleMetricObj := !metric.IsNull()
+			numMetrics := 0
+			if !metrics.IsNull() {
+				numMetrics = len(metrics.Elements())
+			}
+
+			if numMetrics == 0 && hasSingleMetricObj {
+				// Metric was configured via the singular "metric" block; valid 1 metric.
+			} else if numMetrics != 1 {
+				diags.AddAttributeError(
+					path.Root("config").AtName("metrics"),
+					"Invalid Metrics Configuration",
+					fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
+				)
+			}
+		}
+	}
+
+	// 4. Secondary time range
+	var secondaryTimeRange resource_report.SecondaryTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondaryTimeRange)
+	diags.Append(d...)
+	if !d.HasError() && !secondaryTimeRange.IsUnknown() {
+		if secondaryTimeRange.IsNull() {
+			diags.AddAttributeError(
+				path.Root("config").AtName("secondary_time_range"),
+				"Missing Secondary Time Range",
+				"`layout = \"cumulative_comparison\"` requires `secondary_time_range` to be configured.",
+			)
+		}
+	}
+
+	// 5. No comparative
+	var displayValues types.String
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("display_values"), &displayValues)
+	diags.Append(d...)
+	if !d.HasError() && !displayValues.IsUnknown() && !displayValues.IsNull() {
+		if displayValues.ValueString() != "actuals_only" {
+			diags.AddAttributeError(
+				path.Root("config").AtName("display_values"),
+				"Conflicting Comparative Configuration",
+				fmt.Sprintf("`layout = \"cumulative_comparison\"` does not support comparative reports (`display_values` is %q). Omit `display_values` or set it to \"actuals_only\".", displayValues.ValueString()),
+			)
+		}
+	}
+
+	// 6. No forecast
+	var forecastSettings resource_report.ForecastSettingsValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("forecast_settings"), &forecastSettings)
+	diags.Append(d...)
+	if !d.HasError() && !forecastSettings.IsUnknown() && !forecastSettings.IsNull() {
+		diags.AddAttributeError(
+			path.Root("config").AtName("forecast_settings"),
+			"Conflicting Forecast Configuration",
+			"`layout = \"cumulative_comparison\"` does not support forecasting. Remove `forecast_settings`.",
+		)
+	}
+
+	var forecast types.Bool
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("advanced_analysis").AtName("forecast"), &forecast)
+	diags.Append(d...)
+	if !d.HasError() && !forecast.IsUnknown() && !forecast.IsNull() && forecast.ValueBool() {
+		diags.AddAttributeError(
+			path.Root("config").AtName("advanced_analysis").AtName("forecast"),
+			"Conflicting Forecast Configuration",
+			"`layout = \"cumulative_comparison\"` does not support forecasting. Set `advanced_analysis.forecast = false` or omit it.",
+		)
+	}
+}

@@ -89,7 +89,7 @@ Read-Only:
 - `include_promotional_credits` (Boolean) Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).
 If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
 - `include_subtotals` (Boolean) Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
-- `layout` (String) Type of visualization or output format.
+- `layout` (String) Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.
 - `limit_aggregation` (String) Controls how rows excluded by limits are rendered. Applies when any limit type is active
 (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
 at most two of those three limit types — not all three. When `displayValues` is not

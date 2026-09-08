@@ -11947,7 +11947,10 @@ components:
             - unallocated
     ExternalRenderer:
       type: string
-      description: Type of visualization or output format.
+      description: >-
+        Type of visualization or output format. cumulative_comparison requires daily
+        datetime dimensions (year, month, day), total aggregation, one metric, a
+        secondary time range, and no comparative or forecast.
       enum:
         - column_chart
         - stacked_column_chart
@@ -11959,12 +11962,14 @@ components:
         - area_spline_chart
         - stacked_area_chart
         - treemap_chart
+        - sankey_chart
         - table
         - table_heatmap
         - table_row_heatmap
         - table_col_heatmap
-        - csv_export
-        - sheets_export
+        - column_and_line_chart
+        - trend_board
+        - cumulative_comparison
     Folder:
       type: object
       description: A Cloud Analytics folder.

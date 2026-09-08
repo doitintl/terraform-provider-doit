@@ -6210,3 +6210,572 @@ resource "doit_report" "cfg_clear" {
 }
 `, i)
 }
+
+func TestAccReport_Layout_CumulativeComparison_Validation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportCumulativeComparisonMissingSecondary(n),
+				ExpectError: regexp.MustCompile(`Missing Secondary Time Range`),
+			},
+			{
+				Config:      testAccReportCumulativeComparisonMissingDimensions(n),
+				ExpectError: regexp.MustCompile(`Invalid Dimensions Configuration`),
+			},
+			{
+				Config:      testAccReportCumulativeComparisonComparativeDisplayValues(n),
+				ExpectError: regexp.MustCompile(`Conflicting Comparative Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCumulativeComparisonMissingSecondary(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_missing_sec" {
+  name = "test-cc-missing-sec-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+func testAccReportCumulativeComparisonMissingDimensions(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_missing_dims" {
+  name = "test-cc-missing-dims-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+func testAccReportCumulativeComparisonComparativeDisplayValues(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_comparative" {
+  name = "test-cc-comparative-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    display_values = "percentage_change"
+    data_source    = "billing"
+    layout         = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+func TestAccReport_Layout_CumulativeComparison(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.layout", "cumulative_comparison"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.aggregation", "total"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.#", "3"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.0.id", "year"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.1.id", "month"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.2.id", "day"),
+				),
+			},
+			// Drift check: ensure re-applying same configuration produces empty plan
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_Layout_CumulativeComparison_UpdateInheritedValidation verifies that
+// when an existing resource with layout = "cumulative_comparison" is updated and
+// layout is omitted from config, ModifyPlan still catches configuration violations
+// (e.g., changing dimensions to invalid set) at plan time rather than failing at apply.
+func TestAccReport_Layout_CumulativeComparison_UpdateInheritedValidation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report with layout = "cumulative_comparison"
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+			},
+			// Step 2: Update config omitting layout and setting only 2 dimensions.
+			// ModifyPlan must reject this at plan time.
+			{
+				Config:      testAccReportCumulativeComparisonOmittedLayoutInvalidDimensions(n),
+				ExpectError: regexp.MustCompile(`Invalid Dimensions Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCumulativeComparisonOmittedLayoutInvalidDimensions(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_valid" {
+  name = "test-cc-valid-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    # layout is intentionally omitted
+  }
+}
+`, i)
+}
+
+func testAccReportCumulativeComparisonValid(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_valid" {
+  name = "test-cc-valid-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+// TestAccReport_Layout_CumulativeComparison_DynamicTransition asserts that updating a report
+// from layout = "cumulative_comparison" to a dynamic layout (e.g. from terraform_data)
+// with fewer dimensions defers validation instead of incorrectly inheriting cumulative_comparison
+// from prior state and failing at plan time.
+func TestAccReport_Layout_CumulativeComparison_DynamicTransition(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report with layout = "cumulative_comparison"
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+			},
+			// Step 2: Transition layout dynamically to "table" with 2 dimensions.
+			{
+				Config: testAccReportDynamicTransitionToTable(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.layout", "table"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.dimensions.#", "2"),
+				),
+			},
+			// Step 3: Verify subsequent plan produces no diff
+			{
+				Config: testAccReportDynamicTransitionToTable(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDynamicTransitionToTable(i int) string {
+	return fmt.Sprintf(`
+resource "terraform_data" "target_layout" {
+  input = "table"
+}
+
+resource "doit_report" "cc_valid" {
+  name = "test-cc-valid-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = terraform_data.target_layout.output
+  }
+}
+`, i)
+}
+
+// TestAccReport_Layout_CumulativeComparison_DynamicMetric asserts that configuring a report
+// with an unknown singular metric object (from terraform_data) when layout = "cumulative_comparison"
+// defers validation instead of incorrectly counting 0 metrics and failing at plan time.
+func TestAccReport_Layout_CumulativeComparison_DynamicMetric(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportDynamicMetric(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.layout", "cumulative_comparison"),
+					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.metric.value", "cost"),
+				),
+			},
+			// Step 2: Verify subsequent plan produces no diff
+			{
+				Config: testAccReportDynamicMetric(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDynamicMetric(i int) string {
+	return fmt.Sprintf(`
+resource "terraform_data" "metric" {
+  input = {
+    type  = "basic"
+    value = "cost"
+  }
+}
+
+resource "doit_report" "cc_dynamic_metric" {
+  name = "test-cc-dyn-metric-%d"
+  config = {
+    metric      = terraform_data.metric.output
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+// TestAccReport_Layout_CumulativeComparison_SecondaryTimeRange_NotClearable asserts that
+// under Category B semantics, removing secondary_time_range on update preserves the prior
+// state value idempotently, even when layout = "cumulative_comparison" is explicitly kept in config.
+func TestAccReport_Layout_CumulativeComparison_SecondaryTimeRange_NotClearable(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create report with layout = "cumulative_comparison" and secondary_time_range
+			{
+				Config: testAccReportCumulativeComparisonValid(n),
+			},
+			// Step 2: Remove secondary_time_range from config, keeping layout = "cumulative_comparison".
+			// Should succeed and preserve the prior secondary_time_range value.
+			{
+				Config: testAccReportCumulativeComparisonOmittedSecondaryTimeRange(n),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.layout", "cumulative_comparison"),
+					resource.TestCheckResourceAttr("doit_report.cc_valid", "config.secondary_time_range.amount", "1"),
+				),
+			},
+			// Step 3: Verify subsequent plan produces no diff
+			{
+				Config: testAccReportCumulativeComparisonOmittedSecondaryTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccReportCumulativeComparisonOmittedSecondaryTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "cc_valid" {
+  name = "test-cc-valid-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    # secondary_time_range omitted on update (Category B: preserved from state)
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}
+
+// TestAccReport_Layout_CumulativeComparison_UnknownMetric_StillValidatesOtherAttributes asserts that
+// when metric is unknown during plan, independent known violations (such as forecast)
+// are still diagnosed at plan time.
+func TestAccReport_Layout_CumulativeComparison_UnknownMetric_StillValidatesOtherAttributes(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportUnknownMetricForecastConflict(n),
+				ExpectError: regexp.MustCompile(`does not support forecasting`),
+			},
+		},
+	})
+}
+
+func testAccReportUnknownMetricForecastConflict(i int) string {
+	return fmt.Sprintf(`
+resource "terraform_data" "metric" {
+  input = {
+    type  = "basic"
+    value = "cost"
+  }
+}
+
+resource "doit_report" "cc_unknown_metric_forecast" {
+  name = "test-cc-dyn-metric-fc-%d"
+  config = {
+    metric      = terraform_data.metric.output
+    aggregation = "total"
+    time_range = {
+      mode            = "last"
+      amount          = 1
+      unit            = "month"
+      include_current = true
+    }
+    secondary_time_range = {
+      amount          = 1
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      {
+        id   = "year"
+        type = "datetime"
+      },
+      {
+        id   = "month"
+        type = "datetime"
+      },
+      {
+        id   = "day"
+        type = "datetime"
+      }
+    ]
+    advanced_analysis = {
+      forecast = true
+    }
+    data_source = "billing"
+    layout      = "cumulative_comparison"
+  }
+}
+`, i)
+}

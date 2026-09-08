@@ -596,8 +596,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"layout": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Type of visualization or output format.\nPossible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`",
-						MarkdownDescription: "Type of visualization or output format.\nPossible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `csv_export`, `sheets_export`",
+						Description:         "Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.\nPossible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `sankey_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `column_and_line_chart`, `trend_board`, `cumulative_comparison`",
+						MarkdownDescription: "Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.\nPossible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_bar_chart`, `line_chart`, `spline_chart`, `area_chart`, `area_spline_chart`, `stacked_area_chart`, `treemap_chart`, `sankey_chart`, `table`, `table_heatmap`, `table_row_heatmap`, `table_col_heatmap`, `column_and_line_chart`, `trend_board`, `cumulative_comparison`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"column_chart",
@@ -610,12 +610,14 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"area_spline_chart",
 								"stacked_area_chart",
 								"treemap_chart",
+								"sankey_chart",
 								"table",
 								"table_heatmap",
 								"table_row_heatmap",
 								"table_col_heatmap",
-								"csv_export",
-								"sheets_export",
+								"column_and_line_chart",
+								"trend_board",
+								"cumulative_comparison",
 							),
 						},
 					},
