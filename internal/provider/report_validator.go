@@ -499,8 +499,9 @@ func warnNAFilterValues(ctx context.Context, filterVals []resource_report.Filter
 	warnNASentinels(ctx, path.Root("config").AtName("filters"), valueLists, diags)
 }
 
-// reportCumulativeComparisonValidator validates that when layout is "cumulative_comparison",
-// the report satisfies the API's constraints:
+// reportCumulativeComparisonDataSourceValidator validates that layout = "cumulative_comparison"
+// satisfies required dimensions, aggregation, metric, secondary time range, and forecast/comparative constraints
+// on the doit_report_query data source:
 //   - daily datetime dimensions (year, month, day in order, all with type "datetime")
 //   - total aggregation (aggregation = "total")
 //   - one metric (metrics has 1 item, or single metric block)
@@ -508,25 +509,8 @@ func warnNAFilterValues(ctx context.Context, filterVals []resource_report.Filter
 //   - no comparative (display_values is null or "actuals_only")
 //   - no forecast (forecast_settings is not set, advanced_analysis.forecast is not true)
 //
-// Shared by both doit_report resource and doit_report_query data source.
-type reportCumulativeComparisonValidator struct{}
-
-var _ resource.ConfigValidator = reportCumulativeComparisonValidator{}
-
-func (v reportCumulativeComparisonValidator) Description(_ context.Context) string {
-	return "Validates that layout = \"cumulative_comparison\" satisfies required dimensions, aggregation, metric, secondary time range, and forecast/comparative constraints"
-}
-
-func (v reportCumulativeComparisonValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that `layout = \"cumulative_comparison\"` satisfies required dimensions, aggregation, metric, secondary time range, and forecast/comparative constraints"
-}
-
-func (v reportCumulativeComparisonValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	validateReportCumulativeComparison(ctx, req.Config, &resp.Diagnostics)
-}
-
-// reportCumulativeComparisonDataSourceValidator is the data source counterpart
-// of reportCumulativeComparisonValidator.
+// Resource-level validation is evaluated in ModifyPlan on the effective plan so that
+// Category B unclearable attributes (like secondary_time_range) can be preserved from prior state on update.
 type reportCumulativeComparisonDataSourceValidator struct{}
 
 var _ datasource.ConfigValidator = reportCumulativeComparisonDataSourceValidator{}
@@ -647,31 +631,32 @@ func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter at
 	diags.Append(d...)
 
 	if !d.HasError() {
-		if metric.IsUnknown() || metrics.IsUnknown() {
-			return
-		}
-		if !metrics.IsNull() {
+		skipMetricCheck := metric.IsUnknown() || metrics.IsUnknown()
+		if !skipMetricCheck && !metrics.IsNull() {
 			for _, elem := range metrics.Elements() {
 				if elem.IsUnknown() {
-					return
+					skipMetricCheck = true
+					break
 				}
 			}
 		}
 
-		hasSingleMetricObj := !metric.IsNull()
-		numMetrics := 0
-		if !metrics.IsNull() {
-			numMetrics = len(metrics.Elements())
-		}
+		if !skipMetricCheck {
+			hasSingleMetricObj := !metric.IsNull()
+			numMetrics := 0
+			if !metrics.IsNull() {
+				numMetrics = len(metrics.Elements())
+			}
 
-		if numMetrics == 0 && hasSingleMetricObj {
-			// Metric was configured via the singular "metric" block; valid 1 metric.
-		} else if numMetrics != 1 {
-			diags.AddAttributeError(
-				path.Root("config").AtName("metrics"),
-				"Invalid Metrics Configuration",
-				fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
-			)
+			if numMetrics == 0 && hasSingleMetricObj {
+				// Metric was configured via the singular "metric" block; valid 1 metric.
+			} else if numMetrics != 1 {
+				diags.AddAttributeError(
+					path.Root("config").AtName("metrics"),
+					"Invalid Metrics Configuration",
+					fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
+				)
+			}
 		}
 	}
 

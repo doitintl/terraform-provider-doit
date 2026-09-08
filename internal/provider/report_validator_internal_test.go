@@ -1071,23 +1071,7 @@ func TestReportCumulativeComparisonValidator(t *testing.T) {
 			tt.mutate(cfgMap)
 			config := buildReportConfigWithMap(ctx, t, cfgMap)
 
-			// Test resource validator
-			v := reportCumulativeComparisonValidator{}
-			req := resource.ValidateConfigRequest{Config: config}
-			resp := &resource.ValidateConfigResponse{}
-			v.ValidateResource(ctx, req, resp)
-
-			if tt.expectErr {
-				if !resp.Diagnostics.HasError() {
-					t.Fatalf("expected validation error but got none")
-				}
-			} else {
-				if resp.Diagnostics.HasError() {
-					t.Fatalf("expected no validation error but got: %v", resp.Diagnostics)
-				}
-			}
-
-			// Test data source validator counterpart shares identical behavior
+			// Test data source config validator
 			dsv := reportCumulativeComparisonDataSourceValidator{}
 			dsReq := datasource.ValidateConfigRequest{Config: config}
 			dsResp := &datasource.ValidateConfigResponse{}
@@ -1176,8 +1160,8 @@ func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
 	}
 }
 
-// TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred reproduces Copilot comment 1:
-// An explicitly unknown planned layout (e.g. from a dynamic expression in HCL) must defer validation
+// TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred asserts that an explicitly
+// unknown planned layout (e.g. from a dynamic expression in HCL) defers validation
 // rather than substituting the prior state's layout, so transitions away from cumulative_comparison
 // are not falsely rejected before the layout is known.
 func TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred(t *testing.T) {
@@ -1221,9 +1205,9 @@ func TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred(t *testing.T) {
 	}
 }
 
-// TestReportCumulativeComparison_UnknownSingularMetricDeferred reproduces Copilot comment 2:
-// When config/plan specifies an unknown singular metric and empty metrics list (as produced by
-// useEmptyForUnconfiguredMetricsMirror), validation must defer rather than rejecting with "0 metrics were configured".
+// TestReportCumulativeComparison_UnknownSingularMetricDeferred asserts that when
+// config/plan specifies an unknown singular metric and empty metrics list (as produced by
+// useEmptyForUnconfiguredMetricsMirror), validation defers rather than rejecting with "0 metrics were configured".
 func TestReportCumulativeComparison_UnknownSingularMetricDeferred(t *testing.T) {
 	ctx := context.Background()
 
@@ -1246,5 +1230,45 @@ func TestReportCumulativeComparison_UnknownSingularMetricDeferred(t *testing.T) 
 
 	if planDiags.HasError() {
 		t.Fatalf("expected unknown singular metric to defer validation without errors, but got: %v", planDiags)
+	}
+}
+
+// TestReportCumulativeComparison_UnknownMetric_StillValidatesOtherAttributes asserts that
+// when metric or metrics is unknown, the validator defers only the metric check,
+// but continues validating other known attributes (such as missing secondary_time_range).
+func TestReportCumulativeComparison_UnknownMetric_StillValidatesOtherAttributes(t *testing.T) {
+	ctx := context.Background()
+
+	cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+	// Metric is unknown
+	emptyMetrics, diags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom metrics: %v", diags)
+	}
+	cfgMap["metrics"] = emptyMetrics
+	cfgMap["metric"] = resource_report.NewMetricValueUnknown()
+
+	// Missing secondary_time_range is an independent violation
+	cfgMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	cfg := buildReportConfigWithMap(ctx, t, cfgMap)
+	plan := tfsdk.Plan(cfg)
+
+	var planDiags diag.Diagnostics
+	validateReportCumulativeComparison(ctx, plan, &planDiags)
+
+	if !planDiags.HasError() {
+		t.Fatal("expected validator to catch missing secondary_time_range even when metric is unknown, but got no errors")
+	}
+
+	foundExpected := false
+	for _, d := range planDiags.Errors() {
+		if d.Summary() == "Missing Secondary Time Range" {
+			foundExpected = true
+			break
+		}
+	}
+	if !foundExpected {
+		t.Fatalf("expected 'Missing Secondary Time Range' error, got: %v", planDiags)
 	}
 }

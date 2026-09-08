@@ -254,9 +254,6 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportCustomTimeRangeUnitValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
-		// cumulative_comparison requires daily datetime dimensions, total aggregation,
-		// one metric, secondary time range, and no comparative or forecast.
-		reportCumulativeComparisonValidator{},
 	}
 }
 
@@ -320,11 +317,16 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		}
 	}
 
-	// Validate proposed plan when effective layout is cumulative_comparison. This prevents
-	// updates where layout is omitted from config (inheriting cumulative_comparison
-	// from state) from bypassing validation with invalid dimensions, comparative display
-	// values, or forecast settings.
-	validateReportCumulativeComparisonWithLayout(ctx, req.Plan, layout, &resp.Diagnostics)
+	// Validate proposed configuration when effective layout is cumulative_comparison. Validating
+	// against req.Config on create ensures missing required attributes (like secondary_time_range
+	// or dimensions) are caught before apply, rather than being treated as unknown computed values.
+	// On update, validating against req.Plan ensures Category B unclearable attributes preserved
+	// from prior state are recognized.
+	var target attributeGetter = req.Plan
+	if req.State.Raw.IsNull() {
+		target = req.Config
+	}
+	validateReportCumulativeComparisonWithLayout(ctx, target, layout, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
