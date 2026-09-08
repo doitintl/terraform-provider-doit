@@ -36,6 +36,9 @@ import (
 //
 // Standard retry libraries would block or error on 404, breaking Terraform semantics.
 //
+// 425 is passed through for a different reason: it means "ask again shortly",
+// and the caller polling an async operation owns that cadence. See Do.
+//
 // # Retry Strategy
 //
 // Only specific transient errors trigger retries:
@@ -44,8 +47,9 @@ import (
 //   - 503 (Service Unavailable): Temporary server overload
 //   - 504 (Gateway Timeout): Temporary timeout
 //
-// All other 4xx/5xx errors are treated as permanent failures (no retry). This
-// deliberately includes 524 — see httpStatusCloudflareTimeout.
+// Apart from the 404 and 425 passthroughs described above and below, all other
+// 4xx/5xx errors are treated as permanent failures (no retry). This deliberately
+// includes 524 — see httpStatusCloudflareTimeout.
 //
 // # NOT Suitable For
 //
@@ -122,24 +126,37 @@ func newRetryBackOff() *backoff.ExponentialBackOff {
 	return b
 }
 
-// parseRetryAfter interprets an HTTP Retry-After header value, returning the
-// duration to wait and whether the header was usable.
+// parseRetryAfter interprets an HTTP Retry-After header value for the retry
+// path, returning the duration to wait and whether the header was usable.
+//
+// It clamps to [retryInitialInterval, maxRetryAfter] — the bounds tuned for
+// retrying a 429. Async operation polling has its own, much tighter bounds; see
+// parseRetryAfterBounded and the asyncPoll* constants in timeouts.go.
+func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
+	return parseRetryAfterBounded(header, now, retryInitialInterval, maxRetryAfter)
+}
+
+// parseRetryAfterBounded interprets an HTTP Retry-After header value, returning
+// the duration to wait and whether the header was usable.
 //
 // Both forms from RFC 7231 are accepted: delay-seconds, and an HTTP-date (all
 // three date formats, via http.ParseTime). An absent, malformed, or already-past
-// value returns false, leaving the caller on exponential backoff.
+// value returns false, leaving the caller on its own fallback schedule.
 //
 // Non-positive values ("0", "-5", or a date already in the past) are rejected
 // rather than honored as "retry immediately". Honoring them would be actively
 // harmful twice over: it schedules a retry with no delay, and because the
 // backoff library resets the exponential policy whenever a Retry-After is
 // honored, a server repeatedly sending such a value would pin us to a flat
-// cadence that never grows. Falling back to exponential backoff instead keeps
-// the retries spreading out.
+// cadence that never grows. Falling back instead keeps the waits spreading out.
 //
-// An honored value is clamped to [retryInitialInterval, maxRetryAfter], so a
-// date a few milliseconds out cannot produce a near-immediate retry either.
-func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
+// An honored value is clamped to [minWait, maxWait], so a date a few
+// milliseconds out cannot produce a near-immediate retry either. The bounds are
+// parameters rather than constants because the two callers want very different
+// pacing: retrying a rate-limited request starts at seconds and tolerates a
+// minute, while polling an async operation follows the API's own 1s-to-30s
+// guidance.
+func parseRetryAfterBounded(header string, now time.Time, minWait, maxWait time.Duration) (time.Duration, bool) {
 	header = strings.TrimSpace(header)
 	if header == "" {
 		return 0, false
@@ -154,8 +171,8 @@ func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
 		if seconds <= 0 {
 			return 0, false
 		}
-		if seconds >= int(maxRetryAfter/time.Second) {
-			return maxRetryAfter, true
+		if seconds >= int(maxWait/time.Second) {
+			return maxWait, true
 		}
 		wait = time.Duration(seconds) * time.Second
 	} else {
@@ -169,7 +186,7 @@ func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
 	if wait <= 0 {
 		return 0, false
 	}
-	return min(max(wait, retryInitialInterval), maxRetryAfter), true
+	return min(max(wait, minWait), maxWait), true
 }
 
 // Do executes an HTTP request with retry logic for transient errors.
@@ -185,6 +202,7 @@ func parseRetryAfter(header string, now time.Time) (time.Duration, bool) {
 // |-------------|----------|
 // | 200, 201, 202, 204 | Success - return response |
 // | 404 | Pass through - NOT an error (for Terraform resource semantics) |
+// | 425 | Pass through - NOT an error (caller owns the retry cadence) |
 // | 429 | Retry with Retry-After or exponential backoff |
 // | 502, 503, 504 | Retry with exponential backoff |
 // | 524 | Permanent error - no retry (Cloudflare edge timeout) |
@@ -257,11 +275,19 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
 		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent,
-			http.StatusNotFound: // 404 - INTENTIONALLY passed through for Terraform resource semantics
+			http.StatusNotFound, // 404 - INTENTIONALLY passed through for Terraform resource semantics
+			http.StatusTooEarly: // 425 - INTENTIONALLY passed through, see below
 			// These codes don't need retry - return response for downstream handling
 			// Note: 404 is NOT an error here. Resource handlers interpret it contextually:
 			// - Read: externally deleted → remove from state
 			// - Delete: already gone → success
+			//
+			// 425 is likewise not an error: the async report results endpoint
+			// returns it while an operation's result is still being written.
+			// The caller waits and asks again on its own schedule, so it has to
+			// be able to see the status rather than a transport error. Retrying
+			// it here instead would be wrong — the poll loop, not the retry
+			// policy, owns that cadence.
 			return resp, nil
 
 		default:

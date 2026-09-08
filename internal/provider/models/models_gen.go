@@ -244,6 +244,63 @@ func (e AnomalyItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for AsyncOperationPollResponseStatus.
+const (
+	AsyncOperationPollResponseStatusCanceled  AsyncOperationPollResponseStatus = "canceled"
+	AsyncOperationPollResponseStatusFailed    AsyncOperationPollResponseStatus = "failed"
+	AsyncOperationPollResponseStatusPending   AsyncOperationPollResponseStatus = "pending"
+	AsyncOperationPollResponseStatusRunning   AsyncOperationPollResponseStatus = "running"
+	AsyncOperationPollResponseStatusSucceeded AsyncOperationPollResponseStatus = "succeeded"
+)
+
+// Valid indicates whether the value is a known member of the AsyncOperationPollResponseStatus enum.
+func (e AsyncOperationPollResponseStatus) Valid() bool {
+	switch e {
+	case AsyncOperationPollResponseStatusCanceled:
+		return true
+	case AsyncOperationPollResponseStatusFailed:
+		return true
+	case AsyncOperationPollResponseStatusPending:
+		return true
+	case AsyncOperationPollResponseStatusRunning:
+		return true
+	case AsyncOperationPollResponseStatusSucceeded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AsyncOperationResponseStatus.
+const (
+	AsyncOperationResponseStatusCanceled  AsyncOperationResponseStatus = "canceled"
+	AsyncOperationResponseStatusDryRun    AsyncOperationResponseStatus = "dry_run"
+	AsyncOperationResponseStatusFailed    AsyncOperationResponseStatus = "failed"
+	AsyncOperationResponseStatusPending   AsyncOperationResponseStatus = "pending"
+	AsyncOperationResponseStatusRunning   AsyncOperationResponseStatus = "running"
+	AsyncOperationResponseStatusSucceeded AsyncOperationResponseStatus = "succeeded"
+)
+
+// Valid indicates whether the value is a known member of the AsyncOperationResponseStatus enum.
+func (e AsyncOperationResponseStatus) Valid() bool {
+	switch e {
+	case AsyncOperationResponseStatusCanceled:
+		return true
+	case AsyncOperationResponseStatusDryRun:
+		return true
+	case AsyncOperationResponseStatusFailed:
+		return true
+	case AsyncOperationResponseStatusPending:
+		return true
+	case AsyncOperationResponseStatusRunning:
+		return true
+	case AsyncOperationResponseStatusSucceeded:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AwsOnboardingStatusEntryStatus.
 const (
 	AwsOnboardingStatusEntryStatusDone       AwsOnboardingStatusEntryStatus = "done"
@@ -2299,6 +2356,48 @@ func (e GetAnomaly200ResponseStatus) Valid() bool {
 	}
 }
 
+// Defines values for GetAsyncOperationResults200ResponseType.
+const (
+	GetAsyncOperationResults200ResponseTypeCustom GetAsyncOperationResults200ResponseType = "custom"
+	GetAsyncOperationResults200ResponseTypePreset GetAsyncOperationResults200ResponseType = "preset"
+)
+
+// Valid indicates whether the value is a known member of the GetAsyncOperationResults200ResponseType enum.
+func (e GetAsyncOperationResults200ResponseType) Valid() bool {
+	switch e {
+	case GetAsyncOperationResults200ResponseTypeCustom:
+		return true
+	case GetAsyncOperationResults200ResponseTypePreset:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetAsyncOperationResults200ResponseResultMlFeatures.
+const (
+	GetAsyncOperationResults200ResponseResultMlFeaturesDecreasing GetAsyncOperationResults200ResponseResultMlFeatures = "decreasing"
+	GetAsyncOperationResults200ResponseResultMlFeaturesForecast   GetAsyncOperationResults200ResponseResultMlFeatures = "forecast"
+	GetAsyncOperationResults200ResponseResultMlFeaturesIncreasing GetAsyncOperationResults200ResponseResultMlFeatures = "increasing"
+	GetAsyncOperationResults200ResponseResultMlFeaturesNone       GetAsyncOperationResults200ResponseResultMlFeatures = "none"
+)
+
+// Valid indicates whether the value is a known member of the GetAsyncOperationResults200ResponseResultMlFeatures enum.
+func (e GetAsyncOperationResults200ResponseResultMlFeatures) Valid() bool {
+	switch e {
+	case GetAsyncOperationResults200ResponseResultMlFeaturesDecreasing:
+		return true
+	case GetAsyncOperationResults200ResponseResultMlFeaturesForecast:
+		return true
+	case GetAsyncOperationResults200ResponseResultMlFeaturesIncreasing:
+		return true
+	case GetAsyncOperationResults200ResponseResultMlFeaturesNone:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetInvoice200ResponseStatus.
 const (
 	GetInvoice200ResponseStatusOPEN    GetInvoice200ResponseStatus = "OPEN"
@@ -2350,48 +2449,6 @@ func (e GetKnownIssue200ResponseStatus) Valid() bool {
 	case GetKnownIssue200ResponseStatusActive:
 		return true
 	case GetKnownIssue200ResponseStatusArchived:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for GetReportResponseType.
-const (
-	GetReportResponseTypeCustom GetReportResponseType = "custom"
-	GetReportResponseTypePreset GetReportResponseType = "preset"
-)
-
-// Valid indicates whether the value is a known member of the GetReportResponseType enum.
-func (e GetReportResponseType) Valid() bool {
-	switch e {
-	case GetReportResponseTypeCustom:
-		return true
-	case GetReportResponseTypePreset:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for GetReportResponseResultMlFeatures.
-const (
-	GetReportResponseResultMlFeaturesDecreasing GetReportResponseResultMlFeatures = "decreasing"
-	GetReportResponseResultMlFeaturesForecast   GetReportResponseResultMlFeatures = "forecast"
-	GetReportResponseResultMlFeaturesIncreasing GetReportResponseResultMlFeatures = "increasing"
-	GetReportResponseResultMlFeaturesNone       GetReportResponseResultMlFeatures = "none"
-)
-
-// Valid indicates whether the value is a known member of the GetReportResponseResultMlFeatures enum.
-func (e GetReportResponseResultMlFeatures) Valid() bool {
-	switch e {
-	case GetReportResponseResultMlFeaturesDecreasing:
-		return true
-	case GetReportResponseResultMlFeaturesForecast:
-		return true
-	case GetReportResponseResultMlFeaturesIncreasing:
-		return true
-	case GetReportResponseResultMlFeaturesNone:
 		return true
 	default:
 		return false
@@ -2734,30 +2791,6 @@ func (e ResourcePermissionsResponsePublic) Valid() bool {
 	case ResourcePermissionsResponsePublicEditor:
 		return true
 	case ResourcePermissionsResponsePublicViewer:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for RunReportResultResultMlFeatures.
-const (
-	RunReportResultResultMlFeaturesDecreasing RunReportResultResultMlFeatures = "decreasing"
-	RunReportResultResultMlFeaturesForecast   RunReportResultResultMlFeatures = "forecast"
-	RunReportResultResultMlFeaturesIncreasing RunReportResultResultMlFeatures = "increasing"
-	RunReportResultResultMlFeaturesNone       RunReportResultResultMlFeatures = "none"
-)
-
-// Valid indicates whether the value is a known member of the RunReportResultResultMlFeatures enum.
-func (e RunReportResultResultMlFeatures) Valid() bool {
-	switch e {
-	case RunReportResultResultMlFeaturesDecreasing:
-		return true
-	case RunReportResultResultMlFeaturesForecast:
-		return true
-	case RunReportResultResultMlFeaturesIncreasing:
-		return true
-	case RunReportResultResultMlFeaturesNone:
 		return true
 	default:
 		return false
@@ -4505,6 +4538,65 @@ type AssignObjectsToLabelRequest struct {
 
 	// Remove Array of objects to unassign from the label.
 	Remove *[]LabelAssignmentObject `json:"remove,omitempty"`
+}
+
+// AsyncOperationError Error describing why an async operation failed. Present only when status is "failed".
+type AsyncOperationError struct {
+	// Code Stable machine-readable error code.
+	//
+	// Example: result_too_large
+	Code   string  `json:"code"`
+	Detail *string `json:"detail,omitempty"`
+
+	// Status Example: 413
+	Status int `json:"status"`
+
+	// Title Example: Query result set is too large
+	Title string `json:"title"`
+}
+
+// AsyncOperationPollResponse Response envelope for polling an async report operation. Does not include result data — once status is "succeeded", fetch the result from the operation's results endpoint.
+type AsyncOperationPollResponse struct {
+	// CreateTime Time the operation was created.
+	CreateTime time.Time `json:"createTime"`
+
+	// Error Error describing why an async operation failed. Present only when status is "failed".
+	Error *AsyncOperationError `json:"error,omitempty"`
+
+	// ExpireBy Time after which the operation record may be deleted.
+	ExpireBy time.Time `json:"expireBy"`
+
+	// OperationId Unique identifier for the operation.
+	OperationId string `json:"operationId"`
+
+	// Status Current lifecycle status of the operation.
+	Status AsyncOperationPollResponseStatus `json:"status"`
+}
+
+// AsyncOperationPollResponseStatus Current lifecycle status of the operation.
+type AsyncOperationPollResponseStatus string
+
+// AsyncOperationResponse Response envelope for an async report operation. Returned on 202 (new operation) and 200 (dry-run). On dry-run, operationId is absent and status is "dry_run".
+type AsyncOperationResponse struct {
+	// CreateTime Time the operation was created (absent on dry-run).
+	CreateTime *time.Time `json:"createTime,omitempty"`
+
+	// OperationId Unique identifier for the operation. Absent on dry-run responses.
+	OperationId *string `json:"operationId,omitempty"`
+
+	// Status Current lifecycle status of the operation.
+	Status *AsyncOperationResponseStatus `json:"status,omitempty"`
+}
+
+// AsyncOperationResponseStatus Current lifecycle status of the operation.
+type AsyncOperationResponseStatus string
+
+// AsyncRunInlineRequestBody defines model for AsyncRunInlineRequestBody.
+type AsyncRunInlineRequestBody struct {
+	// Config Report configuration.
+	//
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	Config *ExternalConfig `json:"config,omitempty"`
 }
 
 // AvaAskSyncRequest defines model for AvaAskSyncRequest.
@@ -7234,6 +7326,50 @@ type GetAnomaly200ResponseMonitorLevel string
 // GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
 type GetAnomaly200ResponseStatus string
 
+// GetAsyncOperationResults200Response defines model for GetAsyncOperationResults200Response.
+type GetAsyncOperationResults200Response struct {
+	// CreateTime The creation time of the report, in milliseconds since the epoch. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// Id The report's id. Present only when the operation was started against a saved report (run by id); omitted for ad hoc runs against an inline config.
+	Id *string `json:"id,omitempty"`
+
+	// Owner Email address of the report owner, looked up at read time. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+	Owner *string `json:"owner,omitempty"`
+
+	// ReportName The report's current name, looked up at read time (not a snapshot from when the operation started). Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+	ReportName *string                                    `json:"reportName,omitempty"`
+	Result     *GetAsyncOperationResults200ResponseResult `json:"result,omitempty"`
+
+	// Type Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+	Type *GetAsyncOperationResults200ResponseType `json:"type,omitempty"`
+
+	// UpdateTime The time when the report was last updated, in milliseconds since the epoch, looked up at read time. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+	UpdateTime *int64 `json:"updateTime,omitempty"`
+
+	// UrlUI The URL of the report in DoiT console. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+	UrlUI *string `json:"urlUI,omitempty"`
+}
+
+// GetAsyncOperationResults200ResponseType Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
+type GetAsyncOperationResults200ResponseType string
+
+// GetAsyncOperationResults200ResponseResult defines model for GetAsyncOperationResults200ResponseResult.
+type GetAsyncOperationResults200ResponseResult struct {
+	// CacheHit If true, results were fetched from the cache.
+	CacheHit     *bool                                                  `json:"cacheHit,omitempty"`
+	ForecastRows *[][]nullable.Nullable[Value]                          `json:"forecastRows,omitempty"`
+	MlFeatures   *[]GetAsyncOperationResults200ResponseResultMlFeatures `json:"mlFeatures,omitempty"`
+	Rows         *[][]nullable.Nullable[Value]                          `json:"rows,omitempty"`
+	Schema       *[]SchemaField                                         `json:"schema,omitempty"`
+
+	// SecondaryRows Secondary time range rows.
+	SecondaryRows *[][]nullable.Nullable[Value] `json:"secondaryRows,omitempty"`
+}
+
+// GetAsyncOperationResults200ResponseResultMlFeatures defines model for GetAsyncOperationResults200ResponseResult.MlFeatures.
+type GetAsyncOperationResults200ResponseResultMlFeatures string
+
 // GetDatahubDataset200Response defines model for GetDatahubDataset200Response.
 type GetDatahubDataset200Response struct {
 	// Description The description of the dataset.
@@ -7346,53 +7482,6 @@ type GetKnownIssue200ResponsePlatform string
 
 // GetKnownIssue200ResponseStatus The Status of the issue
 type GetKnownIssue200ResponseStatus string
-
-// GetReportResponse Results returned when running a report; includes schema and rows.
-//
-// Example: {"createTime":1704067200000,"id":"rpt_dummy001abc","labels":[],"owner":"customer@example.com","reportName":"Monthly Cost by Service","result":{"cacheHit":true,"rows":[["Amazon Elastic Compute Cloud",4821.37,12450],["Cloud Storage",912.05,893021],["BigQuery",356.88,42]],"schema":[{"name":"service_description","type":"string"},{"aggregation":"total","currency":"USD","name":"cost","type":"float","unit":"currency"},{"aggregation":"total","name":"usage","type":"float","unit":"number"}]},"type":"custom","updateTime":1706745600000,"urlUI":"https://console.doit.com/customers/cust_dummy123/analyze/reports/rpt_dummy001abc"}
-type GetReportResponse struct {
-	// CreateTime The creation time of the report, in milliseconds since the epoch.
-	CreateTime *int64 `json:"createTime,omitempty"`
-
-	// Id Report ID.
-	Id *string `json:"id,omitempty"`
-
-	// Labels List of labels associated with the report.
-	Labels *[]LabelInfo `json:"labels,omitempty"`
-
-	// Owner Email address of the report owner.
-	Owner *string `json:"owner,omitempty"`
-
-	// ReportName The name of the report.
-	ReportName *string                  `json:"reportName,omitempty"`
-	Result     *GetReportResponseResult `json:"result,omitempty"`
-	Type       *GetReportResponseType   `json:"type,omitempty"`
-
-	// UpdateTime The time when this report was last updated, in milliseconds since the epoch.
-	UpdateTime *int64 `json:"updateTime,omitempty"`
-
-	// UrlUI The URL of the report in DoiT console.
-	UrlUI *string `json:"urlUI,omitempty"`
-}
-
-// GetReportResponseType defines model for GetReportResponse.Type.
-type GetReportResponseType string
-
-// GetReportResponseResult defines model for GetReportResponseResult.
-type GetReportResponseResult struct {
-	// CacheHit If true, results were fetched from the cache.
-	CacheHit     *bool                                `json:"cacheHit,omitempty"`
-	ForecastRows *[][]nullable.Nullable[Value]        `json:"forecastRows,omitempty"`
-	MlFeatures   *[]GetReportResponseResultMlFeatures `json:"mlFeatures,omitempty"`
-	Rows         *[][]nullable.Nullable[Value]        `json:"rows,omitempty"`
-	Schema       *[]SchemaField                       `json:"schema,omitempty"`
-
-	// SecondaryRows Secondary time range rows.
-	SecondaryRows *[][]nullable.Nullable[Value] `json:"secondaryRows,omitempty"`
-}
-
-// GetReportResponseResultMlFeatures defines model for GetReportResponseResult.MlFeatures.
-type GetReportResponseResultMlFeatures string
 
 // Group The dimension that defines a row in the report.
 //
@@ -7941,14 +8030,6 @@ type ProductAPI struct {
 	Platform    *string `json:"platform,omitempty"`
 }
 
-// QueryRequestBody defines model for QueryRequestBody.
-type QueryRequestBody struct {
-	// Config Report configuration.
-	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
-	Config *ExternalConfig `json:"config,omitempty"`
-}
-
 // RenewalSettings Settings that control subscription renewal behavior at the end of a commitment term.
 type RenewalSettings struct {
 	// RenewalType The type of renewal, e.g. AUTO_RENEW_MONTHLY_PAY, AUTO_RENEW_YEARLY_PAY, RENEW_CURRENT_USERS_MONTHLY_PAY, RENEW_CURRENT_USERS_YEARLY_PAY, SWITCH_TO_PAY_AS_YOU_GO, or CANCEL.
@@ -8068,38 +8149,6 @@ type Role struct {
 
 	// Type The type of the role (preset or custom).
 	Type *string `json:"type,omitempty"`
-}
-
-// RunReportResult Results returned when running a report; includes schema and rows.
-//
-// Example: {"result":{"cacheHit":false,"rows":[["Amazon Elastic Compute Cloud",4821.37],["Cloud Storage",912.05],["BigQuery",356.88]],"schema":[{"name":"service_description","type":"string"},{"aggregation":"total","currency":"USD","name":"cost","type":"float","unit":"currency"}]}}
-type RunReportResult struct {
-	Result *RunReportResultResult `json:"result,omitempty"`
-}
-
-// RunReportResultResult defines model for RunReportResultResult.
-type RunReportResultResult struct {
-	// CacheHit If true, results were fetched from the cache.
-	CacheHit *bool `json:"cacheHit,omitempty"`
-
-	// Details Optional metadata about the result.
-	Details      *RunReportResultResultDetails      `json:"details,omitempty"`
-	ForecastRows *[][]nullable.Nullable[Value]      `json:"forecastRows,omitempty"`
-	MlFeatures   *[]RunReportResultResultMlFeatures `json:"mlFeatures,omitempty"`
-	Rows         *[][]nullable.Nullable[Value]      `json:"rows,omitempty"`
-	Schema       *[]SchemaField                     `json:"schema,omitempty"`
-
-	// SecondaryRows Secondary time range rows.
-	SecondaryRows *[][]nullable.Nullable[Value] `json:"secondaryRows,omitempty"`
-}
-
-// RunReportResultResultMlFeatures defines model for RunReportResultResult.MlFeatures.
-type RunReportResultResultMlFeatures string
-
-// RunReportResultResultDetails Optional metadata about the result.
-type RunReportResultResultDetails struct {
-	// ValueAliases Display aliases for values that appear in `rows`, keyed by dimension id and then by the stored value (for example `{"fixed:cloud_provider": {"datadog_prod": "Datadog (prod)"}}`). Rows keep the stored values so they can be fed back into filters; apply the alias only when presenting a value. Present only when the customer has renamed a DataHub dataset whose dimension is part of the report.
-	ValueAliases *map[string]map[string]string `json:"valueAliases,omitempty"`
 }
 
 // SchemaField Schema of a report result column.
@@ -8932,8 +8981,11 @@ type N403ResourceOrForbidden = Error
 // N404 Standard error response structure.
 type N404 = Error
 
-// N429 Standard error response structure.
-type N429 = Error
+// N422 Standard error response structure.
+type N422 = Error
+
+// N425 Standard error response structure.
+type N425 = Error
 
 // N500 Standard error response structure.
 type N500 = Error
@@ -9186,9 +9238,30 @@ type ListReportsParams struct {
 	MaxCreationTime *string `form:"maxCreationTime,omitempty" json:"maxCreationTime,omitempty"`
 }
 
-// GetReportParams defines parameters for GetReport.
-type GetReportParams struct {
-	// TimeRange An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n].
+// AsyncRunInlineParams defines parameters for AsyncRunInline.
+type AsyncRunInlineParams struct {
+	// DryRun If true, validates the request and returns 200 without creating an operation or submitting a job. The response body will have status "dry_run" and no operationId.
+	DryRun *bool `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Unique key for this submission. Required on every request. Deduplication is based on config content, not this key.
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// CancelAsyncOperationParams defines parameters for CancelAsyncOperation.
+type CancelAsyncOperationParams struct {
+	// DryRun If true, validates the request and returns 200 without modifying any state. The response body will have status "dry_run" and the X-Dry-Run response header will be set to "true".
+	DryRun *bool `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Unique key for this submission. Required on every request.
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// AsyncRunReportByIdParams defines parameters for AsyncRunReportById.
+type AsyncRunReportByIdParams struct {
+	// DryRun If true, validates the request and returns 200 without creating an operation or submitting a job.
+	DryRun *bool `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// TimeRange An optional parameter to override the report time settings. Value should be represented in the format P[n]Y[n]M[n]D[n]. In the representations, the [n] is replaced by the value for each of the date and time elements that follow the [n]. Cannot be combined with startDate/endDate.
 	TimeRange *string `form:"timeRange,omitempty" json:"timeRange,omitempty"`
 
 	// StartDate An optional parameter to override the report time settings. Must be provided together with endDate. Format: yyyy-mm-dd
@@ -9196,6 +9269,9 @@ type GetReportParams struct {
 
 	// EndDate An optional parameter to override the report time settings. Must be provided together with startDate. Format: yyyy-mm-dd
 	EndDate *openapi_types.Date `form:"endDate,omitempty" json:"endDate,omitempty"`
+
+	// IdempotencyKey Unique key for this submission. Required on every request.
+	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
 // ListAnomaliesParams defines parameters for ListAnomalies.
@@ -9570,8 +9646,8 @@ type AssignObjectsToLabelJSONRequestBody = AssignObjectsToLabelRequest
 // CreateReportJSONRequestBody defines body for CreateReport for application/json ContentType.
 type CreateReportJSONRequestBody = CreateReportRequestBody
 
-// QueryJSONRequestBody defines body for Query for application/json ContentType.
-type QueryJSONRequestBody = QueryRequestBody
+// AsyncRunInlineJSONRequestBody defines body for AsyncRunInline for application/json ContentType.
+type AsyncRunInlineJSONRequestBody = AsyncRunInlineRequestBody
 
 // UpdateReportJSONRequestBody defines body for UpdateReport for application/json ContentType.
 type UpdateReportJSONRequestBody = ExternalUpdateReport
@@ -10559,25 +10635,44 @@ type ClientInterface interface {
 	// Corresponds with POST /analytics/v1/reports (the `CreateReport` operationId).
 	CreateReport(ctx context.Context, body CreateReportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// QueryWithBody Run a query
+	// AsyncRunInlineWithBody Run a report asynchronously
 	//
-	// Runs a report query with the specified configuration without persisting it.
-	// Fields that are not populated will use their default values if needed.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 	//
 	// Takes any type of body and a specified content type.
 	//
-	// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-	QueryWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+	AsyncRunInlineWithBody(ctx context.Context, params *AsyncRunInlineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Query Run a query
+	// AsyncRunInline Run a report asynchronously
 	//
-	// Runs a report query with the specified configuration without persisting it.
-	// Fields that are not populated will use their default values if needed.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 	//
 	// Takes a body of the `application/json` content type.
 	//
-	// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-	Query(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+	AsyncRunInline(ctx context.Context, params *AsyncRunInlineParams, body AsyncRunInlineJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAsyncOperation Poll an async report run operation
+	//
+	// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+	//
+	// Corresponds with GET /analytics/v1/reports/operations/{operationId} (the `GetAsyncOperation` operationId).
+	GetAsyncOperation(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CancelAsyncOperation Cancel an async report run operation
+	//
+	// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+	//
+	// Corresponds with POST /analytics/v1/reports/operations/{operationId}/actions/cancel (the `CancelAsyncOperation` operationId).
+	CancelAsyncOperation(ctx context.Context, operationId string, params *CancelAsyncOperationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAsyncOperationResults Get results of an async report run operation
+	//
+	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+	//
+	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
+	GetAsyncOperationResults(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteReport Delete a report
 	//
@@ -10585,13 +10680,6 @@ type ClientInterface interface {
 	//
 	// Corresponds with DELETE /analytics/v1/reports/{id} (the `DeleteReport` operationId).
 	DeleteReport(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetReport Get report results
-	//
-	// Returns the results of the specified report.
-	//
-	// Corresponds with GET /analytics/v1/reports/{id} (the `GetReport` operationId).
-	GetReport(ctx context.Context, id ReportId, params *GetReportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateReportWithBody Update a report
 	//
@@ -10614,6 +10702,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /analytics/v1/reports/{id} (the `UpdateReport` operationId).
 	UpdateReport(ctx context.Context, id ReportId, body UpdateReportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AsyncRunReportById Run a saved report asynchronously
+	//
+	// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+	//
+	// Corresponds with POST /analytics/v1/reports/{id}/actions/run (the `AsyncRunReportById` operationId).
+	AsyncRunReportById(ctx context.Context, id string, params *AsyncRunReportByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetReportConfig Get report config
 	//
@@ -12369,16 +12464,15 @@ func (c *Client) CreateReport(ctx context.Context, body CreateReportJSONRequestB
 	return c.Client.Do(req)
 }
 
-// QueryWithBody Run a query
+// AsyncRunInlineWithBody Run a report asynchronously
 //
-// Runs a report query with the specified configuration without persisting it.
-// Fields that are not populated will use their default values if needed.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 //
 // Takes any type of body and a specified content type.
 //
-// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-func (c *Client) QueryWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewQueryRequestWithBody(c.Server, contentType, body)
+// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+func (c *Client) AsyncRunInlineWithBody(ctx context.Context, params *AsyncRunInlineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAsyncRunInlineRequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -12389,16 +12483,66 @@ func (c *Client) QueryWithBody(ctx context.Context, contentType string, body io.
 	return c.Client.Do(req)
 }
 
-// Query Run a query
+// AsyncRunInline Run a report asynchronously
 //
-// Runs a report query with the specified configuration without persisting it.
-// Fields that are not populated will use their default values if needed.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 //
 // Takes a body of the `application/json` content type.
 //
-// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-func (c *Client) Query(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewQueryRequest(c.Server, body)
+// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+func (c *Client) AsyncRunInline(ctx context.Context, params *AsyncRunInlineParams, body AsyncRunInlineJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAsyncRunInlineRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetAsyncOperation Poll an async report run operation
+//
+// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+//
+// Corresponds with GET /analytics/v1/reports/operations/{operationId} (the `GetAsyncOperation` operationId).
+func (c *Client) GetAsyncOperation(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAsyncOperationRequest(c.Server, operationId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CancelAsyncOperation Cancel an async report run operation
+//
+// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+//
+// Corresponds with POST /analytics/v1/reports/operations/{operationId}/actions/cancel (the `CancelAsyncOperation` operationId).
+func (c *Client) CancelAsyncOperation(ctx context.Context, operationId string, params *CancelAsyncOperationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCancelAsyncOperationRequest(c.Server, operationId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetAsyncOperationResults Get results of an async report run operation
+//
+// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+//
+// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
+func (c *Client) GetAsyncOperationResults(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAsyncOperationResultsRequest(c.Server, operationId)
 	if err != nil {
 		return nil, err
 	}
@@ -12416,23 +12560,6 @@ func (c *Client) Query(ctx context.Context, body QueryJSONRequestBody, reqEditor
 // Corresponds with DELETE /analytics/v1/reports/{id} (the `DeleteReport` operationId).
 func (c *Client) DeleteReport(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteReportRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-// GetReport Get report results
-//
-// Returns the results of the specified report.
-//
-// Corresponds with GET /analytics/v1/reports/{id} (the `GetReport` operationId).
-func (c *Client) GetReport(ctx context.Context, id ReportId, params *GetReportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetReportRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -12475,6 +12602,23 @@ func (c *Client) UpdateReportWithBody(ctx context.Context, id ReportId, contentT
 // Corresponds with PATCH /analytics/v1/reports/{id} (the `UpdateReport` operationId).
 func (c *Client) UpdateReport(ctx context.Context, id ReportId, body UpdateReportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateReportRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// AsyncRunReportById Run a saved report asynchronously
+//
+// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+//
+// Corresponds with POST /analytics/v1/reports/{id}/actions/run (the `AsyncRunReportById` operationId).
+func (c *Client) AsyncRunReportById(ctx context.Context, id string, params *AsyncRunReportByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAsyncRunReportByIdRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -16203,19 +16347,19 @@ func NewCreateReportRequestWithBody(server string, contentType string, body io.R
 	return req, nil
 }
 
-// NewQueryRequest calls the generic Query builder with application/json body
-func NewQueryRequest(server string, body QueryJSONRequestBody) (*http.Request, error) {
+// NewAsyncRunInlineRequest calls the generic AsyncRunInline builder with application/json body
+func NewAsyncRunInlineRequest(server string, params *AsyncRunInlineParams, body AsyncRunInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewQueryRequestWithBody(server, "application/json", bodyReader)
+	return NewAsyncRunInlineRequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewQueryRequestWithBody constructs an http.Request for the Query method, with any body, and a specified content type
-func NewQueryRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewAsyncRunInlineRequestWithBody constructs an http.Request for the AsyncRunInline method, with any body, and a specified content type
+func NewAsyncRunInlineRequestWithBody(server string, params *AsyncRunInlineParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -16223,7 +16367,7 @@ func NewQueryRequestWithBody(server string, contentType string, body io.Reader) 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/analytics/v1/reports/query")
+	operationPath := fmt.Sprintf("/analytics/v1/reports/actions/run")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -16233,12 +16377,194 @@ func NewQueryRequestWithBody(server string, contentType string, body io.Reader) 
 		return nil, err
 	}
 
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
 	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetAsyncOperationRequest constructs an http.Request for the GetAsyncOperation method
+func NewGetAsyncOperationRequest(server string, operationId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "operationId", operationId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/reports/operations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCancelAsyncOperationRequest constructs an http.Request for the CancelAsyncOperation method
+func NewCancelAsyncOperationRequest(server string, operationId string, params *CancelAsyncOperationParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "operationId", operationId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/reports/operations/%s/actions/cancel", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetAsyncOperationResultsRequest constructs an http.Request for the GetAsyncOperationResults method
+func NewGetAsyncOperationResultsRequest(server string, operationId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "operationId", operationId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/reports/operations/%s/results", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -16270,91 +16596,6 @@ func NewDeleteReportRequest(server string, id ReportId) (*http.Request, error) {
 	}
 
 	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetReportRequest constructs an http.Request for the GetReport method
-func NewGetReportRequest(server string, id ReportId, params *GetReportParams) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/analytics/v1/reports/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		// queryValues collects non-styled parameters (passthrough, JSON)
-		// that are safe to round-trip through url.Values.Encode().
-		queryValues := queryURL.Query()
-		// rawQueryFragments collects pre-encoded query fragments from
-		// styled parameters, preserving literal commas as delimiters
-		// per the OpenAPI spec (e.g. "color=blue,black,brown").
-		var rawQueryFragments []string
-
-		if params.TimeRange != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "timeRange", *params.TimeRange, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
-				return nil, err
-			} else {
-				for _, qp := range strings.Split(queryFrag, "&") {
-					rawQueryFragments = append(rawQueryFragments, qp)
-				}
-			}
-
-		}
-
-		if params.StartDate != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startDate", *params.StartDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
-				return nil, err
-			} else {
-				for _, qp := range strings.Split(queryFrag, "&") {
-					rawQueryFragments = append(rawQueryFragments, qp)
-				}
-			}
-
-		}
-
-		if params.EndDate != nil {
-
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endDate", *params.EndDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
-				return nil, err
-			} else {
-				for _, qp := range strings.Split(queryFrag, "&") {
-					rawQueryFragments = append(rawQueryFragments, qp)
-				}
-			}
-
-		}
-
-		if encoded := queryValues.Encode(); encoded != "" {
-			rawQueryFragments = append(rawQueryFragments, encoded)
-		}
-		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
-	}
-
-	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -16405,6 +16646,116 @@ func NewUpdateReportRequestWithBody(server string, id ReportId, contentType stri
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAsyncRunReportByIdRequest constructs an http.Request for the AsyncRunReportById method
+func NewAsyncRunReportByIdRequest(server string, id string, params *AsyncRunReportByIdParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/reports/%s/actions/run", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.TimeRange != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "timeRange", *params.TimeRange, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.StartDate != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startDate", *params.StartDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.EndDate != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endDate", *params.EndDate, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
 
 	return req, nil
 }
@@ -20302,25 +20653,50 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /analytics/v1/reports (the `CreateReport` operationId).
 	CreateReportWithResponse(ctx context.Context, body CreateReportJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateReportResp, error)
 
-	// QueryWithBodyWithResponse Run a query
+	// AsyncRunInlineWithBodyWithResponse Run a report asynchronously
 	//
-	// Runs a report query with the specified configuration without persisting it.
-	// Fields that are not populated will use their default values if needed.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-	QueryWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryResp, error)
+	// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+	AsyncRunInlineWithBodyWithResponse(ctx context.Context, params *AsyncRunInlineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AsyncRunInlineResp, error)
 
-	// QueryWithResponse Run a query
+	// AsyncRunInlineWithResponse Run a report asynchronously
 	//
-	// Runs a report query with the specified configuration without persisting it.
-	// Fields that are not populated will use their default values if needed.
+	// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
-	// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-	QueryWithResponse(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryResp, error)
+	// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+	AsyncRunInlineWithResponse(ctx context.Context, params *AsyncRunInlineParams, body AsyncRunInlineJSONRequestBody, reqEditors ...RequestEditorFn) (*AsyncRunInlineResp, error)
+
+	// GetAsyncOperationWithResponse Poll an async report run operation
+	//
+	// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /analytics/v1/reports/operations/{operationId} (the `GetAsyncOperation` operationId).
+	GetAsyncOperationWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResp, error)
+
+	// CancelAsyncOperationWithResponse Cancel an async report run operation
+	//
+	// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /analytics/v1/reports/operations/{operationId}/actions/cancel (the `CancelAsyncOperation` operationId).
+	CancelAsyncOperationWithResponse(ctx context.Context, operationId string, params *CancelAsyncOperationParams, reqEditors ...RequestEditorFn) (*CancelAsyncOperationResp, error)
+
+	// GetAsyncOperationResultsWithResponse Get results of an async report run operation
+	//
+	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
+	GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error)
 
 	// DeleteReportWithResponse Delete a report
 	//
@@ -20330,15 +20706,6 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with DELETE /analytics/v1/reports/{id} (the `DeleteReport` operationId).
 	DeleteReportWithResponse(ctx context.Context, id ReportId, reqEditors ...RequestEditorFn) (*DeleteReportResp, error)
-
-	// GetReportWithResponse Get report results
-	//
-	// Returns the results of the specified report.
-	//
-	// Returns a wrapper object for the known response body format(s).
-	//
-	// Corresponds with GET /analytics/v1/reports/{id} (the `GetReport` operationId).
-	GetReportWithResponse(ctx context.Context, id ReportId, params *GetReportParams, reqEditors ...RequestEditorFn) (*GetReportResp, error)
 
 	// UpdateReportWithBodyWithResponse Update a report
 	//
@@ -20361,6 +20728,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /analytics/v1/reports/{id} (the `UpdateReport` operationId).
 	UpdateReportWithResponse(ctx context.Context, id ReportId, body UpdateReportJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateReportResp, error)
+
+	// AsyncRunReportByIdWithResponse Run a saved report asynchronously
+	//
+	// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /analytics/v1/reports/{id}/actions/run (the `AsyncRunReportById` operationId).
+	AsyncRunReportByIdWithResponse(ctx context.Context, id string, params *AsyncRunReportByIdParams, reqEditors ...RequestEditorFn) (*AsyncRunReportByIdResp, error)
 
 	// GetReportConfigWithResponse Get report config
 	//
@@ -23920,46 +24296,81 @@ func (r CreateReportResp) ContentType() string {
 	return ""
 }
 
-type QueryResp struct {
+// AsyncRunInlineResp200Headers the declared response headers of an HTTP 200 response for AsyncRunInline
+type AsyncRunInlineResp200Headers struct {
+	XDryRun *string
+}
+
+// AsyncRunInlineResp202Headers the declared response headers of an HTTP 202 response for AsyncRunInline
+type AsyncRunInlineResp202Headers struct {
+	Location *string
+}
+
+type AsyncRunInlineResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *RunReportResult
+	JSON200 *AsyncOperationResponse
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *AsyncOperationResponse
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *AsyncRunInlineResp200Headers
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *AsyncRunInlineResp202Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r QueryResp) GetJSON200() *RunReportResult {
+func (r AsyncRunInlineResp) GetJSON200() *AsyncOperationResponse {
 	return r.JSON200
 }
 
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r AsyncRunInlineResp) GetJSON202() *AsyncOperationResponse {
+	return r.JSON202
+}
+
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r QueryResp) GetJSON400() *N400 {
+func (r AsyncRunInlineResp) GetJSON400() *N400 {
 	return r.JSON400
 }
 
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r QueryResp) GetJSON401() *N401 {
+func (r AsyncRunInlineResp) GetJSON401() *N401 {
 	return r.JSON401
 }
 
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r AsyncRunInlineResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r AsyncRunInlineResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
 // GetJSON500 returns the response for an HTTP 500 `application/json` response
-func (r QueryResp) GetJSON500() *N500 {
+func (r AsyncRunInlineResp) GetJSON500() *N500 {
 	return r.JSON500
 }
 
 // GetBody returns the raw response body bytes
-func (r QueryResp) GetBody() []byte {
+func (r AsyncRunInlineResp) GetBody() []byte {
 	return r.Body
 }
 
 // Status returns HTTPResponse.Status
-func (r QueryResp) Status() string {
+func (r AsyncRunInlineResp) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23967,7 +24378,7 @@ func (r QueryResp) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r QueryResp) StatusCode() int {
+func (r AsyncRunInlineResp) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -23975,7 +24386,263 @@ func (r QueryResp) StatusCode() int {
 }
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r QueryResp) ContentType() string {
+func (r AsyncRunInlineResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetAsyncOperationResp200Headers the declared response headers of an HTTP 200 response for GetAsyncOperation
+type GetAsyncOperationResp200Headers struct {
+	RetryAfter *string
+}
+
+type GetAsyncOperationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AsyncOperationPollResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetAsyncOperationResp200Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetAsyncOperationResp) GetJSON200() *AsyncOperationPollResponse {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetAsyncOperationResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetAsyncOperationResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetAsyncOperationResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetAsyncOperationResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetAsyncOperationResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetAsyncOperationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAsyncOperationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAsyncOperationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetAsyncOperationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CancelAsyncOperationResp200Headers the declared response headers of an HTTP 200 response for CancelAsyncOperation
+type CancelAsyncOperationResp200Headers struct {
+	XDryRun *string
+}
+
+type CancelAsyncOperationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AsyncOperationResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CancelAsyncOperationResp200Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CancelAsyncOperationResp) GetJSON200() *AsyncOperationResponse {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r CancelAsyncOperationResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CancelAsyncOperationResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CancelAsyncOperationResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r CancelAsyncOperationResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r CancelAsyncOperationResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CancelAsyncOperationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CancelAsyncOperationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CancelAsyncOperationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CancelAsyncOperationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetAsyncOperationResultsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GetAsyncOperationResults200Response
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON422 the response for an HTTP 422 `application/json` response
+	JSON422 *N422
+	// JSON425 the response for an HTTP 425 `application/json` response
+	JSON425 *N425
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON200() *GetAsyncOperationResults200Response {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON422 returns the response for an HTTP 422 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON422() *N422 {
+	return r.JSON422
+}
+
+// GetJSON425 returns the response for an HTTP 425 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON425() *N425 {
+	return r.JSON425
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetAsyncOperationResultsResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetAsyncOperationResultsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAsyncOperationResultsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAsyncOperationResultsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetAsyncOperationResultsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -24058,82 +24725,6 @@ func (r DeleteReportResp) ContentType() string {
 	return ""
 }
 
-type GetReportResp struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *GetReportResponse
-	// JSON400 the response for an HTTP 400 `application/json` response
-	JSON400 *N400
-	// JSON401 the response for an HTTP 401 `application/json` response
-	JSON401 *N401
-	// JSON403 the response for an HTTP 403 `application/json` response
-	JSON403 *N403
-	// JSON404 the response for an HTTP 404 `application/json` response
-	JSON404 *N404
-	// JSON429 the response for an HTTP 429 `application/json` response
-	JSON429 *N429
-}
-
-// GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r GetReportResp) GetJSON200() *GetReportResponse {
-	return r.JSON200
-}
-
-// GetJSON400 returns the response for an HTTP 400 `application/json` response
-func (r GetReportResp) GetJSON400() *N400 {
-	return r.JSON400
-}
-
-// GetJSON401 returns the response for an HTTP 401 `application/json` response
-func (r GetReportResp) GetJSON401() *N401 {
-	return r.JSON401
-}
-
-// GetJSON403 returns the response for an HTTP 403 `application/json` response
-func (r GetReportResp) GetJSON403() *N403 {
-	return r.JSON403
-}
-
-// GetJSON404 returns the response for an HTTP 404 `application/json` response
-func (r GetReportResp) GetJSON404() *N404 {
-	return r.JSON404
-}
-
-// GetJSON429 returns the response for an HTTP 429 `application/json` response
-func (r GetReportResp) GetJSON429() *N429 {
-	return r.JSON429
-}
-
-// GetBody returns the raw response body bytes
-func (r GetReportResp) GetBody() []byte {
-	return r.Body
-}
-
-// Status returns HTTPResponse.Status
-func (r GetReportResp) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetReportResp) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
-func (r GetReportResp) ContentType() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Header.Get("Content-Type")
-	}
-	return ""
-}
-
 type UpdateReportResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -24197,6 +24788,103 @@ func (r UpdateReportResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r UpdateReportResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// AsyncRunReportByIdResp200Headers the declared response headers of an HTTP 200 response for AsyncRunReportById
+type AsyncRunReportByIdResp200Headers struct {
+	XDryRun *string
+}
+
+// AsyncRunReportByIdResp202Headers the declared response headers of an HTTP 202 response for AsyncRunReportById
+type AsyncRunReportByIdResp202Headers struct {
+	Location *string
+}
+
+type AsyncRunReportByIdResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AsyncOperationResponse
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *AsyncOperationResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *AsyncRunReportByIdResp200Headers
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *AsyncRunReportByIdResp202Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r AsyncRunReportByIdResp) GetJSON200() *AsyncOperationResponse {
+	return r.JSON200
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r AsyncRunReportByIdResp) GetJSON202() *AsyncOperationResponse {
+	return r.JSON202
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r AsyncRunReportByIdResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r AsyncRunReportByIdResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r AsyncRunReportByIdResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r AsyncRunReportByIdResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r AsyncRunReportByIdResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r AsyncRunReportByIdResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r AsyncRunReportByIdResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AsyncRunReportByIdResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r AsyncRunReportByIdResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -29717,36 +30405,79 @@ func (c *ClientWithResponses) CreateReportWithResponse(ctx context.Context, body
 	return ParseCreateReportResp(rsp)
 }
 
-// QueryWithBodyWithResponse Run a query
+// AsyncRunInlineWithBodyWithResponse Run a report asynchronously
 //
-// Runs a report query with the specified configuration without persisting it.
-// Fields that are not populated will use their default values if needed.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-func (c *ClientWithResponses) QueryWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryResp, error) {
-	rsp, err := c.QueryWithBody(ctx, contentType, body, reqEditors...)
+// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+func (c *ClientWithResponses) AsyncRunInlineWithBodyWithResponse(ctx context.Context, params *AsyncRunInlineParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AsyncRunInlineResp, error) {
+	rsp, err := c.AsyncRunInlineWithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseQueryResp(rsp)
+	return ParseAsyncRunInlineResp(rsp)
 }
 
-// QueryWithResponse Run a query
+// AsyncRunInlineWithResponse Run a report asynchronously
 //
-// Runs a report query with the specified configuration without persisting it.
-// Fields that are not populated will use their default values if needed.
+// Submits an async report execution job using an inline configuration. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header to ensure at-most-once submission. Duplicate requests with the same config for the same customer return the existing in-flight operation. Use ?dryRun=true to validate the config without creating an operation.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
-// Corresponds with POST /analytics/v1/reports/query (the `Query` operationId).
-func (c *ClientWithResponses) QueryWithResponse(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryResp, error) {
-	rsp, err := c.Query(ctx, body, reqEditors...)
+// Corresponds with POST /analytics/v1/reports/actions/run (the `AsyncRunInline` operationId).
+func (c *ClientWithResponses) AsyncRunInlineWithResponse(ctx context.Context, params *AsyncRunInlineParams, body AsyncRunInlineJSONRequestBody, reqEditors ...RequestEditorFn) (*AsyncRunInlineResp, error) {
+	rsp, err := c.AsyncRunInline(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseQueryResp(rsp)
+	return ParseAsyncRunInlineResp(rsp)
+}
+
+// GetAsyncOperationWithResponse Poll an async report run operation
+//
+// Returns the current status of an async report operation. Non-terminal operations (pending, running) include a Retry-After header suggesting when to poll again. This endpoint does not return result data — once status is "succeeded", fetch the result from the operation's results endpoint. When status is "failed", the error field contains an RFC 9457-shaped error. Returns 404 if the operationId does not exist, belongs to a different tenant, or has expired.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /analytics/v1/reports/operations/{operationId} (the `GetAsyncOperation` operationId).
+func (c *ClientWithResponses) GetAsyncOperationWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResp, error) {
+	rsp, err := c.GetAsyncOperation(ctx, operationId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAsyncOperationResp(rsp)
+}
+
+// CancelAsyncOperationWithResponse Cancel an async report run operation
+//
+// Cancels a pending or running async report operation. Already-terminal operations (succeeded, failed, canceled) are returned as-is without any state change (idempotent). Returns 404 if the operationId does not exist or belongs to a different tenant. Use ?dryRun=true to validate the request without modifying any state.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /analytics/v1/reports/operations/{operationId}/actions/cancel (the `CancelAsyncOperation` operationId).
+func (c *ClientWithResponses) CancelAsyncOperationWithResponse(ctx context.Context, operationId string, params *CancelAsyncOperationParams, reqEditors ...RequestEditorFn) (*CancelAsyncOperationResp, error) {
+	rsp, err := c.CancelAsyncOperation(ctx, operationId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCancelAsyncOperationResp(rsp)
+}
+
+// GetAsyncOperationResultsWithResponse Get results of an async report run operation
+//
+// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
+func (c *ClientWithResponses) GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error) {
+	rsp, err := c.GetAsyncOperationResults(ctx, operationId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAsyncOperationResultsResp(rsp)
 }
 
 // DeleteReportWithResponse Delete a report
@@ -29762,21 +30493,6 @@ func (c *ClientWithResponses) DeleteReportWithResponse(ctx context.Context, id R
 		return nil, err
 	}
 	return ParseDeleteReportResp(rsp)
-}
-
-// GetReportWithResponse Get report results
-//
-// Returns the results of the specified report.
-//
-// Returns a wrapper object for the known response body format(s).
-//
-// Corresponds with GET /analytics/v1/reports/{id} (the `GetReport` operationId).
-func (c *ClientWithResponses) GetReportWithResponse(ctx context.Context, id ReportId, params *GetReportParams, reqEditors ...RequestEditorFn) (*GetReportResp, error) {
-	rsp, err := c.GetReport(ctx, id, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetReportResp(rsp)
 }
 
 // UpdateReportWithBodyWithResponse Update a report
@@ -29811,6 +30527,21 @@ func (c *ClientWithResponses) UpdateReportWithResponse(ctx context.Context, id R
 		return nil, err
 	}
 	return ParseUpdateReportResp(rsp)
+}
+
+// AsyncRunReportByIdWithResponse Run a saved report asynchronously
+//
+// Submits an async execution job for a saved report identified by ID. Returns 202 immediately with a Location header pointing to the operation status endpoint. Requires the Idempotency-Key header. Use ?dryRun=true to validate without creating an operation.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /analytics/v1/reports/{id}/actions/run (the `AsyncRunReportById` operationId).
+func (c *ClientWithResponses) AsyncRunReportByIdWithResponse(ctx context.Context, id string, params *AsyncRunReportByIdParams, reqEditors ...RequestEditorFn) (*AsyncRunReportByIdResp, error) {
+	rsp, err := c.AsyncRunReportById(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAsyncRunReportByIdResp(rsp)
 }
 
 // GetReportConfigWithResponse Get report config
@@ -33292,22 +34023,113 @@ func ParseCreateReportResp(rsp *http.Response) (*CreateReportResp, error) {
 	return response, nil
 }
 
-// ParseQueryResp parses an HTTP response from a QueryWithResponse call
-func ParseQueryResp(rsp *http.Response) (*QueryResp, error) {
+// ParseAsyncRunInlineResp parses an HTTP response from a AsyncRunInlineWithResponse call
+func ParseAsyncRunInlineResp(rsp *http.Response) (*AsyncRunInlineResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &QueryResp{
+	response := &AsyncRunInlineResp{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RunReportResult
+		var dest AsyncOperationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest AsyncOperationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers AsyncRunInlineResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 202:
+		var headers AsyncRunInlineResp202Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		response.Headers202 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetAsyncOperationResp parses an HTTP response from a GetAsyncOperationWithResponse call
+func ParseGetAsyncOperationResp(rsp *http.Response) (*GetAsyncOperationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAsyncOperationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AsyncOperationPollResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -33326,6 +34148,182 @@ func ParseQueryResp(rsp *http.Response) (*QueryResp, error) {
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetAsyncOperationResp200Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers200 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCancelAsyncOperationResp parses an HTTP response from a CancelAsyncOperationWithResponse call
+func ParseCancelAsyncOperationResp(rsp *http.Response) (*CancelAsyncOperationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CancelAsyncOperationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AsyncOperationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CancelAsyncOperationResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetAsyncOperationResultsResp parses an HTTP response from a GetAsyncOperationResultsWithResponse call
+func ParseGetAsyncOperationResultsResp(rsp *http.Response) (*GetAsyncOperationResultsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAsyncOperationResultsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetAsyncOperationResults200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest N422
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 425:
+		var dest N425
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON425 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500
@@ -33400,67 +34398,6 @@ func ParseDeleteReportResp(rsp *http.Response) (*DeleteReportResp, error) {
 	return response, nil
 }
 
-// ParseGetReportResp parses an HTTP response from a GetReportWithResponse call
-func ParseGetReportResp(rsp *http.Response) (*GetReportResp, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetReportResp{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetReportResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest N400
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest N401
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest N403
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest N404
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
-		var dest N429
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON429 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseUpdateReportResp parses an HTTP response from a UpdateReportWithResponse call
 func ParseUpdateReportResp(rsp *http.Response) (*UpdateReportResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -33510,6 +34447,97 @@ func ParseUpdateReportResp(rsp *http.Response) (*UpdateReportResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseAsyncRunReportByIdResp parses an HTTP response from a AsyncRunReportByIdWithResponse call
+func ParseAsyncRunReportByIdResp(rsp *http.Response) (*AsyncRunReportByIdResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AsyncRunReportByIdResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AsyncOperationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest AsyncOperationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers AsyncRunReportByIdResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 202:
+		var headers AsyncRunReportByIdResp202Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		response.Headers202 = &headers
 	}
 
 	return response, nil

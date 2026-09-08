@@ -11,6 +11,8 @@
 
 ### ENHANCEMENTS
 
+- **data-source/doit_report_result, data-source/doit_report_query**: Reports and queries now run through the asynchronous execution API: the provider submits the run, polls until it completes, and then fetches the result. Reports that take longer than the API's 120-second edge timeout previously failed with a `524` and could not be read through Terraform at all; they now complete. No configuration changes are required — both schemas are unchanged
+- **data-source/doit_report_result, data-source/doit_report_query**: The `read` timeout (default 5 minutes) now bounds the entire report run rather than a single HTTP request. Reports needing longer should raise it, for example `timeouts = { read = "30m" }`. When the timeout is reached, or Terraform is interrupted, the provider now **cancels the running report** instead of leaving it consuming query capacity
 - **data-source/doit_cloudconnect_supported_features**: Read supported features and permission status for connected AWS accounts. Document the public schema’s unsupported Azure claim.
 - **resource/doit_report, data-source/doit_report_query**: Accept `sankey_chart`, `column_and_line_chart`, and `trend_board` layouts by synchronizing the renderer enum from upstream [omni#63122](https://github.com/doiteng/omni/pull/63122).
 

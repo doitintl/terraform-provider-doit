@@ -25,6 +25,20 @@ The `result_json` field contains the full result object including:
 - `secondaryRows`: Secondary time range rows (if applicable)
 - `cacheHit`: Whether results were served from cache
 
+## Report Execution and Timeouts
+
+Reports are executed asynchronously: the provider submits the run and polls until it completes. Because no single HTTP request stays open for the duration of the report, the API's 120-second edge timeout does not limit how long a report may take, and the provider's `request_timeout` setting has no practical bearing on it.
+
+The `read` timeout bounds the whole run and defaults to 5 minutes. Raise it for reports that need longer:
+
+```hcl
+timeouts = {
+  read = "30m"
+}
+```
+
+If the `read` timeout is reached — or you interrupt Terraform — the provider cancels the running report before returning the error. See the [Timeouts guide](../guides/timeouts) for details.
+
 ## Example Usage
 
 ```terraform

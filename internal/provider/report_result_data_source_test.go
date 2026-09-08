@@ -121,6 +121,50 @@ func TestAccReportResultDataSource_NotFound(t *testing.T) {
 
 // --- Test config helpers ---
 
+// TestAccReportResultDataSource_WithTimeout verifies the timeouts block is
+// wired up and a generous read timeout is honored. Reports run asynchronously,
+// so this timeout is what bounds the whole poll loop — exceeding it cancels the
+// operation. The expiry path itself is covered deterministically by the unit
+// tests in async_report_test.go; a real report can finish faster than any
+// deadline worth setting here.
+func TestAccReportResultDataSource_WithTimeout(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-rr-ds-to")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportResultDataSourceConfigWithTimeout(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_result.with_timeout",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_result.with_timeout",
+						tfjsonpath.New("report_name"),
+						knownvalue.StringExact(rName)),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportResultDataSourceConfigWithTimeout(name string) string {
+	return testAccReportResultDataSourceConfig(name) + `
+
+data "doit_report_result" "with_timeout" {
+    id = doit_report.test.id
+
+    timeouts = {
+      read = "10m"
+    }
+}
+`
+}
+
 func testAccReportResultDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_report" "test" {

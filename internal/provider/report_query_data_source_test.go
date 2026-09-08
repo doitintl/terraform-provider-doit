@@ -165,6 +165,61 @@ data "doit_report_query" "test" {
 `
 }
 
+// TestAccReportQueryDataSource_WithTimeout verifies the timeouts block is wired
+// up and a generous read timeout is honored. Queries run asynchronously, so this
+// timeout bounds the whole poll loop — exceeding it cancels the operation. The
+// expiry path itself is covered deterministically by the unit tests in
+// async_report_test.go.
+func TestAccReportQueryDataSource_WithTimeout(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceConfigWithTimeout(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.with_timeout",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.with_timeout",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceConfigWithTimeout() string {
+	return `
+data "doit_report_query" "with_timeout" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        time_range = {
+          mode            = "last"
+          amount          = 1
+          unit            = "month"
+          include_current = false
+        }
+    }
+
+    timeouts = {
+      read = "10m"
+    }
+}
+`
+}
+
 func testAccReportQueryDataSourceConfig() string {
 	return `
 data "doit_report_query" "test" {

@@ -127,7 +127,45 @@ When writing unit tests that mock DoiT API responses (e.g. `*_internal_test.go`,
 
 1. **Always use `httptest.NewTestServer(t, handler)`** instead of `httptest.NewServer(handler)` to use the in-memory fake network and avoid OS TCP port allocations. Server cleanup is handled automatically by the test framework.
 2. **Always pass `models.WithHTTPClient(server.Client())`** when instantiating the generated client (`models.NewClientWithResponses`). Because `NewTestServer` does not bind a local TCP port, failing to pass `server.Client()` will cause connection errors.
-3. **Use `testing/synctest` for timeout and retry testing**: Wrap asynchronous timing/backoff tests in `synctest.Run(func() { ... })` and use `synctest.Sleep` / virtual time rather than sleeping in real wall-clock time.
+3. **Use `testing/synctest` for timeout, retry, and polling tests** — see below.
+
+### Virtual Time with `testing/synctest`
+
+Tests that would otherwise sleep in real wall-clock time belong in a synctest
+bubble, where the `time` package uses a fake clock that advances instantly once
+every goroutine in the bubble is durably blocked. The whole unit suite runs under
+a 120s budget, so a test asserting on minutes of elapsed time is only practical
+this way.
+
+```go
+func TestSomethingSlow(t *testing.T) {
+    // No t.Parallel(): a bubble owns its own clock and requires every goroutine
+    // in it to be durably blocked before time advances.
+    synctest.Test(t, func(t *testing.T) {
+        srv := httptest.NewTestServer(t, handler)   // in-memory net = durably blocking
+        client := newTestClient(t, srv)
+
+        start := time.Now()
+        // ... code that waits on timers or a context deadline ...
+        if elapsed := time.Since(start); elapsed != 15*time.Second {
+            t.Errorf("elapsed = %v, want 15s", elapsed)  // virtual, costs ~0 real time
+        }
+    })
+}
+```
+
+Rules that matter:
+
+- **`synctest.Test(t, func(t *testing.T){...})`** is the API. `synctest.Run` was
+  the pre-1.25 experimental form and **no longer exists** — it will not compile.
+- **Never call `t.Parallel()` inside a bubble.**
+- **`httptest.NewTestServer` is what makes this work.** Its in-memory network is
+  durably blocking; a real TCP listener is not, and time would never advance.
+- Real network I/O and mutex contention are not durably blocking. Keep the
+  server, client, and system under test entirely inside the bubble.
+
+`internal/provider/async_report_test.go` is the reference example — it drives a
+full submit/poll/cancel cycle across minutes of virtual time in milliseconds.
 
 ---
 
