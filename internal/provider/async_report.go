@@ -63,11 +63,24 @@ func newIdempotencyKey() string {
 // a submission being applied twice; deduplication itself is content-based, so an
 // identical config issued concurrently attaches to the operation already in
 // flight rather than starting a second one.
-func submitAsyncReport(ctx context.Context, what string, submit asyncSubmitFunc) (string, diag.Diagnostics) {
+func submitAsyncReport(
+	ctx context.Context,
+	client *models.ClientWithResponses,
+	what string,
+	submit asyncSubmitFunc,
+) (string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	sub, err := submit(ctx, newIdempotencyKey())
+	idempotencyKey := newIdempotencyKey()
+
+	sub, err := submit(ctx, idempotencyKey)
 	if err != nil {
+		if ctx.Err() != nil {
+			// The server may have accepted the submission before we stopped
+			// waiting for its response, leaving a run we never learned the ID
+			// of. Recover it before reporting the failure.
+			diags.Append(cleanUpAbandonedSubmit(ctx, client, idempotencyKey, submit)...)
+		}
 		diags.AddError(
 			"Error Running "+what,
 			fmt.Sprintf("Could not submit the %s run: %s", what, err.Error()),
@@ -97,6 +110,104 @@ func submitAsyncReport(ctx context.Context, what string, submit asyncSubmitFunc)
 	}
 
 	return sub.OperationID, diags
+}
+
+// cleanUpAbandonedSubmit recovers and cancels an operation whose submission was
+// accepted but whose response never reached us.
+//
+// Replaying the original Idempotency-Key is what makes this possible: the API
+// answers a replay with the operation the first attempt created, so the ID can
+// be recovered and the run stopped. The replay runs on a context detached from
+// the expired one, since the whole point is that ctx is already dead.
+//
+// If the server never actually received the first attempt, the replay is treated
+// as a fresh submission and creates an operation — which is then cancelled here
+// anyway. That trades a briefly-created run for the guarantee that nothing is
+// left executing, which is the better failure mode of the two.
+func cleanUpAbandonedSubmit(
+	ctx context.Context,
+	client *models.ClientWithResponses,
+	idempotencyKey string,
+	submit asyncSubmitFunc,
+) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	recoverCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), asyncCancelGrace)
+	defer stop()
+
+	sub, err := submit(recoverCtx, idempotencyKey)
+	if err != nil || sub.OperationID == "" {
+		// Nothing recoverable: either the submission never landed, or the
+		// replay itself failed. Both are logged rather than warned about,
+		// since in the common case there is no operation to worry about.
+		tflog.Debug(ctx, "Could not determine whether an abandoned submission created an operation", map[string]any{
+			"error": err,
+		})
+		return diags
+	}
+
+	_, cancelDiags := cancelAsyncOperation(ctx, client, sub.OperationID)
+	return append(diags, cancelDiags...)
+}
+
+// cancelAsyncOperation issues a best-effort cancel for operationID on a context
+// detached from ctx, because every caller reaches here with ctx already expired
+// or cancelled — a cancel issued on it would fail immediately.
+//
+// It returns a phrase describing what became of the operation, empty when
+// cancellation did not demonstrably happen, plus a warning in that case.
+func cancelAsyncOperation(
+	ctx context.Context,
+	client *models.ClientWithResponses,
+	operationID string,
+) (string, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	cancelCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), asyncCancelGrace)
+	defer stop()
+
+	cancelResp, err := client.CancelAsyncOperationWithResponse(cancelCtx, operationID,
+		&models.CancelAsyncOperationParams{IdempotencyKey: newIdempotencyKey()})
+
+	switch {
+	case err != nil:
+		diags.AddWarning(
+			"Could Not Cancel Report Operation",
+			fmt.Sprintf("Operation %s could not be canceled: %s. "+
+				"It may still be running; cancel it from the DoiT console if needed.",
+				operationID, err.Error()),
+		)
+		return "", diags
+
+	case cancelResp.StatusCode() != http.StatusOK:
+		diags.AddWarning(
+			"Could Not Cancel Report Operation",
+			fmt.Sprintf("Operation %s could not be canceled, status: %d, body: %s. "+
+				"It may still be running; cancel it from the DoiT console if needed.",
+				operationID, cancelResp.StatusCode(), string(cancelResp.Body)),
+		)
+		return "", diags
+	}
+
+	// Cancelling is idempotent: an operation that already reached a terminal
+	// state comes back unchanged rather than as "canceled". Report the state the
+	// API returned instead of assuming the cancel took effect.
+	outcome := fmt.Sprintf("A cancellation request was accepted for operation %s.", operationID)
+	if cancelResp.JSON200 != nil && cancelResp.JSON200.Status != nil {
+		status := *cancelResp.JSON200.Status
+		if status == models.AsyncOperationResponseStatusCanceled {
+			outcome = fmt.Sprintf("Operation %s was canceled.", operationID)
+		} else {
+			outcome = fmt.Sprintf("Operation %s had already finished (%s) and was left as-is.",
+				operationID, status)
+		}
+	}
+
+	tflog.Debug(ctx, "Requested cancellation of async report operation", map[string]any{
+		"operation_id": operationID,
+		"outcome":      outcome,
+	})
+	return outcome, diags
 }
 
 // asyncSubmitErrorDetail builds the detail for a failed submit, always
@@ -252,65 +363,18 @@ func fetchAsyncReportResults(
 
 // asyncTimedOut cancels a still-running operation and reports the timeout.
 //
-// The cancel runs on a context detached from the expired one — reusing ctx
-// would fail instantly, which is the whole reason the operation would otherwise
-// be left running. A cancel that fails is reported as a warning rather than an
-// error: the timeout is what the user needs to act on, and the warning names the
-// operation so it can be cancelled from the console.
+// A cancel that fails is reported as a warning rather than an error: the timeout
+// is what the user needs to act on, and the warning names the operation so it
+// can be cancelled from the console.
 func asyncTimedOut(
 	ctx context.Context,
 	client *models.ClientWithResponses,
 	what, operationID string,
 ) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	cancelCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), asyncCancelGrace)
-	defer stop()
-
-	cancelResp, err := client.CancelAsyncOperationWithResponse(cancelCtx, operationID,
-		&models.CancelAsyncOperationParams{IdempotencyKey: newIdempotencyKey()})
-
-	// outcome describes what actually became of the operation, and is appended
-	// to the timeout error. It stays empty when cancellation did not demonstrably
-	// happen, so the error never claims an outcome the warning contradicts.
-	var outcome string
-
-	switch {
-	case err != nil:
-		diags.AddWarning(
-			"Could Not Cancel Report Operation",
-			fmt.Sprintf("Operation %s timed out but could not be canceled: %s. "+
-				"It may still be running; cancel it from the DoiT console if needed.",
-				operationID, err.Error()),
-		)
-	case cancelResp.StatusCode() != http.StatusOK:
-		diags.AddWarning(
-			"Could Not Cancel Report Operation",
-			fmt.Sprintf("Operation %s timed out but could not be canceled, status: %d, body: %s. "+
-				"It may still be running; cancel it from the DoiT console if needed.",
-				operationID, cancelResp.StatusCode(), string(cancelResp.Body)),
-		)
-	default:
-		// Cancelling is idempotent: an operation that already reached a terminal
-		// state comes back unchanged rather than as "canceled". Report the state
-		// the API returned instead of assuming the cancel took effect.
-		outcome = fmt.Sprintf("A cancellation request was accepted for operation %s.", operationID)
-		if cancelResp.JSON200 != nil && cancelResp.JSON200.Status != nil {
-			status := *cancelResp.JSON200.Status
-			if status == models.AsyncOperationResponseStatusCanceled {
-				outcome = fmt.Sprintf("Operation %s was canceled.", operationID)
-			} else {
-				outcome = fmt.Sprintf("Operation %s had already finished (%s) and was left as-is.",
-					operationID, status)
-			}
-		}
-		tflog.Debug(ctx, "Requested cancellation of async report operation after timeout", map[string]any{
-			"operation_id": operationID,
-			"outcome":      outcome,
-		})
-	}
-
+	outcome, diags := cancelAsyncOperation(ctx, client, operationID)
 	if outcome == "" {
+		// Cancellation did not demonstrably happen, so say only what is known.
+		// The accompanying warning explains why.
 		outcome = fmt.Sprintf("Operation %s may still be running.", operationID)
 	}
 

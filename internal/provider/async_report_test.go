@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -41,10 +42,11 @@ type asyncTestServer struct {
 	failureError  *models.AsyncOperationError
 	resultsStatus []int // consumed one per results call; last value repeats
 	submitStatus  int
-	submitEmpty   int    // number of initial submits answered with a 202 carrying no operation ID
-	cancelStatus  int    // status returned by the cancel endpoint
-	cancelOpState string // operation status reported in the cancel response body
-	pollNotFound  bool   // poll returns 404
+	submitEmpty   int           // number of initial submits answered with a 202 carrying no operation ID
+	submitDelay   time.Duration // how long the submit handler withholds its response
+	cancelStatus  int           // status returned by the cancel endpoint
+	cancelOpState string        // operation status reported in the cancel response body
+	pollNotFound  bool          // poll returns 404
 
 	// observations
 	submitKeys  []string
@@ -74,10 +76,36 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 	mux := http.NewServeMux()
 
 	submit := func(w http.ResponseWriter, r *http.Request) {
+		key := r.Header.Get("Idempotency-Key")
+
+		s.mu.Lock()
+		seenBefore := slices.Contains(s.submitKeys, key)
+		s.submitKeys = append(s.submitKeys, key)
+		delay := s.submitDelay
+		s.mu.Unlock()
+
+		// Only a first submission is slow. Replaying a key the server has
+		// already accepted is a lookup, so it answers promptly — which is what
+		// makes recovering an abandoned submission possible at all.
+		//
+		// The wait is held outside the lock so a slow submit does not block the
+		// cancel the abandoning caller issues concurrently. The operation counts
+		// as accepted the moment the handler is entered: the server has it, the
+		// client never sees the response.
+		if delay > 0 && !seenBefore {
+			select {
+			case <-time.After(delay):
+			case <-r.Context().Done():
+				return
+			}
+		}
+
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		s.submitKeys = append(s.submitKeys, r.Header.Get("Idempotency-Key"))
+		if seenBefore {
+			w.Header().Set("Idempotency-Replayed", "true")
+		}
 
 		if s.submitStatus != http.StatusAccepted {
 			w.Header().Set("Content-Type", "application/json")
@@ -207,7 +235,7 @@ func newAsyncTestClientWithRequestTimeout(
 
 // submitViaInline drives submitAsyncReport against the inline run endpoint.
 func submitViaInline(ctx context.Context, client *models.ClientWithResponses) (string, error) {
-	operationID, diags := submitAsyncReport(ctx, "query",
+	operationID, diags := submitAsyncReport(ctx, client, "query",
 		func(ctx context.Context, idempotencyKey string) (asyncSubmission, error) {
 			runResp, err := client.AsyncRunInlineWithResponse(ctx,
 				&models.AsyncRunInlineParams{IdempotencyKey: idempotencyKey},
@@ -651,6 +679,41 @@ func TestSubmitAsyncReport_Succeeds(t *testing.T) {
 		}
 		if submits[0] == "" {
 			t.Error("submit carried no Idempotency-Key")
+		}
+	})
+}
+
+// TestSubmitAsyncReport_AbandonedSubmitIsCleanedUp covers the window where the
+// server accepts a submission but the read context expires before the response
+// arrives. The provider never saw an operation ID, yet the run exists — and the
+// documented timeout/Ctrl-C behavior promises not to leave one behind.
+//
+// Recovery leans on the Idempotency-Key: replaying it returns the original
+// operation, which can then be canceled.
+func TestSubmitAsyncReport_AbandonedSubmitIsCleanedUp(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{submitDelay: 30 * time.Second})
+		client := newAsyncTestClient(t, srv.Server)
+
+		ctx, stop := context.WithTimeout(t.Context(), 5*time.Second)
+		defer stop()
+
+		if _, err := submitViaInline(ctx, client); err == nil {
+			t.Fatal("expected the submit to fail once the context expired")
+		}
+
+		submits, cancels, _, _, _ := srv.snapshot()
+		if len(cancels) != 1 {
+			t.Fatalf("cancel calls = %d, want 1 — the accepted submission was orphaned", len(cancels))
+		}
+		// The replay must reuse the original key; a fresh one would create a
+		// second operation rather than recovering the abandoned one.
+		if len(submits) != 2 {
+			t.Fatalf("submits = %d, want 2 (original + replay to recover the ID)", len(submits))
+		}
+		if submits[0] != submits[1] {
+			t.Errorf("recovery used a new Idempotency-Key (%q vs %q); it must replay the original",
+				submits[0], submits[1])
 		}
 	})
 }

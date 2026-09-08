@@ -254,7 +254,7 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 	// Submit the run, then poll to completion. The Idempotency-Key is supplied
 	// by submitAsyncReport.
 	reportID := data.Id.ValueString()
-	operationID, submitDiags := submitAsyncReport(ctx, "report results",
+	operationID, submitDiags := submitAsyncReport(ctx, d.client, "report results",
 		func(ctx context.Context, idempotencyKey string) (asyncSubmission, error) {
 			runResp, err := d.client.AsyncRunReportByIdWithResponse(ctx, reportID,
 				&models.AsyncRunReportByIdParams{
