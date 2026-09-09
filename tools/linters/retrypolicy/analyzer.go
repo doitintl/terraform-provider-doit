@@ -18,8 +18,10 @@
 // Two checks:
 //
 //   - a DCIRetryClient composite literal that omits newBackOff;
-//   - a newTestRetryClient call whose backoff argument is the nil literal,
-//     which reaches the same fallback despite going through the helper.
+//   - a call passing a literal nil where a backoff-policy factory is expected,
+//     which reaches the same fallback despite going through a helper. This keys
+//     off the parameter's type, so it covers every such constructor and wrapper
+//     rather than a list of names that would go stale.
 //
 // It deliberately does not flag:
 //
@@ -61,13 +63,16 @@ const (
 	// backoffField is the field whose absence selects the production policy.
 	backoffField = "newBackOff"
 
-	// retryClientHelper is the test helper that takes a policy as its third
-	// argument. Passing nil there reaches the same fallback as omitting the
-	// field, so going through the helper is not on its own sufficient.
-	retryClientHelper = "newTestRetryClient"
+	// backOffType is the result type of a backoff-policy factory —
+	// func() backoff.BackOff. Any call passing nil for such a parameter reaches
+	// the same production fallback as omitting the field, so the second check
+	// keys off the parameter's type rather than a list of helper names: that way
+	// it covers newTestRetryClient, newTestRetryAPIClient, and any wrapper added
+	// later, without the list going stale.
+	backOffType = "BackOff"
 
-	// helperBackoffArg is the position of the helper's backoff argument.
-	helperBackoffArg = 2
+	// retryClientHelper is named in diagnostics as the constructor to reach for.
+	retryClientHelper = "newTestRetryClient"
 )
 
 // Analyzer is the go/analysis Analyzer for retrypolicy.
@@ -97,7 +102,7 @@ func run(pass *analysis.Pass) (any, error) {
 		case *ast.CompositeLit:
 			checkLiteral(pass, node)
 		case *ast.CallExpr:
-			checkHelperCall(pass, node)
+			checkNilPolicyArg(pass, node)
 		}
 	})
 
@@ -139,30 +144,110 @@ func checkLiteral(pass *analysis.Pass, lit *ast.CompositeLit) {
 		retryClientType, backoffField, retryClientHelper, backoffField)
 }
 
-// checkHelperCall reports newTestRetryClient(_, _, nil), which reaches the
-// production fallback despite naming the field inside the helper.
-func checkHelperCall(pass *analysis.Pass, call *ast.CallExpr) {
-	ident, ok := call.Fun.(*ast.Ident)
-	if !ok || ident.Name != retryClientHelper {
-		return
-	}
-	if len(call.Args) <= helperBackoffArg {
-		return
-	}
-
-	arg, ok := call.Args[helperBackoffArg].(*ast.Ident)
-	if !ok || arg.Name != "nil" {
-		return
-	}
-	// Confirm it is the predeclared nil and not a shadowing identifier.
-	if _, isNil := pass.TypesInfo.ObjectOf(arg).(*types.Nil); !isNil {
+// checkNilPolicyArg reports a call that passes a literal nil where a
+// backoff-policy factory is expected.
+//
+// Keyed off the parameter's type, not the callee's name: newTestRetryClient and
+// newTestRetryAPIClient take the policy at different positions, and a future
+// wrapper would take it at a third — a name-and-index list would silently go
+// stale the moment one was added, which is exactly how the hazard this linter
+// exists for reached the tests in the first place.
+//
+// Only a literal nil is detected. A nil-valued variable passed through would
+// need dataflow analysis and is not covered; the testdata records that boundary.
+func checkNilPolicyArg(pass *analysis.Pass, call *ast.CallExpr) {
+	sig, ok := signatureOf(pass, call)
+	if !ok {
 		return
 	}
 
-	pass.Reportf(arg.Pos(),
-		"%s is passed a nil backoff policy, which reaches the same production "+
-			"2s-to-60s fallback as omitting %s; pass constantBackOff(d)",
-		retryClientHelper, backoffField)
+	for i, arg := range call.Args {
+		if !isNilLiteral(pass, arg) {
+			continue
+		}
+		if !isBackOffFactory(paramTypeAt(sig, i)) {
+			continue
+		}
+		pass.Reportf(arg.Pos(),
+			"nil backoff policy reaches the same production 2s-to-60s fallback "+
+				"as omitting %s; pass constantBackOff(d), as %s expects",
+			backoffField, retryClientHelper)
+	}
+}
+
+// signatureOf returns the callee's signature, skipping type conversions and
+// builtins, for which there is no signature to inspect.
+func signatureOf(pass *analysis.Pass, call *ast.CallExpr) (*types.Signature, bool) {
+	t := pass.TypesInfo.TypeOf(call.Fun)
+	if t == nil {
+		return nil, false
+	}
+	sig, ok := types.Unalias(t).Underlying().(*types.Signature)
+	return sig, ok
+}
+
+// paramTypeAt returns the declared type of the parameter receiving argument i,
+// accounting for a variadic tail. It returns nil when there is no such
+// parameter, which isBackOffFactory treats as no match.
+func paramTypeAt(sig *types.Signature, i int) types.Type {
+	params := sig.Params()
+	if params == nil || params.Len() == 0 {
+		return nil
+	}
+
+	last := params.Len() - 1
+	if i < last {
+		return params.At(i).Type()
+	}
+	if !sig.Variadic() {
+		if i > last {
+			return nil
+		}
+		return params.At(last).Type()
+	}
+	// The variadic parameter is a slice; an argument fills its element type.
+	slice, ok := params.At(last).Type().(*types.Slice)
+	if !ok {
+		return nil
+	}
+	return slice.Elem()
+}
+
+// isNilLiteral reports whether expr is the predeclared nil, rather than an
+// identifier that happens to be spelled that way.
+func isNilLiteral(pass *analysis.Pass, expr ast.Expr) bool {
+	ident, ok := expr.(*ast.Ident)
+	if !ok || ident.Name != "nil" {
+		return false
+	}
+	_, isNil := pass.TypesInfo.ObjectOf(ident).(*types.Nil)
+	return isNil
+}
+
+// isBackOffFactory reports whether t is func() BackOff — the shape of the
+// policy factory DCIRetryClient stores. A named function type is unwrapped, so
+// a future alias for the factory is still recognized.
+func isBackOffFactory(t types.Type) bool {
+	if t == nil {
+		return false
+	}
+	sig, ok := types.Unalias(t).Underlying().(*types.Signature)
+	if !ok {
+		return false
+	}
+	if sig.Params().Len() != 0 || sig.Results().Len() != 1 {
+		return false
+	}
+
+	result := types.Unalias(sig.Results().At(0).Type())
+	if ptr, ok := result.(*types.Pointer); ok {
+		result = ptr.Elem()
+	}
+	named, ok := result.(*types.Named)
+	if !ok {
+		return false
+	}
+	return named.Obj().Name() == backOffType
 }
 
 // isRetryClient reports whether t is DCIRetryClient or a pointer to it.

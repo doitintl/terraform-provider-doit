@@ -32,6 +32,19 @@ func newClientWithHTTPClient(httpClient *http.Client) *DCIRetryClient {
 	return &DCIRetryClient{client: httpClient}
 }
 
+// newTestRetryAPIClient wraps the constructor and takes the policy at a
+// different position, which is why the nil check keys off the parameter type
+// rather than a name-and-index list.
+func newTestRetryAPIClient(_ *http.Client, _ int, newBackOff func() BackOff) *DCIRetryClient {
+	return newTestRetryClient(nil, 0, newBackOff)
+}
+
+// takesAnyPointer exists to prove the nil check is type-selective: a nil passed
+// for a non-factory parameter must not be flagged.
+func takesAnyPointer(_ *http.Client) {}
+
+var _ = newTestRetryAPIClient
+var _ = takesAnyPointer
 var _ = newClientWithHTTPClient
 var _ = newTestRetryClient
 var _ = constantBackOff

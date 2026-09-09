@@ -120,9 +120,13 @@ func newTestAPIClient(t *testing.T, server *httptest.Server) *models.ClientWithR
 // newTestRetryAPIClient builds a generated client that reaches server through
 // the real DCIRetryClient with an injected policy.
 //
-// Callers must bound their context — retryTestTimeout says why. This is called
-// from inside synctest bubbles, so it must keep allocating nothing outside the
-// caller's goroutine.
+// Callers must bound their context — retryTestTimeout says why.
+//
+// Callers are split: async_report_test.go calls this from inside synctest
+// bubbles, delete_notfound_test.go from ordinary tests. Because some callers are
+// bubbled, this must keep allocating nothing outside the caller's goroutine — a
+// timer or channel created elsewhere is not durably blocking, and a bubble whose
+// clock cannot advance hangs to the suite timeout instead of failing.
 func newTestRetryAPIClient(
 	t *testing.T, server *httptest.Server,
 	requestTimeout time.Duration, newBackOff func() backoff.BackOff,
