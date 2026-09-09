@@ -10,6 +10,8 @@ import (
 	"testing"
 	"testing/synctest"
 	"time"
+
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 )
 
 // These tests drive DCIRetryClient's timeout and retry behavior against a fake
@@ -165,12 +167,14 @@ func TestDCIRetryClient_RequestTimeout(t *testing.T) {
 // cancellation propagates through the retry loop and stops retries immediately,
 // even when the per-request timeout is far larger.
 //
-// The per-request timeout here is deliberately not a legal provider
-// configuration — validateRequestTimeout rejects anything at or below the
-// 120s edge timeout and warns once it reaches the operation default, so in
-// production the request timeout always sits below the operation timeout. The
-// inversion is the point: it leaves the parent context as the only thing that
-// can end the run, which is what makes the assertion meaningful.
+// The per-request timeout is deliberately inverted relative to this test's
+// parent deadline. Such a value is legal — validateRequestTimeout errors only
+// at or below the 120s edge timeout, and merely warns above the operation
+// defaults, since raising the timeouts {} block to match is a legitimate thing
+// to do — but it is not the shape the defaults describe, where the request
+// timeout sits below the operation budget with headroom to retry. The inversion
+// is the point: it leaves the parent context as the only thing that can end the
+// run, which is what makes the assertion meaningful.
 func TestDCIRetryClient_ContextCancellation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		const (
@@ -496,23 +500,47 @@ func TestDCIRetryClient_500NotRetried(t *testing.T) {
 	})
 }
 
-// TestNewClient_CustomTimeout verifies that NewClient accepts a custom timeout
-// and performs zero network I/O during initialization.
+// TestNewClient_CustomTimeout verifies that NewClient wires the requested
+// per-request timeout through to the http.Client that actually enforces it.
+//
+// Asserting on the wiring rather than on observed traffic is deliberate:
+// NewClient builds its own &http.Client{Timeout: ...} with the default
+// transport, so a request it issued would leave for the real network and could
+// never be seen by an in-memory test server. A request counter therefore cannot
+// say anything about NewClient at all — see TestNewClientNoConstructorIO, which
+// asserts the no-I/O property against the injectable constructor where the
+// counter is genuinely observable.
 func TestNewClient_CustomTimeout(t *testing.T) {
 	t.Parallel()
 
-	var reqCount atomic.Int64
-	server := countingServer(t, &reqCount, func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	// httptest.NewTestServer starts lazily: the first Server.Client() call is what
-	// starts the fake network and assigns Server.URL, which reads as "" until
-	// then. Touching it here is what makes the address below real — handed "",
-	// NewClient would reach nothing and the assertion could not fail.
-	_ = server.Client()
+	const (
+		host           = "https://api.example.test"
+		requestTimeout = 42 * time.Second
+	)
+
+	client, err := NewClient(host, "test-token", "", "1.0.0", "dev", requestTimeout)
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+	if client == nil {
+		t.Fatal("NewClient() returned nil client")
+	}
+
+	if got, want := requestTimeoutOf(t, client), requestTimeout; got != want {
+		t.Errorf("request timeout = %v, want %v", got, want)
+	}
+	if got, want := serverOf(t, client), host+"/"; got != want {
+		t.Errorf("server = %q, want %q", got, want)
+	}
+}
+
+// TestNewClient_DefaultTimeout verifies that DefaultRequestTimeout is accepted
+// and reaches the same place a custom value does.
+func TestNewClient_DefaultTimeout(t *testing.T) {
+	t.Parallel()
 
 	client, err := NewClient(
-		server.URL, "test-token", "", "1.0.0", "dev", 42*time.Second,
+		"https://api.example.test", "test-token", "", "1.0.0", "dev", DefaultRequestTimeout,
 	)
 	if err != nil {
 		t.Fatalf("NewClient() error = %v", err)
@@ -520,32 +548,71 @@ func TestNewClient_CustomTimeout(t *testing.T) {
 	if client == nil {
 		t.Fatal("NewClient() returned nil client")
 	}
-	if got := reqCount.Load(); got != 0 {
-		t.Errorf("NewClient() made %d HTTP requests, want 0", got)
+
+	if got, want := requestTimeoutOf(t, client), DefaultRequestTimeout; got != want {
+		t.Errorf("request timeout = %v, want %v", got, want)
 	}
 }
 
-// TestNewClient_DefaultTimeout verifies that DefaultRequestTimeout is a valid
-// configuration value and performs zero network I/O during initialization.
-func TestNewClient_DefaultTimeout(t *testing.T) {
+// TestNewClientNoConstructorIO verifies that building a client performs no
+// network I/O — no token exchange, no discovery, no health check.
+//
+// This goes through newClientWithHTTPClient, the constructor NewClient
+// delegates to, so the injected client is the test server's and any request the
+// constructor made would reach the counter. Through NewClient itself the
+// assertion would be unfalsifiable: its own http.Client would not route here.
+func TestNewClientNoConstructorIO(t *testing.T) {
 	t.Parallel()
 
 	var reqCount atomic.Int64
 	server := countingServer(t, &reqCount, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	_ = server.Client() // see TestNewClient_CustomTimeout — this is what sets server.URL
 
-	client, err := NewClient(
-		server.URL, "test-token", "", "1.0.0", "dev", DefaultRequestTimeout,
+	client, err := newClientWithHTTPClient(
+		server.URL, "test-token", "", "1.0.0", "dev", server.Client(),
 	)
 	if err != nil {
-		t.Fatalf("NewClient() error = %v", err)
+		t.Fatalf("newClientWithHTTPClient() error = %v", err)
 	}
 	if client == nil {
-		t.Fatal("NewClient() returned nil client")
+		t.Fatal("newClientWithHTTPClient() returned nil client")
 	}
 	if got := reqCount.Load(); got != 0 {
-		t.Errorf("NewClient() made %d HTTP requests, want 0", got)
+		t.Errorf("construction made %d HTTP requests, want 0", got)
 	}
+}
+
+// requestTimeoutOf digs out the timeout on the http.Client buried inside a
+// generated client, so a test can assert the value survived the trip through
+// DCIRetryClient and models.NewClientWithResponses.
+func requestTimeoutOf(t *testing.T, client *models.ClientWithResponses) time.Duration {
+	t.Helper()
+
+	retryClient, ok := doerOf(t, client).(*DCIRetryClient)
+	if !ok {
+		t.Fatalf("request doer is %T, want *DCIRetryClient", doerOf(t, client))
+	}
+	return retryClient.client.Timeout
+}
+
+// serverOf returns the base URL the generated client will resolve paths against.
+func serverOf(t *testing.T, client *models.ClientWithResponses) string {
+	t.Helper()
+
+	inner, ok := client.ClientInterface.(*models.Client)
+	if !ok {
+		t.Fatalf("ClientInterface is %T, want *models.Client", client.ClientInterface)
+	}
+	return inner.Server
+}
+
+func doerOf(t *testing.T, client *models.ClientWithResponses) models.HttpRequestDoer {
+	t.Helper()
+
+	inner, ok := client.ClientInterface.(*models.Client)
+	if !ok {
+		t.Fatalf("ClientInterface is %T, want *models.Client", client.ClientInterface)
+	}
+	return inner.Client
 }
