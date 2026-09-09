@@ -311,11 +311,13 @@ func (v budgetScopeRequiredValidator) ValidateResource(ctx context.Context, req 
 		return
 	}
 
-	if scopes.IsNull() {
+	// An empty list is as invalid as an absent one — the API answers both with
+	// "invalid budget - no scopes" — so catch it here rather than at apply.
+	if scopes.IsNull() || len(scopes.Elements()) == 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("scopes"),
 			"Missing Required Attribute",
-			"'scopes' must be specified: a budget has to define the spend it tracks.",
+			"'scopes' must be set to a non-empty list: a budget has to define the spend it tracks.",
 		)
 	}
 }

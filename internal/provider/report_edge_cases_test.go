@@ -52,8 +52,9 @@ func TestAccReport_ForecastSettings_Import(t *testing.T) {
 				ResourceName:      "doit_report.forecast_import_test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// Import cannot tell which mirror is in use, so it populates the
-				// canonical metrics and leaves metric null. Trailing dots keep
+				// Import has no prior state, so it cannot know that metrics was
+				// omitted from configuration; it stores what the API returns while
+				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
@@ -76,8 +77,9 @@ func TestAccReport_ForecastSettings_ImportWithIntervals(t *testing.T) {
 				ResourceName:      "doit_report.intervals_test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// Import cannot tell which mirror is in use, so it populates the
-				// canonical metrics and leaves metric null. Trailing dots keep
+				// Import has no prior state, so it cannot know that metrics was
+				// omitted from configuration; it stores what the API returns while
+				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},

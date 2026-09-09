@@ -166,10 +166,21 @@ shows up as drift.
 
 ## Budgets and alerts created before the migration
 
-Records that still hold the legacy scope server-side keep working. The API reports their
-scope through `scopes` as well, so the provider reads them normally, and the first apply
-after you migrate the configuration converts them.
+Records that still hold the legacy scope server-side keep working, and no action is
+required. The API reports their scope through `scopes` as well, synthesized from the
+legacy references, so the provider reads them normally and produces no drift.
 
-For budgets this is fully automatic. For alerts, an apply that sends `scopes` while the
-alert still holds legacy attribution references clears those references — but only when
-the request does not also carry `attributions`, which the provider no longer sends.
+The server-side representation is converted the next time something actually updates the
+record. Migrating your configuration is not itself enough: if the `scopes` you write
+matches what the API already reports, the plan is empty, nothing is sent, and the legacy
+references stay where they are — harmlessly. They are cleared on the next apply that
+changes some other attribute.
+
+You can force the conversion by applying any change to the resource, but there is no need
+to. Both representations read identically, and `scopes` is the only one the provider
+uses.
+
+~> For alerts, the clearing only happens when the request carries `scopes` and **not**
+`attributions`. That is always the case with this provider version, which can no longer
+send the deprecated field, but it is worth knowing if you also manage these alerts
+through another client.

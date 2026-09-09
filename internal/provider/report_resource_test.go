@@ -183,8 +183,9 @@ func TestAccReport_Import(t *testing.T) {
 				ResourceName:      "doit_report.this",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// Import cannot tell which mirror is in use, so it populates the
-				// canonical metrics and leaves metric null. Trailing dots keep
+				// Import has no prior state, so it cannot know that metrics was
+				// omitted from configuration; it stores what the API returns while
+				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
@@ -4061,8 +4062,9 @@ func TestAccReport_MetricFilterOperand(t *testing.T) {
 				ResourceName:      "doit_report.operand",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// Import cannot tell which mirror is in use, so it populates the
-				// canonical metrics and leaves metric null. Trailing dots keep
+				// Import has no prior state, so it cannot know that metrics was
+				// omitted from configuration; it stores what the API returns while
+				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
@@ -4125,8 +4127,9 @@ func TestAccReport_LimitAggregation(t *testing.T) {
 				ResourceName:      "doit_report.limitagg",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// Import cannot tell which mirror is in use, so it populates the
-				// canonical metrics and leaves metric null. Trailing dots keep
+				// Import has no prior state, so it cannot know that metrics was
+				// omitted from configuration; it stores what the API returns while
+				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
@@ -4224,8 +4227,9 @@ func TestAccReport_LimitByChange(t *testing.T) {
 				ResourceName:      "doit_report.lbc",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// Import cannot tell which mirror is in use, so it populates the
-				// canonical metrics and leaves metric null. Trailing dots keep
+				// Import has no prior state, so it cannot know that metrics was
+				// omitted from configuration; it stores what the API returns while
+				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
@@ -4995,8 +4999,9 @@ func TestAccReport_Count_Lifecycle(t *testing.T) {
 				ResourceName:      "doit_report.count_test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// Import cannot tell which mirror is in use, so it populates the
-				// canonical metrics and leaves metric null. Trailing dots keep
+				// Import has no prior state, so it cannot know that metrics was
+				// omitted from configuration; it stores what the API returns while
+				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},

@@ -539,9 +539,12 @@ func buildBudgetScopesConfig(ctx context.Context, t *testing.T, scopes types.Lis
 // `required` the generated schema cannot express, because
 // BudgetCreateUpdateRequest serves both POST and PATCH (CMP-51650).
 //
-// The unknown case matters as much as the null one: a scopes list computed from
-// another resource is not yet known at validation time, and rejecting it there
-// would fail a configuration that is in fact valid.
+// An empty list is rejected alongside a null one: the API answers both with
+// "invalid budget - no scopes", so there is no reason to defer that to apply.
+//
+// The unknown case matters as much: a scopes list computed from another resource
+// is not yet known at validation time, and rejecting it there would fail a
+// configuration that is in fact valid.
 func TestBudgetScopeRequiredValidator(t *testing.T) {
 	ctx := t.Context()
 
@@ -566,7 +569,7 @@ func TestBudgetScopeRequiredValidator(t *testing.T) {
 	}{
 		{name: "populated", scopes: populated, wantError: false},
 		{name: "unknown is deferred", scopes: types.ListUnknown(resource_budget.ScopesValue{}.Type(ctx)), wantError: false},
-		{name: "empty list is accepted here and rejected by the API", scopes: empty, wantError: false},
+		{name: "empty list is rejected", scopes: empty, wantError: true},
 		{name: "null is rejected", scopes: types.ListNull(resource_budget.ScopesValue{}.Type(ctx)), wantError: true},
 	}
 
