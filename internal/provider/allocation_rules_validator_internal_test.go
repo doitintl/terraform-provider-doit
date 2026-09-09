@@ -64,7 +64,7 @@ type ruleSpec struct {
 }
 
 func TestAllocationRulesValidator(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name        string
@@ -187,7 +187,7 @@ func TestAllocationRulesValidator(t *testing.T) {
 }
 
 func TestAllocationRulesValidator_NullAndUnknown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	v := allocationRulesValidator{}
 
 	t.Run("null list skips validation", func(t *testing.T) {

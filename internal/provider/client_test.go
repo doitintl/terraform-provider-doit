@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -32,7 +31,6 @@ func captureUserAgent(t *testing.T) (*httptest.Server, *http.Client, func() stri
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"email":"test@example.com"}`))
 	}))
-	t.Cleanup(server.Close)
 	return server, server.Client(), func() string {
 		mu.Lock()
 		defer mu.Unlock()
@@ -54,7 +52,7 @@ func TestNewClient_UserAgent(t *testing.T) {
 		t.Fatal("NewClient() returned nil client")
 	}
 
-	resp, err := client.Validate(context.Background())
+	resp, err := client.Validate(t.Context())
 	if err != nil {
 		t.Fatalf("client.Validate() error = %v", err)
 	}
@@ -82,7 +80,7 @@ func TestNewClient_UserAgentDev(t *testing.T) {
 		t.Fatal("NewClient() returned nil client")
 	}
 
-	resp, err := client.Validate(context.Background())
+	resp, err := client.Validate(t.Context())
 	if err != nil {
 		t.Fatalf("client.Validate() error = %v", err)
 	}
@@ -110,7 +108,7 @@ func TestNewClient_UserAgentAppend(t *testing.T) {
 		t.Fatal("NewClient() returned nil client")
 	}
 
-	resp, err := client.Validate(context.Background())
+	resp, err := client.Validate(t.Context())
 	if err != nil {
 		t.Fatalf("client.Validate() error = %v", err)
 	}

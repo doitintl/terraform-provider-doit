@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -234,7 +233,7 @@ func getAllocationCount(t *testing.T) int {
 func computeAllocationCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var total int
 	params := &models.ListAllocationsParams{}

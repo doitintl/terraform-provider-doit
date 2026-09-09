@@ -96,7 +96,7 @@ func TestReconcileTags(t *testing.T) {
 func TestSupportRequestTagsTagValidators(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	r := &supportRequestTagsResource{}
 	schemaResp := &resource.SchemaResponse{}
 	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
@@ -225,7 +225,6 @@ func TestSupportRequestTagsCreate_Reconciles(t *testing.T) {
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			}))
-			defer server.Close()
 
 			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
@@ -233,7 +232,7 @@ func TestSupportRequestTagsCreate_Reconciles(t *testing.T) {
 			}
 
 			r := &supportRequestTagsResource{client: client}
-			ctx := context.Background()
+			ctx := t.Context()
 
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
@@ -343,7 +342,6 @@ func TestSupportRequestTagsPopulateState_Normalization(t *testing.T) {
 				w.WriteHeader(tt.statusCode)
 				_, _ = w.Write([]byte(tt.responseBody))
 			}))
-			defer server.Close()
 
 			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
@@ -352,7 +350,7 @@ func TestSupportRequestTagsPopulateState_Normalization(t *testing.T) {
 
 			r := &supportRequestTagsResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 
 			priorTagsSet := types.SetNull(types.StringType)
 			if tt.priorTags != nil {

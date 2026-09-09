@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -77,7 +76,7 @@ func TestRfc3339Validator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := rfc3339Validator{}
-			ctx := context.Background()
+			ctx := t.Context()
 
 			req := validator.StringRequest{
 				Path:        path.Root("timestamp"),
@@ -110,7 +109,7 @@ func TestRfc3339Validator(t *testing.T) {
 
 func TestRfc3339Validator_NullAndUnknown(t *testing.T) {
 	v := rfc3339Validator{}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("null value skips validation", func(t *testing.T) {
 		req := validator.StringRequest{

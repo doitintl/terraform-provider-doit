@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -250,7 +249,7 @@ func getAlertCount(t *testing.T) int {
 func computeAlertCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var total int
 	params := &models.ListAlertsParams{}

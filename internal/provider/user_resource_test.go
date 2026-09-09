@@ -31,9 +31,18 @@ func deleteTestUser(t *testing.T, email string) {
 	t.Helper()
 	client := getAPIClient(t)
 
+	// Cancellation is detached deliberately. Most callers invoke this from
+	// t.Cleanup, and t.Context() is cancelled just before cleanups run — so a
+	// plain t.Context() here would fail every cleanup call. It would do so
+	// silently, too: every failure below only logs a warning, so the result
+	// would be test users accumulating in the tenant with nothing going red.
+	// This is also called directly from test bodies, so one context has to
+	// serve both paths.
+	ctx := context.WithoutCancel(t.Context())
+
 	params := &models.ListUsersParams{Email: new(openapi_types.Email(email))}
 
-	listResp, err := client.ListUsersWithResponse(context.Background(), params)
+	listResp, err := client.ListUsersWithResponse(ctx, params)
 	if err != nil {
 		t.Logf("Warning: could not list users for cleanup: %v", err)
 		return
@@ -52,7 +61,7 @@ func deleteTestUser(t *testing.T, email string) {
 		return
 	}
 
-	deleteResp, err := client.DeleteUserWithResponse(context.Background(), *users[0].Id)
+	deleteResp, err := client.DeleteUserWithResponse(ctx, *users[0].Id)
 	if err != nil {
 		t.Logf("Warning: could not delete user during cleanup: %v", err)
 		return

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -32,7 +31,7 @@ func TestDateValidator(t *testing.T) {
 		{"timestamp", "2025-01-15T00:00:00Z", false},
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -55,7 +54,7 @@ func TestDateValidator(t *testing.T) {
 }
 
 func TestDateValidator_NullAndUnknown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	v := dateValidator{}
 
 	// Null value should pass without error

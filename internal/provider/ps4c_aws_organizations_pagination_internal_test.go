@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -37,7 +36,6 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 				"rowCount": 2
 			}`)
 		}))
-		defer server.Close()
 
 		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"max_results": tftypes.NewValue(tftypes.Number, 2.0),
@@ -54,7 +52,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		}
 
 		var data ps4cAwsOrganizationsDataSourceModel
-		if diags := state.Get(context.Background(), &data); diags.HasError() {
+		if diags := state.Get(t.Context(), &data); diags.HasError() {
 			t.Fatalf("failed to read state: %v", diags)
 		}
 		if got := len(data.Items.Elements()); got != 2 {
@@ -92,7 +90,6 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 				"rowCount": 1
 			}`)
 		}))
-		defer server.Close()
 
 		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"page_token": tftypes.NewValue(tftypes.String, "start-token"),
@@ -103,7 +100,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		}
 
 		var data ps4cAwsOrganizationsDataSourceModel
-		if diags := state.Get(context.Background(), &data); diags.HasError() {
+		if diags := state.Get(t.Context(), &data); diags.HasError() {
 			t.Fatalf("failed to read state: %v", diags)
 		}
 		if got := len(data.Items.Elements()); got != 2 {
@@ -132,7 +129,6 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 				"rowCount": 1
 			}`)
 		}))
-		defer server.Close()
 
 		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"max_results": tftypes.NewValue(tftypes.Number, 1.0),
@@ -150,7 +146,7 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 		}
 
 		var data ps4cAwsOrganizationsDataSourceModel
-		if diags := state.Get(context.Background(), &data); diags.HasError() {
+		if diags := state.Get(t.Context(), &data); diags.HasError() {
 			t.Fatalf("failed to read state: %v", diags)
 		}
 		if got := len(data.Items.Elements()); got != 1 {
@@ -174,7 +170,7 @@ func readPs4cAwsOrganizations(t *testing.T, server *httptest.Server, overrides m
 	}
 
 	ds := &ps4cAwsOrganizationsDataSource{client: client}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	schemaResp := &datasource.SchemaResponse{}
 	ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)

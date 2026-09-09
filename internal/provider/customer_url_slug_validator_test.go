@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -48,7 +47,7 @@ func TestCustomerURLSlugValidator(t *testing.T) {
 		{"invalid only hyphens 3 chars", "---", false},
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -71,7 +70,7 @@ func TestCustomerURLSlugValidator(t *testing.T) {
 }
 
 func TestCustomerURLSlugValidator_NullAndUnknown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	v := customerURLSlug()
 
 	// Null value should pass without error

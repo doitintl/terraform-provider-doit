@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -718,7 +717,7 @@ func TestAccBudget_Disappears(t *testing.T) {
 				PreConfig: func() {
 					// Delete the resource directly via API
 					client := getAPIClient(t)
-					resp, err := client.DeleteBudgetWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteBudgetWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete budget via API: %v", err)
 					}
@@ -2564,7 +2563,7 @@ func createLegacyScopeBudget(t *testing.T, name string) string {
 	t.Helper()
 
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	body := fmt.Sprintf(`{
   "name": %q,
@@ -2613,7 +2612,7 @@ func budgetLegacyScopeCleared(t *testing.T, id *string) resource.TestCheckFunc {
 	t.Helper()
 
 	return func(*terraform.State) error {
-		resp, err := getAPIClient(t).GetBudgetWithResponse(context.Background(), *id)
+		resp, err := getAPIClient(t).GetBudgetWithResponse(t.Context(), *id)
 		if err != nil {
 			return fmt.Errorf("reading budget %s: %w", *id, err)
 		}

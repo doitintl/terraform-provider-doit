@@ -24,7 +24,7 @@ import (
 // This tests whether GetAttribute on missing nested paths generates diagnostics
 // that would confuse users if propagated.
 func TestReportTimestampValidator_NoCustomTimeRange(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	schema := resource_report.ReportResourceSchema(ctx)
 
 	// Create an empty config with the report schema (no attributes set).
@@ -136,7 +136,7 @@ func countWarnings(d diag.Diagnostics) int {
 }
 
 func TestWarnNAFilterValues(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name         string
@@ -216,7 +216,7 @@ func TestWarnNAFilterValues(t *testing.T) {
 // TestReportFilterNAValidator_EmptyConfig verifies that the validator produces
 // no diagnostics when the config has no filters set (null).
 func TestReportFilterNAValidator_EmptyConfig(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	config := tfsdk.Config{Schema: resource_report.ReportResourceSchema(ctx)}
 	v := reportFilterNAValidator{}
 	req := resource.ValidateConfigRequest{Config: config}
@@ -240,7 +240,7 @@ func TestReportFilterNAValidator_EmptyConfig(t *testing.T) {
 // on unknown values. With []basetypes.StringValue, unknown elements are
 // silently skipped instead.
 func TestWarnNASentinels_UnknownElement(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	unknownList := types.ListValueMust(types.StringType, []attr.Value{
 		types.StringValue("known-allocation-id"),
@@ -263,7 +263,7 @@ func TestWarnNASentinels_UnknownElement(t *testing.T) {
 // same list are unknown. This is the key advantage of using
 // []basetypes.StringValue over the skip-all approach.
 func TestWarnNASentinels_MixedUnknownAndSentinel(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	mixedList := types.ListValueMust(types.StringType, []attr.Value{
 		types.StringValue("[Service N/A]"), // sentinel — should warn
@@ -285,7 +285,7 @@ func TestWarnNASentinels_MixedUnknownAndSentinel(t *testing.T) {
 // TestWarnNASentinels_AllUnknown reproduces the crash when ALL elements in a
 // values list are unknown (e.g. values = [doit_allocation.xxx.id]).
 func TestWarnNASentinels_AllUnknown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	unknownList := types.ListValueMust(types.StringType, []attr.Value{
 		types.StringUnknown(),
@@ -302,7 +302,7 @@ func TestWarnNASentinels_AllUnknown(t *testing.T) {
 // TestWarnNAFilterValues_UnknownElement reproduces the crash through the full
 // warnNAFilterValues path (the report validator's entry point).
 func TestWarnNAFilterValues_UnknownElement(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	f, fDiags := resource_report.NewFiltersValue(
 		resource_report.FiltersValue{}.AttributeTypes(ctx),
@@ -334,7 +334,7 @@ func TestWarnNAFilterValues_UnknownElement(t *testing.T) {
 // still fires for fully-known values containing sentinels (guard against
 // false positives from the unknown-element fix).
 func TestWarnNASentinels_KnownValues_StillWarns(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	knownList := types.ListValueMust(types.StringType, []attr.Value{
 		types.StringValue("[Service N/A]"),
@@ -478,7 +478,7 @@ func buildReportConfigWithForecastSettings(ctx context.Context, t *testing.T, fu
 }
 
 func TestReportTimestampValidator_ForecastSettings(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name       string
@@ -644,7 +644,7 @@ func buildForecastConfigValue(ctx context.Context, t *testing.T, forecast *bool)
 // serializes both the false flag and the non-null settings (the API tolerates this
 // and enables forecasting; see TestAccReport_ForecastSettings_RetainedForecastFalse).
 func TestToExternalConfig_ForecastFalseWithSettings(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	forecastFalse := false
 
 	cfg := buildForecastConfigValue(ctx, t, &forecastFalse)
@@ -764,7 +764,7 @@ func validCumulativeComparisonConfigMap(ctx context.Context, t *testing.T) map[s
 }
 
 func TestReportCumulativeComparisonValidator(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	dimAttrTypes := resource_report.DimensionsValue{}.AttributeTypes(ctx)
 	dimYear := resource_report.NewDimensionsValueMust(dimAttrTypes, map[string]attr.Value{
@@ -1102,7 +1102,7 @@ func TestReportCumulativeComparisonValidator(t *testing.T) {
 }
 
 func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Prior state has layout = "cumulative_comparison" and valid config
 	validMap := validCumulativeComparisonConfigMap(ctx, t)
@@ -1162,7 +1162,7 @@ func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
 // rather than substituting the prior state's layout, so transitions away from cumulative_comparison
 // are not falsely rejected before the layout is known.
 func TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Prior state has layout = "cumulative_comparison" and valid config
 	validMap := validCumulativeComparisonConfigMap(ctx, t)
@@ -1207,7 +1207,7 @@ func TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred(t *testing.T) {
 // "0 metrics were configured". The list resolves at apply time, so rejecting at
 // plan time would fail a config that is in fact valid.
 func TestReportCumulativeComparison_UnknownMetricsDeferred(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cfgMap := validCumulativeComparisonConfigMap(ctx, t)
 	cfgMap["metrics"] = types.ListUnknown(resource_report.MetricsValue{}.Type(ctx))
@@ -1227,7 +1227,7 @@ func TestReportCumulativeComparison_UnknownMetricsDeferred(t *testing.T) {
 // that when metrics is unknown the validator defers only the metric check, and
 // continues validating other known attributes (such as missing secondary_time_range).
 func TestReportCumulativeComparison_UnknownMetrics_StillValidatesOtherAttributes(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	cfgMap := validCumulativeComparisonConfigMap(ctx, t)
 	cfgMap["metrics"] = types.ListUnknown(resource_report.MetricsValue{}.Type(ctx))

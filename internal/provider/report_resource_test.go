@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -920,7 +919,7 @@ func TestAccReport_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteReportWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteReportWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete report via API: %v", err)
 					}

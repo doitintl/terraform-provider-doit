@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -173,7 +172,7 @@ func TestAccDatahubDatasetResource_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteDatahubDatasetWithResponse(context.Background(), rName)
+					resp, err := client.DeleteDatahubDatasetWithResponse(t.Context(), rName)
 					if err != nil {
 						t.Fatalf("Failed to delete dataset via API: %v", err)
 					}

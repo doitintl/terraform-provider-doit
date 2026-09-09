@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"regexp"
@@ -402,7 +401,7 @@ func getServiceQuotaSnapshot(t *testing.T) []models.ServiceQuota {
 func computeServiceQuotaSnapshot(t *testing.T) []models.ServiceQuota {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var all []models.ServiceQuota
 	params := &models.ListServiceQuotasParams{}

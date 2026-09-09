@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -243,7 +242,7 @@ func getCommitmentCount(t *testing.T) int {
 func computeCommitmentCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var total int
 	params := &models.ListCommitmentsParams{}
@@ -269,7 +268,7 @@ func getCommitmentFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
 	skipIfNoAcc(t)
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resp, err := client.ListCommitmentsWithResponse(ctx, &models.ListCommitmentsParams{
 		MaxResults: &maxResults,

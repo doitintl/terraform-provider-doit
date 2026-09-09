@@ -22,6 +22,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/requestguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/retrypolicy"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/testserver"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/unknownguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
@@ -49,6 +50,9 @@ func init() {
 
 	register.Plugin("structliteral", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{structliteral.Analyzer}}, nil
+	})
+	register.Plugin("testserver", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{testserver.Analyzer}}, nil
 	})
 
 	register.Plugin("overlayinvariant", func(_ any) (register.LinterPlugin, error) {

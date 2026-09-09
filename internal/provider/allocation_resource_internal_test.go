@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -19,7 +18,7 @@ import (
 // TestAllocationResource_ModifyPlan_AllowUnknownElements confirms that allowUnknown=true is required
 // when unmarshaling an unknown plan rules list or unknown rule elements during plan modification.
 func TestAllocationResource_ModifyPlan_AllowUnknownElements(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Construct an unknown rules list (e.g. from an unknown variable or resource dependency)
 	unknownListVal := types.ListUnknown(resource_allocation.RulesValue{}.Type(ctx))
@@ -41,7 +40,7 @@ func TestAllocationResource_ModifyPlan_AllowUnknownElements(t *testing.T) {
 
 func modifyPlanTestSchema(t *testing.T) schema.Schema {
 	t.Helper()
-	ctx := context.Background()
+	ctx := t.Context()
 	r := &allocationResource{}
 	var schemaResp resource.SchemaResponse
 	r.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
@@ -63,7 +62,7 @@ func modifyPlanTestTimeouts(t *testing.T, sch schema.Schema) timeouts.Value {
 
 func modifyPlanTestRule(t *testing.T, attrs map[string]attr.Value) resource_allocation.RulesValue {
 	t.Helper()
-	ctx := context.Background()
+	ctx := t.Context()
 	return resource_allocation.NewRulesValueMust(
 		resource_allocation.RulesValue{}.AttributeTypes(ctx),
 		attrs,
@@ -72,7 +71,7 @@ func modifyPlanTestRule(t *testing.T, attrs map[string]attr.Value) resource_allo
 
 func modifyPlanTestComponent(t *testing.T, key string, values []string) resource_allocation.ComponentsValue {
 	t.Helper()
-	ctx := context.Background()
+	ctx := t.Context()
 	valElems := make([]attr.Value, len(values))
 	for i, v := range values {
 		valElems[i] = types.StringValue(v)
@@ -93,7 +92,7 @@ func modifyPlanTestComponent(t *testing.T, key string, values []string) resource
 
 func modifyPlanTestComponentList(t *testing.T, components ...resource_allocation.ComponentsValue) basetypes.ListValue {
 	t.Helper()
-	ctx := context.Background()
+	ctx := t.Context()
 	elems := make([]attr.Value, len(components))
 	for i, c := range components {
 		elems[i] = c
@@ -103,7 +102,7 @@ func modifyPlanTestComponentList(t *testing.T, components ...resource_allocation
 
 func modifyPlanTestModel(t *testing.T, rules []attr.Value, tv timeouts.Value) allocationResourceModel {
 	t.Helper()
-	ctx := context.Background()
+	ctx := t.Context()
 	return allocationResourceModel{
 		Id:               types.StringValue("group-123"),
 		Name:             types.StringValue("group-alloc"),
@@ -128,7 +127,7 @@ type modifyPlanResult struct {
 
 func runModifyPlan(t *testing.T, sch schema.Schema, stateModel, planModel allocationResourceModel) modifyPlanResult {
 	t.Helper()
-	ctx := context.Background()
+	ctx := t.Context()
 	r := &allocationResource{}
 
 	attrTypes := sch.Type().(basetypes.ObjectType).AttrTypes
@@ -447,7 +446,7 @@ func TestAllocationResource_ModifyPlan_AmbiguousFormulaRenameWithComponentChange
 // fillAllocationCommon defaults all rules to action="select"), ModifyPlan can still recover IDs
 // when the user's HCL uses action="create".
 func TestAllocationResource_ModifyPlan_PostImportSelectRules(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	sch := modifyPlanTestSchema(t)
 	tv := modifyPlanTestTimeouts(t, sch)
 
@@ -482,7 +481,7 @@ func TestAllocationResource_ModifyPlan_PostImportSelectRules(t *testing.T) {
 // handles an update where a plan rule has unknown nested elements (e.g. a component value derived
 // from a computed resource attribute). The rule should still be matched by name (Pass 1).
 func TestAllocationResource_ModifyPlan_UnknownComponentsInUpdate(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	sch := modifyPlanTestSchema(t)
 	tv := modifyPlanTestTimeouts(t, sch)
 
@@ -517,7 +516,7 @@ func TestAllocationResource_ModifyPlan_UnknownComponentsInUpdate(t *testing.T) {
 // and components are unknown, tiers 1 and 2 skip (can't compare unknowns). Tier 3 (formula) still
 // matches if the formula is unique.
 func TestAllocationResource_ModifyPlan_UnknownComponentsRename(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	sch := modifyPlanTestSchema(t)
 	tv := modifyPlanTestTimeouts(t, sch)
 

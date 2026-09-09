@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -230,7 +229,7 @@ func getReportCount(t *testing.T) int {
 func computeReportCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var total int
 	params := &models.ListReportsParams{}

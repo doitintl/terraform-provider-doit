@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -47,7 +46,7 @@ func TestUnknownPointerAccessor_ReturnsZeroValue(t *testing.T) {
 }
 
 func TestMapAllocationToModel_GroupRule_RuleNull(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	allocType := models.AllocationAllocationType("group")
 	var nullRule nullable.Nullable[models.AllocationRule]

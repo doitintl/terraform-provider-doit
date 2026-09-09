@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -175,7 +174,7 @@ func TestAccFolder_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteFolderWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteFolderWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete folder via API: %v", err)
 					}

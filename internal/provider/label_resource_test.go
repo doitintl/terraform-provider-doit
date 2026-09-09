@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -211,7 +210,7 @@ func TestAccLabel_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteLabelWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteLabelWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete label via API: %v", err)
 					}

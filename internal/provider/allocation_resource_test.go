@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -838,7 +837,7 @@ func TestAccAllocation_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteAllocationWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteAllocationWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete allocation via API: %v", err)
 					}
@@ -1058,7 +1057,7 @@ func TestAccAllocation_NestedAllocationRule_InvalidMode(t *testing.T) {
 func testAccCheckAllocationDestroy(t *testing.T) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := getAPIClient(t)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		for _, rs := range s.RootModule().Resources {
 			if rs.Type != "doit_allocation" {
