@@ -23,6 +23,16 @@
 // Both checks apply to test files only — NewTestServer takes a testing.TB, so
 // neither concern exists outside one.
 //
+// The cleanup check is keyed off the receiver's type, so it does not know which
+// constructor produced the server. Its diagnostic therefore states the rule —
+// a server from NewTestServer needs no explicit Close — rather than asserting
+// that this particular server's cleanup is already registered, which would be
+// false for one built by a banned constructor. Where both checks fire on the
+// same variable they are meant to be read together: switch the constructor, and
+// the close becomes unnecessary. Tracking provenance to suppress one of them
+// would be precise but pointless, since the state where it matters cannot pass
+// lint in the first place — the constructor is rejected too.
+//
 // The redundant-cleanup check deliberately does not flag an immediate
 // "s.Close()". A test may legitimately close a server early to assert what a
 // client does against a refused connection; only a deferred or registered close
@@ -50,14 +60,15 @@ const (
 	// type in any test file.
 	httptestPkg = "net/http/httptest"
 
-	// serverType is the type whose cleanup NewTestServer already registers.
+	// serverType is the type NewTestServer returns, and whose cleanup it
+	// registers.
 	serverType = "Server"
 
-	// closeMethod is the redundant call.
+	// closeMethod is the call NewTestServer makes unnecessary.
 	closeMethod = "Close"
 
-	// cleanupMethod registers a function to run at test end; NewTestServer
-	// already calls it, so passing Close to it again is redundant.
+	// cleanupMethod registers a function to run at test end. NewTestServer
+	// calls it with Close already, so passing Close to it again adds nothing.
 	cleanupMethod = "Cleanup"
 
 	// preferredCtor is the constructor the banned ones should become.
@@ -119,10 +130,10 @@ func checkDeferredClose(pass *analysis.Pass, stmt *ast.DeferStmt) {
 	}
 
 	pass.Reportf(stmt.Pos(),
-		"redundant %s: httptest.%s already registers it with t.Cleanup, and a "+
-			"deferred close runs before the registered cleanups, which inside a "+
-			"synctest bubble can block on connections still in flight",
-		closeMethod, preferredCtor)
+		"an httptest.Server from %s needs no explicit %s — it registers its own "+
+			"cleanup — and a deferred close runs before the registered cleanups, "+
+			"which inside a synctest bubble can block on connections still in flight",
+		preferredCtor, closeMethod)
 }
 
 // checkRegisteredClose reports "t.Cleanup(server.Close)".
@@ -143,8 +154,9 @@ func checkRegisteredClose(pass *analysis.Pass, call *ast.CallExpr) {
 			continue
 		}
 		pass.Reportf(arg.Pos(),
-			"redundant %s: httptest.%s already registers it",
-			closeMethod, preferredCtor)
+			"an httptest.Server from %s needs no explicit %s — it registers its "+
+				"own cleanup",
+			preferredCtor, closeMethod)
 	}
 }
 
