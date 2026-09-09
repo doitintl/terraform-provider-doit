@@ -20,6 +20,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/paralleltest"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/read404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/requestguard"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/retrypolicy"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/unknownguard"
@@ -124,6 +125,9 @@ func init() {
 
 	register.Plugin("requestguard", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{requestguard.Analyzer}}, nil
+	})
+	register.Plugin("retrypolicy", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{retrypolicy.Analyzer}}, nil
 	})
 
 	register.Plugin("clearableattr", func(_ any) (register.LinterPlugin, error) {

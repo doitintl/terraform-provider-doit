@@ -225,12 +225,7 @@ func newAsyncTestClientWithRequestTimeout(
 ) *models.ClientWithResponses {
 	t.Helper()
 
-	retryClient := newTestRetryClient(server, requestTimeout, constantBackOff(time.Millisecond))
-	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(retryClient))
-	if err != nil {
-		t.Fatalf("models.NewClientWithResponses() error = %v", err)
-	}
-	return client
+	return newTestRetryAPIClient(t, server, requestTimeout, constantBackOff(time.Millisecond))
 }
 
 // submitViaInline drives submitAsyncReport against the inline run endpoint.
