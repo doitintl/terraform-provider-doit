@@ -125,9 +125,10 @@ grep -rn "NewConfigValue(" internal/provider/   # update each (incl. *_test.go)
 
 When writing unit tests that mock DoiT API responses (e.g. `*_internal_test.go`, `delete_notfound_test.go`):
 
-1. **Always use `httptest.NewTestServer(t, handler)`** instead of `httptest.NewServer(handler)` to use the in-memory fake network and avoid OS TCP port allocations. Server cleanup is handled automatically by the test framework.
+1. **Always use `httptest.NewTestServer(t, handler)`** instead of `httptest.NewServer(handler)` to use the in-memory fake network and avoid OS TCP port allocations. Server cleanup is handled automatically, so **never add `defer server.Close()`** — see the rules below for why it is actively harmful inside a bubble.
 2. **Always pass `models.WithHTTPClient(server.Client())`** when instantiating the generated client (`models.NewClientWithResponses`). Because `NewTestServer` does not bind a local TCP port, failing to pass `server.Client()` will cause connection errors.
-3. **Use `testing/synctest` for timeout, retry, and polling tests** — see below.
+3. **`NewTestServer` starts lazily.** Startup — and the assignment of `server.URL` — happens on the first `server.Client()` call. Read `server.URL` before anything has called `Client()` and you get `""`, silently: the client reaches nothing and any "no request was made" assertion becomes vacuous. If a test needs the URL without building a client, touch `server.Client()` first.
+4. **Timeout, retry, and polling tests must use `testing/synctest`** — see below. A test that waits in real wall-clock time does not belong in the unit suite.
 
 ### Virtual Time with `testing/synctest`
 
@@ -143,7 +144,13 @@ func TestSomethingSlow(t *testing.T) {
     // in it to be durably blocked before time advances.
     synctest.Test(t, func(t *testing.T) {
         srv := httptest.NewTestServer(t, handler)   // in-memory net = durably blocking
-        client := newTestClient(t, srv)
+        client := newTestClient(t, srv)             // ...and no defer srv.Close()
+
+        // t.Context(), never context.Background(): its Done channel belongs to
+        // the bubble. Bound it even when the expected path never reaches the
+        // deadline — it is what turns a runaway retry into a fast failure.
+        ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+        defer cancel()
 
         start := time.Now()
         // ... code that waits on timers or a context deadline ...
@@ -156,16 +163,83 @@ func TestSomethingSlow(t *testing.T) {
 
 Rules that matter:
 
+**The API**
+
 - **`synctest.Test(t, func(t *testing.T){...})`** is the API. `synctest.Run` was
   the pre-1.25 experimental form and **no longer exists** — it will not compile.
-- **Never call `t.Parallel()` inside a bubble.**
+- **`synctest.Wait()`** blocks until every *other* goroutine in the bubble is
+  durably blocked. Call it before asserting on state a handler goroutine writes
+  (request counters, recorded delays) when the assertion is not already ordered
+  by a response you observed — `atomic` makes such a read safe, not ordered.
+- **`synctest.Sleep(d)`** is exactly `time.Sleep(d)` + `synctest.Wait()`. Prefer
+  it over a bare `time.Sleep` when the test and the system under test would
+  otherwise wake at the same virtual instant and the test wants the SUT to
+  settle first.
+- **Never call `t.Parallel()` inside a bubble.** The ban is on the bubble's `t`;
+  the outer `t` is an ordinary `*testing.T`, so wrapping is technically legal.
+  Don't — a bubbled test finishes in ~0ms, so parallelism buys nothing, and the
+  two-`t` shadowing is a trap. The repo's `paralleltest` linter only flags
+  `resource.Test()`, so omitting `t.Parallel()` here is lint-clean.
+- **Table tests:** `t.Run` on the outside, `synctest.Test` on the inside.
+  `synctest.Test` must not be called from within a bubble or from a `t.Cleanup`.
+
+**Keeping the clock running**
+
 - **`httptest.NewTestServer` is what makes this work.** Its in-memory network is
   durably blocking; a real TCP listener is not, and time would never advance.
-- Real network I/O and mutex contention are not durably blocking. Keep the
-  server, client, and system under test entirely inside the bubble.
+- **Build the server inside the bubble, with the bubble's `t`.** A server
+  constructed outside it has its accept loops and connection channels created
+  outside the bubble, so a blocked read is *not* durably blocking and the clock
+  never advances. Instant handlers still pass, so this fails as a hang to the
+  120s package timeout rather than as a test failure.
+- **Nothing created outside the bubble may cross into it** — no contexts,
+  channels, timers, tickers, or `WaitGroup`s. A `select` on a non-bubbled Done
+  channel is not durably blocking. Use **`t.Context()`**, never
+  `context.Background()`.
+- **Never hold a `sync.Mutex` across a durable block.** Mutex contention is not
+  durable, so the bubble never idles, the clock never advances, and a holder
+  parked on a timer never wakes. synctest cannot detect this deadlock — it
+  surfaces as a package timeout. Take the wait outside the lock.
+- **Close every response body.** An open body keeps its connection out of the
+  idle pool, so the server's cleanup cannot reap it and the transport's read
+  loop never exits — which `synctest.Test` reports as a leaked goroutine.
+- **Never add `defer server.Close()`.** `defer`s run *before* `t.Cleanup`s, so an
+  explicit `Close` jumps ahead of the body-close cleanups, blocks waiting on
+  connections still in flight, and arms a 5s hang diagnostic that virtual time
+  makes free — a spurious "blocked in Close after 5 seconds" on a test that took
+  0ms. The auto-registered cleanup already orders correctly: body closes →
+  connection idles → `Close` reaps it.
 
-`internal/provider/async_report_test.go` is the reference example — it drives a
-full submit/poll/cancel cycle across minutes of virtual time in milliseconds.
+**Writing assertions that hold**
+
+- **Assert elapsed time with exact equality**, including `elapsed == 0` to prove
+  no wait happened. There is no timer granularity to absorb, so loose bounds
+  only weaken the test. `elapsed == 0` is the most direct available proof that a
+  status was not retried.
+- **Use the production constants.** Virtual time is free, so a test can drive the
+  real `DefaultRequestTimeout` / `DefaultReadTimeout` / backoff intervals instead
+  of millisecond stand-ins. Where a realistic value would invert the very
+  relationship under test, keep the synthetic one and say so in a comment.
+- **Bound every context, even when the expected path never reaches the
+  deadline.** `DCIRetryClient` runs with `MaxElapsedTime(0)`, so the context is
+  the only thing that stops a retry loop; without a deadline a regression spins
+  virtual time at full CPU until the package timeout. With one, it fails fast and
+  legibly. The deadline is a tripwire, not part of the assertion.
+- **Do not let two timers come due at the same virtual instant.** Both cases of a
+  `select` are then ready and the choice varies between runs — elapsed stays
+  exact but attempt counts flip. In practice: don't let a backoff interval divide
+  the deadline. Verify with `-count=20`.
+- **The bubble clock starts at exactly midnight UTC 2000-01-01**, with zero
+  nanoseconds. Every virtual instant is a whole second, which is why HTTP-date
+  arithmetic (`Retry-After` as a date) stays exact where it would be flaky on a
+  real clock.
+- Real network I/O is not durably blocking. Keep the server, client, and system
+  under test entirely inside the bubble.
+
+Reference examples: `internal/provider/async_report_test.go` drives a full
+submit/poll/cancel cycle across minutes of virtual time in milliseconds, and
+`internal/provider/timeout_test.go` asserts the retry client's behavior at the
+shipped timeout and backoff constants.
 
 ---
 

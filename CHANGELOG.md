@@ -38,6 +38,7 @@
 - Timeout defaults are now defined once in `internal/provider/timeouts.go`, replacing literal durations at 136 call sites across 84 files. The file documents the ordering invariant between the layers and enforces it at compile time
 - The `timeoutcheck` linter now also rejects literal durations passed as a `Timeouts.*` default, so the defaults cannot drift back out of one place
 - Added unit coverage for the retry client's `429`, `524`, `404`, and `500` handling and for `Retry-After` parsing, none of which was previously tested
+- The retry client's timeout and backoff tests now run under `testing/synctest`'s virtual clock. They previously burned real wall time and asserted on loose bounds to absorb timer granularity; they now drive the production constants — a 150s request timeout, a 5-minute operation timeout, and the 2s-to-60s backoff policy — and assert exact elapsed times, in ~0ms. Also added end-to-end coverage of the `Retry-After` cap and its fallback to the exponential policy
 
 ## v1.7.0 (2026-08-12)
 

@@ -306,11 +306,23 @@ func constantBackOff(d time.Duration) func() backoff.BackOff {
 
 // newTestRetryClient builds a DCIRetryClient with an injected backoff policy
 // for unit testing retry behavior.
+//
+// This is the call that lazily starts the test server: httptest.NewTestServer
+// defers startup to the first Server.Client(), which is also what assigns
+// Server.URL. Two consequences for callers — inside a synctest bubble this must
+// run within the bubble, so the fake network's channels belong to it and a
+// blocked read is durably blocking; and Server.URL reads as "" until it has run.
+//
+// The client is copied rather than used in place. Server.Client() hands back the
+// one *http.Client the server owns — and reaches into its Transport during Close
+// to reap idle connections — so mutating it would make Timeout shared state
+// between every client built against the same server. Copying keeps the Transport
+// pointer, so Close still works, while per-client timeouts stay independent.
 func newTestRetryClient(server *httptest.Server, requestTimeout time.Duration, newBackOff func() backoff.BackOff) *DCIRetryClient {
-	c := server.Client()
+	c := *server.Client()
 	c.Timeout = requestTimeout
 	return &DCIRetryClient{
-		client:     c,
+		client:     &c,
 		newBackOff: newBackOff,
 	}
 }
