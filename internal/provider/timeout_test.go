@@ -569,8 +569,17 @@ func TestNewClientNoConstructorIO(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	// Start the server in its own statement rather than inline below. Go
+	// specifies the order of calls relative to each other, but not relative to
+	// an ordinary field read in the same argument list — the spec's own example
+	// is `[]int{a, f()}` — so `server.Client()` is not guaranteed to run before
+	// `server.URL` is read. It does today, but this assertion is one that passes
+	// when the plumbing is broken as readily as when the property holds, so it
+	// should not rest on that.
+	httpClient := server.Client()
+
 	client, err := newClientWithHTTPClient(
-		server.URL, "test-token", "", "1.0.0", "dev", server.Client(),
+		server.URL, "test-token", "", "1.0.0", "dev", httpClient,
 	)
 	if err != nil {
 		t.Fatalf("newClientWithHTTPClient() error = %v", err)
