@@ -187,7 +187,7 @@ func TestAccReport_Import(t *testing.T) {
 				// Import cannot tell which mirror is in use, so it populates the
 				// canonical metrics and leaves metric null. Trailing dots keep
 				// config.metric_filter.* out of the prefix match.
-				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
+				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
 		},
 	})
@@ -235,10 +235,10 @@ resource "doit_report" "this" {
   name        = "test_report_attributions"
   description = "test_report_attributions"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation   = "total"
     time_interval = "month"
     filters = [
@@ -317,10 +317,10 @@ resource "doit_report" "alias_test" {
   name        = "test_report_alias_types"
   description = "Test report using alias dimension types"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation   = "total"
     time_interval = "month"
     filters = [
@@ -358,10 +358,10 @@ func testAccReportMinimal(i int) string {
 resource "doit_report" "this" {
     name = "test-minimal-%d"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation    = "total"
 		time_interval  = "month"
 		data_source    = "billing"
@@ -422,10 +422,10 @@ resource "doit_report" "this" {
     name = "test-full-%d"
 	description = "Full report with splits and custom time"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		custom_time_range = {
@@ -457,10 +457,10 @@ resource "doit_report" "this" {
     name = "test-%d"
 	description = "test report"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		metric_filter = {
 			metric = {
 				type = "basic"
@@ -549,10 +549,10 @@ resource "doit_report" "this" {
     name = "test-%d"
 	description = "test report updated"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		metric_filter = {
 			metric = {
 				type = "basic"
@@ -691,10 +691,10 @@ resource "doit_report" "timezone_test" {
     name = "test-timezone-%d"
 	description = "Report with non-UTC timezone to test timestamp preservation"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		custom_time_range = {
@@ -759,10 +759,10 @@ resource "doit_report" "splits" {
     name = "test-splits-%d"
     description = "Report with splits configuration"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -850,10 +850,10 @@ resource "doit_report" "split_targets" {
     name = "test-split-targets-%d"
     description = "Report with populated split targets"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -983,10 +983,10 @@ func testAccReportWithEmptyLists(i int) string {
 resource "doit_report" "this" {
   name = "test-empty-lists-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -1039,10 +1039,10 @@ func testAccReportWithFilterEmptyValues(i int) string {
 resource "doit_report" "filter_empty_values" {
   name = "test-filter-empty-values-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -1090,10 +1090,10 @@ func testAccReportWithMetricFilterEmptyValues(i int) string {
 resource "doit_report" "metric_filter_empty" {
   name = "test-mf-empty-values-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     metric_filter = {
       metric = {
         type  = "basic"
@@ -1244,10 +1244,10 @@ resource "doit_report" "no_datasource" {
     name = "test-no-ds-%d"
     description = "Report without data_source to verify it is truly optional"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         display_values = "actuals_only"
@@ -1327,10 +1327,10 @@ resource "doit_report" "datasource_test" {
     name = "test-datasource-%d"
     description = "Report testing dataSource enum values"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "%s"
@@ -1397,10 +1397,10 @@ resource "doit_report" "secondary_tr" {
     name = "test-sec-tr-%d"
     description = "Report with secondary time range (relative)"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         time_range = {
@@ -1474,10 +1474,10 @@ resource "doit_report" "secondary_custom" {
     name = "test-sec-custom-%d"
     description = "Report with secondary time range using custom dates"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         custom_time_range = {
@@ -1545,10 +1545,10 @@ resource "doit_report" "secondary_offset" {
     name = "test-sec-offset-%d"
     description = "Report with secondary custom time range using non-UTC offset"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         custom_time_range = {
@@ -1648,10 +1648,10 @@ resource "doit_report" "secondary_update" {
     name = "test-sec-update-%d"
     description = "Report testing secondary time range updates"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         time_range = {
@@ -1680,10 +1680,10 @@ resource "doit_report" "secondary_update" {
     name = "test-sec-update-%d"
     description = "Report testing secondary time range updates"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         custom_time_range = {
@@ -1800,10 +1800,10 @@ func testAccReportInvalidTimestamp(i int) string {
 resource "doit_report" "invalid_ts" {
   name = "test-invalid-ts-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation   = "total"
     time_interval = "month"
     custom_time_range = {
@@ -1845,10 +1845,10 @@ func testAccReportInvalidSecondaryTimestamp(i int) string {
 resource "doit_report" "invalid_sec_ts" {
   name = "test-invalid-sec-ts-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation   = "total"
     time_interval = "month"
     custom_time_range = {
@@ -1910,10 +1910,10 @@ func testAccReportWithOmittedLabels(i int) string {
 resource "doit_report" "this" {
   name   = "test-omitted-labels-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -1988,10 +1988,10 @@ resource "doit_report" "this" {
   name   = "test-labels-%d"
   labels = [doit_label.test.id]
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -2014,10 +2014,10 @@ resource "doit_report" "this" {
   name   = "test-labels-%d"
   labels = []
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -2076,10 +2076,10 @@ resource "doit_report" "this" {
     name = "test-include-null-%d"
 	description = "Report testing include_null filter property"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		filters = [
@@ -2247,10 +2247,10 @@ resource "doit_report" "filter_update" {
     name = "test-filter-update-%d"
     description = "Report testing filter values survive update"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         filters = [
@@ -2284,10 +2284,10 @@ resource "doit_report" "filter_update" {
     description = "Report testing filter values survive update"
     labels = [doit_label.filter_test.id]
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         filters = [
@@ -2314,10 +2314,10 @@ resource "doit_report" "this" {
     name = "test-case-insensitive-%d"
 	description = "Report testing case_insensitive filter property"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		filters = [
@@ -2397,10 +2397,10 @@ resource "doit_report" "no_inverse" {
     name = "test-no-inverse-%d"
 	description = "Report testing filter without inverse field set"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		filters = [
@@ -2533,10 +2533,10 @@ resource "doit_report" "filter_mixed_na" {
     name = "test-filter-mixed-na-%d"
     description = "Reproduces API-stripping of N/A sentinel when mixed with real values"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         filters = [
@@ -2563,10 +2563,10 @@ resource "doit_report" "filter_na_stripped" {
     name = "test-filter-na-stripped-%d"
     description = "Reproduces API stripping N/A filter values"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         filters = [
@@ -2645,10 +2645,10 @@ resource "doit_report" "this" {
     name        = "test-report-include-null-only-%d"
     description = "Report testing include_null=true with no values (pending PR #51575)"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         filters = [
@@ -2821,10 +2821,10 @@ resource "doit_report" "folder_test" {
     name      = "test-in-folder-%d"
     folder_id = doit_folder.test.id
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -2842,10 +2842,10 @@ resource "doit_report" "folder_test" {
     name      = "test-in-folder-%d"
     folder_id = "root"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -2921,10 +2921,10 @@ resource "doit_report" "ds_test" {
     name        = "test-display-settings-%d"
     description = "Report testing display_settings block"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -2998,10 +2998,10 @@ resource "doit_report" "themed" {
     name        = "test-report-themed-%d"
     description = "Report with a custom theme applied"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -3063,10 +3063,10 @@ func testAccReportPartialTimeRange(i int) string {
 resource "doit_report" "this" {
     name = "test-partial-tr-%d"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -3106,10 +3106,10 @@ func testAccReportEmptyCustomTimeRange(i int) string {
 resource "doit_report" "this" {
     name = "test-empty-ctr-%d"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -3184,10 +3184,10 @@ resource "doit_report" "this" {
     description = "initial description"
     labels      = []
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation    = "total"
 		time_interval  = "month"
 		data_source    = "billing"
@@ -3208,10 +3208,10 @@ resource "doit_report" "this" {
     name   = "test-minimal-%d"
     labels = []
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation    = "total"
 		time_interval  = "month"
 		data_source    = "billing"
@@ -3223,50 +3223,6 @@ resource "doit_report" "this" {
 `, i)
 }
 
-// TestAccReport_MetricToEmptyMetrics verifies that metrics = [] is rejected at
-// plan time. The API silently preserves existing metrics when given an empty
-// array, which would cause state inconsistency. The provider's validator
-// catches this and returns a clear error.
-func TestAccReport_MetricToEmptyMetrics(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccReportWithEmptyMetrics(n),
-				ExpectError: regexp.MustCompile(`Empty Metrics List Not Supported`),
-			},
-		},
-	})
-}
-
-func testAccReportWithEmptyMetrics(i int) string {
-	return fmt.Sprintf(`
-resource "doit_report" "metric_empty_test" {
-    name = "test-metric-empty-%d"
-    description = "Report to test metric to empty metrics transition"
-    config = {
-        metric = {
-          type  = "basic"
-          value = "cost"
-        }
-        metrics        = []
-        aggregation    = "total"
-        time_interval  = "month"
-        data_source    = "billing"
-        display_values = "actuals_only"
-        currency       = "USD"
-        layout         = "table"
-    }
-}
-`, i)
-}
-
-// TestAccReport_ClearFilterMode verifies the clearing lifecycle for config.filters[*].mode.
-// The API returns null when mode is unset, so omitting it from config clears it.
 func TestAccReport_ClearFilterMode(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -3340,10 +3296,10 @@ func testAccReportWithFilterMode(i int) string {
 resource "doit_report" "this" {
     name = "test-clear-filter-mode-%d"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         filters = [
@@ -3369,10 +3325,10 @@ func testAccReportWithFilterModeCleared(i int) string {
 resource "doit_report" "this" {
     name = "test-clear-filter-mode-%d"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         filters = [
@@ -3454,10 +3410,10 @@ resource "doit_report" "forecast_intervals_test" {
     name = "test-forecast-intervals-%d"
 	description = "Report with forecast settings intervals"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -3542,10 +3498,10 @@ resource "doit_report" "forecast_custom_test" {
     name = "test-forecast-custom-%d"
 	description = "Report with forecast settings custom date ranges"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -3689,10 +3645,10 @@ resource "doit_report" "forecast_intervals_test" {
     name = "test-forecast-intervals-%d"
 	description = "Report with forecast settings intervals updated to custom ranges"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -3726,10 +3682,10 @@ resource "doit_report" "forecast_intervals_test" {
     name = "test-forecast-intervals-%d"
 	description = "Report with forecast settings completely removed"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -3774,10 +3730,10 @@ func testAccReportWithForecastSettingsInvalidTimestamp(i int) string {
 resource "doit_report" "forecast_invalid" {
     name = "test-forecast-invalid-%d"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -3812,10 +3768,10 @@ func testAccReportWithForecastSettingsEmptyCustomDateRange(i int) string {
 resource "doit_report" "forecast_empty" {
     name = "test-forecast-empty-%d"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -3879,10 +3835,10 @@ resource "doit_report" "forecast_grouping_test" {
     name = "test-forecast-grouping-%d"
 	description = "Report with forecast settings grouping mode only"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -3923,10 +3879,10 @@ func testAccReportWithForecastSettingsConflict(i int) string {
 resource "doit_report" "forecast_conflict" {
     name = "test-forecast-conflict-%d"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -4017,10 +3973,10 @@ resource "doit_report" "retained_forecast_test" {
     name = "test-retained-forecast-%d"
 	description = "Non-forecast report; forecast omitted from advanced_analysis"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -4046,10 +4002,10 @@ resource "doit_report" "retained_forecast_test" {
     name = "test-retained-forecast-%d"
 	description = "Forecast settings added while forecast still omitted"
 	config = {
-		metric = {
+		metrics = [{
 		  type  = "basic"
 		  value = "cost"
-		}
+		}]
 		aggregation   = "total"
 		time_interval = "month"
 		time_range = {
@@ -4109,7 +4065,7 @@ func TestAccReport_MetricFilterOperand(t *testing.T) {
 				// Import cannot tell which mirror is in use, so it populates the
 				// canonical metrics and leaves metric null. Trailing dots keep
 				// config.metric_filter.* out of the prefix match.
-				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
+				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
 			// Step 4: omit operand -> resolves to the schema default single_value (Update).
 			{
@@ -4173,7 +4129,7 @@ func TestAccReport_LimitAggregation(t *testing.T) {
 				// Import cannot tell which mirror is in use, so it populates the
 				// canonical metrics and leaves metric null. Trailing dots keep
 				// config.metric_filter.* out of the prefix match.
-				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
+				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
 			// Step 4: update to none.
 			{
@@ -4272,7 +4228,7 @@ func TestAccReport_LimitByChange(t *testing.T) {
 				// Import cannot tell which mirror is in use, so it populates the
 				// canonical metrics and leaves metric null. Trailing dots keep
 				// config.metric_filter.* out of the prefix match.
-				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
+				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
 			// Step 4: update to absolute/between/[10,90], include_incomplete_data = true.
 			{
@@ -4359,10 +4315,10 @@ func testAccReportOperand(i int, operandLine string) string {
 resource "doit_report" "operand" {
     name = "test-operand-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         metric_filter = {
             metric = {
                 type  = "basic"
@@ -4388,10 +4344,10 @@ func testAccReportLimitAggregation(i int, limitAggLine string) string {
 resource "doit_report" "limitagg" {
     name = "test-limitagg-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         %s
         group = [
             {
@@ -4423,10 +4379,10 @@ func testAccReportLimitAggregationBadView(i int) string {
 resource "doit_report" "limitagg_badview" {
     name = "test-limitagg-badview-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         limit_aggregation = "top"
         group = [
             {
@@ -4458,10 +4414,10 @@ func testAccReportLimitByChange(i int, changeType, operator, values, includeInco
 resource "doit_report" "lbc" {
     name = "test-lbc-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         limit_by_change = {
             metric = {
                 type  = "basic"
@@ -4488,10 +4444,10 @@ func testAccReportThreeLimits(i int) string {
 resource "doit_report" "three_limits" {
     name = "test-three-limits-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         metric_filter = {
             metric = {
                 type  = "basic"
@@ -4580,10 +4536,10 @@ func testAccReportLimitByChangeMetricMissingType(i int) string {
 resource "doit_report" "lbc_no_type" {
     name = "test-lbc-no-type-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         limit_by_change = {
             metric = {
                 value = "cost"
@@ -4609,10 +4565,10 @@ func testAccReportMetricFilterMetricMissingType(i int) string {
 resource "doit_report" "mf_no_type" {
     name = "test-mf-no-type-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         metric_filter = {
             metric = {
                 value = "cost"
@@ -4636,9 +4592,9 @@ func testAccReportMetricMissingValue(i int) string {
 resource "doit_report" "metric_no_value" {
     name = "test-metric-no-value-%d"
     config = {
-        metric = {
+        metrics = [{
             type = "basic"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -4704,10 +4660,10 @@ func testAccReportWithLimitedGroup(i int) string {
 resource "doit_report" "grp_clear" {
     name = "test-grp-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         group = [{
             id   = "cloud_provider"
             type = "fixed"
@@ -4733,10 +4689,10 @@ func testAccReportGroupCleared(i int) string {
 resource "doit_report" "grp_clear" {
     name = "test-grp-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -4748,163 +4704,6 @@ resource "doit_report" "grp_clear" {
 `, i)
 }
 
-// TestAccReport_Metric_MirrorsConflict asserts that config.metric and
-// config.metrics cannot both be configured. toExternalConfig sends only metrics
-// when both are set, so differing values would leave state inconsistent and
-// drift on every refresh.
-func TestAccReport_Metric_MirrorsConflict(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccReportWithBothMetricMirrors(n),
-				ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Combination`),
-			},
-		},
-	})
-}
-
-func testAccReportWithBothMetricMirrors(i int) string {
-	return fmt.Sprintf(`
-resource "doit_report" "both_mirrors" {
-    name = "test-both-mirrors-%d"
-    config = {
-        metric  = { type = "basic", value = "usage" }
-        metrics = [{ type = "basic", value = "cost" }]
-        aggregation    = "total"
-        time_interval  = "month"
-        data_source    = "billing"
-        display_values = "actuals_only"
-        currency       = "USD"
-        layout         = "table"
-    }
-}
-`, i)
-}
-
-// TestAccReport_Metric_MirrorSwitchBackAndForth switches metrics -> metric ->
-// metrics. The configured mirror must survive and the other stay out of state in
-// both directions. Only config can distinguish them — prior state holds both —
-// which is why the plan modifier keys off req.ConfigValue rather than state.
-func TestAccReport_Metric_MirrorSwitchBackAndForth(t *testing.T) {
-	n := acctest.RandInt()
-
-	metricsOnly := []statecheck.StateCheck{
-		statecheck.ExpectKnownValue("doit_report.metric_clear",
-			tfjsonpath.New("config").AtMapKey("metric"), knownvalue.Null()),
-		statecheck.ExpectKnownValue("doit_report.metric_clear",
-			tfjsonpath.New("config").AtMapKey("metrics").AtSliceIndex(0).AtMapKey("value"),
-			knownvalue.StringExact("usage")),
-	}
-	metricOnly := []statecheck.StateCheck{
-		statecheck.ExpectKnownValue("doit_report.metric_clear",
-			tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
-			knownvalue.StringExact("cost")),
-		statecheck.ExpectKnownValue("doit_report.metric_clear",
-			tfjsonpath.New("config").AtMapKey("metrics"),
-			knownvalue.ListExact([]knownvalue.Check{})),
-	}
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Start on the canonical metrics list.
-			{
-				Config:            testAccReportMetricCleared(n),
-				ConfigStateChecks: metricsOnly,
-			},
-			// Switch to the deprecated singular metric.
-			{
-				Config:            testAccReportWithSingularMetric(n),
-				ConfigStateChecks: metricOnly,
-			},
-			{
-				Config: testAccReportWithSingularMetric(n),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
-				},
-			},
-			// ...and back again.
-			{
-				Config:            testAccReportMetricCleared(n),
-				ConfigStateChecks: metricsOnly,
-			},
-			{
-				Config: testAccReportMetricCleared(n),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
-				},
-			},
-		},
-	})
-}
-
-// TestAccReport_Metric_UpgradeFromBothMirrorsInState pins upgrade safety from a
-// state that holds BOTH mirrors, which is what earlier provider versions wrote.
-// The configured mirror must be preserved and the upgrade must converge in one
-// apply — that apply is noisy, since Core proposes null for the unconfigured
-// mirror and cascades the rest of config to "known after apply" for that plan.
-func TestAccReport_Metric_UpgradeFromBothMirrorsInState(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:               testAccPreCheckFunc(t),
-		TerraformVersionChecks: testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: create with the last release, which writes BOTH mirrors.
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"doit": {Source: "doitintl/doit", VersionConstraint: "1.6.0"},
-				},
-				Config: testAccReportWithSingularMetric(n),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("doit_report.metric_clear",
-						tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
-						knownvalue.StringExact("cost")),
-					statecheck.ExpectKnownValue("doit_report.metric_clear",
-						tfjsonpath.New("config").AtMapKey("metrics").AtSliceIndex(0).AtMapKey("value"),
-						knownvalue.StringExact("cost")),
-				},
-			},
-			// Step 2: same config, current provider. One convergent apply; the
-			// configured mirror survives and the echoed one drops out of state.
-			{
-				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-				Config:                   testAccReportWithSingularMetric(n),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue("doit_report.metric_clear",
-						tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
-						knownvalue.StringExact("cost")),
-					statecheck.ExpectKnownValue("doit_report.metric_clear",
-						tfjsonpath.New("config").AtMapKey("metrics"),
-						knownvalue.ListExact([]knownvalue.Check{})),
-				},
-			},
-			// Step 3: the upgrade has settled — no permadiff.
-			{
-				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-				Config:                   testAccReportWithSingularMetric(n),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
-				},
-			},
-		},
-	})
-}
-
-// TestAccReport_NestedMetricOmitted asserts that metric_filter and
-// group[*].limit reject a missing metric/operator/values at plan time. All are
-// Required in the schema, so Terraform rejects them before the provider runs.
-//
-// Because the API refuses these configs, neither container can hold an
-// unconfigured-but-echoed metric, so neither needs the mirror handling that
-// config.metric/config.metrics require.
 func TestAccReport_NestedMetricOmitted(t *testing.T) {
 	// Terraform's own config decoder rejects these now, before the provider is
 	// called. HCL word-wraps diagnostics, so tolerate a wrap before the name.
@@ -4943,10 +4742,10 @@ func testAccReportMetricFilterMetricOmitted(i int) string {
 resource "doit_report" "mf_metric_omitted" {
     name = "test-mf-metric-omitted-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         metric_filter = {
             operator = "gt"
             values   = [1]
@@ -4967,10 +4766,10 @@ func testAccReportMetricFilterOperatorOmitted(i int) string {
 resource "doit_report" "mf_operator_omitted" {
     name = "test-mf-operator-omitted-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         metric_filter = {
             metric = {
                 type  = "basic"
@@ -4994,10 +4793,10 @@ func testAccReportMetricFilterValuesOmitted(i int) string {
 resource "doit_report" "mf_values_omitted" {
     name = "test-mf-values-omitted-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         metric_filter = {
             metric = {
                 type  = "basic"
@@ -5021,10 +4820,10 @@ func testAccReportGroupLimitMetricOmitted(i int) string {
 resource "doit_report" "grp_limit_metric_omitted" {
     name = "test-grp-limit-metric-omitted-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         group = [{
             id   = "cloud_provider"
             type = "fixed"
@@ -5106,10 +4905,10 @@ func testAccReportLimitByChangeCleared(i int) string {
 resource "doit_report" "lbc" {
     name = "test-lbc-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5200,7 +4999,7 @@ func TestAccReport_Count_Lifecycle(t *testing.T) {
 				// Import cannot tell which mirror is in use, so it populates the
 				// canonical metrics and leaves metric null. Trailing dots keep
 				// config.metric_filter.* out of the prefix match.
-				ImportStateVerifyIgnore: []string{"config.metric.", "config.metrics."},
+				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
 		},
 	})
@@ -5261,10 +5060,10 @@ func testAccReportCount(i int, id, ctype string) string {
 resource "doit_report" "count_test" {
     name = "test-count-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "count"
         time_interval  = "month"
         data_source    = "billing"
@@ -5285,10 +5084,10 @@ func testAccReportCountOmitted(i int) string {
 resource "doit_report" "count_test" {
     name = "test-count-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5305,10 +5104,10 @@ func testAccReportCountInvalidAggregation(i int) string {
 resource "doit_report" "count_invalid" {
     name = "test-count-invalid-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5349,10 +5148,10 @@ func testAccReportCountNoAggregation(i int) string {
 resource "doit_report" "count_noagg" {
     name = "test-count-noagg-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         time_interval  = "month"
         data_source    = "billing"
         display_values = "actuals_only"
@@ -5439,10 +5238,10 @@ func testAccReportCountAggNoBlock(i int) string {
 resource "doit_report" "count_aggnoblock" {
     name = "test-count-aggnoblock-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "count"
         time_interval  = "month"
         data_source    = "billing"
@@ -5530,10 +5329,10 @@ func testAccReportWithAdvancedAnalysis(i int) string {
 resource "doit_report" "aa_clear" {
     name = "test-aa-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5556,10 +5355,10 @@ func testAccReportAdvancedAnalysisCleared(i int) string {
 resource "doit_report" "aa_clear" {
     name = "test-aa-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5632,10 +5431,10 @@ func testAccReportWithCustomTimeRange(i int) string {
 resource "doit_report" "ctr_clear" {
     name = "test-ctr-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5659,10 +5458,10 @@ func testAccReportCustomTimeRangeCleared(i int) string {
 resource "doit_report" "ctr_clear" {
     name = "test-ctr-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5726,10 +5525,10 @@ resource "doit_report" "ds_test" {
     name        = "test-display-settings-%d"
     description = "Report testing display_settings block"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5741,115 +5540,6 @@ resource "doit_report" "ds_test" {
 `, i)
 }
 
-// TestAccReport_Metric_NotClearable proves config.metric (the deprecated singular
-// metric) cannot be cleared to null: it is a computed mirror of metrics[0].
-// Setting metric then switching to a metrics list drops the block from config, but
-// the API keeps metric populated (now mirroring metrics[0]="usage"). The removal
-// applies idempotently — the mirror does not drift (no permadiff).
-// TestAccReport_Metric_UnconfiguredMirrorNotStored pins that only the configured
-// mirror is stored. The API returns both populated, but their type/value leaves
-// are Required, so storing the unconfigured one permanently diffs the resource.
-// This is a state-tracking decision, not a clearing one — the API keeps deriving
-// `metric` either way. See useNullForUnconfiguredMetricMirror.
-func TestAccReport_Metric_UnconfiguredMirrorNotStored(t *testing.T) {
-	n := acctest.RandInt()
-
-	// Step 1: metric is configured, so it is tracked; metrics is not configured,
-	// so its mirror stays out of state as an empty list.
-	metricCost := statecheck.ExpectKnownValue(
-		"doit_report.metric_clear",
-		tfjsonpath.New("config").AtMapKey("metric").AtMapKey("value"),
-		knownvalue.StringExact("cost"))
-	metricsEmpty := statecheck.ExpectKnownValue(
-		"doit_report.metric_clear",
-		tfjsonpath.New("config").AtMapKey("metrics"),
-		knownvalue.ListExact([]knownvalue.Check{}))
-	// Step 2: after switching to metrics=[usage] and dropping the metric block,
-	// the roles swap — metrics is tracked and the metric mirror drops to null.
-	metricNull := statecheck.ExpectKnownValue(
-		"doit_report.metric_clear",
-		tfjsonpath.New("config").AtMapKey("metric"),
-		knownvalue.Null())
-	metricsUsage := statecheck.ExpectKnownValue(
-		"doit_report.metric_clear",
-		tfjsonpath.New("config").AtMapKey("metrics").AtSliceIndex(0).AtMapKey("value"),
-		knownvalue.StringExact("usage"))
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: create WITH the singular metric.
-			{
-				Config:            testAccReportWithSingularMetric(n),
-				ConfigStateChecks: []statecheck.StateCheck{metricCost, metricsEmpty},
-			},
-			// Step 2: switch to the metrics list, dropping metric.
-			{
-				Config:            testAccReportMetricCleared(n),
-				ConfigStateChecks: []statecheck.StateCheck{metricNull, metricsUsage},
-			},
-			// Step 3: drift check — this is the regression guard for the phantom
-			// diff; without the mirror handling this plan never converges.
-			{
-				Config: testAccReportMetricCleared(n),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-		},
-	})
-}
-
-func testAccReportWithSingularMetric(i int) string {
-	return fmt.Sprintf(`
-resource "doit_report" "metric_clear" {
-    name = "test-metric-clear-%d"
-    config = {
-        metric = {
-            type  = "basic"
-            value = "cost"
-        }
-        aggregation    = "total"
-        time_interval  = "month"
-        data_source    = "billing"
-        display_values = "actuals_only"
-        currency       = "USD"
-        layout         = "table"
-    }
-}
-`, i)
-}
-
-func testAccReportMetricCleared(i int) string {
-	return fmt.Sprintf(`
-resource "doit_report" "metric_clear" {
-    name = "test-metric-clear-%d"
-    config = {
-        metrics = [
-            {
-                type  = "basic"
-                value = "usage"
-            }
-        ]
-        aggregation    = "total"
-        time_interval  = "month"
-        data_source    = "billing"
-        display_values = "actuals_only"
-        currency       = "USD"
-        layout         = "table"
-    }
-}
-`, i)
-}
-
-// TestAccReport_MetricFilter_RemovalForcesReplace proves config.metric_filter (and
-// its required nested config.metric_filter.metric) cannot be cleared in place — an
-// in-place update would send an empty metricFilter and the API would reject it
-// (400) — so ModifyPlan forces a destroy+create (Category C) when it is removed.
 func TestAccReport_MetricFilter_RemovalForcesReplace(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -5909,10 +5599,10 @@ func testAccReportWithMetricFilter(i int) string {
 resource "doit_report" "mf_clear" {
     name = "test-mf-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         metric_filter = {
             metric = {
                 type  = "basic"
@@ -5937,10 +5627,10 @@ func testAccReportMetricFilterCleared(i int) string {
 resource "doit_report" "mf_clear" {
     name = "test-mf-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -5999,10 +5689,10 @@ func testAccReportWithSecondaryCustom(i int) string {
 resource "doit_report" "str_clear" {
     name = "test-str-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         time_range = {
@@ -6032,10 +5722,10 @@ func testAccReportSecondaryCleared(i int) string {
 resource "doit_report" "str_clear" {
     name = "test-str-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         time_range = {
@@ -6100,10 +5790,10 @@ func testAccReportWithExplicitTimeRange(i int) string {
 resource "doit_report" "tr_clear" {
     name = "test-tr-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -6125,10 +5815,10 @@ func testAccReportTimeRangeCleared(i int) string {
 resource "doit_report" "tr_clear" {
     name = "test-tr-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -6188,10 +5878,10 @@ func testAccReportWithConfigForClear(i int) string {
 resource "doit_report" "cfg_clear" {
     name = "test-cfg-clear-%d"
     config = {
-        metric = {
+        metrics = [{
             type  = "basic"
             value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -6240,10 +5930,10 @@ func testAccReportCumulativeComparisonMissingSecondary(i int) string {
 resource "doit_report" "cc_missing_sec" {
   name = "test-cc-missing-sec-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6277,10 +5967,10 @@ func testAccReportCumulativeComparisonMissingDimensions(i int) string {
 resource "doit_report" "cc_missing_dims" {
   name = "test-cc-missing-dims-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6305,10 +5995,10 @@ func testAccReportCumulativeComparisonComparativeDisplayValues(i int) string {
 resource "doit_report" "cc_comparative" {
   name = "test-cc-comparative-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6406,10 +6096,10 @@ func testAccReportCumulativeComparisonOmittedLayoutInvalidDimensions(i int) stri
 resource "doit_report" "cc_valid" {
   name = "test-cc-valid-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6444,10 +6134,10 @@ func testAccReportCumulativeComparisonValid(i int) string {
 resource "doit_report" "cc_valid" {
   name = "test-cc-valid-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6527,10 +6217,10 @@ resource "terraform_data" "target_layout" {
 resource "doit_report" "cc_valid" {
   name = "test-cc-valid-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6561,7 +6251,7 @@ resource "doit_report" "cc_valid" {
 }
 
 // TestAccReport_Layout_CumulativeComparison_DynamicMetric asserts that configuring a report
-// with an unknown singular metric object (from terraform_data) when layout = "cumulative_comparison"
+// with an unknown metrics list (from terraform_data) when layout = "cumulative_comparison"
 // defers validation instead of incorrectly counting 0 metrics and failing at plan time.
 func TestAccReport_Layout_CumulativeComparison_DynamicMetric(t *testing.T) {
 	n := acctest.RandInt()
@@ -6575,7 +6265,7 @@ func TestAccReport_Layout_CumulativeComparison_DynamicMetric(t *testing.T) {
 				Config: testAccReportDynamicMetric(n),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.layout", "cumulative_comparison"),
-					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.metric.value", "cost"),
+					resource.TestCheckResourceAttr("doit_report.cc_dynamic_metric", "config.metrics.0.value", "cost"),
 				),
 			},
 			// Step 2: Verify subsequent plan produces no diff
@@ -6594,16 +6284,16 @@ func TestAccReport_Layout_CumulativeComparison_DynamicMetric(t *testing.T) {
 func testAccReportDynamicMetric(i int) string {
 	return fmt.Sprintf(`
 resource "terraform_data" "metric" {
-  input = {
+  input = [{
     type  = "basic"
     value = "cost"
-  }
+  }]
 }
 
 resource "doit_report" "cc_dynamic_metric" {
   name = "test-cc-dyn-metric-%d"
   config = {
-    metric      = terraform_data.metric.output
+    metrics     = terraform_data.metric.output
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6679,10 +6369,10 @@ func testAccReportCumulativeComparisonOmittedSecondaryTimeRange(i int) string {
 resource "doit_report" "cc_valid" {
   name = "test-cc-valid-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation = "total"
     time_range = {
       mode            = "last"
@@ -6734,16 +6424,16 @@ func TestAccReport_Layout_CumulativeComparison_UnknownMetric_StillValidatesOther
 func testAccReportUnknownMetricForecastConflict(i int) string {
 	return fmt.Sprintf(`
 resource "terraform_data" "metric" {
-  input = {
+  input = [{
     type  = "basic"
     value = "cost"
-  }
+  }]
 }
 
 resource "doit_report" "cc_unknown_metric_forecast" {
   name = "test-cc-dyn-metric-fc-%d"
   config = {
-    metric      = terraform_data.metric.output
+    metrics     = terraform_data.metric.output
     aggregation = "total"
     time_range = {
       mode            = "last"

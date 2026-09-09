@@ -71,13 +71,6 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.\n\"atRisk\" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.\n\"onTrack\" - the budget has forecast data and is neither over budget nor projected to breach.\n\"unknown\" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.",
 							MarkdownDescription: "Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.\n\"atRisk\" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.\n\"onTrack\" - the budget has forecast data and is neither over budget nor projected to breach.\n\"unknown\" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.",
 						},
-						"scope": schema.ListAttribute{
-							ElementType:         types.StringType,
-							Computed:            true,
-							Description:         "List of allocations that define the budget scope.",
-							MarkdownDescription: "List of allocations that define the budget scope.",
-							DeprecationMessage:  "This attribute is deprecated.",
-						},
 						"scopes": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
@@ -465,24 +458,6 @@ func (t BudgetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`risk_status expected to be basetypes.StringValue, was: %T`, riskStatusAttribute))
 	}
 
-	scopeAttribute, ok := attributes["scope"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`scope is missing from object`)
-
-		return nil, diags
-	}
-
-	scopeVal, ok := scopeAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`scope expected to be basetypes.ListValue, was: %T`, scopeAttribute))
-	}
-
 	scopesAttribute, ok := attributes["scopes"]
 
 	if !ok {
@@ -589,7 +564,6 @@ func (t BudgetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		Id:                        idVal,
 		Owner:                     ownerVal,
 		RiskStatus:                riskStatusVal,
-		Scope:                     scopeVal,
 		Scopes:                    scopesVal,
 		StartPeriod:               startPeriodVal,
 		TimeInterval:              timeIntervalVal,
@@ -860,24 +834,6 @@ func NewBudgetsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`risk_status expected to be basetypes.StringValue, was: %T`, riskStatusAttribute))
 	}
 
-	scopeAttribute, ok := attributes["scope"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`scope is missing from object`)
-
-		return NewBudgetsValueUnknown(), diags
-	}
-
-	scopeVal, ok := scopeAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`scope expected to be basetypes.ListValue, was: %T`, scopeAttribute))
-	}
-
 	scopesAttribute, ok := attributes["scopes"]
 
 	if !ok {
@@ -984,7 +940,6 @@ func NewBudgetsValue(attributeTypes map[string]attr.Type, attributes map[string]
 		Id:                        idVal,
 		Owner:                     ownerVal,
 		RiskStatus:                riskStatusVal,
-		Scope:                     scopeVal,
 		Scopes:                    scopesVal,
 		StartPeriod:               startPeriodVal,
 		TimeInterval:              timeIntervalVal,
@@ -1073,7 +1028,6 @@ type BudgetsValue struct {
 	Id                        basetypes.StringValue  `tfsdk:"id"`
 	Owner                     basetypes.StringValue  `tfsdk:"owner"`
 	RiskStatus                basetypes.StringValue  `tfsdk:"risk_status"`
-	Scope                     basetypes.ListValue    `tfsdk:"scope"`
 	Scopes                    basetypes.ListValue    `tfsdk:"scopes"`
 	StartPeriod               basetypes.Int64Value   `tfsdk:"start_period"`
 	TimeInterval              basetypes.StringValue  `tfsdk:"time_interval"`
@@ -1083,7 +1037,7 @@ type BudgetsValue struct {
 }
 
 func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 17)
+	attrTypes := make(map[string]tftypes.Type, 16)
 
 	var val tftypes.Value
 	var err error
@@ -1101,9 +1055,6 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["owner"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["risk_status"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["scope"] = basetypes.ListType{
-		ElemType: types.StringType,
-	}.TerraformType(ctx)
 	attrTypes["scopes"] = basetypes.ListType{
 		ElemType: ScopesValue{}.Type(ctx),
 	}.TerraformType(ctx)
@@ -1116,7 +1067,7 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 17)
+		vals := make(map[string]tftypes.Value, 16)
 
 		val, err = v.AlertThresholds.ToTerraformValue(ctx)
 
@@ -1206,14 +1157,6 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 		vals["risk_status"] = val
 
-		val, err = v.Scope.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["scope"] = val
-
 		val, err = v.Scopes.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -1295,46 +1238,6 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		scopes = v.Scopes
 	}
 
-	var scopeVal basetypes.ListValue
-	switch {
-	case v.Scope.IsUnknown():
-		scopeVal = types.ListUnknown(types.StringType)
-	case v.Scope.IsNull():
-		scopeVal = types.ListNull(types.StringType)
-	default:
-		var d diag.Diagnostics
-		scopeVal, d = types.ListValue(types.StringType, v.Scope.Elements())
-		diags.Append(d...)
-	}
-
-	if diags.HasError() {
-		return types.ObjectUnknown(map[string]attr.Type{
-			"alert_thresholds": basetypes.ListType{
-				ElemType: AlertThresholdsValue{}.Type(ctx),
-			},
-			"amount":                      basetypes.Float64Type{},
-			"budget_name":                 basetypes.StringType{},
-			"create_time":                 basetypes.Int64Type{},
-			"currency":                    basetypes.StringType{},
-			"current_utilization":         basetypes.Float64Type{},
-			"end_period":                  basetypes.Int64Type{},
-			"forecasted_utilization_date": basetypes.Int64Type{},
-			"id":                          basetypes.StringType{},
-			"owner":                       basetypes.StringType{},
-			"risk_status":                 basetypes.StringType{},
-			"scope": basetypes.ListType{
-				ElemType: types.StringType,
-			},
-			"scopes": basetypes.ListType{
-				ElemType: ScopesValue{}.Type(ctx),
-			},
-			"start_period":  basetypes.Int64Type{},
-			"time_interval": basetypes.StringType{},
-			"update_time":   basetypes.Int64Type{},
-			"url":           basetypes.StringType{},
-		}), diags
-	}
-
 	attributeTypes := map[string]attr.Type{
 		"alert_thresholds": basetypes.ListType{
 			ElemType: AlertThresholdsValue{}.Type(ctx),
@@ -1349,9 +1252,6 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		"id":                          basetypes.StringType{},
 		"owner":                       basetypes.StringType{},
 		"risk_status":                 basetypes.StringType{},
-		"scope": basetypes.ListType{
-			ElemType: types.StringType,
-		},
 		"scopes": basetypes.ListType{
 			ElemType: ScopesValue{}.Type(ctx),
 		},
@@ -1383,7 +1283,6 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			"id":                          v.Id,
 			"owner":                       v.Owner,
 			"risk_status":                 v.RiskStatus,
-			"scope":                       scopeVal,
 			"scopes":                      scopes,
 			"start_period":                v.StartPeriod,
 			"time_interval":               v.TimeInterval,
@@ -1453,10 +1352,6 @@ func (v BudgetsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.Scope.Equal(other.Scope) {
-		return false
-	}
-
 	if !v.Scopes.Equal(other.Scopes) {
 		return false
 	}
@@ -1503,9 +1398,6 @@ func (v BudgetsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"id":                          basetypes.StringType{},
 		"owner":                       basetypes.StringType{},
 		"risk_status":                 basetypes.StringType{},
-		"scope": basetypes.ListType{
-			ElemType: types.StringType,
-		},
 		"scopes": basetypes.ListType{
 			ElemType: ScopesValue{}.Type(ctx),
 		},

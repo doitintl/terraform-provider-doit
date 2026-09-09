@@ -714,37 +714,6 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						Description:         "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.",
 						MarkdownDescription: "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.",
 					},
-					"metric": schema.SingleNestedAttribute{
-						Attributes: map[string]schema.Attribute{
-							"type": schema.StringAttribute{
-								Required:            true,
-								Description:         "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
-								MarkdownDescription: "Type of metric to use.\nPossible values: `basic`, `custom`, `extended`",
-								Validators: []validator.String{
-									stringvalidator.OneOf(
-										"basic",
-										"custom",
-										"extended",
-									),
-								},
-							},
-							"value": schema.StringAttribute{
-								Required:            true,
-								Description:         "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
-								MarkdownDescription: "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID.",
-							},
-						},
-						CustomType: MetricType{
-							ObjectType: types.ObjectType{
-								AttrTypes: MetricValue{}.AttributeTypes(ctx),
-							},
-						},
-						Optional:            true,
-						Computed:            true,
-						Description:         "Deprecated: Use 'metrics' instead.",
-						MarkdownDescription: "Deprecated: Use 'metrics' instead.",
-						DeprecationMessage:  "This attribute is deprecated.",
-					},
 					"metric_filter": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"metric": schema.SingleNestedAttribute{
@@ -1728,50 +1697,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 			fmt.Sprintf(`limit_by_change expected to be LimitByChangeValue, was: %T`, limitByChangeConverted))
 	}
 
-	metricAttribute, ok := attributes["metric"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`metric is missing from object`)
-
-		return nil, diags
-	}
-
-	metricValuable, ok := metricAttribute.(basetypes.ObjectValuable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be basetypes.ObjectValuable, was: %T`, metricAttribute))
-
-		return nil, diags
-	}
-
-	metricObjVal, metricObjValDiags := metricValuable.ToObjectValue(ctx)
-	diags.Append(metricObjValDiags...)
-
-	metricTypable, ok := t.AttrTypes["metric"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["metric"]))
-
-		return nil, diags
-	}
-
-	metricConverted, metricConvertedDiags := metricTypable.ValueFromObject(ctx, metricObjVal)
-	diags.Append(metricConvertedDiags...)
-
-	metricVal, ok := metricConverted.(MetricValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricConverted))
-	}
-
 	metricFilterAttribute, ok := attributes["metric_filter"]
 
 	if !ok {
@@ -2016,7 +1941,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 		Layout:                    layoutVal,
 		LimitAggregation:          limitAggregationVal,
 		LimitByChange:             limitByChangeVal,
-		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
 		Metrics:                   metricsVal,
 		SecondaryTimeRange:        secondaryTimeRangeVal,
@@ -2398,24 +2322,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 			fmt.Sprintf(`limit_by_change expected to be LimitByChangeValue, was: %T`, limitByChangeAttribute))
 	}
 
-	metricAttribute, ok := attributes["metric"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`metric is missing from object`)
-
-		return NewConfigValueUnknown(), diags
-	}
-
-	metricVal, ok := metricAttribute.(MetricValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`metric expected to be MetricValue, was: %T`, metricAttribute))
-	}
-
 	metricFilterAttribute, ok := attributes["metric_filter"]
 
 	if !ok {
@@ -2582,7 +2488,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 		Layout:                    layoutVal,
 		LimitAggregation:          limitAggregationVal,
 		LimitByChange:             limitByChangeVal,
-		Metric:                    metricVal,
 		MetricFilter:              metricFilterVal,
 		Metrics:                   metricsVal,
 		SecondaryTimeRange:        secondaryTimeRangeVal,
@@ -2680,7 +2585,6 @@ type ConfigValue struct {
 	Layout                    basetypes.StringValue   `tfsdk:"layout"`
 	LimitAggregation          basetypes.StringValue   `tfsdk:"limit_aggregation"`
 	LimitByChange             LimitByChangeValue      `tfsdk:"limit_by_change"`
-	Metric                    MetricValue             `tfsdk:"metric"`
 	MetricFilter              MetricFilterValue       `tfsdk:"metric_filter"`
 	Metrics                   basetypes.ListValue     `tfsdk:"metrics"`
 	SecondaryTimeRange        SecondaryTimeRangeValue `tfsdk:"secondary_time_range"`
@@ -2693,7 +2597,7 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 26)
+	attrTypes := make(map[string]tftypes.Type, 25)
 
 	var val tftypes.Value
 	var err error
@@ -2745,11 +2649,6 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 			AttrTypes: LimitByChangeValue{}.AttributeTypes(ctx),
 		},
 	}.TerraformType(ctx)
-	attrTypes["metric"] = MetricType{
-		basetypes.ObjectType{
-			AttrTypes: MetricValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
 	attrTypes["metric_filter"] = MetricFilterType{
 		basetypes.ObjectType{
 			AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
@@ -2779,7 +2678,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 26)
+		vals := make(map[string]tftypes.Value, 25)
 
 		val, err = v.AdvancedAnalysis.ToTerraformValue(ctx)
 
@@ -2916,14 +2815,6 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 		}
 
 		vals["limit_by_change"] = val
-
-		val, err = v.Metric.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["metric"] = val
 
 		val, err = v.MetricFilter.ToTerraformValue(ctx)
 
@@ -3072,12 +2963,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		limitByChange = v.LimitByChange
 	}
 
-	var metric attr.Value
-
-	{
-		metric = v.Metric
-	}
-
 	var metricFilter attr.Value
 
 	{
@@ -3156,11 +3041,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 				AttrTypes: LimitByChangeValue{}.AttributeTypes(ctx),
 			},
 		},
-		"metric": MetricType{
-			basetypes.ObjectType{
-				AttrTypes: MetricValue{}.AttributeTypes(ctx),
-			},
-		},
 		"metric_filter": MetricFilterType{
 			basetypes.ObjectType{
 				AttrTypes: MetricFilterValue{}.AttributeTypes(ctx),
@@ -3215,7 +3095,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 			"layout":                      v.Layout,
 			"limit_aggregation":           v.LimitAggregation,
 			"limit_by_change":             limitByChange,
-			"metric":                      metric,
 			"metric_filter":               metricFilter,
 			"metrics":                     metrics,
 			"secondary_time_range":        secondaryTimeRange,
@@ -3312,10 +3191,6 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.Metric.Equal(other.Metric) {
-		return false
-	}
-
 	if !v.MetricFilter.Equal(other.MetricFilter) {
 		return false
 	}
@@ -3406,11 +3281,6 @@ func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"limit_by_change": LimitByChangeType{
 			basetypes.ObjectType{
 				AttrTypes: LimitByChangeValue{}.AttributeTypes(ctx),
-			},
-		},
-		"metric": MetricType{
-			basetypes.ObjectType{
-				AttrTypes: MetricValue{}.AttributeTypes(ctx),
 			},
 		},
 		"metric_filter": MetricFilterType{

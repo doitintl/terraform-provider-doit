@@ -80,14 +80,13 @@ func modifyPlanTestComponent(t *testing.T, key string, values []string) resource
 	return resource_allocation.NewComponentsValueMust(
 		resource_allocation.ComponentsValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"key":               types.StringValue(key),
-			"mode":              types.StringValue("is"),
-			"type":              types.StringValue("fixed"),
-			"values":            types.ListValueMust(types.StringType, valElems),
-			"case_insensitive":  types.BoolNull(),
-			"include_null":      types.BoolNull(),
-			"inverse":           types.BoolNull(),
-			"inverse_selection": types.BoolNull(),
+			"key":              types.StringValue(key),
+			"mode":             types.StringValue("is"),
+			"type":             types.StringValue("fixed"),
+			"values":           types.ListValueMust(types.StringType, valElems),
+			"case_insensitive": types.BoolNull(),
+			"include_null":     types.BoolNull(),
+			"inverse":          types.BoolNull(),
 		},
 	)
 }

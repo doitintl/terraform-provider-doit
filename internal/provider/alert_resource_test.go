@@ -182,56 +182,6 @@ func TestAccAlert_WithEmptyScopes(t *testing.T) {
 	})
 }
 
-// TestAccAlert_WithAttributions tests the deprecated attributions field for backward compatibility.
-func TestAccAlert_WithAttributions(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAlertWithAttributions(n),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_alert.this",
-						tfjsonpath.New("config").AtMapKey("attributions"),
-						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.StringExact(testAttribution()),
-						})),
-				},
-			},
-		},
-	})
-}
-
-// TestAccAlert_WithEmptyAttributions tests that explicitly setting attributions = [] works correctly.
-// This verifies the fix for state inconsistency between empty list and null.
-func TestAccAlert_WithEmptyAttributions(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccAlertWithEmptyAttributions(n),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_alert.this",
-						tfjsonpath.New("config").AtMapKey("attributions"),
-						knownvalue.ListExact([]knownvalue.Check{})), // Empty list, not null
-				},
-			},
-		},
-	})
-}
-
-// TestAccAlert_WithEmptyRecipients documents that recipients = [] is not allowed.
-// The API adds the creator as a default recipient when recipients is empty, causing state drift.
-// To prevent this, the provider validates that at least one recipient is specified.
 func TestAccAlert_WithEmptyRecipients(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -533,46 +483,6 @@ resource "doit_alert" "this" {
     condition     = "value"
     operator      = "gt"
     scopes        = []
-  }
-}
-`, i)
-}
-
-func testAccAlertWithAttributions(i int) string {
-	return fmt.Sprintf(`
-resource "doit_alert" "this" {
-  name = "test-alert-attributions-%d"
-  config = {
-    metric = {
-      type  = "basic"
-      value = "cost"
-    }
-    time_interval = "month"
-    value         = 500
-    currency      = "USD"
-    condition     = "value"
-    operator      = "gt"
-    attributions  = ["%s"]
-  }
-}
-`, i, testAttribution())
-}
-
-func testAccAlertWithEmptyAttributions(i int) string {
-	return fmt.Sprintf(`
-resource "doit_alert" "this" {
-  name = "test-alert-empty-attributions-%d"
-  config = {
-    metric = {
-      type  = "basic"
-      value = "cost"
-    }
-    time_interval = "month"
-    value         = 500
-    currency      = "USD"
-    condition     = "value"
-    operator      = "gt"
-    attributions  = []
   }
 }
 `, i)
@@ -1525,11 +1435,6 @@ func TestAccAlert_MinimalConfig(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_alert.this",
 						tfjsonpath.New("config").AtMapKey("scopes"),
-						knownvalue.ListSizeExact(0)),
-					// Attributions should be empty list (not null)
-					statecheck.ExpectKnownValue(
-						"doit_alert.this",
-						tfjsonpath.New("config").AtMapKey("attributions"),
 						knownvalue.ListSizeExact(0)),
 				},
 			},

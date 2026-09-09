@@ -87,7 +87,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		//
 		// Sending [] is also what keeps plans stable: group[*].limit.metric is
 		// Required, so an API-populated group left in state while absent from config
-		// permanently diffs the resource — see useNullForUnconfiguredMetricMirror.
+		// permanently diffs the resource — see useEmptyForUnconfiguredMetricsMirror.
 		if attr, ok := configAttr.Attributes["group"].(schema.ListNestedAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
 			configAttr.Attributes["group"] = attr
@@ -98,21 +98,11 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
 
-		// metric (deprecated) and metrics are two views of one API field, and the
-		// API returns both populated whichever one is configured. Keep the
-		// unconfigured mirror out of state; their type/value leaves are Required, so
-		// storing the echo permanently diffs the resource. Not a clearing
-		// classification — both stay Category B below, since nothing is cleared
-		// server-side. See useNullForUnconfiguredMetricMirror.
-		//
-		// They are also mutually exclusive: toExternalConfig sends only metrics when
-		// both are set, so differing values would drift on every refresh. Reject the
-		// combination instead of silently discarding one.
-		if attr, ok := configAttr.Attributes["metric"].(schema.SingleNestedAttribute); ok {
-			attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnconfiguredMetricMirror())
-			attr.Validators = append(attr.Validators, metricMirrorConflictValidator())
-			configAttr.Attributes["metric"] = attr
-		}
+		// metrics is Optional+Computed and its type/value leaves are Required, so an
+		// API-populated list left in state while absent from config permanently
+		// diffs the resource. Keep it out of state when unconfigured. Not a clearing
+		// classification — it stays Category B below, since nothing is cleared
+		// server-side. See useEmptyForUnconfiguredMetricsMirror.
 		if attr, ok := configAttr.Attributes["metrics"].(schema.ListNestedAttribute); ok {
 			attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnconfiguredMetricsMirror())
 			configAttr.Attributes["metrics"] = attr
@@ -208,7 +198,6 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		// requiresReplaceWhenCleared in ModifyPlan instead, not acknowledged here.)
 		"config.advanced_analysis",                      // silently preserved on removal
 		"config.display_settings",                       // silently preserved on removal
-		"config.metric",                                 // deprecated mirror of metrics[0]; API always derives it, never clears
 		"config.secondary_time_range",                   // silently preserved on removal
 		"config.secondary_time_range.custom_time_range", // silently preserved on removal
 		"config.time_range",                             // silently preserved on removal

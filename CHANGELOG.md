@@ -9,6 +9,15 @@
 - **resource/doit_insight, resource/doit_insight_resource_results, data-source/doit_insight, data-source/doit_insights, data-source/doit_insight_resource_results**: Removed all resources and data sources for the Insights API as the upstream service has been deprecated and is no longer being maintained. A replacement API is being worked on upstream.
 - **provider**: `request_timeout` values at or below `120s` are now rejected at validation time. The DoiT API's edge proxy answers requests still running after 120 seconds with a `524`, and a local timeout at or below that threshold cancels the request before that response can arrive — turning a definitive, fast failure into an opaque `context deadline exceeded` that is then retried. Configurations setting a lower value must raise it; the default is `150s`
 
+- **resource/doit_budget, data-source/doit_budget, data-source/doit_budgets**: Removed the deprecated `scope` attribute. Use `scopes`, which expresses the same selection as a single filter carrying every allocation rule ID in its `values` list. `scopes` is now required. See the [deprecated attribute removal guide](https://registry.terraform.io/providers/doitintl/doit/latest/docs/guides/deprecated_attribute_removal)
+- **resource/doit_alert, data-source/doit_alert, data-source/doit_alerts**: Removed the deprecated `config.attributions` attribute. Use `config.scopes`. Alerts apply only the first entry of `scopes`, so express a multi-attribution alert as one filter with several `values`
+- **resource/doit_report, data-source/doit_report, data-source/doit_report_query**: Removed the deprecated `config.metric` attribute. Use `config.metrics`, which accepts up to four. The nested `metric_filter.metric`, `limit_by_change.metric` and `group[*].limit.metric` attributes are unaffected
+- **resource/doit_allocation, data-source/doit_allocation**: Removed the deprecated `inverse_selection` attribute on rule components. Use `inverse`. A component whose state carried `inverse_selection = true` previously had its `inverse` value read from state rather than from the API; that masking is gone, so an out-of-band change to `inverse` now surfaces as drift
+
+  All four properties were removed from the DoiT API's published specification in [omni#63754](https://github.com/doiteng/omni/pull/63754). Configurations still setting them fail with `Unsupported argument`; state written by an earlier provider version needs no migration.
+
+- **resource/doit_budget**: An API-side change shipped alongside the specification update evaluates a budget that still holds a legacy server-side scope against **every** allocation rule it lists, rather than only the first. This is not a provider change and applies whichever provider version you run, but it can raise a budget's tracked utilization and trigger a threshold that previously never fired ([omni#63754](https://github.com/doiteng/omni/pull/63754))
+
 ### ENHANCEMENTS
 
 - **data-source/doit_report_result, data-source/doit_report_query**: Reports and queries now run through the asynchronous execution API: the provider submits the run, polls until it completes, and then fetches the result. Reports that take longer than the API's 120-second edge timeout previously failed with a `524` and could not be read through Terraform at all; they now complete. No configuration changes are required — both schemas are unchanged
@@ -64,9 +73,8 @@
 
 - **resource/doit_report, data-source/doit_report**: Fixed a provider crash when reading a report whose `config.time_range` omits `mode` or `unit`. The API now omits `unit` for custom time ranges, which the previous code dereferenced unconditionally. **Users managing reports with a custom time range should upgrade as soon as possible**, as an older provider will panic when reading them ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
 - **resource/doit_report, data-source/doit_report_query**: `config.custom_time_range` no longer reports a spurious "Empty Custom Time Range" error when `from`/`to` are computed from another resource or data source. Unknown values are now deferred until they resolve, matching `forecast_settings.future_custom_date_range` ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
-- **resource/doit_report, data-source/doit_report_query**: Fixed a permanent whole-resource diff when `config.metric` or `config.metrics` was omitted from configuration — the mirror field left unconfigured is no longer forced to unknown on every plan ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
+- **resource/doit_report, data-source/doit_report_query**: Fixed a permanent whole-resource diff when `config.metrics` was omitted from configuration — it is no longer forced to unknown on every plan ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
 - **resource/doit_report**: `config.group` can now be cleared by removing it from configuration; it previously remained stuck in state due to the API's PATCH-merge semantics ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
-- **resource/doit_report, data-source/doit_report_query**: Restored the deprecation warning on `config.metric`, which the `allOf`-composed schema had silently dropped ([#284](https://github.com/doitintl/terraform-provider-doit/pull/284))
 
 ### DOCUMENTATION
 

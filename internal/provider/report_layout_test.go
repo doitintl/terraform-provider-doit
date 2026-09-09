@@ -59,7 +59,7 @@ func testAccReportLayoutConfig(name, layout string) string {
 resource "doit_report" "test" {
   name = %q
   config = {
-    metric = { type = "basic", value = "cost" }
+    metrics = [{ type = "basic", value = "cost" }]
     aggregation = "total"
     time_interval = "month"
     data_source = "billing"

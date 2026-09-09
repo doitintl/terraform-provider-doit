@@ -198,7 +198,6 @@ Required:
 
 Optional:
 
-- `attributions` (List of String, Deprecated) Use 'scopes' instead. The attributions selected define the scope to monitor.
 - `condition` (String) Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 Possible values: `value`, `percentage-change`, `forecast`
 - `currency` (String) Currency code for monetary values.

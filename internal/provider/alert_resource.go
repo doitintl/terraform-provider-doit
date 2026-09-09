@@ -85,7 +85,6 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		"config.currency",          // API defaults to org currency
 		"config.operator",          // API defaults comparison operator
 		"config.evaluate_for_each", // API defaults to false
-		"config.attributions",      // deprecated legacy alias for scopes
 		"config.scopes[*].inverse", // API defaults to false
 		"config.scopes[*].values",  // API defaults scope values
 	)

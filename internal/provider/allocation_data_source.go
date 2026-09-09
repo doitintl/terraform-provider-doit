@@ -249,14 +249,13 @@ func (ds *allocationDataSource) mapComponentsToList(ctx context.Context, compone
 		}
 
 		componentMap := map[string]attr.Value{
-			"case_insensitive":  types.BoolPointerValue(component.CaseInsensitive),
-			"include_null":      types.BoolPointerValue(component.IncludeNull),
-			"inverse":           types.BoolPointerValue(component.Inverse),
-			"inverse_selection": types.BoolPointerValue(component.InverseSelection),
-			"key":               types.StringValue(component.Key),
-			"mode":              types.StringValue(string(component.Mode)),
-			"type":              types.StringValue(string(component.Type)),
-			"values":            valuesList,
+			"case_insensitive": types.BoolPointerValue(component.CaseInsensitive),
+			"include_null":     types.BoolPointerValue(component.IncludeNull),
+			"inverse":          types.BoolPointerValue(component.Inverse),
+			"key":              types.StringValue(component.Key),
+			"mode":             types.StringValue(string(component.Mode)),
+			"type":             types.StringValue(string(component.Type)),
+			"values":           valuesList,
 		}
 
 		componentValue, compDiags := datasource_allocation.NewComponentsValue(datasource_allocation.ComponentsValue{}.AttributeTypes(ctx), componentMap)

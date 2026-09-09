@@ -66,7 +66,6 @@ required: true(if budget type is fixed)
 - `public` (String) Public sharing access level for the budget.
 - `recipients` (List of String) List of emails to notify when reaching alert threshold.
 - `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold. (see [below for nested schema](#nestedatt--recipients_slack_channels))
-- `scope` (List of String) List of allocations that defines the budget scope.
 - `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--scopes))
 - `seasonal_amounts` (List of Number) List of seasonal amounts for recurring budgets with different amounts per period.
 - `start_period` (Number) Budget start date (in UNIX timestamp).

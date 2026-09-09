@@ -98,10 +98,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report for data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -123,10 +123,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report with filters for data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation   = "total"
         time_interval = "month"
         data_source   = "billing"
@@ -211,10 +211,10 @@ resource "doit_report" "test" {
     name      = %q
     folder_id = doit_folder.ds_test.id
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -266,10 +266,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report with forecast settings for data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -334,10 +334,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report with forecast settings custom dates for data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -392,10 +392,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report with omitted forecast settings for data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -468,10 +468,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report with new limit attributes for data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         # metric_filter and limit_by_change are two of the (at most two) allowed
         # limit types; limit_aggregation is left to default to none.
         metric_filter = {
@@ -550,10 +550,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report with count for data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "count"
         time_interval  = "month"
         data_source    = "billing"

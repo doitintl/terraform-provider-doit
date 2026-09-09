@@ -2,9 +2,12 @@ package provider_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -13,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -117,6 +121,11 @@ func TestAccBudget(t *testing.T) {
 	})
 }
 
+// legacyBudgetStartPeriod is the epoch-millisecond form of the timestamp
+// budgetStartPeriod renders in HCL, for callers that build a request body
+// directly rather than through Terraform.
+const legacyBudgetStartPeriod = 1759276800000
+
 func budgetStartPeriod() string {
 	return `
 locals {
@@ -158,7 +167,14 @@ resource "doit_budget" "this" {
   amount        = 100
   currency      = "EUR"
   time_interval = "month"
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   alerts = [
     { percentage = 50 }
   ]
@@ -183,7 +199,14 @@ resource "doit_budget" "this" {
   amount        = 150
   currency      = "EUR"
   time_interval = "month"
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   alerts = [
     { percentage = 50 },
     { percentage = 80 }
@@ -210,7 +233,14 @@ resource "doit_budget" "this" {
   type          = "fixed"
   start_period  = local.start_period
   end_period    = local.start_period + (30 * 24 * 60 * 60 * 1000) # 30 days later
-  scope         = ["%s"] # Required by validator
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
 }
 `, budgetStartPeriod(), i, testAttribution())
 }
@@ -242,8 +272,13 @@ resource "doit_budget" "this" {
       "role" : "owner"
     },
   ]
-  scope = [
-    "%s"
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
   ]
   amount            = 1000
   currency          = "EUR"
@@ -278,6 +313,12 @@ func TestAccBudget_Import(t *testing.T) {
 				ResourceName:      "doit_budget.this",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// Import has no prior state for normalizeDimensionsType to compare
+				// against, so an aliased scope type is stored as the canonical name
+				// the API returns ("attribution" for the configured
+				// "allocation_rule"). Documented behavior, and it converges on the
+				// first apply; TestAccBudget_ScopesAliasTypes covers that path.
+				ImportStateVerifyIgnore: []string{"scopes.0.id", "scopes.0.type"},
 			},
 		},
 	})
@@ -353,28 +394,6 @@ func TestAccBudget_Scopes(t *testing.T) {
 	})
 }
 
-func TestAccBudget_Conflict(t *testing.T) {
-	n := acctest.RandInt()
-
-	resource.ParallelTest(t, resource.TestCase{
-		ExternalProviders: map[string]resource.ExternalProvider{
-			"time": {
-				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
-			},
-		},
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccBudgetConflict(n),
-				ExpectError: regexp.MustCompile("Attributes 'scope' and 'scopes' are mutually exclusive"),
-			},
-		},
-	})
-}
-
 func testAccBudgetScopes(i int) string {
 	return fmt.Sprintf(`
 %s
@@ -407,39 +426,6 @@ resource "doit_budget" "this" {
   start_period  = local.start_period
 }
 `, budgetStartPeriod(), i, testUser())
-}
-
-func testAccBudgetConflict(i int) string {
-	return fmt.Sprintf(`
-%s
-
-resource "doit_budget" "this" {
-  name          = "test-conflict-%d"
-  amount        = 100
-  scope         = ["%s"]
-  scopes = [
-    {
-      type   = "attribution"
-      id     = "attribution"
-      mode   = "is"
-      values = ["%s"]
-    }
-  ]
-  alerts = [
-    { percentage = 50 },
-    { percentage = 80 },
-    { percentage = 100 }
-  ]
-  collaborators = [
-    {
-      "email" : "%s",
-      "role" : "owner"
-    },
-  ]
-  type          = "recurring"
-  start_period  = local.start_period
-}
-`, budgetStartPeriod(), i, testAttribution(), testAttribution(), testUser())
 }
 
 func TestAccBudget_Attributes_Coverage(t *testing.T) {
@@ -676,7 +662,14 @@ resource "doit_budget" "this" {
     }
   ]
 
-  scope = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
 
   collaborators = [
     {
@@ -857,7 +850,14 @@ resource "doit_budget" "this" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = []
 }
 `, budgetStartPeriod(), i, testAttribution())
@@ -874,7 +874,14 @@ resource "doit_budget" "this" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       email = "%s"
@@ -896,8 +903,14 @@ resource "doit_budget" "this" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
-  # collaborators omitted - API adds creator as owner
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
 }
 `, budgetStartPeriod(), i, testAttribution())
 }
@@ -913,7 +926,14 @@ resource "doit_budget" "this" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       email = "%s"
@@ -940,7 +960,14 @@ resource "doit_budget" "this" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       email = "%s"
@@ -964,7 +991,14 @@ resource "doit_budget" "this" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       email = "%s"
@@ -1651,8 +1685,9 @@ resource "doit_budget" "drift_test" {
 // from the API response (or null) and the Read path must agree.
 //
 // Critically, this also verifies that omitted list fields (recipients_slack_channels,
-// scopes, seasonal_amounts) resolve to empty lists [] — not null — matching the
-// Read path (mapBudgetToModel). A null↔[] mismatch would cause state churn.
+// seasonal_amounts) resolve to empty lists [] — not null — matching the Read path
+// (mapBudgetToModel). A null↔[] mismatch would cause state churn. scopes is not
+// among them: a budget must declare the spend it tracks, so it is always set.
 func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -1666,7 +1701,7 @@ func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 		statecheck.ExpectKnownValue(
 			"doit_budget.omitted_test",
 			tfjsonpath.New("scopes"),
-			knownvalue.ListSizeExact(0)),
+			knownvalue.ListSizeExact(1)),
 		statecheck.ExpectKnownValue(
 			"doit_budget.omitted_test",
 			tfjsonpath.New("seasonal_amounts"),
@@ -1685,7 +1720,7 @@ func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			// Create a minimal budget omitting description, growth_per_period, metric, public,
-			// and all optional list fields (recipients_slack_channels, scopes, seasonal_amounts).
+			// and the optional list fields (recipients_slack_channels, seasonal_amounts).
 			{
 				Config: testAccBudgetMinimalOmitted(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -1804,7 +1839,14 @@ resource "doit_budget" "defaulted_test" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -1833,7 +1875,14 @@ resource "doit_budget" "omitted_test" {
   type          = "recurring"
   start_period  = local.start_period
   use_prev_spend = false
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -1901,7 +1950,14 @@ resource "doit_budget" "this" {
   description       = "A test budget with optional fields"
   growth_per_period = 0
   metric            = "cost"
-  scope             = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -1928,7 +1984,14 @@ resource "doit_budget" "this" {
   type          = "recurring"
   start_period  = local.start_period
   use_prev_spend = false
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -1995,7 +2058,14 @@ resource "doit_budget" "this" {
   type           = "recurring"
   start_period   = local.start_period
   use_prev_spend = true
-  scope          = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -2075,7 +2145,14 @@ resource "doit_budget" "this" {
   type         = "fixed"
   start_period = local.start_period
   end_period   = local.start_period + (30 * 24 * 60 * 60 * 1000)
-  scope        = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -2097,7 +2174,14 @@ resource "doit_budget" "this" {
   time_interval = "month"
   type          = "recurring"
   start_period  = local.start_period
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -2183,7 +2267,14 @@ resource "doit_budget" "this" {
   start_period  = local.start_period
   use_prev_spend = false
   public        = "%s"
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -2268,7 +2359,14 @@ resource "doit_budget" "this" {
   type          = "recurring"
   start_period  = local.start_period
   use_prev_spend = false
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -2295,7 +2393,14 @@ resource "doit_budget" "this" {
   type          = "recurring"
   start_period  = local.start_period
   use_prev_spend = false
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   collaborators = [
     {
       "email" : "%s",
@@ -2447,4 +2552,191 @@ resource "doit_budget" "this" {
   ]
 }
 `, budgetStartPeriod(), i, testUser())
+}
+
+// createLegacyScopeBudget POSTs a budget carrying the deprecated `scope` field
+// straight to the API, bypassing the provider — which can no longer write that
+// field. Returns the new budget's ID.
+//
+// The API still accepts `scope`, so budgets in this shape exist in the wild and
+// the provider has to keep reading and migrating them.
+func createLegacyScopeBudget(t *testing.T, name string) string {
+	t.Helper()
+
+	client := getAPIClient(t)
+	ctx := context.Background()
+
+	body := fmt.Sprintf(`{
+  "name": %q,
+  "amount": 100,
+  "currency": "EUR",
+  "timeInterval": "month",
+  "type": "recurring",
+  "startPeriod": %d,
+  "scope": [%q],
+  "alerts": [{"percentage": 50}],
+  "collaborators": [{"email": %q, "role": "owner"}]
+}`, name, legacyBudgetStartPeriod, testAttribution(), testUser())
+
+	resp, err := client.CreateBudgetWithBodyWithResponse(ctx, "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("creating legacy-scope budget: %v", err)
+	}
+	if resp.StatusCode() != http.StatusCreated {
+		t.Fatalf("creating legacy-scope budget: status %d: %s", resp.StatusCode(), resp.Body)
+	}
+
+	var created struct {
+		ID     string   `json:"id"`
+		Scope  []string `json:"scope"`
+		Scopes []any    `json:"scopes"`
+	}
+	if err := json.Unmarshal(resp.Body, &created); err != nil {
+		t.Fatalf("decoding created budget: %v", err)
+	}
+	if len(created.Scope) == 0 {
+		t.Fatalf("expected the API to store the legacy scope, got none: %s", resp.Body)
+	}
+	if len(created.Scopes) != 1 {
+		t.Fatalf("expected the API to synthesize exactly one scopes entry, got %d: %s", len(created.Scopes), resp.Body)
+	}
+
+	return created.ID
+}
+
+// budgetLegacyScopeCleared reads the budget straight from the API and asserts the
+// deprecated `scope` field is gone. The provider's models no longer carry it, so
+// this decodes the raw body.
+// The id is read through a pointer because the budget is created in a step's
+// PreConfig, after the test case is constructed.
+func budgetLegacyScopeCleared(t *testing.T, id *string) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(*terraform.State) error {
+		resp, err := getAPIClient(t).GetBudgetWithResponse(context.Background(), *id)
+		if err != nil {
+			return fmt.Errorf("reading budget %s: %w", *id, err)
+		}
+
+		var got struct {
+			Scope  []string `json:"scope"`
+			Scopes []any    `json:"scopes"`
+		}
+		if err := json.Unmarshal(resp.Body, &got); err != nil {
+			return fmt.Errorf("decoding budget %s: %w", *id, err)
+		}
+		if len(got.Scope) != 0 {
+			return fmt.Errorf("budget %s still holds the legacy scope %v; writing scopes should have cleared it", *id, got.Scope)
+		}
+		if len(got.Scopes) != 1 {
+			return fmt.Errorf("budget %s has %d scopes, want 1", *id, len(got.Scopes))
+		}
+
+		return nil
+	}
+}
+
+// TestAccBudget_LegacyScopeMigration covers the migration path for a budget that
+// still holds the deprecated scope server-side, which is what practitioners
+// upgrading past the removal of `scope` will be holding.
+//
+// The API reports such a budget's scope through `scopes` as well, synthesized
+// from the legacy references. Two things have to hold:
+//
+//  1. Reading one produces no diff. `scopes` is Optional+Computed with Required
+//     children, so a value that appears in state but not in config makes
+//     Terraform Core propose null for the whole attribute and mark every other
+//     config-null Computed attribute unknown — a whole-resource "known after
+//     apply" plan that never converges.
+//  2. Writing `scopes` clears the legacy references, so the budget converges on
+//     the new representation instead of keeping both.
+func TestAccBudget_LegacyScopeMigration(t *testing.T) {
+	name := fmt.Sprintf("test-legacy-scope-%d", acctest.RandInt())
+
+	var budgetID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Adopt the out-of-band budget. The config spells the scope the way the
+			// API synthesizes it, so import lands on exactly the configured value.
+			{
+				PreConfig:    func() { budgetID = createLegacyScopeBudget(t, name) },
+				Config:       testAccBudgetLegacyScope(name),
+				ResourceName: "doit_budget.legacy",
+				ImportState:  true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return budgetID, nil
+				},
+				ImportStatePersist: true,
+			},
+			// The regression guard: reading a legacy budget must not diff.
+			{
+				Config: testAccBudgetLegacyScope(name),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_budget.legacy",
+						tfjsonpath.New("scopes").AtSliceIndex(0).AtMapKey("values"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact(testAttribution()),
+						})),
+				},
+			},
+			// Any write migrates the budget off the legacy references.
+			{
+				Config: testAccBudgetLegacyScopeUpdated(name),
+				Check:  budgetLegacyScopeCleared(t, &budgetID),
+			},
+			// And the migrated budget is still drift-free.
+			{
+				Config: testAccBudgetLegacyScopeUpdated(name),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testAccBudgetLegacyScope(name string) string {
+	return testAccBudgetLegacyScopeAmount(name, 100)
+}
+
+func testAccBudgetLegacyScopeUpdated(name string) string {
+	return testAccBudgetLegacyScopeAmount(name, 150)
+}
+
+// testAccBudgetLegacyScopeAmount inlines start_period rather than deriving it
+// through the time provider: an import-only step cannot call a provider function.
+func testAccBudgetLegacyScopeAmount(name string, amount int) string {
+	return fmt.Sprintf(`
+resource "doit_budget" "legacy" {
+  name          = %q
+  amount        = %d
+  currency      = "EUR"
+  time_interval = "month"
+  scopes = [
+    {
+      type   = "attribution"
+      id     = "attribution"
+      values = ["%s"]
+    }
+  ]
+  alerts = [
+    { percentage = 50 }
+  ]
+  collaborators = [
+    {
+      "email" : "%s",
+      "role" : "owner"
+    },
+  ]
+  type         = "recurring"
+  start_period = %d
+}
+`, name, amount, testAttribution(), testUser(), legacyBudgetStartPeriod)
 }

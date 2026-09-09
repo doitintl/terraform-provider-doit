@@ -100,10 +100,10 @@ resource "doit_report" "test" {
   description = "Report for label assignment test"
   labels      = [doit_label.test.id]
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"

@@ -98,7 +98,6 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	acknowledgeNotClearable(s,
 		"seasonal_amounts", // optional list, API returns empty list
 		"currency",         // API defaults to org currency
-		"scope",            // legacy alias list, API always returns a value
 		"type",             // API defaults budget type
 		"time_interval",    // API defaults time interval
 		"amount",           // API-computed for use_prev_spend budgets
@@ -154,7 +153,7 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		budgetTypeEndPeriodValidator{},
 		budgetAlertsLengthValidator{},
 		budgetRecipientsMinLengthValidator{},
-		budgetScopeMutuallyExclusiveValidator{},
+		budgetScopeRequiredValidator{},
 		budgetCollaboratorsOwnerValidator{},
 		budgetSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.

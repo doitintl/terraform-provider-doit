@@ -146,18 +146,6 @@ func (ds *alertDataSource) mapAlertToModel(ctx context.Context, alert *models.Al
 func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.AlertConfig) (datasource_alert.ConfigValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// Map attributions
-	var attributions types.List
-	if config.Attributions != nil {
-		attrList, d := types.ListValueFrom(ctx, types.StringType, *config.Attributions)
-		diags.Append(d...)
-		attributions = attrList
-	} else {
-		emptyList2, d := types.ListValueFrom(ctx, types.StringType, []string{})
-		diags.Append(d...)
-		attributions = emptyList2
-	}
-
 	// Map condition
 	var condition types.String
 	if config.Condition != nil {
@@ -229,7 +217,6 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 	configVal, d := datasource_alert.NewConfigValue(
 		datasource_alert.ConfigValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"attributions":      attributions,
 			"condition":         condition,
 			"currency":          currency,
 			"data_source":       dataSource,

@@ -150,11 +150,13 @@ These resources are no longer supported in the Terraform provider. Existing Attr
 
 ### Deprecated Attributes
 
-The following attributes are deprecated and will be removed in a future version of the provider:
-
 | Attribute | Replacement | Notes                                                                  |
 | --------- | ----------- | ---------------------------------------------------------------------- |
 | `scope`   | `scopes`    | The new `scopes` attribute provides more flexibility with filter modes |
+
+~> **`scope` has since been removed.** It was deprecated in v1.0.0 and removed in
+v1.8.0. See the [deprecated attribute removal guide](./deprecated_attribute_removal)
+if you are upgrading past that version.
 
 **Before (v0.x):**
 
@@ -273,6 +275,11 @@ resource "doit_allocation" "example" {
 | --------------- | ---------------- | ---------------------------------------------------------- |
 | `config.metric` | `config.metrics` | The new `metrics` list supports up to 4 metrics per report |
 
+~> **`config.metric` has since been removed.** It was deprecated in v1.0.0 and
+removed in v1.8.0. See the
+[deprecated attribute removal guide](./deprecated_attribute_removal) if you are
+upgrading past that version.
+
 **Before (v0.x):**
 
 ```hcl
@@ -386,6 +393,11 @@ and the values will not be applied to the report.
 | Attribute             | Replacement     | Notes                                                                  |
 | --------------------- | --------------- | ---------------------------------------------------------------------- |
 | `config.attributions` | `config.scopes` | The new `scopes` attribute provides more flexibility with filter modes |
+
+~> **`config.attributions` has since been removed.** It was deprecated in v1.0.0
+and removed in v1.8.0. See the
+[deprecated attribute removal guide](./deprecated_attribute_removal) if you are
+upgrading past that version.
 
 **Before (v0.x):**
 

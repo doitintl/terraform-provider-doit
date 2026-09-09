@@ -235,22 +235,6 @@ func mapAlertConfig(ctx context.Context, config *models.AlertConfig, diagnostics
 		return datasource_alerts.NewConfigValueNull()
 	}
 
-	// Map attributions list
-	var attributionsList types.List
-	if config.Attributions != nil {
-		attrVals := make([]attr.Value, 0, len(*config.Attributions))
-		for _, a := range *config.Attributions {
-			attrVals = append(attrVals, types.StringValue(a))
-		}
-		var diags diag.Diagnostics
-		attributionsList, diags = types.ListValue(types.StringType, attrVals)
-		diagnostics.Append(diags...)
-	} else {
-		emptyAttrs, d := types.ListValueFrom(ctx, types.StringType, []string{})
-		diagnostics.Append(d...)
-		attributionsList = emptyAttrs
-	}
-
 	// Map scopes list
 	scopesList := mapAlertScopes(ctx, config.Scopes, diagnostics)
 
@@ -276,7 +260,6 @@ func mapAlertConfig(ctx context.Context, config *models.AlertConfig, diagnostics
 	configVal, diags := datasource_alerts.NewConfigValue(
 		datasource_alerts.ConfigValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"attributions":      attributionsList,
 			"condition":         conditionVal,
 			"currency":          currencyVal,
 			"data_source":       types.StringPointerValue((*string)(config.DataSource)),

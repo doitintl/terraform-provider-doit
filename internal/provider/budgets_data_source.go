@@ -200,21 +200,6 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			scopesList, diags := mapBudgetScopes(ctx, budget.Scopes)
 			resp.Diagnostics.Append(diags...)
 
-			// Handle deprecated scope list
-			var scopeList types.List
-			if budget.Scope != nil {
-				scopeVals := make([]attr.Value, 0, len(*budget.Scope))
-				for _, s := range *budget.Scope {
-					scopeVals = append(scopeVals, types.StringValue(s))
-				}
-				scopeList, diags = types.ListValue(types.StringType, scopeVals)
-				resp.Diagnostics.Append(diags...)
-			} else {
-				emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
-				resp.Diagnostics.Append(d...)
-				scopeList = emptyList1
-			}
-
 			budgetVal, diags := datasource_budgets.NewBudgetsValue(
 				datasource_budgets.BudgetsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
@@ -234,7 +219,6 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 					"risk_status":                 types.StringPointerValue((*string)(budget.RiskStatus)),
 					"alert_thresholds":            alertThresholdsList,
 					"scopes":                      scopesList,
-					"scope":                       scopeList,
 				},
 			)
 			resp.Diagnostics.Append(diags...)

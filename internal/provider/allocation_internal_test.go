@@ -65,14 +65,13 @@ func TestFillAllocationCommon_SingleRule_NoEmptyRules(t *testing.T) {
 	comp, compDiags := resource_allocation.NewComponentsValue(
 		resource_allocation.ComponentsValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"case_insensitive":  types.BoolValue(false),
-			"include_null":      types.BoolNull(),
-			"inverse":           types.BoolNull(),
-			"inverse_selection": types.BoolNull(),
-			"key":               types.StringValue("country"),
-			"mode":              types.StringValue("is"),
-			"type":              types.StringValue("fixed"),
-			"values":            types.ListValueMust(types.StringType, []attr.Value{types.StringValue("JP")}),
+			"case_insensitive": types.BoolValue(false),
+			"include_null":     types.BoolNull(),
+			"inverse":          types.BoolNull(),
+			"key":              types.StringValue("country"),
+			"mode":             types.StringValue("is"),
+			"type":             types.StringValue("fixed"),
+			"values":           types.ListValueMust(types.StringType, []attr.Value{types.StringValue("JP")}),
 		},
 	)
 	if compDiags.HasError() {

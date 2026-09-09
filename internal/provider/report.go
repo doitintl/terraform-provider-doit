@@ -75,12 +75,11 @@ func overlayReportComputedFields(ctx context.Context, apiResp *models.ExternalRe
 	} else if plan.Config.IsUnknown() {
 		plan.Config = resolved.Config
 
-		// config omitted entirely means neither metric mirror is configured. The
-		// per-attribute modifiers cannot do this here — the framework does not
+		// config omitted entirely means metrics is not configured. The
+		// per-attribute modifier cannot do this here — the framework does not
 		// descend into the children of an Unknown object — so drop the API echo
 		// explicitly, or prior state carries metrics[*].type and permanently diffs
-		// the resource. See useNullForUnconfiguredMetricMirror.
-		plan.Config.Metric = resource_report.NewMetricValueNull()
+		// the resource. See useEmptyForUnconfiguredMetricsMirror.
 		emptyMetrics, emptyDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
 		diags.Append(emptyDiags...)
 		plan.Config.Metrics = emptyMetrics
@@ -144,14 +143,10 @@ func overlayConfigFields(ctx context.Context, resolved *resource_report.ConfigVa
 		overlayCustomTimeRange(&resolved.CustomTimeRange, &plan.CustomTimeRange)
 	}
 
-	// metric, metric_filter and limit_by_change need no sub-overlay: every child
-	// is Required except metric_filter.operand, which has a schema Default and so
+	// metric_filter and limit_by_change need no sub-overlay: every child is
+	// Required except metric_filter.operand, which has a schema Default and so
 	// is resolved at plan time. Once the object itself is known, all of its
 	// children are known and the plan value must be preserved as-is.
-	if plan.Metric.IsUnknown() {
-		plan.Metric = resolved.Metric
-	}
-
 	if plan.MetricFilter.IsUnknown() {
 		plan.MetricFilter = resolved.MetricFilter
 	}
@@ -841,20 +836,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		}
 	}
 
-	// metric and metrics are mutually exclusive in the API. On Update, prior state
-	// may carry both (the API response populates both). Prefer metrics (non-deprecated).
-	//
-	// An EMPTY metrics list does not count as "has metrics": that is what
-	// useEmptyForUnconfiguredMetricsMirror proposes when the practitioner
-	// configured `metric` instead, and treating it as present would send neither
-	// field, silently leaving the API on its previous metric.
-	hasMetrics := !config.Metrics.IsNull() && !config.Metrics.IsUnknown() && len(config.Metrics.Elements()) > 0
-	if !config.Metric.IsNull() && !config.Metric.IsUnknown() && !hasMetrics {
-		metric := baseTypeObjectValueToExternalMetric(config.Metric)
-		externalConfig.Metric = metric
-	}
-
-	// Handle metrics list (new multi-metric support, replaces deprecated singular metric)
+	// Handle metrics list
 	// - If user sets a non-empty list: send it to API
 	// - If user sets an empty list []: send nothing (omit from request), API preserves existing
 	// - If user omits (null): send nothing (omit from request), API uses defaults
@@ -1496,15 +1478,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		diags.Append(emptyGroupDiags...)
 	}
 
-	// Nested Object: Metric
-	metricVal, d := externalMetricToBaseTypeObjectValue(ctx, config.Metric)
-	diags.Append(d...)
-	if diags.HasError() {
-		return diags
-	}
-	configMap["metric"] = metricVal
-
-	// Nested List: Metrics (new multi-metric support)
+	// Nested List: Metrics
 	if config.Metrics != nil && len(*config.Metrics) > 0 {
 		metricsVals := make([]attr.Value, len(*config.Metrics))
 		for i, m := range *config.Metrics {
@@ -1533,18 +1507,11 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		diags.Append(emptyMetricsDiags...)
 	}
 
-	// State-aware read for the metric mirrors: preserve a prior null/[] instead of
-	// mapping the API echo, so a refresh does not undo what the plan modifiers do.
-	// See useNullForUnconfiguredMetricMirror.
-	if state.Config.IsNull() || state.Config.IsUnknown() {
-		// Import has no prior state. Populate the canonical `metrics` and leave the
-		// deprecated `metric` mirror null, so a config written against `metrics`
-		// round-trips cleanly; one using `metric` gets one convergent diff.
-		configMap["metric"] = resource_report.NewMetricValueNull()
-	} else {
-		if state.Config.Metric.IsNull() {
-			configMap["metric"] = resource_report.NewMetricValueNull()
-		}
+	// State-aware read for metrics: preserve a prior empty list instead of mapping
+	// the API echo, so a refresh does not undo what the plan modifier does.
+	// Import has no prior state, so the canonical `metrics` is populated as mapped.
+	// See useEmptyForUnconfiguredMetricsMirror.
+	if !state.Config.IsNull() && !state.Config.IsUnknown() {
 		if priorMetrics := state.Config.Metrics; priorMetrics.IsNull() || len(priorMetrics.Elements()) == 0 {
 			emptyMetrics, emptyDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
 			diags.Append(emptyDiags...)
@@ -1913,8 +1880,9 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		configMap["forecast_settings"] = resource_report.NewForecastSettingsValueNull()
 	}
 
-	state.Config, d = resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
-	diags.Append(d...)
+	configVal, configDiags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), configMap)
+	diags.Append(configDiags...)
+	state.Config = configVal
 
 	return diags
 }
@@ -1933,8 +1901,8 @@ func datesEqualUTC(t1, t2 time.Time) bool {
 // baseTypeObjectValueToExternalMetric converts a MetricValue to an
 // models.ExternalMetric. type and value are Required in the schema, so callers
 // must only invoke this once the metric object itself is known non-null (the
-// object container may still be Optional+Computed, e.g. config.metric); once
-// present, its type/value are always known.
+// object container may still be Optional+Computed, e.g. config.metric_filter);
+// once present, its type/value are always known.
 func baseTypeObjectValueToExternalMetric(metricValue resource_report.MetricValue) *models.ExternalMetric {
 	return &models.ExternalMetric{
 		Type:  models.ExternalMetricType(metricValue.MetricType.ValueString()),

@@ -94,7 +94,6 @@ Read-Only:
 "atRisk" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.
 "onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
 "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
-- `scope` (List of String, Deprecated) List of allocations that define the budget scope.
 - `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--budgets--scopes))
 - `start_period` (Number)
 - `time_interval` (String)

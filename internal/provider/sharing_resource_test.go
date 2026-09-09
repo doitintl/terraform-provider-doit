@@ -395,10 +395,10 @@ func testAccSharingReport(i int) string {
 resource "doit_report" "sharing_target" {
   name = "test-sharing-target-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -726,7 +726,14 @@ resource "doit_budget" "sharing_target" {
   amount        = 100
   currency      = "EUR"
   time_interval = "month"
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   alerts = [
     { percentage = 50 }
   ]
@@ -771,7 +778,14 @@ resource "doit_budget" "sharing_target" {
   amount        = 100
   currency      = "EUR"
   time_interval = "month"
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   alerts = [
     { percentage = 50 }
   ]

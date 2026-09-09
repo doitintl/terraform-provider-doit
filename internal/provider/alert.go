@@ -69,9 +69,6 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 	var diags diag.Diagnostics
 
 	// ── Optional+Computed scalar fields: only when Unknown ──
-	if plan.Attributions.IsUnknown() {
-		plan.Attributions = resolved.Attributions
-	}
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
 	}
@@ -201,16 +198,6 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 
 	if !configVal.Operator.IsNull() && !configVal.Operator.IsUnknown() {
 		config.Operator = new(models.MetricFilterText(configVal.Operator.ValueString()))
-	}
-
-	// Attributions
-	if !configVal.Attributions.IsNull() && !configVal.Attributions.IsUnknown() {
-		var attributions []string
-		diags.Append(configVal.Attributions.ElementsAs(ctx, &attributions, false)...)
-		if diags.HasError() {
-			return config, diags
-		}
-		config.Attributions = &attributions
 	}
 
 	// Scopes
@@ -344,19 +331,6 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, existingScopeTypes, existingScopeIDs []string, existingScopeIncludeNull []*bool, existingScopeCaseInsensitive []*bool, existingScopeValues []types.List) (resource_alert.ConfigValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// Build attributions list
-	var attributionsVal types.List
-	if config.Attributions != nil {
-		var listDiags diag.Diagnostics
-		attributionsVal, listDiags = types.ListValueFrom(ctx, types.StringType, *config.Attributions)
-		diags.Append(listDiags...)
-	} else {
-		// Return empty list for nil to avoid inconsistent result if user sets []
-		var emptyDiags diag.Diagnostics
-		attributionsVal, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
-		diags.Append(emptyDiags...)
-	}
-
 	// Build scopes list
 	var scopesVal types.List
 	if config.Scopes != nil {
@@ -454,7 +428,6 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 
 	// Build config value
 	configAttrs := map[string]attr.Value{
-		"attributions":      attributionsVal,
 		"condition":         types.StringPointerValue((*string)(config.Condition)),
 		"currency":          types.StringPointerValue((*string)(config.Currency)),
 		"data_source":       types.StringPointerValue((*string)(config.DataSource)),

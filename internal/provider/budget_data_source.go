@@ -99,7 +99,6 @@ func (d *budgetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		data.Collaborators = types.ListUnknown(datasource_budget.CollaboratorsValue{}.Type(ctx))
 		data.Recipients = types.ListUnknown(types.StringType)
 		data.RecipientsSlackChannels = types.ListUnknown(datasource_budget.RecipientsSlackChannelsValue{}.Type(ctx))
-		data.Scope = types.ListUnknown(types.StringType)
 		data.Scopes = types.ListUnknown(datasource_budget.ScopesValue{}.Type(ctx))
 		data.SeasonalAmounts = types.ListUnknown(types.Float64Type)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -252,17 +251,6 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 		emptySlack, d := types.ListValueFrom(ctx, datasource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []datasource_budget.RecipientsSlackChannelsValue{})
 		diags.Append(d...)
 		data.RecipientsSlackChannels = emptySlack
-	}
-
-	// Map scope list
-	if budget.Scope != nil {
-		scopeList, listDiags := types.ListValueFrom(ctx, types.StringType, *budget.Scope)
-		diags.Append(listDiags...)
-		data.Scope = scopeList
-	} else {
-		emptyList2, d := types.ListValueFrom(ctx, types.StringType, []string{})
-		diags.Append(d...)
-		data.Scope = emptyList2
 	}
 
 	// Map scopes list

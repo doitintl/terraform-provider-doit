@@ -231,14 +231,6 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "List of Slack channels to notify when reaching alert threshold.",
 				MarkdownDescription: "List of Slack channels to notify when reaching alert threshold.",
 			},
-			"scope": schema.ListAttribute{
-				ElementType:         types.StringType,
-				Optional:            true,
-				Computed:            true,
-				Description:         "List of allocations that define the budget scope.",
-				MarkdownDescription: "List of allocations that define the budget scope.",
-				DeprecationMessage:  "This attribute is deprecated.",
-			},
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -383,7 +375,6 @@ type BudgetModel struct {
 	Public                  types.String  `tfsdk:"public"`
 	Recipients              types.List    `tfsdk:"recipients"`
 	RecipientsSlackChannels types.List    `tfsdk:"recipients_slack_channels"`
-	Scope                   types.List    `tfsdk:"scope"`
 	Scopes                  types.List    `tfsdk:"scopes"`
 	SeasonalAmounts         types.List    `tfsdk:"seasonal_amounts"`
 	StartPeriod             types.Int64   `tfsdk:"start_period"`

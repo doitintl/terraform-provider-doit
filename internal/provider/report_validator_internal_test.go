@@ -437,7 +437,6 @@ func buildReportConfigWithForecastSettings(ctx context.Context, t *testing.T, fu
 		"time_range":                  resource_report.NewTimeRangeValueNull(),
 		"advanced_analysis":           resource_report.NewAdvancedAnalysisValueNull(),
 		"display_settings":            resource_report.NewDisplaySettingsValueNull(),
-		"metric":                      resource_report.NewMetricValueNull(),
 		"metric_filter":               resource_report.NewMetricFilterValueNull(),
 		"limit_by_change":             resource_report.NewLimitByChangeValueNull(),
 		"dimensions":                  types.ListNull(resource_report.DimensionsValue{}.Type(ctx)),
@@ -624,7 +623,6 @@ func buildForecastConfigValue(ctx context.Context, t *testing.T, forecast *bool)
 		"time_range":                  resource_report.NewTimeRangeValueNull(),
 		"advanced_analysis":           advVal,
 		"display_settings":            resource_report.NewDisplaySettingsValueNull(),
-		"metric":                      resource_report.NewMetricValueNull(),
 		"metric_filter":               resource_report.NewMetricFilterValueNull(),
 		"limit_by_change":             resource_report.NewLimitByChangeValueNull(),
 		"dimensions":                  types.ListNull(resource_report.DimensionsValue{}.Type(ctx)),
@@ -754,7 +752,6 @@ func validCumulativeComparisonConfigMap(ctx context.Context, t *testing.T) map[s
 		"time_range":                  resource_report.NewTimeRangeValueNull(),
 		"advanced_analysis":           resource_report.NewAdvancedAnalysisValueNull(),
 		"display_settings":            resource_report.NewDisplaySettingsValueNull(),
-		"metric":                      resource_report.NewMetricValueNull(),
 		"metric_filter":               resource_report.NewMetricFilterValueNull(),
 		"limit_by_change":             resource_report.NewLimitByChangeValueNull(),
 		"dimensions":                  dimsVal,
@@ -1205,22 +1202,15 @@ func TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred(t *testing.T) {
 	}
 }
 
-// TestReportCumulativeComparison_UnknownSingularMetricDeferred asserts that when
-// config/plan specifies an unknown singular metric and empty metrics list (as produced by
-// useEmptyForUnconfiguredMetricsMirror), validation defers rather than rejecting with "0 metrics were configured".
-func TestReportCumulativeComparison_UnknownSingularMetricDeferred(t *testing.T) {
+// TestReportCumulativeComparison_UnknownMetricsDeferred asserts that an unknown
+// metrics list defers the one-metric check rather than rejecting it with
+// "0 metrics were configured". The list resolves at apply time, so rejecting at
+// plan time would fail a config that is in fact valid.
+func TestReportCumulativeComparison_UnknownMetricsDeferred(t *testing.T) {
 	ctx := context.Background()
 
 	cfgMap := validCumulativeComparisonConfigMap(ctx, t)
-	// metrics is empty list (from useEmptyForUnconfiguredMetricsMirror)
-	emptyMetrics, diags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
-	if diags.HasError() {
-		t.Fatalf("ListValueFrom metrics: %v", diags)
-	}
-	cfgMap["metrics"] = emptyMetrics
-
-	// metric is unknown object
-	cfgMap["metric"] = resource_report.NewMetricValueUnknown()
+	cfgMap["metrics"] = types.ListUnknown(resource_report.MetricsValue{}.Type(ctx))
 
 	cfg := buildReportConfigWithMap(ctx, t, cfgMap)
 	plan := tfsdk.Plan(cfg)
@@ -1229,24 +1219,18 @@ func TestReportCumulativeComparison_UnknownSingularMetricDeferred(t *testing.T) 
 	validateReportCumulativeComparison(ctx, plan, &planDiags)
 
 	if planDiags.HasError() {
-		t.Fatalf("expected unknown singular metric to defer validation without errors, but got: %v", planDiags)
+		t.Fatalf("expected unknown metrics to defer validation without errors, but got: %v", planDiags)
 	}
 }
 
-// TestReportCumulativeComparison_UnknownMetric_StillValidatesOtherAttributes asserts that
-// when metric or metrics is unknown, the validator defers only the metric check,
-// but continues validating other known attributes (such as missing secondary_time_range).
-func TestReportCumulativeComparison_UnknownMetric_StillValidatesOtherAttributes(t *testing.T) {
+// TestReportCumulativeComparison_UnknownMetrics_StillValidatesOtherAttributes asserts
+// that when metrics is unknown the validator defers only the metric check, and
+// continues validating other known attributes (such as missing secondary_time_range).
+func TestReportCumulativeComparison_UnknownMetrics_StillValidatesOtherAttributes(t *testing.T) {
 	ctx := context.Background()
 
 	cfgMap := validCumulativeComparisonConfigMap(ctx, t)
-	// Metric is unknown
-	emptyMetrics, diags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), []resource_report.MetricsValue{})
-	if diags.HasError() {
-		t.Fatalf("ListValueFrom metrics: %v", diags)
-	}
-	cfgMap["metrics"] = emptyMetrics
-	cfgMap["metric"] = resource_report.NewMetricValueUnknown()
+	cfgMap["metrics"] = types.ListUnknown(resource_report.MetricsValue{}.Type(ctx))
 
 	// Missing secondary_time_range is an independent violation
 	cfgMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
