@@ -1,9 +1,12 @@
 package provider_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -12,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -1464,4 +1468,174 @@ resource "doit_alert" "this" {
   }
 }
 `, i)
+}
+
+// createLegacyAttributionsAlert POSTs an alert carrying the deprecated
+// config.attributions straight to the API, bypassing the provider — which can no
+// longer write that field. Returns the new alert's ID.
+func createLegacyAttributionsAlert(t *testing.T, name string) string {
+	t.Helper()
+
+	client := getAPIClient(t)
+
+	body := fmt.Sprintf(`{
+  "name": %q,
+  "recipients": [%q],
+  "config": {
+    "metric": {"type": "basic", "value": "cost"},
+    "timeInterval": "month",
+    "value": 500,
+    "currency": "USD",
+    "condition": "value",
+    "operator": "gt",
+    "attributions": [%q]
+  }
+}`, name, testUser(), testAttribution())
+
+	resp, err := client.CreateAlertWithBodyWithResponse(t.Context(), "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("creating legacy-attributions alert: %v", err)
+	}
+	if resp.StatusCode() != http.StatusCreated {
+		t.Fatalf("creating legacy-attributions alert: status %d: %s", resp.StatusCode(), resp.Body)
+	}
+
+	var created struct {
+		ID     string `json:"id"`
+		Config struct {
+			Attributions []string `json:"attributions"`
+			Scopes       []any    `json:"scopes"`
+		} `json:"config"`
+	}
+	if err := json.Unmarshal(resp.Body, &created); err != nil {
+		t.Fatalf("decoding created alert: %v", err)
+	}
+	if len(created.Config.Attributions) == 0 {
+		t.Fatalf("expected the API to store the legacy attributions, got none: %s", resp.Body)
+	}
+	if len(created.Config.Scopes) != 1 {
+		t.Fatalf("expected the API to synthesize exactly one scopes entry, got %d: %s", len(created.Config.Scopes), resp.Body)
+	}
+
+	return created.ID
+}
+
+// alertLegacyAttributionsCleared reads the alert straight from the API and asserts
+// the deprecated attributions are gone. The provider's models no longer carry the
+// field, so this decodes the raw body.
+//
+// The id is read through a pointer because the alert is created in a step's
+// PreConfig, after the test case is constructed.
+func alertLegacyAttributionsCleared(t *testing.T, id *string) resource.TestCheckFunc {
+	t.Helper()
+
+	return func(*terraform.State) error {
+		resp, err := getAPIClient(t).GetAlertWithResponse(t.Context(), *id)
+		if err != nil {
+			return fmt.Errorf("reading alert %s: %w", *id, err)
+		}
+
+		var got struct {
+			Config struct {
+				Attributions []string `json:"attributions"`
+				Scopes       []any    `json:"scopes"`
+			} `json:"config"`
+		}
+		if err := json.Unmarshal(resp.Body, &got); err != nil {
+			return fmt.Errorf("decoding alert %s: %w", *id, err)
+		}
+		if len(got.Config.Attributions) != 0 {
+			return fmt.Errorf("alert %s still holds legacy attributions %v; writing scopes should have cleared them", *id, got.Config.Attributions)
+		}
+		if len(got.Config.Scopes) != 1 {
+			return fmt.Errorf("alert %s has %d scopes, want 1", *id, len(got.Config.Scopes))
+		}
+
+		return nil
+	}
+}
+
+// TestAccAlert_LegacyAttributionsMigration is the alert counterpart of
+// TestAccBudget_LegacyScopeMigration, and the alert side is the more delicate of
+// the two: the API only deletes the legacy references when the update carries
+// scopes and NOT attributions, and alert evaluation ignores config.filters
+// entirely while any reference remains. A migration that half-applied would look
+// successful while the alert kept evaluating its old scope.
+func TestAccAlert_LegacyAttributionsMigration(t *testing.T) {
+	name := fmt.Sprintf("test-legacy-attr-%d", acctest.RandInt())
+
+	var alertID string
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Adopt the out-of-band alert. The config spells the scope the way the
+			// API synthesizes it, so import lands on exactly the configured value.
+			{
+				PreConfig:    func() { alertID = createLegacyAttributionsAlert(t, name) },
+				Config:       testAccAlertLegacyAttributions(name, 500),
+				ResourceName: "doit_alert.legacy",
+				ImportState:  true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return alertID, nil
+				},
+				ImportStatePersist: true,
+			},
+			// Reading an alert that still holds legacy references must not diff.
+			{
+				Config: testAccAlertLegacyAttributions(name, 500),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_alert.legacy",
+						tfjsonpath.New("config").AtMapKey("scopes").AtSliceIndex(0).AtMapKey("values"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact(testAttribution()),
+						})),
+				},
+			},
+			// Any write migrates the alert off the legacy references.
+			{
+				Config: testAccAlertLegacyAttributions(name, 600),
+				Check:  alertLegacyAttributionsCleared(t, &alertID),
+			},
+			// And the migrated alert is still drift-free.
+			{
+				Config: testAccAlertLegacyAttributions(name, 600),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertLegacyAttributions(name string, value int) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "legacy" {
+  name       = %q
+  recipients = ["%s"]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = %d
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+    scopes = [
+      {
+        type   = "attribution"
+        id     = "attribution"
+        values = ["%s"]
+      }
+    ]
+  }
+}
+`, name, testUser(), value, testAttribution())
 }

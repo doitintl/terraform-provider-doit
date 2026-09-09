@@ -27,7 +27,7 @@ output "report_description" {
   value = data.doit_report.example.description
 }
 
-output "report_metric" {
+output "report_metrics" {
   value = data.doit_report.example.config.metrics
 }
 

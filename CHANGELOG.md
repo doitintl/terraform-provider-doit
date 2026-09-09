@@ -75,7 +75,8 @@
 
 - **resource/doit_report, data-source/doit_report**: Fixed a provider crash when reading a report whose `config.time_range` omits `mode` or `unit`. The API now omits `unit` for custom time ranges, which the previous code dereferenced unconditionally. **Users managing reports with a custom time range should upgrade as soon as possible**, as an older provider will panic when reading them ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
 - **resource/doit_report, data-source/doit_report_query**: `config.custom_time_range` no longer reports a spurious "Empty Custom Time Range" error when `from`/`to` are computed from another resource or data source. Unknown values are now deferred until they resolve, matching `forecast_settings.future_custom_date_range` ([#283](https://github.com/doitintl/terraform-provider-doit/pull/283))
-- **resource/doit_report, data-source/doit_report_query**: Fixed a permanent whole-resource diff when `config.metrics` was omitted from configuration — it is no longer forced to unknown on every plan ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
+- **resource/doit_report, data-source/doit_report_query**: Fixed a permanent whole-resource diff when `config.metric` or `config.metrics` was omitted from configuration — the mirror field left unconfigured is no longer forced to unknown on every plan ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
+- **resource/doit_report, data-source/doit_report_query**: Restored the deprecation warning on `config.metric`, which the `allOf`-composed schema had silently dropped ([#284](https://github.com/doitintl/terraform-provider-doit/pull/284))
 - **resource/doit_report**: `config.group` can now be cleared by removing it from configuration; it previously remained stuck in state due to the API's PATCH-merge semantics ([#281](https://github.com/doitintl/terraform-provider-doit/pull/281))
 
 ### DOCUMENTATION

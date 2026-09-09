@@ -80,6 +80,17 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		}
 	}
 
+	// The generated schema marks scopes Optional because it is derived from
+	// BudgetCreateUpdateRequest, the body for both POST and PATCH, where scopes
+	// is mandatory only on create. budgetScopeRequiredValidator enforces it, so
+	// say so here — otherwise the docs read as though it can be omitted.
+	// Upstream is splitting that schema in CMP-51650.
+	if attr, ok := s.Attributes["scopes"].(schema.ListNestedAttribute); ok {
+		attr.Description += " Required: a budget has to define the spend it tracks."
+		attr.MarkdownDescription = attr.Description
+		s.Attributes["scopes"] = attr
+	}
+
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.
 	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {

@@ -504,3 +504,112 @@ func TestBudgetSlackChannelsValidator(t *testing.T) {
 		})
 	}
 }
+
+// buildBudgetScopesConfig returns a budget config whose scopes attribute holds
+// the given value and whose every other attribute is null.
+func buildBudgetScopesConfig(ctx context.Context, t *testing.T, scopes types.List) tfsdk.Config {
+	t.Helper()
+
+	budgetSchema := resource_budget.BudgetResourceSchema(ctx)
+
+	schemaType := budgetSchema.Type().TerraformType(ctx)
+	objType, ok := schemaType.(tftypes.Object)
+	if !ok {
+		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
+	}
+
+	attrValues := make(map[string]tftypes.Value, len(objType.AttributeTypes))
+	for name, attrType := range objType.AttributeTypes {
+		attrValues[name] = tftypes.NewValue(attrType, nil)
+	}
+
+	scopesTFValue, err := scopes.ToTerraformValue(ctx)
+	if err != nil {
+		t.Fatalf("ToTerraformValue: %v", err)
+	}
+	attrValues["scopes"] = scopesTFValue
+
+	return tfsdk.Config{
+		Schema: budgetSchema,
+		Raw:    tftypes.NewValue(schemaType, attrValues),
+	}
+}
+
+// TestBudgetScopeRequiredValidator covers the validator standing in for a
+// `required` the generated schema cannot express, because
+// BudgetCreateUpdateRequest serves both POST and PATCH (CMP-51650).
+//
+// The unknown case matters as much as the null one: a scopes list computed from
+// another resource is not yet known at validation time, and rejecting it there
+// would fail a configuration that is in fact valid.
+func TestBudgetScopeRequiredValidator(t *testing.T) {
+	ctx := t.Context()
+
+	populated, diags := types.ListValueFrom(
+		ctx,
+		resource_budget.ScopesValue{}.Type(ctx),
+		[]attr.Value{newTestBudgetScope(ctx, t)},
+	)
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom: %v", diags)
+	}
+
+	empty, diags := types.ListValueFrom(ctx, resource_budget.ScopesValue{}.Type(ctx), []attr.Value{})
+	if diags.HasError() {
+		t.Fatalf("ListValueFrom: %v", diags)
+	}
+
+	tests := []struct {
+		name      string
+		scopes    types.List
+		wantError bool
+	}{
+		{name: "populated", scopes: populated, wantError: false},
+		{name: "unknown is deferred", scopes: types.ListUnknown(resource_budget.ScopesValue{}.Type(ctx)), wantError: false},
+		{name: "empty list is accepted here and rejected by the API", scopes: empty, wantError: false},
+		{name: "null is rejected", scopes: types.ListNull(resource_budget.ScopesValue{}.Type(ctx)), wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := &resource.ValidateConfigResponse{}
+			budgetScopeRequiredValidator{}.ValidateResource(
+				ctx,
+				resource.ValidateConfigRequest{Config: buildBudgetScopesConfig(ctx, t, tt.scopes)},
+				resp,
+			)
+
+			if got := resp.Diagnostics.HasError(); got != tt.wantError {
+				t.Fatalf("HasError() = %v, want %v (diags: %v)", got, tt.wantError, resp.Diagnostics)
+			}
+			if !tt.wantError {
+				return
+			}
+			if summary := resp.Diagnostics.Errors()[0].Summary(); summary != "Missing Required Attribute" {
+				t.Errorf("summary = %q, want %q", summary, "Missing Required Attribute")
+			}
+		})
+	}
+}
+
+func newTestBudgetScope(ctx context.Context, t *testing.T) resource_budget.ScopesValue {
+	t.Helper()
+
+	val, diags := resource_budget.NewScopesValue(
+		resource_budget.ScopesValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"case_insensitive": types.BoolValue(false),
+			"id":               types.StringValue("allocation_rule"),
+			"include_null":     types.BoolValue(false),
+			"inverse":          types.BoolValue(false),
+			"mode":             types.StringValue("is"),
+			"type":             types.StringValue("allocation_rule"),
+			"values":           types.ListValueMust(types.StringType, []attr.Value{types.StringValue("alloc-1")}),
+		},
+	)
+	if diags.HasError() {
+		t.Fatalf("NewScopesValue: %v", diags)
+	}
+
+	return val
+}
