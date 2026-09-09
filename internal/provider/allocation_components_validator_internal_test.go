@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
@@ -12,7 +11,7 @@ import (
 )
 
 func TestAllocationComponentsValidator(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	makeComponent := func(key, mode, compType string) resource_allocation.ComponentsValue {
 		val, diags := resource_allocation.NewComponentsValue(
@@ -119,7 +118,7 @@ func TestAllocationComponentsValidator(t *testing.T) {
 }
 
 func TestAllocationComponentsValidator_InverseConflict(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	makeComponentWithFlags := func(key, mode, compType string, inverse, inverseSelection bool) resource_allocation.ComponentsValue {
 		val, diags := resource_allocation.NewComponentsValue(
@@ -209,7 +208,7 @@ func TestAllocationComponentsValidator_InverseConflict(t *testing.T) {
 }
 
 func TestAllocationComponentsValidator_NullAndUnknown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name  string

@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -560,7 +559,7 @@ func TestAccAnnotation_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteAnnotationWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteAnnotationWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete annotation via API: %v", err)
 					}

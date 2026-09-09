@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -725,7 +724,7 @@ func TestAccBudget_Disappears(t *testing.T) {
 				PreConfig: func() {
 					// Delete the resource directly via API
 					client := getAPIClient(t)
-					resp, err := client.DeleteBudgetWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteBudgetWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete budget via API: %v", err)
 					}

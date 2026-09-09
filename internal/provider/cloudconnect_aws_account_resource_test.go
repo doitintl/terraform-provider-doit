@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -320,7 +319,7 @@ func TestAccCloudconnectAwsAccount_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteAccountRoleWithResponse(context.Background(), accountID)
+					resp, err := client.DeleteAccountRoleWithResponse(t.Context(), accountID)
 					if err != nil {
 						t.Fatalf("Failed to delete CloudConnect AWS account via API: %v", err)
 					}

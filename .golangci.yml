@@ -50,6 +50,7 @@ linters:
     - methodreceiver
     - requestguard
     - retrypolicy
+    - testserver
     - clearableattr
     - modernize
   exclusions:
@@ -103,7 +104,8 @@ linters:
           - requestguard
           - clearableattr
           - modernize
-      # Test files — exclude custom linters (except paralleltest which only applies to tests)
+      # Test files — exclude custom linters. paralleltest, retrypolicy and
+      # testserver are absent deliberately: they only apply to tests.
       - path: _test\.go
         linters:
           - overlaycheck
@@ -178,6 +180,15 @@ linters:
       excludes:
         - G101 # Look for hardcoded credentials
         - G404 # Insecure random number source
+    usetesting:
+      # A test's context should be the test's own: t.Context() is cancelled when
+      # the test ends, so nothing it started can outlive it, and inside a
+      # testing/synctest bubble its Done channel belongs to the bubble — a
+      # non-bubbled one is not durably blocking, so the fake clock stops
+      # advancing and the test hangs to the suite timeout instead of failing.
+      # Both default to off upstream, which is why this block exists.
+      context-background: true
+      context-todo: true
     custom:
       diagsuppressed:
         type: "module"
@@ -245,6 +256,9 @@ linters:
       retrypolicy:
         type: "module"
         description: "Requires a DCIRetryClient built in a test to name its backoff policy."
+      testserver:
+        type: "module"
+        description: "Enforces httptest.NewTestServer and flags its redundant cleanup calls in tests."
       clearableattr:
         type: "module"
         description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."

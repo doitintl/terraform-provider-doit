@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +27,7 @@ func readAnomalyExplanationHelper(t *testing.T, server *httptest.Server, overrid
 	}
 
 	ds := &anomalyExplanationDataSource{client: client}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	schemaResp := &datasource.SchemaResponse{}
 	ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)
@@ -77,7 +76,6 @@ func TestAnomalyExplanationDataSource_UnknownID(t *testing.T) {
 		requestCount.Add(1)
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer server.Close()
 
 	overrides := map[string]tftypes.Value{
 		"id": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
@@ -168,7 +166,6 @@ func TestAnomalyExplanationDataSource_FactsMapping(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				_, _ = fmt.Fprint(w, tc.responseJSON)
 			}))
-			defer server.Close()
 
 			overrides := map[string]tftypes.Value{
 				"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
@@ -242,7 +239,6 @@ func TestAnomalyExplanationDataSource_ExplanationMapping(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprint(w, responseJSON)
 	}))
-	defer server.Close()
 
 	overrides := map[string]tftypes.Value{
 		"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
@@ -316,7 +312,6 @@ func TestAnomalyExplanationDataSource_EvidenceList(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				_, _ = fmt.Fprint(w, tc.responseJSON)
 			}))
-			defer server.Close()
 
 			overrides := map[string]tftypes.Value{
 				"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
@@ -335,7 +330,7 @@ func TestAnomalyExplanationDataSource_EvidenceList(t *testing.T) {
 			}
 
 			var gotElements []datasource_anomaly_explanation.EvidenceValue
-			d := data.Evidence.ElementsAs(context.Background(), &gotElements, false)
+			d := data.Evidence.ElementsAs(t.Context(), &gotElements, false)
 			if d.HasError() {
 				t.Fatalf("ElementsAs() returned diagnostics: %v", d)
 			}
@@ -364,7 +359,6 @@ func TestAnomalyExplanationDataSource_NotFound(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = fmt.Fprint(w, `{"error": "not found"}`)
 	}))
-	defer server.Close()
 
 	overrides := map[string]tftypes.Value{
 		"id": tftypes.NewValue(tftypes.String, "non-existent-id"),

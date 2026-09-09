@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -174,7 +173,7 @@ func getInvoiceCount(t *testing.T) int {
 func computeInvoiceCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var total int
 	params := &models.ListInvoicesParams{}
@@ -200,7 +199,7 @@ func getInvoiceFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
 	skipIfNoAcc(t)
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resp, err := client.ListInvoicesWithResponse(ctx, &models.ListInvoicesParams{
 		MaxResults: &maxResults,

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -15,7 +14,7 @@ import (
 // filter combination on the real API is guaranteed to stay empty as tenant
 // data changes.
 func TestMapServiceQuotasToModel_EmptyReturnsNonNullList(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	for _, name := range []string{"nil slice", "empty slice"} {
 		t.Run(name, func(t *testing.T) {

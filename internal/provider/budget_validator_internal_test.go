@@ -185,7 +185,7 @@ func TestValidateBudgetEndPeriod(t *testing.T) {
 	}
 
 	v := budgetEndPeriodValidator{}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -211,7 +211,7 @@ func TestValidateBudgetEndPeriod(t *testing.T) {
 // Error" crash when a budget scope's values list contains an unknown element
 // from a cross-resource reference (e.g. values = [doit_allocation.xxx.id]).
 func TestBudgetScopeNAValidator_UnknownElement(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	scopeVal, sDiags := resource_budget.NewScopesValue(
 		resource_budget.ScopesValue{}.AttributeTypes(ctx),
@@ -327,7 +327,7 @@ func buildBudgetSlackConfig(ctx context.Context, t *testing.T, channels []testSl
 }
 
 func TestBudgetSlackChannelsValidator(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name          string

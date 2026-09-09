@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -284,7 +283,7 @@ func getBudgetCount(t *testing.T) int {
 func computeBudgetCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Auto-paginate to get true total count
 	var total int

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -14,7 +13,7 @@ import (
 func TestStatussheetComponentIDsValidator(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Schema matching the statussheet data source ID attributes.
 	testSchema := schema.Schema{

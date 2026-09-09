@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -26,7 +25,7 @@ func lineItem(costType, amount, currency string) models.BillingExplainerCostLine
 // populated details list) against the real shape captured from the test
 // tenant's 2025-12 response.
 func TestMapBillingExplainerToModel_FullyPopulated(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	awsSummary := models.BillingExplainerServiceSummary{
 		ServiceCharges: []models.BillingExplainerCostLineItem{lineItem("usage", "937.78", "USD")},
@@ -197,7 +196,7 @@ func TestMapBillingExplainerToModel_FullyPopulated(t *testing.T) {
 // field defaults to an empty (never null) collection when the API returns no
 // entries, per the Computed-Only List Attributes rule.
 func TestMapBillingExplainerToModel_EmptyCollections(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	emptySummary := models.BillingExplainerServiceSummary{
 		ServiceCharges: []models.BillingExplainerCostLineItem{},
@@ -266,7 +265,7 @@ func TestMapBillingExplainerToModel_EmptyCollections(t *testing.T) {
 // TestMapBillingExplainerToModel_NoPayers confirms an empty payers map
 // resolves to an empty (never null) map at the root.
 func TestMapBillingExplainerToModel_NoPayers(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	apiResp := &models.BillingExplainerCustomer{
 		CustomerId:         "cust-1",
