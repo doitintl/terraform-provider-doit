@@ -15,7 +15,7 @@ import (
 // return an advanced_analysis object (resolved is null), Unknown plan subfields
 // are resolved to explicit null values instead of zero-valued Go struct fields.
 func TestOverlayAdvancedAnalysis_NullResolved(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resolved := resource_report.NewAdvancedAnalysisValueNull()
 
@@ -55,7 +55,7 @@ func TestOverlayAdvancedAnalysis_NullResolved(t *testing.T) {
 // TestOverlayAdvancedAnalysis_KnownResolved verifies that when the API returns
 // a valid advanced_analysis object, Unknown plan subfields pick up the API values.
 func TestOverlayAdvancedAnalysis_KnownResolved(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resolved := resource_report.NewAdvancedAnalysisValueMust(
 		resource_report.AdvancedAnalysisValue{}.AttributeTypes(ctx),
@@ -95,7 +95,7 @@ func TestOverlayAdvancedAnalysis_KnownResolved(t *testing.T) {
 
 // TestOverlayTimeRange_NullResolved verifies the null guard for time_range.
 func TestOverlayTimeRange_NullResolved(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resolved := resource_report.NewTimeRangeValueNull()
 
@@ -136,7 +136,7 @@ func TestOverlayTimeRange_NullResolved(t *testing.T) {
 
 // TestOverlayCustomTimeRange_NullResolved verifies the null guard for custom_time_range.
 func TestOverlayCustomTimeRange_NullResolved(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resolved := resource_report.NewCustomTimeRangeValueNull()
 
@@ -166,7 +166,7 @@ func TestOverlayCustomTimeRange_NullResolved(t *testing.T) {
 
 // TestOverlayLimit_NullResolved verifies the null guard for limit.
 func TestOverlayLimit_NullResolved(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resolved := resource_report.NewLimitValueNull()
 
@@ -199,7 +199,7 @@ func TestOverlayLimit_NullResolved(t *testing.T) {
 // element is null (API returned null in the list), the overlay skips that element
 // rather than walking into zero-valued struct fields.
 func TestOverlayListElements_NullResolvedElement(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Build a plan list with one filter element that has an Unknown subfield.
 	planFilter := resource_report.NewFiltersValueMust(

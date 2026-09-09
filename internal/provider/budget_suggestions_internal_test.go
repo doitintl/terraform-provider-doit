@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 // mapping path (amount, scope_chips with nested values, config, enums,
 // generated_time) with a fully populated API response.
 func TestMapBudgetSuggestionsItems_FullyPopulated(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	generatedTime := time.Date(2026, 8, 1, 12, 30, 0, 0, time.UTC)
 	confidence := models.BudgetSuggestionConfidence("high")
@@ -127,7 +126,7 @@ func TestMapBudgetSuggestionsItems_FullyPopulated(t *testing.T) {
 // BudgetSuggestion field optional, so a real suggestion can omit amount,
 // scope_chips, config, confidence, and status entirely.
 func TestMapBudgetSuggestionsItems_NullFields(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	items := []models.BudgetSuggestion{
 		{
@@ -168,7 +167,7 @@ func TestMapBudgetSuggestionsItems_NullFields(t *testing.T) {
 // TestMapBudgetSuggestionsItems_Empty verifies that an empty result maps to
 // an empty (never null) list, per the Computed-Only List Attributes rule.
 func TestMapBudgetSuggestionsItems_Empty(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	list, diags := mapBudgetSuggestionsItems(ctx, []models.BudgetSuggestion{})
 	if diags.HasError() {

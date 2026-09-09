@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -185,7 +184,7 @@ func testAccGetAssetQuantity(t *testing.T, assetID string) int {
 	t.Helper()
 
 	client := getAPIClient(t)
-	resp, err := client.GetAssetWithResponse(context.Background(), assetID)
+	resp, err := client.GetAssetWithResponse(t.Context(), assetID)
 	if err != nil {
 		t.Fatalf("Failed to get asset %s: %v", assetID, err)
 	}

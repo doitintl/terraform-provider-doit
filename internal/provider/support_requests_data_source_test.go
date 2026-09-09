@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -232,7 +231,7 @@ func getSupportRequestCount(t *testing.T) int {
 func computeSupportRequestCount(t *testing.T) int {
 	t.Helper()
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var total int
 	params := &models.ListTicketsParams{}
@@ -258,7 +257,7 @@ func getSupportRequestFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
 	skipIfNoAcc(t)
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resp, err := client.ListTicketsWithResponse(ctx, &models.ListTicketsParams{
 		MaxResults: &maxResults,

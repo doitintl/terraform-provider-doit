@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -114,7 +113,7 @@ func getCloudIncidentFirstPageToken(t *testing.T, maxResults int64) string {
 	t.Helper()
 	skipIfNoAcc(t)
 	client := getAPIClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	resp, err := client.ListKnownIssuesWithResponse(ctx, &models.ListKnownIssuesParams{
 		MaxResults: &maxResults,

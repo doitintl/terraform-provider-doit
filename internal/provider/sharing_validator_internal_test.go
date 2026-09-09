@@ -79,7 +79,7 @@ func buildSharingConfig(ctx context.Context, t *testing.T, perms []struct{ user,
 // TestSharingOwnerValidator_UnknownRole verifies that when a role is
 // unknown (e.g., from a variable), the validator does NOT error with "Missing Owner".
 func TestSharingOwnerValidator_UnknownRole(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"user@example.com", ""}, // role unknown — simulates var.role during plan
 	})
@@ -96,7 +96,7 @@ func TestSharingOwnerValidator_UnknownRole(t *testing.T) {
 
 // TestSharingOwnerValidator_KnownOwner verifies that a known "owner" role passes.
 func TestSharingOwnerValidator_KnownOwner(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"owner@example.com", "owner"},
 	})
@@ -114,7 +114,7 @@ func TestSharingOwnerValidator_KnownOwner(t *testing.T) {
 // TestSharingOwnerValidator_NoOwnerKnown verifies that if all roles are known
 // and none is "owner", the validator errors.
 func TestSharingOwnerValidator_NoOwnerKnown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"viewer@example.com", "viewer"},
 	})
@@ -142,7 +142,7 @@ func TestSharingOwnerValidator_NoOwnerKnown(t *testing.T) {
 // is unknown and another is a known "owner", the validator passes (no false-positive
 // "Multiple Owners" from the unknown).
 func TestSharingOwnerValidator_MixedUnknownAndOwner(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"owner@example.com", "owner"},
 		{"dynamic@example.com", ""}, // unknown role
@@ -161,7 +161,7 @@ func TestSharingOwnerValidator_MixedUnknownAndOwner(t *testing.T) {
 // TestSharingOwnerValidator_NullPermissions verifies the validator skips
 // validation when permissions is null (e.g., during import planning).
 func TestSharingOwnerValidator_NullPermissions(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	schema := resource_sharing.SharingResourceSchema(ctx)
 
 	// Empty config — permissions will be null.
@@ -180,7 +180,7 @@ func TestSharingOwnerValidator_NullPermissions(t *testing.T) {
 // TestSharingOwnerValidator_MultipleOwners verifies the validator rejects
 // configs with more than one owner.
 func TestSharingOwnerValidator_MultipleOwners(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"owner1@example.com", "owner"},
 		{"owner2@example.com", "owner"},
@@ -208,7 +208,7 @@ func TestSharingOwnerValidator_MultipleOwners(t *testing.T) {
 // TestSharingOwnerValidator_AllUnknown verifies the validator does not error
 // when ALL roles are unknown (all provided via variables).
 func TestSharingOwnerValidator_AllUnknown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	config := buildSharingConfig(ctx, t, []struct{ user, role string }{
 		{"user1@example.com", ""},
 		{"user2@example.com", ""},
@@ -227,7 +227,7 @@ func TestSharingOwnerValidator_AllUnknown(t *testing.T) {
 // TestSharingOwnerValidator_EmptyList verifies the validator on an empty
 // permissions list uses the path.Root("permissions") attribute error.
 func TestSharingOwnerValidator_EmptyList(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	schema := resource_sharing.SharingResourceSchema(ctx)
 
 	// Build a config with an empty permissions list.

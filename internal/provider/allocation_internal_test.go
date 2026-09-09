@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -15,7 +14,7 @@ import (
 // empty-but-non-nil slice does not panic. The function indexes stateComponents[0]
 // to get the element type, which would panic with len=0.
 func TestToAllocationRuleComponentsListValue_EmptySlice(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// This must not panic
 	result, diags := toAllocationRuleComponentsListValue(ctx, []models.AllocationComponent{}, nil)
@@ -47,7 +46,7 @@ func TestToAllocationRuleComponentsListValue_EmptySlice(t *testing.T) {
 //
 // Post-fix behavior: fillAllocationCommon omits req.Rules when len == 0.
 func TestFillAllocationCommon_SingleRule_NoEmptyRules(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Simulate the state that mapAllocationToModel produces for a single-rule
 	// allocation: Rules is set to an empty list (not null) because of the
@@ -133,7 +132,7 @@ func TestFillAllocationCommon_SingleRule_NoEmptyRules(t *testing.T) {
 // keeps Rules null for single-rule allocations. This is the root cause of the 500
 // error: the empty list gets carried into the plan and serialized as "rules": [].
 func TestMapAllocationToModel_SingleRule_RulesNull(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	allocType := models.AllocationAllocationType("single")
 	apiResp := &models.Allocation{

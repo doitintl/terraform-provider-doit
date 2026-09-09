@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -158,7 +157,7 @@ func TestAccCustomTheme_Disappears(t *testing.T) {
 			{
 				PreConfig: func() {
 					client := getAPIClient(t)
-					resp, err := client.DeleteCustomThemeWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteCustomThemeWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete custom theme via API: %v", err)
 					}

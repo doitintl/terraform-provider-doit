@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 // different type-collision resolutions than, the singular data source's
 // package — were otherwise untested.
 func TestMapAwsOrganizationsToItemsList_FullyPopulated(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	onboardingStartedAt := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
 
@@ -125,7 +124,7 @@ func TestMapAwsOrganizationsToItemsList_FullyPopulated(t *testing.T) {
 // TestMapAwsOrganizationsToItemsList_Empty verifies that an empty result maps
 // to an empty (never null) list, per the Computed-Only List Attributes rule.
 func TestMapAwsOrganizationsToItemsList_Empty(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	list, diags := mapAwsOrganizationsToItemsList(ctx, []models.AwsOrganization{})
 	if diags.HasError() {

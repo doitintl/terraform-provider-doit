@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -11,7 +10,7 @@ import (
 // from customTimeRange instead. Both mappers must render an omitted mode or
 // unit as null rather than dereferencing it.
 func TestMapReportToModel_TimeRangeNilModeAndUnit(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	customMode := models.TimeSettingsMode("custom")
 	amount := int64(0)

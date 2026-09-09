@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +25,7 @@ func readAnomalyHelper(t *testing.T, server *httptest.Server, overrides map[stri
 	}
 
 	ds := &anomalyDataSource{client: client}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	schemaResp := &datasource.SchemaResponse{}
 	ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)
@@ -321,7 +320,7 @@ func TestAnomalyDataSource_LinkedAnomalies(t *testing.T) {
 			}
 
 			var gotElements []string
-			d := data.LinkedAnomalies.ElementsAs(context.Background(), &gotElements, false)
+			d := data.LinkedAnomalies.ElementsAs(t.Context(), &gotElements, false)
 			if d.HasError() {
 				t.Fatalf("ElementsAs() returned diagnostics: %v", d)
 			}

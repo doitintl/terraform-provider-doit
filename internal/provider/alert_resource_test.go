@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -905,7 +904,7 @@ func TestAccAlert_Disappears(t *testing.T) {
 				PreConfig: func() {
 					// Delete the resource directly via API
 					client := getAPIClient(t)
-					resp, err := client.DeleteAlertWithResponse(context.Background(), resourceId)
+					resp, err := client.DeleteAlertWithResponse(t.Context(), resourceId)
 					if err != nil {
 						t.Fatalf("Failed to delete alert via API: %v", err)
 					}

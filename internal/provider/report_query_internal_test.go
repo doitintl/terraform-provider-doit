@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
@@ -222,7 +221,7 @@ func TestConvertResourceAttrsToDataSource_IgnoresDefaults(t *testing.T) {
 // be fully converted without errors. This catches regressions if new attribute
 // types are added to the report schema.
 func TestConvertResourceAttrsToDataSource_ReportConfigSchema(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Get the actual generated report resource schema.
 	reportSchema := resource_report.ReportResourceSchema(ctx)

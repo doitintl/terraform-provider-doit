@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 // the deeply nested compute/database type collision that motivated the
 // terraform-plugin-codegen-framework fork bump — was otherwise untested.
 func TestMapAwsOrganizationDetailToModel_FullyPopulated(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	coverageDate := openapi_types.Date{Time: time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)}
 	syncTime := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -54,7 +53,7 @@ func TestNewClient_UserAgent(t *testing.T) {
 		t.Fatal("NewClient() returned nil client")
 	}
 
-	resp, err := client.Validate(context.Background())
+	resp, err := client.Validate(t.Context())
 	if err != nil {
 		t.Fatalf("client.Validate() error = %v", err)
 	}
@@ -82,7 +81,7 @@ func TestNewClient_UserAgentDev(t *testing.T) {
 		t.Fatal("NewClient() returned nil client")
 	}
 
-	resp, err := client.Validate(context.Background())
+	resp, err := client.Validate(t.Context())
 	if err != nil {
 		t.Fatalf("client.Validate() error = %v", err)
 	}
@@ -110,7 +109,7 @@ func TestNewClient_UserAgentAppend(t *testing.T) {
 		t.Fatal("NewClient() returned nil client")
 	}
 
-	resp, err := client.Validate(context.Background())
+	resp, err := client.Validate(t.Context())
 	if err != nil {
 		t.Fatalf("client.Validate() error = %v", err)
 	}

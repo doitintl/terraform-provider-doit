@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -61,7 +60,7 @@ func TestAvaDataSource_Read_ErrorHandling(t *testing.T) {
 			}
 
 			ds := &avaDataSource{client: client}
-			ctx := context.Background()
+			ctx := t.Context()
 
 			schemaResp := &datasource.SchemaResponse{}
 			ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)

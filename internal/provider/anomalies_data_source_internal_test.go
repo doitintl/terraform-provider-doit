@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -27,7 +26,7 @@ func readAnomaliesHelper(t *testing.T, server *httptest.Server, overrides map[st
 	}
 
 	ds := &anomaliesDataSource{client: client}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	schemaResp := &datasource.SchemaResponse{}
 	ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)
@@ -263,7 +262,7 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 		t.Errorf("total_count = %d, want 2 (from page 1 snapshot)", got)
 	}
 
-	summaryVal, diags := data.AnomalySummary.ToObjectValue(context.Background())
+	summaryVal, diags := data.AnomalySummary.ToObjectValue(t.Context())
 	if diags.HasError() {
 		t.Fatalf("failed to convert summary to object: %v", diags)
 	}
@@ -477,7 +476,7 @@ func TestAnomaliesDataSource_LinkedAnomalies(t *testing.T) {
 		t.Error("expected first anomaly LinkedAnomalies not to be unknown")
 	}
 	var firstElements []string
-	if d := first.LinkedAnomalies.ElementsAs(context.Background(), &firstElements, false); d.HasError() {
+	if d := first.LinkedAnomalies.ElementsAs(t.Context(), &firstElements, false); d.HasError() {
 		t.Fatalf("ElementsAs() returned diagnostics: %v", d)
 	}
 	if len(firstElements) != 2 {

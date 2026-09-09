@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +27,7 @@ func readAnomalyExplanationHelper(t *testing.T, server *httptest.Server, overrid
 	}
 
 	ds := &anomalyExplanationDataSource{client: client}
-	ctx := context.Background()
+	ctx := t.Context()
 
 	schemaResp := &datasource.SchemaResponse{}
 	ds.Schema(ctx, datasource.SchemaRequest{}, schemaResp)
@@ -335,7 +334,7 @@ func TestAnomalyExplanationDataSource_EvidenceList(t *testing.T) {
 			}
 
 			var gotElements []datasource_anomaly_explanation.EvidenceValue
-			d := data.Evidence.ElementsAs(context.Background(), &gotElements, false)
+			d := data.Evidence.ElementsAs(t.Context(), &gotElements, false)
 			if d.HasError() {
 				t.Fatalf("ElementsAs() returned diagnostics: %v", d)
 			}

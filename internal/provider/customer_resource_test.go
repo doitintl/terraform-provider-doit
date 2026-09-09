@@ -364,7 +364,7 @@ func testAccGetCustomer(t *testing.T) *models.Customer {
 
 	client := getAPIClient(t)
 	customerID := os.Getenv("TEST_CUSTOMER_ID")
-	resp, err := client.GetCustomerWithResponse(context.Background(), customerID)
+	resp, err := client.GetCustomerWithResponse(t.Context(), customerID)
 	if err != nil {
 		t.Fatalf("Failed to get customer: %v", err)
 	}
@@ -378,6 +378,12 @@ func testAccRestoreCustomer(t *testing.T, original *models.Customer) {
 	t.Helper()
 
 	client := getAPIClient(t)
+
+	// Cancellation is detached deliberately: this only ever runs from
+	// t.Cleanup, and t.Context() is cancelled just before cleanups run, so a
+	// plain t.Context() would fail every time. The customer is shared tenant
+	// state, so a failed restore leaves it mutated for every later run.
+	ctx := context.WithoutCancel(t.Context())
 	customerID := original.Id
 	if customerID == "" {
 		customerID = os.Getenv("TEST_CUSTOMER_ID")
@@ -414,7 +420,7 @@ func testAccRestoreCustomer(t *testing.T, original *models.Customer) {
 		}
 	}
 
-	resp, err := client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(context.Background(), customerID, req)
+	resp, err := client.UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx, customerID, req)
 	if err != nil {
 		t.Logf("Failed to restore customer settings during cleanup: %v", err)
 		return

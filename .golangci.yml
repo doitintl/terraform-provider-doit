@@ -178,6 +178,15 @@ linters:
       excludes:
         - G101 # Look for hardcoded credentials
         - G404 # Insecure random number source
+    usetesting:
+      # A test's context should be the test's own: t.Context() is cancelled when
+      # the test ends, so nothing it started can outlive it, and inside a
+      # testing/synctest bubble its Done channel belongs to the bubble — a
+      # non-bubbled one is not durably blocking, so the fake clock stops
+      # advancing and the test hangs to the suite timeout instead of failing.
+      # Both default to off upstream, which is why this block exists.
+      context-background: true
+      context-todo: true
     custom:
       diagsuppressed:
         type: "module"
