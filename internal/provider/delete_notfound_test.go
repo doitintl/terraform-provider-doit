@@ -7,8 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -74,16 +73,13 @@ func TestBudgetResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			// Create the resource
 			r := &budgetResource{client: client}
 
 			// Create a mock state with a budget ID
-			ctx := context.Background()
+			ctx := t.Context()
 
 			// Build the state schema
 			schemaResp := &resource.SchemaResponse{}
@@ -188,16 +184,13 @@ func TestAllocationResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			// Create the resource
 			r := &allocationResource{client: client}
 
 			// Build the state schema
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -286,16 +279,13 @@ func TestReportResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			// Create the resource
 			r := &reportResource{client: client}
 
 			// Build the state schema
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -407,18 +397,14 @@ func TestBudgetDelete_WithDCIRetryClient_404(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create client with DCIRetryClient (like the real provider does)
-	retryClient := &DCIRetryClient{
-		client: server.Client(),
-	}
-
-	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(retryClient))
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
+	// Through the real DCIRetryClient, like the provider does. The injected
+	// policy must be named: left nil, Do would use the production 2s-to-60s
+	// backoff, and with MaxElapsedTime(0) the context is the only bound.
+	client := newTestRetryAPIClient(t, server, DefaultRequestTimeout, constantBackOff(time.Millisecond))
 
 	// Try to delete - 404 should pass through as a response (not error)
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(t.Context(), retryTestTimeout)
+	defer cancel()
 	resp, err := client.DeleteBudgetWithResponse(ctx, "test-id")
 
 	// With the new DCIRetryClient behavior, 404 passes through as a response
@@ -478,16 +464,13 @@ func TestBudgetResourceRead_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			// Create the resource
 			r := &budgetResource{client: client}
 
 			// Build the state schema
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -596,14 +579,11 @@ func TestAllocationResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			r := &allocationResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -702,14 +682,11 @@ func TestReportResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			r := &reportResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -806,21 +783,17 @@ func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			// Create client WITH DCIRetryClient (as in production)
-			retryClient := &DCIRetryClient{
-				client: server.Client(),
-			}
-
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(retryClient))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			// Through the real DCIRetryClient, as in production. See the note in
+			// TestBudgetDelete_WithDCIRetryClient_404 on naming the policy.
+			client := newTestRetryAPIClient(t, server, DefaultRequestTimeout, constantBackOff(time.Millisecond))
 
 			// Create the resource
 			r := &budgetResource{client: client}
 
-			// Build the state schema
-			ctx := context.Background()
+			// Build the state schema. One context for the whole subtest: the
+			// deadline also covers the schema work, which is pure CPU.
+			ctx, cancel := context.WithTimeout(t.Context(), retryTestTimeout)
+			defer cancel()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 
@@ -914,16 +887,13 @@ func TestLabelResourceDelete_NotFound(t *testing.T) {
 			defer server.Close()
 
 			// Create client pointing to mock server
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			// Create the resource
 			r := &labelResource{client: client}
 
 			// Build the state schema
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -1014,14 +984,11 @@ func TestLabelResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			r := &labelResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -1122,14 +1089,11 @@ func TestAnnotationResourceDelete_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			r := &annotationResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -1215,14 +1179,11 @@ func TestAnnotationResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			r := &annotationResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -1323,14 +1284,11 @@ func TestAlertResourceDelete_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			r := &alertResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -1410,14 +1368,11 @@ func TestAlertResourceRead_NotFound(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			r := &alertResource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			schemaResp := &resource.SchemaResponse{}
 			r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
 			if schemaResp.Diagnostics.HasError() {
@@ -1516,14 +1471,11 @@ func TestAnnotationDataSource_Read_ErrorHandling(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			ds := &annotationDataSource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 
 			// Get schema
 			schemaResp := &datasource.SchemaResponse{}
@@ -1615,14 +1567,11 @@ func TestAlertDataSource_Read_ErrorHandling(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
-			if err != nil {
-				t.Fatalf("Failed to create client: %v", err)
-			}
+			client := newTestAPIClient(t, server)
 
 			ds := &alertDataSource{client: client}
 
-			ctx := context.Background()
+			ctx := t.Context()
 
 			// Get schema
 			schemaResp := &datasource.SchemaResponse{}

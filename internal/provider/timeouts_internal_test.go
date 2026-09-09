@@ -2,11 +2,9 @@ package provider
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/cenkalti/backoff/v5"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
@@ -283,46 +281,5 @@ func TestValidateRequestTimeout_AttributePath(t *testing.T) {
 		if got := withPath.Path(); !got.Equal(requestTimeoutPath) {
 			t.Errorf("diagnostic %q path = %s, want %s", d.Summary(), got, requestTimeoutPath)
 		}
-	}
-}
-
-// constantBackOff returns a factory for a fixed-delay, jitter-free retry policy.
-//
-// Tests inject this so retry timing is deterministic and cheap: the backoff
-// library's timer hook is unexported, so replacing the policy is the only way to
-// control how long the retry loop sleeps. A long delay is equally useful — it
-// proves a response was NOT retried, or that a Retry-After header took
-// precedence over the policy.
-func constantBackOff(d time.Duration) func() backoff.BackOff {
-	return func() backoff.BackOff {
-		b := backoff.NewExponentialBackOff()
-		b.InitialInterval = d
-		b.RandomizationFactor = 0
-		b.Multiplier = 1
-		b.MaxInterval = d
-		return b
-	}
-}
-
-// newTestRetryClient builds a DCIRetryClient with an injected backoff policy
-// for unit testing retry behavior.
-//
-// This is the call that lazily starts the test server: httptest.NewTestServer
-// defers startup to the first Server.Client(), which is also what assigns
-// Server.URL. Two consequences for callers — inside a synctest bubble this must
-// run within the bubble, so the fake network's channels belong to it and a
-// blocked read is durably blocking; and Server.URL reads as "" until it has run.
-//
-// The client is copied rather than used in place. Server.Client() hands back the
-// one *http.Client the server owns — and reaches into its Transport during Close
-// to reap idle connections — so mutating it would make Timeout shared state
-// between every client built against the same server. Copying keeps the Transport
-// pointer, so Close still works, while per-client timeouts stay independent.
-func newTestRetryClient(server *httptest.Server, requestTimeout time.Duration, newBackOff func() backoff.BackOff) *DCIRetryClient {
-	c := *server.Client()
-	c.Timeout = requestTimeout
-	return &DCIRetryClient{
-		client:     &c,
-		newBackOff: newBackOff,
 	}
 }

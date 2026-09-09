@@ -49,6 +49,7 @@ linters:
     - defaultdrift
     - methodreceiver
     - requestguard
+    - retrypolicy
     - clearableattr
     - modernize
   exclusions:
@@ -241,6 +242,9 @@ linters:
       requestguard:
         type: "module"
         description: "Validates IsUnknown() guards in request builder functions."
+      retrypolicy:
+        type: "module"
+        description: "Requires a DCIRetryClient built in a test to name its backoff policy."
       clearableattr:
         type: "module"
         description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."
