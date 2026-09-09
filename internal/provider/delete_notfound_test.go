@@ -70,7 +70,6 @@ func TestBudgetResourceDelete_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			// Create client pointing to mock server
 			client := newTestAPIClient(t, server)
@@ -181,7 +180,6 @@ func TestAllocationResourceDelete_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			// Create client pointing to mock server
 			client := newTestAPIClient(t, server)
@@ -276,7 +274,6 @@ func TestReportResourceDelete_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			// Create client pointing to mock server
 			client := newTestAPIClient(t, server)
@@ -395,7 +392,6 @@ func TestBudgetDelete_WithDCIRetryClient_404(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`{"message": "Budget not found"}`))
 	}))
-	defer server.Close()
 
 	// Through the real DCIRetryClient, like the provider does. The injected
 	// policy must be named: left nil, Do would use the production 2s-to-60s
@@ -461,7 +457,6 @@ func TestBudgetResourceRead_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			// Create client pointing to mock server
 			client := newTestAPIClient(t, server)
@@ -577,7 +572,6 @@ func TestAllocationResourceRead_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -680,7 +674,6 @@ func TestReportResourceRead_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -781,7 +774,6 @@ func TestBudgetResourceDelete_WithDCIRetryClient_Integration(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			// Through the real DCIRetryClient, as in production. See the note in
 			// TestBudgetDelete_WithDCIRetryClient_404 on naming the policy.
@@ -884,7 +876,6 @@ func TestLabelResourceDelete_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			// Create client pointing to mock server
 			client := newTestAPIClient(t, server)
@@ -982,7 +973,6 @@ func TestLabelResourceRead_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -1087,7 +1077,6 @@ func TestAnnotationResourceDelete_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -1177,7 +1166,6 @@ func TestAnnotationResourceRead_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -1282,7 +1270,6 @@ func TestAlertResourceDelete_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -1366,7 +1353,6 @@ func TestAlertResourceRead_NotFound(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -1469,7 +1455,6 @@ func TestAnnotationDataSource_Read_ErrorHandling(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 
@@ -1565,7 +1550,6 @@ func TestAlertDataSource_Read_ErrorHandling(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client := newTestAPIClient(t, server)
 

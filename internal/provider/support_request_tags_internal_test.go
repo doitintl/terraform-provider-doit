@@ -225,7 +225,6 @@ func TestSupportRequestTagsCreate_Reconciles(t *testing.T) {
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			}))
-			defer server.Close()
 
 			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {
@@ -343,7 +342,6 @@ func TestSupportRequestTagsPopulateState_Normalization(t *testing.T) {
 				w.WriteHeader(tt.statusCode)
 				_, _ = w.Write([]byte(tt.responseBody))
 			}))
-			defer server.Close()
 
 			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {

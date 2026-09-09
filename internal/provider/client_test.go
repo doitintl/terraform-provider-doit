@@ -31,7 +31,6 @@ func captureUserAgent(t *testing.T) (*httptest.Server, *http.Client, func() stri
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"email":"test@example.com"}`))
 	}))
-	t.Cleanup(server.Close)
 	return server, server.Client(), func() string {
 		mu.Lock()
 		defer mu.Unlock()

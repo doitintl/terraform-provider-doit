@@ -50,6 +50,7 @@ linters:
     - methodreceiver
     - requestguard
     - retrypolicy
+    - testserver
     - clearableattr
     - modernize
   exclusions:
@@ -103,7 +104,8 @@ linters:
           - requestguard
           - clearableattr
           - modernize
-      # Test files — exclude custom linters (except paralleltest which only applies to tests)
+      # Test files — exclude custom linters. paralleltest, retrypolicy and
+      # testserver are absent deliberately: they only apply to tests.
       - path: _test\.go
         linters:
           - overlaycheck
@@ -254,6 +256,9 @@ linters:
       retrypolicy:
         type: "module"
         description: "Requires a DCIRetryClient built in a test to name its backoff policy."
+      testserver:
+        type: "module"
+        description: "Enforces httptest.NewTestServer and flags its redundant cleanup calls in tests."
       clearableattr:
         type: "module"
         description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."

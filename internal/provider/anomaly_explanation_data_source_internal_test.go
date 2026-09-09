@@ -76,7 +76,6 @@ func TestAnomalyExplanationDataSource_UnknownID(t *testing.T) {
 		requestCount.Add(1)
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer server.Close()
 
 	overrides := map[string]tftypes.Value{
 		"id": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
@@ -167,7 +166,6 @@ func TestAnomalyExplanationDataSource_FactsMapping(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				_, _ = fmt.Fprint(w, tc.responseJSON)
 			}))
-			defer server.Close()
 
 			overrides := map[string]tftypes.Value{
 				"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
@@ -241,7 +239,6 @@ func TestAnomalyExplanationDataSource_ExplanationMapping(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprint(w, responseJSON)
 	}))
-	defer server.Close()
 
 	overrides := map[string]tftypes.Value{
 		"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
@@ -315,7 +312,6 @@ func TestAnomalyExplanationDataSource_EvidenceList(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				_, _ = fmt.Fprint(w, tc.responseJSON)
 			}))
-			defer server.Close()
 
 			overrides := map[string]tftypes.Value{
 				"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
@@ -363,7 +359,6 @@ func TestAnomalyExplanationDataSource_NotFound(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = fmt.Fprint(w, `{"error": "not found"}`)
 	}))
-	defer server.Close()
 
 	overrides := map[string]tftypes.Value{
 		"id": tftypes.NewValue(tftypes.String, "non-existent-id"),

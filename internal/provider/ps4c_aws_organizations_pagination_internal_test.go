@@ -36,7 +36,6 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 				"rowCount": 2
 			}`)
 		}))
-		defer server.Close()
 
 		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"max_results": tftypes.NewValue(tftypes.Number, 2.0),
@@ -91,7 +90,6 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 				"rowCount": 1
 			}`)
 		}))
-		defer server.Close()
 
 		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"page_token": tftypes.NewValue(tftypes.String, "start-token"),
@@ -131,7 +129,6 @@ func TestPs4cAwsOrganizationsDataSource_Read_Pagination(t *testing.T) {
 				"rowCount": 1
 			}`)
 		}))
-		defer server.Close()
 
 		state := readPs4cAwsOrganizations(t, server, map[string]tftypes.Value{
 			"max_results": tftypes.NewValue(tftypes.Number, 1.0),

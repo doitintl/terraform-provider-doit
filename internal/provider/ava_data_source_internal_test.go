@@ -52,7 +52,6 @@ func TestAvaDataSource_Read_ErrorHandling(t *testing.T) {
 					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
-			defer server.Close()
 
 			client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
 			if err != nil {

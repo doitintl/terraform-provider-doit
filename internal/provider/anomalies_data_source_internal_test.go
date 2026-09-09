@@ -135,7 +135,6 @@ func TestAnomaliesDataSource_UnknownInputs(t *testing.T) {
 				requestCount.Add(1)
 				w.WriteHeader(http.StatusOK)
 			}))
-			defer server.Close()
 
 			data, _ := readAnomaliesHelper(t, server, tc.overrides)
 
@@ -234,7 +233,6 @@ func TestAnomaliesDataSource_AutoPaginationMetadataFromFirstPage(t *testing.T) {
 			}
 		}`)
 	}))
-	defer server.Close()
 
 	// Zero overrides = auto-pagination mode
 	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
@@ -294,7 +292,6 @@ func TestAnomaliesDataSource_EmptyAnomaliesList(t *testing.T) {
 			}
 		}`)
 	}))
-	defer server.Close()
 
 	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
 
@@ -359,7 +356,6 @@ func TestAnomaliesDataSource_EntityFieldsMapping(t *testing.T) {
 			}
 		}`)
 	}))
-	defer server.Close()
 
 	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
 
@@ -456,7 +452,6 @@ func TestAnomaliesDataSource_LinkedAnomalies(t *testing.T) {
 			}
 		}`)
 	}))
-	defer server.Close()
 
 	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
 
