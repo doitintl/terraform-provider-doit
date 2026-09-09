@@ -30,8 +30,9 @@ import (
 // The rule for this file is that a test making a claim about time or retry
 // sequencing belongs in a bubble — including the ones that expect no wait,
 // since elapsed == 0 is the most direct possible proof that a status was not
-// retried. The two TestNewClient_* tests make no such claim (they assert
-// NewClient performs no I/O at all), so they stay on t.Parallel().
+// retried. The constructor tests at the bottom of the file make no such claim —
+// they assert what NewClient wires up, and that construction issues no requests
+// at all — so they stay on t.Parallel().
 //
 // Note the absence of t.Parallel() in the bubbled tests: a bubble owns its own
 // clock and requires every goroutine in it to be durably blocked before time

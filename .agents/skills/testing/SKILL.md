@@ -231,9 +231,13 @@ Rules that matter:
   exact but attempt counts flip. In practice: don't let a backoff interval divide
   the deadline. Verify with `-count=20`.
 - **The bubble clock starts at exactly midnight UTC 2000-01-01**, with zero
-  nanoseconds. Every virtual instant is a whole second, which is why HTTP-date
-  arithmetic (`Retry-After` as a date) stays exact where it would be flaky on a
-  real clock.
+  nanoseconds, and advances only to the next scheduled timer deadline — so a
+  test whose own durations are all whole seconds never leaves a whole-second
+  instant. That is what makes HTTP-date arithmetic (`Retry-After` as a date)
+  exact where a real clock would be flaky, since `http.TimeFormat` truncates to
+  seconds. It is a property of the durations the test chooses, not of the
+  bubble: sleep 1500ms and the clock sits at `00:00:01.5`, where the same
+  arithmetic loses the remainder.
 - Real network I/O is not durably blocking. Keep the server, client, and system
   under test entirely inside the bubble.
 
