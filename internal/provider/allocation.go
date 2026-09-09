@@ -152,25 +152,13 @@ func (plan *allocationResourceModel) toUpdateRequest(ctx context.Context) (req m
 func convertComponentsToModels(ctx context.Context, components []resource_allocation.ComponentsValue) (result []models.AllocationComponent, diags diag.Diagnostics) {
 	result = make([]models.AllocationComponent, len(components))
 	for i := range components {
-		// Only send the deprecated inverse_selection when inverse is a known
-		// false value. The API's ToFilter() gives inverse_selection precedence
-		// over inverse, so sending both (e.g. inverse=true,
-		// inverse_selection=false) causes inverse to be silently overwritten.
-		// Guard against Unknown/Null defensively — schema defaults ensure
-		// inverse is always known during Apply, but the guard costs nothing.
-		var inverseSelection *bool
-		inverse := components[i].Inverse
-		if !inverse.IsUnknown() && !inverse.IsNull() && !inverse.ValueBool() {
-			inverseSelection = components[i].InverseSelection.ValueBoolPointer()
-		}
 		result[i] = models.AllocationComponent{
-			CaseInsensitive:  components[i].CaseInsensitive.ValueBoolPointer(),
-			IncludeNull:      components[i].IncludeNull.ValueBoolPointer(),
-			Inverse:          components[i].Inverse.ValueBoolPointer(),
-			InverseSelection: inverseSelection,
-			Key:              components[i].Key.ValueString(),
-			Mode:             models.AllocationComponentMode(components[i].Mode.ValueString()),
-			Type:             models.AllocationDimensionsTypes(components[i].ComponentsType.ValueString()),
+			CaseInsensitive: components[i].CaseInsensitive.ValueBoolPointer(),
+			IncludeNull:     components[i].IncludeNull.ValueBoolPointer(),
+			Inverse:         components[i].Inverse.ValueBoolPointer(),
+			Key:             components[i].Key.ValueString(),
+			Mode:            models.AllocationComponentMode(components[i].Mode.ValueString()),
+			Type:            models.AllocationDimensionsTypes(components[i].ComponentsType.ValueString()),
 		}
 		d := components[i].Values.ElementsAs(ctx, &result[i].Values, true)
 		diags.Append(d...)
@@ -354,11 +342,9 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 			"formula": types.StringValue(rule.Formula),
 		}
 		if rule.Components != nil {
-			// Preserve existing component values from state for alias-type normalization
-			// and deprecated field round-tripping.
+			// Preserve existing component values from state for alias-type normalization.
 			// - includeNull, inverse, caseInsensitive: use API value (reliably echoed),
 			//   falling back to state only when API returns nil.
-			// - inverseSelection: MUST use state (API never returns this deprecated field).
 			// - type: use normalizeDimensionsType to preserve user's alias (e.g. allocation_rule).
 			var existingComponents []resource_allocation.ComponentsValue
 			if !state.Rule.IsNull() && !state.Rule.IsUnknown() &&
@@ -386,7 +372,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 	}
 
 	if resp.Rules != nil && len(*resp.Rules) > 0 {
-		// Parse state rules once for reuse (actions, component types, include_null, inverse_selection)
+		// Parse state rules once for reuse (actions, component types, include_null)
 		var stateRules []resource_allocation.RulesValue
 		existingActionsByID := make(map[string]string)
 		existingActionsByIndex := make([]string, 0)
@@ -531,15 +517,11 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 			compType = normalizeDimensionsType(compType, existingComponents[i].ComponentsType.ValueString())
 		}
 
-		// Field echo behavior (verified via API probe):
-		// - includeNull, inverse, caseInsensitive: echoed correctly by the API.
-		//   We use the API value as the source of truth, falling back to state
-		//   only when the API returns nil (shouldn't happen, but defensive).
-		//   This ensures real drift (e.g. external modifications) is detected.
-		// - inverseSelection: DEPRECATED (superseded by inverse). The API accepts
-		//   it on write but never echoes it back. We MUST preserve it from state
-		//   so that existing configs using the deprecated field don't drift.
-		//   ImportState (no prior state) falls back to the API value (always nil → false).
+		// Field echo behavior (verified via API probe): includeNull, inverse and
+		// caseInsensitive are echoed correctly by the API. We use the API value as
+		// the source of truth, falling back to state only when the API returns nil
+		// (shouldn't happen, but defensive). This ensures real drift (e.g. external
+		// modifications) is detected.
 		caseInsensitiveVal := types.BoolValue(false)
 		if component.CaseInsensitive != nil {
 			caseInsensitiveVal = types.BoolValue(*component.CaseInsensitive)
@@ -554,37 +536,20 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 			includeNullVal = types.BoolValue(existingComponents[i].IncludeNull.ValueBool())
 		}
 
-		// inverseSelection: state-first — API never returns this deprecated field.
-		inverseSelectionVal := types.BoolValue(false)
-		if i < len(existingComponents) {
-			inverseSelectionVal = types.BoolValue(existingComponents[i].InverseSelection.ValueBool())
-		} else if component.InverseSelection != nil {
-			inverseSelectionVal = types.BoolValue(*component.InverseSelection)
-		}
-
 		inverseVal := types.BoolValue(false)
-		if i < len(existingComponents) && existingComponents[i].InverseSelection.ValueBool() {
-			// When the user uses the deprecated inverse_selection=true, the API
-			// stores inverse=true internally (via ToFilter's deprecated field
-			// override). The Read path would then see inverse=true from the API,
-			// but the user's config has inverse at its default (false). This would
-			// cause false drift. Preserve the state's inverse value so the
-			// deprecated workflow remains stable.
-			inverseVal = types.BoolValue(existingComponents[i].Inverse.ValueBool())
-		} else if component.Inverse != nil {
+		if component.Inverse != nil {
 			inverseVal = types.BoolValue(*component.Inverse)
 		} else if i < len(existingComponents) {
 			inverseVal = types.BoolValue(existingComponents[i].Inverse.ValueBool())
 		}
 
 		m := map[string]attr.Value{
-			"case_insensitive":  caseInsensitiveVal,
-			"include_null":      includeNullVal,
-			"inverse":           inverseVal,
-			"inverse_selection": inverseSelectionVal,
-			"key":               types.StringValue(component.Key),
-			"mode":              types.StringValue(string(component.Mode)),
-			"type":              types.StringValue(compType),
+			"case_insensitive": caseInsensitiveVal,
+			"include_null":     includeNullVal,
+			"inverse":          inverseVal,
+			"key":              types.StringValue(component.Key),
+			"mode":             types.StringValue(string(component.Mode)),
+			"type":             types.StringValue(compType),
 		}
 		// Merge API values with prior state to restore any NullFallback sentinels
 		// that the API strips during normalization. This is needed for the Read path

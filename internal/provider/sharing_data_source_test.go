@@ -57,10 +57,10 @@ resource "doit_report" "test" {
   name = %q
 
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     time_range = {
       mode            = "last"
       amount          = 1

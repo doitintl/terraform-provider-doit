@@ -199,8 +199,12 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 		UsePrevSpend:    oldState.UsePrevSpend,
 		Amount:          oldState.Amount,
 		Recipients:      oldState.Recipients,
-		Scope:           oldState.Scope,
 	}
+
+	// V0's deprecated `scope` has no V1 counterpart: the attribute was removed
+	// once the API stopped publishing it. Dropping it is lossless in practice —
+	// the config has to move to `scopes` regardless, and the first Read fills
+	// `scopes` from the filter the API now synthesizes for legacy budgets.
 
 	// Transform alerts list - add new computed fields
 	// Old schema: only percentage field

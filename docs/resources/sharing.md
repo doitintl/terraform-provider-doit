@@ -34,10 +34,10 @@ resource "doit_report" "example" {
   name = "Shared Cost Report"
 
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     time_range = {
       mode            = "last"
       amount          = 1

@@ -116,7 +116,14 @@ resource "doit_budget" "test" {
   amount        = 500
   currency      = "EUR"
   time_interval = "month"
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   alerts = [
     { percentage = 50 },
     { percentage = 80 }

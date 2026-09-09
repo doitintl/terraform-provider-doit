@@ -10178,9 +10178,11 @@ components:
             value: cost
           operator: gt
           evaluateForEach: ""
-          attributions:
-            - PvqyGcdFcTHh7aLUdGdf
-          scopes: []
+          scopes:
+            - id: attribution
+              type: attribution
+              values:
+                - PvqyGcdFcTHh7aLUdGdf
           timeInterval: month
           dataSource: billing
           value: 500
@@ -10246,12 +10248,6 @@ components:
           type: string
           description: >-
             Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
-        attributions:
-          type: array
-          deprecated: true
-          description: Use 'scopes' instead. The attributions selected define the scope to monitor.
-          items:
-            type: string
     AlertRequest:
       required:
         - config
@@ -10339,11 +10335,6 @@ components:
           type: boolean
           description: If true, all selected values will be excluded.
           default: false
-        inverse_selection:
-          type: boolean
-          description: If true, all selected values will be excluded.
-          default: false
-          deprecated: true
         includeNull:
           type: boolean
           description: Include null values.
@@ -11313,7 +11304,7 @@ components:
       required:
         - currency
         - name
-        - scope
+        - scopes
         - startPeriod
         - timeInterval
         - type
@@ -11385,11 +11376,11 @@ components:
           description: List of slack channels to notify when reaching alert threshold.
           items:
             $ref: "#/components/schemas/SlackChannel"
-        scope:
+        scopes:
           type: array
-          description: List of allocations that defines the budget scope.
+          description: The filters selected define the scope of the budget.
           items:
-            type: string
+            $ref: "#/components/schemas/ExternalConfigFilter"
         startPeriod:
           type: integer
           description: Budget start Date, in milliseconds since the epoch.
@@ -11494,11 +11485,6 @@ components:
           description: List of Slack channels to notify when reaching alert threshold.
           items:
             $ref: "#/components/schemas/SlackChannel"
-        scope:
-          type: array
-          description: List of allocations that defines the budget scope.
-          items:
-            type: string
         scopes:
           type: array
           description: The filters selected define the scope of the budget.
@@ -11561,12 +11547,6 @@ components:
             "onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
             "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
           enum: ["atRisk", "onTrack", "unknown"]
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
         scopes:
           type: array
           description: The filters selected define the scope of the budget.
@@ -11679,12 +11659,6 @@ components:
           description: List of Slack channels to notify when reaching alert threshold.
           items:
             $ref: "#/components/schemas/SlackChannel"
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
         scopes:
           type: array
           description: The filters selected define the scope of the budget.
@@ -12031,11 +12005,6 @@ components:
       type: object
       description: Report configuration.
       properties:
-        metric:
-          deprecated: true
-          description: "Deprecated: Use 'metrics' instead."
-          allOf:
-            - $ref: "#/components/schemas/ExternalMetric"
         metrics:
           type: array
           description: The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.

@@ -182,8 +182,7 @@ Possible values: `cost`, `amortized_cost`
 Possible values: `owner`, `editor`, `viewer`
 - `recipients` (List of String) List of emails to notify when reaching alert threshold.
 - `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold. (see [below for nested schema](#nestedatt--recipients_slack_channels))
-- `scope` (List of String, Deprecated) List of allocations that define the budget scope.
-- `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--scopes))
+- `scopes` (Attributes List) The filters selected define the scope of the budget. Required: a budget has to define the spend it tracks. (see [below for nested schema](#nestedatt--scopes))
 - `seasonal_amounts` (List of Number) List of seasonal amounts for recurring budgets with different amounts per period.
 - `start_period` (Number) Budget start Date
 - `time_interval` (String) Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]

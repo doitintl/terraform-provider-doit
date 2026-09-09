@@ -27,8 +27,8 @@ output "report_description" {
   value = data.doit_report.example.description
 }
 
-output "report_metric" {
-  value = data.doit_report.example.config.metric
+output "report_metrics" {
+  value = data.doit_report.example.config.metrics
 }
 
 output "report_time_range" {
@@ -96,7 +96,6 @@ at most two of those three limit types — not all three. When `displayValues` i
 `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
 - `limit_by_change` (Attributes) Limit by change filter. A report may configure at most two of
 `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three. (see [below for nested schema](#nestedatt--config--limit_by_change))
-- `metric` (Attributes, Deprecated) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric))
 - `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
@@ -259,16 +258,6 @@ Read-Only:
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom metric ID.
 
-
-
-<a id="nestedatt--config--metric"></a>
-### Nested Schema for `config.metric`
-
-Read-Only:
-
-- `type` (String) Type of metric to use.
-- `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 <a id="nestedatt--config--metric_filter"></a>

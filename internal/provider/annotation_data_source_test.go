@@ -131,10 +131,10 @@ resource "doit_label" "test" {
 resource "doit_report" "test" {
   name = "%s-report"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"

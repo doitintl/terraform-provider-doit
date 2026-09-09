@@ -12,8 +12,8 @@ output "report_description" {
   value = data.doit_report.example.description
 }
 
-output "report_metric" {
-  value = data.doit_report.example.config.metric
+output "report_metrics" {
+  value = data.doit_report.example.config.metrics
 }
 
 output "report_time_range" {

@@ -5,28 +5,14 @@ import (
 	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
-
-// metricMirrorConflictValidator rejects config.metric being set alongside
-// config.metrics. They are two views of one API field: toExternalConfig sends
-// only metrics when both are present, so differing values leave state
-// inconsistent and drift on every refresh.
-//
-// Shared because doit_report_query builds its config schema from the generated
-// resource schema rather than from reportResource.Schema, so it does not inherit
-// attribute-level validators added there.
-func metricMirrorConflictValidator() validator.Object {
-	return objectvalidator.ConflictsWith(path.MatchRoot("config").AtName("metrics"))
-}
 
 // warnNASentinels appends a Warning diagnostic for every string inside valueLists
 // that matches the legacy NullFallback sentinel pattern (e.g. "[Service N/A]").
@@ -626,12 +612,8 @@ func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter at
 	d = getter.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
 	diags.Append(d...)
 
-	var metric resource_report.MetricValue
-	d = getter.GetAttribute(ctx, path.Root("config").AtName("metric"), &metric)
-	diags.Append(d...)
-
 	if !d.HasError() {
-		skipMetricCheck := metric.IsUnknown() || metrics.IsUnknown()
+		skipMetricCheck := metrics.IsUnknown()
 		if !skipMetricCheck && !metrics.IsNull() {
 			for _, elem := range metrics.Elements() {
 				if elem.IsUnknown() {
@@ -642,15 +624,12 @@ func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter at
 		}
 
 		if !skipMetricCheck {
-			hasSingleMetricObj := !metric.IsNull()
 			numMetrics := 0
 			if !metrics.IsNull() {
 				numMetrics = len(metrics.Elements())
 			}
 
-			if numMetrics == 0 && hasSingleMetricObj {
-				// Metric was configured via the singular "metric" block; valid 1 metric.
-			} else if numMetrics != 1 {
+			if numMetrics != 1 {
 				diags.AddAttributeError(
 					path.Root("config").AtName("metrics"),
 					"Invalid Metrics Configuration",

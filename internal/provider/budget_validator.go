@@ -284,47 +284,40 @@ func (v budgetRecipientsMinLengthValidator) ValidateResource(ctx context.Context
 	}
 }
 
-// budgetScopeMutuallyExclusiveValidator validates that exactly one of 'scope' or 'scopes' is set.
-type budgetScopeMutuallyExclusiveValidator struct{}
+// budgetScopeRequiredValidator validates that 'scopes' is set.
+//
+// The API rejects a budget carrying no scope at all (ErrMissingBudgetScopes),
+// but the generated schema cannot express that: `scopes` is derived from
+// BudgetCreateUpdateRequest, which serves both POST and PATCH and therefore
+// declares nothing required — `scopes` is mandatory on create only. Splitting
+// that schema is tracked upstream as CMP-51650; until it lands, enforce the
+// create-time requirement here so the failure surfaces at plan time.
+type budgetScopeRequiredValidator struct{}
 
-func (v budgetScopeMutuallyExclusiveValidator) Description(_ context.Context) string {
-	return "Validates that exactly one of 'scope' or 'scopes' is set"
+func (v budgetScopeRequiredValidator) Description(_ context.Context) string {
+	return "Validates that 'scopes' is set"
 }
 
-func (v budgetScopeMutuallyExclusiveValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that exactly one of `scope` or `scopes` is set"
+func (v budgetScopeRequiredValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `scopes` is set"
 }
 
-func (v budgetScopeMutuallyExclusiveValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var scope types.List
+func (v budgetScopeRequiredValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var scopes types.List
 
-	// Get the attributes
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("scope"), &scope)...)
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("scopes"), &scopes)...)
 
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || scopes.IsUnknown() {
 		return
 	}
 
-	if scope.IsUnknown() || scopes.IsUnknown() {
-		return
-	}
-
-	hasScope := !scope.IsNull()
-	hasScopes := !scopes.IsNull()
-
-	if hasScope && hasScopes {
-		resp.Diagnostics.AddError(
-			"Invalid Attribute Combination",
-			"Attributes 'scope' and 'scopes' are mutually exclusive. Please specify only one.",
-		)
-	}
-
-	if !hasScope && !hasScopes {
-		resp.Diagnostics.AddError(
+	// An empty list is as invalid as an absent one — the API answers both with
+	// "invalid budget - no scopes" — so catch it here rather than at apply.
+	if scopes.IsNull() || len(scopes.Elements()) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("scopes"),
 			"Missing Required Attribute",
-			"One of 'scope' or 'scopes' must be specified.",
+			"'scopes' must be set to a non-empty list: a budget has to define the spend it tracks.",
 		)
 	}
 }

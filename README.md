@@ -211,7 +211,7 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `DOIT_HOST`        | API host (e.g., `https://api.doit.com`)        |
 | `TEST_USER`        | Email for test budget collaborators/recipients |
 | `TEST_USER_2`      | Second user email for resource sharing tests   |
-| `TEST_ATTRIBUTION` | Attribution ID for test budget scope           |
+| `TEST_ATTRIBUTION` | Allocation rule ID for test budget scopes      |
 | `TEST_PROJECT`     | Project ID for allocation rule tests           |
 | `TEST_CUSTOMER_ID` | Customer ID for tests                          |
 

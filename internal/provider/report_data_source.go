@@ -421,15 +421,6 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		configMap["group"] = emptyGroup
 	}
 
-	// Nested Object: Metric (deprecated, but still supported)
-	metricVal, metricDiags := ds.externalMetricToValue(ctx, config.Metric)
-	diags.Append(metricDiags...)
-	if diags.HasError() {
-		log.Println("Error creating metric value configMap")
-		return diags
-	}
-	configMap["metric"] = metricVal
-
 	// Nested List: Metrics (new - up to 4 metrics per report)
 	if config.Metrics != nil && len(*config.Metrics) > 0 {
 		metricsVals := make([]attr.Value, len(*config.Metrics))

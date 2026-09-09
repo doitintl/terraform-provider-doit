@@ -150,93 +150,6 @@ func TestAccAllocation_Validation(t *testing.T) {
 	})
 }
 
-// TestAccAllocation_InverseConflict tests that setting both inverse=true and
-// inverse_selection=true on the same component is rejected at plan time.
-func TestAccAllocation_InverseConflict(t *testing.T) {
-	rName := acctest.RandomWithPrefix(testAllocPrefix)
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccAllocationInverseConflict(rName),
-				ExpectError: regexp.MustCompile(`Conflicting Inverse Attributes`),
-			},
-		},
-	})
-}
-
-func testAccAllocationInverseConflict(rName string) string {
-	return fmt.Sprintf(`
-resource "doit_allocation" "inv_conflict" {
-    name        = "%s-inv-conflict"
-    description = "test allocation with conflicting inverse attributes"
-    rule = {
-       formula = "A"
-       components = [
-        {
-           key               = "country"
-           mode              = "is"
-           type              = "fixed"
-           values            = ["JP"]
-           inverse           = true
-           inverse_selection = true
-         }
-       ]
-    }
-}
-`, rName)
-}
-
-// TestAccAllocation_InverseConflict_Rules verifies that the conflict validator
-// also fires on the rules[] (group allocation) path, not just rule.
-func TestAccAllocation_InverseConflict_Rules(t *testing.T) {
-	rName := acctest.RandomWithPrefix(testAllocPrefix)
-
-	resource.ParallelTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccAllocationInverseConflictRules(rName),
-				ExpectError: regexp.MustCompile(`Conflicting Inverse Attributes`),
-			},
-		},
-	})
-}
-
-func testAccAllocationInverseConflictRules(rName string) string {
-	return fmt.Sprintf(`
-resource "doit_allocation" "inv_conflict_rules" {
-    name              = "%s-inv-conflict-rules"
-    description       = "test allocation group with conflicting inverse attributes"
-    unallocated_costs = "%s-other"
-    rules = [
-        {
-            action  = "create"
-            name    = "%s-conflict-rule"
-            formula = "A"
-            components = [
-                {
-                    key               = "country"
-                    mode              = "is"
-                    type              = "fixed"
-                    values            = ["JP"]
-                    inverse           = true
-                    inverse_selection = true
-                }
-            ]
-        }
-    ]
-}
-`, rName, rName, rName)
-}
-
-// TestAccAllocation_InverseRulesPath tests that inverse=true works correctly
-// through the rules[] (group allocation) path, not just the rule path.
 func TestAccAllocation_InverseRulesPath(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 	resource.ParallelTest(t, resource.TestCase{
@@ -631,8 +544,8 @@ resource "doit_allocation" "missing_name" {
 `, rName)
 }
 
-// TestAccAllocation_ComponentFlags tests the include_null and inverse_selection
-// boolean flags on allocation rule components.
+// TestAccAllocation_ComponentFlags tests the include_null and inverse boolean
+// flags on allocation rule components.
 func TestAccAllocation_ComponentFlags(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 	resource.ParallelTest(t, resource.TestCase{
@@ -646,7 +559,7 @@ func TestAccAllocation_ComponentFlags(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("doit_allocation.flags", "id"),
 					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.include_null", "true"),
-					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.inverse_selection", "true"),
+					resource.TestCheckResourceAttr("doit_allocation.flags", "rules.0.components.0.inverse", "true"),
 				),
 			},
 			// Verify no drift on re-apply
@@ -675,12 +588,12 @@ resource "doit_allocation" "flags" {
             formula = "A"
             components = [
                 {
-                    key               = "country"
-                    mode              = "is"
-                    type              = "fixed"
-                    values            = ["JP"]
-                    include_null      = true
-                    inverse_selection = true
+                    key          = "country"
+                    mode         = "is"
+                    type         = "fixed"
+                    values       = ["JP"]
+                    include_null = true
+                    inverse      = true
                 }
             ]
         }
@@ -749,8 +662,7 @@ resource "doit_allocation" "ci" {
 // TestAccAllocation_InverseLifecycle comprehensively tests the "inverse" attribute
 // through its full lifecycle: create with true, drift check, toggle to false, toggle
 // back to true, and import + drift check. This verifies that:
-//   - The provider correctly sends inverse=true to the API without interference
-//     from the deprecated inverse_selection field.
+//   - The provider correctly sends inverse=true to the API.
 //   - The Read path detects real API values (no masking from prior state).
 //   - No "Provider produced inconsistent result" errors occur in any transition.
 func TestAccAllocation_InverseLifecycle(t *testing.T) {
@@ -770,8 +682,7 @@ func TestAccAllocation_InverseLifecycle(t *testing.T) {
 						tfjsonpath.New("rule").AtMapKey("components"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"inverse":           knownvalue.Bool(true),
-								"inverse_selection": knownvalue.Bool(false),
+								"inverse": knownvalue.Bool(true),
 							}),
 						}),
 					),
@@ -804,8 +715,7 @@ func TestAccAllocation_InverseLifecycle(t *testing.T) {
 						tfjsonpath.New("rule").AtMapKey("components"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"inverse":           knownvalue.Bool(false),
-								"inverse_selection": knownvalue.Bool(false),
+								"inverse": knownvalue.Bool(false),
 							}),
 						}),
 					),
@@ -838,8 +748,7 @@ func TestAccAllocation_InverseLifecycle(t *testing.T) {
 						tfjsonpath.New("rule").AtMapKey("components"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"inverse":           knownvalue.Bool(true),
-								"inverse_selection": knownvalue.Bool(false),
+								"inverse": knownvalue.Bool(true),
 							}),
 						}),
 					),
@@ -1187,145 +1096,9 @@ resource "doit_allocation" "invalid_nested" {
 `, rName)
 }
 
-// TestAccAllocation_InverseMigration tests that migrating a single allocation
-// from the deprecated "inverse_selection" attribute to the new "inverse"
-// attribute (and back) does not produce "inconsistent result" errors.
-//
-// The API internally maps "inverse" back to "inverse_selection" in the response,
-// so the response always has inverse_selection=true and inverse=false. The
-// provider must preserve the user's planned values in state rather than
-// writing the API's swapped values.
-func TestAccAllocation_InverseMigration(t *testing.T) {
-	rName := acctest.RandomWithPrefix(testAllocPrefix)
-
-	resource.ParallelTest(t, resource.TestCase{
-		CheckDestroy:             testAccCheckAllocationDestroy(t),
-		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
-		PreCheck:                 testAccPreCheckFunc(t),
-		TerraformVersionChecks:   testAccTFVersionChecks,
-		Steps: []resource.TestStep{
-			// Step 1: Create with the legacy inverse_selection = true.
-			{
-				Config: testAccAllocationInverseSelectionLegacy(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_allocation.inv_migrate",
-						tfjsonpath.New("rule").AtMapKey("components"),
-						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"inverse_selection": knownvalue.Bool(true),
-							}),
-						}),
-					),
-				},
-			},
-			// Step 2: Drift check for legacy config.
-			{
-				Config: testAccAllocationInverseSelectionLegacy(rName),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-			// Step 3: Migrate to inverse = true (remove inverse_selection).
-			{
-				Config: testAccAllocationInverseMigrated(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_allocation.inv_migrate",
-						tfjsonpath.New("rule").AtMapKey("components"),
-						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"inverse": knownvalue.Bool(true),
-							}),
-						}),
-					),
-				},
-			},
-			// Step 4: Drift check after migration to inverse.
-			{
-				Config: testAccAllocationInverseMigrated(rName),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-			// Step 5: Migrate back to inverse_selection = true (remove inverse).
-			{
-				Config: testAccAllocationInverseSelectionLegacy(rName),
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_allocation.inv_migrate",
-						tfjsonpath.New("rule").AtMapKey("components"),
-						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"inverse_selection": knownvalue.Bool(true),
-							}),
-						}),
-					),
-				},
-			},
-			// Step 6: Drift check after migrating back.
-			{
-				Config: testAccAllocationInverseSelectionLegacy(rName),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
-			},
-		},
-	})
-}
-
-func testAccAllocationInverseSelectionLegacy(rName string) string {
-	return fmt.Sprintf(`
-resource "doit_allocation" "inv_migrate" {
-    name        = "%s-inv-migrate"
-    description = "test allocation with inverse_selection migration"
-    rule = {
-       formula = "A"
-       components = [
-        {
-           key               = "service_description"
-           mode              = "is"
-           type              = "fixed"
-           values            = ["AmazonCloudWatch"]
-           inverse_selection = true
-         }
-       ]
-    }
-}
-`, rName)
-}
-
-func testAccAllocationInverseMigrated(rName string) string {
-	return fmt.Sprintf(`
-resource "doit_allocation" "inv_migrate" {
-    name        = "%s-inv-migrate"
-    description = "test allocation with inverse_selection migration"
-    rule = {
-       formula = "A"
-       components = [
-        {
-           key     = "service_description"
-           mode    = "is"
-           type    = "fixed"
-           values  = ["AmazonCloudWatch"]
-           inverse = true
-         }
-       ]
-    }
-}
-`, rName)
-}
-
-// TestAccAllocation_InverseWithMultipleComponents tests an allocation with
-// multiple components using different combinations of inverse and inverse_selection.
-// This verifies that the write path correctly handles each component independently
-// and that the read path doesn't cross-contaminate values between components.
+// TestAccAllocation_InverseWithMultipleComponents tests that a single allocation
+// carrying several components resolves each component's inverse flag
+// independently, with no cross-contamination between them.
 func TestAccAllocation_InverseWithMultipleComponents(t *testing.T) {
 	rName := acctest.RandomWithPrefix(testAllocPrefix)
 
@@ -1338,7 +1111,7 @@ func TestAccAllocation_InverseWithMultipleComponents(t *testing.T) {
 			// Step 1: Create with 3 components:
 			//   A: no inverse (default false)
 			//   B: inverse = true
-			//   C: inverse_selection = true (deprecated)
+			//   C: inverse = true on a different dimension
 			{
 				Config: testAccAllocationInverseMultiComponent(rName),
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -1348,20 +1121,18 @@ func TestAccAllocation_InverseWithMultipleComponents(t *testing.T) {
 						knownvalue.ListExact([]knownvalue.Check{
 							// A: default inverse=false
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"key":               knownvalue.StringExact("country"),
-								"inverse":           knownvalue.Bool(false),
-								"inverse_selection": knownvalue.Bool(false),
+								"key":     knownvalue.StringExact("country"),
+								"inverse": knownvalue.Bool(false),
 							}),
 							// B: inverse=true
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"key":               knownvalue.StringExact("service_description"),
-								"inverse":           knownvalue.Bool(true),
-								"inverse_selection": knownvalue.Bool(false),
+								"key":     knownvalue.StringExact("service_description"),
+								"inverse": knownvalue.Bool(true),
 							}),
-							// C: inverse_selection=true (deprecated)
+							// C: inverse=true on a different dimension
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"key":               knownvalue.StringExact("project_id"),
-								"inverse_selection": knownvalue.Bool(true),
+								"key":     knownvalue.StringExact("project_id"),
+								"inverse": knownvalue.Bool(true),
 							}),
 						}),
 					),
@@ -1384,7 +1155,7 @@ func testAccAllocationInverseMultiComponent(rName string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "inv_multi" {
     name        = "%s-inv-multi"
-    description = "Test allocation with mixed inverse/inverse_selection components"
+    description = "Test allocation with multiple inverse components"
     rule = {
        formula = "A AND B AND C"
        components = [
@@ -1402,11 +1173,11 @@ resource "doit_allocation" "inv_multi" {
            inverse = true
         },
         {
-           key               = "project_id"
-           mode              = "is"
-           type              = "fixed"
-           values            = ["%s"]
-           inverse_selection = true
+           key     = "project_id"
+           mode    = "is"
+           type    = "fixed"
+           values  = ["%s"]
+           inverse = true
         }
        ]
     }
@@ -2629,10 +2400,9 @@ resource "doit_allocation" "minimal" {
 						tfjsonpath.New("rule").AtMapKey("components"),
 						knownvalue.ListExact([]knownvalue.Check{
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"case_insensitive":  knownvalue.Bool(false),
-								"include_null":      knownvalue.Bool(false),
-								"inverse":           knownvalue.Bool(false),
-								"inverse_selection": knownvalue.Bool(false),
+								"case_insensitive": knownvalue.Bool(false),
+								"include_null":     knownvalue.Bool(false),
+								"inverse":          knownvalue.Bool(false),
 							}),
 						}),
 					),

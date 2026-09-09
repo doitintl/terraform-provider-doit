@@ -171,10 +171,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report for result data source"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -202,10 +202,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report for result data source with date range"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"
@@ -262,10 +262,10 @@ resource "doit_report" "test" {
     name        = %q
     description = "test report for result data source with time range"
     config = {
-        metric = {
+        metrics = [{
           type  = "basic"
           value = "cost"
-        }
+        }]
         aggregation    = "total"
         time_interval  = "month"
         data_source    = "billing"

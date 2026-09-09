@@ -4009,7 +4009,7 @@ type AdvancedAnalysis struct {
 
 // Alert Configuration and runtime metadata of an alert.
 //
-// Example: {"config":{"attributions":["PvqyGcdFcTHh7aLUdGdf"],"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"updateTime":1678628938891}
 type Alert struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
@@ -4035,10 +4035,6 @@ type Alert struct {
 
 // AlertConfig Parameters that define when and how an alert is evaluated.
 type AlertConfig struct {
-	// Attributions Use 'scopes' instead. The attributions selected define the scope to monitor.
-	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
-	Attributions *[]string `json:"attributions,omitempty"`
-
 	// Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 	Condition *Condition `json:"condition,omitempty"`
 
@@ -4075,7 +4071,7 @@ type AlertConfigTimeInterval string
 
 // AlertListItem Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
 //
-// Example: {"config":{"attributions":["PvqyGcdFcTHh7aLUdGdf"],"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"updateTime":1678628938891}
 type AlertListItem struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
@@ -4188,10 +4184,6 @@ type AllocationComponent struct {
 
 	// Inverse If true, all selected values will be excluded.
 	Inverse *bool `json:"inverse,omitempty"`
-
-	// InverseSelection If true, all selected values will be excluded.
-	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
-	InverseSelection *bool `json:"inverse_selection,omitempty"`
 
 	// Key Key of an existing dimension. Examples: "billing_account_id", "country". When type is "allocation_rule", the key must be set to "allocation_rule".
 	// Use `GET /analytics/v1/dimensions` to retrieve all available dimensions.
@@ -4996,9 +4988,6 @@ type BudgetAPI struct {
 	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scope List of allocations that defines the budget scope.
-	Scope *[]string `json:"scope,omitempty"`
-
 	// Scopes The filters selected define the scope of the budget.
 	Scopes []ExternalConfigFilter `json:"scopes"`
 
@@ -5067,10 +5056,6 @@ type BudgetCreateUpdateRequest struct {
 	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scope List of allocations that define the budget scope.
-	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
-	Scope *[]string `json:"scope,omitempty"`
-
 	// Scopes The filters selected define the scope of the budget.
 	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
@@ -5114,10 +5099,6 @@ type BudgetListItem struct {
 	// "onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
 	// "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.
 	RiskStatus *BudgetListItemRiskStatus `json:"riskStatus,omitempty"`
-
-	// Scope List of allocations that define the budget scope.
-	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
-	Scope *[]string `json:"scope,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget.
 	Scopes       *[]ExternalConfigFilter `json:"scopes,omitempty"`
@@ -6807,10 +6788,6 @@ type ExternalConfig struct {
 	//
 	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]}
 	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
-
-	// Metric Deprecated: Use 'metrics' instead.
-	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
-	Metric *ExternalMetric `json:"metric,omitempty"`
 
 	// MetricFilter Metric filter to limit report rows by metric value.
 	//

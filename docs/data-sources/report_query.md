@@ -158,7 +158,6 @@ at most two of those three limit types — not all three. When `displayValues` i
 Possible values: `none`, `top`, `all`
 - `limit_by_change` (Attributes) Limit by change filter. A report may configure at most two of
 `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three. (see [below for nested schema](#nestedatt--config--limit_by_change))
-- `metric` (Attributes, Deprecated) Deprecated: Use 'metrics' instead. (see [below for nested schema](#nestedatt--config--metric))
 - `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
@@ -343,17 +342,6 @@ Possible values: `basic`, `custom`, `extended`
 - `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 If using custom metrics, the value must refer to an existing custom metric ID.
 
-
-
-<a id="nestedatt--config--metric"></a>
-### Nested Schema for `config.metric`
-
-Required:
-
-- `type` (String) Type of metric to use.
-Possible values: `basic`, `custom`, `extended`
-- `value` (String) For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-If using custom metrics, the value must refer to an existing custom metric ID.
 
 
 <a id="nestedatt--config--metric_filter"></a>

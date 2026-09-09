@@ -27,10 +27,10 @@ resource "doit_report" "monthly_costs" {
   # Using both with DIFFERENT labels causes perpetual Terraform drift.
   # See the "Conflict with report labels" section below.
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"

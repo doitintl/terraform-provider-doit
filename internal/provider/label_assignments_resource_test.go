@@ -64,10 +64,10 @@ resource "doit_report" "test" {
   name        = "tf-acc-assignments-report-%d"
   description = "Report for label assignments resource test"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -147,10 +147,10 @@ resource "doit_report" "test1" {
   name        = "tf-acc-assignments-report1-%d"
   description = "First report for update test"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -164,10 +164,10 @@ resource "doit_report" "test2" {
   name        = "tf-acc-assignments-report2-%d"
   description = "Second report for update test"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -200,10 +200,10 @@ resource "doit_report" "test1" {
   name        = "tf-acc-assignments-report1-%d"
   description = "First report for update test"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -217,10 +217,10 @@ resource "doit_report" "test2" {
   name        = "tf-acc-assignments-report2-%d"
   description = "Second report for update test"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -303,10 +303,10 @@ resource "doit_report" "test" {
   name        = "tf-acc-mixed-report-%d"
   description = "Report for mixed type test"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -321,7 +321,14 @@ resource "doit_budget" "test" {
   amount        = 100
   currency      = "USD"
   time_interval = "month"
-  scope         = ["%s"]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
   type          = "recurring"
   start_period  = local.start_period
   collaborators = [
@@ -532,10 +539,10 @@ resource "doit_report" "test" {
   description = "Report with labels attribute for conflict test"
   labels      = [doit_label.test.id]
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -604,10 +611,10 @@ resource "doit_report" "test" {
   description = "Report with different labels for conflict test"
   labels      = [doit_label.via_report.id]
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -703,10 +710,10 @@ resource "doit_report" "test" {
   name        = "tf-acc-reverse-dep-report-%d"
   description = "Report created without labels for reverse dependency test"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -746,10 +753,10 @@ resource "doit_report" "test" {
   description = "Report updated to add labels for reverse dependency test"
   labels      = [doit_label.via_report.id]
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -789,10 +796,10 @@ resource "doit_report" "test" {
   description = "Report updated to use same label as assignments"
   labels      = [doit_label.via_assignments.id]
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"

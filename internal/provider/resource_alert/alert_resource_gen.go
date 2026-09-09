@@ -24,14 +24,6 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"config": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
-					"attributions": schema.ListAttribute{
-						ElementType:         types.StringType,
-						Optional:            true,
-						Computed:            true,
-						Description:         "Use 'scopes' instead. The attributions selected define the scope to monitor.",
-						MarkdownDescription: "Use 'scopes' instead. The attributions selected define the scope to monitor.",
-						DeprecationMessage:  "This attribute is deprecated.",
-					},
 					"condition": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
@@ -325,24 +317,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 
 	attributes := in.Attributes()
 
-	attributionsAttribute, ok := attributes["attributions"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`attributions is missing from object`)
-
-		return nil, diags
-	}
-
-	attributionsVal, ok := attributionsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`attributions expected to be basetypes.ListValue, was: %T`, attributionsAttribute))
-	}
-
 	conditionAttribute, ok := attributes["condition"]
 
 	if !ok {
@@ -536,7 +510,6 @@ func (t ConfigType) ValueFromObject(ctx context.Context, in basetypes.ObjectValu
 	}
 
 	return ConfigValue{
-		Attributions:    attributionsVal,
 		Condition:       conditionVal,
 		Currency:        currencyVal,
 		DataSource:      dataSourceVal,
@@ -611,24 +584,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 
 	if diags.HasError() {
 		return NewConfigValueUnknown(), diags
-	}
-
-	attributionsAttribute, ok := attributes["attributions"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`attributions is missing from object`)
-
-		return NewConfigValueUnknown(), diags
-	}
-
-	attributionsVal, ok := attributionsAttribute.(basetypes.ListValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`attributions expected to be basetypes.ListValue, was: %T`, attributionsAttribute))
 	}
 
 	conditionAttribute, ok := attributes["condition"]
@@ -798,7 +753,6 @@ func NewConfigValue(attributeTypes map[string]attr.Type, attributes map[string]a
 	}
 
 	return ConfigValue{
-		Attributions:    attributionsVal,
 		Condition:       conditionVal,
 		Currency:        currencyVal,
 		DataSource:      dataSourceVal,
@@ -880,7 +834,6 @@ func (t ConfigType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ConfigValue{}
 
 type ConfigValue struct {
-	Attributions    basetypes.ListValue    `tfsdk:"attributions"`
 	Condition       basetypes.StringValue  `tfsdk:"condition"`
 	Currency        basetypes.StringValue  `tfsdk:"currency"`
 	DataSource      basetypes.StringValue  `tfsdk:"data_source"`
@@ -894,14 +847,11 @@ type ConfigValue struct {
 }
 
 func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 10)
+	attrTypes := make(map[string]tftypes.Type, 9)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["attributions"] = basetypes.ListType{
-		ElemType: types.StringType,
-	}.TerraformType(ctx)
 	attrTypes["condition"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["data_source"] = basetypes.StringType{}.TerraformType(ctx)
@@ -922,15 +872,7 @@ func (v ConfigValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 10)
-
-		val, err = v.Attributions.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["attributions"] = val
+		vals := make(map[string]tftypes.Value, 9)
 
 		val, err = v.Condition.ToTerraformValue(ctx)
 
@@ -1045,45 +987,7 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 		scopes = v.Scopes
 	}
 
-	var attributionsVal basetypes.ListValue
-	switch {
-	case v.Attributions.IsUnknown():
-		attributionsVal = types.ListUnknown(types.StringType)
-	case v.Attributions.IsNull():
-		attributionsVal = types.ListNull(types.StringType)
-	default:
-		var d diag.Diagnostics
-		attributionsVal, d = types.ListValue(types.StringType, v.Attributions.Elements())
-		diags.Append(d...)
-	}
-
-	if diags.HasError() {
-		return types.ObjectUnknown(map[string]attr.Type{
-			"attributions": basetypes.ListType{
-				ElemType: types.StringType,
-			},
-			"condition":         basetypes.StringType{},
-			"currency":          basetypes.StringType{},
-			"data_source":       basetypes.StringType{},
-			"evaluate_for_each": basetypes.StringType{},
-			"metric": MetricType{
-				basetypes.ObjectType{
-					AttrTypes: MetricValue{}.AttributeTypes(ctx),
-				},
-			},
-			"operator": basetypes.StringType{},
-			"scopes": basetypes.ListType{
-				ElemType: ScopesValue{}.Type(ctx),
-			},
-			"time_interval": basetypes.StringType{},
-			"value":         basetypes.Float64Type{},
-		}), diags
-	}
-
 	attributeTypes := map[string]attr.Type{
-		"attributions": basetypes.ListType{
-			ElemType: types.StringType,
-		},
 		"condition":         basetypes.StringType{},
 		"currency":          basetypes.StringType{},
 		"data_source":       basetypes.StringType{},
@@ -1112,7 +1016,6 @@ func (v ConfigValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, 
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"attributions":      attributionsVal,
 			"condition":         v.Condition,
 			"currency":          v.Currency,
 			"data_source":       v.DataSource,
@@ -1140,10 +1043,6 @@ func (v ConfigValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
-	}
-
-	if !v.Attributions.Equal(other.Attributions) {
-		return false
 	}
 
 	if !v.Condition.Equal(other.Condition) {
@@ -1195,9 +1094,6 @@ func (v ConfigValue) Type(ctx context.Context) attr.Type {
 
 func (v ConfigValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"attributions": basetypes.ListType{
-			ElemType: types.StringType,
-		},
 		"condition":         basetypes.StringType{},
 		"currency":          basetypes.StringType{},
 		"data_source":       basetypes.StringType{},

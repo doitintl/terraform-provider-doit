@@ -164,10 +164,10 @@ func testAccAnnotationWithReport(i int, timestamp string) string {
 resource "doit_report" "test" {
   name = "test-report-for-annotation-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -231,10 +231,10 @@ resource "doit_label" "test" {
 resource "doit_report" "test" {
   name = "test-report-for-annotation-both-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -304,10 +304,10 @@ resource "doit_label" "second" {
 resource "doit_report" "first" {
   name = "test-report-first-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "cost"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"
@@ -320,10 +320,10 @@ resource "doit_report" "first" {
 resource "doit_report" "second" {
   name = "test-report-second-%d"
   config = {
-    metric = {
+    metrics = [{
       type  = "basic"
       value = "usage"
-    }
+    }]
     aggregation    = "total"
     time_interval  = "month"
     data_source    = "billing"

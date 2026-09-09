@@ -30,17 +30,6 @@
 							"computed_optional_required": "required",
 							"attributes": [
 								{
-									"name": "attributions",
-									"list": {
-										"computed_optional_required": "computed_optional",
-										"element_type": {
-											"string": {}
-										},
-										"deprecation_message": "This attribute is deprecated.",
-										"description": "Use 'scopes' instead. The attributions selected define the scope to monitor."
-									}
-								},
-								{
 									"name": "condition",
 									"string": {
 										"computed_optional_required": "computed_optional",
@@ -404,17 +393,6 @@
 													}
 												},
 												{
-													"name": "inverse_selection",
-													"bool": {
-														"computed_optional_required": "computed_optional",
-														"default": {
-															"static": false
-														},
-														"deprecation_message": "This attribute is deprecated.",
-														"description": "If true, all selected values will be excluded."
-													}
-												},
-												{
 													"name": "key",
 													"string": {
 														"computed_optional_required": "required",
@@ -543,17 +521,6 @@
 															"default": {
 																"static": false
 															},
-															"description": "If true, all selected values will be excluded."
-														}
-													},
-													{
-														"name": "inverse_selection",
-														"bool": {
-															"computed_optional_required": "computed_optional",
-															"default": {
-																"static": false
-															},
-															"deprecation_message": "This attribute is deprecated.",
 															"description": "If true, all selected values will be excluded."
 														}
 													},
@@ -1222,17 +1189,6 @@
 								]
 							},
 							"description": "List of Slack channels to notify when reaching alert threshold."
-						}
-					},
-					{
-						"name": "scope",
-						"list": {
-							"computed_optional_required": "computed_optional",
-							"element_type": {
-								"string": {}
-							},
-							"deprecation_message": "This attribute is deprecated.",
-							"description": "List of allocations that define the budget scope."
 						}
 					},
 					{
@@ -2794,42 +2750,6 @@
 											}
 										],
 										"description": "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three."
-									}
-								},
-								{
-									"name": "metric",
-									"single_nested": {
-										"computed_optional_required": "computed_optional",
-										"attributes": [
-											{
-												"name": "type",
-												"string": {
-													"computed_optional_required": "required",
-													"description": "Type of metric to use.",
-													"validators": [
-														{
-															"custom": {
-																"imports": [
-																	{
-																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-																	}
-																],
-																"schema_definition": "stringvalidator.OneOf(\n\"basic\",\n\"custom\",\n\"extended\",\n)"
-															}
-														}
-													]
-												}
-											},
-											{
-												"name": "value",
-												"string": {
-													"computed_optional_required": "required",
-													"description": "For basic metrics, the value can be one of: [\"cost\", \"usage\", \"savings\"]\nIf using custom metrics, the value must refer to an existing custom metric ID."
-												}
-											}
-										],
-										"deprecation_message": "This attribute is deprecated.",
-										"description": "Deprecated: Use 'metrics' instead."
 									}
 								},
 								{

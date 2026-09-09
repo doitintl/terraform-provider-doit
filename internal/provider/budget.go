@@ -105,10 +105,6 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 		diags.Append(overlayListElements(ctx, &resolved.RecipientsSlackChannels, &plan.RecipientsSlackChannels, overlayBudgetSlackChannel)...)
 	}
 
-	if plan.Scope.IsUnknown() {
-		plan.Scope = resolved.Scope
-	}
-
 	if plan.Scopes.IsUnknown() {
 		plan.Scopes = resolved.Scopes
 	} else if !plan.Scopes.IsNull() {
@@ -275,15 +271,6 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 			}
 		}
 		req.RecipientsSlackChannels = &reqSlackChannels
-	}
-
-	if !plan.Scope.IsNull() && !plan.Scope.IsUnknown() {
-		var scope []string
-		diags.Append(plan.Scope.ElementsAs(ctx, &scope, false)...)
-		if diags.HasError() {
-			return req, diags
-		}
-		req.Scope = &scope
 	}
 
 	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
@@ -512,18 +499,6 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		emptyChannels, d := types.ListValueFrom(ctx, resource_budget.RecipientsSlackChannelsValue{}.Type(ctx), []resource_budget.RecipientsSlackChannelsValue{})
 		diags.Append(d...)
 		state.RecipientsSlackChannels = emptyChannels
-	}
-
-	// Convert scope list
-	if resp.Scope != nil {
-		scopeList, listDiags := types.ListValueFrom(ctx, types.StringType, *resp.Scope)
-		diags.Append(listDiags...)
-		state.Scope = scopeList
-	} else {
-		// Return empty list for nil to avoid inconsistent result if user sets []
-		var emptyDiags diag.Diagnostics
-		state.Scope, emptyDiags = types.ListValue(types.StringType, []attr.Value{})
-		diags.Append(emptyDiags...)
 	}
 
 	// Convert scopes list
