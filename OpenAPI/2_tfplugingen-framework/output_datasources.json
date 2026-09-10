@@ -12269,6 +12269,39 @@
 			}
 		},
 		{
+			"name": "rbac_countries",
+			"schema": {
+				"attributes": [
+					{
+						"name": "countries",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "country_code",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Canonical ISO 3166-1 alpha-2 country code."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Canonical English display name."
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Manage country-based access to tenants in your customer hierarchy.",
+				"markdown_description": "Manage country-based access to tenants in your customer hierarchy."
+			}
+		},
+		{
 			"name": "report",
 			"schema": {
 				"attributes": [

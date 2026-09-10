@@ -7225,6 +7225,24 @@ type Folder struct {
 	ParentFolderId *string `json:"parentFolderId,omitempty"`
 }
 
+// GeographicAccessCountriesResponse defines model for GeographicAccessCountriesResponse.
+type GeographicAccessCountriesResponse struct {
+	Countries []GeographicAccessCountry `json:"countries"`
+}
+
+// GeographicAccessCountry defines model for GeographicAccessCountry.
+type GeographicAccessCountry struct {
+	// CountryCode Canonical ISO 3166-1 alpha-2 country code.
+	//
+	// Example: GB
+	CountryCode string `json:"countryCode"`
+
+	// Name Canonical English display name.
+	//
+	// Example: United Kingdom
+	Name string `json:"name"`
+}
+
 // GetAnomaly200Response defines model for GetAnomaly200Response.
 type GetAnomaly200Response struct {
 	// Acknowledged Has the anomaly been acknowledged
@@ -9619,6 +9637,16 @@ type GetAwsOrganizationParams struct {
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
+// ListGeographicAccessCountriesParams defines parameters for ListGeographicAccessCountries.
+type ListGeographicAccessCountriesParams struct {
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
 // GetResourcePermissionParamsResourceType defines parameters for GetResourcePermission.
 type GetResourcePermissionParamsResourceType string
 
@@ -11390,6 +11418,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 	GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGeographicAccessCountries List countries available for geographic access
+	//
+	// Returns the canonical ISO 3166-1 alpha-2 country catalogue used by geographic access policies.
+	//
+	// Corresponds with GET /rbac/v1/countries (the `ListGeographicAccessCountries` operationId).
+	ListGeographicAccessCountries(ctx context.Context, params *ListGeographicAccessCountriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetResourcePermission Get resource permissions
 	//
@@ -14022,6 +14057,23 @@ func (c *Client) ListAwsOrganizations(ctx context.Context, params *ListAwsOrgani
 // Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 func (c *Client) GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAwsOrganizationRequest(c.Server, managementAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGeographicAccessCountries List countries available for geographic access
+//
+// Returns the canonical ISO 3166-1 alpha-2 country catalogue used by geographic access policies.
+//
+// Corresponds with GET /rbac/v1/countries (the `ListGeographicAccessCountries` operationId).
+func (c *Client) ListGeographicAccessCountries(ctx context.Context, params *ListGeographicAccessCountriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGeographicAccessCountriesRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -19753,6 +19805,48 @@ func NewGetAwsOrganizationRequest(server string, managementAccountId ManagementA
 	return req, nil
 }
 
+// NewListGeographicAccessCountriesRequest constructs an http.Request for the ListGeographicAccessCountries method
+func NewListGeographicAccessCountriesRequest(server string, params *ListGeographicAccessCountriesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/rbac/v1/countries")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewGetResourcePermissionRequest constructs an http.Request for the GetResourcePermission method
 func NewGetResourcePermissionRequest(server string, resourceType GetResourcePermissionParamsResourceType, resourceId ResourceId) (*http.Request, error) {
 	var err error
@@ -21564,6 +21658,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 	GetAwsOrganizationWithResponse(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*GetAwsOrganizationResp, error)
+
+	// ListGeographicAccessCountriesWithResponse List countries available for geographic access
+	//
+	// Returns the canonical ISO 3166-1 alpha-2 country catalogue used by geographic access policies.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /rbac/v1/countries (the `ListGeographicAccessCountries` operationId).
+	ListGeographicAccessCountriesWithResponse(ctx context.Context, params *ListGeographicAccessCountriesParams, reqEditors ...RequestEditorFn) (*ListGeographicAccessCountriesResp, error)
 
 	// GetResourcePermissionWithResponse Get resource permissions
 	//
@@ -29091,6 +29194,90 @@ func (r GetAwsOrganizationResp) ContentType() string {
 	return ""
 }
 
+// ListGeographicAccessCountriesResp200Headers the declared response headers of an HTTP 200 response for ListGeographicAccessCountries
+type ListGeographicAccessCountriesResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListGeographicAccessCountriesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GeographicAccessCountriesResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON429 the response for an HTTP 429 `application/json` response
+	JSON429 *N429
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *N503
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGeographicAccessCountriesResp200Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGeographicAccessCountriesResp) GetJSON200() *GeographicAccessCountriesResponse {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListGeographicAccessCountriesResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListGeographicAccessCountriesResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListGeographicAccessCountriesResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON429 returns the response for an HTTP 429 `application/json` response
+func (r ListGeographicAccessCountriesResp) GetJSON429() *N429 {
+	return r.JSON429
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r ListGeographicAccessCountriesResp) GetJSON503() *N503 {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGeographicAccessCountriesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGeographicAccessCountriesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGeographicAccessCountriesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGeographicAccessCountriesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetResourcePermissionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -31906,6 +32093,21 @@ func (c *ClientWithResponses) GetAwsOrganizationWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetAwsOrganizationResp(rsp)
+}
+
+// ListGeographicAccessCountriesWithResponse List countries available for geographic access
+//
+// Returns the canonical ISO 3166-1 alpha-2 country catalogue used by geographic access policies.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /rbac/v1/countries (the `ListGeographicAccessCountries` operationId).
+func (c *ClientWithResponses) ListGeographicAccessCountriesWithResponse(ctx context.Context, params *ListGeographicAccessCountriesParams, reqEditors ...RequestEditorFn) (*ListGeographicAccessCountriesResp, error) {
+	rsp, err := c.ListGeographicAccessCountries(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGeographicAccessCountriesResp(rsp)
 }
 
 // GetResourcePermissionWithResponse Get resource permissions
@@ -38378,6 +38580,87 @@ func ParseGetAwsOrganizationResp(rsp *http.Response) (*GetAwsOrganizationResp, e
 			headers.RetryAfter = &value
 		}
 		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGeographicAccessCountriesResp parses an HTTP response from a ListGeographicAccessCountriesWithResponse call
+func ParseListGeographicAccessCountriesResp(rsp *http.Response) (*ListGeographicAccessCountriesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGeographicAccessCountriesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GeographicAccessCountriesResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest N429
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest N503
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGeographicAccessCountriesResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil

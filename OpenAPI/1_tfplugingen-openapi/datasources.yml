@@ -275,3 +275,8 @@ data_sources:
     read:
       path: /core/v1/cloudconnect/supportedFeatures/{accountID}
       method: GET
+  # RBAC Geographic Access Countries data source
+  rbac_countries:
+    read:
+      path: /rbac/v1/countries
+      method: GET

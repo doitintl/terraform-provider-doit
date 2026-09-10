@@ -60,6 +60,8 @@ tags:
     description: Manage user permissions and access levels in your organization.
   - name: Organizations
     description: Organizations help you segment data by your company or team structure.
+  - name: Geographic Access
+    description: Manage country-based access to tenants in your customer hierarchy.
   - name: Platforms
     description: Metadata about supported cloud providers.
   - name: Products
@@ -4401,6 +4403,43 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/countries:
+    get:
+      tags:
+        - Geographic Access
+      summary: List countries available for geographic access
+      description: Returns the canonical ISO 3166-1 alpha-2 country catalogue used by geographic access policies.
+      operationId: listGeographicAccessCountries
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeographicAccessCountriesResponse"
+              example:
+                countries:
+                  - countryCode: GB
+                    name: United Kingdom
+                  - countryCode: US
+                    name: United States
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "429":
+          $ref: "#/components/responses/429"
+        "503":
+          $ref: "#/components/responses/503"
 components:
   schemas:
     AccountManagerListItem:
@@ -9075,6 +9114,32 @@ components:
           description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
           default: root
           example: root
+    GeographicAccessCountriesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - countries
+      properties:
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeographicAccessCountry"
+    GeographicAccessCountry:
+      type: object
+      additionalProperties: false
+      required:
+        - countryCode
+        - name
+      properties:
+        countryCode:
+          type: string
+          pattern: ^[A-Z]{2}$
+          description: Canonical ISO 3166-1 alpha-2 country code.
+          example: GB
+        name:
+          type: string
+          description: Canonical English display name.
+          example: United Kingdom
     GetAnomaly200Response:
       required:
         - attribution
