@@ -64,6 +64,11 @@ func SupportRequestCommentsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Comment ID.",
 							MarkdownDescription: "Comment ID.",
 						},
+						"public": schema.BoolAttribute{
+							Computed:            true,
+							Description:         "Whether the comment is public. Always present in new responses,\nincluding false for private internal notes. GET reports Zendesk\nvisibility; POST reports the effective visibility of the created\ncomment. Missing metadata in legacy responses or snapshots means\nunknown and must not be interpreted as false.",
+							MarkdownDescription: "Whether the comment is public. Always present in new responses,\nincluding false for private internal notes. GET reports Zendesk\nvisibility; POST reports the effective visibility of the created\ncomment. Missing metadata in legacy responses or snapshots means\nunknown and must not be interpreted as false.",
+						},
 					},
 					CustomType: CommentsType{
 						ObjectType: types.ObjectType{
@@ -212,6 +217,24 @@ func (t CommentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 			fmt.Sprintf(`id expected to be basetypes.Int64Value, was: %T`, idAttribute))
 	}
 
+	publicAttribute, ok := attributes["public"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`public is missing from object`)
+
+		return nil, diags
+	}
+
+	publicVal, ok := publicAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`public expected to be basetypes.BoolValue, was: %T`, publicAttribute))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
@@ -222,6 +245,7 @@ func (t CommentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 		Body:        bodyVal,
 		Created:     createdVal,
 		Id:          idVal,
+		Public:      publicVal,
 		state:       attr.ValueStateKnown,
 	}, diags
 }
@@ -379,6 +403,24 @@ func NewCommentsValue(attributeTypes map[string]attr.Type, attributes map[string
 			fmt.Sprintf(`id expected to be basetypes.Int64Value, was: %T`, idAttribute))
 	}
 
+	publicAttribute, ok := attributes["public"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`public is missing from object`)
+
+		return NewCommentsValueUnknown(), diags
+	}
+
+	publicVal, ok := publicAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`public expected to be basetypes.BoolValue, was: %T`, publicAttribute))
+	}
+
 	if diags.HasError() {
 		return NewCommentsValueUnknown(), diags
 	}
@@ -389,6 +431,7 @@ func NewCommentsValue(attributeTypes map[string]attr.Type, attributes map[string
 		Body:        bodyVal,
 		Created:     createdVal,
 		Id:          idVal,
+		Public:      publicVal,
 		state:       attr.ValueStateKnown,
 	}, diags
 }
@@ -466,11 +509,12 @@ type CommentsValue struct {
 	Body        basetypes.StringValue `tfsdk:"body"`
 	Created     basetypes.Int64Value  `tfsdk:"created"`
 	Id          basetypes.Int64Value  `tfsdk:"id"`
+	Public      basetypes.BoolValue   `tfsdk:"public"`
 	state       attr.ValueState
 }
 
 func (v CommentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 6)
 
 	var val tftypes.Value
 	var err error
@@ -482,12 +526,13 @@ func (v CommentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 	attrTypes["body"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["created"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["public"] = basetypes.BoolType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 6)
 
 		val, err = v.Attachments.ToTerraformValue(ctx)
 
@@ -528,6 +573,14 @@ func (v CommentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 		}
 
 		vals["id"] = val
+
+		val, err = v.Public.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["public"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -572,6 +625,7 @@ func (v CommentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 		"body":    basetypes.StringType{},
 		"created": basetypes.Int64Type{},
 		"id":      basetypes.Int64Type{},
+		"public":  basetypes.BoolType{},
 	}
 
 	if v.IsNull() {
@@ -590,6 +644,7 @@ func (v CommentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 			"body":        v.Body,
 			"created":     v.Created,
 			"id":          v.Id,
+			"public":      v.Public,
 		})
 
 	return objVal, diags
@@ -630,6 +685,10 @@ func (v CommentsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Public.Equal(other.Public) {
+		return false
+	}
+
 	return true
 }
 
@@ -650,6 +709,7 @@ func (v CommentsValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 		"body":    basetypes.StringType{},
 		"created": basetypes.Int64Type{},
 		"id":      basetypes.Int64Type{},
+		"public":  basetypes.BoolType{},
 	}
 }
 

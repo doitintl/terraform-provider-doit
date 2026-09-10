@@ -6,3 +6,7 @@ data "doit_support_request_comments" "example" {
 output "comment_count" {
   value = length(data.doit_support_request_comments.example.comments)
 }
+
+output "public_comments" {
+  value = [for c in data.doit_support_request_comments.example.comments : c if c.public]
+}

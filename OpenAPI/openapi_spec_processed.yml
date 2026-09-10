@@ -3300,9 +3300,14 @@ paths:
         - Support Requests
       summary: List request comments
       description: |-
-        Returns all comments on a support request. For customers, only public
-        comments are returned. For DoiT employees, both public and private
-        comments are returned. All comments are returned in a single response
+        Returns all permitted comments on a support request. Customers and
+        service-account callers receive only public comments; private comment
+        bodies and attachments are excluded. Callers authenticated with DoiT
+        employee privileges receive both public and private comments, subject
+        to existing ticket authorization. Each comment includes `public`,
+        sourced from Zendesk: `true` means public and `false` means private
+        (internal). Missing visibility in legacy responses or snapshots means
+        unknown, not private. All comments are returned in a single response
         (no pagination).
       operationId: listTicketComments
       x-cli-name: list-ticket-comments
@@ -7449,6 +7454,8 @@ components:
     CommentExtAPI:
       type: object
       description: A comment on a support ticket.
+      required:
+        - public
       properties:
         id:
           type: integer
@@ -7457,6 +7464,14 @@ components:
         body:
           type: string
           description: The text content of the comment.
+        public:
+          type: boolean
+          description: |-
+            Whether the comment is public. Always present in new responses,
+            including false for private internal notes. GET reports Zendesk
+            visibility; POST reports the effective visibility of the created
+            comment. Missing metadata in legacy responses or snapshots means
+            unknown and must not be interpreted as false.
         author:
           type: string
           description: |-
