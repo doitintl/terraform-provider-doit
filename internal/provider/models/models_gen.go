@@ -6115,6 +6115,13 @@ type CommentExtAPI struct {
 
 	// Id Comment ID.
 	Id *int64 `json:"id,omitempty"`
+
+	// Public Whether the comment is public. Always present in new responses,
+	// including false for private internal notes. GET reports Zendesk
+	// visibility; POST reports the effective visibility of the created
+	// comment. Missing metadata in legacy responses or snapshots means
+	// unknown and must not be interpreted as false.
+	Public bool `json:"public"`
 }
 
 // CommentExtAPIAttachmentsItem defines model for CommentExtAPIAttachmentsItem.
@@ -11443,9 +11450,14 @@ type ClientInterface interface {
 
 	// ListTicketComments List request comments
 	//
-	// Returns all comments on a support request. For customers, only public
-	// comments are returned. For DoiT employees, both public and private
-	// comments are returned. All comments are returned in a single response
+	// Returns all permitted comments on a support request. Customers and
+	// service-account callers receive only public comments; private comment
+	// bodies and attachments are excluded. Callers authenticated with DoiT
+	// employee privileges receive both public and private comments, subject
+	// to existing ticket authorization. Each comment includes `public`,
+	// sourced from Zendesk: `true` means public and `false` means private
+	// (internal). Missing visibility in legacy responses or snapshots means
+	// unknown, not private. All comments are returned in a single response
 	// (no pagination).
 	//
 	// Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `ListTicketComments` operationId).
@@ -14149,9 +14161,14 @@ func (c *Client) GetTicket(ctx context.Context, ticketId int64, reqEditors ...Re
 
 // ListTicketComments List request comments
 //
-// Returns all comments on a support request. For customers, only public
-// comments are returned. For DoiT employees, both public and private
-// comments are returned. All comments are returned in a single response
+// Returns all permitted comments on a support request. Customers and
+// service-account callers receive only public comments; private comment
+// bodies and attachments are excluded. Callers authenticated with DoiT
+// employee privileges receive both public and private comments, subject
+// to existing ticket authorization. Each comment includes `public`,
+// sourced from Zendesk: `true` means public and `false` means private
+// (internal). Missing visibility in legacy responses or snapshots means
+// unknown, not private. All comments are returned in a single response
 // (no pagination).
 //
 // Corresponds with GET /support/v1/tickets/{ticketId}/comments (the `ListTicketComments` operationId).
@@ -21617,9 +21634,14 @@ type ClientWithResponsesInterface interface {
 
 	// ListTicketCommentsWithResponse List request comments
 	//
-	// Returns all comments on a support request. For customers, only public
-	// comments are returned. For DoiT employees, both public and private
-	// comments are returned. All comments are returned in a single response
+	// Returns all permitted comments on a support request. Customers and
+	// service-account callers receive only public comments; private comment
+	// bodies and attachments are excluded. Callers authenticated with DoiT
+	// employee privileges receive both public and private comments, subject
+	// to existing ticket authorization. Each comment includes `public`,
+	// sourced from Zendesk: `true` means public and `false` means private
+	// (internal). Missing visibility in legacy responses or snapshots means
+	// unknown, not private. All comments are returned in a single response
 	// (no pagination).
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -31997,9 +32019,14 @@ func (c *ClientWithResponses) GetTicketWithResponse(ctx context.Context, ticketI
 
 // ListTicketCommentsWithResponse List request comments
 //
-// Returns all comments on a support request. For customers, only public
-// comments are returned. For DoiT employees, both public and private
-// comments are returned. All comments are returned in a single response
+// Returns all permitted comments on a support request. Customers and
+// service-account callers receive only public comments; private comment
+// bodies and attachments are excluded. Callers authenticated with DoiT
+// employee privileges receive both public and private comments, subject
+// to existing ticket authorization. Each comment includes `public`,
+// sourced from Zendesk: `true` means public and `false` means private
+// (internal). Missing visibility in legacy responses or snapshots means
+// unknown, not private. All comments are returned in a single response
 // (no pagination).
 //
 // Returns a wrapper object for the known response body format(s).

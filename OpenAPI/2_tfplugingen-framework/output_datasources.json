@@ -13751,6 +13751,13 @@
 											"computed_optional_required": "computed",
 											"description": "Comment ID."
 										}
+									},
+									{
+										"name": "public",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the comment is public. Always present in new responses,\nincluding false for private internal notes. GET reports Zendesk\nvisibility; POST reports the effective visibility of the created\ncomment. Missing metadata in legacy responses or snapshots means\nunknown and must not be interpreted as false."
+										}
 									}
 								]
 							}

@@ -121,6 +121,7 @@ func (d *supportRequestCommentsDataSource) Read(ctx context.Context, req datasou
 					"author":      types.StringPointerValue(c.Author),
 					"body":        types.StringPointerValue(c.Body),
 					"created":     types.Int64PointerValue(c.Created),
+					"public":      types.BoolValue(c.Public),
 					"attachments": attachmentsList,
 				},
 			)

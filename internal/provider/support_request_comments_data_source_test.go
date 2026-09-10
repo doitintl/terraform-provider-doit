@@ -1,10 +1,13 @@
 package provider_test
 
 import (
+	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccSupportRequestCommentsDataSource_Basic(t *testing.T) {
@@ -17,6 +20,7 @@ func TestAccSupportRequestCommentsDataSource_Basic(t *testing.T) {
 				Config: testAccSupportRequestCommentsDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_support_request_comments.test", "comments.#"),
+					testCheckSupportRequestCommentsAttributes("data.doit_support_request_comments.test"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -30,6 +34,37 @@ func TestAccSupportRequestCommentsDataSource_Basic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testCheckSupportRequestCommentsAttributes(dataSourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[dataSourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", dataSourceName)
+		}
+
+		countStr, ok := rs.Primary.Attributes["comments.#"]
+		if !ok {
+			return fmt.Errorf("comments.# attribute not found")
+		}
+
+		count, err := strconv.Atoi(countStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse comments.#: %w", err)
+		}
+
+		if count > 0 {
+			val, ok := rs.Primary.Attributes["comments.0.public"]
+			if !ok {
+				return fmt.Errorf("comments.0.public is not set")
+			}
+			if val != "true" && val != "false" {
+				return fmt.Errorf("comments.0.public expected 'true' or 'false', got %q", val)
+			}
+		}
+
+		return nil
+	}
 }
 
 func testAccSupportRequestCommentsDataSourceConfig() string {
