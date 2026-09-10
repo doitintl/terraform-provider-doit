@@ -11560,7 +11560,7 @@ components:
             code: unauthorized
             retryable: false
     Forbidden:
-      description: Authenticated but not authorized to access this customer's PerfectScale for Commitments resources.
+      description: Authenticated but not authorized to perform this request.
       headers:
         Request-Id:
           $ref: "#/components/headers/RequestId"
@@ -11716,6 +11716,33 @@ components:
         Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.
       schema:
         type: string
+    targetCustomerId:
+      name: targetCustomerId
+      in: path
+      required: true
+      description: Customer ID within the authenticated tenant's hierarchy whose geographic scope is managed.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    geographicAccessUserId:
+      name: userId
+      in: path
+      required: true
+      description: Unique user ID returned by GET /iam/v1/users that belongs to the target customer.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customRegionId:
+      name: customRegionId
+      in: path
+      required: true
+      description: Stable service-generated custom-region ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
     billingExplainerInvoiceMonth:
       name: invoiceMonth
       in: path
