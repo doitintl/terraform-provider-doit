@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -21,14 +22,14 @@ func TestMapGcpBillingAccountsSettingsToItemsList_FullyPopulated(t *testing.T) {
 			BillingAccountId: "012345-6789AB-CDEF01",
 			Services: []models.GcpBillingAccountServiceSettings{
 				{
-					Service: models.GcpBillingAccountServiceSettingsService("COMPUTE"),
+					Service: models.GcpBillingAccountServiceSettingsServiceCompute,
 					Settings: models.GcpBillingAccountSettings{
 						LastDayOfMonthForPurchase: 25,
 						MaximumCommitment:         500.0,
 						MinimumCommitment:         10.0,
-						Policy:                    models.Policy("automatic"),
-						PurchaseMode:              models.GcpBillingAccountSettingsPurchaseMode("regular"),
-						Term:                      models.CommitmentTerm("1_YEAR"),
+						Policy:                    models.PolicyBalanced,
+						PurchaseMode:              models.GcpBillingAccountSettingsPurchaseModeRequiresApproval,
+						Term:                      models.CommitmentTermOneYear,
 					},
 				},
 			},
@@ -64,8 +65,8 @@ func TestMapGcpBillingAccountsSettingsToItemsList_FullyPopulated(t *testing.T) {
 		t.Fatalf("services[0] has unexpected type %T", services[0])
 	}
 
-	if got := svc.Service.ValueString(); got != "COMPUTE" {
-		t.Errorf("service = %q, want %q", got, "COMPUTE")
+	if got := svc.Service.ValueString(); got != "compute" {
+		t.Errorf("service = %q, want %q", got, "compute")
 	}
 
 	settings := svc.Settings
@@ -78,14 +79,14 @@ func TestMapGcpBillingAccountsSettingsToItemsList_FullyPopulated(t *testing.T) {
 	if got := settings.MinimumCommitment.ValueFloat64(); got != 10.0 {
 		t.Errorf("minimum_commitment = %v, want 10.0", got)
 	}
-	if got := settings.Policy.ValueString(); got != "automatic" {
-		t.Errorf("policy = %q, want %q", got, "automatic")
+	if got := settings.Policy.ValueString(); got != "balanced" {
+		t.Errorf("policy = %q, want %q", got, "balanced")
 	}
-	if got := settings.PurchaseMode.ValueString(); got != "regular" {
-		t.Errorf("purchase_mode = %q, want %q", got, "regular")
+	if got := settings.PurchaseMode.ValueString(); got != "requires_approval" {
+		t.Errorf("purchase_mode = %q, want %q", got, "requires_approval")
 	}
-	if got := settings.Term.ValueString(); got != "1_YEAR" {
-		t.Errorf("term = %q, want %q", got, "1_YEAR")
+	if got := settings.Term.ValueString(); got != "one_year" {
+		t.Errorf("term = %q, want %q", got, "one_year")
 	}
 }
 
@@ -142,7 +143,13 @@ func TestPs4cGcpSettingsRead(t *testing.T) {
 				callIdx++
 			}))
 
-			resp := readPs4cGcpSettings(t, server, tc.maxResults)
+			var overrides map[string]tftypes.Value
+			if tc.maxResults != nil {
+				overrides = map[string]tftypes.Value{
+					"max_results": tftypes.NewValue(tftypes.Number, float64(*tc.maxResults)),
+				}
+			}
+			resp := readPs4cGcpSettings(t, server, overrides)
 			if resp.Diagnostics.HasError() {
 				t.Fatal(resp.Diagnostics)
 			}
@@ -165,6 +172,157 @@ func TestPs4cGcpSettingsRead(t *testing.T) {
 	}
 }
 
+func TestPs4cGcpSettingsDataSource_Read_Pagination(t *testing.T) {
+	t.Run("max_results_only sends a single manual call and preserves the returned page_token", func(t *testing.T) {
+		t.Parallel()
+
+		var requests []*http.Request
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests = append(requests, r)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprint(w, `{
+				"items": [
+					{"billingAccountId": "012345-6789AB-CDEF01", "services": []},
+					{"billingAccountId": "012345-6789AB-CDEF02", "services": []}
+				],
+				"pageToken": "next-page-token",
+				"rowCount": 2
+			}`)
+		}))
+
+		resp := readPs4cGcpSettings(t, server, map[string]tftypes.Value{
+			"max_results": tftypes.NewValue(tftypes.Number, 2.0),
+		})
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("Read() returned diagnostics: %v", resp.Diagnostics)
+		}
+
+		if len(requests) != 1 {
+			t.Fatalf("expected exactly 1 API call in manual mode, got %d", len(requests))
+		}
+		if got := requests[0].URL.Query().Get("maxResults"); got != "2" {
+			t.Errorf("maxResults query param = %q, want %q", got, "2")
+		}
+		if got := requests[0].URL.Query().Get("pageToken"); got != "" {
+			t.Errorf("pageToken query param = %q, want empty", got)
+		}
+
+		var data ps4cGcpSettingsDataSourceModel
+		if diags := resp.State.Get(t.Context(), &data); diags.HasError() {
+			t.Fatalf("failed to read state: %v", diags)
+		}
+		if got := len(data.Items.Elements()); got != 2 {
+			t.Errorf("items count = %d, want 2", got)
+		}
+		if got := data.RowCount.ValueInt64(); got != 2 {
+			t.Errorf("row_count = %d, want 2", got)
+		}
+		if got := data.PageToken.ValueString(); got != "next-page-token" {
+			t.Errorf("page_token = %q, want %q", got, "next-page-token")
+		}
+	})
+
+	t.Run("page_token_only auto-paginates from the token until exhausted", func(t *testing.T) {
+		t.Parallel()
+
+		var requests []*http.Request
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests = append(requests, r)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if r.URL.Query().Get("pageToken") == "start-token" {
+				_, _ = fmt.Fprint(w, `{
+					"items": [{"billingAccountId": "012345-6789AB-CDEF03", "services": []}],
+					"pageToken": "second-page-token",
+					"rowCount": 1
+				}`)
+				return
+			}
+			_, _ = fmt.Fprint(w, `{
+				"items": [{"billingAccountId": "012345-6789AB-CDEF04", "services": []}],
+				"rowCount": 1
+			}`)
+		}))
+
+		resp := readPs4cGcpSettings(t, server, map[string]tftypes.Value{
+			"page_token": tftypes.NewValue(tftypes.String, "start-token"),
+		})
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("Read() returned diagnostics: %v", resp.Diagnostics)
+		}
+
+		if len(requests) != 2 {
+			t.Fatalf("expected 2 API calls while auto-paginating to exhaustion, got %d", len(requests))
+		}
+		if got := requests[0].URL.Query().Get("pageToken"); got != "start-token" {
+			t.Errorf("first pageToken = %q, want %q", got, "start-token")
+		}
+		if got := requests[1].URL.Query().Get("pageToken"); got != "second-page-token" {
+			t.Errorf("second pageToken = %q, want %q", got, "second-page-token")
+		}
+
+		var data ps4cGcpSettingsDataSourceModel
+		if diags := resp.State.Get(t.Context(), &data); diags.HasError() {
+			t.Fatalf("failed to read state: %v", diags)
+		}
+		if got := len(data.Items.Elements()); got != 2 {
+			t.Errorf("items count = %d, want 2 (accumulated across both pages)", got)
+		}
+		if got := data.RowCount.ValueInt64(); got != 2 {
+			t.Errorf("row_count = %d, want 2", got)
+		}
+		if !data.PageToken.IsNull() {
+			t.Errorf("page_token = %q, want null after auto-pagination completes", data.PageToken.ValueString())
+		}
+	})
+
+	t.Run("max_results and page_token together send a single manual call with both params", func(t *testing.T) {
+		t.Parallel()
+
+		var requests []*http.Request
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests = append(requests, r)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprint(w, `{
+				"items": [{"billingAccountId": "012345-6789AB-CDEF05", "services": []}],
+				"pageToken": "third-page-token",
+				"rowCount": 1
+			}`)
+		}))
+
+		resp := readPs4cGcpSettings(t, server, map[string]tftypes.Value{
+			"max_results": tftypes.NewValue(tftypes.Number, 1.0),
+			"page_token":  tftypes.NewValue(tftypes.String, "second-page-token"),
+		})
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("Read() returned diagnostics: %v", resp.Diagnostics)
+		}
+
+		if len(requests) != 1 {
+			t.Fatalf("expected exactly 1 API call when both params are user-controlled, got %d", len(requests))
+		}
+		if got := requests[0].URL.Query().Get("maxResults"); got != "1" {
+			t.Errorf("maxResults query param = %q, want %q", got, "1")
+		}
+		if got := requests[0].URL.Query().Get("pageToken"); got != "second-page-token" {
+			t.Errorf("pageToken query param = %q, want %q", got, "second-page-token")
+		}
+
+		var data ps4cGcpSettingsDataSourceModel
+		if diags := resp.State.Get(t.Context(), &data); diags.HasError() {
+			t.Fatalf("failed to read state: %v", diags)
+		}
+		if got := len(data.Items.Elements()); got != 1 {
+			t.Errorf("items count = %d, want 1", got)
+		}
+		if got := data.PageToken.ValueString(); got != "third-page-token" {
+			t.Errorf("page_token = %q, want %q", got, "third-page-token")
+		}
+	})
+}
+
 func TestPs4cGcpSettingsReadErrors(t *testing.T) {
 	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -181,7 +339,7 @@ func TestPs4cGcpSettingsReadErrors(t *testing.T) {
 	}
 }
 
-func readPs4cGcpSettings(t *testing.T, server *httptest.Server, maxResults *int64) datasource.ReadResponse {
+func readPs4cGcpSettings(t *testing.T, server *httptest.Server, overrides map[string]tftypes.Value) datasource.ReadResponse {
 	t.Helper()
 	ctx := t.Context()
 	httpClient := server.Client()
@@ -208,8 +366,8 @@ func readPs4cGcpSettings(t *testing.T, server *httptest.Server, maxResults *int6
 	for name, attribute := range schemaResp.Schema.Attributes {
 		tfType := attribute.GetType().TerraformType(ctx)
 		attrTypes[name] = tfType
-		if name == "max_results" && maxResults != nil {
-			values[name] = tftypes.NewValue(tfType, *maxResults)
+		if val, ok := overrides[name]; ok {
+			values[name] = val
 		} else {
 			values[name] = tftypes.NewValue(tfType, nil)
 		}
