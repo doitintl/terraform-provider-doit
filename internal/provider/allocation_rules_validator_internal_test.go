@@ -15,12 +15,18 @@ import (
 
 // createRulesValue creates a RulesValue for testing purposes using NewRulesValueMust
 // to ensure the state field is properly initialized (vs zero-value which means null).
-func createRulesValue(ctx context.Context, action, name string, nameIsNull bool) resource_allocation.RulesValue {
+func createRulesValue(ctx context.Context, action, name string, nameIsNull, nameIsUnknown, actionIsUnknown bool) resource_allocation.RulesValue {
 	var nameVal basetypes.StringValue
-	if nameIsNull {
+	if nameIsUnknown {
+		nameVal = basetypes.NewStringUnknown()
+	} else if nameIsNull {
 		nameVal = basetypes.NewStringNull()
 	} else {
 		nameVal = basetypes.NewStringValue(name)
+	}
+	actionVal := basetypes.NewStringValue(action)
+	if actionIsUnknown {
+		actionVal = basetypes.NewStringUnknown()
 	}
 
 	// Get attribute types from RulesValue
@@ -28,7 +34,7 @@ func createRulesValue(ctx context.Context, action, name string, nameIsNull bool)
 
 	// Build attributes map
 	attributes := map[string]attr.Value{
-		"action":      basetypes.NewStringValue(action),
+		"action":      actionVal,
 		"name":        nameVal,
 		"description": basetypes.NewStringNull(),
 		"id":          basetypes.NewStringNull(),
@@ -58,9 +64,11 @@ func createRulesListValue(ctx context.Context, rules []resource_allocation.Rules
 
 // ruleSpec is a simplified spec for creating RulesValue in tests.
 type ruleSpec struct {
-	action     string
-	name       string
-	nameIsNull bool
+	action        string
+	name          string
+	nameIsNull    bool
+	nameUnknown   bool
+	actionUnknown bool
 }
 
 func TestAllocationRulesValidator(t *testing.T) {
@@ -135,6 +143,27 @@ func TestAllocationRulesValidator(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "valid - create action with unknown name is deferred",
+			ruleSpecs: []ruleSpec{
+				{action: "create", nameUnknown: true},
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - update action with unknown name is deferred",
+			ruleSpecs: []ruleSpec{
+				{action: "update", nameUnknown: true},
+			},
+			expectError: false,
+		},
+		{
+			name: "valid - unknown action is deferred",
+			ruleSpecs: []ruleSpec{
+				{actionUnknown: true, nameIsNull: true},
+			},
+			expectError: false,
+		},
+		{
 			// Empty rules list is blocked - API returns null for empty lists,
 			// which would cause a plan/state mismatch.
 			name:        "invalid - empty rules list (blocked)",
@@ -148,7 +177,7 @@ func TestAllocationRulesValidator(t *testing.T) {
 			// Build rules from specs
 			rules := make([]resource_allocation.RulesValue, len(tt.ruleSpecs))
 			for i, spec := range tt.ruleSpecs {
-				rules[i] = createRulesValue(ctx, spec.action, spec.name, spec.nameIsNull)
+				rules[i] = createRulesValue(ctx, spec.action, spec.name, spec.nameIsNull, spec.nameUnknown, spec.actionUnknown)
 			}
 
 			listVal, hasErr := createRulesListValue(ctx, rules)

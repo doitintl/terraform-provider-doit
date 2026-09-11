@@ -177,9 +177,14 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 		return
 	}
 
+	// Validity depends on both values. Defer until Terraform has resolved them.
+	if budgetType.IsNull() || budgetType.IsUnknown() || endPeriod.IsUnknown() {
+		return
+	}
+
 	// If type is "recurring" and end_period is set, that's an error
-	if !budgetType.IsNull() && !budgetType.IsUnknown() && budgetType.ValueString() == "recurring" {
-		if !endPeriod.IsNull() && !endPeriod.IsUnknown() {
+	if budgetType.ValueString() == "recurring" {
+		if !endPeriod.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("end_period"),
 				"Invalid Attribute Combination",
@@ -191,8 +196,8 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 	}
 
 	// If type is "fixed" and end_period is not set, that's an error
-	if !budgetType.IsNull() && !budgetType.IsUnknown() && budgetType.ValueString() == "fixed" {
-		if endPeriod.IsNull() || endPeriod.IsUnknown() {
+	if budgetType.ValueString() == "fixed" {
+		if endPeriod.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("end_period"),
 				"Missing Required Attribute",
@@ -388,6 +393,7 @@ func (v budgetCollaboratorsOwnerValidator) ValidateResource(ctx context.Context,
 
 	// Count owners in the collaborators list
 	ownerCount := 0
+	unknownCount := 0
 	for _, elem := range collaborators.Elements() {
 		// Use the generated CollaboratorsValue type
 		collabVal, ok := elem.(resource_budget.CollaboratorsValue)
@@ -395,13 +401,19 @@ func (v budgetCollaboratorsOwnerValidator) ValidateResource(ctx context.Context,
 			continue
 		}
 
-		// Skip if the element is null or unknown
-		if collabVal.IsNull() || collabVal.IsUnknown() {
+		if collabVal.IsUnknown() {
+			unknownCount++
+			continue
+		}
+		if collabVal.IsNull() {
 			continue
 		}
 
-		// Check role
-		if collabVal.Role.IsNull() || collabVal.Role.IsUnknown() {
+		if collabVal.Role.IsUnknown() {
+			unknownCount++
+			continue
+		}
+		if collabVal.Role.IsNull() {
 			continue
 		}
 
@@ -410,7 +422,7 @@ func (v budgetCollaboratorsOwnerValidator) ValidateResource(ctx context.Context,
 		}
 	}
 
-	if ownerCount == 0 {
+	if ownerCount == 0 && unknownCount == 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("collaborators"),
 			"Exactly One Owner Required",
