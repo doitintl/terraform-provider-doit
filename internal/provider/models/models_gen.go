@@ -1216,6 +1216,24 @@ func (e CommitmentExternalListItemCloudProvider) Valid() bool {
 	}
 }
 
+// Defines values for CommitmentTerm.
+const (
+	CommitmentTermOneYear   CommitmentTerm = "one_year"
+	CommitmentTermThreeYear CommitmentTerm = "three_year"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentTerm enum.
+func (e CommitmentTerm) Valid() bool {
+	switch e {
+	case CommitmentTermOneYear:
+		return true
+	case CommitmentTermThreeYear:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Condition.
 const (
 	ConditionForecast         Condition = "forecast"
@@ -2299,6 +2317,63 @@ func (e ExternalSplitTargetType) Valid() bool {
 	}
 }
 
+// Defines values for GcpBillingAccountServiceSettingsService.
+const (
+	GcpBillingAccountServiceSettingsServiceCompute GcpBillingAccountServiceSettingsService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpBillingAccountServiceSettingsService enum.
+func (e GcpBillingAccountServiceSettingsService) Valid() bool {
+	switch e {
+	case GcpBillingAccountServiceSettingsServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpBillingAccountSettingsPurchaseMode.
+const (
+	GcpBillingAccountSettingsPurchaseModeAutonomous       GcpBillingAccountSettingsPurchaseMode = "autonomous"
+	GcpBillingAccountSettingsPurchaseModeRequiresApproval GcpBillingAccountSettingsPurchaseMode = "requires_approval"
+)
+
+// Valid indicates whether the value is a known member of the GcpBillingAccountSettingsPurchaseMode enum.
+func (e GcpBillingAccountSettingsPurchaseMode) Valid() bool {
+	switch e {
+	case GcpBillingAccountSettingsPurchaseModeAutonomous:
+		return true
+	case GcpBillingAccountSettingsPurchaseModeRequiresApproval:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpOnboardingStatusEntryStatus.
+const (
+	GcpOnboardingStatusEntryStatusDone       GcpOnboardingStatusEntryStatus = "done"
+	GcpOnboardingStatusEntryStatusError      GcpOnboardingStatusEntryStatus = "error"
+	GcpOnboardingStatusEntryStatusNotStarted GcpOnboardingStatusEntryStatus = "not_started"
+	GcpOnboardingStatusEntryStatusOnboarding GcpOnboardingStatusEntryStatus = "onboarding"
+)
+
+// Valid indicates whether the value is a known member of the GcpOnboardingStatusEntryStatus enum.
+func (e GcpOnboardingStatusEntryStatus) Valid() bool {
+	switch e {
+	case GcpOnboardingStatusEntryStatusDone:
+		return true
+	case GcpOnboardingStatusEntryStatusError:
+		return true
+	case GcpOnboardingStatusEntryStatusNotStarted:
+		return true
+	case GcpOnboardingStatusEntryStatusOnboarding:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetAnomaly200ResponseDeactivationReason.
 const (
 	GetAnomaly200ResponseDeactivationReasonExpired  GetAnomaly200ResponseDeactivationReason = "expired"
@@ -2734,6 +2809,27 @@ func (e NotificationEventChannel) Valid() bool {
 	case NotificationEventChannelMsteams:
 		return true
 	case NotificationEventChannelSlack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Policy.
+const (
+	PolicyBalanced     Policy = "balanced"
+	PolicyConservative Policy = "conservative"
+	PolicyMaxSavings   Policy = "max_savings"
+)
+
+// Valid indicates whether the value is a known member of the Policy enum.
+func (e Policy) Valid() bool {
+	switch e {
+	case PolicyBalanced:
+		return true
+	case PolicyConservative:
+		return true
+	case PolicyMaxSavings:
 		return true
 	default:
 		return false
@@ -3928,6 +4024,33 @@ func (e ListServiceQuotasParamsCloudProvider) Valid() bool {
 	case ListServiceQuotasParamsCloudProviderAws:
 		return true
 	case ListServiceQuotasParamsCloudProviderGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpResourceCudsParamsStatus.
+const (
+	ListGcpResourceCudsParamsStatusActive       ListGcpResourceCudsParamsStatus = "active"
+	ListGcpResourceCudsParamsStatusCancelled    ListGcpResourceCudsParamsStatus = "cancelled"
+	ListGcpResourceCudsParamsStatusCreating     ListGcpResourceCudsParamsStatus = "creating"
+	ListGcpResourceCudsParamsStatusExpired      ListGcpResourceCudsParamsStatus = "expired"
+	ListGcpResourceCudsParamsStatusNotYetActive ListGcpResourceCudsParamsStatus = "not_yet_active"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpResourceCudsParamsStatus enum.
+func (e ListGcpResourceCudsParamsStatus) Valid() bool {
+	switch e {
+	case ListGcpResourceCudsParamsStatusActive:
+		return true
+	case ListGcpResourceCudsParamsStatusCancelled:
+		return true
+	case ListGcpResourceCudsParamsStatusCreating:
+		return true
+	case ListGcpResourceCudsParamsStatusExpired:
+		return true
+	case ListGcpResourceCudsParamsStatusNotYetActive:
 		return true
 	default:
 		return false
@@ -6282,6 +6405,9 @@ type CommitmentPeriod struct {
 	StartDate *time.Time `json:"startDate,omitempty"`
 }
 
+// CommitmentTerm Preferred or actual commitment term length for Savings Plans and related settings.
+type CommitmentTerm string
+
 // Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 type Condition string
 
@@ -7225,6 +7351,329 @@ type Folder struct {
 	ParentFolderId *string `json:"parentFolderId,omitempty"`
 }
 
+// GcpBillingAccount defines model for GcpBillingAccount.
+type GcpBillingAccount struct {
+	// BillingAccountId GCP Billing Account ID.
+	//
+	// Example: 01D4A2-4E3F1B-9C72A0
+	BillingAccountId string `json:"billingAccountId"`
+
+	// CommitmentsSyncTime Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
+	CommitmentsSyncTime nullable.Nullable[time.Time] `json:"commitmentsSyncTime,omitempty"`
+
+	// CudExportHealthy `true` if the BigQuery CUD export is healthy and up to date.
+	CudExportHealthy nullable.Nullable[bool] `json:"cudExportHealthy,omitempty"`
+
+	// Currency ISO 4217 currency code for this billing account.
+	//
+	// Example: USD
+	Currency nullable.Nullable[string] `json:"currency,omitempty"`
+
+	// DisplayName Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
+	DisplayName      nullable.Nullable[string] `json:"displayName,omitempty"`
+	OnboardingStatus *GcpOnboardingStatus      `json:"onboardingStatus,omitempty"`
+
+	// SavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+	SavingsTotals *GcpBillingAccountSavingsTotals `json:"savingsTotals,omitempty"`
+
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
+	Stats30d *GcpBillingAccountStats30d `json:"stats30d,omitempty"`
+}
+
+// GcpBillingAccountDetail defines model for GcpBillingAccountDetail.
+type GcpBillingAccountDetail struct {
+	// BillingAccountId GCP Billing Account ID.
+	//
+	// Example: 01D4A2-4E3F1B-9C72A0
+	BillingAccountId string `json:"billingAccountId"`
+
+	// CommitmentsSyncTime Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
+	CommitmentsSyncTime nullable.Nullable[time.Time] `json:"commitmentsSyncTime,omitempty"`
+
+	// CudExportHealthy `true` if the BigQuery CUD export is healthy and up to date.
+	CudExportHealthy nullable.Nullable[bool] `json:"cudExportHealthy,omitempty"`
+
+	// Currency ISO 4217 currency code for this billing account.
+	//
+	// Example: USD
+	Currency nullable.Nullable[string] `json:"currency,omitempty"`
+
+	// DailyCoverage Trailing 30 days of CUD coverage, grouped by product line.
+	DailyCoverage *GcpBillingAccountDetailAllOf1DailyCoverage `json:"dailyCoverage,omitempty"`
+
+	// DisplayName Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
+	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
+
+	// MonthlyStats Trailing 6 calendar months of billing account stats, grouped by product line.
+	MonthlyStats     *GcpBillingAccountDetailAllOf1MonthlyStats `json:"monthlyStats,omitempty"`
+	OnboardingStatus *GcpOnboardingStatus                       `json:"onboardingStatus,omitempty"`
+
+	// SavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+	SavingsTotals *GcpBillingAccountSavingsTotals `json:"savingsTotals,omitempty"`
+
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
+	Stats30d *GcpBillingAccountStats30d `json:"stats30d,omitempty"`
+}
+
+// GcpBillingAccountDetailAllOf1DailyCoverage Trailing 30 days of CUD coverage, grouped by product line.
+type GcpBillingAccountDetailAllOf1DailyCoverage struct {
+	Compute *[]GcpDailyCoverageEntry `json:"compute,omitempty"`
+}
+
+// GcpBillingAccountDetailAllOf1MonthlyStats Trailing 6 calendar months of billing account stats, grouped by product line.
+type GcpBillingAccountDetailAllOf1MonthlyStats struct {
+	Compute *[]GcpMonthlyStatsEntry `json:"compute,omitempty"`
+}
+
+// GcpBillingAccountSavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+type GcpBillingAccountSavingsTotals struct {
+	// Compute Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
+	Compute *GcpSavingsTotals `json:"compute,omitempty"`
+}
+
+// GcpBillingAccountServiceSettings defines model for GcpBillingAccountServiceSettings.
+type GcpBillingAccountServiceSettings struct {
+	// Service Product line these settings apply to.
+	Service GcpBillingAccountServiceSettingsService `json:"service"`
+
+	// Settings Commitment settings for this product line.
+	Settings GcpBillingAccountSettings `json:"settings"`
+}
+
+// GcpBillingAccountServiceSettingsService Product line these settings apply to.
+type GcpBillingAccountServiceSettingsService string
+
+// GcpBillingAccountSettings Recommendation and automation engine settings for one product line on a GCP billing account.
+type GcpBillingAccountSettings struct {
+	// LastDayOfMonthForPurchase Latest calendar day of the month on which a purchase may be scheduled.
+	LastDayOfMonthForPurchase int `json:"lastDayOfMonthForPurchase"`
+
+	// MaximumCommitment Maximum total hourly commitment (USD). `0` means no cap.
+	MaximumCommitment float64 `json:"maximumCommitment"`
+
+	// MinimumCommitment Minimum hourly commitment amount (USD) per purchase step.
+	MinimumCommitment float64 `json:"minimumCommitment"`
+
+	// Policy Coverage target policy for recommendations and purchases.
+	Policy Policy `json:"policy"`
+
+	// PurchaseMode Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
+	PurchaseMode GcpBillingAccountSettingsPurchaseMode `json:"purchaseMode"`
+
+	// Term Preferred commitment term length for new purchases.
+	Term CommitmentTerm `json:"term"`
+}
+
+// GcpBillingAccountSettingsPurchaseMode Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
+type GcpBillingAccountSettingsPurchaseMode string
+
+// GcpBillingAccountSettingsItem defines model for GcpBillingAccountSettingsItem.
+type GcpBillingAccountSettingsItem struct {
+	// BillingAccountId GCP Billing Account ID.
+	//
+	// Example: 01D4A2-4E3F1B-9C72A0
+	BillingAccountId string `json:"billingAccountId"`
+
+	// Services Settings for each product line activated on this billing account.
+	Services []GcpBillingAccountServiceSettings `json:"services"`
+}
+
+// GcpBillingAccountStats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
+type GcpBillingAccountStats30d struct {
+	// Compute Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
+	Compute *Stats30dSummary `json:"compute,omitempty"`
+}
+
+// GcpDailyCoverageEntry One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage sub-type had no spend for the day.
+type GcpDailyCoverageEntry struct {
+	// AlloyDb Spend covered by AlloyDB CUDs for the day.
+	AlloyDb *Money `json:"alloyDb,omitempty"`
+
+	// BackupForOracle Spend covered by Google Cloud Backup and DR for Oracle CUDs for the day.
+	BackupForOracle *Money `json:"backupForOracle,omitempty"`
+
+	// BigQuery Spend covered by BigQuery CUDs for the day.
+	BigQuery *Money `json:"bigQuery,omitempty"`
+
+	// Bigtable Spend covered by Bigtable CUDs for the day.
+	Bigtable *Money `json:"bigtable,omitempty"`
+
+	// CloudFirestore Spend covered by Cloud Firestore CUDs for the day.
+	CloudFirestore *Money `json:"cloudFirestore,omitempty"`
+
+	// CloudRun Spend covered by Cloud Run CUDs for the day.
+	CloudRun *Money `json:"cloudRun,omitempty"`
+
+	// CloudSpanner Spend covered by Cloud Spanner CUDs for the day.
+	CloudSpanner *Money `json:"cloudSpanner,omitempty"`
+
+	// CloudSql Spend covered by Cloud SQL CUDs for the day.
+	CloudSql *Money `json:"cloudSql,omitempty"`
+
+	// ComputeFlexible Spend covered by Compute Flexible CUDs for the day.
+	ComputeFlexible *Money `json:"computeFlexible,omitempty"`
+
+	// Date Calendar day (UTC) for this coverage row in format YYYY-MM-DD.
+	Date openapi_types.Date `json:"date"`
+
+	// Kafka Spend covered by Kafka CUDs for the day.
+	Kafka *Money `json:"kafka,omitempty"`
+
+	// MemorystoreForRedis Spend covered by Memorystore for Redis CUDs for the day.
+	MemorystoreForRedis *Money `json:"memorystoreForRedis,omitempty"`
+
+	// OnDemand On-demand spend not covered by any CUD for the day.
+	OnDemand *Money `json:"onDemand,omitempty"`
+
+	// ResourceBased Spend covered by resource-based (vCPU / memory) CUDs for the day.
+	ResourceBased *Money `json:"resourceBased,omitempty"`
+}
+
+// GcpMonthlyStatsEntry One calendar-month aggregate for the billing account. Money fields are wrapped objects (`{amount, currency}`).
+type GcpMonthlyStatsEntry struct {
+	// CostWithSavings Actual cost after commitments for the month.
+	CostWithSavings Money `json:"costWithSavings"`
+
+	// Esr Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.
+	Esr float64 `json:"esr"`
+
+	// Month Calendar month in `YYYY-MM` form (UTC).
+	//
+	// Example: 2025-06
+	Month string `json:"month"`
+
+	// OnDemandCost Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.
+	OnDemandCost Money `json:"onDemandCost"`
+}
+
+// GcpOnboardingStatus PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
+type GcpOnboardingStatus struct {
+	Compute *GcpOnboardingStatusEntry `json:"compute,omitempty"`
+}
+
+// GcpOnboardingStatusEntry defines model for GcpOnboardingStatusEntry.
+type GcpOnboardingStatusEntry struct {
+	// OnboardingStartedAt When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
+	OnboardingStartedAt nullable.Nullable[time.Time] `json:"onboardingStartedAt,omitempty"`
+
+	// Status Current onboarding lifecycle stage for this product line.
+	Status GcpOnboardingStatusEntryStatus `json:"status"`
+}
+
+// GcpOnboardingStatusEntryStatus Current onboarding lifecycle stage for this product line.
+type GcpOnboardingStatusEntryStatus string
+
+// GcpResourceCud GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
+// document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").
+type GcpResourceCud struct {
+	// AutoRenew `true` if the CUD is configured to renew automatically at the end of its term.
+	AutoRenew *bool `json:"autoRenew,omitempty"`
+
+	// BillingProjectNumber GCP project number billed for this CUD's charges.
+	//
+	// Example: 744947574473
+	BillingProjectNumber *string `json:"billingProjectNumber,omitempty"`
+
+	// CommitmentNumericId Resource-based CUD ID (provider-assigned).
+	//
+	// Example: 6100297402551498897
+	CommitmentNumericId string `json:"commitmentNumericId"`
+
+	// CreatedTime When the CUD was created. Null when unknown.
+	CreatedTime nullable.Nullable[time.Time] `json:"createdTime,omitempty"`
+
+	// CustomTermEligibleUntil Latest date by which this CUD is eligible for a custom-term exchange. Null when not eligible.
+	CustomTermEligibleUntil nullable.Nullable[time.Time] `json:"customTermEligibleUntil,omitempty"`
+
+	// EndTime When the CUD term ends. Null when unknown.
+	EndTime nullable.Nullable[time.Time] `json:"endTime,omitempty"`
+
+	// ExportDate Timestamp of the BigQuery CUD export row this item was read from.
+	ExportDate *time.Time `json:"exportDate,omitempty"`
+
+	// HardwareScope Machine family this CUD's reserved resources apply to.
+	//
+	// Example: GENERAL_PURPOSE_E2
+	HardwareScope *string `json:"hardwareScope,omitempty"`
+
+	// HostProjectId GCP project ID hosting the reserved resources.
+	//
+	// Example: test-k8s-project-468707
+	HostProjectId *string `json:"hostProjectId,omitempty"`
+
+	// InventoryState Raw provider inventory state.
+	//
+	// Example: ACTIVE
+	InventoryState *string `json:"inventoryState,omitempty"`
+
+	// LastMonthCPUCoverage Fraction (0–1) of vCPU usage covered by this CUD in the last full calendar month.
+	LastMonthCPUCoverage *float64 `json:"lastMonthCPUCoverage,omitempty"`
+
+	// LastMonthCPUSavings Realized vCPU savings in the last full calendar month.
+	LastMonthCPUSavings *float64 `json:"lastMonthCPUSavings,omitempty"`
+
+	// LastMonthCPUUtilization Fraction (0–1) of this CUD's reserved vCPUs actually used in the last full calendar month.
+	LastMonthCPUUtilization *float64 `json:"lastMonthCPUUtilization,omitempty"`
+
+	// LastMonthMemoryCoverage Fraction (0–1) of memory usage covered by this CUD in the last full calendar month.
+	LastMonthMemoryCoverage *float64 `json:"lastMonthMemoryCoverage,omitempty"`
+
+	// LastMonthMemorySavings Realized memory savings in the last full calendar month.
+	LastMonthMemorySavings *float64 `json:"lastMonthMemorySavings,omitempty"`
+
+	// LastMonthMemoryUtilization Fraction (0–1) of this CUD's reserved memory actually used in the last full calendar month.
+	LastMonthMemoryUtilization *float64 `json:"lastMonthMemoryUtilization,omitempty"`
+
+	// Name Provider commitment display name.
+	//
+	// Example: resource-based-cud-1
+	Name *string `json:"name,omitempty"`
+
+	// OrganizationId GCP organization ID that owns the host project.
+	//
+	// Example: 604768222286
+	OrganizationId *string `json:"organizationId,omitempty"`
+
+	// Plan Raw provider commitment plan.
+	//
+	// Example: TWELVE_MONTH
+	Plan *string `json:"plan,omitempty"`
+
+	// Region GCP region the reserved resources are scoped to.
+	//
+	// Example: us-central1
+	Region *string `json:"region,omitempty"`
+
+	// ReservedResources Resources reserved by this CUD.
+	ReservedResources *[]GcpResourceCudReservedResourcesItem `json:"reservedResources,omitempty"`
+
+	// StartTime When the CUD term started. Null when unknown.
+	StartTime nullable.Nullable[time.Time] `json:"startTime,omitempty"`
+
+	// State Raw provider commitment state.
+	//
+	// Example: ACTIVE
+	State string `json:"state"`
+}
+
+// GcpResourceCudReservedResourcesItem defines model for GcpResourceCudReservedResourcesItem.
+type GcpResourceCudReservedResourcesItem struct {
+	// Amount Example: 1
+	Amount string `json:"amount"`
+
+	// ResourceKind Example: VCPU
+	ResourceKind string `json:"resourceKind"`
+}
+
+// GcpSavingsTotals Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
+type GcpSavingsTotals struct {
+	// Lifetime Lifetime realized savings since onboarding.
+	Lifetime Money `json:"lifetime"`
+
+	// Ytd Year-to-date realized savings.
+	Ytd Money `json:"ytd"`
+}
+
 // GeographicAccessCountriesResponse defines model for GeographicAccessCountriesResponse.
 type GeographicAccessCountriesResponse struct {
 	Countries []GeographicAccessCountry `json:"countries"`
@@ -7928,6 +8377,35 @@ type ListFolders200Response struct {
 	RowCount *int `json:"rowCount,omitempty"`
 }
 
+// ListGcpBillingAccounts200Response defines model for ListGcpBillingAccounts200Response.
+type ListGcpBillingAccounts200Response struct {
+	Items     []GcpBillingAccount       `json:"items"`
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+	RowCount nullable.Nullable[int64] `json:"rowCount,omitempty"`
+}
+
+// ListGcpBillingAccountsSettings200Response defines model for ListGcpBillingAccountsSettings200Response.
+type ListGcpBillingAccountsSettings200Response struct {
+	Items []GcpBillingAccountSettingsItem `json:"items"`
+
+	// PageToken Opaque cursor for the next page. Absent when this is the last page.
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Number of items returned in this page.
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// ListGcpResourceCuds200Response defines model for ListGcpResourceCuds200Response.
+type ListGcpResourceCuds200Response struct {
+	Items     []GcpResourceCud          `json:"items"`
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+	RowCount nullable.Nullable[int64] `json:"rowCount,omitempty"`
+}
+
 // ListInvoices200Response defines model for ListInvoices200Response.
 type ListInvoices200Response struct {
 	// Invoices Array of Invoices
@@ -8050,6 +8528,9 @@ type PlatformAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
 }
+
+// Policy Coverage target policy that balances savings against underutilization risk. Used by recommendations and planned-purchase projections.
+type Policy string
 
 // ProblemDetails RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type ProblemDetails struct {
@@ -8989,6 +9470,9 @@ type Value1 = float32
 // Value2 defines model for Value.2.
 type Value2 = int
 
+// BillingAccountId Example: 01D4A2-4E3F1B-9C72A0
+type BillingAccountId = string
+
 // BillingExplainerInvoiceMonth Example: 2026-06
 type BillingExplainerInvoiceMonth = string
 
@@ -9629,6 +10113,70 @@ type ListAwsOrganizationsParams struct {
 
 // GetAwsOrganizationParams defines parameters for GetAwsOrganization.
 type GetAwsOrganizationParams struct {
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpBillingAccountsParams defines parameters for ListGcpBillingAccounts.
+type ListGcpBillingAccountsParams struct {
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetGcpBillingAccountParams defines parameters for GetGcpBillingAccount.
+type GetGcpBillingAccountParams struct {
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpResourceCudsParams defines parameters for ListGcpResourceCuds.
+type ListGcpResourceCudsParams struct {
+	// Status Filter by CUD state. Omit to include all states.
+	Status *ListGcpResourceCudsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpResourceCudsParamsStatus defines parameters for ListGcpResourceCuds.
+type ListGcpResourceCudsParamsStatus string
+
+// ListGcpBillingAccountsSettingsParams defines parameters for ListGcpBillingAccountsSettings.
+type ListGcpBillingAccountsSettingsParams struct {
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
 	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
@@ -11418,6 +11966,51 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 	GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGcpBillingAccounts List GCP billing accounts
+	//
+	// Returns all GCP Billing Accounts accessible to the authenticated tenant. Use as the entry point to discover GCP billing account IDs, and billing-account-level onboarding status of the available product lines and savings metrics.
+	//
+	// Each item includes metadata, CUD export health, trailing 30-day aggregate statistics, and precomputed YTD/lifetime savings totals per product line. Sum across items for customer-level totals.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts (the `ListGcpBillingAccounts` operationId).
+	ListGcpBillingAccounts(ctx context.Context, params *ListGcpBillingAccountsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetGcpBillingAccount Get a GCP billing account
+	//
+	// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
+	//
+	// Fields that drive the Overview tab in the DoiT console:
+	// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
+	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
+	// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
+	// - `savingsTotals`: year-to-date and lifetime realized savings per product line (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
+	GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGcpResourceCuds List GCP resource-based Committed Use Discounts
+	//
+	// Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
+	ListGcpResourceCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGcpBillingAccountsSettings List billing account engine settings
+	//
+	// Returns one item per onboarded GCP Billing Account. Each item includes that billing
+	// account's recommendation and automation engine settings for each product line activated
+	// on it (`compute`).
+	//
+	// Settings are stored independently on each billing account. Existing customer-level
+	// settings are copied lazily when an account is first read or initialized; if no valid
+	// legacy value exists, the complete backend defaults are materialized once on the account.
+	// Only product lines that are activated/onboarded for a given billing account are returned.
+	//
+	// In the DoiT Console, these settings are edited on an account's Settings tab.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
+	ListGcpBillingAccountsSettings(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListGeographicAccessCountries List countries available for geographic access
 	//
@@ -14057,6 +14650,91 @@ func (c *Client) ListAwsOrganizations(ctx context.Context, params *ListAwsOrgani
 // Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 func (c *Client) GetAwsOrganization(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAwsOrganizationRequest(c.Server, managementAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpBillingAccounts List GCP billing accounts
+//
+// Returns all GCP Billing Accounts accessible to the authenticated tenant. Use as the entry point to discover GCP billing account IDs, and billing-account-level onboarding status of the available product lines and savings metrics.
+//
+// Each item includes metadata, CUD export health, trailing 30-day aggregate statistics, and precomputed YTD/lifetime savings totals per product line. Sum across items for customer-level totals.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts (the `ListGcpBillingAccounts` operationId).
+func (c *Client) ListGcpBillingAccounts(ctx context.Context, params *ListGcpBillingAccountsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpBillingAccountsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetGcpBillingAccount Get a GCP billing account
+//
+// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
+//
+// Fields that drive the Overview tab in the DoiT console:
+// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
+// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
+// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
+// - `savingsTotals`: year-to-date and lifetime realized savings per product line (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
+func (c *Client) GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGcpBillingAccountRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpResourceCuds List GCP resource-based Committed Use Discounts
+//
+// Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
+func (c *Client) ListGcpResourceCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpResourceCudsRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpBillingAccountsSettings List billing account engine settings
+//
+// Returns one item per onboarded GCP Billing Account. Each item includes that billing
+// account's recommendation and automation engine settings for each product line activated
+// on it (`compute`).
+//
+// Settings are stored independently on each billing account. Existing customer-level
+// settings are copied lazily when an account is first read or initialized; if no valid
+// legacy value exists, the complete backend defaults are materialized once on the account.
+// Only product lines that are activated/onboarded for a given billing account are returned.
+//
+// In the DoiT Console, these settings are edited on an account's Settings tab.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
+func (c *Client) ListGcpBillingAccountsSettings(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpBillingAccountsSettingsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -19805,6 +20483,317 @@ func NewGetAwsOrganizationRequest(server string, managementAccountId ManagementA
 	return req, nil
 }
 
+// NewListGcpBillingAccountsRequest constructs an http.Request for the ListGcpBillingAccounts method
+func NewListGcpBillingAccountsRequest(server string, params *ListGcpBillingAccountsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetGcpBillingAccountRequest constructs an http.Request for the GetGcpBillingAccount method
+func NewGetGcpBillingAccountRequest(server string, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewListGcpResourceCudsRequest constructs an http.Request for the ListGcpResourceCuds method
+func NewListGcpResourceCudsRequest(server string, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/resource-based", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "status", *params.Status, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewListGcpBillingAccountsSettingsRequest constructs an http.Request for the ListGcpBillingAccountsSettings method
+func NewListGcpBillingAccountsSettingsRequest(server string, params *ListGcpBillingAccountsSettingsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/settings")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListGeographicAccessCountriesRequest constructs an http.Request for the ListGeographicAccessCountries method
 func NewListGeographicAccessCountriesRequest(server string, params *ListGeographicAccessCountriesParams) (*http.Request, error) {
 	var err error
@@ -21658,6 +22647,59 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/aws/organizations/{managementAccountId} (the `GetAwsOrganization` operationId).
 	GetAwsOrganizationWithResponse(ctx context.Context, managementAccountId ManagementAccountId, params *GetAwsOrganizationParams, reqEditors ...RequestEditorFn) (*GetAwsOrganizationResp, error)
+
+	// ListGcpBillingAccountsWithResponse List GCP billing accounts
+	//
+	// Returns all GCP Billing Accounts accessible to the authenticated tenant. Use as the entry point to discover GCP billing account IDs, and billing-account-level onboarding status of the available product lines and savings metrics.
+	//
+	// Each item includes metadata, CUD export health, trailing 30-day aggregate statistics, and precomputed YTD/lifetime savings totals per product line. Sum across items for customer-level totals.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts (the `ListGcpBillingAccounts` operationId).
+	ListGcpBillingAccountsWithResponse(ctx context.Context, params *ListGcpBillingAccountsParams, reqEditors ...RequestEditorFn) (*ListGcpBillingAccountsResp, error)
+
+	// GetGcpBillingAccountWithResponse Get a GCP billing account
+	//
+	// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
+	//
+	// Fields that drive the Overview tab in the DoiT console:
+	// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
+	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
+	// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
+	// - `savingsTotals`: year-to-date and lifetime realized savings per product line (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
+	GetGcpBillingAccountWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*GetGcpBillingAccountResp, error)
+
+	// ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
+	//
+	// Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
+	ListGcpResourceCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*ListGcpResourceCudsResp, error)
+
+	// ListGcpBillingAccountsSettingsWithResponse List billing account engine settings
+	//
+	// Returns one item per onboarded GCP Billing Account. Each item includes that billing
+	// account's recommendation and automation engine settings for each product line activated
+	// on it (`compute`).
+	//
+	// Settings are stored independently on each billing account. Existing customer-level
+	// settings are copied lazily when an account is first read or initialized; if no valid
+	// legacy value exists, the complete backend defaults are materialized once on the account.
+	// Only product lines that are activated/onboarded for a given billing account are returned.
+	//
+	// In the DoiT Console, these settings are edited on an account's Settings tab.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
+	ListGcpBillingAccountsSettingsWithResponse(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*ListGcpBillingAccountsSettingsResp, error)
 
 	// ListGeographicAccessCountriesWithResponse List countries available for geographic access
 	//
@@ -29194,6 +30236,540 @@ func (r GetAwsOrganizationResp) ContentType() string {
 	return ""
 }
 
+// ListGcpBillingAccountsResp200Headers the declared response headers of an HTTP 200 response for ListGcpBillingAccounts
+type ListGcpBillingAccountsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsResp400Headers the declared response headers of an HTTP 400 response for ListGcpBillingAccounts
+type ListGcpBillingAccountsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsResp401Headers the declared response headers of an HTTP 401 response for ListGcpBillingAccounts
+type ListGcpBillingAccountsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpBillingAccountsResp403Headers the declared response headers of an HTTP 403 response for ListGcpBillingAccounts
+type ListGcpBillingAccountsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsResp500Headers the declared response headers of an HTTP 500 response for ListGcpBillingAccounts
+type ListGcpBillingAccountsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsResp503Headers the declared response headers of an HTTP 503 response for ListGcpBillingAccounts
+type ListGcpBillingAccountsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpBillingAccountsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpBillingAccounts200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpBillingAccountsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpBillingAccountsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpBillingAccountsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpBillingAccountsResp403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpBillingAccountsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpBillingAccountsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpBillingAccountsResp) GetJSON200() *ListGcpBillingAccounts200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpBillingAccountsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpBillingAccountsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpBillingAccountsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpBillingAccountsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpBillingAccountsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpBillingAccountsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpBillingAccountsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpBillingAccountsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpBillingAccountsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetGcpBillingAccountResp200Headers the declared response headers of an HTTP 200 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpBillingAccountResp400Headers the declared response headers of an HTTP 400 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpBillingAccountResp401Headers the declared response headers of an HTTP 401 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetGcpBillingAccountResp403Headers the declared response headers of an HTTP 403 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpBillingAccountResp404Headers the declared response headers of an HTTP 404 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpBillingAccountResp500Headers the declared response headers of an HTTP 500 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpBillingAccountResp503Headers the declared response headers of an HTTP 503 response for GetGcpBillingAccount
+type GetGcpBillingAccountResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type GetGcpBillingAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpBillingAccountDetail
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetGcpBillingAccountResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetGcpBillingAccountResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetGcpBillingAccountResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetGcpBillingAccountResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetGcpBillingAccountResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetGcpBillingAccountResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetGcpBillingAccountResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetGcpBillingAccountResp) GetJSON200() *GcpBillingAccountDetail {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetGcpBillingAccountResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetGcpBillingAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetGcpBillingAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetGcpBillingAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetGcpBillingAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListGcpResourceCudsResp200Headers the declared response headers of an HTTP 200 response for ListGcpResourceCuds
+type ListGcpResourceCudsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpResourceCudsResp400Headers the declared response headers of an HTTP 400 response for ListGcpResourceCuds
+type ListGcpResourceCudsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpResourceCudsResp401Headers the declared response headers of an HTTP 401 response for ListGcpResourceCuds
+type ListGcpResourceCudsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpResourceCudsResp403Headers the declared response headers of an HTTP 403 response for ListGcpResourceCuds
+type ListGcpResourceCudsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpResourceCudsResp404Headers the declared response headers of an HTTP 404 response for ListGcpResourceCuds
+type ListGcpResourceCudsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpResourceCudsResp500Headers the declared response headers of an HTTP 500 response for ListGcpResourceCuds
+type ListGcpResourceCudsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpResourceCudsResp503Headers the declared response headers of an HTTP 503 response for ListGcpResourceCuds
+type ListGcpResourceCudsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpResourceCudsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpResourceCuds200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpResourceCudsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpResourceCudsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpResourceCudsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpResourceCudsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListGcpResourceCudsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpResourceCudsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpResourceCudsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpResourceCudsResp) GetJSON200() *ListGcpResourceCuds200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpResourceCudsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpResourceCudsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpResourceCudsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListGcpResourceCudsResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpResourceCudsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpResourceCudsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpResourceCudsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpResourceCudsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpResourceCudsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpResourceCudsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListGcpBillingAccountsSettingsResp200Headers the declared response headers of an HTTP 200 response for ListGcpBillingAccountsSettings
+type ListGcpBillingAccountsSettingsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsSettingsResp400Headers the declared response headers of an HTTP 400 response for ListGcpBillingAccountsSettings
+type ListGcpBillingAccountsSettingsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsSettingsResp401Headers the declared response headers of an HTTP 401 response for ListGcpBillingAccountsSettings
+type ListGcpBillingAccountsSettingsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpBillingAccountsSettingsResp403Headers the declared response headers of an HTTP 403 response for ListGcpBillingAccountsSettings
+type ListGcpBillingAccountsSettingsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsSettingsResp500Headers the declared response headers of an HTTP 500 response for ListGcpBillingAccountsSettings
+type ListGcpBillingAccountsSettingsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpBillingAccountsSettingsResp503Headers the declared response headers of an HTTP 503 response for ListGcpBillingAccountsSettings
+type ListGcpBillingAccountsSettingsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpBillingAccountsSettingsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpBillingAccountsSettings200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpBillingAccountsSettingsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpBillingAccountsSettingsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpBillingAccountsSettingsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpBillingAccountsSettingsResp403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpBillingAccountsSettingsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpBillingAccountsSettingsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpBillingAccountsSettingsResp) GetJSON200() *ListGcpBillingAccountsSettings200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpBillingAccountsSettingsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpBillingAccountsSettingsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpBillingAccountsSettingsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpBillingAccountsSettingsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpBillingAccountsSettingsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpBillingAccountsSettingsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpBillingAccountsSettingsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpBillingAccountsSettingsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpBillingAccountsSettingsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListGeographicAccessCountriesResp200Headers the declared response headers of an HTTP 200 response for ListGeographicAccessCountries
 type ListGeographicAccessCountriesResp200Headers struct {
 	ContentLanguage *string
@@ -32093,6 +33669,83 @@ func (c *ClientWithResponses) GetAwsOrganizationWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetAwsOrganizationResp(rsp)
+}
+
+// ListGcpBillingAccountsWithResponse List GCP billing accounts
+//
+// Returns all GCP Billing Accounts accessible to the authenticated tenant. Use as the entry point to discover GCP billing account IDs, and billing-account-level onboarding status of the available product lines and savings metrics.
+//
+// Each item includes metadata, CUD export health, trailing 30-day aggregate statistics, and precomputed YTD/lifetime savings totals per product line. Sum across items for customer-level totals.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts (the `ListGcpBillingAccounts` operationId).
+func (c *ClientWithResponses) ListGcpBillingAccountsWithResponse(ctx context.Context, params *ListGcpBillingAccountsParams, reqEditors ...RequestEditorFn) (*ListGcpBillingAccountsResp, error) {
+	rsp, err := c.ListGcpBillingAccounts(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpBillingAccountsResp(rsp)
+}
+
+// GetGcpBillingAccountWithResponse Get a GCP billing account
+//
+// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
+//
+// Fields that drive the Overview tab in the DoiT console:
+// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
+// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
+// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
+// - `savingsTotals`: year-to-date and lifetime realized savings per product line (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
+func (c *ClientWithResponses) GetGcpBillingAccountWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*GetGcpBillingAccountResp, error) {
+	rsp, err := c.GetGcpBillingAccount(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGcpBillingAccountResp(rsp)
+}
+
+// ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
+//
+// Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
+func (c *ClientWithResponses) ListGcpResourceCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*ListGcpResourceCudsResp, error) {
+	rsp, err := c.ListGcpResourceCuds(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpResourceCudsResp(rsp)
+}
+
+// ListGcpBillingAccountsSettingsWithResponse List billing account engine settings
+//
+// Returns one item per onboarded GCP Billing Account. Each item includes that billing
+// account's recommendation and automation engine settings for each product line activated
+// on it (`compute`).
+//
+// Settings are stored independently on each billing account. Existing customer-level
+// settings are copied lazily when an account is first read or initialized; if no valid
+// legacy value exists, the complete backend defaults are materialized once on the account.
+// Only product lines that are activated/onboarded for a given billing account are returned.
+//
+// In the DoiT Console, these settings are edited on an account's Settings tab.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
+func (c *ClientWithResponses) ListGcpBillingAccountsSettingsWithResponse(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*ListGcpBillingAccountsSettingsResp, error) {
+	rsp, err := c.ListGcpBillingAccountsSettings(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpBillingAccountsSettingsResp(rsp)
 }
 
 // ListGeographicAccessCountriesWithResponse List countries available for geographic access
@@ -38558,6 +40211,774 @@ func ParseGetAwsOrganizationResp(rsp *http.Response) (*GetAwsOrganizationResp, e
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers GetAwsOrganizationResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGcpBillingAccountsResp parses an HTTP response from a ListGcpBillingAccountsWithResponse call
+func ParseListGcpBillingAccountsResp(rsp *http.Response) (*ListGcpBillingAccountsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpBillingAccountsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpBillingAccounts200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpBillingAccountsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpBillingAccountsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpBillingAccountsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpBillingAccountsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpBillingAccountsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpBillingAccountsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetGcpBillingAccountResp parses an HTTP response from a GetGcpBillingAccountWithResponse call
+func ParseGetGcpBillingAccountResp(rsp *http.Response) (*GetGcpBillingAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetGcpBillingAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpBillingAccountDetail
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetGcpBillingAccountResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetGcpBillingAccountResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetGcpBillingAccountResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetGcpBillingAccountResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetGcpBillingAccountResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetGcpBillingAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetGcpBillingAccountResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGcpResourceCudsResp parses an HTTP response from a ListGcpResourceCudsWithResponse call
+func ParseListGcpResourceCudsResp(rsp *http.Response) (*ListGcpResourceCudsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpResourceCudsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpResourceCuds200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpResourceCudsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpResourceCudsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpResourceCudsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpResourceCudsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListGcpResourceCudsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpResourceCudsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpResourceCudsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGcpBillingAccountsSettingsResp parses an HTTP response from a ListGcpBillingAccountsSettingsWithResponse call
+func ParseListGcpBillingAccountsSettingsResp(rsp *http.Response) (*ListGcpBillingAccountsSettingsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpBillingAccountsSettingsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpBillingAccountsSettings200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpBillingAccountsSettingsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpBillingAccountsSettingsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpBillingAccountsSettingsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpBillingAccountsSettingsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpBillingAccountsSettingsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpBillingAccountsSettingsResp503Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

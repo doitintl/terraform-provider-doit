@@ -90,6 +90,8 @@ tags:
     description: Evaluate current AWS commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
   - name: Billing Transfer
     description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
+  - name: PerfectScale for Commitments GCP
+    description: Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
 paths:
   /analytics/v1/alerts:
     get:
@@ -4440,6 +4442,180 @@ paths:
           $ref: "#/components/responses/429"
         "503":
           $ref: "#/components/responses/503"
+  /ps4commitments/v1/gcp/billing-accounts:
+    get:
+      operationId: listGcpBillingAccounts
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP billing accounts
+      description: |-
+        Returns all GCP Billing Accounts accessible to the authenticated tenant. Use as the entry point to discover GCP billing account IDs, and billing-account-level onboarding status of the available product lines and savings metrics.
+
+        Each item includes metadata, CUD export health, trailing 30-day aggregate statistics, and precomputed YTD/lifetime savings totals per product line. Sum across items for customer-level totals.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: List of GCP Billing Accounts. One item per billing account.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpBillingAccounts200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}:
+    get:
+      operationId: getGcpBillingAccount
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: Get a GCP billing account
+      description: |-
+        Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
+
+        Fields that drive the Overview tab in the DoiT console:
+        - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
+        - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
+        - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
+        - `savingsTotals`: year-to-date and lifetime realized savings per product line (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+      responses:
+        "200":
+          description: "Single GCP Billing Account details (same list-item fields as provided for the billing account through list GCP billing accounts operation) and overview time series: 6 months stats and 30 days of CUD coverage."
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GcpBillingAccountDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based:
+    get:
+      operationId: listGcpResourceCuds
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP resource-based Committed Use Discounts
+      description: Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - in: query
+          name: status
+          required: false
+          description: Filter by CUD state. Omit to include all states.
+          schema:
+            type: string
+            enum:
+              - active
+              - expired
+              - creating
+              - cancelled
+              - not_yet_active
+            x-enumDescriptions:
+              active: CUD is active and providing coverage.
+              expired: CUD term has ended.
+              creating: CUD purchase is in progress; not yet providing coverage.
+              cancelled: CUD was cancelled before or during its term.
+              not_yet_active: CUD has been purchased but its term has not started yet.
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: Paginated list of resource-based CUDs.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpResourceCuds200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/settings:
+    get:
+      operationId: listGcpBillingAccountsSettings
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List billing account engine settings
+      description: |-
+        Returns one item per onboarded GCP Billing Account. Each item includes that billing
+        account's recommendation and automation engine settings for each product line activated
+        on it (`compute`).
+
+        Settings are stored independently on each billing account. Existing customer-level
+        settings are copied lazily when an account is first read or initialized; if no valid
+        legacy value exists, the complete backend defaults are materialized once on the account.
+        Only product lines that are activated/onboarded for a given billing account are returned.
+
+        In the DoiT Console, these settings are edited on an account's Settings tab.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: Settings payload for one onboarded GCP Billing Account, broken down by activated product line (`services[].settings`).
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpBillingAccountsSettings200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
     AccountManagerListItem:
@@ -7716,6 +7892,15 @@ components:
           type: number
           format: double
           description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+    CommitmentTerm:
+      type: string
+      enum:
+        - one_year
+        - three_year
+      description: Preferred or actual commitment term length for Savings Plans and related settings.
+      x-enumDescriptions:
+        one_year: One-year commitment term.
+        three_year: Three-year commitment term.
     Condition:
       type: string
       description: >-
@@ -9114,6 +9299,436 @@ components:
           description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
           default: root
           example: root
+    GcpBillingAccount:
+      type: object
+      required:
+        - billingAccountId
+      properties:
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+          example: 01D4A2-4E3F1B-9C72A0
+        displayName:
+          type: string
+          description: Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
+          nullable: true
+        currency:
+          type: string
+          description: ISO 4217 currency code for this billing account.
+          nullable: true
+          example: USD
+        onboardingStatus:
+          allOf:
+            - $ref: "#/components/schemas/GcpOnboardingStatus"
+        cudExportHealthy:
+          type: boolean
+          description: "`true` if the BigQuery CUD export is healthy and up to date."
+          nullable: true
+        commitmentsSyncTime:
+          type: string
+          format: date-time
+          description: Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
+          nullable: true
+        stats30d:
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
+          allOf:
+            - $ref: '#/components/schemas/GcpBillingAccountStats30d'
+        savingsTotals:
+          description: Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+          allOf:
+            - $ref: '#/components/schemas/GcpBillingAccountSavingsTotals'
+    GcpBillingAccountDetail:
+      type: object
+      required:
+        - billingAccountId
+      properties:
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+          example: 01D4A2-4E3F1B-9C72A0
+        displayName:
+          type: string
+          description: Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
+          nullable: true
+        currency:
+          type: string
+          description: ISO 4217 currency code for this billing account.
+          nullable: true
+          example: USD
+        onboardingStatus:
+          allOf:
+            - $ref: "#/components/schemas/GcpOnboardingStatus"
+        cudExportHealthy:
+          type: boolean
+          description: "`true` if the BigQuery CUD export is healthy and up to date."
+          nullable: true
+        commitmentsSyncTime:
+          type: string
+          format: date-time
+          description: Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
+          nullable: true
+        stats30d:
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
+          allOf:
+            - $ref: '#/components/schemas/GcpBillingAccountStats30d'
+        savingsTotals:
+          description: Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+          allOf:
+            - $ref: '#/components/schemas/GcpBillingAccountSavingsTotals'
+        monthlyStats:
+          description: Trailing 6 calendar months of billing account stats, grouped by product line.
+          allOf:
+            - $ref: '#/components/schemas/GcpBillingAccountDetailAllOf1MonthlyStats'
+        dailyCoverage:
+          description: Trailing 30 days of CUD coverage, grouped by product line.
+          allOf:
+            - $ref: '#/components/schemas/GcpBillingAccountDetailAllOf1DailyCoverage'
+    GcpBillingAccountDetailAllOf1DailyCoverage:
+      type: object
+      description: Trailing 30 days of CUD coverage, grouped by product line.
+      properties:
+        compute:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpDailyCoverageEntry"
+    GcpBillingAccountDetailAllOf1MonthlyStats:
+      type: object
+      description: Trailing 6 calendar months of billing account stats, grouped by product line.
+      properties:
+        compute:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpMonthlyStatsEntry"
+    GcpBillingAccountSavingsTotals:
+      type: object
+      description: Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+      properties:
+        compute:
+          $ref: "#/components/schemas/GcpSavingsTotals"
+    GcpBillingAccountServiceSettings:
+      type: object
+      required:
+        - service
+        - settings
+      properties:
+        service:
+          type: string
+          enum:
+            - compute
+          description: Product line these settings apply to.
+        settings:
+          allOf:
+            - $ref: "#/components/schemas/GcpBillingAccountSettings"
+          description: Commitment settings for this product line.
+    GcpBillingAccountSettings:
+      type: object
+      description: Recommendation and automation engine settings for one product line on a GCP billing account.
+      required:
+        - purchaseMode
+        - minimumCommitment
+        - lastDayOfMonthForPurchase
+        - maximumCommitment
+        - term
+        - policy
+      properties:
+        purchaseMode:
+          type: string
+          enum:
+            - autonomous
+            - requires_approval
+          description: Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
+          x-enumDescriptions:
+            autonomous: Purchases execute automatically within configured commitment limits. Set in the DoiT Console (Autonomous Purchasing).
+            requires_approval: Purchases wait for customer approval in the DoiT Console before execution. Default mode; set in Console Settings.
+        minimumCommitment:
+          type: number
+          format: double
+          description: Minimum hourly commitment amount (USD) per purchase step.
+        lastDayOfMonthForPurchase:
+          type: integer
+          description: Latest calendar day of the month on which a purchase may be scheduled.
+        maximumCommitment:
+          type: number
+          format: double
+          description: Maximum total hourly commitment (USD). `0` means no cap.
+        term:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentTerm"
+          description: Preferred commitment term length for new purchases.
+        policy:
+          allOf:
+            - $ref: "#/components/schemas/Policy"
+          description: Coverage target policy for recommendations and purchases.
+    GcpBillingAccountSettingsItem:
+      type: object
+      required:
+        - billingAccountId
+        - services
+      properties:
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+          example: 01D4A2-4E3F1B-9C72A0
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpBillingAccountServiceSettings"
+          description: Settings for each product line activated on this billing account.
+    GcpBillingAccountStats30d:
+      type: object
+      description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
+      properties:
+        compute:
+          $ref: "#/components/schemas/Stats30dSummary"
+    GcpDailyCoverageEntry:
+      type: object
+      required:
+        - date
+      description: One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage sub-type had no spend for the day.
+      properties:
+        date:
+          type: string
+          format: date
+          description: Calendar day (UTC) for this coverage row in format YYYY-MM-DD.
+        computeFlexible:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Compute Flexible CUDs for the day.
+        cloudRun:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Cloud Run CUDs for the day.
+        bigQuery:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by BigQuery CUDs for the day.
+        bigtable:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Bigtable CUDs for the day.
+        cloudSql:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Cloud SQL CUDs for the day.
+        cloudFirestore:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Cloud Firestore CUDs for the day.
+        cloudSpanner:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Cloud Spanner CUDs for the day.
+        memorystoreForRedis:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Memorystore for Redis CUDs for the day.
+        alloyDb:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by AlloyDB CUDs for the day.
+        backupForOracle:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Google Cloud Backup and DR for Oracle CUDs for the day.
+        kafka:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by Kafka CUDs for the day.
+        resourceBased:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Spend covered by resource-based (vCPU / memory) CUDs for the day.
+        onDemand:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: On-demand spend not covered by any CUD for the day.
+    GcpMonthlyStatsEntry:
+      type: object
+      required:
+        - month
+        - esr
+        - onDemandCost
+        - costWithSavings
+      description: One calendar-month aggregate for the billing account. Money fields are wrapped objects (`{amount, currency}`).
+      properties:
+        month:
+          type: string
+          pattern: ^\d{4}-(0[1-9]|1[0-2])$
+          description: Calendar month in `YYYY-MM` form (UTC).
+          example: 2025-06
+        esr:
+          type: number
+          format: double
+          description: Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.
+        onDemandCost:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.
+        costWithSavings:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Actual cost after commitments for the month.
+    GcpOnboardingStatus:
+      type: object
+      description: PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
+      properties:
+        compute:
+          $ref: "#/components/schemas/GcpOnboardingStatusEntry"
+    GcpOnboardingStatusEntry:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Current onboarding lifecycle stage for this product line.
+          enum:
+            - not_started
+            - onboarding
+            - done
+            - error
+          x-enumDescriptions:
+            not_started: This commitment type has not begun onboarding.
+            onboarding: Onboarding is in progress (inventory and models still initializing).
+            done: Onboarding completed, commitments and recommendations are available.
+            error: Onboarding failed, check the DoiT Console or contact support for remediation.
+        onboardingStartedAt:
+          type: string
+          format: date-time
+          description: When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
+          nullable: true
+    GcpResourceCud:
+      type: object
+      description: |-
+        GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
+        document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").
+      required:
+        - commitmentNumericId
+        - state
+      properties:
+        autoRenew:
+          type: boolean
+          description: "`true` if the CUD is configured to renew automatically at the end of its term."
+        billingProjectNumber:
+          type: string
+          description: GCP project number billed for this CUD's charges.
+          example: "744947574473"
+        commitmentNumericId:
+          type: string
+          description: Resource-based CUD ID (provider-assigned).
+          example: "6100297402551498897"
+        createdTime:
+          type: string
+          format: date-time
+          description: When the CUD was created. Null when unknown.
+          nullable: true
+        customTermEligibleUntil:
+          type: string
+          format: date-time
+          description: Latest date by which this CUD is eligible for a custom-term exchange. Null when not eligible.
+          nullable: true
+        endTime:
+          type: string
+          format: date-time
+          description: When the CUD term ends. Null when unknown.
+          nullable: true
+        exportDate:
+          type: string
+          format: date-time
+          description: Timestamp of the BigQuery CUD export row this item was read from.
+        hardwareScope:
+          type: string
+          description: Machine family this CUD's reserved resources apply to.
+          example: GENERAL_PURPOSE_E2
+        hostProjectId:
+          type: string
+          description: GCP project ID hosting the reserved resources.
+          example: test-k8s-project-468707
+        inventoryState:
+          type: string
+          description: Raw provider inventory state.
+          example: ACTIVE
+        lastMonthCPUCoverage:
+          type: number
+          format: double
+          description: Fraction (0–1) of vCPU usage covered by this CUD in the last full calendar month.
+        lastMonthCPUSavings:
+          type: number
+          format: double
+          description: Realized vCPU savings in the last full calendar month.
+        lastMonthCPUUtilization:
+          type: number
+          format: double
+          description: Fraction (0–1) of this CUD's reserved vCPUs actually used in the last full calendar month.
+        lastMonthMemoryCoverage:
+          type: number
+          format: double
+          description: Fraction (0–1) of memory usage covered by this CUD in the last full calendar month.
+        lastMonthMemorySavings:
+          type: number
+          format: double
+          description: Realized memory savings in the last full calendar month.
+        lastMonthMemoryUtilization:
+          type: number
+          format: double
+          description: Fraction (0–1) of this CUD's reserved memory actually used in the last full calendar month.
+        name:
+          type: string
+          description: Provider commitment display name.
+          example: resource-based-cud-1
+        organizationId:
+          type: string
+          description: GCP organization ID that owns the host project.
+          example: "604768222286"
+        plan:
+          type: string
+          description: Raw provider commitment plan.
+          example: TWELVE_MONTH
+        region:
+          type: string
+          description: GCP region the reserved resources are scoped to.
+          example: us-central1
+        reservedResources:
+          type: array
+          description: Resources reserved by this CUD.
+          items:
+            $ref: '#/components/schemas/GcpResourceCudReservedResourcesItem'
+        startTime:
+          type: string
+          format: date-time
+          description: When the CUD term started. Null when unknown.
+          nullable: true
+        state:
+          type: string
+          description: Raw provider commitment state.
+          example: ACTIVE
+    GcpResourceCudReservedResourcesItem:
+      type: object
+      required:
+        - resourceKind
+        - amount
+      properties:
+        amount:
+          type: string
+          example: "1"
+        resourceKind:
+          type: string
+          example: VCPU
+    GcpSavingsTotals:
+      type: object
+      required:
+        - ytd
+        - lifetime
+      description: Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
+      properties:
+        ytd:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Year-to-date realized savings.
+        lifetime:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Lifetime realized savings since onboarding.
     GeographicAccessCountriesResponse:
       type: object
       additionalProperties: false
@@ -10016,6 +10631,57 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Folder"
+    ListGcpBillingAccounts200Response:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpBillingAccount"
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+          nullable: true
+    ListGcpBillingAccountsSettings200Response:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpBillingAccountSettingsItem"
+        pageToken:
+          type: string
+          description: Opaque cursor for the next page. Absent when this is the last page.
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Number of items returned in this page.
+    ListGcpResourceCuds200Response:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpResourceCud"
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+          nullable: true
     ListInvoices200Response:
       type: object
       properties:
@@ -10188,6 +10854,17 @@ components:
           type: string
         id:
           type: string
+    Policy:
+      type: string
+      enum:
+        - conservative
+        - balanced
+        - max_savings
+      description: "Coverage target policy that balances savings against underutilization risk. Used by recommendations and planned-purchase projections."
+      x-enumDescriptions:
+        conservative: Lower coverage target (~65%); favors stable usage and lower underutilization risk.
+        balanced: Moderate coverage target (~80%); default balance of savings and buffer.
+        max_savings: Aggressive coverage target (~90%); highest savings potential with a smaller buffer.
     ProblemDetails:
       type: object
       required:
@@ -11641,6 +12318,36 @@ components:
             code: service_unavailable
             retryable: true
   parameters:
+    gcp_service:
+      in: query
+      name: gcp_service
+      required: false
+      description: Filter GCP planned purchases by PS4C product line.
+      schema:
+        type: string
+        enum:
+          - compute
+    gcp_region:
+      in: query
+      name: region
+      required: false
+      description: |-
+        Filter GCP planned purchases by region scope. Requires `gcp_service`; when omitted together
+        with `gcp_service`, all available regions for all available product lines are returned.
+        A request with `region` but no `gcp_service` returns `400` with code `gcp_service_required`.
+      schema:
+        type: string
+        enum:
+          - global
+    billingAccountId:
+      in: path
+      name: billingAccountId
+      required: true
+      description: GCP Billing Account ID (format `XXXXXX-XXXXXX-XXXXXX`; the account that owns the CUDs) that scopes the request.
+      schema:
+        type: string
+        pattern: ^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$
+        example: 01D4A2-4E3F1B-9C72A0
     maxResults:
       name: maxResults
       in: query

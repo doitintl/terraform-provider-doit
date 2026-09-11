@@ -80,11 +80,15 @@ The following table shows which data sources support pagination:
 | `doit_cloud_incidents`      | ✗               | ✓                 |
 | `doit_commitments`          | ✓               | ✓                 |
 | `doit_dimensions`           | ✓               | ✓                 |
-| `doit_invoices`             | ✓               | ✓                 |
-| `doit_labels`               | ✓               | ✓                 |
-| `doit_reports`              | ✓               | ✓                 |
-| `doit_service_quotas`       | ✓               | ✓                 |
-| `doit_support_requests`     | ✓               | ✓                 |
+| `doit_invoices`                 | ✓               | ✓                 |
+| `doit_labels`                   | ✓               | ✓                 |
+| `doit_ps4c_aws_organizations`   | ✓               | ✓                 |
+| `doit_ps4c_gcp_billing_accounts`| ✓               | ✓                 |
+| `doit_ps4c_gcp_resource_cuds`   | ✓               | ✓                 |
+| `doit_ps4c_gcp_settings`        | ✓               | ✓                 |
+| `doit_reports`                  | ✓               | ✓                 |
+| `doit_service_quotas`           | ✓               | ✓                 |
+| `doit_support_requests`         | ✓               | ✓                 |
 
 ## Filtering vs Pagination
 
