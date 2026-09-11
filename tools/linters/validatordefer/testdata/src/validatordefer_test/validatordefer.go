@@ -31,6 +31,11 @@ func (*dataSourceValidator) ValidateConfig(_ context.Context, _ datasource.Valid
 	if present {
 		resp.Diagnostics.AddError("invalid", "invalid") // want "validator diagnostic may be emitted while value is unknown"
 	}
+
+	directValue := types.StringUnknown()
+	if !directValue.IsNull() {
+		resp.Diagnostics.AddError("invalid", "invalid") // want "validator diagnostic may be emitted while directValue is unknown"
+	}
 }
 
 type resourceValidator struct{}
@@ -38,6 +43,49 @@ type resourceValidator struct{}
 func (*resourceValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	validateOwners([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
 	validateSafely(types.StringUnknown(), &resp.Diagnostics)
+}
+
+type guardedHelperValidator struct{}
+
+func (*guardedHelperValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	if value.IsUnknown() {
+		return
+	}
+	validateGuardedPresence(&resp.Diagnostics, value)
+}
+
+func validateGuardedPresence(diagnostics *diag.Diagnostics, value types.String) {
+	validateNestedGuardedPresence(value, diagnostics)
+}
+
+func validateNestedGuardedPresence(value types.String, diagnostics *diag.Diagnostics) {
+	present := !value.IsNull()
+	if present {
+		diagnostics.AddError("known", "known")
+	}
+}
+
+type guardedSharedHelperValidator struct{}
+
+func (*guardedSharedHelperValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	if value.IsUnknown() {
+		return
+	}
+	validateSharedPresence(value, &resp.Diagnostics)
+}
+
+type unguardedSharedHelperValidator struct{}
+
+func (*unguardedSharedHelperValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateSharedPresence(types.StringUnknown(), &resp.Diagnostics)
+}
+
+func validateSharedPresence(value types.String, diagnostics *diag.Diagnostics) {
+	if !value.IsNull() {
+		diagnostics.AddError("invalid", "invalid") // want "validator diagnostic may be emitted while value is unknown"
+	}
 }
 
 type testItem struct {
@@ -67,8 +115,7 @@ func validateSafely(value types.String, diagnostics *diag.Diagnostics) {
 		diagnostics.AddError("invalid", "invalid")
 	}
 
-	present := !value.IsNull()
-	if present {
+	if !value.IsNull() {
 		diagnostics.AddWarning("known", "known")
 	}
 

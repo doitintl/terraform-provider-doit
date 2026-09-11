@@ -42,9 +42,21 @@ type presenceAlias struct {
 }
 
 type functionAnalysis struct {
-	pass      *analysis.Pass
-	reachable map[token.Pos]bool
-	reported  map[token.Pos]bool
+	pass           *analysis.Pass
+	reachable      map[token.Pos]bool
+	reported       map[token.Pos]bool
+	knownAtIf      map[token.Pos]map[string]bool
+	unknownAliases map[string]presenceAlias
+}
+
+type analysisContext struct {
+	function *types.Func
+	knownKey string
+}
+
+type flowFacts struct {
+	knownAtIf   map[token.Pos]map[string]bool
+	knownAtCall map[token.Pos]map[string]bool
 }
 
 func run(pass *analysis.Pass) (any, error) {
@@ -68,19 +80,32 @@ func run(pass *analysis.Pass) (any, error) {
 		}
 	})
 
-	seen := map[*types.Func]bool{}
-	var analyze func(*ast.FuncDecl)
-	analyze = func(decl *ast.FuncDecl) {
+	seen := map[analysisContext]bool{}
+	reported := map[token.Pos]bool{}
+	var analyze func(*ast.FuncDecl, map[string]bool)
+	analyze = func(decl *ast.FuncDecl, entryKnown map[string]bool) {
 		fn, ok := pass.TypesInfo.Defs[decl.Name].(*types.Func)
-		if !ok || seen[fn] {
+		if !ok {
 			return
 		}
-		seen[fn] = true
+		// A helper can be safe from one guarded call site and unsafe from
+		// another, so analyze each distinct parameter-fact context. Diagnostics
+		// are deduplicated globally and remain reported if any context is unsafe.
+		context := analysisContext{function: fn, knownKey: setKey(entryKnown)}
+		if seen[context] {
+			return
+		}
+		seen[context] = true
+
+		unknownAliases := collectUnknownAliases(decl.Body)
+		flow := collectFlowFacts(decl.Body, unknownAliases, entryKnown)
 
 		state := &functionAnalysis{
-			pass:      pass,
-			reachable: reachablePositions(cfgs.FuncDecl(decl)),
-			reported:  map[token.Pos]bool{},
+			pass:           pass,
+			reachable:      reachablePositions(cfgs.FuncDecl(decl)),
+			reported:       reported,
+			knownAtIf:      flow.knownAtIf,
+			unknownAliases: unknownAliases,
 		}
 		state.checkExplicitUnknownDiagnostics(decl.Body)
 		state.checkPresenceAliases(decl.Body)
@@ -91,15 +116,19 @@ func run(pass *analysis.Pass) (any, error) {
 			if !ok {
 				return
 			}
+			callerKnown, supported := flow.knownAtCall[call.Pos()]
+			if !supported {
+				return
+			}
 			callee := typeutil.StaticCallee(pass.TypesInfo, call)
 			if next, ok := decls[callee]; ok {
-				analyze(next)
+				analyze(next, mapKnownArguments(call, next, callerKnown))
 			}
 		})
 	}
 
 	for _, root := range roots {
-		analyze(root)
+		analyze(root, nil)
 	}
 
 	return nil, nil
@@ -159,40 +188,13 @@ func reachablePositions(graph *cfg.CFG) map[token.Pos]bool {
 }
 
 func (state *functionAnalysis) checkExplicitUnknownDiagnostics(body *ast.BlockStmt) {
-	aliases := map[string]presenceAlias{}
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		switch statement := node.(type) {
-		case *ast.AssignStmt:
-			if len(statement.Lhs) != len(statement.Rhs) {
-				return
-			}
-			for index, lhs := range statement.Lhs {
-				ident, ok := lhs.(*ast.Ident)
-				if !ok {
-					continue
-				}
-				if alias, ok := unknownPredicateAlias(statement.Rhs[index]); ok {
-					aliases[ident.Name] = alias
-				}
-			}
-		case *ast.ValueSpec:
-			if len(statement.Names) != len(statement.Values) {
-				return
-			}
-			for index, ident := range statement.Names {
-				if alias, ok := unknownPredicateAlias(statement.Values[index]); ok {
-					aliases[ident.Name] = alias
-				}
-			}
-		}
-	})
-
 	inspectWithoutFuncLits(body, func(node ast.Node) {
 		ifStmt, ok := node.(*ast.IfStmt)
 		if !ok {
 			return
 		}
-		unknowns := positiveUnknownValuesWithAliases(ifStmt.Cond, aliases)
+		unknowns := positiveUnknownValuesWithAliases(ifStmt.Cond, state.unknownAliases)
+		unknowns = withoutKnownValues(unknowns, state.knownAtIf[ifStmt.Pos()])
 		if len(unknowns) == 0 {
 			return
 		}
@@ -203,8 +205,86 @@ func (state *functionAnalysis) checkExplicitUnknownDiagnostics(body *ast.BlockSt
 }
 
 func (state *functionAnalysis) checkPresenceAliases(body *ast.BlockStmt) {
+	aliases := collectNullPresenceAliases(body)
+
+	inspectWithoutFuncLits(body, func(node ast.Node) {
+		ifStmt, ok := node.(*ast.IfStmt)
+		if !ok {
+			return
+		}
+		unsafeValues := unsafePresenceValues(ifStmt.Cond, aliases, true)
+		unsafeValues = withoutKnownValues(unsafeValues, state.knownAtIf[ifStmt.Pos()])
+		if len(unsafeValues) == 0 {
+			return
+		}
+		for _, diagnostic := range diagnosticsIn(ifStmt.Body) {
+			state.report(diagnostic, unsafeValues)
+		}
+	})
+}
+
+func collectFlowFacts(body *ast.BlockStmt, aliases map[string]presenceAlias, entryKnown map[string]bool) flowFacts {
+	facts := flowFacts{
+		knownAtIf:   map[token.Pos]map[string]bool{},
+		knownAtCall: map[token.Pos]map[string]bool{},
+	}
+	recordCalls := func(node ast.Node, known map[string]bool) {
+		if node == nil {
+			return
+		}
+		inspectWithoutFuncLits(node, func(candidate ast.Node) {
+			if call, ok := candidate.(*ast.CallExpr); ok {
+				facts.knownAtCall[call.Pos()] = cloneSet(known)
+			}
+		})
+	}
+	var visitBlock func(*ast.BlockStmt, map[string]bool)
+	visitBlock = func(block *ast.BlockStmt, incoming map[string]bool) {
+		known := cloneSet(incoming)
+		for _, statement := range block.List {
+			switch statement := statement.(type) {
+			case *ast.IfStmt:
+				recordCalls(statement.Init, known)
+				recordCalls(statement.Cond, known)
+				branchKnown := cloneSet(known)
+				addValues(branchKnown, definitelyKnownValues(statement.Cond, aliases))
+				facts.knownAtIf[statement.Pos()] = branchKnown
+				visitBlock(statement.Body, branchKnown)
+				if elseBlock, ok := statement.Else.(*ast.BlockStmt); ok {
+					visitBlock(elseBlock, known)
+				}
+				if blockEndsWithExit(statement.Body) {
+					addValues(known, positiveUnknownValuesWithAliases(statement.Cond, aliases))
+				}
+			case *ast.ForStmt:
+				recordCalls(statement.Init, known)
+				recordCalls(statement.Cond, known)
+				recordCalls(statement.Post, known)
+				visitBlock(statement.Body, known)
+			case *ast.RangeStmt:
+				recordCalls(statement.X, known)
+				visitBlock(statement.Body, known)
+			case *ast.BlockStmt:
+				visitBlock(statement, known)
+			default:
+				recordCalls(statement, known)
+			}
+		}
+	}
+	visitBlock(body, entryKnown)
+	return facts
+}
+
+func collectUnknownAliases(body *ast.BlockStmt) map[string]presenceAlias {
+	return collectPredicateAliases(body, unknownPredicateAlias)
+}
+
+func collectNullPresenceAliases(body *ast.BlockStmt) map[string]presenceAlias {
+	return collectPredicateAliases(body, nullPresenceAlias)
+}
+
+func collectPredicateAliases(body *ast.BlockStmt, match func(ast.Expr) (presenceAlias, bool)) map[string]presenceAlias {
 	aliases := map[string]presenceAlias{}
-	unknownAliases := map[string]presenceAlias{}
 	inspectWithoutFuncLits(body, func(node ast.Node) {
 		switch statement := node.(type) {
 		case *ast.AssignStmt:
@@ -216,11 +296,8 @@ func (state *functionAnalysis) checkPresenceAliases(body *ast.BlockStmt) {
 				if !ok {
 					continue
 				}
-				if alias, ok := nullPresenceAlias(statement.Rhs[index]); ok {
+				if alias, ok := match(statement.Rhs[index]); ok {
 					aliases[ident.Name] = alias
-				}
-				if alias, ok := unknownPredicateAlias(statement.Rhs[index]); ok {
-					unknownAliases[ident.Name] = alias
 				}
 			}
 		case *ast.ValueSpec:
@@ -228,66 +305,53 @@ func (state *functionAnalysis) checkPresenceAliases(body *ast.BlockStmt) {
 				return
 			}
 			for index, ident := range statement.Names {
-				if alias, ok := nullPresenceAlias(statement.Values[index]); ok {
+				if alias, ok := match(statement.Values[index]); ok {
 					aliases[ident.Name] = alias
 				}
-				if alias, ok := unknownPredicateAlias(statement.Values[index]); ok {
-					unknownAliases[ident.Name] = alias
-				}
 			}
 		}
 	})
-
-	if len(aliases) == 0 {
-		return
-	}
-	knownAt := knownValuesAtIf(body, unknownAliases)
-
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		ifStmt, ok := node.(*ast.IfStmt)
-		if !ok {
-			return
-		}
-		unsafeValues := unsafePresenceValues(ifStmt.Cond, aliases, true)
-		unsafeValues = withoutKnownValues(unsafeValues, knownAt[ifStmt.Pos()])
-		if len(unsafeValues) == 0 {
-			return
-		}
-		for _, diagnostic := range diagnosticsIn(ifStmt.Body) {
-			state.report(diagnostic, unsafeValues)
-		}
-	})
+	return aliases
 }
 
-func knownValuesAtIf(body *ast.BlockStmt, aliases map[string]presenceAlias) map[token.Pos]map[string]bool {
-	knownAt := map[token.Pos]map[string]bool{}
-	var visitBlock func(*ast.BlockStmt, map[string]bool)
-	visitBlock = func(block *ast.BlockStmt, incoming map[string]bool) {
-		known := cloneSet(incoming)
-		for _, statement := range block.List {
-			switch statement := statement.(type) {
-			case *ast.IfStmt:
-				branchKnown := cloneSet(known)
-				addValues(branchKnown, definitelyKnownValues(statement.Cond, aliases))
-				knownAt[statement.Pos()] = branchKnown
-				visitBlock(statement.Body, branchKnown)
-				if elseBlock, ok := statement.Else.(*ast.BlockStmt); ok {
-					visitBlock(elseBlock, known)
-				}
-				if blockEndsWithExit(statement.Body) {
-					addValues(known, positiveUnknownValuesWithAliases(statement.Cond, aliases))
-				}
-			case *ast.ForStmt:
-				visitBlock(statement.Body, known)
-			case *ast.RangeStmt:
-				visitBlock(statement.Body, known)
-			case *ast.BlockStmt:
-				visitBlock(statement, known)
-			}
+func mapKnownArguments(call *ast.CallExpr, callee *ast.FuncDecl, callerKnown map[string]bool) map[string]bool {
+	parameters := parameterNames(callee)
+	known := map[string]bool{}
+	for index, argument := range call.Args {
+		if index >= len(parameters) || parameters[index] == "" {
+			continue
+		}
+		if callerKnown[expressionName(argument)] {
+			known[parameters[index]] = true
 		}
 	}
-	visitBlock(body, nil)
-	return knownAt
+	return known
+}
+
+func parameterNames(function *ast.FuncDecl) []string {
+	if function.Type == nil || function.Type.Params == nil {
+		return nil
+	}
+	var names []string
+	for _, field := range function.Type.Params.List {
+		if len(field.Names) == 0 {
+			names = append(names, "")
+			continue
+		}
+		for _, name := range field.Names {
+			names = append(names, name.Name)
+		}
+	}
+	return names
+}
+
+func setKey(values map[string]bool) string {
+	keys := make([]string, 0, len(values))
+	for value := range values {
+		keys = append(keys, value)
+	}
+	sort.Strings(keys)
+	return strings.Join(keys, "\x00")
 }
 
 func definitelyKnownValues(expression ast.Expr, aliases map[string]presenceAlias) []string {
@@ -512,6 +576,11 @@ func unsafePresenceValues(expression ast.Expr, aliases map[string]presenceAlias,
 		if expr.Op == token.LAND || expr.Op == token.LOR {
 			values = append(values, unsafePresenceValues(expr.X, aliases, positive)...)
 			values = append(values, unsafePresenceValues(expr.Y, aliases, positive)...)
+		}
+	case *ast.CallExpr:
+		selector, ok := expr.Fun.(*ast.SelectorExpr)
+		if ok && selector.Sel.Name == "IsNull" && !positive && len(expr.Args) == 0 {
+			values = append(values, expressionName(selector.X))
 		}
 	case *ast.Ident:
 		if alias, ok := aliases[expr.Name]; ok && alias.unknownMakesAliasTrue == positive {
