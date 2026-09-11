@@ -16,7 +16,7 @@ List resource-based commitments (CUDs) for a GCP billing account tracked by Perf
 # Retrieve resource-based commitments (CUDs) for a GCP billing account
 data "doit_ps4c_gcp_resource_cuds" "active" {
   billing_account_id = "012345-6789AB-CDEF01"
-  status             = "ACTIVE"
+  status             = "active"
 }
 
 output "cud_count" {

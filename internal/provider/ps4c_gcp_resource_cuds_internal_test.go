@@ -152,7 +152,7 @@ func TestPs4cGcpResourceCudsRead(t *testing.T) {
 	}{
 		{
 			name:   "auto-pagination single page with status",
-			status: new("ACTIVE"),
+			status: new("active"),
 			responses: []string{
 				`{"items":[{"commitmentNumericId":"CUD-1","state":"ACTIVE"}],"rowCount":1}`,
 			},

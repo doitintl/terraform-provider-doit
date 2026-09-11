@@ -280,36 +280,19 @@ data_sources:
     read:
       path: /rbac/v1/countries
       method: GET
-  # PS4C GCP test evaluation data sources
-  test_ps4c_gcp_billing_accounts:
-    read:
-      path: /ps4commitments/v1/gcp/billing-accounts
-      method: GET
-  test_ps4c_gcp_billing_account:
+  ps4c_gcp_billing_account:
     read:
       path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}
       method: GET
-  test_ps4c_gcp_spend_cuds:
+  ps4c_gcp_billing_accounts:
     read:
-      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based
+      path: /ps4commitments/v1/gcp/billing-accounts
       method: GET
-  test_ps4c_gcp_resource_cuds:
-    read:
-      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based
-      method: GET
-  test_ps4c_gcp_recommendations:
-    read:
-      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations
-      method: GET
-  test_ps4c_gcp_recommendation:
-    read:
-      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service}
-      method: GET
-  test_ps4c_gcp_planned_purchases:
-    read:
-      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases
-      method: GET
-  test_ps4c_gcp_settings:
+  ps4c_gcp_settings:
     read:
       path: /ps4commitments/v1/gcp/settings
+      method: GET
+  ps4c_gcp_resource_cuds:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based
       method: GET
