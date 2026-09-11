@@ -62,19 +62,19 @@ func (v cloudconnectAwsS3RealTimeValidator) ValidateResource(ctx context.Context
 		return
 	}
 
-	// !IsNull() is sufficient — if the value is unknown the user configured
-	// something (e.g. a reference), so validation should not reject it.
-	hasS3 := !s3bucket.IsNull()
-	hasS3Region := !s3bucketRegion.IsNull()
+	missingS3 := s3bucket.IsNull()
+	missingS3Region := s3bucketRegion.IsNull()
+	hasKnownS3 := !s3bucket.IsNull() && !s3bucket.IsUnknown()
+	hasKnownS3Region := !s3bucketRegion.IsNull() && !s3bucketRegion.IsUnknown()
 
-	if hasRealTime && (!hasS3 || !hasS3Region) {
+	if hasRealTime && (missingS3 || missingS3Region) {
 		resp.Diagnostics.AddError(
 			"Missing S3 Configuration for Real-Time Data",
 			`When enabled_features contains "real-time-data", both s3bucket and s3bucket_region must be set.`,
 		)
 	}
 
-	if !hasRealTime && (hasS3 || hasS3Region) {
+	if !hasRealTime && (hasKnownS3 || hasKnownS3Region) {
 		resp.Diagnostics.AddError(
 			"S3 Configuration Without Real-Time Data",
 			`s3bucket and s3bucket_region can only be set when enabled_features contains "real-time-data".`,

@@ -71,7 +71,10 @@ func (v allocationRulesValidator) ValidateList(ctx context.Context, req validato
 
 		// For "create" or "update" actions, name is required
 		if action == "create" || action == "update" {
-			if ruleVal.Name.IsNull() || ruleVal.Name.IsUnknown() || ruleVal.Name.ValueString() == "" {
+			if ruleVal.Name.IsUnknown() {
+				continue
+			}
+			if ruleVal.Name.IsNull() || ruleVal.Name.ValueString() == "" {
 				resp.Diagnostics.AddAttributeError(
 					req.Path.AtListIndex(i).AtName("name"),
 					"Missing Required Attribute",
