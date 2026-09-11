@@ -46,6 +46,7 @@ type functionAnalysis struct {
 	reachable      map[token.Pos]bool
 	reported       map[token.Pos]bool
 	knownAtIf      map[token.Pos]map[string]bool
+	knownAtCall    map[token.Pos]map[string]bool
 	unknownAliases map[string]presenceAlias
 }
 
@@ -105,6 +106,7 @@ func run(pass *analysis.Pass) (any, error) {
 			reachable:      reachablePositions(cfgs.FuncDecl(decl)),
 			reported:       reported,
 			knownAtIf:      flow.knownAtIf,
+			knownAtCall:    flow.knownAtCall,
 			unknownAliases: unknownAliases,
 		}
 		state.checkExplicitUnknownDiagnostics(decl.Body)
@@ -238,40 +240,77 @@ func collectFlowFacts(body *ast.BlockStmt, aliases map[string]presenceAlias, ent
 			}
 		})
 	}
-	var visitBlock func(*ast.BlockStmt, map[string]bool)
-	visitBlock = func(block *ast.BlockStmt, incoming map[string]bool) {
+	var visitBlock func(*ast.BlockStmt, map[string]bool) (map[string]bool, bool)
+	var visitIf func(*ast.IfStmt, map[string]bool) (map[string]bool, bool)
+	visitIf = func(statement *ast.IfStmt, incoming map[string]bool) (map[string]bool, bool) {
+		recordCalls(statement.Init, incoming)
+		recordCalls(statement.Cond, incoming)
+
+		trueKnown := cloneSet(incoming)
+		addValues(trueKnown, knownValuesWhen(statement.Cond, true, aliases))
+		facts.knownAtIf[statement.Pos()] = trueKnown
+		trueKnown, trueContinues := visitBlock(statement.Body, trueKnown)
+
+		falseKnown := cloneSet(incoming)
+		addValues(falseKnown, knownValuesWhen(statement.Cond, false, aliases))
+		falseContinues := true
+		switch elseStatement := statement.Else.(type) {
+		case *ast.BlockStmt:
+			falseKnown, falseContinues = visitBlock(elseStatement, falseKnown)
+		case *ast.IfStmt:
+			falseKnown, falseContinues = visitIf(elseStatement, falseKnown)
+		}
+
+		switch {
+		case trueContinues && falseContinues:
+			return intersectSets(trueKnown, falseKnown), true
+		case trueContinues:
+			return trueKnown, true
+		case falseContinues:
+			return falseKnown, true
+		default:
+			return map[string]bool{}, false
+		}
+	}
+	visitBlock = func(block *ast.BlockStmt, incoming map[string]bool) (map[string]bool, bool) {
 		known := cloneSet(incoming)
 		for _, statement := range block.List {
 			switch statement := statement.(type) {
 			case *ast.IfStmt:
-				recordCalls(statement.Init, known)
-				recordCalls(statement.Cond, known)
-				branchKnown := cloneSet(known)
-				addValues(branchKnown, definitelyKnownValues(statement.Cond, aliases))
-				facts.knownAtIf[statement.Pos()] = branchKnown
-				visitBlock(statement.Body, branchKnown)
-				if elseBlock, ok := statement.Else.(*ast.BlockStmt); ok {
-					visitBlock(elseBlock, known)
-				}
-				if blockEndsWithExit(statement.Body) {
-					addValues(known, positiveUnknownValuesWithAliases(statement.Cond, aliases))
+				var continues bool
+				known, continues = visitIf(statement, known)
+				if !continues {
+					return known, false
 				}
 			case *ast.ForStmt:
 				recordCalls(statement.Init, known)
 				recordCalls(statement.Cond, known)
 				recordCalls(statement.Post, known)
-				visitBlock(statement.Body, known)
+				_, _ = visitBlock(statement.Body, known)
 			case *ast.RangeStmt:
 				recordCalls(statement.X, known)
-				visitBlock(statement.Body, known)
+				_, _ = visitBlock(statement.Body, known)
 			case *ast.BlockStmt:
-				visitBlock(statement, known)
+				var continues bool
+				known, continues = visitBlock(statement, known)
+				if !continues {
+					return known, false
+				}
+			case *ast.ReturnStmt:
+				recordCalls(statement, known)
+				return known, false
+			case *ast.BranchStmt:
+				recordCalls(statement, known)
+				if statement.Tok == token.CONTINUE {
+					return known, false
+				}
 			default:
 				recordCalls(statement, known)
 			}
 		}
+		return known, true
 	}
-	visitBlock(body, entryKnown)
+	_, _ = visitBlock(body, entryKnown)
 	return facts
 }
 
@@ -354,50 +393,45 @@ func setKey(values map[string]bool) string {
 	return strings.Join(keys, "\x00")
 }
 
-func definitelyKnownValues(expression ast.Expr, aliases map[string]presenceAlias) []string {
+func knownValuesWhen(expression ast.Expr, result bool, aliases map[string]presenceAlias) []string {
 	switch expression := expression.(type) {
 	case *ast.ParenExpr:
-		return definitelyKnownValues(expression.X, aliases)
+		return knownValuesWhen(expression.X, result, aliases)
 	case *ast.BinaryExpr:
-		if expression.Op != token.LAND {
+		if expression.Op != token.LAND && expression.Op != token.LOR {
 			return nil
 		}
-		return uniqueSorted(append(
-			definitelyKnownValues(expression.X, aliases),
-			definitelyKnownValues(expression.Y, aliases)...,
-		))
+		left := knownValuesWhen(expression.X, result, aliases)
+		right := knownValuesWhen(expression.Y, result, aliases)
+		if (expression.Op == token.LAND && result) || (expression.Op == token.LOR && !result) {
+			return uniqueSorted(append(left, right...))
+		}
+		return intersectValues(left, right)
 	case *ast.UnaryExpr:
-		if expression.Op != token.NOT {
+		if expression.Op == token.NOT {
+			return knownValuesWhen(expression.X, !result, aliases)
+		}
+	case *ast.CallExpr:
+		if len(expression.Args) != 0 {
 			return nil
 		}
-		call, ok := expression.X.(*ast.CallExpr)
-		if !ok || len(call.Args) != 0 {
+		selector, ok := expression.Fun.(*ast.SelectorExpr)
+		if !ok {
 			return nil
 		}
-		selector, ok := call.Fun.(*ast.SelectorExpr)
-		if ok && selector.Sel.Name == "IsUnknown" {
+		unknownResult, recognized := map[string]bool{
+			"IsUnknown": true,
+			"IsNull":    false,
+		}[selector.Sel.Name]
+		if recognized && result != unknownResult {
 			return []string{expressionName(selector.X)}
 		}
 	case *ast.Ident:
-		if alias, ok := aliases[expression.Name]; ok && !alias.unknownMakesAliasTrue {
+		if alias, ok := aliases[expression.Name]; ok && result != alias.unknownMakesAliasTrue {
 			return []string{alias.value}
 		}
 	}
 	return nil
-}
-
-func blockEndsWithExit(block *ast.BlockStmt) bool {
-	if block == nil || len(block.List) == 0 {
-		return false
-	}
-	switch statement := block.List[len(block.List)-1].(type) {
-	case *ast.ReturnStmt:
-		return true
-	case *ast.BranchStmt:
-		return statement.Tok == token.CONTINUE
-	default:
-		return false
-	}
 }
 
 func cloneSet(values map[string]bool) map[string]bool {
@@ -406,6 +440,30 @@ func cloneSet(values map[string]bool) map[string]bool {
 		result[value] = true
 	}
 	return result
+}
+
+func intersectSets(left, right map[string]bool) map[string]bool {
+	result := map[string]bool{}
+	for value := range left {
+		if right[value] {
+			result[value] = true
+		}
+	}
+	return result
+}
+
+func intersectValues(left, right []string) []string {
+	rightSet := map[string]bool{}
+	for _, value := range right {
+		rightSet[value] = true
+	}
+	var result []string
+	for _, value := range left {
+		if rightSet[value] {
+			result = append(result, value)
+		}
+	}
+	return uniqueSorted(result)
 }
 
 func addValues(destination map[string]bool, values []string) {
@@ -486,6 +544,7 @@ func (state *functionAnalysis) report(call *ast.CallExpr, values []string) {
 	if state.reported[call.Pos()] || (state.reachable != nil && !state.reachable[call.Pos()]) {
 		return
 	}
+	values = withoutKnownValues(values, state.knownAtCall[call.Pos()])
 	values = uniqueSorted(values)
 	if len(values) == 0 {
 		return

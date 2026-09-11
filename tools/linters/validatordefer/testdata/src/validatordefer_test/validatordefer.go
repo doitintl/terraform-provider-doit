@@ -66,6 +66,85 @@ func validateNestedGuardedPresence(value types.String, diagnostics *diag.Diagnos
 	}
 }
 
+type nestedBranchValidator struct{}
+
+func (*nestedBranchValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	enabled := true
+	if value.IsUnknown() || enabled {
+		if !value.IsUnknown() {
+			resp.Diagnostics.AddError("known", "known")
+			if !value.IsNull() {
+				resp.Diagnostics.AddWarning("known", "known")
+			}
+		}
+	}
+}
+
+type falseBranchValidator struct{}
+
+func (*falseBranchValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	if value.IsUnknown() {
+		return
+	} else {
+		if !value.IsNull() {
+			resp.Diagnostics.AddError("known", "known")
+		}
+	}
+}
+
+type safeElseIfValidator struct{}
+
+func (*safeElseIfValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	if value.IsUnknown() {
+		return
+	} else if !value.IsNull() {
+		resp.Diagnostics.AddError("known", "known")
+	}
+}
+
+type unsafeElseIfHelperValidator struct{}
+
+func (*unsafeElseIfHelperValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	enabled := false
+	if enabled {
+		return
+	} else if !value.IsNull() {
+		validateElseIfPresence(value, &resp.Diagnostics)
+	}
+}
+
+func validateElseIfPresence(value types.String, diagnostics *diag.Diagnostics) {
+	if !value.IsNull() {
+		diagnostics.AddError("invalid", "invalid") // want "validator diagnostic may be emitted while value is unknown"
+	}
+}
+
+type exitingConditionValidator struct{}
+
+func (*exitingConditionValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	unsafeValue := types.StringUnknown()
+	skip := false
+	if unsafeValue.IsUnknown() && skip {
+		return
+	}
+	if !unsafeValue.IsNull() {
+		resp.Diagnostics.AddError("invalid", "invalid") // want "validator diagnostic may be emitted while unsafeValue is unknown"
+	}
+
+	left := types.StringUnknown()
+	right := types.StringUnknown()
+	if left.IsUnknown() || right.IsUnknown() {
+		return
+	}
+	if !left.IsNull() && !right.IsNull() {
+		resp.Diagnostics.AddWarning("known", "known")
+	}
+}
+
 type guardedSharedHelperValidator struct{}
 
 func (*guardedSharedHelperValidator) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
