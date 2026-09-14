@@ -70,17 +70,37 @@ type customValue struct {
 	types.String
 }
 
-type goodKnownBusinessSwitch struct{}
+type goodCustomValue struct{}
 
-func (*goodKnownBusinessSwitch) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+func (*goodCustomValue) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
 	value := customValue{String: types.StringUnknown()}
 	if value.IsUnknown() {
 		return
 	}
-	missing := value.IsNull()
+	if value.IsNull() {
+		return
+	}
+}
+
+type badKnownPredicateAlias struct{}
+
+func (*badKnownPredicateAlias) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	value := customValue{String: types.StringUnknown()}
+	if value.IsUnknown() {
+		return
+	}
+	missing := value.IsNull() // want "do not store IsUnknown or IsNull results"
 	switch {
 	case missing:
 		return
+	}
+}
+
+type badUnguardedAccessor struct{}
+
+func (*badUnguardedAccessor) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.ValueString() == "" { // want "Terraform value accessor ValueString requires a dominating unknown guard"
+		resp.Diagnostics.AddAttributeError(req.Path, "invalid", "invalid")
 	}
 }
 

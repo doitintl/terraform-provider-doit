@@ -39,6 +39,46 @@ func (*resourceValidator) ValidateConfig(_ context.Context, _ resource.ValidateC
 	validateUnrelatedDiagnostics(types.StringUnknown())
 	validateOwnersWithInterveningStatement([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
 	validateNestedCollection([][]testItem{{{Role: types.StringUnknown()}}}, &resp.Diagnostics)
+	validateSelectorTracker([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateSelectorTrackerSafely([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+}
+
+type selectorTrackerState struct {
+	hasUnknown bool
+	ownerCount int
+}
+
+func validateSelectorTracker(items []testItem, diagnostics *diag.Diagnostics) {
+	state := selectorTrackerState{}
+	ownerCount := 0
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			state.hasUnknown = true
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	if ownerCount == 0 && state.ownerCount == 0 {
+		diagnostics.AddError("missing", "missing") // want "validator diagnostic may be emitted while item.Role is unknown"
+	}
+}
+
+func validateSelectorTrackerSafely(items []testItem, diagnostics *diag.Diagnostics) {
+	state := selectorTrackerState{}
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			state.hasUnknown = true
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			state.ownerCount++
+		}
+	}
+	if state.ownerCount == 0 && !state.hasUnknown {
+		diagnostics.AddError("missing", "missing")
+	}
 }
 
 func validateOwnersWithInterveningStatement(items []testItem, diagnostics *diag.Diagnostics) {

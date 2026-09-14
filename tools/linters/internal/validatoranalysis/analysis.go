@@ -148,6 +148,30 @@ func Predicate(pass *analysis.Pass, call *ast.CallExpr) (PredicateKind, ValueRef
 	return kind, value, ok
 }
 
+// Accessor resolves a Terraform value accessor that can collapse Unknown into
+// a zero value or expose collection contents requiring a known container.
+func Accessor(pass *analysis.Pass, call *ast.CallExpr) (string, ValueRef, bool) {
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return "", ValueRef{}, false
+	}
+	switch selector.Sel.Name {
+	case "ValueString", "ValueStringPointer",
+		"ValueBool", "ValueBoolPointer",
+		"ValueInt64", "ValueInt64Pointer",
+		"ValueFloat64", "ValueFloat64Pointer",
+		"ValueBigFloat", "ValueBigInt",
+		"Elements", "ElementsAs", "Attributes", "AttributesAs":
+	default:
+		return "", ValueRef{}, false
+	}
+	if !implementsAttrValue(pass, pass.TypesInfo.TypeOf(selector.X)) {
+		return "", ValueRef{}, false
+	}
+	value, ok := Value(pass, selector.X)
+	return selector.Sel.Name, value, ok
+}
+
 // IsDiagnosticCall reports whether call invokes a framework diag.Diagnostics method.
 func IsDiagnosticCall(pass *analysis.Pass, call *ast.CallExpr) bool {
 	selector, ok := call.Fun.(*ast.SelectorExpr)
@@ -260,12 +284,34 @@ func AnalyzeKnownFacts(pass *analysis.Pass, body *ast.BlockStmt) KnownFacts {
 			}
 		})
 	}
+	var recordExpression func(ast.Expr, ValueSet)
+	recordExpression = func(expression ast.Expr, known ValueSet) {
+		if expression == nil {
+			return
+		}
+		recordCalls(expression, known)
+		switch expression := expression.(type) {
+		case *ast.ParenExpr:
+			recordExpression(expression.X, known)
+		case *ast.UnaryExpr:
+			recordExpression(expression.X, known)
+		case *ast.BinaryExpr:
+			recordExpression(expression.X, known)
+			if expression.Op == token.LAND || expression.Op == token.LOR {
+				rightKnown := CloneValues(known)
+				AddValues(rightKnown, KnownValuesWhen(pass, expression.X, expression.Op == token.LAND))
+				recordExpression(expression.Y, rightKnown)
+			} else {
+				recordExpression(expression.Y, known)
+			}
+		}
+	}
 
 	var visitBlock func(*ast.BlockStmt, ValueSet) (ValueSet, bool)
 	var visitIf func(*ast.IfStmt, ValueSet) (ValueSet, bool)
 	visitIf = func(statement *ast.IfStmt, incoming ValueSet) (ValueSet, bool) {
 		recordCalls(statement.Init, incoming)
-		recordCalls(statement.Cond, incoming)
+		recordExpression(statement.Cond, incoming)
 
 		trueKnown := CloneValues(incoming)
 		AddValues(trueKnown, KnownValuesWhen(pass, statement.Cond, true))
@@ -305,7 +351,7 @@ func AnalyzeKnownFacts(pass *analysis.Pass, body *ast.BlockStmt) KnownFacts {
 				}
 			case *ast.ForStmt:
 				recordCalls(statement.Init, known)
-				recordCalls(statement.Cond, known)
+				recordExpression(statement.Cond, known)
 				recordCalls(statement.Post, known)
 				_, _ = visitBlock(statement.Body, known)
 			case *ast.RangeStmt:

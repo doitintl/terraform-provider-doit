@@ -72,10 +72,28 @@ func analyzeFunction(pass *analysis.Pass, declaration *ast.FuncDecl) FunctionFac
 	}
 	parents := parentMap(declaration.Body)
 	reported := map[token.Pos]bool{}
+	reportedConditions := map[token.Pos]bool{}
 
 	ast.Inspect(declaration.Body, func(node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)
 		if !ok {
+			return true
+		}
+		condition := containingIfCondition(call, declaration.Body, parents)
+		if accessor, value, ok := validatoranalysis.Accessor(pass, call); ok {
+			if !valueIsKnown(facts.KnownAtCall[call.Pos()], value) {
+				facts.Conforms = false
+				if condition != nil && reportedConditions[condition.Pos()] {
+					return true
+				}
+				if !reported[call.Pos()] {
+					reported[call.Pos()] = true
+					if condition != nil {
+						reportedConditions[condition.Pos()] = true
+					}
+					pass.Reportf(call.Pos(), "Terraform value accessor %s requires a dominating unknown guard", accessor)
+				}
+			}
 			return true
 		}
 		kind, value, ok := validatoranalysis.Predicate(pass, call)
@@ -84,8 +102,14 @@ func analyzeFunction(pass *analysis.Pass, declaration *ast.FuncDecl) FunctionFac
 		}
 		fail := func(message string) {
 			facts.Conforms = false
+			if condition != nil && reportedConditions[condition.Pos()] {
+				return
+			}
 			if !reported[call.Pos()] {
 				reported[call.Pos()] = true
+				if condition != nil {
+					reportedConditions[condition.Pos()] = true
+				}
 				pass.Reportf(call.Pos(), "%s", message)
 			}
 		}
@@ -95,14 +119,11 @@ func analyzeFunction(pass *analysis.Pass, declaration *ast.FuncDecl) FunctionFac
 			return true
 		}
 		if hasPredicateAliasAncestor(call, declaration.Body, parents) {
-			if kind == validatoranalysis.PredicateNull && valueIsKnown(facts.KnownAtCall[call.Pos()], value) {
-				return true
-			}
 			fail("do not store IsUnknown or IsNull results; use the predicate directly in a canonical validator guard")
 			return true
 		}
 
-		ifStatement := containingIfCondition(call, declaration.Body, parents)
+		ifStatement := condition
 		if ifStatement == nil {
 			if kind == validatoranalysis.PredicateNull && valueIsKnown(facts.KnownAtCall[call.Pos()], value) && hasSwitchAncestor(call, declaration.Body, parents) {
 				return true

@@ -5,7 +5,6 @@ package validatordefer
 import (
 	"go/ast"
 	"go/token"
-	"go/types"
 	"sort"
 	"strings"
 
@@ -154,19 +153,19 @@ func (state *functionAnalysis) checkUncertainLoopCounts(body *ast.BlockStmt) {
 						intervening = append(intervening, following)
 						continue
 					}
-					counts := minimumCountObjects(state.pass, conditional.Cond)
+					counts := minimumCountValues(state.pass, conditional.Cond)
 					if len(counts) == 0 {
 						continue
 					}
-					references := referencedObjects(state.pass, conditional.Cond)
+					references := referencedValues(state.pass, conditional.Cond)
 					var unsafe []validatoranalysis.ValueRef
 					for _, branch := range branches {
-						relevant := cloneObjectSet(counts)
-						addObjects(relevant, branch.trackers)
-						if statementsMentionObjects(state.pass, intervening, relevant) {
+						relevant := cloneValueKeys(counts)
+						addValueKeys(relevant, branch.trackers)
+						if statementsMentionValues(state.pass, intervening, relevant) {
 							continue
 						}
-						if !intersectsObjects(branch.trackers, references) {
+						if !intersectsValueKeys(branch.trackers, references) {
 							unsafe = append(unsafe, branch.values...)
 						}
 					}
@@ -194,24 +193,30 @@ func (state *functionAnalysis) checkUncertainLoopCounts(body *ast.BlockStmt) {
 	visitBlock(body)
 }
 
-func cloneObjectSet(values map[types.Object]bool) map[types.Object]bool {
-	result := map[types.Object]bool{}
-	addObjects(result, values)
+type valueKeySet map[validatoranalysis.ValueKey]bool
+
+func cloneValueKeys(values valueKeySet) valueKeySet {
+	result := valueKeySet{}
+	addValueKeys(result, values)
 	return result
 }
 
-func addObjects(destination, values map[types.Object]bool) {
-	for object := range values {
-		destination[object] = true
+func addValueKeys(destination, values valueKeySet) {
+	for value := range values {
+		destination[value] = true
 	}
 }
 
-func statementsMentionObjects(pass *analysis.Pass, statements []ast.Stmt, objects map[types.Object]bool) bool {
+func statementsMentionValues(pass *analysis.Pass, statements []ast.Stmt, values valueKeySet) bool {
 	for _, statement := range statements {
 		mentioned := false
 		validatoranalysis.Inspect(statement, func(node ast.Node) {
-			identifier, ok := node.(*ast.Ident)
-			if ok && objects[pass.TypesInfo.ObjectOf(identifier)] {
+			expression, ok := valueExpression(node)
+			if !ok {
+				return
+			}
+			value, ok := validatoranalysis.Value(pass, expression)
+			if ok && values[value.Key] {
 				mentioned = true
 			}
 		})
@@ -224,7 +229,7 @@ func statementsMentionObjects(pass *analysis.Pass, statements []ast.Stmt, object
 
 type unknownBranch struct {
 	values   []validatoranalysis.ValueRef
-	trackers map[types.Object]bool
+	trackers valueKeySet
 }
 
 func unknownContinueBranches(
@@ -241,12 +246,12 @@ func unknownContinueBranches(
 		if tracker, ok := trackers[statement.Pos()]; ok {
 			branches = append(branches, unknownBranch{
 				values:   tracker.Values,
-				trackers: map[types.Object]bool{tracker.Tracker.Key.Root: true},
+				trackers: valueKeySet{tracker.Tracker.Key: true},
 			})
 			continue
 		}
 		if values := guards[statement.Pos()]; len(values) > 0 {
-			branches = append(branches, unknownBranch{values: values, trackers: map[types.Object]bool{}})
+			branches = append(branches, unknownBranch{values: values, trackers: valueKeySet{}})
 		}
 	}
 	return branches
@@ -260,57 +265,71 @@ func endsWithContinue(body *ast.BlockStmt) bool {
 	return ok && branch.Tok == token.CONTINUE
 }
 
-func minimumCountObjects(pass *analysis.Pass, expression ast.Expr) map[types.Object]bool {
-	objects := map[types.Object]bool{}
+func minimumCountValues(pass *analysis.Pass, expression ast.Expr) valueKeySet {
+	values := valueKeySet{}
 	ast.Inspect(expression, func(node ast.Node) bool {
 		binary, ok := node.(*ast.BinaryExpr)
 		if !ok {
 			return true
 		}
-		if identifier := minimumCountIdentifier(binary); identifier != nil {
-			objects[pass.TypesInfo.ObjectOf(identifier)] = true
+		if expression := minimumCountExpression(binary); expression != nil {
+			if value, ok := validatoranalysis.Value(pass, expression); ok {
+				values[value.Key] = true
+			}
 		}
 		return true
 	})
-	delete(objects, nil)
-	return objects
+	return values
 }
 
-func minimumCountIdentifier(binary *ast.BinaryExpr) *ast.Ident {
-	if left, ok := binary.X.(*ast.Ident); ok {
-		if right, ok := binary.Y.(*ast.BasicLit); ok && right.Kind == token.INT {
-			if (right.Value == "0" && (binary.Op == token.EQL || binary.Op == token.LEQ)) ||
-				(right.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.LSS)) {
-				return left
-			}
+func minimumCountExpression(binary *ast.BinaryExpr) ast.Expr {
+	if right, ok := binary.Y.(*ast.BasicLit); ok && right.Kind == token.INT {
+		if (right.Value == "0" && (binary.Op == token.EQL || binary.Op == token.LEQ)) ||
+			(right.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.LSS)) {
+			return binary.X
 		}
 	}
-	if right, ok := binary.Y.(*ast.Ident); ok {
-		if left, ok := binary.X.(*ast.BasicLit); ok && left.Kind == token.INT {
-			if (left.Value == "0" && (binary.Op == token.EQL || binary.Op == token.GEQ)) ||
-				(left.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.GTR)) {
-				return right
-			}
+	if left, ok := binary.X.(*ast.BasicLit); ok && left.Kind == token.INT {
+		if (left.Value == "0" && (binary.Op == token.EQL || binary.Op == token.GEQ)) ||
+			(left.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.GTR)) {
+			return binary.Y
 		}
 	}
 	return nil
 }
 
-func referencedObjects(pass *analysis.Pass, expression ast.Expr) map[types.Object]bool {
-	objects := map[types.Object]bool{}
+func referencedValues(pass *analysis.Pass, expression ast.Expr) valueKeySet {
+	values := valueKeySet{}
 	ast.Inspect(expression, func(node ast.Node) bool {
-		if identifier, ok := node.(*ast.Ident); ok {
-			objects[pass.TypesInfo.ObjectOf(identifier)] = true
+		valueExpression, ok := valueExpression(node)
+		if !ok {
+			return true
 		}
-		return true
+		if value, ok := validatoranalysis.Value(pass, valueExpression); ok {
+			values[value.Key] = true
+		}
+		_, compound := valueExpression.(*ast.Ident)
+		return compound
 	})
-	delete(objects, nil)
-	return objects
+	return values
 }
 
-func intersectsObjects(left, right map[types.Object]bool) bool {
-	for object := range left {
-		if right[object] {
+func valueExpression(node ast.Node) (ast.Expr, bool) {
+	switch node := node.(type) {
+	case *ast.Ident:
+		return node, true
+	case *ast.SelectorExpr:
+		return node, true
+	case *ast.IndexExpr:
+		return node, true
+	default:
+		return nil, false
+	}
+}
+
+func intersectsValueKeys(left, right valueKeySet) bool {
+	for value := range left {
+		if right[value] {
 			return true
 		}
 	}

@@ -654,25 +654,17 @@ func validateReportCumulativeDimensions(ctx context.Context, dimensions types.Li
 		return
 	}
 
-	hasUnknown := false
-	for _, value := range values {
-		if value.IsUnknown() || value.Id.IsUnknown() || value.DimensionsType.IsUnknown() {
-			hasUnknown = true
-			continue
-		}
-	}
-	if hasUnknown {
-		return
-	}
-
 	expected := []string{"year", "month", "day"}
 	valid := len(values) == len(expected)
-	if valid {
-		for index, expectedID := range expected {
-			if values[index].Id.ValueString() != expectedID || values[index].DimensionsType.ValueString() != "datetime" {
-				valid = false
-				break
-			}
+	for index, value := range values {
+		if !valid {
+			continue
+		}
+		if value.IsUnknown() {
+			continue
+		}
+		if knownStringDiffers(value.Id, expected[index]) || knownStringDiffers(value.DimensionsType, "datetime") {
+			valid = false
 		}
 	}
 	if !valid {
@@ -684,21 +676,18 @@ func validateReportCumulativeDimensions(ctx context.Context, dimensions types.Li
 	}
 }
 
+func knownStringDiffers(value types.String, expected string) bool {
+	if value.IsUnknown() {
+		return false
+	}
+	if value.IsNull() {
+		return true
+	}
+	return value.ValueString() != expected
+}
+
 func validateReportCumulativeMetrics(metrics types.List, diags *diag.Diagnostics) {
 	if metrics.IsUnknown() {
-		return
-	}
-
-	hasUnknown := false
-	if !metrics.IsNull() {
-		for _, metric := range metrics.Elements() {
-			if metric.IsUnknown() {
-				hasUnknown = true
-				continue
-			}
-		}
-	}
-	if hasUnknown {
 		return
 	}
 
