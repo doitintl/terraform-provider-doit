@@ -6,6 +6,8 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_alert"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -58,6 +60,34 @@ func buildAlertValidatorConfig(
 	return tfsdk.Config{
 		Schema: schema,
 		Raw:    tftypes.NewValue(schemaType, attrValues),
+	}
+}
+
+func assertAlertValidatorDiagnostics(t *testing.T, diagnostics diag.Diagnostics, wantError bool, wantSummary string, wantPath path.Path) {
+	t.Helper()
+	wantCount := 0
+	if wantError {
+		wantCount = 1
+	}
+	if len(diagnostics) != wantCount {
+		t.Fatalf("diagnostic count = %d, want %d: %v", len(diagnostics), wantCount, diagnostics)
+	}
+	if !wantError {
+		return
+	}
+	diagnostic := diagnostics[0]
+	if diagnostic.Severity() != diag.SeverityError {
+		t.Errorf("severity = %s, want error", diagnostic.Severity())
+	}
+	if diagnostic.Summary() != wantSummary {
+		t.Errorf("summary = %q, want %q", diagnostic.Summary(), wantSummary)
+	}
+	withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+	if !ok {
+		t.Fatalf("diagnostic %T has no path", diagnostic)
+	}
+	if got := withPath.Path(); !got.Equal(wantPath) {
+		t.Errorf("path = %s, want %s", got, wantPath)
 	}
 }
 
@@ -115,11 +145,18 @@ func TestAlertRecipientsValidator(t *testing.T) {
 		slackChannels attr.Value
 		wantError     bool
 		errorSummary  string
+		wantPath      path.Path
 	}{
 		{
 			name:          "both omitted (null) is valid (defaults to owner)",
 			recipients:    recipientsNull,
 			slackChannels: slackNull,
+			wantError:     false,
+		},
+		{
+			name:          "both unknown is deferred",
+			recipients:    recipientsUnknown,
+			slackChannels: slackUnknown,
 			wantError:     false,
 		},
 		{
@@ -135,6 +172,12 @@ func TestAlertRecipientsValidator(t *testing.T) {
 			wantError:     false,
 		},
 		{
+			name:          "recipients populated, slack unknown is valid",
+			recipients:    recipientsPopulated,
+			slackChannels: slackUnknown,
+			wantError:     false,
+		},
+		{
 			name:          "recipients empty, slack populated is valid",
 			recipients:    recipientsEmpty,
 			slackChannels: slackPopulated,
@@ -146,6 +189,7 @@ func TestAlertRecipientsValidator(t *testing.T) {
 			slackChannels: slackNull,
 			wantError:     true,
 			errorSummary:  "At Least One Recipient Required",
+			wantPath:      path.Root("recipients"),
 		},
 		{
 			name:          "recipients empty, slack empty is invalid",
@@ -153,6 +197,7 @@ func TestAlertRecipientsValidator(t *testing.T) {
 			slackChannels: slackEmpty,
 			wantError:     true,
 			errorSummary:  "At Least One Recipient Required",
+			wantPath:      path.Root("recipients"),
 		},
 		{
 			name:          "recipients null, slack empty is invalid",
@@ -160,6 +205,7 @@ func TestAlertRecipientsValidator(t *testing.T) {
 			slackChannels: slackEmpty,
 			wantError:     true,
 			errorSummary:  "At Least One Destination Required",
+			wantPath:      path.Root("recipients_slack_channels"),
 		},
 		{
 			name:          "recipients unknown is deferred",
@@ -185,11 +231,7 @@ func TestAlertRecipientsValidator(t *testing.T) {
 			if got := resp.Diagnostics.HasError(); got != tt.wantError {
 				t.Fatalf("HasError() = %v, want %v (diags: %v)", got, tt.wantError, resp.Diagnostics)
 			}
-			if tt.wantError && tt.errorSummary != "" {
-				if summary := resp.Diagnostics.Errors()[0].Summary(); summary != tt.errorSummary {
-					t.Errorf("summary = %q, want %q", summary, tt.errorSummary)
-				}
-			}
+			assertAlertValidatorDiagnostics(t, resp.Diagnostics, tt.wantError, tt.errorSummary, tt.wantPath)
 		})
 	}
 }
@@ -241,6 +283,8 @@ func makeTestAlertConfigValue(
 func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 	ctx := t.Context()
 
+	rangePath := path.Root("config").AtName("ignore_values_range")
+
 	validRange, d := resource_alert.NewIgnoreValuesRangeValue(
 		resource_alert.IgnoreValuesRangeValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
@@ -274,6 +318,28 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 		t.Fatalf("invertedRange: %v", d)
 	}
 
+	unknownLowerRange, d := resource_alert.NewIgnoreValuesRangeValue(
+		resource_alert.IgnoreValuesRangeValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"lower_bound": types.Float64Unknown(),
+			"upper_bound": types.Float64Value(10.0),
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("unknownLowerRange: %v", d)
+	}
+
+	unknownUpperRange, d := resource_alert.NewIgnoreValuesRangeValue(
+		resource_alert.IgnoreValuesRangeValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"lower_bound": types.Float64Value(10.0),
+			"upper_bound": types.Float64Unknown(),
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("unknownUpperRange: %v", d)
+	}
+
 	rangeNull := resource_alert.NewIgnoreValuesRangeValueNull()
 	rangeUnknown := resource_alert.NewIgnoreValuesRangeValueUnknown()
 
@@ -283,6 +349,7 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 		ignoreValuesRange attr.Value
 		wantError         bool
 		errorSummary      string
+		wantPath          path.Path
 	}{
 		{
 			name:              "null range with condition percentage-change is valid",
@@ -314,6 +381,7 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 			ignoreValuesRange: invertedRange,
 			wantError:         true,
 			errorSummary:      "Invalid Ignore Values Range Bounds",
+			wantPath:          rangePath.AtName("lower_bound"),
 		},
 		{
 			name:              "range configured with condition value is invalid",
@@ -321,6 +389,7 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 			ignoreValuesRange: validRange,
 			wantError:         true,
 			errorSummary:      "Invalid Ignore Values Range Condition",
+			wantPath:          rangePath,
 		},
 		{
 			name:              "range configured with condition forecasted-value is invalid",
@@ -328,6 +397,15 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 			ignoreValuesRange: validRange,
 			wantError:         true,
 			errorSummary:      "Invalid Ignore Values Range Condition",
+			wantPath:          rangePath,
+		},
+		{
+			name:              "range configured with null condition is invalid",
+			condition:         types.StringNull(),
+			ignoreValuesRange: validRange,
+			wantError:         true,
+			errorSummary:      "Invalid Ignore Values Range Condition",
+			wantPath:          rangePath,
 		},
 		{
 			name:              "range configured with unknown condition is deferred",
@@ -339,6 +417,18 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 			name:              "unknown range is deferred",
 			condition:         types.StringValue("percentage-change"),
 			ignoreValuesRange: rangeUnknown,
+			wantError:         false,
+		},
+		{
+			name:              "range with unknown lower bound is deferred",
+			condition:         types.StringValue("percentage-change"),
+			ignoreValuesRange: unknownLowerRange,
+			wantError:         false,
+		},
+		{
+			name:              "range with unknown upper bound is deferred",
+			condition:         types.StringValue("percentage-change"),
+			ignoreValuesRange: unknownUpperRange,
 			wantError:         false,
 		},
 	}
@@ -354,11 +444,7 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 			if got := resp.Diagnostics.HasError(); got != tt.wantError {
 				t.Fatalf("HasError() = %v, want %v (diags: %v)", got, tt.wantError, resp.Diagnostics)
 			}
-			if tt.wantError && tt.errorSummary != "" {
-				if summary := resp.Diagnostics.Errors()[0].Summary(); summary != tt.errorSummary {
-					t.Errorf("summary = %q, want %q", summary, tt.errorSummary)
-				}
-			}
+			assertAlertValidatorDiagnostics(t, resp.Diagnostics, tt.wantError, tt.errorSummary, tt.wantPath)
 		})
 	}
 }
@@ -366,7 +452,7 @@ func TestAlertIgnoreValuesRangeValidator(t *testing.T) {
 func makeSlackChannel(
 	ctx context.Context,
 	t *testing.T,
-	id string,
+	id attr.Value,
 	shared attr.Value,
 	workspace attr.Value,
 ) resource_alert.RecipientsSlackChannelsValue {
@@ -375,7 +461,7 @@ func makeSlackChannel(
 		resource_alert.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
 			"customer_id": types.StringNull(),
-			"id":          types.StringValue(id),
+			"id":          id,
 			"name":        types.StringNull(),
 			"shared":      shared,
 			"type":        types.StringNull(),
@@ -390,147 +476,157 @@ func makeSlackChannel(
 
 func TestAlertSlackChannelsValidator(t *testing.T) {
 	ctx := t.Context()
+	channelsPath := path.Root("recipients_slack_channels")
+
+	elementType := resource_alert.RecipientsSlackChannelsValue{}.Type(ctx)
+	list := func(values ...attr.Value) types.List {
+		return types.ListValueMust(elementType, values)
+	}
+
+	sharedValid := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringNull())
+	sharedWithWs := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringValue("my-workspace"))
+	wsValid := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringValue("my-workspace"))
+	wsWithoutWs := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringNull())
+	sharedNullWithWs := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolNull(), types.StringValue("my-workspace"))
+	sharedNullWithoutWs := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolNull(), types.StringNull())
+
+	chShared1 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringNull())
+	chShared2 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringNull())
+	chWsA1 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringValue("workspace-a"))
+	chWsA2 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringValue("workspace-a"))
+	chWsB := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringValue("workspace-b"))
+
+	unknownShared := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolUnknown(), types.StringValue("workspace-a"))
+	unknownWorkspace := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringUnknown())
+	unknownId1 := makeSlackChannel(ctx, t, types.StringUnknown(), types.BoolValue(true), types.StringNull())
+	unknownId2 := makeSlackChannel(ctx, t, types.StringUnknown(), types.BoolValue(true), types.StringNull())
+
+	unknownElement := resource_alert.NewRecipientsSlackChannelsValueUnknown()
+	nullElement := resource_alert.NewRecipientsSlackChannelsValueNull()
 
 	tests := []struct {
 		name         string
-		channels     func() types.List
+		channels     types.List
 		wantError    bool
 		errorSummary string
+		wantPath     path.Path
 	}{
 		{
-			name: "shared true without workspace is valid",
-			channels: func() types.List {
-				ch := makeSlackChannel(ctx, t, "C123", types.BoolValue(true), types.StringNull())
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
+			name:      "unknown list is deferred",
+			channels:  types.ListUnknown(elementType),
 			wantError: false,
 		},
 		{
-			name: "shared true with workspace is invalid",
-			channels: func() types.List {
-				ch := makeSlackChannel(ctx, t, "C123", types.BoolValue(true), types.StringValue("my-workspace"))
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
-			wantError:    true,
-			errorSummary: "Invalid Slack Channel Shape",
-		},
-		{
-			name: "shared false with workspace is valid",
-			channels: func() types.List {
-				ch := makeSlackChannel(ctx, t, "C123", types.BoolValue(false), types.StringValue("my-workspace"))
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
+			name:      "unknown element is deferred",
+			channels:  list(unknownElement),
 			wantError: false,
 		},
 		{
-			name: "shared false without workspace is invalid",
-			channels: func() types.List {
-				ch := makeSlackChannel(ctx, t, "C123", types.BoolValue(false), types.StringNull())
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
-			wantError:    true,
-			errorSummary: "Invalid Slack Channel Shape",
-		},
-		{
-			name: "shared null (omitted) with workspace is valid",
-			channels: func() types.List {
-				ch := makeSlackChannel(ctx, t, "C123", types.BoolNull(), types.StringValue("my-workspace"))
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
+			name:      "null element is skipped safely",
+			channels:  list(nullElement, sharedValid),
 			wantError: false,
 		},
 		{
-			name: "shared null (omitted) without workspace is invalid",
-			channels: func() types.List {
-				ch := makeSlackChannel(ctx, t, "C123", types.BoolNull(), types.StringNull())
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
-			wantError:    true,
-			errorSummary: "Invalid Slack Channel Shape",
+			name:      "shared true without workspace is valid",
+			channels:  list(sharedValid),
+			wantError: false,
 		},
 		{
-			name: "duplicate shared channel is invalid",
-			channels: func() types.List {
-				ch1 := makeSlackChannel(ctx, t, "C123", types.BoolValue(true), types.StringNull())
-				ch2 := makeSlackChannel(ctx, t, "C123", types.BoolValue(true), types.StringNull())
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch1, ch2})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
+			name:         "shared true with workspace is invalid",
+			channels:     list(sharedWithWs),
+			wantError:    true,
+			errorSummary: "Invalid Slack Channel Shape",
+			wantPath:     channelsPath.AtListIndex(0).AtName("workspace"),
+		},
+		{
+			name:      "shared false with workspace is valid",
+			channels:  list(wsValid),
+			wantError: false,
+		},
+		{
+			name:         "shared false without workspace is invalid",
+			channels:     list(wsWithoutWs),
+			wantError:    true,
+			errorSummary: "Invalid Slack Channel Shape",
+			wantPath:     channelsPath.AtListIndex(0).AtName("workspace"),
+		},
+		{
+			name:      "shared null (omitted) with workspace is valid",
+			channels:  list(sharedNullWithWs),
+			wantError: false,
+		},
+		{
+			name:         "shared null (omitted) without workspace is invalid",
+			channels:     list(sharedNullWithoutWs),
+			wantError:    true,
+			errorSummary: "Invalid Slack Channel Shape",
+			wantPath:     channelsPath.AtListIndex(0).AtName("workspace"),
+		},
+		{
+			name:      "channel with unknown shared is deferred",
+			channels:  list(unknownShared),
+			wantError: false,
+		},
+		{
+			name:      "channel with unknown workspace is deferred",
+			channels:  list(unknownWorkspace),
+			wantError: false,
+		},
+		{
+			name:      "channels with unknown id do not trigger false duplicate",
+			channels:  list(unknownId1, unknownId2),
+			wantError: false,
+		},
+		{
+			name:         "duplicate shared channel is invalid",
+			channels:     list(chShared1, chShared2),
 			wantError:    true,
 			errorSummary: "Duplicate Slack Channel",
+			wantPath:     channelsPath.AtListIndex(1),
 		},
 		{
-			name: "duplicate workspace channel is invalid",
-			channels: func() types.List {
-				ch1 := makeSlackChannel(ctx, t, "C123", types.BoolValue(false), types.StringValue("workspace-a"))
-				ch2 := makeSlackChannel(ctx, t, "C123", types.BoolValue(false), types.StringValue("workspace-a"))
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch1, ch2})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
+			name:         "duplicate workspace channel is invalid",
+			channels:     list(chWsA1, chWsA2),
 			wantError:    true,
 			errorSummary: "Duplicate Slack Channel",
+			wantPath:     channelsPath.AtListIndex(1),
 		},
 		{
-			name: "same channel ID in different workspaces is valid",
-			channels: func() types.List {
-				ch1 := makeSlackChannel(ctx, t, "C123", types.BoolValue(false), types.StringValue("workspace-a"))
-				ch2 := makeSlackChannel(ctx, t, "C123", types.BoolValue(false), types.StringValue("workspace-b"))
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch1, ch2})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
+			name:         "unknown element before known invalid channel still reports invalid channel",
+			channels:     list(unknownElement, sharedWithWs),
+			wantError:    true,
+			errorSummary: "Invalid Slack Channel Shape",
+			wantPath:     channelsPath.AtListIndex(1).AtName("workspace"),
+		},
+		{
+			name:         "unknown element after known invalid channel still reports invalid channel",
+			channels:     list(sharedWithWs, unknownElement),
+			wantError:    true,
+			errorSummary: "Invalid Slack Channel Shape",
+			wantPath:     channelsPath.AtListIndex(0).AtName("workspace"),
+		},
+		{
+			name:         "unknown element between duplicate channels still reports duplicate",
+			channels:     list(chShared1, unknownElement, chShared2),
+			wantError:    true,
+			errorSummary: "Duplicate Slack Channel",
+			wantPath:     channelsPath.AtListIndex(2),
+		},
+		{
+			name:      "same channel ID in different workspaces is valid",
+			channels:  list(chWsA1, chWsB),
 			wantError: false,
 		},
 		{
-			name: "same channel ID one shared and one in workspace is valid",
-			channels: func() types.List {
-				ch1 := makeSlackChannel(ctx, t, "C123", types.BoolValue(true), types.StringNull())
-				ch2 := makeSlackChannel(ctx, t, "C123", types.BoolValue(false), types.StringValue("workspace-a"))
-				l, d := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{ch1, ch2})
-				if d.HasError() {
-					t.Fatalf("ListValueFrom: %v", d)
-				}
-				return l
-			},
+			name:      "same channel ID one shared and one in workspace is valid",
+			channels:  list(chShared1, chWsA1),
 			wantError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := buildAlertValidatorConfig(ctx, t, nil, tt.channels(), nil)
+			cfg := buildAlertValidatorConfig(ctx, t, nil, tt.channels, nil)
 			req := resource.ValidateConfigRequest{Config: cfg}
 			resp := &resource.ValidateConfigResponse{}
 			alertSlackChannelsValidator{}.ValidateResource(ctx, req, resp)
@@ -538,11 +634,7 @@ func TestAlertSlackChannelsValidator(t *testing.T) {
 			if got := resp.Diagnostics.HasError(); got != tt.wantError {
 				t.Fatalf("HasError() = %v, want %v (diags: %v)", got, tt.wantError, resp.Diagnostics)
 			}
-			if tt.wantError && tt.errorSummary != "" {
-				if summary := resp.Diagnostics.Errors()[0].Summary(); summary != tt.errorSummary {
-					t.Errorf("summary = %q, want %q", summary, tt.errorSummary)
-				}
-			}
+			assertAlertValidatorDiagnostics(t, resp.Diagnostics, tt.wantError, tt.errorSummary, tt.wantPath)
 		})
 	}
 }
