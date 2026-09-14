@@ -306,19 +306,52 @@ func AnalyzeKnownFacts(pass *analysis.Pass, body *ast.BlockStmt) KnownFacts {
 			}
 		}
 	}
+	invalidateValue := func(known ValueSet, expression ast.Expr) {
+		assigned, ok := Value(pass, expression)
+		if !ok {
+			return
+		}
+		for candidate := range known {
+			if candidate.Root != assigned.Key.Root {
+				continue
+			}
+			if assigned.Key.Path == "" || candidate.Path == assigned.Key.Path ||
+				strings.HasPrefix(candidate.Path, assigned.Key.Path+".") ||
+				strings.HasPrefix(candidate.Path, assigned.Key.Path+"[*]") {
+				delete(known, candidate)
+			}
+		}
+	}
+	invalidateAssignments := func(node ast.Node, known ValueSet) {
+		if node == nil {
+			return
+		}
+		Inspect(node, func(candidate ast.Node) {
+			switch statement := candidate.(type) {
+			case *ast.AssignStmt:
+				for _, expression := range statement.Lhs {
+					invalidateValue(known, expression)
+				}
+			case *ast.IncDecStmt:
+				invalidateValue(known, statement.X)
+			}
+		})
+	}
 
 	var visitBlock func(*ast.BlockStmt, ValueSet) (ValueSet, bool)
 	var visitIf func(*ast.IfStmt, ValueSet) (ValueSet, bool)
 	visitIf = func(statement *ast.IfStmt, incoming ValueSet) (ValueSet, bool) {
 		recordCalls(statement.Init, incoming)
-		recordExpression(statement.Cond, incoming)
+		initialized := CloneValues(incoming)
+		invalidateAssignments(statement.Init, initialized)
+		recordExpression(statement.Cond, initialized)
 
-		trueKnown := CloneValues(incoming)
+		trueKnown := CloneValues(initialized)
 		AddValues(trueKnown, KnownValuesWhen(pass, statement.Cond, true))
 		facts.AtIf[statement.Pos()] = CloneValues(trueKnown)
 		trueKnown, trueContinues := visitBlock(statement.Body, trueKnown)
 
-		falseKnown := CloneValues(incoming)
+		falseKnown := CloneValues(initialized)
 		AddValues(falseKnown, KnownValuesWhen(pass, statement.Cond, false))
 		falseContinues := true
 		switch alternative := statement.Else.(type) {
@@ -351,12 +384,22 @@ func AnalyzeKnownFacts(pass *analysis.Pass, body *ast.BlockStmt) KnownFacts {
 				}
 			case *ast.ForStmt:
 				recordCalls(statement.Init, known)
-				recordExpression(statement.Cond, known)
-				recordCalls(statement.Post, known)
-				_, _ = visitBlock(statement.Body, known)
+				loopKnown := CloneValues(known)
+				invalidateAssignments(statement.Init, loopKnown)
+				invalidateAssignments(statement.Post, loopKnown)
+				invalidateAssignments(statement.Body, loopKnown)
+				recordExpression(statement.Cond, loopKnown)
+				recordCalls(statement.Post, loopKnown)
+				_, _ = visitBlock(statement.Body, loopKnown)
+				known = loopKnown
 			case *ast.RangeStmt:
 				recordCalls(statement.X, known)
-				_, _ = visitBlock(statement.Body, known)
+				loopKnown := CloneValues(known)
+				invalidateValue(loopKnown, statement.Key)
+				invalidateValue(loopKnown, statement.Value)
+				invalidateAssignments(statement.Body, loopKnown)
+				_, _ = visitBlock(statement.Body, loopKnown)
+				known = loopKnown
 			case *ast.BlockStmt:
 				var continues bool
 				known, continues = visitBlock(statement, known)
@@ -373,6 +416,7 @@ func AnalyzeKnownFacts(pass *analysis.Pass, body *ast.BlockStmt) KnownFacts {
 				}
 			default:
 				recordCalls(statement, known)
+				invalidateAssignments(statement, known)
 			}
 		}
 		return known, true

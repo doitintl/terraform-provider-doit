@@ -104,6 +104,69 @@ func (*badUnguardedAccessor) ValidateString(_ context.Context, req validator.Str
 	}
 }
 
+type badReassignedAccessor struct{}
+
+func (*badReassignedAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	if value.IsUnknown() {
+		return
+	}
+	value = types.StringUnknown()
+	_ = value.ValueString() // want "Terraform value accessor ValueString requires a dominating unknown guard"
+}
+
+type reassignedState struct {
+	value   types.String
+	sibling types.String
+}
+
+type badReassignedSelectorAccessor struct{}
+
+func (*badReassignedSelectorAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	state := reassignedState{value: types.StringUnknown()}
+	if state.value.IsUnknown() {
+		return
+	}
+	state.value = types.StringUnknown()
+	_ = state.value.ValueString() // want "Terraform value accessor ValueString requires a dominating unknown guard"
+}
+
+type badReassignedRootAccessor struct{}
+
+func (*badReassignedRootAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	state := reassignedState{value: types.StringUnknown()}
+	if state.value.IsUnknown() {
+		return
+	}
+	state = reassignedState{value: types.StringUnknown()}
+	_ = state.value.ValueString() // want "Terraform value accessor ValueString requires a dominating unknown guard"
+}
+
+type goodReassignedAndReguardedAccessor struct{}
+
+func (*goodReassignedAndReguardedAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	value := types.StringUnknown()
+	if value.IsUnknown() {
+		return
+	}
+	value = types.StringUnknown()
+	if value.IsUnknown() {
+		return
+	}
+	_ = value.ValueString()
+}
+
+type goodSiblingReassignmentAccessor struct{}
+
+func (*goodSiblingReassignmentAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	state := reassignedState{value: types.StringUnknown(), sibling: types.StringUnknown()}
+	if state.sibling.IsUnknown() {
+		return
+	}
+	state.value = types.StringUnknown()
+	_ = state.sibling.ValueString()
+}
+
 type goodGuardedBusinessCondition struct{}
 
 func (*goodGuardedBusinessCondition) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {

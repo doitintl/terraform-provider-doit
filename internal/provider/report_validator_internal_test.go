@@ -1355,6 +1355,24 @@ func TestReportCumulativeComparison_PartialUnknownStillReportsDefiniteErrors(t *
 			wantCount: 0,
 		},
 		{
+			name: "null dimension element is invalid",
+			validate: func(diagnostics *diag.Diagnostics) {
+				values := []resource_report.DimensionsValue{
+					dimension("year", "datetime"),
+					resource_report.NewDimensionsValueNull(),
+					dimension("day", "datetime"),
+				}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build dimensions: %v", listDiags)
+				}
+				validateReportCumulativeDimensions(ctx, list, diagnostics)
+			},
+			wantCount:   1,
+			wantSummary: "Invalid Dimensions Configuration",
+			wantPath:    path.Root("config").AtName("dimensions"),
+		},
+		{
 			name: "two metrics remain invalid with an unknown element",
 			validate: func(diagnostics *diag.Diagnostics) {
 				values := []resource_report.MetricsValue{knownMetric, resource_report.NewMetricsValueUnknown()}
