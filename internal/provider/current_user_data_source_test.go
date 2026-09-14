@@ -18,6 +18,7 @@ func TestAccCurrentUserDataSource_Basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_current_user.test", "email"),
 					resource.TestCheckResourceAttrSet("data.doit_current_user.test", "domain"),
+					resource.TestCheckResourceAttrSet("data.doit_current_user.test", "permissions.#"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan

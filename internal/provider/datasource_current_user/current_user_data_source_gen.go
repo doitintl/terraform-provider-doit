@@ -18,6 +18,12 @@ func CurrentUserDataSourceSchema(ctx context.Context) schema.Schema {
 			"email": schema.StringAttribute{
 				Computed: true,
 			},
+			"permissions": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "The caller's own effective permission names (e.g. \"CloudAnalyticsReadOnly\"), not opaque permission IDs. Empty for a DoiT employee token, which is not scoped to a fixed permission set.",
+				MarkdownDescription: "The caller's own effective permission names (e.g. \"CloudAnalyticsReadOnly\"), not opaque permission IDs. Empty for a DoiT employee token, which is not scoped to a fixed permission set.",
+			},
 		},
 		Description:         "User authentication.",
 		MarkdownDescription: "User authentication.",
@@ -25,6 +31,7 @@ func CurrentUserDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type CurrentUserModel struct {
-	Domain types.String `tfsdk:"domain"`
-	Email  types.String `tfsdk:"email"`
+	Domain      types.String `tfsdk:"domain"`
+	Email       types.String `tfsdk:"email"`
+	Permissions types.List   `tfsdk:"permissions"`
 }
