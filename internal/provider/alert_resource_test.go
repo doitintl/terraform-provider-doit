@@ -1523,8 +1523,9 @@ resource "doit_alert" "this" {
 }
 
 // TestAccAlert_MinimalConfig tests creating an alert with only the absolute
-// minimum required fields, omitting all Optional+Computed config scalars
-// (condition, currency, operator, time_interval, evaluate_for_each, data_source).
+// minimum required fields (name, config.metric, config.time_interval,
+// config.value, config.operator), omitting all Optional+Computed config scalars
+// (condition, currency, evaluate_for_each, data_source).
 // This exercises the overlay code's handling of Unknown values for every
 // Optional+Computed field in the config object.
 func TestAccAlert_MinimalConfig(t *testing.T) {
@@ -1543,7 +1544,6 @@ func TestAccAlert_MinimalConfig(t *testing.T) {
 						"doit_alert.this",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(fmt.Sprintf("test-alert-minimal-%d", n))),
-					// time_interval defaults to "year" via schema default
 					statecheck.ExpectKnownValue(
 						"doit_alert.this",
 						tfjsonpath.New("config").AtMapKey("time_interval"),
@@ -1577,8 +1577,9 @@ resource "doit_alert" "this" {
       type  = "basic"
       value = "cost"
     }
-    value    = 500
-    operator = "gt"
+    time_interval = "year"
+    value         = 500
+    operator      = "gt"
   }
 }
 `, i)
