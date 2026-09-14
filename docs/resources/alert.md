@@ -261,11 +261,13 @@ Required:
 Optional:
 
 - `customer_id` (String)
-- `name` (String) Display name, resolved server-side.
 - `shared` (Boolean)
-- `type` (String) Channel visibility, resolved server-side.
-Possible values: `public`, `private`
 - `workspace` (String) Connected workspace name returned by discovery. Required for a non-shared channel.
+
+Read-Only:
+
+- `name` (String) Display name, resolved server-side.
+- `type` (String) Channel visibility, resolved server-side.
 
 
 <a id="nestedatt--timeouts"></a>
