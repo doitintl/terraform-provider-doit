@@ -150,10 +150,54 @@ paths:
       description: Creates a new alert.
       operationId: createAlert
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/AlertRequest"
+            examples:
+              emailOnly:
+                value:
+                  name: Monthly spend
+                  recipients: [finops@example.com]
+                  config:
+                    {
+                      metric: { type: basic, value: cost },
+                      timeInterval: month,
+                      operator: gt,
+                      condition: value,
+                      currency: USD,
+                      value: 1000,
+                    }
+              slackOnly:
+                value:
+                  name: Spend changes
+                  recipients: []
+                  recipientsSlackChannels: [{ id: C0123456789, workspace: acme }]
+                  config:
+                    {
+                      metric: { type: basic, value: cost },
+                      timeInterval: day,
+                      operator: gt,
+                      condition: percentage-change,
+                      currency: USD,
+                      value: 20,
+                      ignoreValuesRange: { lowerBound: 0, upperBound: 5 },
+                    }
+              mixed:
+                value:
+                  name: Monthly spend
+                  recipients: [finops@example.com]
+                  recipientsSlackChannels: [{ id: C0123456789, shared: true }]
+                  config:
+                    {
+                      metric: { type: basic, value: cost },
+                      timeInterval: month,
+                      operator: gt,
+                      condition: value,
+                      currency: USD,
+                      value: 1000,
+                    }
       responses:
         "201":
           description: Created - The request succeeded.
@@ -183,6 +227,41 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
+  /analytics/v1/alerts/slack-channels:
+    get:
+      tags: [Alerts]
+      summary: List eligible Slack destinations
+      operationId: listAlertSlackChannels
+      description: Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+      parameters:
+        - name: nameContains
+          in: query
+          schema:
+            type: string
+            description: Case-insensitive substring of the channel display name.
+        - name: maxResults
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: Eligible channels and connection status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertSlackChannelList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "503":
+          description: Slack discovery is temporarily unavailable. Retry later.
   "/analytics/v1/alerts/{id}":
     get:
       tags:
@@ -264,8 +343,27 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/AlertUpdateRequest"
-        required: false
+            examples:
+              replaceDestinations:
+                value:
+                  { recipients: [finops@example.com], recipientsSlackChannels: [{ id: C0123456789, workspace: acme }] }
+              clearEmail:
+                summary: Requires a saved Slack destination
+                value: { recipients: [] }
+              clearSlack:
+                summary: Requires a saved email destination
+                value: { recipientsSlackChannels: [] }
+              clearIgnoreRange:
+                value: { config: { ignoreValuesRange: null } }
+              updateIgnoreRange:
+                summary: Requires a percentage-change alert
+                value: { config: { ignoreValuesRange: { lowerBound: 0, upperBound: 10 } } }
+              zeroThreshold:
+                value: { config: { value: 0 } }
+        required: true
       responses:
+        "409":
+          description: The alert changed during the update. Retrieve it and retry against its latest settings.
         "200":
           description: OK - Alert updated.
           content:
@@ -12038,16 +12136,23 @@ components:
           default: ""
         createTime:
           type: integer
-          description: The time when the alert was created (in UNIX timestamp).
+          description: The time when the alert was created (in Unix milliseconds).
           format: int64
         updateTime:
           type: integer
-          description: Last time the alert was modified (in UNIX timestamp).
+          description: Last time the alert was modified (in Unix milliseconds).
           format: int64
         lastAlerted:
           type: integer
-          description: Last time the alert was triggered (in UNIX timestamp).
+          description: Last notification activity in Unix milliseconds. Slack advances this on the first provider acceptance for a detection, which does not confirm final delivery.
+          nullable: true
           format: int64
+        recipientsSlackChannels:
+          type: array
+          maxItems: 50
+          description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+          items:
+            $ref: "#/components/schemas/AlertSlackChannel"
         recipients:
           type: array
           description: List of emails that will be notified when the alert is triggered.
@@ -12061,6 +12166,7 @@ components:
         createTime: 1678628817062
         updateTime: 1678628938891
         lastAlerted: null
+        recipientsSlackChannels: []
         recipients:
           - user1@example.com
           - user2@example.com
@@ -12099,7 +12205,10 @@ components:
         - metric
         - timeInterval
         - value
+        - operator
       properties:
+        ignoreValuesRange:
+          $ref: "#/components/schemas/AlertIgnoreValuesRange"
         dataSource:
           type: string
           description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
@@ -12107,13 +12216,18 @@ components:
           enum:
             - billing
             - billing-datahub
+            - kubernetes-utilization
+            - tokenomics
           x-enumDescriptions:
             billing: Standard Cloud Analytics billing data only.
             billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+            kubernetes-utilization: Kubernetes utilization data.
+            tokenomics: Tokenomics data; requires the customer to have Tokenomics enabled.
         scopes:
           type: array
           description: >-
-            The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.
+            All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer.
+          maxItems: 26
           items:
             $ref: "#/components/schemas/ExternalConfigFilter"
         metric:
@@ -12123,7 +12237,6 @@ components:
         timeInterval:
           type: string
           description: The period each evaluation looks at.
-          default: year
           enum:
             - day
             - week
@@ -12141,7 +12254,7 @@ components:
         evaluateForEach:
           type: string
           description: >-
-            Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
+            Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
     AlertRequest:
       required:
         - config
@@ -12151,12 +12264,20 @@ components:
       properties:
         name:
           type: string
-          description: Name of the alert (max 64 characters).
+          description: Name of the alert.
+          minLength: 1
+          maxLength: 64
         config:
           $ref: "#/components/schemas/AlertConfig"
+        recipientsSlackChannels:
+          type: array
+          maxItems: 50
+          description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+          items:
+            $ref: "#/components/schemas/AlertSlackChannel"
         recipients:
           type: array
-          description: List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
+          description: Email destinations matching allowed customer domains. Omitted on create defaults to the resolved owner email only when no Slack destinations are supplied. An explicit [] means no email and requires a Slack destination. Null is rejected.
           items:
             type: string
       example:
@@ -12167,7 +12288,7 @@ components:
           timeInterval: year
           operator: gt
           scopes:
-            - key: service_description
+            - id: service_description
               type: fixed
               values:
                 - Amazon Simple Storage Service
@@ -12186,21 +12307,134 @@ components:
           type: number
           format: double
     AlertUpdateRequest:
-      required:
-        - config
+      minProperties: 1
       type: object
-      description: Request body for modifying an existing alert.
+      description: Partial update. Only supplied fields change. Recipient-only and config-field-only requests are supported. Identical effective updates preserve updateTime and the notification revision. Empty recipient arrays now clear destinations instead of being ignored; direct API clients relying on the previous behavior must omit those fields instead.
       properties:
         name:
           type: string
           description: Alert name
+          minLength: 1
+          maxLength: 64
         config:
-          $ref: "#/components/schemas/AlertConfig"
+          $ref: "#/components/schemas/AlertConfigUpdate"
+        recipientsSlackChannels:
+          type: array
+          maxItems: 50
+          description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+          items:
+            $ref: "#/components/schemas/AlertSlackChannel"
         recipients:
           type: array
-          description: List of emails to notify when the alert is triggered.
+          description: Email destinations. Omission preserves saved emails; an array replaces them; [] clears them and requires a Slack destination in the resulting alert. Null is rejected.
           items:
             type: string
+    AlertIgnoreValuesRange:
+      type: object
+      nullable: true
+      required: [lowerBound, upperBound]
+      description: Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected.
+      properties:
+        lowerBound:
+          type: number
+          format: double
+        upperBound:
+          type: number
+          format: double
+    AlertConfigUpdate:
+      type: object
+      description: Only supplied configuration fields change. A zero value is a valid threshold. Fields cannot be null except ignoreValuesRange.
+      properties:
+        ignoreValuesRange:
+          $ref: "#/components/schemas/AlertIgnoreValuesRange"
+        dataSource:
+          type: string
+          enum: [billing, billing-datahub, kubernetes-utilization, tokenomics]
+          description: Omission preserves the saved data source. Tokenomics requires customer enablement.
+        scopes:
+          type: array
+          description: >-
+            All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Omission preserves scopes and [] clears them.
+          maxItems: 26
+          items:
+            $ref: "#/components/schemas/ExternalConfigFilter"
+        metric:
+          $ref: "#/components/schemas/MetricConfig"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        timeInterval:
+          type: string
+          description: The period each evaluation looks at. Omission preserves the saved interval.
+          enum:
+            - day
+            - week
+            - month
+            - quarter
+            - year
+        condition:
+          type: string
+          enum: [value, percentage-change, forecast]
+          description: Omission preserves the saved condition.
+        operator:
+          $ref: "#/components/schemas/MetricFilterText"
+        value:
+          type: number
+          format: double
+          description: The `condition` threshold value. Omission preserves the saved value; an explicit 0 is a valid threshold.
+        evaluateForEach:
+          type: string
+          description: >-
+            Add a dimension to break down the evaluation of the condition. Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. Omission preserves the saved breakdown and an empty string clears it. Not allowed with condition: `forecast`.
+    AlertSlackChannel:
+      type: object
+      required: [id]
+      description: >-
+        Eligible Slack destination returned by listAlertSlackChannels. Exactly one of the two shapes is valid:
+        a shared channel (`shared: true`, `workspace` omitted), or a workspace channel (`shared: false` or omitted,
+        `workspace` required). Any other combination is rejected with `validation_failed`.
+        Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected. Name and type are canonical display metadata. Existing unavailable destinations may be retained or removed. Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.
+      properties:
+        id:
+          type: string
+          minLength: 1
+        workspace:
+          type: string
+          description: Connected workspace name returned by discovery. Required for a non-shared channel.
+        shared:
+          type: boolean
+          default: false
+        customerId:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          description: Display name, resolved server-side.
+        type:
+          type: string
+          description: Channel visibility, resolved server-side.
+          enum: [public, private]
+    AlertSlackChannelList:
+      type: object
+      required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertSlackChannel"
+        rowCount:
+          type: integer
+          description: Total eligible channels after filtering and before pagination.
+        pageToken:
+          type: string
+          description: Opaque continuation token. Omitted on the final page.
+        workspaceStatus:
+          type: string
+          enum: [none, ok, inactive, missing_private_scope]
+          description: Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
+        isWorkspaceConnected:
+          type: boolean
+        hasSharedChannel:
+          type: boolean
     AllocationComponent:
       required:
         - key

@@ -46,11 +46,12 @@ output "alert_last_triggered" {
 ### Read-Only
 
 - `config` (Attributes) Parameters that define when and how an alert is evaluated. (see [below for nested schema](#nestedatt--config))
-- `create_time` (Number) The time when the alert was created (in UNIX timestamp).
-- `last_alerted` (Number) Last time the alert was triggered (in UNIX timestamp).
+- `create_time` (Number) The time when the alert was created (in Unix milliseconds).
+- `last_alerted` (Number) Last notification activity in Unix milliseconds. Slack advances this on the first provider acceptance for a detection, which does not confirm final delivery.
 - `name` (String) Alert Name.
 - `recipients` (List of String) List of emails that will be notified when the alert is triggered.
-- `update_time` (Number) Last time the alert was modified (in UNIX timestamp).
+- `recipients_slack_channels` (Attributes List) Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels. (see [below for nested schema](#nestedatt--recipients_slack_channels))
+- `update_time` (Number) Last time the alert was modified (in Unix milliseconds).
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -68,12 +69,22 @@ Read-Only:
 - `condition` (String) Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 - `currency` (String) Currency code for monetary values.
 - `data_source` (String) Data source used to query data for the alert. Affects which dimensions and metrics are available.
-- `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
+- `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
+- `ignore_values_range` (Attributes) Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected. (see [below for nested schema](#nestedatt--config--ignore_values_range))
 - `metric` (Attributes) Define how metrics are selected and filtered in reports. (see [below for nested schema](#nestedatt--config--metric))
 - `operator` (String) Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
-- `scopes` (Attributes List) The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead. (see [below for nested schema](#nestedatt--config--scopes))
+- `scopes` (Attributes List) All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer. (see [below for nested schema](#nestedatt--config--scopes))
 - `time_interval` (String) The period each evaluation looks at.
 - `value` (Number) The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
+
+<a id="nestedatt--config--ignore_values_range"></a>
+### Nested Schema for `config.ignore_values_range`
+
+Read-Only:
+
+- `lower_bound` (Number)
+- `upper_bound` (Number)
+
 
 <a id="nestedatt--config--metric"></a>
 ### Nested Schema for `config.metric`
@@ -96,3 +107,17 @@ Read-Only:
 - `mode` (String) Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
 - `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 - `values` (List of String) List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+
+
+
+<a id="nestedatt--recipients_slack_channels"></a>
+### Nested Schema for `recipients_slack_channels`
+
+Read-Only:
+
+- `customer_id` (String)
+- `id` (String)
+- `name` (String) Display name, resolved server-side.
+- `shared` (Boolean)
+- `type` (String) Channel visibility, resolved server-side.
+- `workspace` (String) Connected workspace name returned by discovery. Required for a non-shared channel.

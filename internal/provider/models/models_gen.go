@@ -21,8 +21,10 @@ import (
 
 // Defines values for AlertConfigDataSource.
 const (
-	AlertConfigDataSourceBilling        AlertConfigDataSource = "billing"
-	AlertConfigDataSourceBillingDatahub AlertConfigDataSource = "billing-datahub"
+	AlertConfigDataSourceBilling               AlertConfigDataSource = "billing"
+	AlertConfigDataSourceBillingDatahub        AlertConfigDataSource = "billing-datahub"
+	AlertConfigDataSourceKubernetesUtilization AlertConfigDataSource = "kubernetes-utilization"
+	AlertConfigDataSourceTokenomics            AlertConfigDataSource = "tokenomics"
 )
 
 // Valid indicates whether the value is a known member of the AlertConfigDataSource enum.
@@ -31,6 +33,10 @@ func (e AlertConfigDataSource) Valid() bool {
 	case AlertConfigDataSourceBilling:
 		return true
 	case AlertConfigDataSourceBillingDatahub:
+		return true
+	case AlertConfigDataSourceKubernetesUtilization:
+		return true
+	case AlertConfigDataSourceTokenomics:
 		return true
 	default:
 		return false
@@ -58,6 +64,96 @@ func (e AlertConfigTimeInterval) Valid() bool {
 	case AlertConfigTimeIntervalWeek:
 		return true
 	case AlertConfigTimeIntervalYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AlertConfigUpdateCondition.
+const (
+	AlertConfigUpdateConditionForecast         AlertConfigUpdateCondition = "forecast"
+	AlertConfigUpdateConditionPercentageChange AlertConfigUpdateCondition = "percentage-change"
+	AlertConfigUpdateConditionValue            AlertConfigUpdateCondition = "value"
+)
+
+// Valid indicates whether the value is a known member of the AlertConfigUpdateCondition enum.
+func (e AlertConfigUpdateCondition) Valid() bool {
+	switch e {
+	case AlertConfigUpdateConditionForecast:
+		return true
+	case AlertConfigUpdateConditionPercentageChange:
+		return true
+	case AlertConfigUpdateConditionValue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AlertConfigUpdateDataSource.
+const (
+	AlertConfigUpdateDataSourceBilling               AlertConfigUpdateDataSource = "billing"
+	AlertConfigUpdateDataSourceBillingDatahub        AlertConfigUpdateDataSource = "billing-datahub"
+	AlertConfigUpdateDataSourceKubernetesUtilization AlertConfigUpdateDataSource = "kubernetes-utilization"
+	AlertConfigUpdateDataSourceTokenomics            AlertConfigUpdateDataSource = "tokenomics"
+)
+
+// Valid indicates whether the value is a known member of the AlertConfigUpdateDataSource enum.
+func (e AlertConfigUpdateDataSource) Valid() bool {
+	switch e {
+	case AlertConfigUpdateDataSourceBilling:
+		return true
+	case AlertConfigUpdateDataSourceBillingDatahub:
+		return true
+	case AlertConfigUpdateDataSourceKubernetesUtilization:
+		return true
+	case AlertConfigUpdateDataSourceTokenomics:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AlertConfigUpdateTimeInterval.
+const (
+	AlertConfigUpdateTimeIntervalDay     AlertConfigUpdateTimeInterval = "day"
+	AlertConfigUpdateTimeIntervalMonth   AlertConfigUpdateTimeInterval = "month"
+	AlertConfigUpdateTimeIntervalQuarter AlertConfigUpdateTimeInterval = "quarter"
+	AlertConfigUpdateTimeIntervalWeek    AlertConfigUpdateTimeInterval = "week"
+	AlertConfigUpdateTimeIntervalYear    AlertConfigUpdateTimeInterval = "year"
+)
+
+// Valid indicates whether the value is a known member of the AlertConfigUpdateTimeInterval enum.
+func (e AlertConfigUpdateTimeInterval) Valid() bool {
+	switch e {
+	case AlertConfigUpdateTimeIntervalDay:
+		return true
+	case AlertConfigUpdateTimeIntervalMonth:
+		return true
+	case AlertConfigUpdateTimeIntervalQuarter:
+		return true
+	case AlertConfigUpdateTimeIntervalWeek:
+		return true
+	case AlertConfigUpdateTimeIntervalYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AlertSlackChannelType.
+const (
+	AlertSlackChannelTypePrivate AlertSlackChannelType = "private"
+	AlertSlackChannelTypePublic  AlertSlackChannelType = "public"
+)
+
+// Valid indicates whether the value is a known member of the AlertSlackChannelType enum.
+func (e AlertSlackChannelType) Valid() bool {
+	switch e {
+	case AlertSlackChannelTypePrivate:
+		return true
+	case AlertSlackChannelTypePublic:
 		return true
 	default:
 		return false
@@ -4132,19 +4228,19 @@ type AdvancedAnalysis struct {
 
 // Alert Configuration and runtime metadata of an alert.
 //
-// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
 type Alert struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
 
-	// CreateTime The time when the alert was created (in UNIX timestamp).
+	// CreateTime The time when the alert was created (in Unix milliseconds).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
 	// Id Alert ID.
 	Id *string `json:"id,omitempty"`
 
-	// LastAlerted Last time the alert was triggered (in UNIX timestamp).
-	LastAlerted *int64 `json:"lastAlerted,omitempty"`
+	// LastAlerted Last notification activity in Unix milliseconds. Slack advances this on the first provider acceptance for a detection, which does not confirm final delivery.
+	LastAlerted nullable.Nullable[int64] `json:"lastAlerted,omitempty"`
 
 	// Name Alert Name.
 	Name string `json:"name"`
@@ -4152,7 +4248,10 @@ type Alert struct {
 	// Recipients List of emails that will be notified when the alert is triggered.
 	Recipients *[]string `json:"recipients,omitempty"`
 
-	// UpdateTime Last time the alert was modified (in UNIX timestamp).
+	// RecipientsSlackChannels Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+	RecipientsSlackChannels *[]AlertSlackChannel `json:"recipientsSlackChannels,omitempty"`
+
+	// UpdateTime Last time the alert was modified (in Unix milliseconds).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
@@ -4167,16 +4266,19 @@ type AlertConfig struct {
 	// DataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
 	DataSource *AlertConfigDataSource `json:"dataSource,omitempty"`
 
-	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
+	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 	EvaluateForEach *string `json:"evaluateForEach,omitempty"`
+
+	// IgnoreValuesRange Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected.
+	IgnoreValuesRange nullable.Nullable[AlertIgnoreValuesRange] `json:"ignoreValuesRange,omitempty"`
 
 	// Metric Define how metrics are selected and filtered in reports.
 	Metric MetricConfig `json:"metric"`
 
 	// Operator Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
-	Operator *MetricFilterText `json:"operator,omitempty"`
+	Operator MetricFilterText `json:"operator"`
 
-	// Scopes The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.
+	// Scopes All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer.
 	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
 
 	// TimeInterval The period each evaluation looks at.
@@ -4192,21 +4294,69 @@ type AlertConfigDataSource string
 // AlertConfigTimeInterval The period each evaluation looks at.
 type AlertConfigTimeInterval string
 
+// AlertConfigUpdate Only supplied configuration fields change. A zero value is a valid threshold. Fields cannot be null except ignoreValuesRange.
+type AlertConfigUpdate struct {
+	// Condition Omission preserves the saved condition.
+	Condition *AlertConfigUpdateCondition `json:"condition,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
+
+	// DataSource Omission preserves the saved data source. Tokenomics requires customer enablement.
+	DataSource *AlertConfigUpdateDataSource `json:"dataSource,omitempty"`
+
+	// EvaluateForEach Add a dimension to break down the evaluation of the condition. Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. Omission preserves the saved breakdown and an empty string clears it. Not allowed with condition: `forecast`.
+	EvaluateForEach *string `json:"evaluateForEach,omitempty"`
+
+	// IgnoreValuesRange Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected.
+	IgnoreValuesRange nullable.Nullable[AlertIgnoreValuesRange] `json:"ignoreValuesRange,omitempty"`
+
+	// Metric Define how metrics are selected and filtered in reports.
+	Metric *MetricConfig `json:"metric,omitempty"`
+
+	// Operator Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
+	Operator *MetricFilterText `json:"operator,omitempty"`
+
+	// Scopes All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Omission preserves scopes and [] clears them.
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+
+	// TimeInterval The period each evaluation looks at. Omission preserves the saved interval.
+	TimeInterval *AlertConfigUpdateTimeInterval `json:"timeInterval,omitempty"`
+
+	// Value The `condition` threshold value. Omission preserves the saved value; an explicit 0 is a valid threshold.
+	Value *float64 `json:"value,omitempty"`
+}
+
+// AlertConfigUpdateCondition Omission preserves the saved condition.
+type AlertConfigUpdateCondition string
+
+// AlertConfigUpdateDataSource Omission preserves the saved data source. Tokenomics requires customer enablement.
+type AlertConfigUpdateDataSource string
+
+// AlertConfigUpdateTimeInterval The period each evaluation looks at. Omission preserves the saved interval.
+type AlertConfigUpdateTimeInterval string
+
+// AlertIgnoreValuesRange Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected.
+type AlertIgnoreValuesRange struct {
+	LowerBound float64 `json:"lowerBound"`
+	UpperBound float64 `json:"upperBound"`
+}
+
 // AlertListItem Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
 //
-// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
 type AlertListItem struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
 
-	// CreateTime The time when the alert was created (in UNIX timestamp).
+	// CreateTime The time when the alert was created (in Unix milliseconds).
 	CreateTime *int64 `json:"createTime,omitempty"`
 
 	// Id Alert ID.
 	Id *string `json:"id,omitempty"`
 
-	// LastAlerted Last time the alert was triggered (in UNIX timestamp).
-	LastAlerted *int64 `json:"lastAlerted,omitempty"`
+	// LastAlerted Last notification activity in Unix milliseconds. Slack advances this on the first provider acceptance for a detection, which does not confirm final delivery.
+	LastAlerted nullable.Nullable[int64] `json:"lastAlerted,omitempty"`
 
 	// Name Alert Name.
 	Name string `json:"name"`
@@ -4217,23 +4367,48 @@ type AlertListItem struct {
 	// Recipients List of emails that will be notified when the alert is triggered.
 	Recipients *[]string `json:"recipients,omitempty"`
 
-	// UpdateTime Last time the alert was modified (in UNIX timestamp).
+	// RecipientsSlackChannels Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+	RecipientsSlackChannels *[]AlertSlackChannel `json:"recipientsSlackChannels,omitempty"`
+
+	// UpdateTime Last time the alert was modified (in Unix milliseconds).
 	UpdateTime *int64 `json:"updateTime,omitempty"`
 }
 
 // AlertRequest Request body for creating a new alert.
 //
-// Example: {"config":{"condition":"value","currency":"USD","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"key":"service_description","type":"fixed","values":["Amazon Simple Storage Service"]}],"timeInterval":"year","value":1000},"name":"test08"}
+// Example: {"config":{"condition":"value","currency":"USD","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"service_description","type":"fixed","values":["Amazon Simple Storage Service"]}],"timeInterval":"year","value":1000},"name":"test08"}
 type AlertRequest struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config AlertConfig `json:"config"`
 
-	// Name Name of the alert (max 64 characters).
+	// Name Name of the alert.
 	Name string `json:"name"`
 
-	// Recipients List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
+	// Recipients Email destinations matching allowed customer domains. Omitted on create defaults to the resolved owner email only when no Slack destinations are supplied. An explicit [] means no email and requires a Slack destination. Null is rejected.
 	Recipients *[]string `json:"recipients,omitempty"`
+
+	// RecipientsSlackChannels Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+	RecipientsSlackChannels *[]AlertSlackChannel `json:"recipientsSlackChannels,omitempty"`
 }
+
+// AlertSlackChannel Eligible Slack destination returned by listAlertSlackChannels. Exactly one of the two shapes is valid: a shared channel (`shared: true`, `workspace` omitted), or a workspace channel (`shared: false` or omitted, `workspace` required). Any other combination is rejected with `validation_failed`. Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected. Name and type are canonical display metadata. Existing unavailable destinations may be retained or removed. Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.
+type AlertSlackChannel struct {
+	CustomerId *string `json:"customerId,omitempty"`
+	Id         string  `json:"id"`
+
+	// Name Display name, resolved server-side.
+	Name   *string `json:"name,omitempty"`
+	Shared *bool   `json:"shared,omitempty"`
+
+	// Type Channel visibility, resolved server-side.
+	Type *AlertSlackChannelType `json:"type,omitempty"`
+
+	// Workspace Connected workspace name returned by discovery. Required for a non-shared channel.
+	Workspace *string `json:"workspace,omitempty"`
+}
+
+// AlertSlackChannelType Channel visibility, resolved server-side.
+type AlertSlackChannelType string
 
 // AlertThreshold A numeric or percentage threshold.
 type AlertThreshold struct {
@@ -4241,16 +4416,19 @@ type AlertThreshold struct {
 	Percentage *float64 `json:"percentage,omitempty"`
 }
 
-// AlertUpdateRequest Request body for modifying an existing alert.
+// AlertUpdateRequest Partial update. Only supplied fields change. Recipient-only and config-field-only requests are supported. Identical effective updates preserve updateTime and the notification revision. Empty recipient arrays now clear destinations instead of being ignored; direct API clients relying on the previous behavior must omit those fields instead.
 type AlertUpdateRequest struct {
-	// Config Parameters that define when and how an alert is evaluated.
-	Config AlertConfig `json:"config"`
+	// Config Only supplied configuration fields change. A zero value is a valid threshold. Fields cannot be null except ignoreValuesRange.
+	Config *AlertConfigUpdate `json:"config,omitempty"`
 
 	// Name Alert name
 	Name *string `json:"name,omitempty"`
 
-	// Recipients List of emails to notify when the alert is triggered.
+	// Recipients Email destinations. Omission preserves saved emails; an array replaces them; [] clears them and requires a Slack destination in the resulting alert. Null is rejected.
 	Recipients *[]string `json:"recipients,omitempty"`
+
+	// RecipientsSlackChannels Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+	RecipientsSlackChannels *[]AlertSlackChannel `json:"recipientsSlackChannels,omitempty"`
 }
 
 // Allocation Allocation object, including rules and metadata.
@@ -34269,6 +34447,9 @@ func ParseUpdateAlertResp(rsp *http.Response) (*UpdateAlertResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case rsp.StatusCode == 409:
+		break // No content-type
 
 	}
 

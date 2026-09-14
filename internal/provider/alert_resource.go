@@ -81,12 +81,15 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
 	// Category B: API-computed defaults — not clearable.
 	acknowledgeNotClearable(s,
-		"recipients",               // API defaults to creator's email
-		"config.currency",          // API defaults to org currency
-		"config.operator",          // API defaults comparison operator
-		"config.evaluate_for_each", // API defaults to false
-		"config.scopes[*].inverse", // API defaults to false
-		"config.scopes[*].values",  // API defaults scope values
+		"recipients",                               // API defaults to creator's email
+		"config.currency",                          // API defaults to org currency
+		"config.evaluate_for_each",                 // API defaults to false
+		"config.scopes[*].inverse",                 // API defaults to false
+		"config.scopes[*].values",                  // API defaults scope values
+		"recipients_slack_channels[*].customer_id", // API-resolved customer ID
+		"recipients_slack_channels[*].name",        // API-resolved channel display name
+		"recipients_slack_channels[*].type",        // API-resolved channel visibility
+		"recipients_slack_channels[*].workspace",   // API-resolved or contextual workspace
 	)
 
 	// Category A: nested clearable attributes.
@@ -98,7 +101,16 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 			}
 			configAttr.Attributes["scopes"] = scopesAttr
 		}
+		if ivrAttr, ok := configAttr.Attributes["ignore_values_range"].(schema.SingleNestedAttribute); ok {
+			ivrAttr.PlanModifiers = append(ivrAttr.PlanModifiers, useNullForIgnoreValuesRange())
+			configAttr.Attributes["ignore_values_range"] = ivrAttr
+		}
 		s.Attributes["config"] = configAttr
+	}
+
+	if attr, ok := s.Attributes["recipients_slack_channels"].(schema.ListNestedAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+		s.Attributes["recipients_slack_channels"] = attr
 	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
@@ -114,6 +126,8 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		alertRecipientsValidator{},
+		alertIgnoreValuesRangeValidator{},
+		alertSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		alertScopeNAValidator{},
 	}

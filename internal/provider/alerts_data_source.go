@@ -200,17 +200,46 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 				recipientsList = emptyList1
 			}
 
+			// Map recipients_slack_channels
+			var slackChannelsList types.List
+			if alert.RecipientsSlackChannels != nil && len(*alert.RecipientsSlackChannels) > 0 {
+				channels := make([]datasource_alerts.RecipientsSlackChannelsValue, len(*alert.RecipientsSlackChannels))
+				for i, ch := range *alert.RecipientsSlackChannels {
+					var d diag.Diagnostics
+					channels[i], d = datasource_alerts.NewRecipientsSlackChannelsValue(
+						datasource_alerts.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
+						map[string]attr.Value{
+							"customer_id": types.StringPointerValue(ch.CustomerId),
+							"id":          types.StringValue(ch.Id),
+							"name":        types.StringPointerValue(ch.Name),
+							"shared":      types.BoolPointerValue(ch.Shared),
+							"type":        types.StringPointerValue((*string)(ch.Type)),
+							"workspace":   types.StringPointerValue(ch.Workspace),
+						},
+					)
+					resp.Diagnostics.Append(d...)
+				}
+				var d diag.Diagnostics
+				slackChannelsList, d = types.ListValueFrom(ctx, datasource_alerts.RecipientsSlackChannelsValue{}.Type(ctx), channels)
+				resp.Diagnostics.Append(d...)
+			} else {
+				emptyList, d := types.ListValueFrom(ctx, datasource_alerts.RecipientsSlackChannelsValue{}.Type(ctx), []datasource_alerts.RecipientsSlackChannelsValue{})
+				resp.Diagnostics.Append(d...)
+				slackChannelsList = emptyList
+			}
+
 			alertVal, diags := datasource_alerts.NewAlertsValue(
 				datasource_alerts.AlertsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"id":           types.StringPointerValue(alert.Id),
-					"name":         types.StringValue(alert.Name),
-					"create_time":  types.Int64PointerValue(alert.CreateTime),
-					"update_time":  types.Int64PointerValue(alert.UpdateTime),
-					"last_alerted": types.Int64PointerValue(alert.LastAlerted),
-					"owner":        types.StringPointerValue(alert.Owner),
-					"recipients":   recipientsList,
-					"config":       configVal,
+					"config":                    configVal,
+					"create_time":               types.Int64PointerValue(alert.CreateTime),
+					"id":                        types.StringPointerValue(alert.Id),
+					"last_alerted":              types.Int64PointerValue(nullableToPointer(alert.LastAlerted)),
+					"name":                      types.StringValue(alert.Name),
+					"owner":                     types.StringPointerValue(alert.Owner),
+					"recipients":                recipientsList,
+					"recipients_slack_channels": slackChannelsList,
+					"update_time":               types.Int64PointerValue(alert.UpdateTime),
 				},
 			)
 			resp.Diagnostics.Append(diags...)
@@ -257,23 +286,35 @@ func mapAlertConfig(ctx context.Context, config *models.AlertConfig, diagnostics
 		currencyVal = types.StringNull()
 	}
 
+	// Map ignore_values_range
+	var ignoreValuesRange datasource_alerts.IgnoreValuesRangeValue
+	if ivr := nullableToPointer(config.IgnoreValuesRange); ivr != nil {
+		var d diag.Diagnostics
+		ignoreValuesRange, d = datasource_alerts.NewIgnoreValuesRangeValue(
+			datasource_alerts.IgnoreValuesRangeValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"lower_bound": types.Float64Value(ivr.LowerBound),
+				"upper_bound": types.Float64Value(ivr.UpperBound),
+			},
+		)
+		diagnostics.Append(d...)
+	} else {
+		ignoreValuesRange = datasource_alerts.NewIgnoreValuesRangeValueNull()
+	}
+
 	configVal, diags := datasource_alerts.NewConfigValue(
 		datasource_alerts.ConfigValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"condition":         conditionVal,
-			"currency":          currencyVal,
-			"data_source":       types.StringPointerValue((*string)(config.DataSource)),
-			"evaluate_for_each": types.StringPointerValue(config.EvaluateForEach),
-			"metric":            metricVal,
-			"operator": func() types.String {
-				if config.Operator != nil {
-					return types.StringValue(string(*config.Operator))
-				}
-				return types.StringNull()
-			}(),
-			"scopes":        scopesList,
-			"time_interval": types.StringValue(string(config.TimeInterval)),
-			"value":         types.Float64Value(config.Value),
+			"condition":           conditionVal,
+			"currency":            currencyVal,
+			"data_source":         types.StringPointerValue((*string)(config.DataSource)),
+			"evaluate_for_each":   types.StringPointerValue(config.EvaluateForEach),
+			"ignore_values_range": ignoreValuesRange,
+			"metric":              metricVal,
+			"operator":            types.StringValue(string(config.Operator)),
+			"scopes":              scopesList,
+			"time_interval":       types.StringValue(string(config.TimeInterval)),
+			"value":               types.Float64Value(config.Value),
 		},
 	)
 	diagnostics.Append(diags...)

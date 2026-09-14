@@ -33,6 +33,9 @@ func TestAccAlertDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrPair(
 						"data.doit_alert.test", "config.value",
 						"doit_alert.test", "config.value"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.operator",
+						"doit_alert.test", "config.operator"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -144,6 +147,74 @@ resource "doit_alert" "test" {
         values = ["amazon-web-services"]
       }
     ]
+  }
+}
+
+data "doit_alert" "test" {
+  id = doit_alert.test.id
+}
+`, name)
+}
+
+func TestAccAlertDataSource_IgnoreValuesRange(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-alert-ds-ivr")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertDataSourceIgnoreValuesRangeConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "id",
+						"doit_alert.test", "id"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.condition",
+						"doit_alert.test", "config.condition"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.operator",
+						"doit_alert.test", "config.operator"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.ignore_values_range.lower_bound",
+						"doit_alert.test", "config.ignore_values_range.lower_bound"),
+					resource.TestCheckResourceAttrPair(
+						"data.doit_alert.test", "config.ignore_values_range.upper_bound",
+						"doit_alert.test", "config.ignore_values_range.upper_bound"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAlertDataSourceIgnoreValuesRangeConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertDataSourceIgnoreValuesRangeConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "test" {
+  name = %q
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 50
+    currency      = "USD"
+    condition     = "percentage-change"
+    operator      = "gt"
+    ignore_values_range = {
+      lower_bound = -15
+      upper_bound = 15
+    }
   }
 }
 

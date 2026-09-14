@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_alert"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -9,44 +10,187 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// alertRecipientsValidator validates that alerts have at least one recipient.
-// The API adds the creator as a default recipient when recipients is empty,
-// but this causes state drift. Requiring at least one recipient avoids this issue.
+// alertRecipientsValidator validates that alerts have at least one recipient destination.
+// The API adds the creator as a default recipient when recipients is empty/omitted,
+// which causes state drift if [] is specified without alternative Slack destinations.
+// An empty 'recipients' list is allowed only when 'recipients_slack_channels' has at least one channel.
 type alertRecipientsValidator struct{}
 
+var _ resource.ConfigValidator = alertRecipientsValidator{}
+
 func (v alertRecipientsValidator) Description(_ context.Context) string {
-	return "Validates that alerts have at least one recipient"
+	return "Validates that alerts have at least one recipient (email or Slack channel)"
 }
 
 func (v alertRecipientsValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that `recipients` has at least one entry"
+	return "Validates that `recipients` has at least one entry unless `recipients_slack_channels` is specified."
 }
 
 func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var recipients types.List
-
-	// Get the recipients attribute
 	diags := req.Config.GetAttribute(ctx, path.Root("recipients"), &recipients)
 	resp.Diagnostics.Append(diags...)
+
+	var slackChannels types.List
+	diags = req.Config.GetAttribute(ctx, path.Root("recipients_slack_channels"), &slackChannels)
+	resp.Diagnostics.Append(diags...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If null/unknown, skip validation - let schema handle required vs optional
-	if recipients.IsNull() || recipients.IsUnknown() {
-		return
-	}
+	hasSlack := !slackChannels.IsNull() && !slackChannels.IsUnknown() && len(slackChannels.Elements()) > 0
+	recipientsEmpty := !recipients.IsNull() && !recipients.IsUnknown() && len(recipients.Elements()) == 0
+	slackEmpty := !slackChannels.IsNull() && !slackChannels.IsUnknown() && len(slackChannels.Elements()) == 0
 
-	// Validate that there's at least one recipient. This prevents perpetual drift
-	// because the API automatically adds the creator's email address if the
-	// 'recipients' list is empty or omitted.
-	if len(recipients.Elements()) == 0 {
+	// If recipients is explicitly configured as empty []
+	if recipientsEmpty && !hasSlack && !slackChannels.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("recipients"),
 			"At Least One Recipient Required",
-			"The 'recipients' attribute must contain at least one email address. "+
+			"The 'recipients' attribute must contain at least one email address unless "+
+				"at least one Slack channel is specified in 'recipients_slack_channels'. "+
 				"If you want to use the default (creator), omit the recipients attribute entirely.",
 		)
+		return
+	}
+
+	// If slackChannels is explicitly configured as empty [] and recipients is empty or not set
+	if slackEmpty && (recipients.IsNull() || (!recipients.IsUnknown() && len(recipients.Elements()) == 0)) && !recipients.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("recipients_slack_channels"),
+			"At Least One Destination Required",
+			"At least one email recipient or Slack channel destination must remain.",
+		)
+	}
+}
+
+// alertIgnoreValuesRangeValidator validates that ignore_values_range has valid bounds
+// (lower_bound <= upper_bound) and is only configured when condition is 'percentage-change'.
+type alertIgnoreValuesRangeValidator struct{}
+
+var _ resource.ConfigValidator = alertIgnoreValuesRangeValidator{}
+
+func (v alertIgnoreValuesRangeValidator) Description(_ context.Context) string {
+	return "Validates that ignore_values_range has valid bounds and is only configured for percentage-change alerts"
+}
+
+func (v alertIgnoreValuesRangeValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `config.ignore_values_range` has `lower_bound <= upper_bound` and is only used when `config.condition` is `percentage-change`."
+}
+
+func (v alertIgnoreValuesRangeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	rangePath := path.Root("config").AtName("ignore_values_range")
+	var rangeVal resource_alert.IgnoreValuesRangeValue
+	diags := req.Config.GetAttribute(ctx, rangePath, &rangeVal)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() || rangeVal.IsNull() || rangeVal.IsUnknown() {
+		return
+	}
+
+	// Validate condition == "percentage-change"
+	condPath := path.Root("config").AtName("condition")
+	var condition types.String
+	diags = req.Config.GetAttribute(ctx, condPath, &condition)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+
+	if !condition.IsNull() && !condition.IsUnknown() && condition.ValueString() != "percentage-change" {
+		resp.Diagnostics.AddAttributeError(
+			rangePath,
+			"Invalid Ignore Values Range Condition",
+			"ignore_values_range is only valid when condition is 'percentage-change', but condition is '"+condition.ValueString()+"'.",
+		)
+	}
+
+	// Validate lower_bound <= upper_bound
+	if !rangeVal.LowerBound.IsNull() && !rangeVal.LowerBound.IsUnknown() &&
+		!rangeVal.UpperBound.IsNull() && !rangeVal.UpperBound.IsUnknown() {
+		if rangeVal.LowerBound.ValueFloat64() > rangeVal.UpperBound.ValueFloat64() {
+			resp.Diagnostics.AddAttributeError(
+				rangePath.AtName("lower_bound"),
+				"Invalid Ignore Values Range Bounds",
+				fmt.Sprintf("lower_bound (%v) must be less than or equal to upper_bound (%v).",
+					rangeVal.LowerBound.ValueFloat64(), rangeVal.UpperBound.ValueFloat64()),
+			)
+		}
+	}
+}
+
+// alertSlackChannelsValidator validates shape constraints (shared vs workspace)
+// and ensures no duplicate destinations exist in recipients_slack_channels.
+type alertSlackChannelsValidator struct{}
+
+var _ resource.ConfigValidator = alertSlackChannelsValidator{}
+
+func (v alertSlackChannelsValidator) Description(_ context.Context) string {
+	return "Validates shape constraints and uniqueness of Slack channel destinations"
+}
+
+func (v alertSlackChannelsValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `recipients_slack_channels` destinations have valid shape (shared vs workspace) and are not duplicated."
+}
+
+func (v alertSlackChannelsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	channelsPath := path.Root("recipients_slack_channels")
+	var channels types.List
+	diags := req.Config.GetAttribute(ctx, channelsPath, &channels)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() || channels.IsNull() || channels.IsUnknown() {
+		return
+	}
+
+	var channelVals []resource_alert.RecipientsSlackChannelsValue
+	diags = channels.ElementsAs(ctx, &channelVals, false)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+
+	seen := make(map[string]int)
+
+	for i, ch := range channelVals {
+		itemPath := channelsPath.AtListIndex(i)
+
+		isShared := !ch.Shared.IsNull() && !ch.Shared.IsUnknown() && ch.Shared.ValueBool()
+		hasWorkspace := !ch.Workspace.IsNull() && !ch.Workspace.IsUnknown() && ch.Workspace.ValueString() != ""
+
+		if isShared && hasWorkspace {
+			resp.Diagnostics.AddAttributeError(
+				itemPath.AtName("workspace"),
+				"Invalid Slack Channel Shape",
+				"workspace must not be specified when shared is true.",
+			)
+		} else if !isShared && !hasWorkspace && !ch.Workspace.IsUnknown() && !ch.Shared.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				itemPath.AtName("workspace"),
+				"Invalid Slack Channel Shape",
+				"workspace is required for a non-shared channel (when shared is false or omitted).",
+			)
+		}
+
+		if !ch.Id.IsNull() && !ch.Id.IsUnknown() {
+			var destKey string
+			if isShared {
+				destKey = "shared:" + ch.Id.ValueString()
+			} else if hasWorkspace {
+				destKey = "workspace:" + ch.Workspace.ValueString() + ":" + ch.Id.ValueString()
+			} else {
+				destKey = "id:" + ch.Id.ValueString()
+			}
+
+			if _, exists := seen[destKey]; exists {
+				resp.Diagnostics.AddAttributeError(
+					itemPath,
+					"Duplicate Slack Channel",
+					fmt.Sprintf("Slack channel %q is specified more than once in 'recipients_slack_channels'. Each destination must be unique.", ch.Id.ValueString()),
+				)
+			} else {
+				seen[destKey] = i
+			}
+		}
 	}
 }
 

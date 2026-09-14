@@ -280,6 +280,97 @@ func TestAccAlert_PercentageChange(t *testing.T) {
 	})
 }
 
+// TestAccAlert_IgnoreValuesRange tests creating, updating, and clearing ignore_values_range.
+func TestAccAlert_IgnoreValuesRange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create percentage-change alert with ignore_values_range
+			{
+				Config: testAccAlertIgnoreValuesRange(n, -10.5, 10.5),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("condition"),
+						knownvalue.StringExact("percentage-change")),
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("lower_bound"),
+						knownvalue.Float64Exact(-10.5)),
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("upper_bound"),
+						knownvalue.Float64Exact(10.5)),
+				},
+			},
+			// Step 2: Update ignore_values_range
+			{
+				Config: testAccAlertIgnoreValuesRange(n, -25.0, 25.0),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("lower_bound"),
+						knownvalue.Float64Exact(-25.0)),
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("upper_bound"),
+						knownvalue.Float64Exact(25.0)),
+				},
+			},
+			// Step 3: Clear ignore_values_range by omitting it
+			{
+				Config: testAccAlertPercentageChange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 4: Drift check — re-apply cleared config, expect empty plan
+			{
+				Config: testAccAlertPercentageChange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestAccAlert_DifferentOperators tests various operator values.
 func TestAccAlert_DifferentOperators(t *testing.T) {
 	n := acctest.RandInt()
@@ -576,6 +667,29 @@ resource "doit_alert" "this" {
   }
 }
 `, i)
+}
+
+func testAccAlertIgnoreValuesRange(i int, lower, upper float64) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-pct-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 50
+    currency      = "USD"
+    condition     = "percentage-change"
+    operator      = "gt"
+    ignore_values_range = {
+      lower_bound = %f
+      upper_bound = %f
+    }
+  }
+}
+`, i, lower, upper)
 }
 
 func testAccAlertWithOperator(i int, operator string) string {
