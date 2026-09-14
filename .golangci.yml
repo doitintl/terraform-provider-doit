@@ -52,6 +52,7 @@ linters:
     - retrypolicy
     - testserver
     - clearableattr
+    - validatorshape
     - validatordefer
     - modernize
   exclusions:
@@ -104,6 +105,7 @@ linters:
           - methodreceiver
           - requestguard
           - clearableattr
+          - validatorshape
           - validatordefer
           - modernize
       # Test files — exclude custom linters. paralleltest, retrypolicy and
@@ -129,6 +131,7 @@ linters:
           - methodreceiver
           - requestguard
           - clearableattr
+          - validatorshape
           - validatordefer
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
@@ -265,6 +268,9 @@ linters:
       clearableattr:
         type: "module"
         description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."
+      validatorshape:
+        type: "module"
+        description: "Enforces canonical unknown-safe control flow in Terraform validators."
       validatordefer:
         type: "module"
         description: "Detects Terraform validator diagnostics that do not defer unknown values."

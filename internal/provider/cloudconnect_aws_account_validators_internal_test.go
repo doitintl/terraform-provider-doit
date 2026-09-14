@@ -6,6 +6,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_cloudconnect_aws_account"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -49,6 +50,9 @@ func TestCloudconnectAwsS3RealTimeValidator(t *testing.T) {
 	realTime := features(types.StringValue("real-time-data"))
 	unknownFeatures := types.ListUnknown(types.StringType)
 	unknownFeatureElement := features(types.StringUnknown())
+	realTimeThenUnknown := features(types.StringValue("real-time-data"), types.StringUnknown())
+	unknownThenRealTime := features(types.StringUnknown(), types.StringValue("real-time-data"))
+	noRealTimeThenUnknown := features(types.StringValue("billing"), types.StringUnknown())
 
 	tests := []struct {
 		name            string
@@ -56,19 +60,25 @@ func TestCloudconnectAwsS3RealTimeValidator(t *testing.T) {
 		s3bucket        types.String
 		s3bucketRegion  types.String
 		wantError       bool
+		wantSummary     string
 	}{
 		{name: "no real-time with unknown S3 fields is deferred", enabledFeatures: noRealTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringUnknown()},
-		{name: "no real-time with known bucket fails", enabledFeatures: noRealTime, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringUnknown(), wantError: true},
-		{name: "no real-time with known region fails", enabledFeatures: noRealTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringValue("us-east-1"), wantError: true},
+		{name: "no real-time with known bucket fails", enabledFeatures: noRealTime, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringUnknown(), wantError: true, wantSummary: "S3 Configuration Without Real-Time Data"},
+		{name: "no real-time with known region fails", enabledFeatures: noRealTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringValue("us-east-1"), wantError: true, wantSummary: "S3 Configuration Without Real-Time Data"},
 		{name: "real-time with unknown S3 fields is deferred", enabledFeatures: realTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringUnknown()},
-		{name: "real-time with known-null bucket fails", enabledFeatures: realTime, s3bucket: types.StringNull(), s3bucketRegion: types.StringUnknown(), wantError: true},
-		{name: "real-time with known-null region fails", enabledFeatures: realTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringNull(), wantError: true},
+		{name: "real-time with known-null bucket fails", enabledFeatures: realTime, s3bucket: types.StringNull(), s3bucketRegion: types.StringUnknown(), wantError: true, wantSummary: "Missing S3 Configuration for Real-Time Data"},
+		{name: "real-time with known-null region fails", enabledFeatures: realTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringNull(), wantError: true, wantSummary: "Missing S3 Configuration for Real-Time Data"},
 		{name: "unknown feature list is deferred", enabledFeatures: unknownFeatures, s3bucket: types.StringNull(), s3bucketRegion: types.StringNull()},
 		{name: "unknown feature element is deferred", enabledFeatures: unknownFeatureElement, s3bucket: types.StringNull(), s3bucketRegion: types.StringNull()},
+		{name: "unknown feature element with known S3 is deferred", enabledFeatures: unknownFeatureElement, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1")},
+		{name: "known real-time before unknown still requires bucket", enabledFeatures: realTimeThenUnknown, s3bucket: types.StringNull(), s3bucketRegion: types.StringUnknown(), wantError: true, wantSummary: "Missing S3 Configuration for Real-Time Data"},
+		{name: "known real-time after unknown still requires region", enabledFeatures: unknownThenRealTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringNull(), wantError: true, wantSummary: "Missing S3 Configuration for Real-Time Data"},
+		{name: "known real-time with unknown feature and complete S3 passes", enabledFeatures: realTimeThenUnknown, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1")},
+		{name: "non-real-time plus unknown with known S3 is deferred", enabledFeatures: noRealTimeThenUnknown, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1")},
 		{name: "known real-time configuration passes", enabledFeatures: realTime, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1")},
-		{name: "known real-time configuration missing both fields fails", enabledFeatures: realTime, s3bucket: types.StringNull(), s3bucketRegion: types.StringNull(), wantError: true},
+		{name: "known real-time configuration missing both fields fails", enabledFeatures: realTime, s3bucket: types.StringNull(), s3bucketRegion: types.StringNull(), wantError: true, wantSummary: "Missing S3 Configuration for Real-Time Data"},
 		{name: "known non-real-time configuration without S3 passes", enabledFeatures: noRealTime, s3bucket: types.StringNull(), s3bucketRegion: types.StringNull()},
-		{name: "known non-real-time configuration with S3 fails", enabledFeatures: noRealTime, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1"), wantError: true},
+		{name: "known non-real-time configuration with S3 fails", enabledFeatures: noRealTime, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1"), wantError: true, wantSummary: "S3 Configuration Without Real-Time Data"},
 	}
 
 	ctx := t.Context()
@@ -84,6 +94,23 @@ func TestCloudconnectAwsS3RealTimeValidator(t *testing.T) {
 
 			if got := resp.Diagnostics.HasError(); got != tt.wantError {
 				t.Fatalf("HasError() = %v, want %v (diagnostics: %v)", got, tt.wantError, resp.Diagnostics)
+			}
+			errorCount := 0
+			for _, diagnostic := range resp.Diagnostics {
+				if diagnostic.Severity() != diag.SeverityError {
+					continue
+				}
+				errorCount++
+				if diagnostic.Summary() != tt.wantSummary {
+					t.Errorf("error summary = %q, want %q", diagnostic.Summary(), tt.wantSummary)
+				}
+			}
+			wantErrorCount := 0
+			if tt.wantError {
+				wantErrorCount = 1
+			}
+			if errorCount != wantErrorCount {
+				t.Errorf("error count = %d, want %d (diagnostics: %v)", errorCount, wantErrorCount, resp.Diagnostics)
 			}
 		})
 	}

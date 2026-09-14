@@ -27,6 +27,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/unknownguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/validatordefer"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/validatorshape"
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/modernize"
@@ -141,6 +142,10 @@ func init() {
 
 	register.Plugin("validatordefer", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{validatordefer.Analyzer}}, nil
+	})
+
+	register.Plugin("validatorshape", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{validatorshape.Analyzer}}, nil
 	})
 
 	// modernize wraps the full x/tools modernize suite. Its "newexpr"

@@ -185,6 +185,10 @@ SupportedFeaturesType{
 
 > **Linter:** `modernize` (`embedlit`) — flags redundant embedded struct type wrappers in composite literals.
 
+## Validator Control Flow
+
+Validator state checks are a coding standard, not an implementation detail. Use direct `IsNull() || IsUnknown()` return guards for whole values, direct unknown-element guards that update one uncertainty tracker and `continue`, and `!value.IsUnknown() && !value.IsNull()` for definite presence. Keep known-independent errors before deferral, and make every diagnostic helper guard Terraform values itself. Raw predicate aliases, mixed business/unknown guards, switches over unresolved Terraform predicates, and predicate closures are not allowed. See [implement-validator](../implement-validator/SKILL.md); `validatorshape` enforces the form and `validatordefer` enforces unknown safety.
+
 ## .gitignore Check
 
 Always check `.gitignore` before committing. Some files (like `OpenAPI/api_endpoint_analysis.md`) are local documentation:

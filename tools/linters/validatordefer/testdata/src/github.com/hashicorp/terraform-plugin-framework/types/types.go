@@ -1,10 +1,14 @@
 package types
 
+import "github.com/hashicorp/terraform-plugin-framework/attr"
+
 type String struct {
 	unknown bool
 	null    bool
 	value   string
 }
+
+var _ attr.Value = String{}
 
 func StringUnknown() String {
 	return String{unknown: true}

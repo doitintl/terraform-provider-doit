@@ -7,6 +7,10 @@ description: Shared implementation conventions for Terraform provider resources 
 
 Shared patterns that apply to **both** resources and data sources in this provider. Enforced by custom linters in `tools/linters/`.
 
+## Validator Implementations
+
+Read [implement-validator](../implement-validator/SKILL.md) before adding or modifying attribute or configuration validators. Validators must use the repository's canonical direct null/unknown guards, defer partially unknown collections, and keep diagnostic helpers self-guarding. The `validatorshape` and `validatordefer` linters enforce that contract.
+
 ## Constructor Style
 
 Use `&type{}` composite literal style for resource/data source constructors:

@@ -39,10 +39,11 @@ func (v cloudconnectAwsS3RealTimeValidator) ValidateResource(ctx context.Context
 	}
 
 	hasRealTime := false
+	hasUnknownFeature := false
 	for _, f := range features {
 		if f.IsUnknown() {
-			// Cannot safely validate S3 requirements if any feature is unknown.
-			return
+			hasUnknownFeature = true
+			continue
 		}
 		if f.ValueString() == "real-time-data" {
 			hasRealTime = true
@@ -62,19 +63,20 @@ func (v cloudconnectAwsS3RealTimeValidator) ValidateResource(ctx context.Context
 		return
 	}
 
-	missingS3 := s3bucket.IsNull()
-	missingS3Region := s3bucketRegion.IsNull()
-	hasKnownS3 := !s3bucket.IsNull() && !s3bucket.IsUnknown()
-	hasKnownS3Region := !s3bucketRegion.IsNull() && !s3bucketRegion.IsUnknown()
-
-	if hasRealTime && (missingS3 || missingS3Region) {
+	if hasRealTime && (s3bucket.IsNull() || s3bucketRegion.IsNull()) {
 		resp.Diagnostics.AddError(
 			"Missing S3 Configuration for Real-Time Data",
 			`When enabled_features contains "real-time-data", both s3bucket and s3bucket_region must be set.`,
 		)
+		return
 	}
 
-	if !hasRealTime && (hasKnownS3 || hasKnownS3Region) {
+	if hasRealTime || hasUnknownFeature {
+		return
+	}
+
+	if (!s3bucket.IsNull() && !s3bucket.IsUnknown()) ||
+		(!s3bucketRegion.IsNull() && !s3bucketRegion.IsUnknown()) {
 		resp.Diagnostics.AddError(
 			"S3 Configuration Without Real-Time Data",
 			`s3bucket and s3bucket_region can only be set when enabled_features contains "real-time-data".`,

@@ -5,7 +5,7 @@ description: How to add or modify a Terraform data source in this provider. Cove
 
 # Implement Data Source
 
-Step-by-step guide for adding a new data source or modifying an existing one. Before starting, also read the [implementation-conventions](../implementation-conventions/SKILL.md) skill for shared patterns.
+Step-by-step guide for adding a new data source or modifying an existing one. Before starting, also read the [implementation-conventions](../implementation-conventions/SKILL.md) skill for shared patterns. When adding or changing validation, also read [implement-validator](../implement-validator/SKILL.md).
 
 ## Step 1: Add to datasources.yml
 

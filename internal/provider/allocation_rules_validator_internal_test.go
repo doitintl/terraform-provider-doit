@@ -7,6 +7,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -79,6 +80,7 @@ func TestAllocationRulesValidator(t *testing.T) {
 		ruleSpecs   []ruleSpec
 		expectError bool
 		errorMatch  string
+		wantPath    string
 	}{
 		{
 			name: "valid - create action with name",
@@ -101,6 +103,7 @@ func TestAllocationRulesValidator(t *testing.T) {
 			},
 			expectError: true,
 			errorMatch:  "'name' is required when action is 'create'",
+			wantPath:    "rules[0].name",
 		},
 		{
 			name: "invalid - update action without name",
@@ -109,6 +112,7 @@ func TestAllocationRulesValidator(t *testing.T) {
 			},
 			expectError: true,
 			errorMatch:  "'name' is required when action is 'update'",
+			wantPath:    "rules[0].name",
 		},
 		{
 			name: "invalid - create action with empty name",
@@ -117,6 +121,7 @@ func TestAllocationRulesValidator(t *testing.T) {
 			},
 			expectError: true,
 			errorMatch:  "'name' is required when action is 'create'",
+			wantPath:    "rules[0].name",
 		},
 		{
 			name: "valid - mixed rules with create having name",
@@ -134,6 +139,7 @@ func TestAllocationRulesValidator(t *testing.T) {
 			},
 			expectError: true,
 			errorMatch:  "rules[1]: 'name' is required when action is 'create'",
+			wantPath:    "rules[1].name",
 		},
 		{
 			name: "valid - update action with name",
@@ -164,11 +170,42 @@ func TestAllocationRulesValidator(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "invalid known rule before unknown name",
+			ruleSpecs: []ruleSpec{
+				{action: "create", nameIsNull: true},
+				{action: "update", nameUnknown: true},
+			},
+			expectError: true,
+			errorMatch:  "rules[0]: 'name' is required when action is 'create'",
+			wantPath:    "rules[0].name",
+		},
+		{
+			name: "invalid known rule after unknown name",
+			ruleSpecs: []ruleSpec{
+				{action: "update", nameUnknown: true},
+				{action: "create", nameIsNull: true},
+			},
+			expectError: true,
+			errorMatch:  "rules[1]: 'name' is required when action is 'create'",
+			wantPath:    "rules[1].name",
+		},
+		{
+			name: "invalid known rule after unknown action",
+			ruleSpecs: []ruleSpec{
+				{actionUnknown: true, nameIsNull: true},
+				{action: "update", name: "", nameIsNull: false},
+			},
+			expectError: true,
+			errorMatch:  "rules[1]: 'name' is required when action is 'update'",
+			wantPath:    "rules[1].name",
+		},
+		{
 			// Empty rules list is blocked - API returns null for empty lists,
 			// which would cause a plan/state mismatch.
 			name:        "invalid - empty rules list (blocked)",
 			ruleSpecs:   []ruleSpec{},
 			expectError: true,
+			wantPath:    "rules",
 		},
 	}
 
@@ -209,6 +246,34 @@ func TestAllocationRulesValidator(t *testing.T) {
 				}
 				if !found {
 					t.Errorf("expected error containing %q, got: %v", tt.errorMatch, resp.Diagnostics)
+				}
+			}
+
+			wantCount := 0
+			if tt.expectError {
+				wantCount = 1
+			}
+			if len(resp.Diagnostics) != wantCount {
+				t.Fatalf("diagnostic count = %d, want %d: %v", len(resp.Diagnostics), wantCount, resp.Diagnostics)
+			}
+			if tt.expectError {
+				diagnostic := resp.Diagnostics[0]
+				if diagnostic.Severity() != diag.SeverityError {
+					t.Errorf("severity = %s, want error", diagnostic.Severity())
+				}
+				wantSummary := "Missing Required Attribute"
+				if tt.wantPath == "rules" {
+					wantSummary = "Invalid Rules Configuration"
+				}
+				if diagnostic.Summary() != wantSummary {
+					t.Errorf("summary = %q, want %q", diagnostic.Summary(), wantSummary)
+				}
+				withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+				if !ok {
+					t.Fatalf("diagnostic %T has no path", diagnostic)
+				}
+				if got := withPath.Path().String(); got != tt.wantPath {
+					t.Errorf("path = %q, want %q", got, tt.wantPath)
 				}
 			}
 		})

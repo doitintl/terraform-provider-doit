@@ -1,21 +1,19 @@
-// Package validatordefer detects Terraform validators that emit diagnostics
-// before unknown configuration values have resolved.
+// Package validatordefer detects canonical Terraform validators that emit
+// diagnostics before unknown configuration values have resolved.
 package validatordefer
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"sort"
 	"strings"
 
+	"github.com/doitintl/terraform-provider-doit/tools/linters/internal/validatoranalysis"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/validatorshape"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/ctrlflow"
-	"golang.org/x/tools/go/analysis/passes/inspect"
-	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/cfg"
-	"golang.org/x/tools/go/types/typeutil"
 )
 
 // Analyzer is the go/analysis analyzer for validatordefer.
@@ -24,493 +22,156 @@ var Analyzer = &analysis.Analyzer{
 	Doc:  "Detects Terraform validator diagnostics that do not defer unknown values.",
 	Run:  run,
 	Requires: []*analysis.Analyzer{
-		inspect.Analyzer,
 		ctrlflow.Analyzer,
+		validatorshape.Analyzer,
 	},
 }
 
-var diagnosticMethods = map[string]bool{
-	"AddAttributeError":   true,
-	"AddAttributeWarning": true,
-	"AddError":            true,
-	"AddWarning":          true,
-}
-
-type presenceAlias struct {
-	value                 string
-	unknownMakesAliasTrue bool
-}
+type valueSet = validatoranalysis.ValueSet
 
 type functionAnalysis struct {
-	pass           *analysis.Pass
-	reachable      map[token.Pos]bool
-	reported       map[token.Pos]bool
-	knownAtIf      map[token.Pos]map[string]bool
-	knownAtCall    map[token.Pos]map[string]bool
-	unknownAliases map[string]presenceAlias
-}
-
-type analysisContext struct {
-	function *types.Func
-	knownKey string
-}
-
-type flowFacts struct {
-	knownAtIf   map[token.Pos]map[string]bool
-	knownAtCall map[token.Pos]map[string]bool
+	pass        *analysis.Pass
+	reachable   map[token.Pos]bool
+	reported    map[token.Pos]bool
+	knownAtIf   map[token.Pos]valueSet
+	knownAtCall map[token.Pos]valueSet
+	guards      map[token.Pos][]validatoranalysis.ValueRef
+	trackers    map[token.Pos]validatorshape.TrackerFact
 }
 
 func run(pass *analysis.Pass) (any, error) {
-	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	cfgs := pass.ResultOf[ctrlflow.Analyzer].(*ctrlflow.CFGs)
-
-	decls := map[*types.Func]*ast.FuncDecl{}
-	var roots []*ast.FuncDecl
-	insp.Preorder([]ast.Node{(*ast.FuncDecl)(nil)}, func(node ast.Node) {
-		decl := node.(*ast.FuncDecl)
-		if decl.Body == nil || decl.Name == nil {
-			return
-		}
-		fn, ok := pass.TypesInfo.Defs[decl.Name].(*types.Func)
-		if !ok {
-			return
-		}
-		decls[fn] = decl
-		if isValidatorEntryPoint(fn) {
-			roots = append(roots, decl)
-		}
-	})
-
-	seen := map[analysisContext]bool{}
+	shape := pass.ResultOf[validatorshape.Analyzer].(*validatorshape.Result)
 	reported := map[token.Pos]bool{}
-	var analyze func(*ast.FuncDecl, map[string]bool)
-	analyze = func(decl *ast.FuncDecl, entryKnown map[string]bool) {
-		fn, ok := pass.TypesInfo.Defs[decl.Name].(*types.Func)
-		if !ok {
-			return
+	for _, facts := range shape.Functions {
+		if !facts.Conforms {
+			continue
 		}
-		// A helper can be safe from one guarded call site and unsafe from
-		// another, so analyze each distinct parameter-fact context. Diagnostics
-		// are deduplicated globally and remain reported if any context is unsafe.
-		context := analysisContext{function: fn, knownKey: setKey(entryKnown)}
-		if seen[context] {
-			return
-		}
-		seen[context] = true
-
-		unknownAliases := collectUnknownAliases(decl.Body)
-		flow := collectFlowFacts(decl.Body, unknownAliases, entryKnown)
-
+		declaration := facts.Declaration
 		state := &functionAnalysis{
-			pass:           pass,
-			reachable:      reachablePositions(cfgs.FuncDecl(decl)),
-			reported:       reported,
-			knownAtIf:      flow.knownAtIf,
-			knownAtCall:    flow.knownAtCall,
-			unknownAliases: unknownAliases,
+			pass:        pass,
+			reachable:   reachablePositions(cfgs.FuncDecl(declaration)),
+			reported:    reported,
+			knownAtIf:   facts.KnownAtIf,
+			knownAtCall: facts.KnownAtCall,
+			guards:      facts.Guards,
+			trackers:    facts.Trackers,
 		}
-		state.checkExplicitUnknownDiagnostics(decl.Body)
-		state.checkPresenceAliases(decl.Body)
-		state.checkUncertainLoopCounts(decl.Body)
-
-		inspectWithoutFuncLits(decl.Body, func(node ast.Node) {
-			call, ok := node.(*ast.CallExpr)
-			if !ok {
-				return
-			}
-			callerKnown, supported := flow.knownAtCall[call.Pos()]
-			if !supported {
-				return
-			}
-			callee := typeutil.StaticCallee(pass.TypesInfo, call)
-			if next, ok := decls[callee]; ok {
-				analyze(next, mapKnownArguments(call, next, callerKnown))
-			}
-		})
+		state.checkPresenceDiagnostics(declaration.Body)
+		state.checkUncertainLoopCounts(declaration.Body)
 	}
-
-	for _, root := range roots {
-		analyze(root, nil)
-	}
-
 	return nil, nil
 }
 
-func isValidatorEntryPoint(fn *types.Func) bool {
-	sig, ok := fn.Type().(*types.Signature)
-	if !ok {
-		return false
-	}
-	for index := 0; index < sig.Params().Len(); index++ {
-		named := namedType(sig.Params().At(index).Type())
-		if named == nil || named.Obj().Pkg() == nil {
-			continue
-		}
-		path := named.Obj().Pkg().Path()
-		name := named.Obj().Name()
-		if path == "github.com/hashicorp/terraform-plugin-framework/schema/validator" && strings.HasSuffix(name, "Request") {
-			return true
-		}
-		if (path == "github.com/hashicorp/terraform-plugin-framework/resource" ||
-			path == "github.com/hashicorp/terraform-plugin-framework/datasource" ||
-			path == "github.com/hashicorp/terraform-plugin-framework/provider") && name == "ValidateConfigRequest" {
-			return true
-		}
-	}
-	return false
-}
-
-func namedType(value types.Type) *types.Named {
-	if pointer, ok := value.(*types.Pointer); ok {
-		value = pointer.Elem()
-	}
-	named, _ := value.(*types.Named)
-	return named
-}
-
 func reachablePositions(graph *cfg.CFG) map[token.Pos]bool {
-	if graph == nil {
-		return map[token.Pos]bool{}
-	}
 	positions := map[token.Pos]bool{}
+	if graph == nil {
+		return positions
+	}
 	for _, block := range graph.Blocks {
 		if !block.Live {
 			continue
 		}
 		for _, node := range block.Nodes {
-			ast.Inspect(node, func(candidate ast.Node) bool {
+			validatoranalysis.Inspect(node, func(candidate ast.Node) {
 				if candidate != nil {
 					positions[candidate.Pos()] = true
 				}
-				return true
 			})
 		}
 	}
 	return positions
 }
 
-func (state *functionAnalysis) checkExplicitUnknownDiagnostics(body *ast.BlockStmt) {
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		ifStmt, ok := node.(*ast.IfStmt)
+func (state *functionAnalysis) checkPresenceDiagnostics(body *ast.BlockStmt) {
+	validatoranalysis.Inspect(body, func(node ast.Node) {
+		statement, ok := node.(*ast.IfStmt)
 		if !ok {
 			return
 		}
-		unknowns := positiveUnknownValuesWithAliases(ifStmt.Cond, state.unknownAliases)
-		unknowns = withoutKnownValues(unknowns, state.knownAtIf[ifStmt.Pos()])
-		if len(unknowns) == 0 {
+		unsafe := unsafePresenceValues(state.pass, statement.Cond, state.knownAtIf[statement.Pos()])
+		if len(unsafe) == 0 {
 			return
 		}
-		for _, diagnostic := range diagnosticsIn(ifStmt.Body) {
-			state.report(diagnostic, unknowns)
+		for _, diagnostic := range diagnosticsIn(state.pass, statement.Body) {
+			state.report(diagnostic, unsafe)
 		}
 	})
 }
 
-func (state *functionAnalysis) checkPresenceAliases(body *ast.BlockStmt) {
-	aliases := collectNullPresenceAliases(body)
-
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		ifStmt, ok := node.(*ast.IfStmt)
-		if !ok {
-			return
-		}
-		unsafeValues := unsafePresenceValues(ifStmt.Cond, aliases, true)
-		unsafeValues = withoutKnownValues(unsafeValues, state.knownAtIf[ifStmt.Pos()])
-		if len(unsafeValues) == 0 {
-			return
-		}
-		for _, diagnostic := range diagnosticsIn(ifStmt.Body) {
-			state.report(diagnostic, unsafeValues)
-		}
-	})
+func unsafePresenceValues(pass *analysis.Pass, expression ast.Expr, known valueSet) []validatoranalysis.ValueRef {
+	if parenthesized, ok := expression.(*ast.ParenExpr); ok {
+		return unsafePresenceValues(pass, parenthesized.X, known)
+	}
+	if binary, ok := expression.(*ast.BinaryExpr); ok && binary.Op == token.LOR {
+		return uniqueValues(append(
+			unsafePresenceValues(pass, binary.X, known),
+			unsafePresenceValues(pass, binary.Y, known)...,
+		))
+	}
+	branchKnown := validatoranalysis.CloneValues(known)
+	validatoranalysis.AddValues(branchKnown, validatoranalysis.KnownValuesWhen(pass, expression, true))
+	return withoutKnown(presenceValues(pass, expression, true), branchKnown)
 }
 
-func collectFlowFacts(body *ast.BlockStmt, aliases map[string]presenceAlias, entryKnown map[string]bool) flowFacts {
-	facts := flowFacts{
-		knownAtIf:   map[token.Pos]map[string]bool{},
-		knownAtCall: map[token.Pos]map[string]bool{},
-	}
-	recordCalls := func(node ast.Node, known map[string]bool) {
-		if node == nil {
-			return
-		}
-		inspectWithoutFuncLits(node, func(candidate ast.Node) {
-			if call, ok := candidate.(*ast.CallExpr); ok {
-				facts.knownAtCall[call.Pos()] = cloneSet(known)
-			}
-		})
-	}
-	var visitBlock func(*ast.BlockStmt, map[string]bool) (map[string]bool, bool)
-	var visitIf func(*ast.IfStmt, map[string]bool) (map[string]bool, bool)
-	visitIf = func(statement *ast.IfStmt, incoming map[string]bool) (map[string]bool, bool) {
-		recordCalls(statement.Init, incoming)
-		recordCalls(statement.Cond, incoming)
-
-		trueKnown := cloneSet(incoming)
-		addValues(trueKnown, knownValuesWhen(statement.Cond, true, aliases))
-		facts.knownAtIf[statement.Pos()] = trueKnown
-		trueKnown, trueContinues := visitBlock(statement.Body, trueKnown)
-
-		falseKnown := cloneSet(incoming)
-		addValues(falseKnown, knownValuesWhen(statement.Cond, false, aliases))
-		falseContinues := true
-		switch elseStatement := statement.Else.(type) {
-		case *ast.BlockStmt:
-			falseKnown, falseContinues = visitBlock(elseStatement, falseKnown)
-		case *ast.IfStmt:
-			falseKnown, falseContinues = visitIf(elseStatement, falseKnown)
-		}
-
-		switch {
-		case trueContinues && falseContinues:
-			return intersectSets(trueKnown, falseKnown), true
-		case trueContinues:
-			return trueKnown, true
-		case falseContinues:
-			return falseKnown, true
-		default:
-			return map[string]bool{}, false
-		}
-	}
-	visitBlock = func(block *ast.BlockStmt, incoming map[string]bool) (map[string]bool, bool) {
-		known := cloneSet(incoming)
-		for _, statement := range block.List {
-			switch statement := statement.(type) {
-			case *ast.IfStmt:
-				var continues bool
-				known, continues = visitIf(statement, known)
-				if !continues {
-					return known, false
-				}
-			case *ast.ForStmt:
-				recordCalls(statement.Init, known)
-				recordCalls(statement.Cond, known)
-				recordCalls(statement.Post, known)
-				_, _ = visitBlock(statement.Body, known)
-			case *ast.RangeStmt:
-				recordCalls(statement.X, known)
-				_, _ = visitBlock(statement.Body, known)
-			case *ast.BlockStmt:
-				var continues bool
-				known, continues = visitBlock(statement, known)
-				if !continues {
-					return known, false
-				}
-			case *ast.ReturnStmt:
-				recordCalls(statement, known)
-				return known, false
-			case *ast.BranchStmt:
-				recordCalls(statement, known)
-				if statement.Tok == token.CONTINUE {
-					return known, false
-				}
-			default:
-				recordCalls(statement, known)
-			}
-		}
-		return known, true
-	}
-	_, _ = visitBlock(body, entryKnown)
-	return facts
-}
-
-func collectUnknownAliases(body *ast.BlockStmt) map[string]presenceAlias {
-	return collectPredicateAliases(body, unknownPredicateAlias)
-}
-
-func collectNullPresenceAliases(body *ast.BlockStmt) map[string]presenceAlias {
-	return collectPredicateAliases(body, nullPresenceAlias)
-}
-
-func collectPredicateAliases(body *ast.BlockStmt, match func(ast.Expr) (presenceAlias, bool)) map[string]presenceAlias {
-	aliases := map[string]presenceAlias{}
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		switch statement := node.(type) {
-		case *ast.AssignStmt:
-			if len(statement.Lhs) != len(statement.Rhs) {
-				return
-			}
-			for index, lhs := range statement.Lhs {
-				ident, ok := lhs.(*ast.Ident)
-				if !ok {
-					continue
-				}
-				if alias, ok := match(statement.Rhs[index]); ok {
-					aliases[ident.Name] = alias
-				}
-			}
-		case *ast.ValueSpec:
-			if len(statement.Names) != len(statement.Values) {
-				return
-			}
-			for index, ident := range statement.Names {
-				if alias, ok := match(statement.Values[index]); ok {
-					aliases[ident.Name] = alias
-				}
-			}
-		}
-	})
-	return aliases
-}
-
-func mapKnownArguments(call *ast.CallExpr, callee *ast.FuncDecl, callerKnown map[string]bool) map[string]bool {
-	parameters := parameterNames(callee)
-	known := map[string]bool{}
-	for index, argument := range call.Args {
-		if index >= len(parameters) || parameters[index] == "" {
-			continue
-		}
-		if callerKnown[expressionName(argument)] {
-			known[parameters[index]] = true
-		}
-	}
-	return known
-}
-
-func parameterNames(function *ast.FuncDecl) []string {
-	if function.Type == nil || function.Type.Params == nil {
-		return nil
-	}
-	var names []string
-	for _, field := range function.Type.Params.List {
-		if len(field.Names) == 0 {
-			names = append(names, "")
-			continue
-		}
-		for _, name := range field.Names {
-			names = append(names, name.Name)
-		}
-	}
-	return names
-}
-
-func setKey(values map[string]bool) string {
-	keys := make([]string, 0, len(values))
-	for value := range values {
-		keys = append(keys, value)
-	}
-	sort.Strings(keys)
-	return strings.Join(keys, "\x00")
-}
-
-func knownValuesWhen(expression ast.Expr, result bool, aliases map[string]presenceAlias) []string {
+func presenceValues(pass *analysis.Pass, expression ast.Expr, positive bool) []validatoranalysis.ValueRef {
 	switch expression := expression.(type) {
 	case *ast.ParenExpr:
-		return knownValuesWhen(expression.X, result, aliases)
-	case *ast.BinaryExpr:
-		if expression.Op != token.LAND && expression.Op != token.LOR {
-			return nil
-		}
-		left := knownValuesWhen(expression.X, result, aliases)
-		right := knownValuesWhen(expression.Y, result, aliases)
-		if (expression.Op == token.LAND && result) || (expression.Op == token.LOR && !result) {
-			return uniqueSorted(append(left, right...))
-		}
-		return intersectValues(left, right)
+		return presenceValues(pass, expression.X, positive)
 	case *ast.UnaryExpr:
 		if expression.Op == token.NOT {
-			return knownValuesWhen(expression.X, !result, aliases)
+			return presenceValues(pass, expression.X, !positive)
+		}
+	case *ast.BinaryExpr:
+		if expression.Op == token.LAND || expression.Op == token.LOR {
+			return uniqueValues(append(
+				presenceValues(pass, expression.X, positive),
+				presenceValues(pass, expression.Y, positive)...,
+			))
 		}
 	case *ast.CallExpr:
-		if len(expression.Args) != 0 {
-			return nil
-		}
-		selector, ok := expression.Fun.(*ast.SelectorExpr)
-		if !ok {
-			return nil
-		}
-		unknownResult, recognized := map[string]bool{
-			"IsUnknown": true,
-			"IsNull":    false,
-		}[selector.Sel.Name]
-		if recognized && result != unknownResult {
-			return []string{expressionName(selector.X)}
-		}
-	case *ast.Ident:
-		if alias, ok := aliases[expression.Name]; ok && result != alias.unknownMakesAliasTrue {
-			return []string{alias.value}
+		kind, value, ok := validatoranalysis.Predicate(pass, expression)
+		if ok && kind == validatoranalysis.PredicateNull && !positive {
+			return []validatoranalysis.ValueRef{value}
 		}
 	}
 	return nil
-}
-
-func cloneSet(values map[string]bool) map[string]bool {
-	result := map[string]bool{}
-	for value := range values {
-		result[value] = true
-	}
-	return result
-}
-
-func intersectSets(left, right map[string]bool) map[string]bool {
-	result := map[string]bool{}
-	for value := range left {
-		if right[value] {
-			result[value] = true
-		}
-	}
-	return result
-}
-
-func intersectValues(left, right []string) []string {
-	rightSet := map[string]bool{}
-	for _, value := range right {
-		rightSet[value] = true
-	}
-	var result []string
-	for _, value := range left {
-		if rightSet[value] {
-			result = append(result, value)
-		}
-	}
-	return uniqueSorted(result)
-}
-
-func addValues(destination map[string]bool, values []string) {
-	for _, value := range values {
-		destination[value] = true
-	}
-}
-
-func withoutKnownValues(values []string, known map[string]bool) []string {
-	result := values[:0]
-	for _, value := range values {
-		if !known[value] {
-			result = append(result, value)
-		}
-	}
-	return result
 }
 
 func (state *functionAnalysis) checkUncertainLoopCounts(body *ast.BlockStmt) {
 	var visitBlock func(*ast.BlockStmt)
 	visitBlock = func(block *ast.BlockStmt) {
 		for index, statement := range block.List {
-			rangeStmt, ok := statement.(*ast.RangeStmt)
-			if ok {
-				branches := unknownContinueBranches(rangeStmt.Body)
-				if len(branches) > 0 {
-					for _, following := range block.List[index+1:] {
-						ifStmt, ok := following.(*ast.IfStmt)
-						if !ok {
+			if loop, ok := statement.(*ast.RangeStmt); ok {
+				branches := unknownContinueBranches(loop.Body, state.guards, state.trackers)
+				var intervening []ast.Stmt
+				for _, following := range block.List[index+1:] {
+					conditional, ok := following.(*ast.IfStmt)
+					if !ok {
+						if _, nested := following.(*ast.RangeStmt); nested {
 							break
 						}
-						minimumCounts := minimumCountNames(ifStmt.Cond)
-						if len(minimumCounts) == 0 {
+						intervening = append(intervening, following)
+						continue
+					}
+					counts := minimumCountObjects(state.pass, conditional.Cond)
+					if len(counts) == 0 {
+						continue
+					}
+					references := referencedObjects(state.pass, conditional.Cond)
+					var unsafe []validatoranalysis.ValueRef
+					for _, branch := range branches {
+						relevant := cloneObjectSet(counts)
+						addObjects(relevant, branch.trackers)
+						if statementsMentionObjects(state.pass, intervening, relevant) {
 							continue
 						}
-						var unsafeValues []string
-						for _, branch := range branches {
-							if !intersects(branch.incremented, minimumCounts) {
-								unsafeValues = append(unsafeValues, branch.values...)
-							}
+						if !intersectsObjects(branch.trackers, references) {
+							unsafe = append(unsafe, branch.values...)
 						}
-						if len(unsafeValues) == 0 {
-							continue
-						}
-						for _, diagnostic := range diagnosticsIn(ifStmt.Body) {
-							state.report(diagnostic, unsafeValues)
-						}
+					}
+					for _, diagnostic := range diagnosticsIn(state.pass, conditional.Body) {
+						state.report(diagnostic, unsafe)
 					}
 				}
 			}
@@ -520,288 +181,180 @@ func (state *functionAnalysis) checkUncertainLoopCounts(body *ast.BlockStmt) {
 				visitBlock(statement)
 			case *ast.IfStmt:
 				visitBlock(statement.Body)
-				if elseBlock, ok := statement.Else.(*ast.BlockStmt); ok {
-					visitBlock(elseBlock)
+				if alternative, ok := statement.Else.(*ast.BlockStmt); ok {
+					visitBlock(alternative)
 				}
 			case *ast.ForStmt:
 				visitBlock(statement.Body)
 			case *ast.RangeStmt:
 				visitBlock(statement.Body)
-			case *ast.SwitchStmt:
-				for _, clause := range statement.Body.List {
-					caseClause, ok := clause.(*ast.CaseClause)
-					if ok {
-						visitBlock(&ast.BlockStmt{List: caseClause.Body})
-					}
-				}
 			}
 		}
 	}
 	visitBlock(body)
 }
 
-func (state *functionAnalysis) report(call *ast.CallExpr, values []string) {
-	if state.reported[call.Pos()] || (state.reachable != nil && !state.reachable[call.Pos()]) {
-		return
-	}
-	values = withoutKnownValues(values, state.knownAtCall[call.Pos()])
-	values = uniqueSorted(values)
-	if len(values) == 0 {
-		return
-	}
-	state.reported[call.Pos()] = true
-	state.pass.Reportf(call.Pos(), "validator diagnostic may be emitted while %s is unknown; defer validation until the value is known", strings.Join(values, ", "))
+func cloneObjectSet(values map[types.Object]bool) map[types.Object]bool {
+	result := map[types.Object]bool{}
+	addObjects(result, values)
+	return result
 }
 
-func positiveUnknownValues(expression ast.Expr) []string {
-	return positiveUnknownValuesWithAliases(expression, nil)
+func addObjects(destination, values map[types.Object]bool) {
+	for object := range values {
+		destination[object] = true
+	}
 }
 
-func positiveUnknownValuesWithAliases(expression ast.Expr, aliases map[string]presenceAlias) []string {
-	var values []string
-	var inspectExpression func(ast.Expr, bool)
-	inspectExpression = func(expr ast.Expr, positive bool) {
-		switch expr := expr.(type) {
-		case *ast.ParenExpr:
-			inspectExpression(expr.X, positive)
-		case *ast.UnaryExpr:
-			if expr.Op == token.NOT {
-				inspectExpression(expr.X, !positive)
+func statementsMentionObjects(pass *analysis.Pass, statements []ast.Stmt, objects map[types.Object]bool) bool {
+	for _, statement := range statements {
+		mentioned := false
+		validatoranalysis.Inspect(statement, func(node ast.Node) {
+			identifier, ok := node.(*ast.Ident)
+			if ok && objects[pass.TypesInfo.ObjectOf(identifier)] {
+				mentioned = true
 			}
-		case *ast.BinaryExpr:
-			if expr.Op == token.LAND || expr.Op == token.LOR {
-				inspectExpression(expr.X, positive)
-				inspectExpression(expr.Y, positive)
-			}
-		case *ast.CallExpr:
-			selector, ok := expr.Fun.(*ast.SelectorExpr)
-			if ok && selector.Sel.Name == "IsUnknown" && positive && len(expr.Args) == 0 {
-				values = append(values, expressionName(selector.X))
-			}
-		case *ast.Ident:
-			if alias, ok := aliases[expr.Name]; ok && alias.unknownMakesAliasTrue == positive {
-				values = append(values, alias.value)
-			}
-		}
-	}
-	inspectExpression(expression, true)
-	return uniqueSorted(values)
-}
-
-func unknownPredicateAlias(expression ast.Expr) (presenceAlias, bool) {
-	unknownMakesTrue := true
-	if unary, ok := expression.(*ast.UnaryExpr); ok && unary.Op == token.NOT {
-		expression = unary.X
-		unknownMakesTrue = false
-	}
-	call, ok := expression.(*ast.CallExpr)
-	if !ok || len(call.Args) != 0 {
-		return presenceAlias{}, false
-	}
-	selector, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || selector.Sel.Name != "IsUnknown" {
-		return presenceAlias{}, false
-	}
-	return presenceAlias{value: expressionName(selector.X), unknownMakesAliasTrue: unknownMakesTrue}, true
-}
-
-func nullPresenceAlias(expression ast.Expr) (presenceAlias, bool) {
-	unknownMakesTrue := false
-	if unary, ok := expression.(*ast.UnaryExpr); ok && unary.Op == token.NOT {
-		expression = unary.X
-		unknownMakesTrue = true
-	}
-	call, ok := expression.(*ast.CallExpr)
-	if !ok || len(call.Args) != 0 {
-		return presenceAlias{}, false
-	}
-	selector, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || selector.Sel.Name != "IsNull" {
-		return presenceAlias{}, false
-	}
-	return presenceAlias{value: expressionName(selector.X), unknownMakesAliasTrue: unknownMakesTrue}, true
-}
-
-func unsafePresenceValues(expression ast.Expr, aliases map[string]presenceAlias, positive bool) []string {
-	var values []string
-	switch expr := expression.(type) {
-	case *ast.ParenExpr:
-		return unsafePresenceValues(expr.X, aliases, positive)
-	case *ast.UnaryExpr:
-		if expr.Op == token.NOT {
-			return unsafePresenceValues(expr.X, aliases, !positive)
-		}
-	case *ast.BinaryExpr:
-		if expr.Op == token.LAND || expr.Op == token.LOR {
-			values = append(values, unsafePresenceValues(expr.X, aliases, positive)...)
-			values = append(values, unsafePresenceValues(expr.Y, aliases, positive)...)
-		}
-	case *ast.CallExpr:
-		selector, ok := expr.Fun.(*ast.SelectorExpr)
-		if ok && selector.Sel.Name == "IsNull" && !positive && len(expr.Args) == 0 {
-			values = append(values, expressionName(selector.X))
-		}
-	case *ast.Ident:
-		if alias, ok := aliases[expr.Name]; ok && alias.unknownMakesAliasTrue == positive {
-			values = append(values, alias.value)
-		}
-	}
-	return uniqueSorted(values)
-}
-
-type unknownBranch struct {
-	values      []string
-	incremented map[string]bool
-}
-
-func unknownContinueBranches(body *ast.BlockStmt) []unknownBranch {
-	var branches []unknownBranch
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		ifStmt, ok := node.(*ast.IfStmt)
-		if !ok || !containsContinue(ifStmt.Body) {
-			return
-		}
-		values := positiveUnknownValues(ifStmt.Cond)
-		if len(values) == 0 {
-			return
-		}
-		branches = append(branches, unknownBranch{
-			values:      values,
-			incremented: incrementedNames(ifStmt.Body),
 		})
-	})
-	return branches
-}
-
-func containsContinue(body *ast.BlockStmt) bool {
-	found := false
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		branch, ok := node.(*ast.BranchStmt)
-		if ok && branch.Tok == token.CONTINUE {
-			found = true
-		}
-	})
-	return found
-}
-
-func incrementedNames(body *ast.BlockStmt) map[string]bool {
-	names := map[string]bool{}
-	inspectWithoutFuncLits(body, func(node ast.Node) {
-		statement, ok := node.(*ast.IncDecStmt)
-		if !ok || statement.Tok != token.INC {
-			return
-		}
-		if ident, ok := statement.X.(*ast.Ident); ok {
-			names[ident.Name] = true
-		}
-	})
-	return names
-}
-
-func minimumCountNames(expression ast.Expr) map[string]bool {
-	names := map[string]bool{}
-	ast.Inspect(expression, func(node ast.Node) bool {
-		binary, ok := node.(*ast.BinaryExpr)
-		if !ok {
-			return true
-		}
-		if name, ok := uncertainCountComparison(binary); ok {
-			names[name] = true
-		}
-		return true
-	})
-	return names
-}
-
-func uncertainCountComparison(binary *ast.BinaryExpr) (string, bool) {
-	left, leftOK := binary.X.(*ast.Ident)
-	right, rightOK := binary.Y.(*ast.BasicLit)
-	if leftOK && rightOK && right.Kind == token.INT {
-		if (right.Value == "0" && (binary.Op == token.EQL || binary.Op == token.LEQ)) ||
-			(right.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.LSS)) {
-			return left.Name, true
-		}
-	}
-	rightIdent, rightIdentOK := binary.Y.(*ast.Ident)
-	leftLiteral, leftLiteralOK := binary.X.(*ast.BasicLit)
-	if rightIdentOK && leftLiteralOK && leftLiteral.Kind == token.INT {
-		if (leftLiteral.Value == "0" && (binary.Op == token.EQL || binary.Op == token.GEQ)) ||
-			(leftLiteral.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.GTR)) {
-			return rightIdent.Name, true
-		}
-	}
-	return "", false
-}
-
-func intersects(left, right map[string]bool) bool {
-	for name := range left {
-		if right[name] {
+		if mentioned {
 			return true
 		}
 	}
 	return false
 }
 
-func diagnosticsIn(node ast.Node) []*ast.CallExpr {
-	var diagnostics []*ast.CallExpr
-	inspectWithoutFuncLits(node, func(candidate ast.Node) {
-		call, ok := candidate.(*ast.CallExpr)
-		if !ok {
-			return
+type unknownBranch struct {
+	values   []validatoranalysis.ValueRef
+	trackers map[types.Object]bool
+}
+
+func unknownContinueBranches(
+	body *ast.BlockStmt,
+	guards map[token.Pos][]validatoranalysis.ValueRef,
+	trackers map[token.Pos]validatorshape.TrackerFact,
+) []unknownBranch {
+	var branches []unknownBranch
+	for _, node := range body.List {
+		statement, ok := node.(*ast.IfStmt)
+		if !ok || !endsWithContinue(statement.Body) {
+			continue
 		}
-		selector, ok := call.Fun.(*ast.SelectorExpr)
-		if ok && diagnosticMethods[selector.Sel.Name] {
+		if tracker, ok := trackers[statement.Pos()]; ok {
+			branches = append(branches, unknownBranch{
+				values:   tracker.Values,
+				trackers: map[types.Object]bool{tracker.Tracker.Key.Root: true},
+			})
+			continue
+		}
+		if values := guards[statement.Pos()]; len(values) > 0 {
+			branches = append(branches, unknownBranch{values: values, trackers: map[types.Object]bool{}})
+		}
+	}
+	return branches
+}
+
+func endsWithContinue(body *ast.BlockStmt) bool {
+	if body == nil || len(body.List) == 0 {
+		return false
+	}
+	branch, ok := body.List[len(body.List)-1].(*ast.BranchStmt)
+	return ok && branch.Tok == token.CONTINUE
+}
+
+func minimumCountObjects(pass *analysis.Pass, expression ast.Expr) map[types.Object]bool {
+	objects := map[types.Object]bool{}
+	ast.Inspect(expression, func(node ast.Node) bool {
+		binary, ok := node.(*ast.BinaryExpr)
+		if !ok {
+			return true
+		}
+		if identifier := minimumCountIdentifier(binary); identifier != nil {
+			objects[pass.TypesInfo.ObjectOf(identifier)] = true
+		}
+		return true
+	})
+	delete(objects, nil)
+	return objects
+}
+
+func minimumCountIdentifier(binary *ast.BinaryExpr) *ast.Ident {
+	if left, ok := binary.X.(*ast.Ident); ok {
+		if right, ok := binary.Y.(*ast.BasicLit); ok && right.Kind == token.INT {
+			if (right.Value == "0" && (binary.Op == token.EQL || binary.Op == token.LEQ)) ||
+				(right.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.LSS)) {
+				return left
+			}
+		}
+	}
+	if right, ok := binary.Y.(*ast.Ident); ok {
+		if left, ok := binary.X.(*ast.BasicLit); ok && left.Kind == token.INT {
+			if (left.Value == "0" && (binary.Op == token.EQL || binary.Op == token.GEQ)) ||
+				(left.Value == "1" && (binary.Op == token.NEQ || binary.Op == token.GTR)) {
+				return right
+			}
+		}
+	}
+	return nil
+}
+
+func referencedObjects(pass *analysis.Pass, expression ast.Expr) map[types.Object]bool {
+	objects := map[types.Object]bool{}
+	ast.Inspect(expression, func(node ast.Node) bool {
+		if identifier, ok := node.(*ast.Ident); ok {
+			objects[pass.TypesInfo.ObjectOf(identifier)] = true
+		}
+		return true
+	})
+	delete(objects, nil)
+	return objects
+}
+
+func intersectsObjects(left, right map[types.Object]bool) bool {
+	for object := range left {
+		if right[object] {
+			return true
+		}
+	}
+	return false
+}
+
+func diagnosticsIn(pass *analysis.Pass, node ast.Node) []*ast.CallExpr {
+	var diagnostics []*ast.CallExpr
+	validatoranalysis.Inspect(node, func(candidate ast.Node) {
+		call, ok := candidate.(*ast.CallExpr)
+		if ok && validatoranalysis.IsDiagnosticCall(pass, call) {
 			diagnostics = append(diagnostics, call)
 		}
 	})
 	return diagnostics
 }
 
-func inspectWithoutFuncLits(node ast.Node, visit func(ast.Node)) {
-	ast.Inspect(node, func(candidate ast.Node) bool {
-		if candidate == nil {
-			return true
-		}
-		if candidate != node {
-			if _, ok := candidate.(*ast.FuncLit); ok {
-				return false
-			}
-		}
-		visit(candidate)
-		return true
-	})
-}
-
-func expressionName(expression ast.Expr) string {
-	switch expression := expression.(type) {
-	case *ast.Ident:
-		return expression.Name
-	case *ast.SelectorExpr:
-		prefix := expressionName(expression.X)
-		if prefix == "" {
-			return expression.Sel.Name
-		}
-		return prefix + "." + expression.Sel.Name
-	case *ast.IndexExpr:
-		return expressionName(expression.X) + "[*]"
-	case *ast.ParenExpr:
-		return expressionName(expression.X)
-	default:
-		return fmt.Sprintf("value at %d", expression.Pos())
+func (state *functionAnalysis) report(call *ast.CallExpr, values []validatoranalysis.ValueRef) {
+	if len(values) == 0 || state.reported[call.Pos()] || !state.reachable[call.Pos()] {
+		return
 	}
-}
-
-func uniqueSorted(values []string) []string {
-	set := map[string]bool{}
+	values = uniqueValues(withoutKnown(values, state.knownAtCall[call.Pos()]))
+	if len(values) == 0 {
+		return
+	}
+	state.reported[call.Pos()] = true
+	displays := make([]string, 0, len(values))
 	for _, value := range values {
-		if value != "" {
-			set[value] = true
+		displays = append(displays, value.Display)
+	}
+	sort.Strings(displays)
+	state.pass.Reportf(call.Pos(), "validator diagnostic may be emitted while %s is unknown; defer validation until the value is known", strings.Join(displays, ", "))
+}
+
+func withoutKnown(values []validatoranalysis.ValueRef, known valueSet) []validatoranalysis.ValueRef {
+	result := make([]validatoranalysis.ValueRef, 0, len(values))
+	for _, value := range values {
+		if _, ok := known[value.Key]; !ok {
+			result = append(result, value)
 		}
 	}
-	result := make([]string, 0, len(set))
-	for value := range set {
-		result = append(result, value)
-	}
-	sort.Strings(result)
 	return result
+}
+
+func uniqueValues(values []validatoranalysis.ValueRef) []validatoranalysis.ValueRef {
+	return validatoranalysis.UniqueValues(values)
 }
