@@ -51,6 +51,11 @@ func (*resourceValidator) ValidateConfig(_ context.Context, _ resource.ValidateC
 	validateWrongTrackerDisjunction([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
 	validateFalseEqualityTrackerSafely([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
 	validateReverseCounterEqualitySafely([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateOwnersWithInterveningCountRead([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateOwnersWithInterveningTrackerRead([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateOwnersWithInterveningCountMutation([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateOwnersWithInterveningPointerMutation([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateOwnersWithInterveningIncrement([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
 }
 
 func validateWrongBooleanTracker(items []testItem, diagnostics *diag.Diagnostics) {
@@ -134,6 +139,95 @@ func validateReverseCounterEqualitySafely(items []testItem, diagnostics *diag.Di
 		}
 	}
 	if ownerCount == 0 && 0 == unknownCount {
+		diagnostics.AddError("missing", "missing")
+	}
+}
+
+func validateOwnersWithInterveningCountRead(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	_ = ownerCount
+	observeCount(ownerCount)
+	if ownerCount == 0 {
+		diagnostics.AddError("missing", "missing") // want "validator diagnostic may be emitted while item.Role is unknown"
+	}
+}
+
+func observeCount(_ int) {}
+
+func validateOwnersWithInterveningTrackerRead(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	hasUnknown := false
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	_ = hasUnknown
+	if ownerCount == 0 && hasUnknown {
+		diagnostics.AddError("missing", "missing") // want "validator diagnostic may be emitted while item.Role is unknown"
+	}
+}
+
+func validateOwnersWithInterveningCountMutation(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	ownerCount = len(items)
+	if ownerCount == 0 {
+		diagnostics.AddError("missing", "missing")
+	}
+}
+
+func validateOwnersWithInterveningPointerMutation(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	resetCount(&ownerCount)
+	if ownerCount == 0 {
+		diagnostics.AddError("missing", "missing")
+	}
+}
+
+func resetCount(count *int) {
+	*count = 1
+}
+
+func validateOwnersWithInterveningIncrement(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	ownerCount++
+	if ownerCount == 0 {
 		diagnostics.AddError("missing", "missing")
 	}
 }

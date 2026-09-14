@@ -5,6 +5,7 @@ package validatordefer
 import (
 	"go/ast"
 	"go/token"
+	"go/types"
 	"sort"
 	"strings"
 
@@ -229,7 +230,7 @@ func (state *functionAnalysis) checkUncertainLoopCounts(body *ast.BlockStmt) {
 						if branch.tracker != nil {
 							relevant[branch.tracker.Tracker.Key] = true
 						}
-						if statementsMentionValues(state.pass, intervening, relevant) {
+						if statementsMutateValues(state.pass, intervening, relevant) {
 							continue
 						}
 						if branch.tracker == nil || !conditionExcludesUncertainty(state.pass, conditional.Cond, *branch.tracker) {
@@ -274,24 +275,66 @@ func addValueKeys(destination, values valueKeySet) {
 	}
 }
 
-func statementsMentionValues(pass *analysis.Pass, statements []ast.Stmt, values valueKeySet) bool {
+func statementsMutateValues(pass *analysis.Pass, statements []ast.Stmt, values valueKeySet) bool {
 	for _, statement := range statements {
-		mentioned := false
+		mutated := false
 		validatoranalysis.Inspect(statement, func(node ast.Node) {
-			expression, ok := valueExpression(node)
-			if !ok {
-				return
-			}
-			value, ok := validatoranalysis.Value(pass, expression)
-			if ok && values[value.Key] {
-				mentioned = true
+			switch node := node.(type) {
+			case *ast.AssignStmt:
+				for _, expression := range node.Lhs {
+					if mutationTouchesValues(pass, expression, values) {
+						mutated = true
+					}
+				}
+			case *ast.IncDecStmt:
+				mutated = mutated || mutationTouchesValues(pass, node.X, values)
+			case *ast.UnaryExpr:
+				if node.Op == token.AND {
+					mutated = mutated || mutationTouchesValues(pass, node.X, values)
+				}
+			case *ast.CallExpr:
+				if selector, ok := node.Fun.(*ast.SelectorExpr); ok {
+					mutated = mutated || mutationTouchesValues(pass, selector.X, values)
+				}
+				for _, argument := range node.Args {
+					if _, pointer := pass.TypesInfo.TypeOf(argument).(*types.Pointer); pointer {
+						mutated = mutated || mutationTouchesValues(pass, argument, values)
+					}
+				}
 			}
 		})
-		if mentioned {
+		if mutated {
 			return true
 		}
 	}
 	return false
+}
+
+func mutationTouchesValues(pass *analysis.Pass, expression ast.Expr, values valueKeySet) bool {
+	mutated, ok := validatoranalysis.Value(pass, expression)
+	if !ok {
+		return false
+	}
+	for value := range values {
+		if mutated.Key.Root != value.Root {
+			continue
+		}
+		if mutated.Key.Path == value.Path || selectorPathContains(mutated.Key.Path, value.Path) {
+			return true
+		}
+	}
+	return false
+}
+
+func selectorPathContains(parent, child string) bool {
+	if parent == "" {
+		return true
+	}
+	if !strings.HasPrefix(child, parent) || len(child) == len(parent) {
+		return false
+	}
+	next := child[len(parent)]
+	return next == '.' || next == '['
 }
 
 type unknownBranch struct {
@@ -378,19 +421,6 @@ func minimumCountExpression(binary *ast.BinaryExpr) ast.Expr {
 		}
 	}
 	return nil
-}
-
-func valueExpression(node ast.Node) (ast.Expr, bool) {
-	switch node := node.(type) {
-	case *ast.Ident:
-		return node, true
-	case *ast.SelectorExpr:
-		return node, true
-	case *ast.IndexExpr:
-		return node, true
-	default:
-		return nil, false
-	}
 }
 
 func conditionExcludesUncertainty(pass *analysis.Pass, expression ast.Expr, tracker validatorshape.TrackerFact) bool {
