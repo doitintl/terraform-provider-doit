@@ -43,9 +43,30 @@ func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req reso
 		return
 	}
 
+	var channelVals []resource_alert.RecipientsSlackChannelsValue
+	if !slackChannels.IsNull() {
+		diags = slackChannels.ElementsAs(ctx, &channelVals, false)
+		resp.Diagnostics.Append(diags...)
+		if diags.HasError() {
+			return
+		}
+	}
+
+	knownChannels := 0
+	hasUnknownChannel := false
+	for _, ch := range channelVals {
+		if ch.IsUnknown() {
+			hasUnknownChannel = true
+			continue
+		}
+		if !ch.IsNull() {
+			knownChannels++
+		}
+	}
+
 	// If recipients is explicitly configured as empty []
 	if !recipients.IsNull() && len(recipients.Elements()) == 0 {
-		if slackChannels.IsNull() || len(slackChannels.Elements()) == 0 {
+		if slackChannels.IsNull() || (knownChannels == 0 && !hasUnknownChannel) {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("recipients"),
 				"At Least One Recipient Required",
@@ -182,11 +203,16 @@ func (v alertSlackChannelsValidator) ValidateResource(ctx context.Context, req r
 		if ch.IsUnknown() {
 			continue
 		}
+		itemPath := channelsPath.AtListIndex(i)
 		if ch.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				itemPath,
+				"Null Slack Channel",
+				"Slack channel element must not be null.",
+			)
 			continue
 		}
 
-		itemPath := channelsPath.AtListIndex(i)
 		validateSlackChannelShape(ch, itemPath, resp)
 		validateSlackChannelDuplicate(ch, i, itemPath, seen, resp)
 	}
@@ -218,17 +244,33 @@ func validateSlackChannelShape(ch resource_alert.RecipientsSlackChannelsValue, i
 }
 
 func validateSlackChannelDuplicate(ch resource_alert.RecipientsSlackChannelsValue, index int, itemPath path.Path, seen map[string]int, resp *resource.ValidateConfigResponse) {
-	if ch.Id.IsUnknown() || ch.Shared.IsUnknown() || ch.Workspace.IsUnknown() {
+	if ch.Id.IsUnknown() || ch.Shared.IsUnknown() {
 		return
 	}
 	if ch.Id.IsNull() {
 		return
 	}
 
-	destKey := "id:" + ch.Id.ValueString()
 	if !ch.Shared.IsNull() && ch.Shared.ValueBool() {
-		destKey = "shared:" + ch.Id.ValueString()
-	} else if !ch.Workspace.IsNull() && ch.Workspace.ValueString() != "" {
+		destKey := "shared:" + ch.Id.ValueString()
+		if _, exists := seen[destKey]; exists {
+			resp.Diagnostics.AddAttributeError(
+				itemPath,
+				"Duplicate Slack Channel",
+				fmt.Sprintf("Slack channel %q is specified more than once in 'recipients_slack_channels'. Each destination must be unique.", ch.Id.ValueString()),
+			)
+		} else {
+			seen[destKey] = index
+		}
+		return
+	}
+
+	if ch.Workspace.IsUnknown() {
+		return
+	}
+
+	destKey := "id:" + ch.Id.ValueString()
+	if !ch.Workspace.IsNull() && ch.Workspace.ValueString() != "" {
 		destKey = "workspace:" + ch.Workspace.ValueString() + ":" + ch.Id.ValueString()
 	}
 

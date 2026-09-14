@@ -465,13 +465,17 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 		channels := make([]resource_alert.RecipientsSlackChannelsValue, len(*resp.RecipientsSlackChannels))
 		for i, ch := range *resp.RecipientsSlackChannels {
 			var d diag.Diagnostics
+			sharedVal := types.BoolValue(false)
+			if ch.Shared != nil {
+				sharedVal = types.BoolValue(*ch.Shared)
+			}
 			channels[i], d = resource_alert.NewRecipientsSlackChannelsValue(
 				resource_alert.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
 					"customer_id": types.StringPointerValue(ch.CustomerId),
 					"id":          types.StringValue(ch.Id),
 					"name":        types.StringPointerValue(ch.Name),
-					"shared":      types.BoolPointerValue(ch.Shared),
+					"shared":      sharedVal,
 					"type":        types.StringPointerValue((*string)(ch.Type)),
 					"workspace":   types.StringPointerValue(ch.Workspace),
 				},

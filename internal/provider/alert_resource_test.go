@@ -1754,3 +1754,129 @@ resource "doit_alert" "legacy" {
 }
 `, name, testUser(), value, testAttribution())
 }
+
+func TestAccAlert_SlackChannelsLifecycle(t *testing.T) {
+	if testSlackChannel() == "" {
+		t.Skip("TEST_SLACK_CHAN is not set, skipping Slack channel test")
+	}
+	if testSlackWorkspace() == "" {
+		t.Skip("TEST_SLACK_WORKSPACE is not set, skipping Slack channel test")
+	}
+
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create alert with email recipients and slack channel
+			{
+				Config: testAccAlertWithSlack(n, testUser(), testSlackChannel()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"id":     knownvalue.StringExact(testSlackChannel()),
+								"shared": knownvalue.Bool(true),
+							}),
+						})),
+				},
+			},
+			// Step 2: Drift check (should be empty plan)
+			{
+				Config: testAccAlertWithSlack(n, testUser(), testSlackChannel()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear slack channels by omitting recipients_slack_channels
+			{
+				Config: testAccAlertClearedSlack(n, testUser()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			// Step 4: Drift check after clearing
+			{
+				Config: testAccAlertClearedSlack(n, testUser()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertWithSlack(i int, email, channelID string) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name       = "test-alert-slack-%d"
+  recipients = ["%s"]
+  recipients_slack_channels = [
+    {
+      id     = "%s"
+      shared = true
+    }
+  ]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, i, email, channelID)
+}
+
+func testAccAlertClearedSlack(i int, email string) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name       = "test-alert-slack-%d"
+  recipients = ["%s"]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, i, email)
+}

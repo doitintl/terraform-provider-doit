@@ -200,6 +200,14 @@ func TestAlertRecipientsValidator(t *testing.T) {
 			wantPath:      path.Root("recipients"),
 		},
 		{
+			name:          "recipients empty, slack with only null element is invalid",
+			recipients:    recipientsEmpty,
+			slackChannels: types.ListValueMust(resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []attr.Value{resource_alert.NewRecipientsSlackChannelsValueNull()}),
+			wantError:     true,
+			errorSummary:  "At Least One Recipient Required",
+			wantPath:      path.Root("recipients"),
+		},
+		{
 			name:          "recipients null, slack empty is invalid",
 			recipients:    recipientsNull,
 			slackChannels: slackEmpty,
@@ -492,6 +500,8 @@ func TestAlertSlackChannelsValidator(t *testing.T) {
 
 	chShared1 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringNull())
 	chShared2 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringNull())
+	chSharedUnknownWs1 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringUnknown())
+	chSharedUnknownWs2 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(true), types.StringUnknown())
 	chWsA1 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringValue("workspace-a"))
 	chWsA2 := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringValue("workspace-a"))
 	chWsB := makeSlackChannel(ctx, t, types.StringValue("C123"), types.BoolValue(false), types.StringValue("workspace-b"))
@@ -522,9 +532,11 @@ func TestAlertSlackChannelsValidator(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:      "null element is skipped safely",
-			channels:  list(nullElement, sharedValid),
-			wantError: false,
+			name:         "null element is rejected",
+			channels:     list(nullElement, sharedValid),
+			wantError:    true,
+			errorSummary: "Null Slack Channel",
+			wantPath:     channelsPath.AtListIndex(0),
 		},
 		{
 			name:      "shared true without workspace is valid",
@@ -580,6 +592,13 @@ func TestAlertSlackChannelsValidator(t *testing.T) {
 		{
 			name:         "duplicate shared channel is invalid",
 			channels:     list(chShared1, chShared2),
+			wantError:    true,
+			errorSummary: "Duplicate Slack Channel",
+			wantPath:     channelsPath.AtListIndex(1),
+		},
+		{
+			name:         "duplicate shared channel with unknown workspace is invalid",
+			channels:     list(chSharedUnknownWs1, chSharedUnknownWs2),
 			wantError:    true,
 			errorSummary: "Duplicate Slack Channel",
 			wantPath:     channelsPath.AtListIndex(1),

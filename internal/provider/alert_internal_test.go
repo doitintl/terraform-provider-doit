@@ -409,3 +409,44 @@ func TestUseNullForIgnoreValuesRangeModifier(t *testing.T) {
 		t.Errorf("expected plan value to not be null when config is populated")
 	}
 }
+
+func TestMapAlertResponseToModel_SlackChannelSharedNilNormalizedToFalse(t *testing.T) {
+	ctx := t.Context()
+	var state alertResourceModel
+
+	id := "alert-123"
+	ws := "workspace-foo"
+	apiResp := &models.Alert{
+		Id:   &id,
+		Name: "Test Alert",
+		RecipientsSlackChannels: &[]models.AlertSlackChannel{
+			{
+				Id:        "C12345",
+				Workspace: &ws,
+				Shared:    nil, // Omitted by API for workspace channel
+			},
+		},
+	}
+
+	diags := mapAlertToModel(ctx, apiResp, &state)
+	if diags.HasError() {
+		t.Fatalf("unexpected error: %v", diags)
+	}
+
+	if state.RecipientsSlackChannels.IsNull() || len(state.RecipientsSlackChannels.Elements()) != 1 {
+		t.Fatalf("expected 1 slack channel, got %v", state.RecipientsSlackChannels)
+	}
+
+	var channels []resource_alert.RecipientsSlackChannelsValue
+	diags = state.RecipientsSlackChannels.ElementsAs(ctx, &channels, false)
+	if diags.HasError() {
+		t.Fatalf("failed to decode channels: %v", diags)
+	}
+
+	ch := channels[0]
+	if ch.Shared.IsNull() {
+		t.Errorf("expected ch.Shared to be false, but got null (should normalize nil to false to match schema default)")
+	} else if ch.Shared.ValueBool() != false {
+		t.Errorf("expected ch.Shared to be false, got %v", ch.Shared.ValueBool())
+	}
+}

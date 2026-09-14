@@ -79,6 +79,7 @@ func (ds *alertDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		data.UpdateTime = types.Int64Unknown()
 		data.LastAlerted = types.Int64Unknown()
 		data.Recipients = types.ListUnknown(types.StringType)
+		data.RecipientsSlackChannels = types.ListUnknown(datasource_alert.RecipientsSlackChannelsValue{}.Type(ctx))
 		data.Config = datasource_alert.NewConfigValueUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
