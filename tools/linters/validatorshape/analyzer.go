@@ -44,7 +44,17 @@ type FunctionFacts struct {
 type TrackerFact struct {
 	Tracker validatoranalysis.ValueRef
 	Values  []validatoranalysis.ValueRef
+	Kind    TrackerKind
 }
+
+// TrackerKind identifies the two canonical ways validators may record
+// collection uncertainty.
+type TrackerKind uint8
+
+const (
+	TrackerBoolean TrackerKind = iota + 1
+	TrackerCounter
+)
 
 func run(pass *analysis.Pass) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -138,6 +148,12 @@ func analyzeFunction(pass *analysis.Pass, declaration *ast.FuncDecl) FunctionFac
 			fail("IsNull cannot share a diagnostic condition with business logic until the value is known")
 			return true
 		}
+		if kind == validatoranalysis.PredicateNull && positive {
+			if _, _, ok := canonicalTrackerBody(pass, ifStatement.Body); ok {
+				fail("IsNull cannot update an uncertainty tracker; handle known-null elements separately")
+			}
+			return true
+		}
 		if kind != validatoranalysis.PredicateUnknown || !positive {
 			return true
 		}
@@ -151,8 +167,17 @@ func analyzeFunction(pass *analysis.Pass, declaration *ast.FuncDecl) FunctionFac
 			facts.Guards[ifStatement.Pos()] = values
 			return true
 		}
-		if tracker, ok := canonicalTrackerBody(pass, ifStatement.Body); ok {
-			facts.Trackers[ifStatement.Pos()] = TrackerFact{Tracker: tracker, Values: values}
+		if tracker, trackerKind, ok := canonicalTrackerBody(pass, ifStatement.Body); ok {
+			trackerValues, trackerCanonical := canonicalUncertaintyCondition(pass, ifStatement.Cond)
+			if !trackerCanonical {
+				if containsPredicateKind(pass, ifStatement.Cond, validatoranalysis.PredicateNull) {
+					fail("IsNull cannot update an uncertainty tracker; handle known-null elements separately")
+				} else {
+					fail("uncertainty trackers may only be updated by direct IsUnknown guards")
+				}
+				return true
+			}
+			facts.Trackers[ifStatement.Pos()] = TrackerFact{Tracker: tracker, Values: trackerValues, Kind: trackerKind}
 			return true
 		}
 		fail("positive IsUnknown checks must return, continue, or record uncertainty and continue")
@@ -255,6 +280,45 @@ func canonicalDeferralCondition(pass *analysis.Pass, expression ast.Expr) ([]val
 	}
 }
 
+func canonicalUncertaintyCondition(pass *analysis.Pass, expression ast.Expr) ([]validatoranalysis.ValueRef, bool) {
+	switch expression := expression.(type) {
+	case *ast.ParenExpr:
+		return canonicalUncertaintyCondition(pass, expression.X)
+	case *ast.BinaryExpr:
+		if expression.Op != token.LOR {
+			return nil, false
+		}
+		left, leftOK := canonicalUncertaintyCondition(pass, expression.X)
+		right, rightOK := canonicalUncertaintyCondition(pass, expression.Y)
+		return append(left, right...), leftOK && rightOK
+	case *ast.CallExpr:
+		kind, value, ok := validatoranalysis.Predicate(pass, expression)
+		if !ok || kind != validatoranalysis.PredicateUnknown {
+			return nil, false
+		}
+		return []validatoranalysis.ValueRef{value}, true
+	default:
+		return nil, false
+	}
+}
+
+func containsPredicateKind(pass *analysis.Pass, expression ast.Expr, target validatoranalysis.PredicateKind) bool {
+	found := false
+	ast.Inspect(expression, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		kind, _, ok := validatoranalysis.Predicate(pass, call)
+		if ok && kind == target {
+			found = true
+			return false
+		}
+		return !found
+	})
+	return found
+}
+
 func valueIsKnown(known validatoranalysis.ValueSet, value validatoranalysis.ValueRef) bool {
 	_, ok := known[value.Key]
 	return ok
@@ -284,31 +348,33 @@ func canonicalExitBody(body *ast.BlockStmt) bool {
 	}
 }
 
-func canonicalTrackerBody(pass *analysis.Pass, body *ast.BlockStmt) (validatoranalysis.ValueRef, bool) {
+func canonicalTrackerBody(pass *analysis.Pass, body *ast.BlockStmt) (validatoranalysis.ValueRef, TrackerKind, bool) {
 	if body == nil || len(body.List) != 2 {
-		return validatoranalysis.ValueRef{}, false
+		return validatoranalysis.ValueRef{}, 0, false
 	}
 	branch, ok := body.List[1].(*ast.BranchStmt)
 	if !ok || branch.Tok != token.CONTINUE {
-		return validatoranalysis.ValueRef{}, false
+		return validatoranalysis.ValueRef{}, 0, false
 	}
 	switch statement := body.List[0].(type) {
 	case *ast.IncDecStmt:
 		if statement.Tok != token.INC {
-			return validatoranalysis.ValueRef{}, false
+			return validatoranalysis.ValueRef{}, 0, false
 		}
-		return validatoranalysis.Value(pass, statement.X)
+		tracker, ok := validatoranalysis.Value(pass, statement.X)
+		return tracker, TrackerCounter, ok
 	case *ast.AssignStmt:
 		if len(statement.Lhs) != 1 || len(statement.Rhs) != 1 {
-			return validatoranalysis.ValueRef{}, false
+			return validatoranalysis.ValueRef{}, 0, false
 		}
 		literal, ok := statement.Rhs[0].(*ast.Ident)
 		if !ok || literal.Name != "true" {
-			return validatoranalysis.ValueRef{}, false
+			return validatoranalysis.ValueRef{}, 0, false
 		}
-		return validatoranalysis.Value(pass, statement.Lhs[0])
+		tracker, ok := validatoranalysis.Value(pass, statement.Lhs[0])
+		return tracker, TrackerBoolean, ok
 	default:
-		return validatoranalysis.ValueRef{}, false
+		return validatoranalysis.ValueRef{}, 0, false
 	}
 }
 

@@ -46,6 +46,96 @@ func (*resourceValidator) ValidateConfig(_ context.Context, _ resource.ValidateC
 	validateNullFallthroughSafely(types.StringUnknown(), &resp.Diagnostics)
 	validateNullElseSafely(types.StringUnknown(), &resp.Diagnostics)
 	validateBusinessGatedNullExit(false, types.StringUnknown(), &resp.Diagnostics)
+	validateWrongBooleanTracker([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateWrongCounterTracker([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateWrongTrackerDisjunction([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateFalseEqualityTrackerSafely([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateReverseCounterEqualitySafely([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+}
+
+func validateWrongBooleanTracker(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	hasUnknown := false
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	if ownerCount == 0 && hasUnknown {
+		diagnostics.AddError("missing", "missing") // want "validator diagnostic may be emitted while item.Role is unknown"
+	}
+}
+
+func validateWrongCounterTracker(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	unknownCount := 0
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			unknownCount++
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	if ownerCount == 0 && unknownCount > 0 {
+		diagnostics.AddError("missing", "missing") // want "validator diagnostic may be emitted while item.Role is unknown"
+	}
+}
+
+func validateWrongTrackerDisjunction(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	hasUnknown := false
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	if ownerCount == 0 || !hasUnknown {
+		diagnostics.AddError("missing", "missing") // want "validator diagnostic may be emitted while item.Role is unknown"
+	}
+}
+
+func validateFalseEqualityTrackerSafely(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	hasUnknown := false
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	if ownerCount == 0 && false == hasUnknown {
+		diagnostics.AddError("missing", "missing")
+	}
+}
+
+func validateReverseCounterEqualitySafely(items []testItem, diagnostics *diag.Diagnostics) {
+	ownerCount := 0
+	unknownCount := 0
+	for _, item := range items {
+		if item.Role.IsUnknown() {
+			unknownCount++
+			continue
+		}
+		if item.Role.ValueString() == "owner" {
+			ownerCount++
+		}
+	}
+	if ownerCount == 0 && 0 == unknownCount {
+		diagnostics.AddError("missing", "missing")
+	}
 }
 
 func validateNullFallthrough(value types.String, diagnostics *diag.Diagnostics) {

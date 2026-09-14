@@ -6,6 +6,8 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_sharing"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,30 +18,39 @@ import (
 // Each entry is (user, role) where role="" means unknown.
 func buildSharingConfig(ctx context.Context, t *testing.T, perms []struct{ user, role string }) tfsdk.Config {
 	t.Helper()
-	schema := resource_sharing.SharingResourceSchema(ctx)
 
 	// Build the framework-level list elements.
 	elems := make([]attr.Value, len(perms))
 	for i, p := range perms {
-		user := types.StringValue(p.user)
 		var role attr.Value
 		if p.role == "" {
 			role = types.StringUnknown()
 		} else {
 			role = types.StringValue(p.role)
 		}
-		pv, diags := resource_sharing.NewPermissionsValue(
-			resource_sharing.PermissionsValue{}.AttributeTypes(ctx),
-			map[string]attr.Value{
-				"user": user,
-				"role": role,
-			},
-		)
-		if diags.HasError() {
-			t.Fatalf("NewPermissionsValue: %v", diags)
-		}
-		elems[i] = pv
+		elems[i] = buildPermissionValue(ctx, t, types.StringValue(p.user), role)
 	}
+	return buildSharingConfigWithPermissionValues(ctx, t, elems)
+}
+
+func buildPermissionValue(ctx context.Context, t *testing.T, user, role attr.Value) attr.Value {
+	t.Helper()
+	pv, diags := resource_sharing.NewPermissionsValue(
+		resource_sharing.PermissionsValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"user": user,
+			"role": role,
+		},
+	)
+	if diags.HasError() {
+		t.Fatalf("NewPermissionsValue: %v", diags)
+	}
+	return pv
+}
+
+func buildSharingConfigWithPermissionValues(ctx context.Context, t *testing.T, elems []attr.Value) tfsdk.Config {
+	t.Helper()
+	schema := resource_sharing.SharingResourceSchema(ctx)
 
 	permsList, listDiags := types.ListValueFrom(
 		ctx,
@@ -73,6 +84,59 @@ func buildSharingConfig(ctx context.Context, t *testing.T, perms []struct{ user,
 	return tfsdk.Config{
 		Schema: schema,
 		Raw:    rawValue,
+	}
+}
+
+func TestSharingOwnerValidator_ElementStates(t *testing.T) {
+	ctx := t.Context()
+	unknownRole := buildPermissionValue(ctx, t, types.StringValue("unknown@example.com"), types.StringUnknown())
+	owner := buildPermissionValue(ctx, t, types.StringValue("owner@example.com"), types.StringValue("owner"))
+	viewer := buildPermissionValue(ctx, t, types.StringValue("viewer@example.com"), types.StringValue("viewer"))
+	nullRole := buildPermissionValue(ctx, t, types.StringValue("null@example.com"), types.StringNull())
+
+	tests := map[string]struct {
+		values      []attr.Value
+		wantSummary string
+	}{
+		"null element":             {values: []attr.Value{resource_sharing.NewPermissionsValueNull()}, wantSummary: "Missing Owner"},
+		"unknown element":          {values: []attr.Value{resource_sharing.NewPermissionsValueUnknown()}},
+		"null role":                {values: []attr.Value{nullRole}, wantSummary: "Missing Owner"},
+		"null and unknown role":    {values: []attr.Value{resource_sharing.NewPermissionsValueNull(), unknownRole}},
+		"null and known owner":     {values: []attr.Value{resource_sharing.NewPermissionsValueNull(), owner}},
+		"null and known non-owner": {values: []attr.Value{resource_sharing.NewPermissionsValueNull(), viewer}, wantSummary: "Missing Owner"},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			config := buildSharingConfigWithPermissionValues(ctx, t, test.values)
+			resp := &resource.ValidateConfigResponse{}
+			sharingOwnerValidator{}.ValidateResource(ctx, resource.ValidateConfigRequest{Config: config}, resp)
+
+			wantCount := 0
+			if test.wantSummary != "" {
+				wantCount = 1
+			}
+			if len(resp.Diagnostics) != wantCount {
+				t.Fatalf("diagnostic count = %d, want %d: %v", len(resp.Diagnostics), wantCount, resp.Diagnostics)
+			}
+			if wantCount == 0 {
+				return
+			}
+			diagnostic := resp.Diagnostics[0]
+			if diagnostic.Severity() != diag.SeverityError {
+				t.Errorf("severity = %s, want error", diagnostic.Severity())
+			}
+			if diagnostic.Summary() != test.wantSummary {
+				t.Errorf("summary = %q, want %q", diagnostic.Summary(), test.wantSummary)
+			}
+			withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+			if !ok {
+				t.Fatalf("diagnostic %T has no path", diagnostic)
+			}
+			if got, want := withPath.Path(), path.Root("permissions"); !got.Equal(want) {
+				t.Errorf("path = %s, want %s", got, want)
+			}
+		})
 	}
 }
 

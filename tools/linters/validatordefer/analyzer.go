@@ -223,15 +223,16 @@ func (state *functionAnalysis) checkUncertainLoopCounts(body *ast.BlockStmt) {
 					if len(counts) == 0 {
 						continue
 					}
-					references := referencedValues(state.pass, conditional.Cond)
 					var unsafe []validatoranalysis.ValueRef
 					for _, branch := range branches {
 						relevant := cloneValueKeys(counts)
-						addValueKeys(relevant, branch.trackers)
+						if branch.tracker != nil {
+							relevant[branch.tracker.Tracker.Key] = true
+						}
 						if statementsMentionValues(state.pass, intervening, relevant) {
 							continue
 						}
-						if !intersectsValueKeys(branch.trackers, references) {
+						if branch.tracker == nil || !conditionExcludesUncertainty(state.pass, conditional.Cond, *branch.tracker) {
 							unsafe = append(unsafe, branch.values...)
 						}
 					}
@@ -294,8 +295,8 @@ func statementsMentionValues(pass *analysis.Pass, statements []ast.Stmt, values 
 }
 
 type unknownBranch struct {
-	values   []validatoranalysis.ValueRef
-	trackers valueKeySet
+	values  []validatoranalysis.ValueRef
+	tracker *validatorshape.TrackerFact
 }
 
 func unknownContinueBranches(
@@ -310,14 +311,15 @@ func unknownContinueBranches(
 			continue
 		}
 		if tracker, ok := trackers[statement.Pos()]; ok {
+			tracker := tracker
 			branches = append(branches, unknownBranch{
-				values:   tracker.Values,
-				trackers: valueKeySet{tracker.Tracker.Key: true},
+				values:  tracker.Values,
+				tracker: &tracker,
 			})
 			continue
 		}
 		if values := guards[statement.Pos()]; len(values) > 0 {
-			branches = append(branches, unknownBranch{values: values, trackers: valueKeySet{}})
+			branches = append(branches, unknownBranch{values: values})
 		}
 	}
 	return branches
@@ -378,22 +380,6 @@ func minimumCountExpression(binary *ast.BinaryExpr) ast.Expr {
 	return nil
 }
 
-func referencedValues(pass *analysis.Pass, expression ast.Expr) valueKeySet {
-	values := valueKeySet{}
-	ast.Inspect(expression, func(node ast.Node) bool {
-		valueExpression, ok := valueExpression(node)
-		if !ok {
-			return true
-		}
-		if value, ok := validatoranalysis.Value(pass, valueExpression); ok {
-			values[value.Key] = true
-		}
-		_, compound := valueExpression.(*ast.Ident)
-		return compound
-	})
-	return values
-}
-
 func valueExpression(node ast.Node) (ast.Expr, bool) {
 	switch node := node.(type) {
 	case *ast.Ident:
@@ -407,13 +393,45 @@ func valueExpression(node ast.Node) (ast.Expr, bool) {
 	}
 }
 
-func intersectsValueKeys(left, right valueKeySet) bool {
-	for value := range left {
-		if right[value] {
-			return true
+func conditionExcludesUncertainty(pass *analysis.Pass, expression ast.Expr, tracker validatorshape.TrackerFact) bool {
+	switch expression := expression.(type) {
+	case *ast.ParenExpr:
+		return conditionExcludesUncertainty(pass, expression.X, tracker)
+	case *ast.UnaryExpr:
+		return expression.Op == token.NOT && tracker.Kind == validatorshape.TrackerBoolean &&
+			isTrackerValue(pass, expression.X, tracker)
+	case *ast.BinaryExpr:
+		switch expression.Op {
+		case token.LAND:
+			return conditionExcludesUncertainty(pass, expression.X, tracker) ||
+				conditionExcludesUncertainty(pass, expression.Y, tracker)
+		case token.LOR:
+			return conditionExcludesUncertainty(pass, expression.X, tracker) &&
+				conditionExcludesUncertainty(pass, expression.Y, tracker)
+		case token.EQL:
+			return (isTrackerValue(pass, expression.X, tracker) && isClearTrackerLiteral(expression.Y, tracker.Kind)) ||
+				(isClearTrackerLiteral(expression.X, tracker.Kind) && isTrackerValue(pass, expression.Y, tracker))
 		}
 	}
 	return false
+}
+
+func isTrackerValue(pass *analysis.Pass, expression ast.Expr, tracker validatorshape.TrackerFact) bool {
+	value, ok := validatoranalysis.Value(pass, expression)
+	return ok && value.Key == tracker.Tracker.Key
+}
+
+func isClearTrackerLiteral(expression ast.Expr, kind validatorshape.TrackerKind) bool {
+	switch kind {
+	case validatorshape.TrackerBoolean:
+		literal, ok := expression.(*ast.Ident)
+		return ok && literal.Name == "false"
+	case validatorshape.TrackerCounter:
+		literal, ok := expression.(*ast.BasicLit)
+		return ok && literal.Kind == token.INT && literal.Value == "0"
+	default:
+		return false
+	}
 }
 
 func diagnosticsIn(pass *analysis.Pass, node ast.Node) []*ast.CallExpr {

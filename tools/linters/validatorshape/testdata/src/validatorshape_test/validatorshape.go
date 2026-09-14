@@ -330,6 +330,79 @@ func (*badConditionalTracker) ValidateConfig(_ context.Context, _ resource.Valid
 	_ = hasUnknown
 }
 
+type badNullUnknownTracker struct{}
+
+func (*badNullUnknownTracker) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	items := []types.String{types.StringUnknown()}
+	unknownCount := 0
+	for _, item := range items {
+		if item.IsNull() || item.IsUnknown() { // want "IsNull cannot update an uncertainty tracker"
+			unknownCount++
+			continue
+		}
+	}
+	_ = unknownCount
+}
+
+type badNullUnknownBooleanTracker struct{}
+
+func (*badNullUnknownBooleanTracker) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	items := []types.String{types.StringUnknown()}
+	hasUnknown := false
+	for _, item := range items {
+		if item.IsUnknown() || item.IsNull() { // want "IsNull cannot update an uncertainty tracker"
+			hasUnknown = true
+			continue
+		}
+	}
+	_ = hasUnknown
+}
+
+type badNegatedNullUnknownTracker struct{}
+
+func (*badNegatedNullUnknownTracker) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	items := []types.String{types.StringUnknown()}
+	unknownCount := 0
+	for _, item := range items {
+		if !item.IsNull() || item.IsUnknown() { // want "IsUnknown must be used in a direct \\|\\|-joined deferral guard"
+			unknownCount++
+			continue
+		}
+	}
+	_ = unknownCount
+}
+
+type badDiagnosticUnknownTracker struct{}
+
+func (*badDiagnosticUnknownTracker) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	items := []types.String{types.StringUnknown()}
+	unknownCount := 0
+	for _, item := range items {
+		if resp.Diagnostics.HasError() || item.IsUnknown() { // want "uncertainty trackers may only be updated by direct IsUnknown guards"
+			unknownCount++
+			continue
+		}
+	}
+	_ = unknownCount
+}
+
+type goodSeparateNullUnknownTracker struct{}
+
+func (*goodSeparateNullUnknownTracker) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	items := []types.String{types.StringUnknown()}
+	unknownCount := 0
+	for _, item := range items {
+		if item.IsUnknown() {
+			unknownCount++
+			continue
+		}
+		if item.IsNull() {
+			continue
+		}
+	}
+	_ = unknownCount
+}
+
 type unrelated struct{}
 
 func (unrelated) IsUnknown() bool { return false }
