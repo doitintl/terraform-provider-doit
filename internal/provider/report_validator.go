@@ -409,10 +409,10 @@ func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, di
 		return
 	}
 
-	aggIsCount := !aggregation.IsNull() && aggregation.ValueString() == "count"
-
-	switch {
-	case !count.IsNull() && !aggIsCount:
+	if !count.IsNull() {
+		if aggregation.ValueString() == "count" {
+			return
+		}
 		// count set but aggregation is not "count".
 		detail := "`count` is only applicable when `aggregation = \"count\"`. " +
 			"Either set aggregation = \"count\" or remove the count block."
@@ -425,7 +425,10 @@ func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, di
 			"Invalid Count Configuration",
 			detail,
 		)
-	case count.IsNull() && aggIsCount:
+		return
+	}
+
+	if aggregation.ValueString() == "count" {
 		// aggregation "count" requires a count block.
 		diags.AddAttributeError(
 			path.Root("config").AtName("count"),
@@ -537,7 +540,10 @@ func validateReportCumulativeComparison(ctx context.Context, getter attributeGet
 // enabling ModifyPlan to validate plans that inherit cumulative_comparison from prior state when
 // layout is omitted in config on update.
 func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter attributeGetter, layout types.String, diags *diag.Diagnostics) {
-	if layout.IsNull() || layout.IsUnknown() || layout.ValueString() != "cumulative_comparison" {
+	if layout.IsNull() || layout.IsUnknown() {
+		return
+	}
+	if layout.ValueString() != "cumulative_comparison" {
 		return
 	}
 
@@ -546,47 +552,7 @@ func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter at
 	d := getter.GetAttribute(ctx, path.Root("config").AtName("dimensions"), &dimensions)
 	diags.Append(d...)
 	if !d.HasError() {
-		if !dimensions.IsUnknown() {
-			if dimensions.IsNull() {
-				diags.AddAttributeError(
-					path.Root("config").AtName("dimensions"),
-					"Invalid Dimensions Configuration",
-					"`layout = \"cumulative_comparison\"` requires daily datetime dimensions (`year`, `month`, `day`), but `dimensions` is not set.",
-				)
-			} else {
-				var dimVals []resource_report.DimensionsValue
-				d = dimensions.ElementsAs(ctx, &dimVals, false)
-				diags.Append(d...)
-				if !d.HasError() {
-					anyUnknown := false
-					for _, dim := range dimVals {
-						if dim.IsUnknown() || dim.Id.IsUnknown() || dim.DimensionsType.IsUnknown() {
-							anyUnknown = true
-							break
-						}
-					}
-					if !anyUnknown {
-						expected := []string{"year", "month", "day"}
-						valid := len(dimVals) == 3
-						if valid {
-							for i, exp := range expected {
-								if dimVals[i].Id.ValueString() != exp || dimVals[i].DimensionsType.ValueString() != "datetime" {
-									valid = false
-									break
-								}
-							}
-						}
-						if !valid {
-							diags.AddAttributeError(
-								path.Root("config").AtName("dimensions"),
-								"Invalid Dimensions Configuration",
-								"`layout = \"cumulative_comparison\"` requires daily datetime dimensions (`year`, `month`, `day`) in order with `type = \"datetime\"`.",
-							)
-						}
-					}
-				}
-			}
-		}
+		validateReportCumulativeDimensions(ctx, dimensions, diags)
 	}
 
 	// 2. Total aggregation
@@ -613,30 +579,7 @@ func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter at
 	diags.Append(d...)
 
 	if !d.HasError() {
-		skipMetricCheck := metrics.IsUnknown()
-		if !skipMetricCheck && !metrics.IsNull() {
-			for _, elem := range metrics.Elements() {
-				if elem.IsUnknown() {
-					skipMetricCheck = true
-					break
-				}
-			}
-		}
-
-		if !skipMetricCheck {
-			numMetrics := 0
-			if !metrics.IsNull() {
-				numMetrics = len(metrics.Elements())
-			}
-
-			if numMetrics != 1 {
-				diags.AddAttributeError(
-					path.Root("config").AtName("metrics"),
-					"Invalid Metrics Configuration",
-					fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
-				)
-			}
-		}
+		validateReportCumulativeMetrics(metrics, diags)
 	}
 
 	// 4. Secondary time range
@@ -687,6 +630,76 @@ func validateReportCumulativeComparisonWithLayout(ctx context.Context, getter at
 			path.Root("config").AtName("advanced_analysis").AtName("forecast"),
 			"Conflicting Forecast Configuration",
 			"`layout = \"cumulative_comparison\"` does not support forecasting. Set `advanced_analysis.forecast = false` or omit it.",
+		)
+	}
+}
+
+func validateReportCumulativeDimensions(ctx context.Context, dimensions types.List, diags *diag.Diagnostics) {
+	if dimensions.IsUnknown() {
+		return
+	}
+	if dimensions.IsNull() {
+		diags.AddAttributeError(
+			path.Root("config").AtName("dimensions"),
+			"Invalid Dimensions Configuration",
+			"`layout = \"cumulative_comparison\"` requires daily datetime dimensions (`year`, `month`, `day`), but `dimensions` is not set.",
+		)
+		return
+	}
+
+	var values []resource_report.DimensionsValue
+	d := dimensions.ElementsAs(ctx, &values, false)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	expected := []string{"year", "month", "day"}
+	valid := len(values) == len(expected)
+	for index, value := range values {
+		if !valid {
+			continue
+		}
+		if value.IsUnknown() {
+			continue
+		}
+		if knownStringDiffers(value.Id, expected[index]) || knownStringDiffers(value.DimensionsType, "datetime") {
+			valid = false
+		}
+	}
+	if !valid {
+		diags.AddAttributeError(
+			path.Root("config").AtName("dimensions"),
+			"Invalid Dimensions Configuration",
+			"`layout = \"cumulative_comparison\"` requires daily datetime dimensions (`year`, `month`, `day`) in order with `type = \"datetime\"`.",
+		)
+	}
+}
+
+func knownStringDiffers(value types.String, expected string) bool {
+	if value.IsUnknown() {
+		return false
+	}
+	if value.IsNull() {
+		return true
+	}
+	return value.ValueString() != expected
+}
+
+func validateReportCumulativeMetrics(metrics types.List, diags *diag.Diagnostics) {
+	if metrics.IsUnknown() {
+		return
+	}
+
+	numMetrics := 0
+	if !metrics.IsNull() {
+		numMetrics = len(metrics.Elements())
+	}
+	if numMetrics != 1 {
+		diags.AddAttributeError(
+			path.Root("config").AtName("metrics"),
+			"Invalid Metrics Configuration",
+			fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
 		)
 	}
 }

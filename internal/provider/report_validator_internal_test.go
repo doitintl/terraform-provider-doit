@@ -1256,3 +1256,174 @@ func TestReportCumulativeComparison_UnknownMetrics_StillValidatesOtherAttributes
 		t.Fatalf("expected 'Missing Secondary Time Range' error, got: %v", planDiags)
 	}
 }
+
+func TestReportCumulativeComparison_PartialUnknownStillReportsDefiniteErrors(t *testing.T) {
+	ctx := t.Context()
+	dimensionTypes := resource_report.DimensionsValue{}.AttributeTypes(ctx)
+	dimension := func(id, dimensionType string) resource_report.DimensionsValue {
+		return resource_report.NewDimensionsValueMust(dimensionTypes, map[string]attr.Value{
+			"id":   types.StringValue(id),
+			"type": types.StringValue(dimensionType),
+		})
+	}
+	metricTypes := resource_report.MetricsValue{}.AttributeTypes(ctx)
+	knownMetric := resource_report.NewMetricsValueMust(metricTypes, map[string]attr.Value{
+		"type":  types.StringValue("basic"),
+		"value": types.StringValue("cost"),
+	})
+
+	tests := []struct {
+		name        string
+		validate    func(*diag.Diagnostics)
+		wantCount   int
+		wantSummary string
+		wantPath    path.Path
+	}{
+		{
+			name: "four dimensions remain invalid with an unknown element",
+			validate: func(diagnostics *diag.Diagnostics) {
+				values := []resource_report.DimensionsValue{
+					dimension("year", "datetime"),
+					dimension("month", "datetime"),
+					dimension("day", "datetime"),
+					resource_report.NewDimensionsValueUnknown(),
+				}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build dimensions: %v", listDiags)
+				}
+				validateReportCumulativeDimensions(ctx, list, diagnostics)
+			},
+			wantCount:   1,
+			wantSummary: "Invalid Dimensions Configuration",
+			wantPath:    path.Root("config").AtName("dimensions"),
+		},
+		{
+			name: "known wrong dimension remains invalid beside an unknown element",
+			validate: func(diagnostics *diag.Diagnostics) {
+				values := []resource_report.DimensionsValue{
+					dimension("week", "datetime"),
+					resource_report.NewDimensionsValueUnknown(),
+					dimension("day", "datetime"),
+				}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build dimensions: %v", listDiags)
+				}
+				validateReportCumulativeDimensions(ctx, list, diagnostics)
+			},
+			wantCount:   1,
+			wantSummary: "Invalid Dimensions Configuration",
+			wantPath:    path.Root("config").AtName("dimensions"),
+		},
+		{
+			name: "known wrong dimension type remains invalid beside an unknown field",
+			validate: func(diagnostics *diag.Diagnostics) {
+				unknownID := resource_report.NewDimensionsValueMust(dimensionTypes, map[string]attr.Value{
+					"id":   types.StringUnknown(),
+					"type": types.StringValue("datetime"),
+				})
+				values := []resource_report.DimensionsValue{
+					dimension("year", "datetime"),
+					unknownID,
+					dimension("day", "wrong"),
+				}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build dimensions: %v", listDiags)
+				}
+				validateReportCumulativeDimensions(ctx, list, diagnostics)
+			},
+			wantCount:   1,
+			wantSummary: "Invalid Dimensions Configuration",
+			wantPath:    path.Root("config").AtName("dimensions"),
+		},
+		{
+			name: "three dimensions defer an unknown element",
+			validate: func(diagnostics *diag.Diagnostics) {
+				values := []resource_report.DimensionsValue{
+					dimension("year", "datetime"),
+					resource_report.NewDimensionsValueUnknown(),
+					dimension("day", "datetime"),
+				}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build dimensions: %v", listDiags)
+				}
+				validateReportCumulativeDimensions(ctx, list, diagnostics)
+			},
+			wantCount: 0,
+		},
+		{
+			name: "null dimension element is invalid",
+			validate: func(diagnostics *diag.Diagnostics) {
+				values := []resource_report.DimensionsValue{
+					dimension("year", "datetime"),
+					resource_report.NewDimensionsValueNull(),
+					dimension("day", "datetime"),
+				}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.DimensionsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build dimensions: %v", listDiags)
+				}
+				validateReportCumulativeDimensions(ctx, list, diagnostics)
+			},
+			wantCount:   1,
+			wantSummary: "Invalid Dimensions Configuration",
+			wantPath:    path.Root("config").AtName("dimensions"),
+		},
+		{
+			name: "two metrics remain invalid with an unknown element",
+			validate: func(diagnostics *diag.Diagnostics) {
+				values := []resource_report.MetricsValue{knownMetric, resource_report.NewMetricsValueUnknown()}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build metrics: %v", listDiags)
+				}
+				validateReportCumulativeMetrics(list, diagnostics)
+			},
+			wantCount:   1,
+			wantSummary: "Invalid Metrics Configuration",
+			wantPath:    path.Root("config").AtName("metrics"),
+		},
+		{
+			name: "one unknown metric defers element validation",
+			validate: func(diagnostics *diag.Diagnostics) {
+				values := []resource_report.MetricsValue{resource_report.NewMetricsValueUnknown()}
+				list, listDiags := types.ListValueFrom(ctx, resource_report.MetricsValue{}.Type(ctx), values)
+				if listDiags.HasError() {
+					t.Fatalf("build metrics: %v", listDiags)
+				}
+				validateReportCumulativeMetrics(list, diagnostics)
+			},
+			wantCount: 0,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var diagnostics diag.Diagnostics
+			test.validate(&diagnostics)
+			if len(diagnostics) != test.wantCount {
+				t.Fatalf("diagnostic count = %d, want %d: %v", len(diagnostics), test.wantCount, diagnostics)
+			}
+			if test.wantCount == 0 {
+				return
+			}
+			diagnostic := diagnostics[0]
+			if diagnostic.Severity() != diag.SeverityError {
+				t.Errorf("severity = %s, want error", diagnostic.Severity())
+			}
+			if diagnostic.Summary() != test.wantSummary {
+				t.Errorf("summary = %q, want %q", diagnostic.Summary(), test.wantSummary)
+			}
+			withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+			if !ok {
+				t.Fatalf("diagnostic %T has no path", diagnostic)
+			}
+			if got := withPath.Path(); !got.Equal(test.wantPath) {
+				t.Errorf("path = %s, want %s", got, test.wantPath)
+			}
+		})
+	}
+}

@@ -203,6 +203,159 @@ func TestValidateBudgetEndPeriod(t *testing.T) {
 	}
 }
 
+func buildBudgetValidatorConfig(ctx context.Context, t *testing.T, values map[string]attr.Value) tfsdk.Config {
+	t.Helper()
+
+	budgetSchema := resource_budget.BudgetResourceSchema(ctx)
+	schemaType := budgetSchema.Type().TerraformType(ctx)
+	objectType, ok := schemaType.(tftypes.Object)
+	if !ok {
+		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
+	}
+
+	terraformValues := make(map[string]tftypes.Value, len(objectType.AttributeTypes))
+	for name, attributeType := range objectType.AttributeTypes {
+		terraformValues[name] = tftypes.NewValue(attributeType, nil)
+	}
+	for name, value := range values {
+		terraformValue, err := value.ToTerraformValue(ctx)
+		if err != nil {
+			t.Fatalf("convert %s to Terraform value: %v", name, err)
+		}
+		terraformValues[name] = terraformValue
+	}
+
+	return tfsdk.Config{
+		Schema: budgetSchema,
+		Raw:    tftypes.NewValue(schemaType, terraformValues),
+	}
+}
+
+func TestBudgetTypeEndPeriodValidator(t *testing.T) {
+	tests := []struct {
+		name        string
+		budgetType  types.String
+		endPeriod   types.Int64
+		wantError   bool
+		wantSummary string
+	}{
+		{name: "fixed with unknown end period is deferred", budgetType: types.StringValue("fixed"), endPeriod: types.Int64Unknown()},
+		{name: "fixed with null end period fails", budgetType: types.StringValue("fixed"), endPeriod: types.Int64Null(), wantError: true, wantSummary: "Missing Required Attribute"},
+		{name: "fixed with known end period passes", budgetType: types.StringValue("fixed"), endPeriod: types.Int64Value(1_800_000_000_000)},
+		{name: "recurring with unknown end period is deferred", budgetType: types.StringValue("recurring"), endPeriod: types.Int64Unknown()},
+		{name: "recurring with null end period passes", budgetType: types.StringValue("recurring"), endPeriod: types.Int64Null()},
+		{name: "recurring with known end period fails", budgetType: types.StringValue("recurring"), endPeriod: types.Int64Value(1_800_000_000_000), wantError: true, wantSummary: "Invalid Attribute Combination"},
+		{name: "unknown budget type is deferred", budgetType: types.StringUnknown(), endPeriod: types.Int64Null()},
+		{name: "unknown budget type with known period is deferred", budgetType: types.StringUnknown(), endPeriod: types.Int64Value(1_800_000_000_000)},
+		{name: "null budget type with null period is deferred", budgetType: types.StringNull(), endPeriod: types.Int64Null()},
+		{name: "null budget type with known period is deferred", budgetType: types.StringNull(), endPeriod: types.Int64Value(1_800_000_000_000)},
+	}
+
+	ctx := t.Context()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := buildBudgetValidatorConfig(ctx, t, map[string]attr.Value{
+				"type":       tt.budgetType,
+				"end_period": tt.endPeriod,
+			})
+			resp := &resource.ValidateConfigResponse{}
+			budgetTypeEndPeriodValidator{}.ValidateResource(ctx, resource.ValidateConfigRequest{Config: config}, resp)
+
+			if got := resp.Diagnostics.HasError(); got != tt.wantError {
+				t.Fatalf("HasError() = %v, want %v (diagnostics: %v)", got, tt.wantError, resp.Diagnostics)
+			}
+			assertBudgetValidatorDiagnostics(t, resp.Diagnostics, tt.wantError, tt.wantSummary, path.Root("end_period"))
+		})
+	}
+}
+
+func assertBudgetValidatorDiagnostics(t *testing.T, diagnostics diag.Diagnostics, wantError bool, wantSummary string, wantPath path.Path) {
+	t.Helper()
+	wantCount := 0
+	if wantError {
+		wantCount = 1
+	}
+	if len(diagnostics) != wantCount {
+		t.Fatalf("diagnostic count = %d, want %d: %v", len(diagnostics), wantCount, diagnostics)
+	}
+	if !wantError {
+		return
+	}
+	diagnostic := diagnostics[0]
+	if diagnostic.Severity() != diag.SeverityError {
+		t.Errorf("severity = %s, want error", diagnostic.Severity())
+	}
+	if diagnostic.Summary() != wantSummary {
+		t.Errorf("summary = %q, want %q", diagnostic.Summary(), wantSummary)
+	}
+	withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+	if !ok {
+		t.Fatalf("diagnostic %T has no path", diagnostic)
+	}
+	if got := withPath.Path(); !got.Equal(wantPath) {
+		t.Errorf("path = %s, want %s", got, wantPath)
+	}
+}
+
+func newTestBudgetCollaborator(ctx context.Context, role attr.Value) resource_budget.CollaboratorsValue {
+	return resource_budget.NewCollaboratorsValueMust(
+		resource_budget.CollaboratorsValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"email": types.StringValue("collaborator@example.com"),
+			"role":  role,
+		},
+	)
+}
+
+func TestBudgetCollaboratorsOwnerValidator(t *testing.T) {
+	ctx := t.Context()
+	elementType := resource_budget.CollaboratorsValue{}.Type(ctx)
+	owner := newTestBudgetCollaborator(ctx, types.StringValue("owner"))
+	viewer := newTestBudgetCollaborator(ctx, types.StringValue("viewer"))
+	unknownRole := newTestBudgetCollaborator(ctx, types.StringUnknown())
+	nullRole := newTestBudgetCollaborator(ctx, types.StringNull())
+	unknownElement := resource_budget.NewCollaboratorsValueUnknown()
+	nullElement := resource_budget.NewCollaboratorsValueNull()
+
+	list := func(values ...attr.Value) types.List {
+		return types.ListValueMust(elementType, values)
+	}
+
+	tests := []struct {
+		name          string
+		collaborators types.List
+		wantError     bool
+	}{
+		{name: "unknown list is deferred", collaborators: types.ListUnknown(elementType)},
+		{name: "unknown element without known owner is deferred", collaborators: list(unknownElement)},
+		{name: "unknown role without known owner is deferred", collaborators: list(unknownRole)},
+		{name: "unknown element with one known owner passes", collaborators: list(unknownElement, owner)},
+		{name: "one known owner plus unknown role passes", collaborators: list(owner, unknownRole)},
+		{name: "known viewers only fail", collaborators: list(viewer), wantError: true},
+		{name: "null element with no owner fails", collaborators: list(nullElement), wantError: true},
+		{name: "null role with no owner fails", collaborators: list(nullRole), wantError: true},
+		{name: "empty list fails", collaborators: list(), wantError: true},
+		{name: "two known owners plus unknown role fail", collaborators: list(owner, owner, unknownRole), wantError: true},
+		{name: "two known owners plus unknown element fail", collaborators: list(unknownElement, owner, owner), wantError: true},
+		{name: "exactly one known owner passes", collaborators: list(owner)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := buildBudgetValidatorConfig(ctx, t, map[string]attr.Value{
+				"collaborators": tt.collaborators,
+			})
+			resp := &resource.ValidateConfigResponse{}
+			budgetCollaboratorsOwnerValidator{}.ValidateResource(ctx, resource.ValidateConfigRequest{Config: config}, resp)
+
+			if got := resp.Diagnostics.HasError(); got != tt.wantError {
+				t.Fatalf("HasError() = %v, want %v (diagnostics: %v)", got, tt.wantError, resp.Diagnostics)
+			}
+			assertBudgetValidatorDiagnostics(t, resp.Diagnostics, tt.wantError, "Exactly One Owner Required", path.Root("collaborators"))
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // TestBudgetScopeNAValidator — unknown element handling
 // ---------------------------------------------------------------------------

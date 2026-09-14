@@ -44,8 +44,11 @@ func (v sharingOwnerValidator) ValidateResource(ctx context.Context, req resourc
 	ownerCount := 0
 	unknownCount := 0
 	for _, pv := range permVals {
-		if pv.IsNull() || pv.IsUnknown() {
+		if pv.IsUnknown() {
 			unknownCount++
+			continue
+		}
+		if pv.IsNull() {
 			continue
 		}
 		// Only truly unknown roles (e.g. from variables not yet resolved) should

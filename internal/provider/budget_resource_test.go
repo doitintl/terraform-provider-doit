@@ -120,6 +120,46 @@ func TestAccBudget(t *testing.T) {
 	})
 }
 
+// TestAccBudget_UnknownEndPeriod is the plan-only regression for issue #340.
+// A fixed budget may take end_period from another resource, so the validator
+// must defer the conditional requirement until that value is known.
+func TestAccBudget_UnknownEndPeriod(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "terraform_data" "end_period" {
+  input = %d
+}
+
+resource "doit_budget" "this" {
+  name         = "test-unknown-end-period-%d"
+  amount       = 500
+  type         = "fixed"
+  start_period = %d
+  end_period   = terraform_data.end_period.output
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = [%q]
+    }
+  ]
+}
+`, legacyBudgetStartPeriod+(30*24*60*60*1000), n, legacyBudgetStartPeriod, testAttribution()),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 // legacyBudgetStartPeriod is the epoch-millisecond form of the timestamp
 // budgetStartPeriod renders in HCL, for callers that build a request body
 // directly rather than through Terraform.
