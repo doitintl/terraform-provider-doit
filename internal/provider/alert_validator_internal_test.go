@@ -91,7 +91,7 @@ func assertAlertValidatorDiagnostics(t *testing.T, diagnostics diag.Diagnostics,
 	}
 }
 
-func TestAlertRecipientsValidator(t *testing.T) {
+func TestAlertResource_ModifyPlan_Destinations(t *testing.T) {
 	ctx := t.Context()
 
 	recipientsPopulated, diags := types.ListValueFrom(ctx, types.StringType, []string{"user@example.com"})
@@ -138,103 +138,216 @@ func TestAlertRecipientsValidator(t *testing.T) {
 	}
 	slackNull := types.ListNull(resource_alert.RecipientsSlackChannelsValue{}.Type(ctx))
 	slackUnknown := types.ListUnknown(resource_alert.RecipientsSlackChannelsValue{}.Type(ctx))
+	slackUnknownElem := types.ListValueMust(
+		resource_alert.RecipientsSlackChannelsValue{}.Type(ctx),
+		[]attr.Value{resource_alert.NewRecipientsSlackChannelsValueUnknown()},
+	)
 
 	tests := []struct {
-		name          string
-		recipients    attr.Value
-		slackChannels attr.Value
-		wantError     bool
-		errorSummary  string
-		wantPath      path.Path
+		name             string
+		isCreate         bool
+		stateRecipients  attr.Value
+		stateSlack       attr.Value
+		configRecipients attr.Value
+		configSlack      attr.Value
+		planRecipients   attr.Value
+		planSlack        attr.Value
+		wantError        bool
+		errorSummary     string
+		wantPath         path.Path
 	}{
+		// CREATE cases
 		{
-			name:          "both omitted (null) is valid (defaults to owner)",
-			recipients:    recipientsNull,
-			slackChannels: slackNull,
-			wantError:     false,
+			name:             "create: both omitted (null) is valid (defaults to owner)",
+			isCreate:         true,
+			configRecipients: recipientsNull,
+			configSlack:      slackNull,
+			planRecipients:   recipientsNull,
+			planSlack:        slackNull,
+			wantError:        false,
 		},
 		{
-			name:          "both unknown is deferred",
-			recipients:    recipientsUnknown,
-			slackChannels: slackUnknown,
-			wantError:     false,
+			name:             "create: recipients omitted (null), slack empty is valid (defaults to owner)",
+			isCreate:         true,
+			configRecipients: recipientsNull,
+			configSlack:      slackEmpty,
+			planRecipients:   recipientsNull,
+			planSlack:        slackEmpty,
+			wantError:        false,
 		},
 		{
-			name:          "recipients populated, slack null is valid",
-			recipients:    recipientsPopulated,
-			slackChannels: slackNull,
-			wantError:     false,
+			name:             "create: both unknown is deferred",
+			isCreate:         true,
+			configRecipients: recipientsNull,
+			configSlack:      slackNull,
+			planRecipients:   recipientsUnknown,
+			planSlack:        slackUnknown,
+			wantError:        false,
 		},
 		{
-			name:          "recipients populated, slack empty is valid",
-			recipients:    recipientsPopulated,
-			slackChannels: slackEmpty,
-			wantError:     false,
+			name:             "create: recipients populated, slack null is valid",
+			isCreate:         true,
+			configRecipients: recipientsPopulated,
+			configSlack:      slackNull,
+			planRecipients:   recipientsPopulated,
+			planSlack:        slackNull,
+			wantError:        false,
 		},
 		{
-			name:          "recipients populated, slack unknown is valid",
-			recipients:    recipientsPopulated,
-			slackChannels: slackUnknown,
-			wantError:     false,
+			name:             "create: recipients populated, slack empty is valid",
+			isCreate:         true,
+			configRecipients: recipientsPopulated,
+			configSlack:      slackEmpty,
+			planRecipients:   recipientsPopulated,
+			planSlack:        slackEmpty,
+			wantError:        false,
 		},
 		{
-			name:          "recipients empty, slack populated is valid",
-			recipients:    recipientsEmpty,
-			slackChannels: slackPopulated,
-			wantError:     false,
+			name:             "create: recipients populated, slack unknown is valid",
+			isCreate:         true,
+			configRecipients: recipientsPopulated,
+			configSlack:      slackNull,
+			planRecipients:   recipientsPopulated,
+			planSlack:        slackUnknown,
+			wantError:        false,
 		},
 		{
-			name:          "recipients empty, slack null is invalid",
-			recipients:    recipientsEmpty,
-			slackChannels: slackNull,
-			wantError:     true,
-			errorSummary:  "At Least One Recipient Required",
-			wantPath:      path.Root("recipients"),
+			name:             "create: recipients empty, slack populated is valid",
+			isCreate:         true,
+			configRecipients: recipientsEmpty,
+			configSlack:      slackPopulated,
+			planRecipients:   recipientsEmpty,
+			planSlack:        slackPopulated,
+			wantError:        false,
 		},
 		{
-			name:          "recipients empty, slack empty is invalid",
-			recipients:    recipientsEmpty,
-			slackChannels: slackEmpty,
-			wantError:     true,
-			errorSummary:  "At Least One Recipient Required",
-			wantPath:      path.Root("recipients"),
+			name:             "create: recipients empty, slack null is invalid",
+			isCreate:         true,
+			configRecipients: recipientsEmpty,
+			configSlack:      slackNull,
+			planRecipients:   recipientsEmpty,
+			planSlack:        slackNull,
+			wantError:        true,
+			errorSummary:     "At Least One Recipient Required",
+			wantPath:         path.Root("recipients"),
 		},
 		{
-			name:          "recipients empty, slack with only null element is invalid",
-			recipients:    recipientsEmpty,
-			slackChannels: types.ListValueMust(resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []attr.Value{resource_alert.NewRecipientsSlackChannelsValueNull()}),
-			wantError:     true,
-			errorSummary:  "At Least One Recipient Required",
-			wantPath:      path.Root("recipients"),
+			name:             "create: recipients empty, slack empty is invalid",
+			isCreate:         true,
+			configRecipients: recipientsEmpty,
+			configSlack:      slackEmpty,
+			planRecipients:   recipientsEmpty,
+			planSlack:        slackEmpty,
+			wantError:        true,
+			errorSummary:     "At Least One Recipient Required",
+			wantPath:         path.Root("recipients"),
 		},
 		{
-			name:          "recipients null, slack empty is invalid",
-			recipients:    recipientsNull,
-			slackChannels: slackEmpty,
-			wantError:     true,
-			errorSummary:  "At Least One Destination Required",
-			wantPath:      path.Root("recipients_slack_channels"),
+			name:             "create: recipients empty, slack with only null element is invalid",
+			isCreate:         true,
+			configRecipients: recipientsEmpty,
+			configSlack:      types.ListValueMust(resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []attr.Value{resource_alert.NewRecipientsSlackChannelsValueNull()}),
+			planRecipients:   recipientsEmpty,
+			planSlack:        types.ListValueMust(resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []attr.Value{resource_alert.NewRecipientsSlackChannelsValueNull()}),
+			wantError:        true,
+			errorSummary:     "At Least One Recipient Required",
+			wantPath:         path.Root("recipients"),
 		},
 		{
-			name:          "recipients unknown is deferred",
-			recipients:    recipientsUnknown,
-			slackChannels: slackEmpty,
-			wantError:     false,
+			name:             "create: recipients unknown is deferred",
+			isCreate:         true,
+			configRecipients: recipientsEmpty,
+			configSlack:      slackEmpty,
+			planRecipients:   recipientsUnknown,
+			planSlack:        slackEmpty,
+			wantError:        false,
 		},
 		{
-			name:          "slack unknown is deferred",
-			recipients:    recipientsEmpty,
-			slackChannels: slackUnknown,
-			wantError:     false,
+			name:             "create: slack unknown is deferred",
+			isCreate:         true,
+			configRecipients: recipientsEmpty,
+			configSlack:      slackUnknown,
+			planRecipients:   recipientsEmpty,
+			planSlack:        slackUnknown,
+			wantError:        false,
+		},
+		{
+			name:             "create: slack element unknown is deferred",
+			isCreate:         true,
+			configRecipients: recipientsEmpty,
+			configSlack:      slackUnknownElem,
+			planRecipients:   recipientsEmpty,
+			planSlack:        slackUnknownElem,
+			wantError:        false,
+		},
+		// UPDATE cases
+		{
+			name:             "update: Slack-only alert, removing both destinations is invalid",
+			isCreate:         false,
+			stateRecipients:  recipientsEmpty,
+			stateSlack:       slackPopulated,
+			configRecipients: recipientsNull,
+			configSlack:      slackNull,
+			planRecipients:   recipientsEmpty,
+			planSlack:        slackNull,
+			wantError:        true,
+			errorSummary:     "At Least One Destination Required",
+			wantPath:         path.Root("recipients_slack_channels"),
+		},
+		{
+			name:             "update: Slack-only alert, setting recipients populated and removing slack is valid",
+			isCreate:         false,
+			stateRecipients:  recipientsEmpty,
+			stateSlack:       slackPopulated,
+			configRecipients: recipientsPopulated,
+			configSlack:      slackNull,
+			planRecipients:   recipientsPopulated,
+			planSlack:        slackNull,
+			wantError:        false,
+		},
+		{
+			name:             "update: alert with emails, removing slack is valid (emails retained from state)",
+			isCreate:         false,
+			stateRecipients:  recipientsPopulated,
+			stateSlack:       slackPopulated,
+			configRecipients: recipientsNull,
+			configSlack:      slackNull,
+			planRecipients:   recipientsPopulated,
+			planSlack:        slackNull,
+			wantError:        false,
+		},
+		{
+			name:             "update: alert with emails, setting recipients to empty and removing slack is invalid",
+			isCreate:         false,
+			stateRecipients:  recipientsPopulated,
+			stateSlack:       slackPopulated,
+			configRecipients: recipientsEmpty,
+			configSlack:      slackNull,
+			planRecipients:   recipientsEmpty,
+			planSlack:        slackNull,
+			wantError:        true,
+			errorSummary:     "At Least One Recipient Required",
+			wantPath:         path.Root("recipients"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := buildAlertValidatorConfig(ctx, t, tt.recipients, tt.slackChannels, nil)
-			req := resource.ValidateConfigRequest{Config: cfg}
-			resp := &resource.ValidateConfigResponse{}
-			alertRecipientsValidator{}.ValidateResource(ctx, req, resp)
+			planCfg := buildAlertValidatorConfig(ctx, t, tt.planRecipients, tt.planSlack, nil)
+			configCfg := buildAlertValidatorConfig(ctx, t, tt.configRecipients, tt.configSlack, nil)
+
+			req := resource.ModifyPlanRequest{
+				Plan:   tfsdk.Plan(planCfg),
+				Config: configCfg,
+			}
+			if !tt.isCreate {
+				stateCfg := buildAlertValidatorConfig(ctx, t, tt.stateRecipients, tt.stateSlack, nil)
+				req.State = tfsdk.State(stateCfg)
+			}
+
+			resp := &resource.ModifyPlanResponse{}
+			r := &alertResource{}
+			r.ModifyPlan(ctx, req, resp)
 
 			if got := resp.Diagnostics.HasError(); got != tt.wantError {
 				t.Fatalf("HasError() = %v, want %v (diags: %v)", got, tt.wantError, resp.Diagnostics)

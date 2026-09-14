@@ -305,7 +305,6 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						"name": schema.StringAttribute{
-							Optional:            true,
 							Computed:            true,
 							Description:         "Display name, resolved server-side.",
 							MarkdownDescription: "Display name, resolved server-side.",
@@ -316,16 +315,9 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 							Default:  booldefault.StaticBool(false),
 						},
 						"type": schema.StringAttribute{
-							Optional:            true,
 							Computed:            true,
-							Description:         "Channel visibility, resolved server-side.\nPossible values: `public`, `private`",
-							MarkdownDescription: "Channel visibility, resolved server-side.\nPossible values: `public`, `private`",
-							Validators: []validator.String{
-								stringvalidator.OneOf(
-									"public",
-									"private",
-								),
-							},
+							Description:         "Channel visibility, resolved server-side.",
+							MarkdownDescription: "Channel visibility, resolved server-side.",
 						},
 						"workspace": schema.StringAttribute{
 							Optional:            true,

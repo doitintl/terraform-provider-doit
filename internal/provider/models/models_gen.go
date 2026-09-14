@@ -4388,10 +4388,10 @@ type AlertRequest struct {
 	Recipients *[]string `json:"recipients,omitempty"`
 
 	// RecipientsSlackChannels Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
-	RecipientsSlackChannels *[]AlertSlackChannel `json:"recipientsSlackChannels,omitempty"`
+	RecipientsSlackChannels *[]AlertSlackChannelRequest `json:"recipientsSlackChannels,omitempty"`
 }
 
-// AlertSlackChannel Eligible Slack destination returned by listAlertSlackChannels. Exactly one of the two shapes is valid: a shared channel (`shared: true`, `workspace` omitted), or a workspace channel (`shared: false` or omitted, `workspace` required). Any other combination is rejected with `validation_failed`. Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected. Name and type are canonical display metadata. Existing unavailable destinations may be retained or removed. Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.
+// AlertSlackChannel Eligible Slack destination returned by listAlertSlackChannels and echoed on alert responses. Name and type are canonical display metadata resolved server-side; values supplied on a request are ignored. Existing unavailable destinations may be retained or removed.
 type AlertSlackChannel struct {
 	CustomerId *string `json:"customerId,omitempty"`
 	Id         string  `json:"id"`
@@ -4409,6 +4409,16 @@ type AlertSlackChannel struct {
 
 // AlertSlackChannelType Channel visibility, resolved server-side.
 type AlertSlackChannelType string
+
+// AlertSlackChannelRequest Slack destination selected for an alert. Exactly one of the two shapes is valid: a shared channel (`shared: true`, `workspace` omitted), or a workspace channel (`shared: false` or omitted, `workspace` required). Any other combination is rejected with `validation_failed`. Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected. Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.
+type AlertSlackChannelRequest struct {
+	CustomerId *string `json:"customerId,omitempty"`
+	Id         string  `json:"id"`
+	Shared     *bool   `json:"shared,omitempty"`
+
+	// Workspace Connected workspace name returned by discovery. Required for a non-shared channel.
+	Workspace *string `json:"workspace,omitempty"`
+}
 
 // AlertThreshold A numeric or percentage threshold.
 type AlertThreshold struct {
@@ -4428,7 +4438,7 @@ type AlertUpdateRequest struct {
 	Recipients *[]string `json:"recipients,omitempty"`
 
 	// RecipientsSlackChannels Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
-	RecipientsSlackChannels *[]AlertSlackChannel `json:"recipientsSlackChannels,omitempty"`
+	RecipientsSlackChannels *[]AlertSlackChannelRequest `json:"recipientsSlackChannels,omitempty"`
 }
 
 // Allocation Allocation object, including rules and metadata.

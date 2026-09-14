@@ -108,14 +108,11 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 
 // overlayAlertSlackChannel resolves Unknown subfields in alert Slack channel elements.
 func overlayAlertSlackChannel(_ context.Context, resolved, plan *resource_alert.RecipientsSlackChannelsValue) diag.Diagnostics {
+	plan.Name = resolved.Name
+	plan.RecipientsSlackChannelsType = resolved.RecipientsSlackChannelsType
+
 	if plan.CustomerId.IsUnknown() {
 		plan.CustomerId = resolved.CustomerId
-	}
-	if plan.Name.IsUnknown() {
-		plan.Name = resolved.Name
-	}
-	if plan.RecipientsSlackChannelsType.IsUnknown() {
-		plan.RecipientsSlackChannelsType = resolved.RecipientsSlackChannelsType
 	}
 	if plan.Workspace.IsUnknown() {
 		plan.Workspace = resolved.Workspace
@@ -162,17 +159,13 @@ func (plan *alertResourceModel) toAlertRequest(ctx context.Context) (req models.
 		if diags.HasError() {
 			return req, diags
 		}
-		apiChannels := make([]models.AlertSlackChannel, len(channels))
+		apiChannels := make([]models.AlertSlackChannelRequest, len(channels))
 		for i, ch := range channels {
-			apiChannels[i] = models.AlertSlackChannel{
+			apiChannels[i] = models.AlertSlackChannelRequest{
 				CustomerId: ch.CustomerId.ValueStringPointer(),
 				Id:         ch.Id.ValueString(),
-				Name:       ch.Name.ValueStringPointer(),
 				Shared:     ch.Shared.ValueBoolPointer(),
 				Workspace:  ch.Workspace.ValueStringPointer(),
-			}
-			if !ch.RecipientsSlackChannelsType.IsNull() && !ch.RecipientsSlackChannelsType.IsUnknown() {
-				apiChannels[i].Type = (*models.AlertSlackChannelType)(ch.RecipientsSlackChannelsType.ValueStringPointer())
 			}
 		}
 		req.RecipientsSlackChannels = &apiChannels
@@ -204,7 +197,7 @@ func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req m
 
 	// Convert recipients_slack_channels
 	if plan.RecipientsSlackChannels.IsNull() || (!plan.RecipientsSlackChannels.IsUnknown() && len(plan.RecipientsSlackChannels.Elements()) == 0) {
-		emptyChannels := []models.AlertSlackChannel{}
+		emptyChannels := []models.AlertSlackChannelRequest{}
 		req.RecipientsSlackChannels = &emptyChannels
 	} else if !plan.RecipientsSlackChannels.IsUnknown() {
 		var channels []resource_alert.RecipientsSlackChannelsValue
@@ -212,17 +205,13 @@ func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req m
 		if diags.HasError() {
 			return req, diags
 		}
-		apiChannels := make([]models.AlertSlackChannel, len(channels))
+		apiChannels := make([]models.AlertSlackChannelRequest, len(channels))
 		for i, ch := range channels {
-			apiChannels[i] = models.AlertSlackChannel{
+			apiChannels[i] = models.AlertSlackChannelRequest{
 				CustomerId: ch.CustomerId.ValueStringPointer(),
 				Id:         ch.Id.ValueString(),
-				Name:       ch.Name.ValueStringPointer(),
 				Shared:     ch.Shared.ValueBoolPointer(),
 				Workspace:  ch.Workspace.ValueStringPointer(),
-			}
-			if !ch.RecipientsSlackChannelsType.IsNull() && !ch.RecipientsSlackChannelsType.IsUnknown() {
-				apiChannels[i].Type = (*models.AlertSlackChannelType)(ch.RecipientsSlackChannelsType.ValueStringPointer())
 			}
 		}
 		req.RecipientsSlackChannels = &apiChannels

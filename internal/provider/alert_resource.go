@@ -20,6 +20,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*alertResource)(nil)
 	_ resource.ResourceWithImportState      = (*alertResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*alertResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*alertResource)(nil)
 )
 
 type (
@@ -125,12 +126,20 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 
 func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
-		alertRecipientsValidator{},
 		alertIgnoreValuesRangeValidator{},
 		alertSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		alertScopeNAValidator{},
 	}
+}
+
+// ModifyPlan validates destination invariants across create and update semantics.
+func (r *alertResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.Type() == nil || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	validateAlertDestinationsPlan(ctx, req, resp)
 }
 
 func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

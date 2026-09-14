@@ -368,13 +368,6 @@
 										}
 									},
 									{
-										"name": "name",
-										"string": {
-											"computed_optional_required": "computed_optional",
-											"description": "Display name, resolved server-side."
-										}
-									},
-									{
 										"name": "shared",
 										"bool": {
 											"computed_optional_required": "computed_optional",
@@ -384,29 +377,24 @@
 										}
 									},
 									{
-										"name": "type",
-										"string": {
-											"computed_optional_required": "computed_optional",
-											"description": "Channel visibility, resolved server-side.",
-											"validators": [
-												{
-													"custom": {
-														"imports": [
-															{
-																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-															}
-														],
-														"schema_definition": "stringvalidator.OneOf(\n\"public\",\n\"private\",\n)"
-													}
-												}
-											]
-										}
-									},
-									{
 										"name": "workspace",
 										"string": {
 											"computed_optional_required": "computed_optional",
 											"description": "Connected workspace name returned by discovery. Required for a non-shared channel."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name, resolved server-side."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Channel visibility, resolved server-side."
 										}
 									}
 								]

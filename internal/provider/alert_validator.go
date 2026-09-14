@@ -10,42 +10,51 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// alertRecipientsValidator validates that alerts have at least one recipient destination.
-// The API adds the creator as a default recipient when recipients is empty/omitted,
-// which causes state drift if [] is specified without alternative Slack destinations.
-// An empty 'recipients' list is allowed only when 'recipients_slack_channels' has at least one channel.
-type alertRecipientsValidator struct{}
+// validateAlertDestinationsPlan validates that alerts have at least one destination (email or Slack channel),
+// taking into account create-time defaults and update-time state retention.
+func validateAlertDestinationsPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var planRecipients types.List
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("recipients"), &planRecipients)...)
 
-var _ resource.ConfigValidator = alertRecipientsValidator{}
+	var planSlackChannels types.List
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("recipients_slack_channels"), &planSlackChannels)...)
 
-func (v alertRecipientsValidator) Description(_ context.Context) string {
-	return "Validates that alerts have at least one recipient (email or Slack channel)"
-}
+	var configRecipients types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("recipients"), &configRecipients)...)
 
-func (v alertRecipientsValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that `recipients` has at least one entry unless `recipients_slack_channels` is specified."
-}
-
-func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var recipients types.List
-	diags := req.Config.GetAttribute(ctx, path.Root("recipients"), &recipients)
-	resp.Diagnostics.Append(diags...)
-
-	var slackChannels types.List
-	diags = req.Config.GetAttribute(ctx, path.Root("recipients_slack_channels"), &slackChannels)
-	resp.Diagnostics.Append(diags...)
+	var configSlackChannels types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("recipients_slack_channels"), &configSlackChannels)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if recipients.IsUnknown() || slackChannels.IsUnknown() {
+	if configRecipients.IsUnknown() || configSlackChannels.IsUnknown() {
+		return
+	}
+	if !configRecipients.IsNull() && planRecipients.IsUnknown() {
+		return
+	}
+	if !configSlackChannels.IsNull() && planSlackChannels.IsUnknown() {
 		return
 	}
 
+	isCreate := req.State.Raw.Type() == nil || req.State.Raw.IsNull()
+	var stateRecipients types.List
+	if !isCreate {
+		resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("recipients"), &stateRecipients)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if stateRecipients.IsUnknown() {
+			return
+		}
+	}
+
+	// Scan Slack channels in plan for uncertainty and non-null presence
 	var channelVals []resource_alert.RecipientsSlackChannelsValue
-	if !slackChannels.IsNull() {
-		diags = slackChannels.ElementsAs(ctx, &channelVals, false)
+	if !configSlackChannels.IsNull() && !planSlackChannels.IsUnknown() && !planSlackChannels.IsNull() {
+		diags := planSlackChannels.ElementsAs(ctx, &channelVals, false)
 		resp.Diagnostics.Append(diags...)
 		if diags.HasError() {
 			return
@@ -53,10 +62,10 @@ func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req reso
 	}
 
 	knownChannels := 0
-	hasUnknownChannel := false
+	unknownChannels := 0
 	for _, ch := range channelVals {
 		if ch.IsUnknown() {
-			hasUnknownChannel = true
+			unknownChannels++
 			continue
 		}
 		if !ch.IsNull() {
@@ -64,9 +73,26 @@ func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req reso
 		}
 	}
 
-	// If recipients is explicitly configured as empty []
-	if !recipients.IsNull() && len(recipients.Elements()) == 0 {
-		if slackChannels.IsNull() || (knownChannels == 0 && !hasUnknownChannel) {
+	if unknownChannels > 0 {
+		return
+	}
+
+	// On Create:
+	if isCreate {
+		// If recipients is omitted from config, it defaults to the creator/owner email
+		// unless Slack destinations are supplied. In either case, destinations >= 1.
+		if configRecipients.IsNull() {
+			return
+		}
+
+		// When recipients is explicitly configured:
+		// If recipients has at least one element, it satisfies the requirement.
+		if len(configRecipients.Elements()) > 0 {
+			return
+		}
+
+		// recipients is explicitly empty []
+		if knownChannels == 0 {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("recipients"),
 				"At Least One Recipient Required",
@@ -74,13 +100,35 @@ func (v alertRecipientsValidator) ValidateResource(ctx context.Context, req reso
 					"at least one Slack channel is specified in 'recipients_slack_channels'. "+
 					"If you want to use the default (creator), omit the recipients attribute entirely.",
 			)
-			return
 		}
+		return
 	}
 
-	// If slackChannels is explicitly configured as empty [] and recipients is empty or not set
-	if !slackChannels.IsNull() && len(slackChannels.Elements()) == 0 {
-		if recipients.IsNull() || len(recipients.Elements()) == 0 {
+	// On Update:
+	effectiveEmailCount := 0
+	if configRecipients.IsNull() {
+		// Category B: omitted in config retains prior state
+		if !stateRecipients.IsNull() {
+			effectiveEmailCount = len(stateRecipients.Elements())
+		}
+	} else {
+		effectiveEmailCount = len(planRecipients.Elements())
+	}
+
+	// recipients_slack_channels uses useNullForUnknownListWhenConfigNull(),
+	// so omitting it clears Slack channels (knownChannels is 0).
+	effectiveSlackCount := knownChannels
+
+	if effectiveEmailCount == 0 && effectiveSlackCount == 0 {
+		if !configRecipients.IsNull() && len(configRecipients.Elements()) == 0 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("recipients"),
+				"At Least One Recipient Required",
+				"The 'recipients' attribute must contain at least one email address unless "+
+					"at least one Slack channel is specified in 'recipients_slack_channels'. "+
+					"If you want to use the default (creator), omit the recipients attribute entirely.",
+			)
+		} else {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("recipients_slack_channels"),
 				"At Least One Destination Required",

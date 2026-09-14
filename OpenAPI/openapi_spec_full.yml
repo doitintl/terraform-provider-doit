@@ -12274,7 +12274,7 @@ components:
           maxItems: 50
           description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
           items:
-            $ref: "#/components/schemas/AlertSlackChannel"
+            $ref: "#/components/schemas/AlertSlackChannelRequest"
         recipients:
           type: array
           description: Email destinations matching allowed customer domains. Omitted on create defaults to the resolved owner email only when no Slack destinations are supplied. An explicit [] means no email and requires a Slack destination. Null is rejected.
@@ -12323,7 +12323,7 @@ components:
           maxItems: 50
           description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
           items:
-            $ref: "#/components/schemas/AlertSlackChannel"
+            $ref: "#/components/schemas/AlertSlackChannelRequest"
         recipients:
           type: array
           description: Email destinations. Omission preserves saved emails; an array replaces them; [] clears them and requires a Slack destination in the resulting alert. Null is rejected.
@@ -12385,14 +12385,15 @@ components:
           type: string
           description: >-
             Add a dimension to break down the evaluation of the condition. Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. Omission preserves the saved breakdown and an empty string clears it. Not allowed with condition: `forecast`.
-    AlertSlackChannel:
+    AlertSlackChannelRequest:
       type: object
       required: [id]
       description: >-
-        Eligible Slack destination returned by listAlertSlackChannels. Exactly one of the two shapes is valid:
+        Slack destination selected for an alert. Exactly one of the two shapes is valid:
         a shared channel (`shared: true`, `workspace` omitted), or a workspace channel (`shared: false` or omitted,
         `workspace` required). Any other combination is rejected with `validation_failed`.
-        Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected. Name and type are canonical display metadata. Existing unavailable destinations may be retained or removed. Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.
+        Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected.
+        Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.
       properties:
         id:
           type: string
@@ -12406,13 +12407,22 @@ components:
         customerId:
           type: string
           minLength: 1
-        name:
-          type: string
-          description: Display name, resolved server-side.
-        type:
-          type: string
-          description: Channel visibility, resolved server-side.
-          enum: [public, private]
+    AlertSlackChannel:
+      description: >-
+        Eligible Slack destination returned by listAlertSlackChannels and echoed on alert responses.
+        Name and type are canonical display metadata resolved server-side; values supplied on a request are ignored.
+        Existing unavailable destinations may be retained or removed.
+      allOf:
+        - $ref: "#/components/schemas/AlertSlackChannelRequest"
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Display name, resolved server-side.
+            type:
+              type: string
+              description: Channel visibility, resolved server-side.
+              enum: [public, private]
     AlertSlackChannelList:
       type: object
       required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel]

@@ -1880,3 +1880,118 @@ resource "doit_alert" "this" {
 }
 `, i, email)
 }
+
+func TestAccAlert_CreateOmittedRecipientsExplicitEmptySlack(t *testing.T) {
+	n := acctest.RandInt()
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name                      = "test-alert-slack-default-owner-%d"
+  recipients_slack_channels = []
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{}),
+					),
+					// API defaults recipients to the creator/owner email
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1),
+					),
+				},
+			},
+		},
+	})
+}
+
+func TestAccAlert_SlackOnlyAlert_RemoveBothDestinations(t *testing.T) {
+	channelID := testSlackChannel()
+	if channelID == "" {
+		t.Skip("skipping test; no Slack channel configured")
+	}
+
+	n := acctest.RandInt()
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a Slack-only alert
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name       = "test-alert-slack-only-%d"
+  recipients = []
+  recipients_slack_channels = [
+    {
+      id     = "%s"
+      shared = true
+    }
+  ]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, n, channelID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: Remove both destinations from config
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-slack-only-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, n),
+				ExpectError: regexp.MustCompile("At least one email recipient or Slack channel destination must remain"),
+			},
+		},
+	})
+}
