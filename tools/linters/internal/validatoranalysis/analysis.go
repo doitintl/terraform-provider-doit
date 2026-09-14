@@ -2,6 +2,7 @@
 package validatoranalysis
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -231,14 +232,30 @@ func Value(pass *analysis.Pass, expression ast.Expr) (ValueRef, bool) {
 		if !ok {
 			return ValueRef{}, false
 		}
-		root.Key.Path += "[*]"
-		root.Display += "[*]"
+		identity, display := indexIdentity(pass, expression.Index)
+		root.Key.Path += identity
+		root.Display += "[" + display + "]"
 		return root, true
 	case *ast.ParenExpr:
 		return Value(pass, expression.X)
 	default:
 		return ValueRef{}, false
 	}
+}
+
+func indexIdentity(pass *analysis.Pass, expression ast.Expr) (string, string) {
+	if typeAndValue, ok := pass.TypesInfo.Types[expression]; ok && typeAndValue.Value != nil {
+		value := typeAndValue.Value.ExactString()
+		return "[constant:" + value + "]", value
+	}
+	if value, ok := Value(pass, expression); ok {
+		return indexValueIdentity(value.Key), value.Display
+	}
+	return fmt.Sprintf("[expression:%d]", expression.Pos()), "*"
+}
+
+func indexValueIdentity(value ValueKey) string {
+	return fmt.Sprintf("[value:%p:%s]", value.Root, value.Path)
 }
 
 // NamedType unwraps a pointer and returns its named type, if any.
@@ -312,12 +329,16 @@ func AnalyzeKnownFacts(pass *analysis.Pass, body *ast.BlockStmt) KnownFacts {
 			return
 		}
 		for candidate := range known {
+			if strings.Contains(candidate.Path, indexValueIdentity(assigned.Key)) {
+				delete(known, candidate)
+				continue
+			}
 			if candidate.Root != assigned.Key.Root {
 				continue
 			}
 			if assigned.Key.Path == "" || candidate.Path == assigned.Key.Path ||
 				strings.HasPrefix(candidate.Path, assigned.Key.Path+".") ||
-				strings.HasPrefix(candidate.Path, assigned.Key.Path+"[*]") {
+				strings.HasPrefix(candidate.Path, assigned.Key.Path+"[") {
 				delete(known, candidate)
 			}
 		}

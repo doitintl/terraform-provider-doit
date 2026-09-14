@@ -71,6 +71,8 @@ func TestCloudconnectAwsS3RealTimeValidator(t *testing.T) {
 		{name: "unknown feature list is deferred", enabledFeatures: unknownFeatures, s3bucket: types.StringNull(), s3bucketRegion: types.StringNull()},
 		{name: "unknown feature element is deferred", enabledFeatures: unknownFeatureElement, s3bucket: types.StringNull(), s3bucketRegion: types.StringNull()},
 		{name: "unknown feature element with known S3 is deferred", enabledFeatures: unknownFeatureElement, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1")},
+		{name: "unknown feature with bucket set and region null is invalid", enabledFeatures: unknownFeatureElement, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringNull(), wantError: true, wantSummary: "Incomplete S3 Configuration"},
+		{name: "unknown feature with bucket null and region set is invalid", enabledFeatures: unknownFeatureElement, s3bucket: types.StringNull(), s3bucketRegion: types.StringValue("us-east-1"), wantError: true, wantSummary: "Incomplete S3 Configuration"},
 		{name: "known real-time before unknown still requires bucket", enabledFeatures: realTimeThenUnknown, s3bucket: types.StringNull(), s3bucketRegion: types.StringUnknown(), wantError: true, wantSummary: "Missing S3 Configuration for Real-Time Data"},
 		{name: "known real-time after unknown still requires region", enabledFeatures: unknownThenRealTime, s3bucket: types.StringUnknown(), s3bucketRegion: types.StringNull(), wantError: true, wantSummary: "Missing S3 Configuration for Real-Time Data"},
 		{name: "known real-time with unknown feature and complete S3 passes", enabledFeatures: realTimeThenUnknown, s3bucket: types.StringValue("bucket"), s3bucketRegion: types.StringValue("us-east-1")},

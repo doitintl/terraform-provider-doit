@@ -167,6 +167,61 @@ func (*goodSiblingReassignmentAccessor) ValidateConfig(_ context.Context, _ reso
 	_ = state.sibling.ValueString()
 }
 
+type badDistinctConstantIndexAccessor struct{}
+
+func (*badDistinctConstantIndexAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	values := []types.String{types.StringUnknown(), types.StringUnknown()}
+	if values[0].IsUnknown() {
+		return
+	}
+	_ = values[1].ValueString() // want "Terraform value accessor ValueString requires a dominating unknown guard"
+}
+
+type goodSameConstantIndexAccessor struct{}
+
+func (*goodSameConstantIndexAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	values := []types.String{types.StringUnknown()}
+	if values[0].IsUnknown() {
+		return
+	}
+	_ = values[0].ValueString()
+}
+
+type badDistinctVariableIndexAccessor struct{}
+
+func (*badDistinctVariableIndexAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	values := []types.String{types.StringUnknown(), types.StringUnknown()}
+	guardedIndex := 0
+	accessedIndex := 1
+	if values[guardedIndex].IsUnknown() {
+		return
+	}
+	_ = values[accessedIndex].ValueString() // want "Terraform value accessor ValueString requires a dominating unknown guard"
+}
+
+type goodSameVariableIndexAccessor struct{}
+
+func (*goodSameVariableIndexAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	values := []types.String{types.StringUnknown()}
+	index := 0
+	if values[index].IsUnknown() {
+		return
+	}
+	_ = values[index].ValueString()
+}
+
+type badReassignedVariableIndexAccessor struct{}
+
+func (*badReassignedVariableIndexAccessor) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, _ *resource.ValidateConfigResponse) {
+	values := []types.String{types.StringUnknown(), types.StringUnknown()}
+	index := 0
+	if values[index].IsUnknown() {
+		return
+	}
+	index = 1
+	_ = values[index].ValueString() // want "Terraform value accessor ValueString requires a dominating unknown guard"
+}
+
 type goodGuardedBusinessCondition struct{}
 
 func (*goodGuardedBusinessCondition) ValidateConfig(_ context.Context, _ resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {

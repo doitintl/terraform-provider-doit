@@ -41,6 +41,53 @@ func (*resourceValidator) ValidateConfig(_ context.Context, _ resource.ValidateC
 	validateNestedCollection([][]testItem{{{Role: types.StringUnknown()}}}, &resp.Diagnostics)
 	validateSelectorTracker([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
 	validateSelectorTrackerSafely([]testItem{{Role: types.StringUnknown()}}, &resp.Diagnostics)
+	validateNullFallthrough(types.StringUnknown(), &resp.Diagnostics)
+	validateNullElse(types.StringUnknown(), &resp.Diagnostics)
+	validateNullFallthroughSafely(types.StringUnknown(), &resp.Diagnostics)
+	validateNullElseSafely(types.StringUnknown(), &resp.Diagnostics)
+	validateBusinessGatedNullExit(false, types.StringUnknown(), &resp.Diagnostics)
+}
+
+func validateNullFallthrough(value types.String, diagnostics *diag.Diagnostics) {
+	if value.IsNull() {
+		return
+	}
+	diagnostics.AddError("present", "present") // want "validator diagnostic may be emitted while value is unknown"
+}
+
+func validateNullElse(value types.String, diagnostics *diag.Diagnostics) {
+	if value.IsNull() {
+		return
+	} else {
+		diagnostics.AddError("present", "present") // want "validator diagnostic may be emitted while value is unknown"
+	}
+}
+
+func validateNullFallthroughSafely(value types.String, diagnostics *diag.Diagnostics) {
+	if value.IsNull() || value.IsUnknown() {
+		return
+	}
+	diagnostics.AddError("present", "present")
+}
+
+func validateNullElseSafely(value types.String, diagnostics *diag.Diagnostics) {
+	if value.IsNull() {
+		return
+	} else {
+		if value.IsUnknown() {
+			return
+		}
+		diagnostics.AddError("present", "present")
+	}
+}
+
+func validateBusinessGatedNullExit(enabled bool, value types.String, diagnostics *diag.Diagnostics) {
+	if enabled && value.IsNull() {
+		return
+	}
+	if !enabled {
+		diagnostics.AddError("disabled", "disabled")
+	}
 }
 
 type selectorTrackerState struct {

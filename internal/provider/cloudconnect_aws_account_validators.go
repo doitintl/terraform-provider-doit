@@ -72,6 +72,15 @@ func (v cloudconnectAwsS3RealTimeValidator) ValidateResource(ctx context.Context
 	}
 
 	if hasRealTime || hasUnknownFeature {
+		if hasUnknownFeature {
+			if (!s3bucket.IsUnknown() && !s3bucket.IsNull() && s3bucketRegion.IsNull()) ||
+				(!s3bucketRegion.IsUnknown() && !s3bucketRegion.IsNull() && s3bucket.IsNull()) {
+				resp.Diagnostics.AddError(
+					"Incomplete S3 Configuration",
+					"s3bucket and s3bucket_region must either both be set or both be omitted while enabled_features contains an unknown value.",
+				)
+			}
+		}
 		return
 	}
 

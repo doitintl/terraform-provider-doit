@@ -57,9 +57,75 @@ func run(pass *analysis.Pass) (any, error) {
 			trackers:    facts.Trackers,
 		}
 		state.checkPresenceDiagnostics(declaration.Body)
+		state.checkNullExitDiagnostics(declaration.Body)
 		state.checkUncertainLoopCounts(declaration.Body)
 	}
 	return nil, nil
+}
+
+func (state *functionAnalysis) checkNullExitDiagnostics(body *ast.BlockStmt) {
+	var visitBlock func(*ast.BlockStmt)
+	var visitIf func(*ast.IfStmt, []ast.Stmt)
+	visitIf = func(statement *ast.IfStmt, following []ast.Stmt) {
+		unsafe := uniqueValues(fallthroughPresenceValues(state.pass, statement.Cond))
+		if len(unsafe) > 0 {
+			if statement.Else != nil {
+				for _, diagnostic := range diagnosticsIn(state.pass, statement.Else) {
+					state.report(diagnostic, unsafe)
+				}
+			}
+			if endsWithExit(statement.Body) {
+				for _, next := range following {
+					for _, diagnostic := range diagnosticsIn(state.pass, next) {
+						state.report(diagnostic, unsafe)
+					}
+				}
+			}
+		}
+
+		visitBlock(statement.Body)
+		switch alternative := statement.Else.(type) {
+		case *ast.BlockStmt:
+			visitBlock(alternative)
+		case *ast.IfStmt:
+			visitIf(alternative, nil)
+		}
+	}
+	visitBlock = func(block *ast.BlockStmt) {
+		for index, statement := range block.List {
+			switch statement := statement.(type) {
+			case *ast.IfStmt:
+				visitIf(statement, block.List[index+1:])
+			case *ast.BlockStmt:
+				visitBlock(statement)
+			case *ast.ForStmt:
+				visitBlock(statement.Body)
+			case *ast.RangeStmt:
+				visitBlock(statement.Body)
+			}
+		}
+	}
+	visitBlock(body)
+}
+
+func fallthroughPresenceValues(pass *analysis.Pass, expression ast.Expr) []validatoranalysis.ValueRef {
+	switch expression := expression.(type) {
+	case *ast.ParenExpr:
+		return fallthroughPresenceValues(pass, expression.X)
+	case *ast.BinaryExpr:
+		if expression.Op == token.LOR {
+			return uniqueValues(append(
+				fallthroughPresenceValues(pass, expression.X),
+				fallthroughPresenceValues(pass, expression.Y)...,
+			))
+		}
+	case *ast.CallExpr:
+		kind, value, ok := validatoranalysis.Predicate(pass, expression)
+		if ok && kind == validatoranalysis.PredicateNull {
+			return []validatoranalysis.ValueRef{value}
+		}
+	}
+	return nil
 }
 
 func reachablePositions(graph *cfg.CFG) map[token.Pos]bool {
@@ -263,6 +329,20 @@ func endsWithContinue(body *ast.BlockStmt) bool {
 	}
 	branch, ok := body.List[len(body.List)-1].(*ast.BranchStmt)
 	return ok && branch.Tok == token.CONTINUE
+}
+
+func endsWithExit(body *ast.BlockStmt) bool {
+	if body == nil || len(body.List) == 0 {
+		return false
+	}
+	switch statement := body.List[len(body.List)-1].(type) {
+	case *ast.ReturnStmt:
+		return true
+	case *ast.BranchStmt:
+		return statement.Tok == token.BREAK || statement.Tok == token.CONTINUE
+	default:
+		return false
+	}
 }
 
 func minimumCountValues(pass *analysis.Pass, expression ast.Expr) valueKeySet {
