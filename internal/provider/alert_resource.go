@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure the implementation satisfies expected interfaces.
@@ -89,8 +90,9 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		"config.scopes[*].values",                  // API defaults scope values
 		"recipients_slack_channels[*].customer_id", // API-resolved customer ID
 		"recipients_slack_channels[*].name",        // API-resolved channel display name
+		"recipients_slack_channels[*].shared",      // API-populated
 		"recipients_slack_channels[*].type",        // API-resolved channel visibility
-		"recipients_slack_channels[*].workspace",   // API-resolved or contextual workspace
+		"recipients_slack_channels[*].workspace",   // API-populated
 	)
 
 	// Category A: nested clearable attributes.
@@ -140,6 +142,48 @@ func (r *alertResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 	}
 
 	validateAlertDestinationsPlan(ctx, req, resp)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	modifyAlertSlackWorkspacePlan(ctx, req, resp)
+}
+
+// modifyAlertSlackWorkspacePlan ensures that when a channel has shared = true,
+// workspace is planned as null (clearing any prior workspace value retained by
+// Optional+Computed planning, or preventing unknown on create).
+func modifyAlertSlackWorkspacePlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var slackList types.List
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("recipients_slack_channels"), &slackList)...)
+	if resp.Diagnostics.HasError() || slackList.IsNull() || slackList.IsUnknown() {
+		return
+	}
+
+	var channels []resource_alert.RecipientsSlackChannelsValue
+	resp.Diagnostics.Append(slackList.ElementsAs(ctx, &channels, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	modified := false
+	for i := range channels {
+		if channels[i].Shared.ValueBool() && !channels[i].Workspace.IsNull() {
+			channels[i].Workspace = types.StringNull()
+			modified = true
+		}
+	}
+
+	if !modified {
+		return
+	}
+
+	newList, listDiags := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), channels)
+	resp.Diagnostics.Append(listDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("recipients_slack_channels"), newList)...)
 }
 
 func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

@@ -114,7 +114,9 @@ func overlayAlertSlackChannel(_ context.Context, resolved, plan *resource_alert.
 	if plan.CustomerId.IsUnknown() {
 		plan.CustomerId = resolved.CustomerId
 	}
-	if plan.Workspace.IsUnknown() {
+	if plan.Shared.ValueBool() {
+		plan.Workspace = types.StringNull()
+	} else if plan.Workspace.IsUnknown() {
 		plan.Workspace = resolved.Workspace
 	}
 	return nil
@@ -458,6 +460,12 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 			if ch.Shared != nil {
 				sharedVal = types.BoolValue(*ch.Shared)
 			}
+			var wsVal types.String
+			if ch.Workspace != nil && *ch.Workspace != "" {
+				wsVal = types.StringValue(*ch.Workspace)
+			} else {
+				wsVal = types.StringNull()
+			}
 			channels[i], d = resource_alert.NewRecipientsSlackChannelsValue(
 				resource_alert.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
@@ -466,7 +474,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 					"name":        types.StringPointerValue(ch.Name),
 					"shared":      sharedVal,
 					"type":        types.StringPointerValue((*string)(ch.Type)),
-					"workspace":   types.StringPointerValue(ch.Workspace),
+					"workspace":   wsVal,
 				},
 			)
 			diags.Append(d...)

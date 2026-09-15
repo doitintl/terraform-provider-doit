@@ -193,6 +193,10 @@ func testSlackWorkspace() string {
 	return os.Getenv("TEST_SLACK_WORKSPACE")
 }
 
+func testSlackWorkspaceChannel() string {
+	return os.Getenv("TEST_SLACK_WORKSPACE_CHAN")
+}
+
 func testCustomerID() string {
 	return os.Getenv("TEST_CUSTOMER_ID")
 }
