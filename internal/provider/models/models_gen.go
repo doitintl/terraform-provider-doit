@@ -8056,7 +8056,10 @@ type GetAsyncOperationResults200ResponseType string
 // GetAsyncOperationResults200ResponseResult defines model for GetAsyncOperationResults200ResponseResult.
 type GetAsyncOperationResults200ResponseResult struct {
 	// CacheHit If true, results were fetched from the cache.
-	CacheHit     *bool                                                  `json:"cacheHit,omitempty"`
+	CacheHit *bool `json:"cacheHit,omitempty"`
+
+	// Details Optional metadata about the result.
+	Details      *GetAsyncOperationResults200ResponseResultDetails      `json:"details,omitempty"`
 	ForecastRows *[][]nullable.Nullable[Value]                          `json:"forecastRows,omitempty"`
 	MlFeatures   *[]GetAsyncOperationResults200ResponseResultMlFeatures `json:"mlFeatures,omitempty"`
 	Rows         *[][]nullable.Nullable[Value]                          `json:"rows,omitempty"`
@@ -8068,6 +8071,12 @@ type GetAsyncOperationResults200ResponseResult struct {
 
 // GetAsyncOperationResults200ResponseResultMlFeatures defines model for GetAsyncOperationResults200ResponseResult.MlFeatures.
 type GetAsyncOperationResults200ResponseResultMlFeatures string
+
+// GetAsyncOperationResults200ResponseResultDetails Optional metadata about the result.
+type GetAsyncOperationResults200ResponseResultDetails struct {
+	// ValueAliases Display aliases for values that appear in `rows`, keyed by dimension id and then by the stored value (for example `{"fixed:cloud_provider": {"datadog_prod": "Datadog (prod)"}}`). Rows keep the stored values so they can be fed back into filters; apply the alias only when presenting a value. Present only when the customer has renamed a DataHub dataset whose dimension is part of the report.
+	ValueAliases *map[string]map[string]string `json:"valueAliases,omitempty"`
+}
 
 // GetDatahubDataset200Response defines model for GetDatahubDataset200Response.
 type GetDatahubDataset200Response struct {

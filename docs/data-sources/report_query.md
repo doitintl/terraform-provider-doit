@@ -5,7 +5,7 @@ description: |-
   Runs an ad-hoc Cloud Analytics query without persisting a report.
   The query is executed with the provided config and results are returned as a raw JSON string in result_json. Use Terraform's jsondecode() to parse the results.
   Results are dynamic: they change over time as new billing data is ingested. Every terraform plan re-executes the query.
-  The result_json object includes schema (column definitions: name, type, and optional unit, currency, aggregation, and id), rows (data), forecastRows (forecast data), secondaryRows (secondary time range data), and cacheHit (whether results were served from cache).
+  The result_json object includes schema (column definitions: name, type, and optional unit, currency, aggregation, and id), rows (data), forecastRows (forecast data), secondaryRows (secondary time range data), cacheHit (whether results were served from cache), and optional details (such as valueAliases).
   Each row contains string, number, or null values corresponding to the schema columns.
 ---
 
@@ -24,6 +24,7 @@ The `result_json` field contains the full result object including:
 - `forecastRows`: Array of forecast data rows (if applicable)
 - `secondaryRows`: Array of secondary time range rows (if applicable)
 - `cacheHit`: Whether results were served from cache
+- `details`: Optional metadata about the result, such as `valueAliases` (display aliases for values that appear in `rows`, keyed by dimension ID and stored value)
 
 ## Query Execution and Timeouts
 
@@ -123,6 +124,7 @@ Structure of the decoded JSON object:
 - `forecastRows`: Array of forecast row arrays (if applicable).
 - `secondaryRows`: Array of secondary time range row arrays (if applicable).
 - `cacheHit`: Boolean indicating if the result was served from cache.
+- `details`: Optional metadata about the result, such as `valueAliases` (display aliases for values that appear in `rows`, keyed by dimension ID like `fixed:cloud_provider` and then by stored value).
 - `row_count` (Number) The number of data rows in the result.
 
 <a id="nestedatt--config"></a>

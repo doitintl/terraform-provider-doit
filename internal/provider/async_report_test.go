@@ -40,7 +40,8 @@ type asyncTestServer struct {
 	pollStatuses  []string // consumed one per poll; last value repeats
 	pollRetryHdr  string   // Retry-After sent on non-terminal polls
 	failureError  *models.AsyncOperationError
-	resultsStatus []int // consumed one per results call; last value repeats
+	resultsStatus []int  // consumed one per results call; last value repeats
+	resultsBody   string // if set, returned on http.StatusOK from results endpoint
 	submitStatus  int
 	submitEmpty   int           // number of initial submits answered with a 202 carrying no operation ID
 	submitDelay   time.Duration // how long the submit handler withholds its response
@@ -179,9 +180,13 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 		w.WriteHeader(status)
 		switch status {
 		case http.StatusOK:
-			_, _ = w.Write([]byte(`{"id":"rpt-1","reportName":"Test Report","result":{` +
-				`"schema":[{"name":"cost","type":"float"}],` +
-				`"rows":[["a",1],["b",2]],"cacheHit":false}}`))
+			if s.resultsBody != "" {
+				_, _ = w.Write([]byte(s.resultsBody))
+			} else {
+				_, _ = w.Write([]byte(`{"id":"rpt-1","reportName":"Test Report","result":{` +
+					`"schema":[{"name":"cost","type":"float"}],` +
+					`"rows":[["a",1],["b",2]],"cacheHit":false}}`))
+			}
 		default:
 			_, _ = w.Write([]byte(`{"error":"result unavailable"}`))
 		}
@@ -274,6 +279,107 @@ func TestAwaitAsyncReport_SucceedsAfterPolling(t *testing.T) {
 		// Three non-terminal polls, each followed by a 5s Retry-After wait.
 		if want := 15 * time.Second; elapsed != want {
 			t.Errorf("virtual elapsed = %v, want %v", elapsed, want)
+		}
+	})
+}
+
+// TestAwaitAsyncReport_DetailsValueAliases verifies that when the results
+// endpoint returns details with valueAliases, awaitAsyncReport populates
+// Details on the result, and json.Marshal serializes details into the JSON output.
+func TestAwaitAsyncReport_DetailsValueAliases(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		resultsPayload := `{"id":"rpt-1","reportName":"Test Report","result":{` +
+			`"schema":[{"name":"cloud_provider","type":"string"},{"name":"cost","type":"float"}],` +
+			`"rows":[["test-manual",10.5]],` +
+			`"cacheHit":false,` +
+			`"details":{"valueAliases":{"fixed:cloud_provider":{"test-manual":"Test Manual Display"}}}` +
+			`}}`
+
+		srv := newAsyncTestServer(t, &asyncTestServer{
+			pollStatuses: []string{"succeeded"},
+			resultsBody:  resultsPayload,
+		})
+		client := newAsyncTestClient(t, srv.Server)
+
+		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		if diags.HasError() {
+			t.Fatalf("unexpected diagnostics: %v", diags.Errors())
+		}
+		if results.Result == nil {
+			t.Fatal("expected non-nil result")
+		}
+		if results.Result.Details == nil || results.Result.Details.ValueAliases == nil {
+			t.Fatal("expected non-nil Details.ValueAliases")
+		}
+		dimAliases, ok := (*results.Result.Details.ValueAliases)["fixed:cloud_provider"]
+		if !ok {
+			t.Fatal("expected valueAliases to contain fixed:cloud_provider")
+		}
+		if got := dimAliases["test-manual"]; got != "Test Manual Display" {
+			t.Errorf("alias for test-manual = %q, want %q", got, "Test Manual Display")
+		}
+
+		// Verify json.Marshal matches what is exposed in result_json
+		b, err := json.Marshal(results.Result)
+		if err != nil {
+			t.Fatalf("json.Marshal failed: %v", err)
+		}
+		var parsed map[string]any
+		if err := json.Unmarshal(b, &parsed); err != nil {
+			t.Fatalf("json.Unmarshal failed: %v", err)
+		}
+		detailsRaw, ok := parsed["details"]
+		if !ok {
+			t.Fatalf("details missing from marshaled result_json: %s", string(b))
+		}
+		detailsMap, ok := detailsRaw.(map[string]any)
+		if !ok {
+			t.Fatalf("details is not a map: %T", detailsRaw)
+		}
+		valAliasesRaw, ok := detailsMap["valueAliases"].(map[string]any)
+		if !ok {
+			t.Fatalf("valueAliases missing or not a map: %v", detailsMap)
+		}
+		fixedCloud, ok := valAliasesRaw["fixed:cloud_provider"].(map[string]any)
+		if !ok {
+			t.Fatalf("fixed:cloud_provider missing or not a map: %v", valAliasesRaw)
+		}
+		if got := fixedCloud["test-manual"]; got != "Test Manual Display" {
+			t.Errorf("marshaled alias for test-manual = %v, want %q", got, "Test Manual Display")
+		}
+	})
+}
+
+// TestAwaitAsyncReport_OmittedDetails verifies that when the API returns no
+// details property, Details is nil and marshaled JSON omits details.
+func TestAwaitAsyncReport_OmittedDetails(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := newAsyncTestServer(t, &asyncTestServer{
+			pollStatuses: []string{"succeeded"},
+		})
+		client := newAsyncTestClient(t, srv.Server)
+
+		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		if diags.HasError() {
+			t.Fatalf("unexpected diagnostics: %v", diags.Errors())
+		}
+		if results.Result == nil {
+			t.Fatal("expected non-nil result")
+		}
+		if results.Result.Details != nil {
+			t.Errorf("expected nil Details when omitted, got %+v", results.Result.Details)
+		}
+
+		b, err := json.Marshal(results.Result)
+		if err != nil {
+			t.Fatalf("json.Marshal failed: %v", err)
+		}
+		var parsed map[string]any
+		if err := json.Unmarshal(b, &parsed); err != nil {
+			t.Fatalf("json.Unmarshal failed: %v", err)
+		}
+		if _, ok := parsed["details"]; ok {
+			t.Errorf("details should be omitted from JSON when nil, got: %s", string(b))
 		}
 	})
 }
