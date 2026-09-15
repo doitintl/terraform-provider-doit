@@ -9,3 +9,7 @@ output "my_email" {
 output "my_domain" {
   value = data.doit_current_user.me.domain
 }
+
+output "my_permissions" {
+  value = data.doit_current_user.me.permissions
+}

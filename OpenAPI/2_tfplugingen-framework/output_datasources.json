@@ -9849,6 +9849,16 @@
 						"string": {
 							"computed_optional_required": "computed"
 						}
+					},
+					{
+						"name": "permissions",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "The caller's own effective permission names (e.g. \"CloudAnalyticsReadOnly\"), not opaque permission IDs. Empty for a DoiT employee token, which is not scoped to a fixed permission set."
+						}
 					}
 				],
 				"description": "User authentication.",

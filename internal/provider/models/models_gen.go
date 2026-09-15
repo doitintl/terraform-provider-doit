@@ -9454,6 +9454,9 @@ type UserListItemStatus string
 type ValidateResponse struct {
 	Domain *string `json:"domain,omitempty"`
 	Email  *string `json:"email,omitempty"`
+
+	// Permissions The caller's own effective permission names (e.g. "CloudAnalyticsReadOnly"), not opaque permission IDs. Empty for a DoiT employee token, which is not scoped to a fixed permission set.
+	Permissions *[]string `json:"permissions,omitempty"`
 }
 
 // Value The content of a single cell from a BigQuery result. Can be a string, number, or null.
@@ -11455,7 +11458,7 @@ type ClientInterface interface {
 
 	// Validate Validate a user
 	//
-	// Returns the domain and email of the current API user.
+	// Returns the domain, email, and effective permissions of the current API user. Callable by any authenticated token, regardless of its own permissions.
 	//
 	// Corresponds with GET /auth/v1/validate (the `Validate` operationId).
 	Validate(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -13578,7 +13581,7 @@ func (c *Client) GetAnomalyExplanation(ctx context.Context, id string, reqEditor
 
 // Validate Validate a user
 //
-// Returns the domain and email of the current API user.
+// Returns the domain, email, and effective permissions of the current API user. Callable by any authenticated token, regardless of its own permissions.
 //
 // Corresponds with GET /auth/v1/validate (the `Validate` operationId).
 func (c *Client) Validate(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -22074,7 +22077,7 @@ type ClientWithResponsesInterface interface {
 
 	// ValidateWithResponse Validate a user
 	//
-	// Returns the domain and email of the current API user.
+	// Returns the domain, email, and effective permissions of the current API user. Callable by any authenticated token, regardless of its own permissions.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -32755,7 +32758,7 @@ func (c *ClientWithResponses) GetAnomalyExplanationWithResponse(ctx context.Cont
 
 // ValidateWithResponse Validate a user
 //
-// Returns the domain and email of the current API user.
+// Returns the domain, email, and effective permissions of the current API user. Callable by any authenticated token, regardless of its own permissions.
 //
 // Returns a wrapper object for the known response body format(s).
 //

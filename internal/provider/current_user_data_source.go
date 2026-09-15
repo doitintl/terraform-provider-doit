@@ -95,5 +95,16 @@ func (d *currentUserDataSource) Read(ctx context.Context, req datasource.ReadReq
 	data.Email = types.StringPointerValue(user.Email)
 	data.Domain = types.StringPointerValue(user.Domain)
 
+	permissions := []string{}
+	if user.Permissions != nil {
+		permissions = *user.Permissions
+	}
+	permissionsList, diags := types.ListValueFrom(ctx, types.StringType, permissions)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	data.Permissions = permissionsList
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
