@@ -246,6 +246,7 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `TEST_AWS_S3_BUCKET`                   | S3 bucket name for CloudConnect resource tests               |
 | `TEST_AWS_S3_BUCKET_REGION`            | S3 bucket region for CloudConnect resource tests             |
 | `TEST_BILLING_EXPLAINER_INVOICE_MONTH` | Invoice month and year for the billing explainer data source |
+| `TEST_DATAHUB_DATASET`                 | DataHub dataset name for report query alias tests            |
 
 </details>
 

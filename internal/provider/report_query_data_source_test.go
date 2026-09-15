@@ -2,9 +2,11 @@ package provider_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -914,4 +916,101 @@ output "cost_field_aggregation" {
   value = lookup(local.cost_field, "aggregation", "")
 }
 `
+}
+
+// TestAccReportQueryDataSource_DetailsValueAliases verifies that when a DataHub
+// dataset has been renamed, report query results include the details object with
+// valueAliases mapping the dimension ID and dataset name to the display name.
+func TestAccReportQueryDataSource_DetailsValueAliases(t *testing.T) {
+	dataset := os.Getenv("TEST_DATAHUB_DATASET")
+	if dataset == "" {
+		t.Skip("TEST_DATAHUB_DATASET environment variable not set")
+	}
+
+	client := getAPIClient(t)
+
+	// Fetch current dataset so we can ensure expectedDisplayName is set
+	origResp, err := client.GetDatahubDatasetWithResponse(t.Context(), dataset)
+	if err != nil {
+		t.Fatalf("Failed to fetch %s dataset: %v", dataset, err)
+	}
+	if origResp.StatusCode() != 200 || origResp.JSON200 == nil {
+		t.Fatalf("%s dataset not found (status %d): %s", dataset, origResp.StatusCode(), string(origResp.Body))
+	}
+	expectedDisplayName := "Test Manual Display"
+	if origResp.JSON200.DisplayName != nil && *origResp.JSON200.DisplayName != "" {
+		expectedDisplayName = *origResp.JSON200.DisplayName
+	} else {
+		patchResp, err := client.UpdateDatahubDatasetWithResponse(t.Context(), dataset, models.UpdateDatahubDatasetJSONRequestBody{
+			DisplayName: &expectedDisplayName,
+		})
+		if err != nil {
+			t.Fatalf("Failed to update %s display name: %v", dataset, err)
+		}
+		if patchResp.StatusCode() != 200 {
+			t.Fatalf("Update %s failed with status %d: %s", dataset, patchResp.StatusCode(), string(patchResp.Body))
+		}
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceConfigDetails(dataset),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.NotNull()),
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckOutput("dataset_alias", expectedDisplayName),
+				),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceConfigDetails(dataset string) string {
+	return fmt.Sprintf(`
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation   = "total"
+        time_interval = "month"
+        data_source   = "billing"
+        custom_time_range = {
+          from = "2026-03-01T00:00:00Z"
+          to   = "2026-03-31T23:59:59Z"
+        }
+        time_range = {
+          mode = "custom"
+        }
+        dimensions = [
+          {
+            id   = "cloud_provider"
+            type = "fixed"
+          }
+        ]
+    }
+}
+
+locals {
+  query_result  = jsondecode(data.doit_report_query.test.result_json)
+  details       = lookup(local.query_result, "details", {})
+  value_aliases = lookup(local.details, "valueAliases", {})
+  cloud_aliases = lookup(local.value_aliases, "fixed:cloud_provider", {})
+}
+
+output "dataset_alias" {
+  value = lookup(local.cloud_aliases, %q, "")
+}
+`, dataset)
 }

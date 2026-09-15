@@ -72,7 +72,7 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			"\n\nThe result_json field contains the full result object, including the" +
 			" schema (column definitions: name, type, and optional unit, currency, aggregation, and id)," +
 			" rows (data), forecastRows (forecast data), secondaryRows (secondary time range data)," +
-			" and cacheHit (whether results were served from cache).",
+			" cacheHit (whether results were served from cache), and optional details (such as valueAliases).",
 		MarkdownDescription: "Fetches the results of an existing Cloud Analytics report." +
 			"\n\nThe report is executed and the results are returned as a JSON string in" +
 			" `result_json`. Use Terraform's `jsondecode()` to parse the results." +
@@ -84,7 +84,8 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			"\n- `rows`: Data rows (each row is an array of cell values: string, number, or null)" +
 			"\n- `forecastRows`: Forecast data rows (if applicable)" +
 			"\n- `secondaryRows`: Secondary time range rows (if applicable)" +
-			"\n- `cacheHit`: Whether results were served from cache",
+			"\n- `cacheHit`: Whether results were served from cache" +
+			"\n- `details`: Optional metadata about the result, such as `valueAliases` (display aliases for values that appear in `rows`, keyed by dimension ID and stored value)",
 		Attributes: map[string]schema.Attribute{
 			// --- Inputs ---
 			"id": schema.StringAttribute{
@@ -135,7 +136,7 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			// --- Outputs ---
 			"result_json": schema.StringAttribute{
 				Description: "The full report result as a JSON string. " +
-					"Contains schema (column definitions including name, type, and optional unit, currency, aggregation, and id), rows (data), and metadata. " +
+					"Contains schema (column definitions including name, type, and optional unit, currency, aggregation, and id), rows (data), and metadata (cacheHit, optional details with valueAliases). " +
 					"Use jsondecode() to parse.",
 				MarkdownDescription: "The full report result as a JSON string. Use `jsondecode()` to parse." +
 					"\n\nStructure of the decoded JSON object:" +
@@ -143,7 +144,8 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 					"\n- `rows`: Array of row arrays `[][string | number | null]` corresponding to the schema columns." +
 					"\n- `forecastRows`: Array of forecast row arrays (if applicable)." +
 					"\n- `secondaryRows`: Array of secondary time range row arrays (if applicable)." +
-					"\n- `cacheHit`: Boolean indicating if the result was served from cache.",
+					"\n- `cacheHit`: Boolean indicating if the result was served from cache." +
+					"\n- `details`: Optional metadata about the result, such as `valueAliases` (display aliases for values that appear in `rows`, keyed by dimension ID like `fixed:cloud_provider` and then by stored value).",
 				Computed: true,
 			},
 			"report_name": schema.StringAttribute{

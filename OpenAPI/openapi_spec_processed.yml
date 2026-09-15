@@ -10208,6 +10208,22 @@ components:
         cacheHit:
           type: boolean
           description: If true, results were fetched from the cache.
+        details:
+          description: Optional metadata about the result.
+          allOf:
+            - $ref: '#/components/schemas/GetAsyncOperationResults200ResponseResultDetails'
+    GetAsyncOperationResults200ResponseResultDetails:
+      type: object
+      description: Optional metadata about the result.
+      properties:
+        valueAliases:
+          type: object
+          description: >-
+            Display aliases for values that appear in `rows`, keyed by dimension id and then by the stored value (for example `{"fixed:cloud_provider": {"datadog_prod": "Datadog (prod)"}}`). Rows keep the stored values so they can be fed back into filters; apply the alias only when presenting a value. Present only when the customer has renamed a DataHub dataset whose dimension is part of the report.
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
     GetDatahubDataset200Response:
       type: object
       properties:
