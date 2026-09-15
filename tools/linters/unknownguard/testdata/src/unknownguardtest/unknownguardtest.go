@@ -18,9 +18,9 @@ func (d *testDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 	resp.Schema = s
 }
 
-// BAD: Read() with Required input but no unknown guard
-func (d *testDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) { // want `data source Read\(\) must check for unknown inputs`
-	// Directly makes API call without checking for unknown inputs
+// BAD: Read() with Required input but no defensive protocol guard
+func (d *testDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) { // want `data source Read\(\) must defensively guard unknown protocol configuration`
+	// Directly makes an API call without guarding unknown protocol configuration.
 }
 
 type goodDataSource struct{}
@@ -30,7 +30,7 @@ func (d *goodDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 	resp.Schema = s
 }
 
-// GOOD: Read() checks for unknown inputs
+// GOOD: Read() defensively checks for unknown protocol configuration
 func (d *goodDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data model
 	if data.IsUnknown() {

@@ -70,9 +70,11 @@ Simple data sources that only do a few scalar assignments may keep mapping logic
 - Use generated constructors (`NewXxxValue()`) for nested objects
 - Add timeout support (see [implementation-conventions](../implementation-conventions/SKILL.md#timeout-support))
 
-### Unknown Input Handling (Critical)
+### Unknown Input Handling
 
-Data sources are read during `terraform plan`. If an input depends on an unresolved resource, its value will be `Unknown`. **Check for unknown inputs before making API calls:**
+When data source configuration contains an unknown value, Terraform Core versions covered by this provider's acceptance suite (`> 1.10`) defer the read until apply and mark the complete data source result unknown. This is the normal practitioner-facing planning behavior; Core does not ordinarily call `ReadDataSource` with that configuration.
+
+The plugin protocol nevertheless permits a client to pass unknown configuration to `ReadDataSource`. Keep a defensive unknown guard before request construction and API calls so direct protocol clients or future execution paths cannot turn unknown values into zero-value request parameters or perform premature I/O.
 
 **Scalar inputs** — check with `IsUnknown()`:
 
@@ -97,9 +99,11 @@ if !req.Config.Raw.IsFullyKnown() {
 
 A list can be known while containing unknown elements (e.g., `resources = [some_resource.id]`), which `IsUnknown()` on the list itself would miss.
 
-> **IMPORTANT:** Return `Unknown`, not `Null`. `Null` means "this value does not exist" while `Unknown` means "not yet determined." Downstream consumers treat `Null` as a real value during planning.
+If the defensive fallback writes state, set API-derived results to `Unknown`, not `Null`. `Null` means "this value does not exist" while `Unknown` means "not yet determined." Preserve configuration values whose schema and semantics require preservation.
 
-> **Linter:** `unknownguard` — flags data source Read methods missing unknown input checks.
+Do not infer fallback assignments solely from schema classification. In particular, `Optional+Computed` can describe an API-derived output such as `page_token` or a configuration value that must be preserved; the schema class cannot distinguish those semantics.
+
+> **Linter:** `unknownguard` — flags data source `Read` methods missing a defensive unknown-configuration guard. It intentionally checks guard presence only; it does not require every `Computed` or `Optional+Computed` attribute to be assigned unknown.
 
 ### API Response Validation
 

@@ -69,7 +69,12 @@ func readAnomaliesHelper(t *testing.T, server *httptest.Server, overrides map[st
 	return data, readResp.State
 }
 
-func TestAnomaliesDataSource_UnknownInputs(t *testing.T) {
+// TestAnomaliesDataSource_UnknownConfigDefensiveFallback exercises the
+// protocol-level fallback directly. Terraform Core normally defers a data
+// source with unknown configuration, but protocol v6 permits clients to send
+// unknown configuration to ReadDataSource. The fallback must avoid API calls
+// and leave every result attribute unknown if that occurs.
+func TestAnomaliesDataSource_UnknownConfigDefensiveFallback(t *testing.T) {
 	t.Parallel()
 
 	unknownCases := []struct {

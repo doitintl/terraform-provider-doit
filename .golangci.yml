@@ -246,7 +246,7 @@ linters:
         description: "Suggests new(expr) instead of temp-variable-then-address pattern."
       unknownguard:
         type: "module"
-        description: "Ensures data source Read() checks for unknown inputs before API calls."
+        description: "Ensures data source Read() defensively guards unknown protocol configuration before API calls."
       diagdrop:
         type: "module"
         description: "Detects return nil that drops captured diag.Diagnostics variables."
