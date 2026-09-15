@@ -79,6 +79,7 @@ func (ds *alertDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		data.UpdateTime = types.Int64Unknown()
 		data.LastAlerted = types.Int64Unknown()
 		data.Recipients = types.ListUnknown(types.StringType)
+		data.RecipientsSlackChannels = types.ListUnknown(datasource_alert.RecipientsSlackChannelsValue{}.Type(ctx))
 		data.Config = datasource_alert.NewConfigValueUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -118,7 +119,7 @@ func (ds *alertDataSource) mapAlertToModel(ctx context.Context, alert *models.Al
 	state.Name = types.StringValue(alert.Name)
 	state.CreateTime = types.Int64PointerValue(alert.CreateTime)
 	state.UpdateTime = types.Int64PointerValue(alert.UpdateTime)
-	state.LastAlerted = types.Int64PointerValue(alert.LastAlerted)
+	state.LastAlerted = types.Int64PointerValue(nullableToPointer(alert.LastAlerted))
 
 	// Map recipients
 	if alert.Recipients != nil {
@@ -129,6 +130,33 @@ func (ds *alertDataSource) mapAlertToModel(ctx context.Context, alert *models.Al
 		emptyList1, d := types.ListValueFrom(ctx, types.StringType, []string{})
 		diags.Append(d...)
 		state.Recipients = emptyList1
+	}
+
+	// Map recipients_slack_channels
+	if alert.RecipientsSlackChannels != nil && len(*alert.RecipientsSlackChannels) > 0 {
+		channels := make([]datasource_alert.RecipientsSlackChannelsValue, len(*alert.RecipientsSlackChannels))
+		for i, ch := range *alert.RecipientsSlackChannels {
+			var d diag.Diagnostics
+			channels[i], d = datasource_alert.NewRecipientsSlackChannelsValue(
+				datasource_alert.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"customer_id": types.StringPointerValue(ch.CustomerId),
+					"id":          types.StringValue(ch.Id),
+					"name":        types.StringPointerValue(ch.Name),
+					"shared":      normalizeSlackChannelShared(ch.Shared),
+					"type":        types.StringPointerValue((*string)(ch.Type)),
+					"workspace":   normalizeSlackChannelWorkspace(ch.Workspace),
+				},
+			)
+			diags.Append(d...)
+		}
+		channelsList, d := types.ListValueFrom(ctx, datasource_alert.RecipientsSlackChannelsValue{}.Type(ctx), channels)
+		diags.Append(d...)
+		state.RecipientsSlackChannels = channelsList
+	} else {
+		emptyList, d := types.ListValueFrom(ctx, datasource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []datasource_alert.RecipientsSlackChannelsValue{})
+		diags.Append(d...)
+		state.RecipientsSlackChannels = emptyList
 	}
 
 	// Map config
@@ -179,12 +207,7 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 	}
 
 	// Map operator
-	var operator types.String
-	if config.Operator != nil {
-		operator = types.StringValue(string(*config.Operator))
-	} else {
-		operator = types.StringNull()
-	}
+	operator := types.StringValue(string(config.Operator))
 
 	// Map time_interval
 	timeInterval := types.StringValue(string(config.TimeInterval))
@@ -214,18 +237,35 @@ func (ds *alertDataSource) mapConfigToModel(ctx context.Context, config *models.
 		scopes = emptyScopes
 	}
 
+	// Map ignore_values_range
+	var ignoreValuesRange datasource_alert.IgnoreValuesRangeValue
+	if ivr := nullableToPointer(config.IgnoreValuesRange); ivr != nil {
+		var ivrDiags diag.Diagnostics
+		ignoreValuesRange, ivrDiags = datasource_alert.NewIgnoreValuesRangeValue(
+			datasource_alert.IgnoreValuesRangeValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"lower_bound": types.Float64Value(ivr.LowerBound),
+				"upper_bound": types.Float64Value(ivr.UpperBound),
+			},
+		)
+		diags.Append(ivrDiags...)
+	} else {
+		ignoreValuesRange = datasource_alert.NewIgnoreValuesRangeValueNull()
+	}
+
 	configVal, d := datasource_alert.NewConfigValue(
 		datasource_alert.ConfigValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"condition":         condition,
-			"currency":          currency,
-			"data_source":       dataSource,
-			"evaluate_for_each": evaluateForEach,
-			"metric":            metricVal,
-			"operator":          operator,
-			"scopes":            scopes,
-			"time_interval":     timeInterval,
-			"value":             value,
+			"condition":           condition,
+			"currency":            currency,
+			"data_source":         dataSource,
+			"evaluate_for_each":   evaluateForEach,
+			"ignore_values_range": ignoreValuesRange,
+			"metric":              metricVal,
+			"operator":            operator,
+			"scopes":              scopes,
+			"time_interval":       timeInterval,
+			"value":               value,
 		},
 	)
 	diags.Append(d...)

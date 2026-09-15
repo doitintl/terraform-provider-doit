@@ -104,7 +104,28 @@
 									"name": "evaluate_for_each",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
+										"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
+									}
+								},
+								{
+									"name": "ignore_values_range",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "lower_bound",
+												"float64": {
+													"computed_optional_required": "computed"
+												}
+											},
+											{
+												"name": "upper_bound",
+												"float64": {
+													"computed_optional_required": "computed"
+												}
+											}
+										],
+										"description": "Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound \u003c= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected."
 									}
 								},
 								{
@@ -196,7 +217,7 @@
 												}
 											]
 										},
-										"description": "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead."
+										"description": "All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer."
 									}
 								},
 								{
@@ -221,14 +242,14 @@
 						"name": "create_time",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "The time when the alert was created (in UNIX timestamp)."
+							"description": "The time when the alert was created (in Unix milliseconds)."
 						}
 					},
 					{
 						"name": "last_alerted",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Last time the alert was triggered (in UNIX timestamp)."
+							"description": "Last notification activity in Unix milliseconds. Slack advances this on the first provider acceptance for a detection, which does not confirm final delivery."
 						}
 					},
 					{
@@ -249,10 +270,60 @@
 						}
 					},
 					{
+						"name": "recipients_slack_channels",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "customer_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name, resolved server-side."
+										}
+									},
+									{
+										"name": "shared",
+										"bool": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Channel visibility, resolved server-side."
+										}
+									},
+									{
+										"name": "workspace",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Connected workspace name returned by discovery. Required for a non-shared channel."
+										}
+									}
+								]
+							},
+							"description": "Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels."
+						}
+					},
+					{
 						"name": "update_time",
 						"int64": {
 							"computed_optional_required": "computed",
-							"description": "Last time the alert was modified (in UNIX timestamp)."
+							"description": "Last time the alert was modified (in Unix milliseconds)."
 						}
 					}
 				],
@@ -366,7 +437,28 @@
 													"name": "evaluate_for_each",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
+														"description": "Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each \"Service\". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping."
+													}
+												},
+												{
+													"name": "ignore_values_range",
+													"single_nested": {
+														"computed_optional_required": "computed",
+														"attributes": [
+															{
+																"name": "lower_bound",
+																"float64": {
+																	"computed_optional_required": "computed"
+																}
+															},
+															{
+																"name": "upper_bound",
+																"float64": {
+																	"computed_optional_required": "computed"
+																}
+															}
+														],
+														"description": "Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound \u003c= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected."
 													}
 												},
 												{
@@ -458,7 +550,7 @@
 																}
 															]
 														},
-														"description": "The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead."
+														"description": "All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer."
 													}
 												},
 												{
@@ -483,7 +575,7 @@
 										"name": "create_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "The time when the alert was created (in UNIX timestamp)."
+											"description": "The time when the alert was created (in Unix milliseconds)."
 										}
 									},
 									{
@@ -497,7 +589,7 @@
 										"name": "last_alerted",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "Last time the alert was triggered (in UNIX timestamp)."
+											"description": "Last notification activity in Unix milliseconds. Slack advances this on the first provider acceptance for a detection, which does not confirm final delivery."
 										}
 									},
 									{
@@ -525,10 +617,60 @@
 										}
 									},
 									{
+										"name": "recipients_slack_channels",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "customer_id",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "id",
+														"string": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "name",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Display name, resolved server-side."
+														}
+													},
+													{
+														"name": "shared",
+														"bool": {
+															"computed_optional_required": "computed"
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Channel visibility, resolved server-side."
+														}
+													},
+													{
+														"name": "workspace",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Connected workspace name returned by discovery. Required for a non-shared channel."
+														}
+													}
+												]
+											},
+											"description": "Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels."
+										}
+									},
+									{
 										"name": "update_time",
 										"int64": {
 											"computed_optional_required": "computed",
-											"description": "Last time the alert was modified (in UNIX timestamp)."
+											"description": "Last time the alert was modified (in Unix milliseconds)."
 										}
 									}
 								]

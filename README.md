@@ -84,49 +84,49 @@ provider "doit" {
 <details>
 <summary><strong>FinOps</strong> — budgets, allocations, alerts, reports</summary>
 
-| Data Source                            | Description                         |
-| -------------------------------------- | ----------------------------------- |
-| `doit_alert` / `doit_alerts`           | Get or list cost/usage alerts       |
-| `doit_allocation` / `doit_allocations` | Get or list allocation rules        |
-| `doit_budget` / `doit_budgets`         | Get or list budgets                 |
-| `doit_budget_suggestions`               | List AI-generated budget suggestions |
-| `doit_dimension` / `doit_dimensions`   | Get or list report dimensions       |
-| `doit_folder` / `doit_folders`         | Get or list Cloud Analytics folders |
-| `doit_report` / `doit_reports`         | Get or list Cloud Analytics reports |
-| `doit_report_query`                    | Run ad-hoc Cloud Analytics queries  |
-| `doit_report_result`                   | Get results from an existing report |
+| Data Source                            | Description                          |
+| -------------------------------------- | ------------------------------------ |
+| `doit_alert` / `doit_alerts`           | Get or list cost/usage alerts        |
+| `doit_allocation` / `doit_allocations` | Get or list allocation rules         |
+| `doit_budget` / `doit_budgets`         | Get or list budgets                  |
+| `doit_budget_suggestions`              | List AI-generated budget suggestions |
+| `doit_dimension` / `doit_dimensions`   | Get or list report dimensions        |
+| `doit_folder` / `doit_folders`         | Get or list Cloud Analytics folders  |
+| `doit_report` / `doit_reports`         | Get or list Cloud Analytics reports  |
+| `doit_report_query`                    | Run ad-hoc Cloud Analytics queries   |
+| `doit_report_result`                   | Get results from an existing report  |
 
 </details>
 
 <details>
 <summary><strong>Operations</strong> — anomalies, incidents, commitments, assets, invoices</summary>
 
-| Data Source                                      | Description                          |
-| ------------------------------------------------ | ------------------------------------ |
-| `doit_anomaly` / `doit_anomalies`                | Get or list cost anomalies           |
-| `doit_anomaly_explanation`                       | Explain a cost anomaly                |
-| `doit_billing_explainer`                         | Get an invoice cost breakdown         |
-| `doit_cloud_diagrams`                            | Search cloud infrastructure diagrams |
-| `doit_cloud_diagrams_activity_groups`            | List activity groups for a diagram   |
-| `doit_cloud_diagrams_cost_snapshot`              | Get a diagram cost snapshot          |
-| `doit_cloud_diagrams_export`                     | Export a cloud diagram               |
-| `doit_cloud_diagrams_node_activities`            | List node activities for a diagram   |
-| `doit_cloud_diagrams_relationships`              | List relationships for a diagram     |
-| `doit_cloud_diagrams_schemes`                    | List available diagram color schemes |
-| `doit_cloud_diagrams_search`                     | Search within a cloud diagram        |
-| `doit_cloud_diagrams_snapshot`                   | Get a single diagram snapshot        |
-| `doit_cloud_diagrams_snapshots`                  | List diagram snapshots               |
-| `doit_cloud_diagrams_stats`                      | Get diagram statistics               |
-| `doit_cloud_diagrams_statussheet`                | Get diagram status sheet             |
-| `doit_cloudconnect_supported_features`           | Read AWS CloudConnect feature permissions |
-| `doit_cloud_incident` / `doit_cloud_incidents`   | Get or list cloud provider incidents |
-| `doit_commitment` / `doit_commitments`           | Get or list commitments              |
-| `doit_asset` / `doit_assets`                     | Get or list cloud assets             |
-| `doit_invoice` / `doit_invoices`                 | Get or list invoices                 |
-| `doit_ps4c_aws_organization` / `doit_ps4c_aws_organizations` | Get or list PS4C AWS organizations |
-| `doit_service_quotas`                            | List cloud service quota usage       |
-| `doit_support_request` / `doit_support_requests` | Get or list support requests         |
-| `doit_support_request_comments`                  | List comments on a support request   |
+| Data Source                                                  | Description                               |
+| ------------------------------------------------------------ | ----------------------------------------- |
+| `doit_anomaly` / `doit_anomalies`                            | Get or list cost anomalies                |
+| `doit_anomaly_explanation`                                   | Explain a cost anomaly                    |
+| `doit_billing_explainer`                                     | Get an invoice cost breakdown             |
+| `doit_cloud_diagrams`                                        | Search cloud infrastructure diagrams      |
+| `doit_cloud_diagrams_activity_groups`                        | List activity groups for a diagram        |
+| `doit_cloud_diagrams_cost_snapshot`                          | Get a diagram cost snapshot               |
+| `doit_cloud_diagrams_export`                                 | Export a cloud diagram                    |
+| `doit_cloud_diagrams_node_activities`                        | List node activities for a diagram        |
+| `doit_cloud_diagrams_relationships`                          | List relationships for a diagram          |
+| `doit_cloud_diagrams_schemes`                                | List available diagram color schemes      |
+| `doit_cloud_diagrams_search`                                 | Search within a cloud diagram             |
+| `doit_cloud_diagrams_snapshot`                               | Get a single diagram snapshot             |
+| `doit_cloud_diagrams_snapshots`                              | List diagram snapshots                    |
+| `doit_cloud_diagrams_stats`                                  | Get diagram statistics                    |
+| `doit_cloud_diagrams_statussheet`                            | Get diagram status sheet                  |
+| `doit_cloudconnect_supported_features`                       | Read AWS CloudConnect feature permissions |
+| `doit_cloud_incident` / `doit_cloud_incidents`               | Get or list cloud provider incidents      |
+| `doit_commitment` / `doit_commitments`                       | Get or list commitments                   |
+| `doit_asset` / `doit_assets`                                 | Get or list cloud assets                  |
+| `doit_invoice` / `doit_invoices`                             | Get or list invoices                      |
+| `doit_ps4c_aws_organization` / `doit_ps4c_aws_organizations` | Get or list PS4C AWS organizations        |
+| `doit_service_quotas`                                        | List cloud service quota usage            |
+| `doit_support_request` / `doit_support_requests`             | Get or list support requests              |
+| `doit_support_request_comments`                              | List comments on a support request        |
 
 </details>
 
@@ -231,6 +231,7 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | -------------------------------------- | ------------------------------------------------------------ |
 | `TEST_SLACK_CHAN`                      | Slack channel ID for notification tests                      |
 | `TEST_SLACK_WORKSPACE`                 | Slack workspace for notification tests                       |
+| `TEST_SLACK_WORKSPACE_CHAN`            | Slack workspace channel ID for notification tests            |
 | `TEST_ATTRIBUTION_GROUP`               | Attribution group ID for report tests                        |
 | `TEST_INVOICE_ID`                      | Invoice ID for invoice data source tests                     |
 | `TEST_ANOMALY_ID`                      | Anomaly ID for anomaly data source tests                     |

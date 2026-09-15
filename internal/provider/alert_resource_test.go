@@ -280,6 +280,97 @@ func TestAccAlert_PercentageChange(t *testing.T) {
 	})
 }
 
+// TestAccAlert_IgnoreValuesRange tests creating, updating, and clearing ignore_values_range.
+func TestAccAlert_IgnoreValuesRange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create percentage-change alert with ignore_values_range
+			{
+				Config: testAccAlertIgnoreValuesRange(n, -10.5, 10.5),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("condition"),
+						knownvalue.StringExact("percentage-change")),
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("lower_bound"),
+						knownvalue.Float64Exact(-10.5)),
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("upper_bound"),
+						knownvalue.Float64Exact(10.5)),
+				},
+			},
+			// Step 2: Update ignore_values_range
+			{
+				Config: testAccAlertIgnoreValuesRange(n, -25.0, 25.0),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("lower_bound"),
+						knownvalue.Float64Exact(-25.0)),
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range").AtMapKey("upper_bound"),
+						knownvalue.Float64Exact(25.0)),
+				},
+			},
+			// Step 3: Clear ignore_values_range by omitting it
+			{
+				Config: testAccAlertPercentageChange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("config").AtMapKey("ignore_values_range"),
+						knownvalue.Null()),
+				},
+			},
+			// Step 4: Drift check — re-apply cleared config, expect empty plan
+			{
+				Config: testAccAlertPercentageChange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestAccAlert_DifferentOperators tests various operator values.
 func TestAccAlert_DifferentOperators(t *testing.T) {
 	n := acctest.RandInt()
@@ -576,6 +667,29 @@ resource "doit_alert" "this" {
   }
 }
 `, i)
+}
+
+func testAccAlertIgnoreValuesRange(i int, lower, upper float64) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-pct-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 50
+    currency      = "USD"
+    condition     = "percentage-change"
+    operator      = "gt"
+    ignore_values_range = {
+      lower_bound = %f
+      upper_bound = %f
+    }
+  }
+}
+`, i, lower, upper)
 }
 
 func testAccAlertWithOperator(i int, operator string) string {
@@ -1409,8 +1523,9 @@ resource "doit_alert" "this" {
 }
 
 // TestAccAlert_MinimalConfig tests creating an alert with only the absolute
-// minimum required fields, omitting all Optional+Computed config scalars
-// (condition, currency, operator, time_interval, evaluate_for_each, data_source).
+// minimum required fields (name, config.metric, config.time_interval,
+// config.value, config.operator), omitting all Optional+Computed config scalars
+// (condition, currency, evaluate_for_each, data_source).
 // This exercises the overlay code's handling of Unknown values for every
 // Optional+Computed field in the config object.
 func TestAccAlert_MinimalConfig(t *testing.T) {
@@ -1429,7 +1544,6 @@ func TestAccAlert_MinimalConfig(t *testing.T) {
 						"doit_alert.this",
 						tfjsonpath.New("name"),
 						knownvalue.StringExact(fmt.Sprintf("test-alert-minimal-%d", n))),
-					// time_interval defaults to "year" via schema default
 					statecheck.ExpectKnownValue(
 						"doit_alert.this",
 						tfjsonpath.New("config").AtMapKey("time_interval"),
@@ -1463,8 +1577,9 @@ resource "doit_alert" "this" {
       type  = "basic"
       value = "cost"
     }
-    value    = 500
-    operator = "gt"
+    time_interval = "year"
+    value         = 500
+    operator      = "gt"
   }
 }
 `, i)
@@ -1638,4 +1753,360 @@ resource "doit_alert" "legacy" {
   }
 }
 `, name, testUser(), value, testAttribution())
+}
+
+func TestAccAlert_SlackChannelsLifecycle(t *testing.T) {
+	if testSlackChannel() == "" {
+		t.Skip("TEST_SLACK_CHAN is not set, skipping Slack channel test")
+	}
+	if testSlackWorkspace() == "" {
+		t.Skip("TEST_SLACK_WORKSPACE is not set, skipping Slack channel test")
+	}
+
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create alert with email recipients and slack channel
+			{
+				Config: testAccAlertWithSlack(n, testUser(), testSlackChannel()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"id":     knownvalue.StringExact(testSlackChannel()),
+								"shared": knownvalue.Bool(true),
+							}),
+						})),
+				},
+			},
+			// Step 2: Drift check (should be empty plan)
+			{
+				Config: testAccAlertWithSlack(n, testUser(), testSlackChannel()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear slack channels by omitting recipients_slack_channels
+			{
+				Config: testAccAlertClearedSlack(n, testUser()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			// Step 4: Drift check after clearing
+			{
+				Config: testAccAlertClearedSlack(n, testUser()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertWithSlack(i int, email, channelID string) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name       = "test-alert-slack-%d"
+  recipients = ["%s"]
+  recipients_slack_channels = [
+    {
+      id     = "%s"
+      shared = true
+    }
+  ]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, i, email, channelID)
+}
+
+func testAccAlertClearedSlack(i int, email string) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name       = "test-alert-slack-%d"
+  recipients = ["%s"]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, i, email)
+}
+
+func TestAccAlert_CreateOmittedRecipientsExplicitEmptySlack(t *testing.T) {
+	n := acctest.RandInt()
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name                      = "test-alert-slack-default-owner-%d"
+  recipients_slack_channels = []
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{}),
+					),
+					// API defaults recipients to the creator/owner email
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients"),
+						knownvalue.ListSizeExact(1),
+					),
+				},
+			},
+		},
+	})
+}
+
+func TestAccAlert_SlackOnlyAlert_RemoveBothDestinations(t *testing.T) {
+	channelID := testSlackChannel()
+	if channelID == "" {
+		t.Skip("skipping test; no Slack channel configured")
+	}
+
+	n := acctest.RandInt()
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create a Slack-only alert
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name       = "test-alert-slack-only-%d"
+  recipients = []
+  recipients_slack_channels = [
+    {
+      id     = "%s"
+      shared = true
+    }
+  ]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, n, channelID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+					},
+				},
+			},
+			// Step 2: Remove both destinations from config
+			{
+				Config: fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name = "test-alert-slack-only-%d"
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, n),
+				ExpectError: regexp.MustCompile("At least one email recipient or Slack channel destination must remain"),
+			},
+		},
+	})
+}
+
+func TestAccAlert_SlackWorkspaceToSharedTransition(t *testing.T) {
+	if testSlackWorkspaceChannel() == "" {
+		t.Skip("TEST_SLACK_WORKSPACE_CHAN is not set, skipping Slack workspace channel test")
+	}
+	if testSlackWorkspace() == "" {
+		t.Skip("TEST_SLACK_WORKSPACE is not set, skipping Slack workspace channel test")
+	}
+	if testSlackChannel() == "" {
+		t.Skip("TEST_SLACK_CHAN is not set, skipping Slack channel test")
+	}
+
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create alert with workspace slack channel
+			{
+				Config: testAccAlertWithWorkspaceSlack(n, testUser(), testSlackWorkspaceChannel(), testSlackWorkspace()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"id":        knownvalue.StringExact(testSlackWorkspaceChannel()),
+								"workspace": knownvalue.StringExact(testSlackWorkspace()),
+								"shared":    knownvalue.Bool(false),
+							}),
+						})),
+				},
+			},
+			// Step 2: Drift check for workspace slack channel
+			{
+				Config: testAccAlertWithWorkspaceSlack(n, testUser(), testSlackWorkspaceChannel(), testSlackWorkspace()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Transition to shared channel (omitting workspace)
+			{
+				Config: testAccAlertWithSlack(n, testUser(), testSlackChannel()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_alert.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_alert.this",
+						tfjsonpath.New("recipients_slack_channels"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"id":     knownvalue.StringExact(testSlackChannel()),
+								"shared": knownvalue.Bool(true),
+							}),
+						})),
+				},
+			},
+			// Step 4: Drift check after transition to shared channel
+			{
+				Config: testAccAlertWithSlack(n, testUser(), testSlackChannel()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAlertWithWorkspaceSlack(i int, email, channelID, workspace string) string {
+	return fmt.Sprintf(`
+resource "doit_alert" "this" {
+  name       = "test-alert-slack-ws-%d"
+  recipients = ["%s"]
+  recipients_slack_channels = [
+    {
+      id        = "%s"
+      workspace = "%s"
+    }
+  ]
+  config = {
+    metric = {
+      type  = "basic"
+      value = "cost"
+    }
+    time_interval = "month"
+    value         = 1000
+    currency      = "USD"
+    condition     = "value"
+    operator      = "gt"
+  }
+}
+`, i, email, channelID, workspace)
 }

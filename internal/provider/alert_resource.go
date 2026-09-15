@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure the implementation satisfies expected interfaces.
@@ -20,6 +21,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*alertResource)(nil)
 	_ resource.ResourceWithImportState      = (*alertResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*alertResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*alertResource)(nil)
 )
 
 type (
@@ -81,12 +83,16 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
 	// Category B: API-computed defaults — not clearable.
 	acknowledgeNotClearable(s,
-		"recipients",               // API defaults to creator's email
-		"config.currency",          // API defaults to org currency
-		"config.operator",          // API defaults comparison operator
-		"config.evaluate_for_each", // API defaults to false
-		"config.scopes[*].inverse", // API defaults to false
-		"config.scopes[*].values",  // API defaults scope values
+		"recipients",                               // API defaults to creator's email
+		"config.currency",                          // API defaults to org currency
+		"config.evaluate_for_each",                 // API defaults to false
+		"config.scopes[*].inverse",                 // API defaults to false
+		"config.scopes[*].values",                  // API defaults scope values
+		"recipients_slack_channels[*].customer_id", // API-resolved customer ID
+		"recipients_slack_channels[*].name",        // API-resolved channel display name
+		"recipients_slack_channels[*].shared",      // API-populated
+		"recipients_slack_channels[*].type",        // API-resolved channel visibility
+		"recipients_slack_channels[*].workspace",   // API-populated
 	)
 
 	// Category A: nested clearable attributes.
@@ -98,7 +104,16 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 			}
 			configAttr.Attributes["scopes"] = scopesAttr
 		}
+		if ivrAttr, ok := configAttr.Attributes["ignore_values_range"].(schema.SingleNestedAttribute); ok {
+			ivrAttr.PlanModifiers = append(ivrAttr.PlanModifiers, useNullForIgnoreValuesRange())
+			configAttr.Attributes["ignore_values_range"] = ivrAttr
+		}
 		s.Attributes["config"] = configAttr
+	}
+
+	if attr, ok := s.Attributes["recipients_slack_channels"].(schema.ListNestedAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+		s.Attributes["recipients_slack_channels"] = attr
 	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
@@ -113,10 +128,62 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 
 func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
-		alertRecipientsValidator{},
+		alertIgnoreValuesRangeValidator{},
+		alertSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		alertScopeNAValidator{},
 	}
+}
+
+// ModifyPlan validates destination invariants across create and update semantics.
+func (r *alertResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.Type() == nil || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	validateAlertDestinationsPlan(ctx, req, resp)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	modifyAlertSlackWorkspacePlan(ctx, req, resp)
+}
+
+// modifyAlertSlackWorkspacePlan ensures that when a channel has shared = true,
+// workspace is planned as null (clearing any prior workspace value retained by
+// Optional+Computed planning, or preventing unknown on create).
+func modifyAlertSlackWorkspacePlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var slackList types.List
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("recipients_slack_channels"), &slackList)...)
+	if resp.Diagnostics.HasError() || slackList.IsNull() || slackList.IsUnknown() {
+		return
+	}
+
+	var channels []resource_alert.RecipientsSlackChannelsValue
+	resp.Diagnostics.Append(slackList.ElementsAs(ctx, &channels, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	modified := false
+	for i := range channels {
+		if channels[i].Shared.ValueBool() && !channels[i].Workspace.IsNull() {
+			channels[i].Workspace = types.StringNull()
+			modified = true
+		}
+	}
+
+	if !modified {
+		return
+	}
+
+	newList, listDiags := types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), channels)
+	resp.Diagnostics.Append(listDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("recipients_slack_channels"), newList)...)
 }
 
 func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

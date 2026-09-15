@@ -53,6 +53,13 @@ func overlayAlertComputedFields(ctx context.Context, apiResp *models.Alert, plan
 		plan.Recipients = resolved.Recipients
 	}
 
+	// ── RecipientsSlackChannels: Optional+Computed list ──
+	if plan.RecipientsSlackChannels.IsUnknown() {
+		plan.RecipientsSlackChannels = resolved.RecipientsSlackChannels
+	} else if !plan.RecipientsSlackChannels.IsNull() {
+		diags.Append(overlayListElements(ctx, &resolved.RecipientsSlackChannels, &plan.RecipientsSlackChannels, overlayAlertSlackChannel)...)
+	}
+
 	// ── Config: Required nested object — overlay subfields individually ──
 	if plan.Config.IsUnknown() {
 		plan.Config = resolved.Config
@@ -75,8 +82,10 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 	if plan.EvaluateForEach.IsUnknown() {
 		plan.EvaluateForEach = resolved.EvaluateForEach
 	}
-	if plan.Operator.IsUnknown() {
-		plan.Operator = resolved.Operator
+
+	// ── IgnoreValuesRange: Optional+Computed single-nested object ──
+	if plan.IgnoreValuesRange.IsUnknown() {
+		plan.IgnoreValuesRange = resolved.IgnoreValuesRange
 	}
 
 	// ── Metric: Required nested — subfields are both Required, never Unknown ──
@@ -95,6 +104,22 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 	}
 
 	return diags
+}
+
+// overlayAlertSlackChannel resolves Unknown subfields in alert Slack channel elements.
+func overlayAlertSlackChannel(_ context.Context, resolved, plan *resource_alert.RecipientsSlackChannelsValue) diag.Diagnostics {
+	plan.Name = resolved.Name
+	plan.RecipientsSlackChannelsType = resolved.RecipientsSlackChannelsType
+
+	if plan.CustomerId.IsUnknown() {
+		plan.CustomerId = resolved.CustomerId
+	}
+	if plan.Shared.ValueBool() {
+		plan.Workspace = types.StringNull()
+	} else if plan.Workspace.IsUnknown() {
+		plan.Workspace = resolved.Workspace
+	}
+	return nil
 }
 
 // overlayAlertScope resolves Unknown subfields in alert scope elements.
@@ -129,6 +154,25 @@ func (plan *alertResourceModel) toAlertRequest(ctx context.Context) (req models.
 		req.Recipients = &recipients
 	}
 
+	// Convert recipients_slack_channels
+	if !plan.RecipientsSlackChannels.IsNull() && !plan.RecipientsSlackChannels.IsUnknown() {
+		var channels []resource_alert.RecipientsSlackChannelsValue
+		diags.Append(plan.RecipientsSlackChannels.ElementsAs(ctx, &channels, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
+		apiChannels := make([]models.AlertSlackChannelRequest, len(channels))
+		for i, ch := range channels {
+			apiChannels[i] = models.AlertSlackChannelRequest{
+				CustomerId: ch.CustomerId.ValueStringPointer(),
+				Id:         ch.Id.ValueString(),
+				Shared:     ch.Shared.ValueBoolPointer(),
+				Workspace:  ch.Workspace.ValueStringPointer(),
+			}
+		}
+		req.RecipientsSlackChannels = &apiChannels
+	}
+
 	// Convert config
 	req.Config, diags = plan.toAlertConfig(ctx)
 
@@ -141,7 +185,10 @@ func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req m
 	req.Name = new(plan.Name.ValueString())
 
 	// Convert recipients
-	if !plan.Recipients.IsNull() && !plan.Recipients.IsUnknown() {
+	if plan.Recipients.IsNull() || (!plan.Recipients.IsUnknown() && len(plan.Recipients.Elements()) == 0) {
+		emptyRecipients := []string{}
+		req.Recipients = &emptyRecipients
+	} else if !plan.Recipients.IsUnknown() {
 		var recipients []string
 		diags.Append(plan.Recipients.ElementsAs(ctx, &recipients, false)...)
 		if diags.HasError() {
@@ -150,8 +197,30 @@ func (plan *alertResourceModel) toAlertUpdateRequest(ctx context.Context) (req m
 		req.Recipients = &recipients
 	}
 
+	// Convert recipients_slack_channels
+	if plan.RecipientsSlackChannels.IsNull() || (!plan.RecipientsSlackChannels.IsUnknown() && len(plan.RecipientsSlackChannels.Elements()) == 0) {
+		emptyChannels := []models.AlertSlackChannelRequest{}
+		req.RecipientsSlackChannels = &emptyChannels
+	} else if !plan.RecipientsSlackChannels.IsUnknown() {
+		var channels []resource_alert.RecipientsSlackChannelsValue
+		diags.Append(plan.RecipientsSlackChannels.ElementsAs(ctx, &channels, false)...)
+		if diags.HasError() {
+			return req, diags
+		}
+		apiChannels := make([]models.AlertSlackChannelRequest, len(channels))
+		for i, ch := range channels {
+			apiChannels[i] = models.AlertSlackChannelRequest{
+				CustomerId: ch.CustomerId.ValueStringPointer(),
+				Id:         ch.Id.ValueString(),
+				Shared:     ch.Shared.ValueBoolPointer(),
+				Workspace:  ch.Workspace.ValueStringPointer(),
+			}
+		}
+		req.RecipientsSlackChannels = &apiChannels
+	}
+
 	// Convert config
-	req.Config, diags = plan.toAlertConfig(ctx)
+	req.Config, diags = plan.toAlertConfigUpdate(ctx)
 
 	return req, diags
 }
@@ -169,6 +238,7 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 	// Required fields
 	config.Value = configVal.Value.ValueFloat64()
 	config.TimeInterval = models.AlertConfigTimeInterval(configVal.TimeInterval.ValueString())
+	config.Operator = models.MetricFilterText(configVal.Operator.ValueString())
 
 	// Metric (required nested object)
 	if !configVal.Metric.IsNull() {
@@ -196,8 +266,11 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 		config.EvaluateForEach = new(configVal.EvaluateForEach.ValueString())
 	}
 
-	if !configVal.Operator.IsNull() && !configVal.Operator.IsUnknown() {
-		config.Operator = new(models.MetricFilterText(configVal.Operator.ValueString()))
+	if !configVal.IgnoreValuesRange.IsNull() && !configVal.IgnoreValuesRange.IsUnknown() {
+		config.IgnoreValuesRange.Set(models.AlertIgnoreValuesRange{
+			LowerBound: configVal.IgnoreValuesRange.LowerBound.ValueFloat64(),
+			UpperBound: configVal.IgnoreValuesRange.UpperBound.ValueFloat64(),
+		})
 	}
 
 	// Scopes
@@ -235,6 +308,88 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 	}
 
 	return config, diags
+}
+
+// toAlertConfigUpdate converts the Terraform config object to the API AlertConfigUpdate.
+func (plan *alertResourceModel) toAlertConfigUpdate(ctx context.Context) (config *models.AlertConfigUpdate, diags diag.Diagnostics) {
+	if plan.Config.IsNull() {
+		return nil, diags
+	}
+
+	configVal := plan.Config
+	cfg := &models.AlertConfigUpdate{}
+
+	if !configVal.Value.IsNull() {
+		cfg.Value = new(configVal.Value.ValueFloat64())
+	}
+	if !configVal.TimeInterval.IsNull() {
+		cfg.TimeInterval = (*models.AlertConfigUpdateTimeInterval)(configVal.TimeInterval.ValueStringPointer())
+	}
+	if !configVal.Metric.IsNull() {
+		cfg.Metric = &models.MetricConfig{
+			Type:  configVal.Metric.MetricType.ValueString(),
+			Value: configVal.Metric.Value.ValueString(),
+		}
+	}
+	if !configVal.Condition.IsNull() {
+		cfg.Condition = (*models.AlertConfigUpdateCondition)(configVal.Condition.ValueStringPointer())
+	}
+	if !configVal.Currency.IsNull() && !configVal.Currency.IsUnknown() {
+		cfg.Currency = (*models.Currency)(configVal.Currency.ValueStringPointer())
+	}
+	if !configVal.DataSource.IsNull() {
+		cfg.DataSource = (*models.AlertConfigUpdateDataSource)(configVal.DataSource.ValueStringPointer())
+	}
+	if !configVal.EvaluateForEach.IsNull() && !configVal.EvaluateForEach.IsUnknown() {
+		cfg.EvaluateForEach = configVal.EvaluateForEach.ValueStringPointer()
+	}
+	if !configVal.Operator.IsNull() {
+		cfg.Operator = (*models.MetricFilterText)(configVal.Operator.ValueStringPointer())
+	}
+	if configVal.IgnoreValuesRange.IsNull() {
+		cfg.IgnoreValuesRange.SetNull()
+	} else if !configVal.IgnoreValuesRange.IsUnknown() {
+		cfg.IgnoreValuesRange.Set(models.AlertIgnoreValuesRange{
+			LowerBound: configVal.IgnoreValuesRange.LowerBound.ValueFloat64(),
+			UpperBound: configVal.IgnoreValuesRange.UpperBound.ValueFloat64(),
+		})
+	}
+
+	// Scopes
+	if !configVal.Scopes.IsNull() && !configVal.Scopes.IsUnknown() {
+		var scopes []resource_alert.ScopesValue
+		diags.Append(configVal.Scopes.ElementsAs(ctx, &scopes, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		apiScopes := make([]models.ExternalConfigFilter, len(scopes))
+		for i, scope := range scopes {
+			filterType := models.DimensionsTypes(scope.ScopesType.ValueString())
+
+			apiScopes[i] = models.ExternalConfigFilter{
+				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
+				Id:              scope.Id.ValueString(),
+				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
+				Inverse:         scope.Inverse.ValueBoolPointer(),
+				Type:            filterType,
+			}
+			if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
+				apiScopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
+			}
+			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
+				var values []string
+				diags.Append(scope.Values.ElementsAs(ctx, &values, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				apiScopes[i].Values = &values
+			}
+		}
+		cfg.Scopes = &apiScopes
+	}
+
+	return cfg, diags
 }
 
 // populateState fetches the alert from the API and populates the state.
@@ -282,7 +437,7 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 	state.Name = types.StringValue(resp.Name)
 	state.CreateTime = types.Int64PointerValue(resp.CreateTime)
 	state.UpdateTime = types.Int64PointerValue(resp.UpdateTime)
-	state.LastAlerted = types.Int64PointerValue(resp.LastAlerted)
+	state.LastAlerted = types.Int64PointerValue(nullableToPointer(resp.LastAlerted))
 
 	// Convert recipients list
 	if resp.Recipients != nil {
@@ -293,6 +448,33 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 		// Use empty list instead of null to match user config if they set recipients = []
 		var listDiags diag.Diagnostics
 		state.Recipients, listDiags = types.ListValue(types.StringType, []attr.Value{})
+		diags.Append(listDiags...)
+	}
+
+	// Convert recipients_slack_channels list
+	if resp.RecipientsSlackChannels != nil && len(*resp.RecipientsSlackChannels) > 0 {
+		channels := make([]resource_alert.RecipientsSlackChannelsValue, len(*resp.RecipientsSlackChannels))
+		for i, ch := range *resp.RecipientsSlackChannels {
+			var d diag.Diagnostics
+			channels[i], d = resource_alert.NewRecipientsSlackChannelsValue(
+				resource_alert.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"customer_id": types.StringPointerValue(ch.CustomerId),
+					"id":          types.StringValue(ch.Id),
+					"name":        types.StringPointerValue(ch.Name),
+					"shared":      normalizeSlackChannelShared(ch.Shared),
+					"type":        types.StringPointerValue((*string)(ch.Type)),
+					"workspace":   normalizeSlackChannelWorkspace(ch.Workspace),
+				},
+			)
+			diags.Append(d...)
+		}
+		var listDiags diag.Diagnostics
+		state.RecipientsSlackChannels, listDiags = types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), channels)
+		diags.Append(listDiags...)
+	} else {
+		var listDiags diag.Diagnostics
+		state.RecipientsSlackChannels, listDiags = types.ListValueFrom(ctx, resource_alert.RecipientsSlackChannelsValue{}.Type(ctx), []resource_alert.RecipientsSlackChannelsValue{})
 		diags.Append(listDiags...)
 	}
 
@@ -426,21 +608,55 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 	metricVal, d := resource_alert.NewMetricValue(resource_alert.MetricValue{}.AttributeTypes(ctx), metricAttrs)
 	diags.Append(d...)
 
+	var ignoreValuesRangeVal resource_alert.IgnoreValuesRangeValue
+	if ivr := nullableToPointer(config.IgnoreValuesRange); ivr != nil {
+		var ivrDiags diag.Diagnostics
+		ignoreValuesRangeVal, ivrDiags = resource_alert.NewIgnoreValuesRangeValue(
+			resource_alert.IgnoreValuesRangeValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"lower_bound": types.Float64Value(ivr.LowerBound),
+				"upper_bound": types.Float64Value(ivr.UpperBound),
+			},
+		)
+		diags.Append(ivrDiags...)
+	} else {
+		ignoreValuesRangeVal = resource_alert.NewIgnoreValuesRangeValueNull()
+	}
+
 	// Build config value
 	configAttrs := map[string]attr.Value{
-		"condition":         types.StringPointerValue((*string)(config.Condition)),
-		"currency":          types.StringPointerValue((*string)(config.Currency)),
-		"data_source":       types.StringPointerValue((*string)(config.DataSource)),
-		"evaluate_for_each": types.StringPointerValue(config.EvaluateForEach),
-		"metric":            metricVal,
-		"operator":          types.StringPointerValue((*string)(config.Operator)),
-		"scopes":            scopesVal,
-		"time_interval":     types.StringValue(string(config.TimeInterval)),
-		"value":             types.Float64Value(config.Value),
+		"condition":           types.StringPointerValue((*string)(config.Condition)),
+		"currency":            types.StringPointerValue((*string)(config.Currency)),
+		"data_source":         types.StringPointerValue((*string)(config.DataSource)),
+		"evaluate_for_each":   types.StringPointerValue(config.EvaluateForEach),
+		"ignore_values_range": ignoreValuesRangeVal,
+		"metric":              metricVal,
+		"operator":            types.StringValue(string(config.Operator)),
+		"scopes":              scopesVal,
+		"time_interval":       types.StringValue(string(config.TimeInterval)),
+		"value":               types.Float64Value(config.Value),
 	}
 
 	configVal, d := resource_alert.NewConfigValue(resource_alert.ConfigValue{}.AttributeTypes(ctx), configAttrs)
 	diags.Append(d...)
 
 	return configVal, diags
+}
+
+// normalizeSlackChannelShared normalizes the API's Slack channel shared pointer to a types.Bool.
+// The API omits shared (nil) for workspace channels, which normalizes to false to match schema semantics.
+func normalizeSlackChannelShared(shared *bool) types.Bool {
+	if shared != nil {
+		return types.BoolValue(*shared)
+	}
+	return types.BoolValue(false)
+}
+
+// normalizeSlackChannelWorkspace normalizes the API's Slack channel workspace pointer to a types.String.
+// The API returns an empty string ("") for shared channels, which normalizes to null to match schema semantics.
+func normalizeSlackChannelWorkspace(workspace *string) types.String {
+	if workspace != nil && *workspace != "" {
+		return types.StringValue(*workspace)
+	}
+	return types.StringNull()
 }
