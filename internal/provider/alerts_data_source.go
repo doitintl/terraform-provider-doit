@@ -201,32 +201,7 @@ func (d *alertsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 			}
 
 			// Map recipients_slack_channels
-			var slackChannelsList types.List
-			if alert.RecipientsSlackChannels != nil && len(*alert.RecipientsSlackChannels) > 0 {
-				channels := make([]datasource_alerts.RecipientsSlackChannelsValue, len(*alert.RecipientsSlackChannels))
-				for i, ch := range *alert.RecipientsSlackChannels {
-					var d diag.Diagnostics
-					channels[i], d = datasource_alerts.NewRecipientsSlackChannelsValue(
-						datasource_alerts.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
-						map[string]attr.Value{
-							"customer_id": types.StringPointerValue(ch.CustomerId),
-							"id":          types.StringValue(ch.Id),
-							"name":        types.StringPointerValue(ch.Name),
-							"shared":      types.BoolPointerValue(ch.Shared),
-							"type":        types.StringPointerValue((*string)(ch.Type)),
-							"workspace":   types.StringPointerValue(ch.Workspace),
-						},
-					)
-					resp.Diagnostics.Append(d...)
-				}
-				var d diag.Diagnostics
-				slackChannelsList, d = types.ListValueFrom(ctx, datasource_alerts.RecipientsSlackChannelsValue{}.Type(ctx), channels)
-				resp.Diagnostics.Append(d...)
-			} else {
-				emptyList, d := types.ListValueFrom(ctx, datasource_alerts.RecipientsSlackChannelsValue{}.Type(ctx), []datasource_alerts.RecipientsSlackChannelsValue{})
-				resp.Diagnostics.Append(d...)
-				slackChannelsList = emptyList
-			}
+			slackChannelsList := mapAlertsSlackChannels(ctx, alert.RecipientsSlackChannels, &resp.Diagnostics)
 
 			alertVal, diags := datasource_alerts.NewAlertsValue(
 				datasource_alerts.AlertsValue{}.AttributeTypes(ctx),
@@ -379,4 +354,32 @@ func mapAlertScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter, 
 	list, diags := types.ListValueFrom(ctx, datasource_alerts.ScopesValue{}.Type(ctx), vals)
 	diagnostics.Append(diags...)
 	return list
+}
+
+func mapAlertsSlackChannels(ctx context.Context, apiChannels *[]models.AlertSlackChannel, diags *diag.Diagnostics) types.List {
+	if apiChannels != nil && len(*apiChannels) > 0 {
+		channels := make([]datasource_alerts.RecipientsSlackChannelsValue, len(*apiChannels))
+		for i, ch := range *apiChannels {
+			var d diag.Diagnostics
+			channels[i], d = datasource_alerts.NewRecipientsSlackChannelsValue(
+				datasource_alerts.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{
+					"customer_id": types.StringPointerValue(ch.CustomerId),
+					"id":          types.StringValue(ch.Id),
+					"name":        types.StringPointerValue(ch.Name),
+					"shared":      normalizeSlackChannelShared(ch.Shared),
+					"type":        types.StringPointerValue((*string)(ch.Type)),
+					"workspace":   normalizeSlackChannelWorkspace(ch.Workspace),
+				},
+			)
+			diags.Append(d...)
+		}
+		slackChannelsList, d := types.ListValueFrom(ctx, datasource_alerts.RecipientsSlackChannelsValue{}.Type(ctx), channels)
+		diags.Append(d...)
+		return slackChannelsList
+	}
+
+	emptyList, d := types.ListValueFrom(ctx, datasource_alerts.RecipientsSlackChannelsValue{}.Type(ctx), []datasource_alerts.RecipientsSlackChannelsValue{})
+	diags.Append(d...)
+	return emptyList
 }

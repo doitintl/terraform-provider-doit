@@ -143,9 +143,9 @@ func (ds *alertDataSource) mapAlertToModel(ctx context.Context, alert *models.Al
 					"customer_id": types.StringPointerValue(ch.CustomerId),
 					"id":          types.StringValue(ch.Id),
 					"name":        types.StringPointerValue(ch.Name),
-					"shared":      types.BoolPointerValue(ch.Shared),
+					"shared":      normalizeSlackChannelShared(ch.Shared),
 					"type":        types.StringPointerValue((*string)(ch.Type)),
-					"workspace":   types.StringPointerValue(ch.Workspace),
+					"workspace":   normalizeSlackChannelWorkspace(ch.Workspace),
 				},
 			)
 			diags.Append(d...)

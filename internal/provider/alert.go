@@ -456,25 +456,15 @@ func mapAlertToModel(ctx context.Context, resp *models.Alert, state *alertResour
 		channels := make([]resource_alert.RecipientsSlackChannelsValue, len(*resp.RecipientsSlackChannels))
 		for i, ch := range *resp.RecipientsSlackChannels {
 			var d diag.Diagnostics
-			sharedVal := types.BoolValue(false)
-			if ch.Shared != nil {
-				sharedVal = types.BoolValue(*ch.Shared)
-			}
-			var wsVal types.String
-			if ch.Workspace != nil && *ch.Workspace != "" {
-				wsVal = types.StringValue(*ch.Workspace)
-			} else {
-				wsVal = types.StringNull()
-			}
 			channels[i], d = resource_alert.NewRecipientsSlackChannelsValue(
 				resource_alert.RecipientsSlackChannelsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
 					"customer_id": types.StringPointerValue(ch.CustomerId),
 					"id":          types.StringValue(ch.Id),
 					"name":        types.StringPointerValue(ch.Name),
-					"shared":      sharedVal,
+					"shared":      normalizeSlackChannelShared(ch.Shared),
 					"type":        types.StringPointerValue((*string)(ch.Type)),
-					"workspace":   wsVal,
+					"workspace":   normalizeSlackChannelWorkspace(ch.Workspace),
 				},
 			)
 			diags.Append(d...)
@@ -651,4 +641,22 @@ func mapAlertConfigToModel(ctx context.Context, config *models.AlertConfig, exis
 	diags.Append(d...)
 
 	return configVal, diags
+}
+
+// normalizeSlackChannelShared normalizes the API's Slack channel shared pointer to a types.Bool.
+// The API omits shared (nil) for workspace channels, which normalizes to false to match schema semantics.
+func normalizeSlackChannelShared(shared *bool) types.Bool {
+	if shared != nil {
+		return types.BoolValue(*shared)
+	}
+	return types.BoolValue(false)
+}
+
+// normalizeSlackChannelWorkspace normalizes the API's Slack channel workspace pointer to a types.String.
+// The API returns an empty string ("") for shared channels, which normalizes to null to match schema semantics.
+func normalizeSlackChannelWorkspace(workspace *string) types.String {
+	if workspace != nil && *workspace != "" {
+		return types.StringValue(*workspace)
+	}
+	return types.StringNull()
 }
