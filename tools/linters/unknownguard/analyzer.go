@@ -1,11 +1,15 @@
-// Package unknownguard ensures that data source Read() methods check for
-// unknown inputs before making API calls.
+// Package unknownguard ensures that data source Read() methods defensively
+// guard unknown configuration before making API calls.
 //
-// Enforces unknown input checks in data source Read methods:
+// Terraform Core normally defers data sources with unknown configuration and
+// marks their complete results unknown. The plugin protocol still permits
+// clients to pass unknown configuration to ReadDataSource, so providers retain
+// a defensive guard to prevent premature request construction and API calls.
 //
-// If any input attribute is Unknown during plan (e.g., depends on an unresolved
-// resource), the data source must NOT make API calls. Instead, it should set all
-// computed outputs to Unknown and return early.
+// This analyzer intentionally checks only for guard presence. Schema classes
+// cannot identify every input or determine the correct fallback assignment:
+// Optional+Computed may be an API-derived output or configuration that must be
+// preserved.
 //
 // Detection strategy:
 //  1. Find data source Read() methods (parameter type contains "datasource.ReadRequest")
@@ -28,7 +32,7 @@ import (
 // Analyzer is the go/analysis Analyzer for unknownguard.
 var Analyzer = &analysis.Analyzer{
 	Name:     "unknownguard",
-	Doc:      "Ensures data source Read() checks for unknown inputs before API calls.",
+	Doc:      "Ensures data source Read() defensively guards unknown protocol configuration before API calls.",
 	Run:      run,
 	Requires: []*analysis.Analyzer{inspect.Analyzer, schemaparser.Analyzer},
 }
@@ -126,8 +130,8 @@ func run(pass *analysis.Pass) (any, error) {
 		}
 
 		pass.Reportf(fn.Name.Pos(),
-			"data source Read() must check for unknown inputs before API calls "+
-				"(IsUnknown/IsFullyKnown); inputs may be unknown during plan")
+			"data source Read() must defensively guard unknown protocol configuration before API calls "+
+				"(IsUnknown/IsFullyKnown)")
 	})
 
 	return nil, nil
