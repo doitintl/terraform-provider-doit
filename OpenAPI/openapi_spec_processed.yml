@@ -62,6 +62,8 @@ tags:
     description: Organizations help you segment data by your company or team structure.
   - name: Geographic Access
     description: Manage country-based access to tenants in your customer hierarchy.
+  - name: Customer Groups
+    description: Manage explicit, named groups of downstream customers and the users scoped to them.
   - name: Platforms
     description: Metadata about supported cloud providers.
   - name: Products
@@ -12643,6 +12645,24 @@ components:
       in: path
       required: true
       description: Stable service-generated custom-region ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customerGroupId:
+      name: customerGroupId
+      in: path
+      required: true
+      description: Stable service-generated customer-group ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customerGroupUserId:
+      name: userId
+      in: path
+      required: true
+      description: User ID to assign to or unassign from the customer group.
       schema:
         type: string
         minLength: 1

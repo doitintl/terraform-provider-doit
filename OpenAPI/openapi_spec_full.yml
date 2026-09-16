@@ -62,6 +62,8 @@ tags:
     description: Organizations help you segment data by your company or team structure.
   - name: Geographic Access
     description: Manage country-based access to tenants in your customer hierarchy.
+  - name: Customer Groups
+    description: Manage explicit, named groups of downstream customers and the users scoped to them.
   - name: Platforms
     description: Metadata about supported cloud providers.
   - name: Products
@@ -3196,6 +3198,52 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+    patch:
+      tags:
+        - Anomalies
+      summary: Update an anomaly's review status
+      description: >-
+        Updates the review status of the anomaly identified by `{id}`, the same identifier
+        `getAnomaly` accepts. Mirrors the review workflow available in the console: set
+        `reviewStatus`, and when resolving, qualify it with `resolution` and optionally a
+        `resolutionNote` (feedback reason and comment). The change is recorded in the
+        anomaly's review history exactly like a console update, and the actor is derived
+        from the API credentials - never from the request body.
+
+
+        Validation: `reviewStatus` is one of `NEEDS_REVIEW`, `UNDER_REVIEW`, `RESOLVED`;
+        `resolution` (`ANOMALY_CONFIRMED` or `NOT_ANOMALY`) is required when `reviewStatus`
+        is `RESOLVED` and forbidden otherwise; `resolutionNote.reason` must belong to the
+        given `resolution` - `SECURITY_BREACH`, `MISCONFIGURATION`, `UNINTENTIONAL_PROVISIONING`,
+        `EXPECTED_COST_SPIKE` or `ANOMALOUS_OTHER` for `ANOMALY_CONFIRMED`, and
+        `FAULTY_ANOMALY_DETECTION_MODEL`, `INCORRECT_DATA`, `LOW_IMPACT` or
+        `NON_ANOMALOUS_OTHER` for `NOT_ANOMALY`. Requires the `AnomaliesManager` permission
+        and DoiT API access (`platform:externalApi`).
+      operationId: patchAnomaly
+      parameters:
+        - name: id
+          in: path
+          description: A unique identifier of the anomaly.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnomalyStatusUpdate"
+      responses:
+        "200":
+          description: OK - Anomaly status updated.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
   "/anomalies/v1/{id}/explanation":
     get:
       tags:
@@ -3429,6 +3477,35 @@ paths:
                   type: string
                   format: binary
                   description: The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
+                schemaTemplate:
+                  type: string
+                  description: >-
+                    Versioned schema template of the file. Defaults to the dataset's template (`default@1` for datasets
+                    created without one). Provider-native templates such as `anthropic-spend-report@1` and
+                    `codex-usage-report@1` validate the vendor's own columns and normalize them into DataHub events.
+                    Must match the template stored on the dataset.
+                  example: "anthropic-spend-report@1"
+                periodStart:
+                  type: string
+                  format: date
+                  description: >-
+                    Inclusive first day of the report period (YYYY-MM-DD). Required for template uploads whose
+                    filename does not carry the period; when both are present they must agree.
+                  example: "2026-09-10"
+                periodEnd:
+                  type: string
+                  format: date
+                  description: Inclusive last day of the report period (YYYY-MM-DD). Events are booked on this day.
+                  example: "2026-09-10"
+                replace:
+                  type: boolean
+                  default: false
+                  description: >-
+                    Template uploads only. When `true`, active batches whose report period overlaps this upload are
+                    soft-deleted before the new file is ingested, and their ids are returned in `replacedBatches`.
+                    Refused with `409` when an overlapping batch extends outside the requested period (so a
+                    one-day replacement can never remove a wider upload) or was ingested less than 90 minutes ago
+                    (`Retry-After` header set). Without `replace`, any overlap is rejected with `409`.
       responses:
         "201":
           description: OK - Ingestion succeeded.
@@ -3445,12 +3522,151 @@ paths:
                     type: integer
                     description: the number of events that have been accepted for processing
                     example: 15
+                  schemaTemplate:
+                    type: string
+                    description: the schema template the file was validated against
+                    example: "anthropic-spend-report@1"
+                  sourceRecords:
+                    type: integer
+                    description: the number of source rows in the file
+                    example: 5
+                  generatedEvents:
+                    type: integer
+                    description: the number of DataHub events generated from the source rows
+                    example: 15
+                  replacedBatches:
+                    type: array
+                    description: ids of the batches soft-deleted because `replace` was set; omitted when none
+                    items:
+                      type: string
+                    example: ["csv_spend-report-…-2026-09-10-to-2026-09-10.csv_1757894400000"]
         "400":
           $ref: "#/components/responses/400"
         "401":
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: >-
+            Conflict - the report period overlaps an active batch (upload without `replace`), the request template
+            does not match the dataset, `replace` would remove data outside the requested period, or an
+            overlapping batch is still being processed (retry after the `Retry-After` seconds).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+  /datahub/v1/import:
+    post:
+      tags:
+        - DataHub
+      summary: Import provider-native records
+      description: >-
+        Sends provider-native records as JSON instead of a CSV file. The records use the same columns as the
+        template's CSV (currently `anthropic-spend-report@1` only) and are validated, normalized and booked on
+        `periodEnd` exactly like a CSV upload. It may take up to 15 minutes for the data to become available in the
+        DoiT console.
+      operationId: datahubImportProviderRecords
+      x-cli-name: import-datahub-provider-records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - schemaTemplate
+                - periodStart
+                - periodEnd
+                - records
+              properties:
+                provider:
+                  type: string
+                  description: Existing dataset (provider) name.
+                  example: "Anthropic Team"
+                schemaTemplate:
+                  type: string
+                  description: Versioned schema template of the records.
+                  example: "anthropic-spend-report@1"
+                periodStart:
+                  type: string
+                  format: date
+                  example: "2026-09-10"
+                periodEnd:
+                  type: string
+                  format: date
+                  example: "2026-09-10"
+                replace:
+                  type: boolean
+                  default: false
+                  description: Same semantics as the `replace` field of the CSV upload.
+                records:
+                  type: array
+                  description: One object per source row; keys are the template's CSV column names. Decimals may be strings or numbers.
+                  items:
+                    type: object
+                    additionalProperties: true
+                  example:
+                    - user_email: "user@example.com"
+                      account_uuid: "00000000-0000-0000-0000-000000000000"
+                      product: "Claude Code"
+                      model: "claude-sonnet-4-6"
+                      total_requests: 1
+                      total_prompt_tokens: 100
+                      total_completion_tokens: 20
+                      total_net_spend_usd: "1.20"
+                      total_gross_spend_usd: "1.50"
+                      total_uncached_input_tokens: 60
+                      total_cache_read_tokens: 20
+                      total_cache_write_5m_tokens: 10
+                      total_cache_write_1h_tokens: 10
+                      total_web_search_count: 0
+      responses:
+        "201":
+          description: OK - Ingestion succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch:
+                    type: string
+                    example: "api_1757894400000"
+                  ingestedRows:
+                    type: integer
+                    example: 15
+                  schemaTemplate:
+                    type: string
+                    example: "anthropic-spend-report@1"
+                  sourceRecords:
+                    type: integer
+                    example: 5
+                  generatedEvents:
+                    type: integer
+                    example: 15
+                  replacedBatches:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: >-
+            Conflict - see the CSV upload endpoint; identical semantics for overlap, template mismatch and `replace`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/500"
   /datahub/v1/events:
@@ -4014,6 +4230,101 @@ paths:
           $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
+  "/datahub/v1/datasets/{name}/records":
+    get:
+      tags:
+        - DataHub
+      summary: Export dataset records
+      description: |-
+        Returns one page of the live records of a DataHub dataset, as CSV (default) or as newline-delimited JSON in the same shape as the `/datahub/v1/events` payload.
+
+        A time window is required: `startTime` is inclusive, `endTime` is exclusive, and the window must not exceed 366 days. Rows are ordered by their event time and event id, and pages never overlap: read the `X-Next-Page-Token` response header and pass it back as `pageToken` until the header is absent. `X-Row-Count` carries the number of rows in the page. Only live rows are returned; rows deleted through the console or the delete endpoints are excluded.
+
+        Every row starts with five provenance columns (`event_id`, `batch`, `source`, `export_time`, `updated_by`) followed by the dataset's business columns in the CSV ingest vocabulary (`usage_date`, `fixed.<key>`, `label.<key>`, `project_label.<key>`, `system_label.<key>`, `metric.<type>`). The business columns are computed from the rows of each page, so consecutive pages can have different label and metric columns; union the headers when concatenating pages. Datasets created with the FOCUS schema template use the FOCUS column names instead and can only be exported as CSV.
+
+        To re-import an export into another dataset, drop the `batch`, `source`, `export_time` and `updated_by` columns, and either drop `event_id` or rename it to `id`.
+      operationId: exportDatahubDatasetRecords
+      x-cli-name: export-datahub-dataset-records
+      parameters:
+        - name: name
+          in: path
+          description: The name of the dataset to export.
+          required: true
+          schema:
+            type: string
+          example: "My Custom Dataset"
+        - name: format
+          in: query
+          description: Output format.
+          schema:
+            type: string
+            enum:
+              - csv
+              - jsonl
+            default: csv
+        - name: startTime
+          in: query
+          description: Inclusive lower bound on the event time, RFC3339.
+          required: true
+          schema:
+            type: string
+            format: date-time
+          example: "2026-01-01T00:00:00Z"
+        - name: endTime
+          in: query
+          description: Exclusive upper bound on the event time, RFC3339. At most 366 days after the start time.
+          required: true
+          schema:
+            type: string
+            format: date-time
+          example: "2026-02-01T00:00:00Z"
+        - name: maxResults
+          in: query
+          description: Maximum number of rows in the page.
+          schema:
+            type: integer
+            format: int64
+            default: 10000
+            minimum: 1
+            maximum: 50000
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: OK - One page of records. The body is streamed.
+          headers:
+            X-Next-Page-Token:
+              description: Pass as `pageToken` to fetch the next page. Absent on the last page.
+              schema:
+                type: string
+            X-Row-Count:
+              description: Number of rows in this page.
+              schema:
+                type: integer
+            Content-Disposition:
+              description: Suggested filename, `<dataset>-<startTime>-<endTime>-p<page>.csv|jsonl`.
+              schema:
+                type: string
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/x-ndjson:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "429":
+          $ref: "#/components/responses/429"
+        "500":
+          $ref: "#/components/responses/500"
   /billing/v1/invoices:
     get:
       tags:
@@ -4575,6 +4886,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContractTemplateResponse"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+  "/billing/v1/contract-templates/{templateID}/actions/assign":
+    post:
+      tags:
+        - Contract Templates
+      summary: Assign contract template
+      description: >-
+        Applies a contract template owned by the authenticated tenant (from the bearer token) to
+        child customers, creating a draft contract for each. Drafts have no billing effect until
+        each one is completed and activated. The template must not be archived, and the current
+        date must fall within its eligibility window.
+        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: assignContractTemplate
+      parameters:
+        - name: templateID
+          in: path
+          required: true
+          description: Identifier of the contract template to apply.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignContractTemplateInput"
+      responses:
+        "201":
+          description: Created - Draft contracts created for the specified customers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssignContractTemplateResponse"
+        "400":
+          $ref: "#/components/responses/400"
         "401":
           $ref: "#/components/responses/401"
         "403":
@@ -7582,6 +7937,343 @@ paths:
   # ============================================================
   # CloudFlow export/import
   # ============================================================
+  /cloudflow/v1/flows/{flowId}/actions/trigger:
+    post:
+      tags:
+        - CloudFlow
+      summary: Trigger a flow run
+      description: |-
+        Starts a run of a **published** flow whose first node is a webhook, scheduled, or manual
+        trigger. A draft flow is rejected with `422` — use `actions/test-run` to run one.
+
+        No `Idempotency-Key` is required. This is a state transition, not a resource creation.
+
+        The response is a snapshot taken at dispatch, so `status` is always `pending` and the
+        timing fields are not yet populated. Read the run back through
+        `GET /cloudflow/v1/flows/{flowId}/runs/{runId}` to follow its progress.
+
+        A flow holds a concurrency lock while it runs, so triggering one that is already running
+        returns `409` with the active run embedded in the problem body — no second lookup needed.
+      operationId: triggerCloudflowFlow
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: The ID of the flow to trigger.
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: |-
+                Optional JSON payload forwarded to the trigger node. Omit or send `{}` for flows
+                that need no input.
+      responses:
+        "200":
+          description: |-
+            The run was started. The snapshot is taken at dispatch, so `status` is `pending`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowRunSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |-
+            The flow is already running. Extends the standard problem shape with an `execution`
+            field holding the run that is currently active.
+          content:
+            application/problem+json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ProblemDetails"
+                  - type: object
+                    properties:
+                      execution:
+                        $ref: "#/components/schemas/CloudflowRunSummary"
+        "422":
+          description: |-
+            The flow cannot be triggered: it is not published (`flow_not_published`), or its first
+            node is not a startable trigger (`invalid_trigger_type`).
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "429":
+          $ref: "#/components/responses/429"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /cloudflow/v1/flows/{flowId}/actions/stop:
+    post:
+      tags:
+        - CloudFlow
+      summary: Stop a flow run
+      description: |-
+        Stops the run currently in progress for the given flow. The run is identified from the
+        flow alone — no run ID is needed, since a flow can only have one run active at a time.
+
+        No `Idempotency-Key` is required. This is a state transition, not a resource creation.
+
+        Returns `409` when the flow has no run in progress, which includes a run that reached a
+        terminal state between this request and the stop attempt.
+      operationId: stopCloudflowFlow
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: The ID of the flow whose in-progress run should be stopped.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The run was stopped. The body is the run as it stands after stopping.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowRunSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/429"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /cloudflow/v1/flows/{flowId}/actions/test-run:
+    post:
+      tags:
+        - CloudFlow
+      summary: Test-run a flow
+      description: |-
+        Runs a flow once as a test, and **accepts an unpublished (draft) flow** — unlike
+        `actions/trigger`, which requires the flow to be published. Use this to verify a newly
+        authored or edited flow before publishing it.
+
+        Execution is identical to a production run: the same graph, the same bound connections,
+        the same credentials, and the same approval behaviour. An approval-gated node still parks
+        the run and its side effect still waits for a real approval — there is no request that
+        skips one.
+
+        The run is recorded as a test, so it does not appear in run history, does not count
+        towards dashboard statistics, does not become a dashboard widget's data source, and does
+        not consume a scheduled-run budget. It does hold the flow's concurrency lock, so a `409`
+        is returned while the flow is already running.
+
+        The flow's first node must be a webhook, scheduled, or manual trigger.
+
+        Before dispatching, the flow is validated with the same checks publish applies — a draft
+        has never been through them. A flow that fails returns `422` listing every offending node
+        at once, so all of them can be fixed in one pass.
+
+        Poll the `Location` URL to follow the run and read what each node produced.
+
+        Pass `?dryRun=true` to validate the flow without starting a run.
+      operationId: testRunCloudflowFlow
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: The ID of the flow to test-run.
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Unique key so a retried request cannot start a second run.
+          schema:
+            type: string
+        - name: dryRun
+          in: query
+          required: false
+          description: Validate the flow and return the outcome without starting a run.
+          schema:
+            type: boolean
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: |-
+                Optional JSON payload forwarded to the trigger node, so a webhook-triggered flow
+                can be test-run with sample input. Omit or send `{}` for flows that need no input.
+      responses:
+        "202":
+          description: |-
+            Test run accepted. The response is a snapshot taken at dispatch, so `status` is
+            `pending`; follow the `Location` header to read the run as it progresses.
+          headers:
+            Location:
+              description: URL of the created run.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowRunSummary"
+        "200":
+          description: Dry-run only. The flow was validated and no run was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowTestRunValidation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          description: The flow cannot be run. `details` names every node that must be fixed.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/CloudflowTestRunValidation"
+        "429":
+          $ref: "#/components/responses/429"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /cloudflow/v1/flows/{flowId}/runs:
+    get:
+      tags:
+        - CloudFlow
+      summary: List a flow's runs
+      description: |-
+        Returns a flow's runs, newest first. Use `mode` to separate test runs from production
+        ones — test runs are included by default.
+
+        Per-node detail is not included here; fetch a single run to read what each node consumed
+        and produced.
+      operationId: listCloudflowFlowRuns
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: The ID of the flow whose runs to list.
+          schema:
+            type: string
+        - name: maxResults
+          in: query
+          required: false
+          description: Maximum runs to return.
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 500
+        - name: pageToken
+          in: query
+          required: false
+          description: Continuation token from a previous response.
+          schema:
+            type: string
+        - name: mode
+          in: query
+          required: false
+          description: Restrict the listing to one kind of run. Omit for both.
+          schema:
+            type: string
+            enum:
+              - test
+              - standard
+      responses:
+        "200":
+          description: A page of runs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowRunList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/429"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /cloudflow/v1/flows/{flowId}/runs/{runId}:
+    get:
+      tags:
+        - CloudFlow
+      summary: Read a flow run, node by node
+      description: |-
+        Returns a run's status and, for each node, the JSON it consumed and produced. This is how
+        you find out *why* a run failed, or that it "succeeded" while producing the wrong data.
+
+        **`input` is null for most node types, and that is not an error.** Only action nodes — the
+        AWS, GCP, Azure, Oracle, DoiT and admin operations — record their inputs. Transform, code,
+        branch, switch, datastore, subflow and trigger nodes record none, so their `input` is
+        always null. `output` is recorded by every node that finishes, so read a transform's
+        behaviour from its `output`.
+
+        Payloads appear as soon as a node reports a terminal status, so a poll loop can read
+        results while later nodes are still running.
+
+        Any value the node's schema marks sensitive is replaced with a redaction marker;
+        credentials and connection configuration never appear.
+
+        Each `input` and `output` is capped at 64KB. When a payload exceeds that, whole entries
+        are dropped from the end, `truncated` is true, and `totalBytes` reports the untruncated
+        size — nothing is silently cut, and what you receive is always valid JSON.
+
+        Runs belonging to another tenant, or to a different flow, return `404`. Nodes inside a
+        fan-out currently report only the last path to finish.
+      operationId: getCloudflowFlowRun
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: The ID of the flow the run belongs to.
+          schema:
+            type: string
+        - name: runId
+          in: path
+          required: true
+          description: The run identifier, as returned when the run was started.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The run and its per-node detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/429"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /cloudflow/v1/flows/{flowId}/export:
     get:
       tags:
@@ -8852,6 +9544,281 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups:
+    get:
+      tags:
+        - Customer Groups
+      summary: List customer groups
+      description: Returns the ready customer groups owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: listCustomerGroups
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerGroupsResponse"
+              example:
+                customerGroups:
+                  - id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                    customerId: Kp2mN8qL4vR0sT1wX3yZ
+                    name: EMEA sales team
+                    memberCustomerIds: [customer-1, customer-2]
+                    createdBy: service-account-1
+                    timeCreated: "2026-08-30T10:00:00Z"
+                    timeModified: "2026-08-30T10:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      tags:
+        - Customer Groups
+      summary: Create a customer group
+      description: Creates a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: createCustomerGroup
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerGroupRequest"
+      responses:
+        "201":
+          description: Created
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerGroup"
+              example:
+                id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: EMEA sales team
+                memberCustomerIds: [customer-1, customer-2]
+                createdBy: service-account-1
+                timeCreated: "2026-08-30T10:00:00Z"
+                timeModified: "2026-08-30T10:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups/{customerGroupId}:
+    parameters:
+      - $ref: "#/components/parameters/customerGroupId"
+      - $ref: "#/components/parameters/tenantId"
+    get:
+      tags:
+        - Customer Groups
+      summary: Get a customer group
+      description: Returns a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: getCustomerGroup
+      responses:
+        "200":
+          description: OK
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerGroup"
+              example:
+                id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: EMEA sales team
+                memberCustomerIds: [customer-1, customer-2]
+                createdBy: service-account-1
+                timeCreated: "2026-08-30T10:00:00Z"
+                timeModified: "2026-08-30T10:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    patch:
+      tags:
+        - Customer Groups
+      summary: Update a customer group
+      description: Updates the name, customer membership, or both for a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: updateCustomerGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerGroupRequest"
+      responses:
+        "200":
+          description: OK
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerGroup"
+              example:
+                id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: EMEA sales team
+                memberCustomerIds: [customer-1, customer-2, customer-3]
+                createdBy: service-account-1
+                timeCreated: "2026-08-30T10:00:00Z"
+                timeModified: "2026-08-30T11:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Customer Groups
+      summary: Delete a customer group
+      description: Deletes a customer group owned by the authenticated tenant. Groups with assigned users cannot be deleted. Requires the UsersManager permission.
+      operationId: deleteCustomerGroup
+      responses:
+        "204":
+          description: Deleted
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups/{customerGroupId}/users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/customerGroupId"
+      - $ref: "#/components/parameters/customerGroupUserId"
+      - $ref: "#/components/parameters/tenantId"
+    put:
+      tags:
+        - Customer Groups
+      summary: Assign a user to a customer group
+      description: Assigns a user to a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: assignCustomerGroupUser
+      responses:
+        "204":
+          description: Assigned
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Customer Groups
+      summary: Unassign a user from a customer group
+      description: Unassigns a user from a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: unassignCustomerGroupUser
+      responses:
+        "204":
+          description: Unassigned
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "429":
           $ref: "#/components/responses/TooManyRequests"
         "500":
@@ -10388,6 +11355,98 @@ components:
           description: Ready custom regions owned by the authenticated tenant.
           items:
             $ref: "#/components/schemas/GeographicAccessCustomRegion"
+    CustomerGroup:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - customerId
+        - name
+        - memberCustomerIds
+        - createdBy
+        - timeCreated
+        - timeModified
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Stable service-generated customer-group ID.
+        customerId:
+          type: string
+          description: Authenticated tenant that owns the customer group.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer-visible customer-group name.
+        memberCustomerIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Customer IDs that are members of this group.
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        createdBy:
+          type: string
+          description: User or service-account identifier that created the group.
+        timeCreated:
+          type: string
+          format: date-time
+          description: Time the group was created.
+        timeModified:
+          type: string
+          format: date-time
+          description: Time the group was last modified.
+    CreateCustomerGroupRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - memberCustomerIds
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        memberCustomerIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+    UpdateCustomerGroupRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        memberCustomerIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+    CustomerGroupsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - customerGroups
+      properties:
+        customerGroups:
+          type: array
+          description: Ready customer groups owned by the authenticated tenant.
+          items:
+            $ref: "#/components/schemas/CustomerGroup"
     GeographicAccessScope:
       oneOf:
         - $ref: "#/components/schemas/UnassignedGeographicAccessScope"
@@ -10721,6 +11780,204 @@ components:
           type: integer
           nullable: true
           description: Always `null`. Row count is not computed for this endpoint.
+    CloudflowRunNodePayload:
+      type: object
+      description: |-
+        JSON a node consumed or produced, bounded in size. Null when the node records nothing of
+        that kind — normal for `input` on any non-action node.
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          description: |-
+            The recorded JSON, always an array. Sensitive values are replaced with a redaction
+            marker.
+          items: {}
+        truncated:
+          type: boolean
+          description: True when entries were dropped to fit the size cap.
+        totalBytes:
+          type: integer
+          description: Size of the untruncated payload in bytes.
+    CloudflowRunNode:
+      type: object
+      description: One node's contribution to a run.
+      required:
+        - nodeId
+        - name
+        - status
+        - input
+        - output
+      properties:
+        nodeId:
+          type: string
+          description: Node identifier, matching the node in the flow's graph.
+        name:
+          type: string
+          description: Node display name.
+        status:
+          type: string
+          description: Current node status.
+          enum:
+            - pending
+            - in-progress
+            - complete
+            - completed-with-errors
+            - failed
+            - rejected
+            - approval-timed-out
+            - pending-approval
+            - sleeping
+            - skipped
+            - stopped
+        stepNumber:
+          type: integer
+          description: Position in execution order. Absent for nodes that never started.
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        error:
+          type: string
+          nullable: true
+          description: Failure message. Present when the node failed.
+        input:
+          nullable: true
+          description: |-
+            What the node consumed. **Always null for non-action nodes** — see the operation
+            description.
+          allOf:
+            - $ref: "#/components/schemas/CloudflowRunNodePayload"
+        output:
+          nullable: true
+          description: What the node produced. Null until the node reaches a terminal status.
+          allOf:
+            - $ref: "#/components/schemas/CloudflowRunNodePayload"
+    CloudflowRunSummary:
+      type: object
+      description: A run without its per-node detail.
+      required:
+        - id
+        - flowId
+        - status
+        - isTest
+        - triggeredBy
+        - triggerTime
+      properties:
+        id:
+          type: string
+        flowId:
+          type: string
+        flowName:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - complete
+            - completed-with-errors
+            - pending-approval
+            - failed
+            - sleeping
+            - stopped
+        isTest:
+          type: boolean
+          description: True when the run was started through `actions/test-run`.
+        triggeredBy:
+          type: string
+        triggerTime:
+          type: string
+          format: date-time
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        error:
+          type: string
+          nullable: true
+        stoppedBy:
+          type: string
+          nullable: true
+    CloudflowRun:
+      type: object
+      description: A run plus what each of its nodes consumed and produced.
+      required:
+        - id
+        - flowId
+        - status
+        - isTest
+        - triggeredBy
+        - triggerTime
+        - nodes
+      allOf:
+        - $ref: "#/components/schemas/CloudflowRunSummary"
+        - type: object
+          properties:
+            nodes:
+              type: array
+              description: One entry per node, in execution order.
+              items:
+                $ref: "#/components/schemas/CloudflowRunNode"
+    CloudflowRunList:
+      type: object
+      description: A cursor-paginated page of a flow's runs.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowRunSummary"
+        pageToken:
+          type: string
+          nullable: true
+          description: Token for the next page. Null on the last page.
+        rowCount:
+          type: integer
+          nullable: true
+          description: Best-effort total. May be null.
+    CloudflowTestRunValidation:
+      type: object
+      description: |-
+        Validation outcome for a test run. Returned on `200` for `?dryRun=true`, and on `422` —
+        with the problem fields populated — when a flow cannot be run.
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          description: True when the flow passed every check and is runnable.
+        details:
+          type: array
+          description: One entry per node that must be fixed. Present only when `valid` is false.
+          items:
+            type: object
+            required:
+              - nodeId
+              - message
+            properties:
+              nodeId:
+                type: string
+              message:
+                type: string
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        retryable:
+          type: boolean
     CloudflowFlowBundle:
       type: object
       description: >-
@@ -10839,7 +12096,8 @@ components:
           properties:
             required:
               type: boolean
-            message: {}
+            message:
+              type: string
             rejectApprovalAfterTime:
               type: boolean
             rejectTimeValue:
@@ -10882,6 +12140,7 @@ components:
         elementType:
           type: string
         value:
+          type: string
           description: Present unless the export stripped variable values. Connection-typed values are `$req:connections/<key>` tokens.
     CloudflowBundleRequirements:
       type: object
@@ -10954,6 +12213,7 @@ components:
               elementType:
                 type: string
               value:
+                type: string
                 description: Present unless the export stripped variable values.
               usedByNodes:
                 type: array
@@ -12641,6 +13901,46 @@ components:
           type: boolean
         applyAWSEligibleDiscount:
           type: boolean
+    AssignContractTemplateInput:
+      type: object
+      description: The customers a contract template is applied to.
+      required:
+        - customerIds
+      properties:
+        customerIds:
+          type: array
+          description: >-
+            Identifiers of the customers to create a draft contract for. Each identifier must name a
+            tenant within the authenticated tenant's own hierarchy, of the tier one level below it: a
+            distributor supplies resellers, a reseller supplies end customers. Repeated identifiers
+            are ignored, and a customer already holding a contract from this template receives
+            another draft.
+          minItems: 1
+          maxItems: 250
+          items:
+            type: string
+    AssignContractTemplateResponse:
+      type: object
+      description: The draft contracts created by applying a contract template.
+      properties:
+        count:
+          type: integer
+          description: Number of draft contracts created.
+        createdContracts:
+          type: array
+          description: One entry per created draft contract, in the order the customers were supplied.
+          items:
+            $ref: "#/components/schemas/AssignedContract"
+    AssignedContract:
+      type: object
+      description: A draft contract created from a contract template.
+      properties:
+        customerId:
+          type: string
+          description: Identifier of the customer the draft contract was created for.
+        contractId:
+          type: string
+          description: Identifier of the created draft contract.
 
     CreateAllocationRequest:
       required:
@@ -13024,6 +14324,60 @@ components:
       description: Array of SKU entries contributing to an anomaly.
       items:
         $ref: "#/components/schemas/AnomalySKU"
+    AnomalyStatusUpdate:
+      type: object
+      required:
+        - customerFeedback
+      properties:
+        customerFeedback:
+          type: object
+          description: >-
+            Partial review-status update. Fields that are omitted are left unchanged.
+            `reviewStatus` drives the state machine; `resolution` and `resolutionNote`
+            apply only when resolving.
+          properties:
+            reviewStatus:
+              type: string
+              description: The review state to move the anomaly to.
+              enum:
+                - NEEDS_REVIEW
+                - UNDER_REVIEW
+                - RESOLVED
+            resolution:
+              type: string
+              description: >-
+                Required when `reviewStatus` is `RESOLVED`; forbidden otherwise. Qualifies
+                whether the anomaly was confirmed as real.
+              enum:
+                - ANOMALY_CONFIRMED
+                - NOT_ANOMALY
+            resolutionNote:
+              type: object
+              description: Optional reason and comment captured on a resolve transition.
+              properties:
+                reason:
+                  type: string
+                  description: >-
+                    Feedback reason; must belong to the given `resolution`. `ANOMALY_CONFIRMED`
+                    accepts `SECURITY_BREACH`, `MISCONFIGURATION`, `UNINTENTIONAL_PROVISIONING`,
+                    `EXPECTED_COST_SPIKE`, `ANOMALOUS_OTHER`; `NOT_ANOMALY` accepts
+                    `FAULTY_ANOMALY_DETECTION_MODEL`, `INCORRECT_DATA`, `LOW_IMPACT`,
+                    `NON_ANOMALOUS_OTHER`.
+                  enum:
+                    - FAULTY_ANOMALY_DETECTION_MODEL
+                    - INCORRECT_DATA
+                    - EXPECTED_COST_SPIKE
+                    - LOW_IMPACT
+                    - NON_ANOMALOUS_OTHER
+                    - SECURITY_BREACH
+                    - MISCONFIGURATION
+                    - UNINTENTIONAL_PROVISIONING
+                    - ANOMALOUS_OTHER
+                comment:
+                  type: string
+                  description: >-
+                    Free-text resolution comment; stored as the tagged resolution comment on
+                    the anomaly feed. Length-capped like console comments.
     NotificationEvent:
       type: object
       description: |-
@@ -19260,7 +20614,7 @@ components:
             - pending_approval
             - approved
             - paused
-          description: "Approval state for purchases of this commitment type. Approve or pause on the Planned Purchases tab in the DoiT Console. Absent or unrecognized stored values are returned as `pending_approval`."
+          description: "Approval state for purchases of this commitment type. Approve or pause on the Planned Purchases tab in the DoiT Console. Absent or unrecognized stored values are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required."
           x-enumDescriptions:
             pending_approval: Approve the commitment ceiling on the Planned Purchases tab in the DoiT Console before purchases can run.
             approved: Purchases may run up to the approved commitment ceiling.
@@ -19931,6 +21285,10 @@ components:
           $ref: "#/components/schemas/HandshakeState"
         billSourceType:
           type: string
+        curBasePath:
+          type: string
+          description: S3 key prefix where this end customer's CUR data lands. Omitted when no path was recorded at mapping time.
+          example: cur2/dpma_rpma_ec
         effectiveTime:
           type: string
           format: date-time
@@ -20646,6 +22004,24 @@ components:
       in: path
       required: true
       description: Stable service-generated custom-region ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customerGroupId:
+      name: customerGroupId
+      in: path
+      required: true
+      description: Stable service-generated customer-group ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customerGroupUserId:
+      name: userId
+      in: path
+      required: true
+      description: User ID to assign to or unassign from the customer group.
       schema:
         type: string
         minLength: 1
