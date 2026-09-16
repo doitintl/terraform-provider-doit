@@ -3924,6 +3924,7 @@ paths:
                     - atlassian
                     - aws
                     - azure
+                    - bifrost
                     - chatgpt
                     - cloudflare
                     - copilot
@@ -4168,6 +4169,7 @@ paths:
                     - atlassian
                     - aws
                     - azure
+                    - bifrost
                     - chatgpt
                     - cloudflare
                     - copilot

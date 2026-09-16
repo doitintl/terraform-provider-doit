@@ -1856,7 +1856,7 @@
 												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 											}
 										],
-										"schema_definition": "stringvalidator.OneOf(\n\"anthropic\",\n\"atlassian\",\n\"aws\",\n\"azure\",\n\"chatgpt\",\n\"cloudflare\",\n\"copilot\",\n\"figma\",\n\"gcp\",\n\"github\",\n\"gitlab\",\n\"hotjar\",\n\"jira\",\n\"litellm\",\n\"miro\",\n\"notion\",\n\"slack\",\n\"wordpress\",\n)"
+										"schema_definition": "stringvalidator.OneOf(\n\"anthropic\",\n\"atlassian\",\n\"aws\",\n\"azure\",\n\"bifrost\",\n\"chatgpt\",\n\"cloudflare\",\n\"copilot\",\n\"figma\",\n\"gcp\",\n\"github\",\n\"gitlab\",\n\"hotjar\",\n\"jira\",\n\"litellm\",\n\"miro\",\n\"notion\",\n\"slack\",\n\"wordpress\",\n)"
 									}
 								}
 							]
