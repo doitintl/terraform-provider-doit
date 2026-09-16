@@ -38,14 +38,15 @@ func DatahubDatasetResourceSchema(ctx context.Context) schema.Schema {
 			"logo_name": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "An optional preset logo shown next to the dataset in the DoiT console.\nPossible values: `anthropic`, `atlassian`, `aws`, `azure`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`",
-				MarkdownDescription: "An optional preset logo shown next to the dataset in the DoiT console.\nPossible values: `anthropic`, `atlassian`, `aws`, `azure`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`",
+				Description:         "An optional preset logo shown next to the dataset in the DoiT console.\nPossible values: `anthropic`, `atlassian`, `aws`, `azure`, `bifrost`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`",
+				MarkdownDescription: "An optional preset logo shown next to the dataset in the DoiT console.\nPossible values: `anthropic`, `atlassian`, `aws`, `azure`, `bifrost`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"anthropic",
 						"atlassian",
 						"aws",
 						"azure",
+						"bifrost",
 						"chatgpt",
 						"cloudflare",
 						"copilot",

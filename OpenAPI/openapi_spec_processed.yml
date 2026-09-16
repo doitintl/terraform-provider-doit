@@ -8251,6 +8251,7 @@ components:
             - atlassian
             - aws
             - azure
+            - bifrost
             - chatgpt
             - cloudflare
             - copilot
@@ -12004,6 +12005,7 @@ components:
             - atlassian
             - aws
             - azure
+            - bifrost
             - chatgpt
             - cloudflare
             - copilot

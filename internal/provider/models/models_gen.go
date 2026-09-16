@@ -1357,6 +1357,7 @@ const (
 	CreateDatahubDatasetRequestBodyLogoNameAtlassian  CreateDatahubDatasetRequestBodyLogoName = "atlassian"
 	CreateDatahubDatasetRequestBodyLogoNameAws        CreateDatahubDatasetRequestBodyLogoName = "aws"
 	CreateDatahubDatasetRequestBodyLogoNameAzure      CreateDatahubDatasetRequestBodyLogoName = "azure"
+	CreateDatahubDatasetRequestBodyLogoNameBifrost    CreateDatahubDatasetRequestBodyLogoName = "bifrost"
 	CreateDatahubDatasetRequestBodyLogoNameChatgpt    CreateDatahubDatasetRequestBodyLogoName = "chatgpt"
 	CreateDatahubDatasetRequestBodyLogoNameCloudflare CreateDatahubDatasetRequestBodyLogoName = "cloudflare"
 	CreateDatahubDatasetRequestBodyLogoNameCopilot    CreateDatahubDatasetRequestBodyLogoName = "copilot"
@@ -1383,6 +1384,8 @@ func (e CreateDatahubDatasetRequestBodyLogoName) Valid() bool {
 	case CreateDatahubDatasetRequestBodyLogoNameAws:
 		return true
 	case CreateDatahubDatasetRequestBodyLogoNameAzure:
+		return true
+	case CreateDatahubDatasetRequestBodyLogoNameBifrost:
 		return true
 	case CreateDatahubDatasetRequestBodyLogoNameChatgpt:
 		return true
@@ -3271,6 +3274,7 @@ const (
 	UpdateDatahubDatasetRequestBodyLogoNameAtlassian  UpdateDatahubDatasetRequestBodyLogoName = "atlassian"
 	UpdateDatahubDatasetRequestBodyLogoNameAws        UpdateDatahubDatasetRequestBodyLogoName = "aws"
 	UpdateDatahubDatasetRequestBodyLogoNameAzure      UpdateDatahubDatasetRequestBodyLogoName = "azure"
+	UpdateDatahubDatasetRequestBodyLogoNameBifrost    UpdateDatahubDatasetRequestBodyLogoName = "bifrost"
 	UpdateDatahubDatasetRequestBodyLogoNameChatgpt    UpdateDatahubDatasetRequestBodyLogoName = "chatgpt"
 	UpdateDatahubDatasetRequestBodyLogoNameCloudflare UpdateDatahubDatasetRequestBodyLogoName = "cloudflare"
 	UpdateDatahubDatasetRequestBodyLogoNameCopilot    UpdateDatahubDatasetRequestBodyLogoName = "copilot"
@@ -3298,6 +3302,8 @@ func (e UpdateDatahubDatasetRequestBodyLogoName) Valid() bool {
 	case UpdateDatahubDatasetRequestBodyLogoNameAws:
 		return true
 	case UpdateDatahubDatasetRequestBodyLogoNameAzure:
+		return true
+	case UpdateDatahubDatasetRequestBodyLogoNameBifrost:
 		return true
 	case UpdateDatahubDatasetRequestBodyLogoNameChatgpt:
 		return true

@@ -50,7 +50,7 @@ output "dataset_records" {
 - `description` (String) An optional description for the dataset.
 - `display_name` (String) Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.
 - `logo_name` (String) An optional preset logo shown next to the dataset in the DoiT console.
-Possible values: `anthropic`, `atlassian`, `aws`, `azure`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`
+Possible values: `anthropic`, `atlassian`, `aws`, `azure`, `bifrost`, `chatgpt`, `cloudflare`, `copilot`, `figma`, `gcp`, `github`, `gitlab`, `hotjar`, `jira`, `litellm`, `miro`, `notion`, `slack`, `wordpress`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
