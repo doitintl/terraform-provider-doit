@@ -68,27 +68,28 @@ data "doit_cloud_incidents" "recent" {
 
 The following table shows which data sources support pagination:
 
-| Data Source                 | Auto-Pagination | Manual Pagination |
-| --------------------------- | --------------- | ----------------- |
-| `doit_alerts`               | ✓               | ✓                 |
-| `doit_allocations`          | ✓               | ✓                 |
-| `doit_annotations`          | ✓               | ✓                 |
-| `doit_anomalies`            | ✓               | ✓                 |
-| `doit_assets`               | ✓               | ✓                 |
-| `doit_budgets`              | ✓               | ✓                 |
-| `doit_cloud_diagrams_search` | ✓               | ✓                 |
-| `doit_cloud_incidents`      | ✗               | ✓                 |
-| `doit_commitments`          | ✓               | ✓                 |
-| `doit_dimensions`           | ✓               | ✓                 |
-| `doit_invoices`                 | ✓               | ✓                 |
-| `doit_labels`                   | ✓               | ✓                 |
-| `doit_ps4c_aws_organizations`   | ✓               | ✓                 |
-| `doit_ps4c_gcp_billing_accounts`| ✓               | ✓                 |
-| `doit_ps4c_gcp_resource_cuds`   | ✓               | ✓                 |
-| `doit_ps4c_gcp_settings`        | ✓               | ✓                 |
-| `doit_reports`                  | ✓               | ✓                 |
-| `doit_service_quotas`           | ✓               | ✓                 |
-| `doit_support_requests`         | ✓               | ✓                 |
+| Data Source                      | Auto-Pagination | Manual Pagination |
+| -------------------------------- | --------------- | ----------------- |
+| `doit_alert_slack_channels`      | ✓               | ✓                 |
+| `doit_alerts`                    | ✓               | ✓                 |
+| `doit_allocations`               | ✓               | ✓                 |
+| `doit_annotations`               | ✓               | ✓                 |
+| `doit_anomalies`                 | ✓               | ✓                 |
+| `doit_assets`                    | ✓               | ✓                 |
+| `doit_budgets`                   | ✓               | ✓                 |
+| `doit_cloud_diagrams_search`     | ✓               | ✓                 |
+| `doit_cloud_incidents`           | ✗               | ✓                 |
+| `doit_commitments`               | ✓               | ✓                 |
+| `doit_dimensions`                | ✓               | ✓                 |
+| `doit_invoices`                  | ✓               | ✓                 |
+| `doit_labels`                    | ✓               | ✓                 |
+| `doit_ps4c_aws_organizations`    | ✓               | ✓                 |
+| `doit_ps4c_gcp_billing_accounts` | ✓               | ✓                 |
+| `doit_ps4c_gcp_resource_cuds`    | ✓               | ✓                 |
+| `doit_ps4c_gcp_settings`         | ✓               | ✓                 |
+| `doit_reports`                   | ✓               | ✓                 |
+| `doit_service_quotas`            | ✓               | ✓                 |
+| `doit_support_requests`          | ✓               | ✓                 |
 
 ## Filtering vs Pagination
 
