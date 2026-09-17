@@ -160,6 +160,30 @@ func (e AlertSlackChannelType) Valid() bool {
 	}
 }
 
+// Defines values for AlertSlackChannelListWorkspaceStatus.
+const (
+	AlertSlackChannelListWorkspaceStatusInactive            AlertSlackChannelListWorkspaceStatus = "inactive"
+	AlertSlackChannelListWorkspaceStatusMissingPrivateScope AlertSlackChannelListWorkspaceStatus = "missing_private_scope"
+	AlertSlackChannelListWorkspaceStatusNone                AlertSlackChannelListWorkspaceStatus = "none"
+	AlertSlackChannelListWorkspaceStatusOk                  AlertSlackChannelListWorkspaceStatus = "ok"
+)
+
+// Valid indicates whether the value is a known member of the AlertSlackChannelListWorkspaceStatus enum.
+func (e AlertSlackChannelListWorkspaceStatus) Valid() bool {
+	switch e {
+	case AlertSlackChannelListWorkspaceStatusInactive:
+		return true
+	case AlertSlackChannelListWorkspaceStatusMissingPrivateScope:
+		return true
+	case AlertSlackChannelListWorkspaceStatusNone:
+		return true
+	case AlertSlackChannelListWorkspaceStatusOk:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AllocationAllocationType.
 const (
 	AllocationAllocationTypeGroup  AllocationAllocationType = "group"
@@ -4415,6 +4439,25 @@ type AlertSlackChannel struct {
 
 // AlertSlackChannelType Channel visibility, resolved server-side.
 type AlertSlackChannelType string
+
+// AlertSlackChannelList defines model for AlertSlackChannelList.
+type AlertSlackChannelList struct {
+	HasSharedChannel     bool                `json:"hasSharedChannel"`
+	IsWorkspaceConnected bool                `json:"isWorkspaceConnected"`
+	Items                []AlertSlackChannel `json:"items"`
+
+	// PageToken Opaque continuation token. Omitted on the final page.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total eligible channels after filtering and before pagination.
+	RowCount int `json:"rowCount"`
+
+	// WorkspaceStatus Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
+	WorkspaceStatus AlertSlackChannelListWorkspaceStatus `json:"workspaceStatus"`
+}
+
+// AlertSlackChannelListWorkspaceStatus Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
+type AlertSlackChannelListWorkspaceStatus string
 
 // AlertSlackChannelRequest Slack destination selected for an alert. Exactly one of the two shapes is valid: a shared channel (`shared: true`, `workspace` omitted), or a workspace channel (`shared: false` or omitted, `workspace` required). Any other combination is rejected with `validation_failed`. Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected. Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.
 type AlertSlackChannelRequest struct {
@@ -9797,6 +9840,15 @@ type ListAlertsParamsSortBy string
 // ListAlertsParamsSortOrder defines parameters for ListAlerts.
 type ListAlertsParamsSortOrder string
 
+// ListAlertSlackChannelsParams defines parameters for ListAlertSlackChannels.
+type ListAlertSlackChannelsParams struct {
+	NameContains *string `form:"nameContains,omitempty" json:"nameContains,omitempty"`
+	MaxResults   *int    `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+}
+
 // ListAllocationsParams defines parameters for ListAllocations.
 type ListAllocationsParams struct {
 	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
@@ -11042,6 +11094,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /analytics/v1/alerts (the `CreateAlert` operationId).
 	CreateAlert(ctx context.Context, body CreateAlertJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListAlertSlackChannels List eligible Slack destinations
+	//
+	// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+	//
+	// Corresponds with GET /analytics/v1/alerts/slack-channels (the `ListAlertSlackChannels` operationId).
+	ListAlertSlackChannels(ctx context.Context, params *ListAlertSlackChannelsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteAlert Delete an alert
 	//
@@ -12426,6 +12485,23 @@ func (c *Client) CreateAlertWithBody(ctx context.Context, contentType string, bo
 // Corresponds with POST /analytics/v1/alerts (the `CreateAlert` operationId).
 func (c *Client) CreateAlert(ctx context.Context, body CreateAlertJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateAlertRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListAlertSlackChannels List eligible Slack destinations
+//
+// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+//
+// Corresponds with GET /analytics/v1/alerts/slack-channels (the `ListAlertSlackChannels` operationId).
+func (c *Client) ListAlertSlackChannels(ctx context.Context, params *ListAlertSlackChannelsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAlertSlackChannelsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -15402,6 +15478,84 @@ func NewCreateAlertRequestWithBody(server string, contentType string, body io.Re
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListAlertSlackChannelsRequest constructs an http.Request for the ListAlertSlackChannels method
+func NewListAlertSlackChannelsRequest(server string, params *ListAlertSlackChannelsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/alerts/slack-channels")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.NameContains != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "nameContains", *params.NameContains, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -21588,6 +21742,15 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /analytics/v1/alerts (the `CreateAlert` operationId).
 	CreateAlertWithResponse(ctx context.Context, body CreateAlertJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateAlertResp, error)
 
+	// ListAlertSlackChannelsWithResponse List eligible Slack destinations
+	//
+	// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /analytics/v1/alerts/slack-channels (the `ListAlertSlackChannels` operationId).
+	ListAlertSlackChannelsWithResponse(ctx context.Context, params *ListAlertSlackChannelsParams, reqEditors ...RequestEditorFn) (*ListAlertSlackChannelsResp, error)
+
 	// DeleteAlertWithResponse Delete an alert
 	//
 	// Deletes the alert specified by the Id.
@@ -23217,6 +23380,68 @@ func (r CreateAlertResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r CreateAlertResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ListAlertSlackChannelsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AlertSlackChannelList
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListAlertSlackChannelsResp) GetJSON200() *AlertSlackChannelList {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListAlertSlackChannelsResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListAlertSlackChannelsResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListAlertSlackChannelsResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetBody returns the raw response body bytes
+func (r ListAlertSlackChannelsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAlertSlackChannelsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAlertSlackChannelsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListAlertSlackChannelsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -31831,6 +32056,21 @@ func (c *ClientWithResponses) CreateAlertWithResponse(ctx context.Context, body 
 	return ParseCreateAlertResp(rsp)
 }
 
+// ListAlertSlackChannelsWithResponse List eligible Slack destinations
+//
+// Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /analytics/v1/alerts/slack-channels (the `ListAlertSlackChannels` operationId).
+func (c *ClientWithResponses) ListAlertSlackChannelsWithResponse(ctx context.Context, params *ListAlertSlackChannelsParams, reqEditors ...RequestEditorFn) (*ListAlertSlackChannelsResp, error) {
+	rsp, err := c.ListAlertSlackChannels(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAlertSlackChannelsResp(rsp)
+}
+
 // DeleteAlertWithResponse Delete an alert
 //
 // Deletes the alert specified by the Id.
@@ -34317,6 +34557,56 @@ func ParseCreateAlertResp(rsp *http.Response) (*CreateAlertResp, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAlertSlackChannelsResp parses an HTTP response from a ListAlertSlackChannelsWithResponse call
+func ParseListAlertSlackChannelsResp(rsp *http.Response) (*ListAlertSlackChannelsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAlertSlackChannelsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AlertSlackChannelList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case rsp.StatusCode == 503:
+		break // No content-type
 
 	}
 

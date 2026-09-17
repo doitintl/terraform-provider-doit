@@ -332,6 +332,122 @@
 			}
 		},
 		{
+			"name": "alert_slack_channels",
+			"schema": {
+				"attributes": [
+					{
+						"name": "name_contains",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Case-insensitive substring of the channel display name."
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 500)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "has_shared_channel",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "is_workspace_connected",
+						"bool": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "customer_id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name, resolved server-side."
+										}
+									},
+									{
+										"name": "shared",
+										"bool": {
+											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Channel visibility, resolved server-side."
+										}
+									},
+									{
+										"name": "workspace",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Connected workspace name returned by discovery. Required for a non-shared channel."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total eligible channels after filtering and before pagination."
+						}
+					},
+					{
+						"name": "workspace_status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available."
+						}
+					}
+				],
+				"description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.",
+				"markdown_description": "Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions."
+			}
+		},
+		{
 			"name": "alerts",
 			"schema": {
 				"attributes": [
