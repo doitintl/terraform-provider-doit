@@ -104,11 +104,7 @@ func (*SchemaFacts) AFact() {}
 
 // String returns a description of the schemas found, used by analysistest.
 func (sf *SchemaFacts) String() string {
-	names := make([]string, 0, len(sf.Schemas))
-	for name := range sf.Schemas {
-		names = append(names, name)
-	}
-	return strings.Join(names, ", ")
+	return strings.Join(sortedKeys(sf.Schemas), ", ")
 }
 
 // Analyzer is the go/analysis Analyzer for schema parsing.
