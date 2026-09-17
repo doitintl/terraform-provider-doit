@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.9.0 (2026-09-17)
+
+### FEATURES
+
+- **data-source/doit_ps4c_gcp_billing_account, data-source/doit_ps4c_gcp_billing_accounts, data-source/doit_ps4c_gcp_resource_cuds, data-source/doit_ps4c_gcp_settings**: Add data sources for PerfectScale for Commitments (PS4C) GCP ([#341](https://github.com/doitintl/terraform-provider-doit/pull/341))
+- **data-source/doit_rbac_countries**: Add data source to list available countries for Role-Based Access Control (RBAC) governance ([#337](https://github.com/doitintl/terraform-provider-doit/pull/337))
+- **data-source/doit_current_user**: Add `permissions` attribute exposing user permissions and capabilities ([#344](https://github.com/doitintl/terraform-provider-doit/pull/344))
+- **data-source/doit_support_request_comments**: Add `public` attribute indicating whether comments are visible to customers ([#336](https://github.com/doitintl/terraform-provider-doit/pull/336))
+
+### ENHANCEMENTS
+
+- **resource/doit_alert, data-source/doit_alert, data-source/doit_alerts**: Add support for Slack channel recipients (`recipients.slack_channels`) and ignore values range (`condition.ignore_values_range`) ([#343](https://github.com/doitintl/terraform-provider-doit/pull/343))
+- **resource/doit_datahub_dataset, data-source/doit_datahub_dataset**: Add support for `bifrost` in `logo_name` enum ([#348](https://github.com/doitintl/terraform-provider-doit/pull/348))
+
+### BUG FIXES
+
+- **validation**: Defer validation for unknown Terraform values in custom validators to prevent premature validation errors during plan phase ([#342](https://github.com/doitintl/terraform-provider-doit/pull/342))
+
+### DOCUMENTATION
+
+- **data-source/doit_report_result, data-source/doit_report_query**: Document and test `details` and value aliases for async reports ([#345](https://github.com/doitintl/terraform-provider-doit/pull/345))
+- Document Terraform Core data source deferral behavior ([#346](https://github.com/doitintl/terraform-provider-doit/pull/346))
+- Add new PS4C GCP and RBAC Countries data sources to README
+
+### INTERNAL
+
+- Synchronize upstream OpenAPI specification ([#339](https://github.com/doitintl/terraform-provider-doit/pull/339), [#347](https://github.com/doitintl/terraform-provider-doit/pull/347))
+- Fix non-deterministic schema fact serialization in custom linters ([#350](https://github.com/doitintl/terraform-provider-doit/pull/350))
+- Make `TestAccReportsDataSource_NameContains` deterministic ([#338](https://github.com/doitintl/terraform-provider-doit/pull/338))
+- Upgrade Go dependencies and tooling
+
 ## v1.8.0 (2026-09-10)
 
 ### BREAKING CHANGES
