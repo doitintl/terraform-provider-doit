@@ -94,6 +94,9 @@ tags:
     description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
   - name: PerfectScale for Commitments GCP
     description: Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
+  - name: Signup
+    description: >-
+      Start a Cloud Intelligence trial for an organization that is not yet a DoiT customer. These operations require no API key: they are rate limited, idempotent, and provision nothing until the organization's admin verifies the request. Agents create a request and hand the returned consentUrl to the admin; the admin verifies by entering the emailed code (or signing the request on the console), after which the tenant is provisioned and the request reports its customer id.
 paths:
   /analytics/v1/alerts:
     get:
@@ -12519,6 +12522,14 @@ components:
             code: service_unavailable
             retryable: true
   parameters:
+    signupRequestId:
+      name: signupRequestId
+      in: path
+      required: true
+      description: Public signup request id (sr_ prefix).
+      schema:
+        type: string
+        pattern: "^sr_[0-9a-f]{32}$"
     gcp_service:
       in: query
       name: gcp_service
