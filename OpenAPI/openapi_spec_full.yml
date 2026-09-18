@@ -94,8 +94,199 @@ tags:
     description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
   - name: PerfectScale for Commitments GCP
     description: Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
+  - name: Signup
+    description: >-
+      Start a Cloud Intelligence trial for an organization that is not yet a DoiT customer. These operations
+      require no API key: they are rate limited, idempotent, and provision nothing until the organization's
+      admin verifies the request. Agents create a request and hand the returned consentUrl to the admin;
+      the admin verifies by entering the emailed code (or signing the request on the console), after which
+      the tenant is provisioned and the request reports its customer id.
 
 paths:
+  /signup/v1/requests:
+    post:
+      tags: [Signup]
+      summary: Create a signup request
+      description: >-
+        Starts a Cloud Intelligence trial signup for the organization owning the email domain. Idempotent per
+        Idempotency-Key: a retried create returns the same request. Nothing is provisioned until the admin
+        verifies the request. Human channels (console, web) additionally require a Cloudflare Turnstile token
+        and an accepted Terms of Service version; the emailed 6-digit verification code is then the consent act.
+        Agents should present consentUrl to the organization's admin and poll getSignupRequest.
+      operationId: createSignupRequest
+      security: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Caller-chosen key (1-256 characters) that makes retries safe; the same key returns the same request.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequestCreate"
+      responses:
+        "201":
+          description: Created - the signup request awaits the admin's verification.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupRequest"
+        "200":
+          description: OK - an earlier request with the same Idempotency-Key was returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupRequest"
+        "400":
+          description: >-
+            Invalid request. code is one of invalid_request, idempotency_key_required, corporate_email_required,
+            bot_check_failed, terms_consent_required, terms_version_outdated.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "409":
+          description: >-
+            Conflict. code is one of email_already_registered, domain_already_registered (both carry signInUrl),
+            partner_domain_not_allowed, signup_already_pending (carries signupRequestId), trial_already_used.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "429":
+          description: Rate limited; retry after the Retry-After header.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "503":
+          description: Signup temporarily unavailable (signup_disabled, validation_unavailable, verification_unavailable); retryable.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+  /signup/v1/requests/{signupRequestId}:
+    get:
+      tags: [Signup]
+      summary: Get a signup request
+      description: >-
+        Returns the current state of a signup request. Poll at the returned pollAfterSeconds cadence; once
+        status is completed the response carries customerId, consoleUrl and signInUrl. The response never
+        includes the requester's email or the verification code.
+      operationId: getSignupRequest
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/signupRequestId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupRequest"
+        "404":
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "429":
+          description: Rate limited; retry after the Retry-After header.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+  /signup/v1/requests/{signupRequestId}/verify:
+    post:
+      tags: [Signup]
+      summary: Verify a signup request with the emailed code
+      description: >-
+        Confirms ownership of the admin email by entering the 6-digit code that was emailed when the request
+        was created (or resent). Success records consent and starts provisioning; the request moves to
+        consented and then completed. Five wrong codes lock the current code; request a new one with
+        resendSignupVerification.
+      operationId: verifySignupRequest
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/signupRequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupVerificationCode"
+      responses:
+        "200":
+          description: OK - the request is consented (or already past that point).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupRequest"
+        "400":
+          description: code is one of invalid_request, verification_code_invalid, verification_code_expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "404":
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "409":
+          description: The request is not awaiting verification (consent_conflict).
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "429":
+          description: Too many attempts (verification_locked) or rate limited.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+  /signup/v1/requests/{signupRequestId}/verification:
+    post:
+      tags: [Signup]
+      summary: Resend the verification code
+      description: >-
+        Emails a fresh 6-digit code to the requester. At most three codes per request, at least 60 seconds apart.
+      operationId: resendSignupVerification
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/signupRequestId"
+      responses:
+        "200":
+          description: OK - a new code was sent; verification.sendsRemaining tells how many resends are left.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupRequest"
+        "404":
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "409":
+          description: The request is not awaiting verification (consent_conflict).
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "429":
+          description: Sent too recently (verification_resend_too_soon, retryable) or send limit reached (verification_locked).
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
   /analytics/v1/alerts:
     get:
       tags:
@@ -9766,6 +9957,47 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups/{customerGroupId}/users:
+    parameters:
+      - $ref: "#/components/parameters/customerGroupId"
+      - $ref: "#/components/parameters/tenantId"
+    get:
+      tags:
+        - Customer Groups
+      summary: List users assigned to a customer group
+      description: Returns the users assigned to a customer group owned by the authenticated tenant, sorted by user ID. Requires the UsersManager permission.
+      operationId: listCustomerGroupUsers
+      responses:
+        "200":
+          description: OK
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerGroupUsersResponse"
+              example:
+                customerGroupId: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                users:
+                  - userId: Hn4pR7sT9vW2xY5zA8bC
+                  - userId: Kp2mN8qL4vR0sT1wX3yZ
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /rbac/v1/customer-groups/{customerGroupId}/users/{userId}:
     parameters:
       - $ref: "#/components/parameters/customerGroupId"
@@ -11449,6 +11681,34 @@ components:
           description: Ready customer groups owned by the authenticated tenant.
           items:
             $ref: "#/components/schemas/CustomerGroup"
+    CustomerGroupUser:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: User assigned to the customer group.
+    CustomerGroupUsersResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - customerGroupId
+        - users
+      properties:
+        customerGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer group the assignments belong to.
+        users:
+          type: array
+          description: Users assigned to the customer group, sorted by user ID.
+          items:
+            $ref: "#/components/schemas/CustomerGroupUser"
     GeographicAccessScope:
       oneOf:
         - $ref: "#/components/schemas/UnassignedGeographicAccessScope"
@@ -15465,6 +15725,168 @@ components:
           description: >-
             The full resource path of the document. A document "doc-1" in
             collection "coll-1" would be: "projects/P/databases/D/documents/coll-1/doc-1".
+    SignupRequestCreate:
+      type: object
+      required: [email, companyName]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 120
+          description: Work email of the organization's admin. Free-mail and disposable addresses are rejected.
+        companyName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        source:
+          type: object
+          description: Attribution. channel defaults to agent; console and web are the human channels.
+          properties:
+            channel:
+              type: string
+              enum: [agent, console, web]
+              default: agent
+            agentClient:
+              type: string
+              maxLength: 120
+              description: Name and version of the calling agent (agent channel).
+            campaign:
+              type: string
+              maxLength: 120
+            utmSource:
+              type: string
+              maxLength: 120
+            utmMedium:
+              type: string
+              maxLength: 120
+            utmCampaign:
+              type: string
+              maxLength: 120
+        turnstileToken:
+          type: string
+          maxLength: 2048
+          description: Cloudflare Turnstile response token. Required for the console and web channels.
+        termsConsent:
+          type: object
+          description: Terms of Service acceptance. Required for the console and web channels.
+          required: [version, accepted]
+          properties:
+            version:
+              type: string
+              description: Terms version shown to the requester; must match the current version.
+            accepted:
+              type: boolean
+    SignupVerificationCode:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: "^[0-9]{6}$"
+          description: The 6-digit code from the verification email.
+    SignupVerification:
+      type: object
+      description: Present while the request awaits the emailed code.
+      properties:
+        required:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        resendAfterSeconds:
+          type: integer
+        sendsRemaining:
+          type: integer
+    SignupRequest:
+      type: object
+      description: >-
+        Redacted public view of a signup request. Never includes the admin email, the verification code
+        or the idempotency key.
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          description: Public request id (sr_ prefix); an unguessable capability.
+        status:
+          type: string
+          enum: [pending_consent, consented, provisioning, completed, rejected, expired, failed]
+        channel:
+          type: string
+          enum: [agent, console, web]
+        companyName:
+          type: string
+          description: Company name supplied at signup; shown on the console verification and completion pages.
+        consentUrl:
+          type: string
+          format: uri
+          description: Page where the organization's admin verifies the request (pending_consent only).
+        verification:
+          $ref: "#/components/schemas/SignupVerification"
+        expiresAt:
+          type: string
+          format: date-time
+          description: When an unverified request expires (pending_consent only).
+        pollAfterSeconds:
+          type: integer
+          description: Suggested polling interval while the request is not terminal.
+        customerId:
+          type: string
+          description: The provisioned tenant (completed only).
+        consoleUrl:
+          type: string
+          format: uri
+        signInUrl:
+          type: string
+          format: uri
+          description: Page where the admin signs into the new tenant (completed only).
+        tier:
+          type: string
+          description: Trial tier name (trial).
+        trialEndDate:
+          type: string
+          format: date-time
+        nextSteps:
+          type: array
+          items:
+            type: string
+        reason:
+          type: object
+          description: Why a terminal request did not complete.
+          properties:
+            code:
+              type: string
+            detail:
+              type: string
+            retryable:
+              type: boolean
+    SignupProblem:
+      type: object
+      description: RFC 9457 problem details for the Signup operations.
+      required: [type, title, status, code, retryable]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          description: Machine-readable problem code (see each response description).
+        retryable:
+          type: boolean
+        signupRequestId:
+          type: string
+          description: The already-pending request for this domain (signup_already_pending).
+        signInUrl:
+          type: string
+          format: uri
+          description: Where an existing DoiT user or customer should sign in instead.
     Error:
       type: object
       description: Standard error response structure.
@@ -21876,6 +22298,14 @@ components:
             code: rate_limited
             retryable: true
   parameters:
+    signupRequestId:
+      name: signupRequestId
+      in: path
+      required: true
+      description: Public signup request id (sr_ prefix).
+      schema:
+        type: string
+        pattern: "^sr_[0-9a-f]{32}$"
     gcp_service:
       in: query
       name: gcp_service
