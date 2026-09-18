@@ -7111,7 +7111,7 @@ type ExternalConfig struct {
 	LimitAggregation *ExternalConfigLimitAggregation `json:"limitAggregation,omitempty"`
 
 	// LimitByChange Limit by change filter. A report may configure at most two of
-	// `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+	// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
 	//
 	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]}
 	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
@@ -7338,7 +7338,7 @@ type ExternalForecastSettings struct {
 type ExternalForecastSettingsMode string
 
 // ExternalLimitByChange Limit by change filter. A report may configure at most two of
-// `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
 //
 // Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]}
 type ExternalLimitByChange struct {
@@ -8206,7 +8206,7 @@ type Group struct {
 	// Example: service_description
 	Id *string `json:"id,omitempty"`
 
-	// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+	// Limit To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 	//
 	// Example: {"metric":{"type":"basic","value":"cost"},"sort":"desc","value":3}
 	Limit *Limit `json:"limit,omitempty"`
@@ -8437,7 +8437,7 @@ type LabelListItemColor string
 // LabelListItemType The type of the label (custom or preset).
 type LabelListItemType string
 
-// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+// Limit To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 //
 // Example: {"metric":{"type":"basic","value":"cost"},"sort":"desc","value":3}
 type Limit struct {

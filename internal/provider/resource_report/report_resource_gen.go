@@ -542,8 +542,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									},
 									Optional:            true,
 									Computed:            true,
-									Description:         "To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).",
-									MarkdownDescription: "To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).",
+									Description:         "To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).",
+									MarkdownDescription: "To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).",
 								},
 								"type": schema.StringAttribute{
 									Optional:            true,
@@ -711,8 +711,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						},
 						Optional:            true,
 						Computed:            true,
-						Description:         "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.",
-						MarkdownDescription: "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.",
+						Description:         "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and rank `group` limits — not all three.",
+						MarkdownDescription: "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and rank `group` limits — not all three.",
 					},
 					"metric_filter": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{

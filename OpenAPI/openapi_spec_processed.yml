@@ -9175,7 +9175,7 @@ components:
     ExternalLimitByChange:
       description: |-
         Limit by change filter. A report may configure at most two of
-        `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+        `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
       type: object
       required:
         - metric
@@ -10658,7 +10658,7 @@ components:
     Limit:
       type: object
       description: |-
-        To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+        To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
       required:
         - metric
       properties:
