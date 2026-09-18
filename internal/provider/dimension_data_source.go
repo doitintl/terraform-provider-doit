@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -49,6 +50,12 @@ func (d *dimensionDataSource) Configure(_ context.Context, req datasource.Config
 
 func (d *dimensionDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_dimension.DimensionDataSourceSchema(ctx)
+	attribute, ok := s.Attributes["type"].(schema.StringAttribute)
+	if !ok {
+		panic("dimensionDataSource.Schema: type is not a string attribute")
+	}
+	attribute.Validators = append(attribute.Validators, deprecatedDimensionsTypeValidator{})
+	s.Attributes["type"] = attribute
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 

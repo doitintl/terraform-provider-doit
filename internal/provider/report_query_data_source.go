@@ -60,6 +60,7 @@ func (d *reportQueryDataSource) Metadata(_ context.Context, req datasource.Metad
 func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	// Get the generated report resource schema and extract its "config" attribute.
 	reportSchema := resource_report.ReportResourceSchema(ctx)
+	appendDimensionsTypeDeprecationValidators(reportSchema.Attributes, reportDimensionsTypeAttributePaths...)
 	configAttr, ok := reportSchema.Attributes["config"].(rsschema.SingleNestedAttribute)
 	if !ok {
 		resp.Diagnostics.AddError(

@@ -67,6 +67,7 @@ func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStat
 
 func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_alert.AlertResourceSchema(ctx)
+	appendDimensionsTypeDeprecationValidators(s.Attributes, "config.scopes[*].type")
 
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.

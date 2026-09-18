@@ -69,6 +69,7 @@ func (r *budgetResource) ImportState(ctx context.Context, req resource.ImportSta
 func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_budget.BudgetResourceSchema(ctx)
 	s.Version = budgetSchemaVersion
+	appendDimensionsTypeDeprecationValidators(s.Attributes, "scopes[*].type")
 
 	// Add manual validator for end_period
 	if endPeriod, ok := s.Attributes["end_period"]; ok {
