@@ -296,3 +296,11 @@ data_sources:
     read:
       path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based
       method: GET
+  ps4c_commitment_policy:
+    read:
+      path: /ps4commitments/v1/general/policies/{policyId}
+      method: GET
+  ps4c_commitment_policies:
+    read:
+      path: /ps4commitments/v1/general/policies
+      method: GET
