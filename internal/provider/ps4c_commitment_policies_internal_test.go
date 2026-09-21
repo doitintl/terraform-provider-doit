@@ -220,6 +220,140 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_MaxResults(t *testing.T) {
 	}
 }
 
+func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T) {
+	var requests []*http.Request
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		if r.URL.Query().Get("pageToken") == "start-token" {
+			_, _ = fmt.Fprint(w, `{
+				"items": [
+					{
+						"id": "balanced",
+						"name": "Balanced",
+						"isBuiltIn": true,
+						"targetCoverage": 80,
+						"lookbackDays": 60,
+						"ladderStepPercent": 10,
+						"ladderIntervalDays": 7,
+						"bootstrapPercent": 35
+					}
+				],
+				"pageToken": "end-token",
+				"rowCount": 2
+			}`)
+			return
+		}
+
+		_, _ = fmt.Fprint(w, `{
+			"items": [
+				{
+					"id": "max_savings",
+					"name": "Max Savings",
+					"isBuiltIn": true,
+					"targetCoverage": 95,
+					"lookbackDays": 30,
+					"ladderStepPercent": 15,
+					"ladderIntervalDays": 7,
+					"bootstrapPercent": 50
+				}
+			],
+			"pageToken": null,
+			"rowCount": 2
+		}`)
+	}))
+
+	resp := readPs4cCommitmentPolicies(t, server, map[string]tftypes.Value{
+		"page_token": tftypes.NewValue(tftypes.String, "start-token"),
+	})
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+	}
+
+	if len(requests) != 2 {
+		t.Fatalf("expected 2 API calls while auto-paginating from start token, got %d", len(requests))
+	}
+	if got := requests[0].URL.Query().Get("pageToken"); got != "start-token" {
+		t.Errorf("first pageToken query param = %q, want %q", got, "start-token")
+	}
+	if got := requests[1].URL.Query().Get("pageToken"); got != "end-token" {
+		t.Errorf("second pageToken query param = %q, want %q", got, "end-token")
+	}
+
+	var state ps4cCommitmentPoliciesDataSourceModel
+	if diags := resp.State.Get(t.Context(), &state); diags.HasError() {
+		t.Fatal(diags)
+	}
+
+	if got := len(state.Items.Elements()); got != 2 {
+		t.Errorf("items count = %d, want 2", got)
+	}
+	if !state.PageToken.IsNull() {
+		t.Errorf("page_token should be null after auto-pagination completes, got %q", state.PageToken.ValueString())
+	}
+}
+
+func TestPs4cCommitmentPoliciesRead_ManualPagination_Both(t *testing.T) {
+	var requests []*http.Request
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests = append(requests, r)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		_, _ = fmt.Fprint(w, `{
+			"items": [
+				{
+					"id": "balanced",
+					"name": "Balanced",
+					"isBuiltIn": true,
+					"targetCoverage": 80,
+					"lookbackDays": 60,
+					"ladderStepPercent": 10,
+					"ladderIntervalDays": 7,
+					"bootstrapPercent": 35
+				}
+			],
+			"pageToken": "next-token-after-both",
+			"rowCount": 5
+		}`)
+	}))
+
+	resp := readPs4cCommitmentPolicies(t, server, map[string]tftypes.Value{
+		"max_results": tftypes.NewValue(tftypes.Number, 1.0),
+		"page_token":  tftypes.NewValue(tftypes.String, "input-page-token"),
+	})
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+	}
+
+	if len(requests) != 1 {
+		t.Fatalf("expected exactly 1 API call in manual mode with both inputs, got %d", len(requests))
+	}
+	if got := requests[0].URL.Query().Get("maxResults"); got != "1" {
+		t.Errorf("maxResults query param = %q, want %q", got, "1")
+	}
+	if got := requests[0].URL.Query().Get("pageToken"); got != "input-page-token" {
+		t.Errorf("pageToken query param = %q, want %q", got, "input-page-token")
+	}
+
+	var state ps4cCommitmentPoliciesDataSourceModel
+	if diags := resp.State.Get(t.Context(), &state); diags.HasError() {
+		t.Fatal(diags)
+	}
+
+	if got := len(state.Items.Elements()); got != 1 {
+		t.Errorf("items count = %d, want 1", got)
+	}
+	if got := state.RowCount.ValueInt64(); got != 5 {
+		t.Errorf("row_count = %d, want 5", got)
+	}
+	if got := state.PageToken.ValueString(); got != "next-token-after-both" {
+		t.Errorf("page_token = %q, want %q", got, "next-token-after-both")
+	}
+}
+
 func TestPs4cCommitmentPoliciesRead_UnknownInputs(t *testing.T) {
 	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		t.Fatal("API should not be called when inputs are unknown")
