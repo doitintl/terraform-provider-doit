@@ -83,6 +83,7 @@ The following table shows which data sources support pagination:
 | `doit_invoices`                 | ✓               | ✓                 |
 | `doit_labels`                   | ✓               | ✓                 |
 | `doit_ps4c_aws_organizations`   | ✓               | ✓                 |
+| `doit_ps4c_commitment_policies` | ✓               | ✓                 |
 | `doit_ps4c_gcp_billing_accounts`| ✓               | ✓                 |
 | `doit_ps4c_gcp_resource_cuds`   | ✓               | ✓                 |
 | `doit_ps4c_gcp_settings`        | ✓               | ✓                 |
