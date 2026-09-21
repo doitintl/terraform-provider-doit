@@ -356,7 +356,8 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_Both(t *testing.T) {
 
 func TestPs4cCommitmentPoliciesRead_UnknownInputs(t *testing.T) {
 	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		t.Fatal("API should not be called when inputs are unknown")
+		t.Error("API should not be called when inputs are unknown")
+		http.Error(w, "unexpected request", http.StatusInternalServerError)
 	}))
 
 	resp := readPs4cCommitmentPolicies(t, server, map[string]tftypes.Value{

@@ -248,7 +248,8 @@ func TestPs4cCommitmentPolicyRead_NotFound(t *testing.T) {
 
 func TestPs4cCommitmentPolicyRead_UnknownInput(t *testing.T) {
 	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		t.Fatal("API should not be called when policy_id is unknown")
+		t.Error("API should not be called when policy_id is unknown")
+		http.Error(w, "unexpected request", http.StatusInternalServerError)
 	}))
 
 	resp := readPs4cCommitmentPolicy(t, server, tftypes.NewValue(tftypes.String, tftypes.UnknownValue))
