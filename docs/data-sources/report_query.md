@@ -159,7 +159,7 @@ at most two of those three limit types — not all three. When `displayValues` i
 `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
 Possible values: `none`, `top`, `all`
 - `limit_by_change` (Attributes) Limit by change filter. A report may configure at most two of
-`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three. (see [below for nested schema](#nestedatt--config--limit_by_change))
+`metricFilter`, `limitByChange`, and rank `group` limits — not all three. (see [below for nested schema](#nestedatt--config--limit_by_change))
 - `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
@@ -291,7 +291,7 @@ Optional:
 Optional:
 
 - `id` (String) Dimension ID.
-- `limit` (Attributes) To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
+- `limit` (Attributes) To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
 - `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
 
