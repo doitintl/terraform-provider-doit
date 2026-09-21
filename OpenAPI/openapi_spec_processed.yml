@@ -206,6 +206,41 @@ paths:
         "404":
           $ref: "#/components/responses/404"
       x-codegen-request-body-name: Body
+  /analytics/v1/alerts/slack-channels:
+    get:
+      tags: [Alerts]
+      summary: List eligible Slack destinations
+      operationId: listAlertSlackChannels
+      description: Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+      parameters:
+        - name: nameContains
+          in: query
+          schema:
+            type: string
+            description: Case-insensitive substring of the channel display name.
+        - name: maxResults
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: Eligible channels and connection status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertSlackChannelList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "503":
+          description: Slack discovery is temporarily unavailable. Retry later.
   "/analytics/v1/alerts/{id}":
     get:
       tags:
@@ -5013,6 +5048,28 @@ components:
           type: string
           description: Channel visibility, resolved server-side.
           enum: [public, private]
+    AlertSlackChannelList:
+      type: object
+      required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertSlackChannel"
+        rowCount:
+          type: integer
+          description: Total eligible channels after filtering and before pagination.
+        pageToken:
+          type: string
+          description: Opaque continuation token. Omitted on the final page.
+        workspaceStatus:
+          type: string
+          enum: [none, ok, inactive, missing_private_scope]
+          description: Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
+        isWorkspaceConnected:
+          type: boolean
+        hasSharedChannel:
+          type: boolean
     AlertSlackChannelRequest:
       type: object
       required: [id]
