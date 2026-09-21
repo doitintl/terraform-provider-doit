@@ -36,7 +36,7 @@ generate:
 
 # Generate provider documentation from templates
 docs:
-	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name doit --rendered-provider-name terraform-provider-doit
 
 # Validate provider documentation is up-to-date and structurally valid
 validate-docs: docs
@@ -45,7 +45,7 @@ validate-docs: docs
 		git status --short -- docs/; \
 		exit 1; \
 	fi
-	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs validate
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs validate --provider-name doit
 
 fmt:
 	gofmt -s -w -e .

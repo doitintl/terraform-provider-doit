@@ -12421,6 +12421,254 @@
 			}
 		},
 		{
+			"name": "ps4c_commitment_policies",
+			"schema": {
+				"attributes": [
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning."
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 500)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "bootstrap_percent",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Share of the target commitment purchased in the first (immediate) step, as a percentage."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id."
+										}
+									},
+									{
+										"name": "is_built_in",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "`true` for the three immutable built-in policies, `false` for tenant-defined policies."
+										}
+									},
+									{
+										"name": "ladder_interval_days",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Days between consecutive laddering steps."
+										}
+									},
+									{
+										"name": "ladder_step_percent",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Size of each incremental laddering step, as a percentage of the target commitment."
+										}
+									},
+									{
+										"name": "lookback_days",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Days of historical usage analyzed to build the recommendation baseline."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name. Built-in names are fixed; custom names are chosen by the tenant."
+										}
+									},
+									{
+										"name": "target_coverage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Share of the optimal commitment the engine aims to purchase, as a percentage."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of policies available to the tenant across all pages."
+						}
+					}
+				],
+				"description": "Cloud-agnostic PerfectScale for Commitments resources — commitment policies shared by AWS and GCP.",
+				"markdown_description": "Cloud-agnostic PerfectScale for Commitments resources — commitment policies shared by AWS and GCP."
+			}
+		},
+		{
+			"name": "ps4c_commitment_policy",
+			"schema": {
+				"attributes": [
+					{
+						"name": "policy_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Commitment policy id. Built-in policies use `conservative`, `balanced` or `max_savings`; custom policies have an opaque id returned by the list endpoint.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Za-z0-9_-]{1,64}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "assignments",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "account_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "AWS management account id or GCP billing account id, matching `managementAccountId` / `billingAccountId` elsewhere in this API."
+										}
+									},
+									{
+										"name": "cloud",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud the scope belongs to."
+										}
+									},
+									{
+										"name": "region",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Region scope in `lower_snake_case` wire form (for example `us_east1`) for product lines assigned per region (GCP `cloud_sql`). `null` for every scope assigned per account (all AWS scopes, GCP `compute`); the settings endpoints report the same scope as `global`."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only."
+										}
+									}
+								]
+							},
+							"description": "Scopes explicitly assigned to this policy across AWS and GCP, sorted by `cloud`, `accountId`, `service`, `region`. Empty when the policy is not assigned anywhere."
+						}
+					},
+					{
+						"name": "bootstrap_percent",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Share of the target commitment purchased in the first (immediate) step, as a percentage."
+						}
+					},
+					{
+						"name": "created_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the policy was created, RFC 3339 UTC. `null` if unknown."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id."
+						}
+					},
+					{
+						"name": "is_built_in",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "`true` for the three immutable built-in policies, `false` for tenant-defined policies."
+						}
+					},
+					{
+						"name": "ladder_interval_days",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Days between consecutive laddering steps."
+						}
+					},
+					{
+						"name": "ladder_step_percent",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Size of each incremental laddering step, as a percentage of the target commitment."
+						}
+					},
+					{
+						"name": "lookback_days",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Days of historical usage analyzed to build the recommendation baseline."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Display name. Built-in names are fixed; custom names are chosen by the tenant."
+						}
+					},
+					{
+						"name": "target_coverage",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Share of the optimal commitment the engine aims to purchase, as a percentage."
+						}
+					},
+					{
+						"name": "updated_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the policy was last written, RFC 3339 UTC. For custom policies this is the last edit; for built-in policies it also advances when DoiT re-publishes the catalog, even if the parameters did not change. `null` if unknown."
+						}
+					}
+				],
+				"description": "Cloud-agnostic PerfectScale for Commitments resources — commitment policies shared by AWS and GCP.",
+				"markdown_description": "Cloud-agnostic PerfectScale for Commitments resources — commitment policies shared by AWS and GCP."
+			}
+		},
+		{
 			"name": "ps4c_gcp_billing_account",
 			"schema": {
 				"attributes": [

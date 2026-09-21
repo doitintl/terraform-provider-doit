@@ -1312,6 +1312,45 @@ func (e CommitmentExternalListItemCloudProvider) Valid() bool {
 	}
 }
 
+// Defines values for CommitmentPolicyAssignmentCloud.
+const (
+	CommitmentPolicyAssignmentCloudAws CommitmentPolicyAssignmentCloud = "aws"
+	CommitmentPolicyAssignmentCloudGcp CommitmentPolicyAssignmentCloud = "gcp"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentPolicyAssignmentCloud enum.
+func (e CommitmentPolicyAssignmentCloud) Valid() bool {
+	switch e {
+	case CommitmentPolicyAssignmentCloudAws:
+		return true
+	case CommitmentPolicyAssignmentCloudGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitmentPolicyAssignmentService.
+const (
+	CommitmentPolicyAssignmentServiceCloudSql CommitmentPolicyAssignmentService = "cloud_sql"
+	CommitmentPolicyAssignmentServiceCompute  CommitmentPolicyAssignmentService = "compute"
+	CommitmentPolicyAssignmentServiceDatabase CommitmentPolicyAssignmentService = "database"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentPolicyAssignmentService enum.
+func (e CommitmentPolicyAssignmentService) Valid() bool {
+	switch e {
+	case CommitmentPolicyAssignmentServiceCloudSql:
+		return true
+	case CommitmentPolicyAssignmentServiceCompute:
+		return true
+	case CommitmentPolicyAssignmentServiceDatabase:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CommitmentTerm.
 const (
 	CommitmentTermOneYear   CommitmentTerm = "one_year"
@@ -6599,6 +6638,136 @@ type CommitmentPeriod struct {
 	StartDate *time.Time `json:"startDate,omitempty"`
 }
 
+// CommitmentPolicy A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
+// `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
+// inventory coverage fields.
+type CommitmentPolicy struct {
+	// BootstrapPercent Share of the target commitment purchased in the first (immediate) step, as a percentage.
+	//
+	// Example: 35
+	BootstrapPercent float64 `json:"bootstrapPercent"`
+
+	// Id Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
+	Id CommitmentPolicyId `json:"id"`
+
+	// IsBuiltIn `true` for the three immutable built-in policies, `false` for tenant-defined policies.
+	IsBuiltIn bool `json:"isBuiltIn"`
+
+	// LadderIntervalDays Days between consecutive laddering steps.
+	//
+	// Example: 7
+	LadderIntervalDays int `json:"ladderIntervalDays"`
+
+	// LadderStepPercent Size of each incremental laddering step, as a percentage of the target commitment.
+	//
+	// Example: 10
+	LadderStepPercent float64 `json:"ladderStepPercent"`
+
+	// LookbackDays Days of historical usage analyzed to build the recommendation baseline.
+	//
+	// Example: 60
+	LookbackDays int `json:"lookbackDays"`
+
+	// Name Display name. Built-in names are fixed; custom names are chosen by the tenant.
+	//
+	// Example: Balanced
+	Name string `json:"name"`
+
+	// TargetCoverage Share of the optimal commitment the engine aims to purchase, as a percentage.
+	//
+	// Example: 80
+	TargetCoverage float64 `json:"targetCoverage"`
+}
+
+// CommitmentPolicyAssignment One account × product-line scope a policy is explicitly assigned to, on either cloud.
+type CommitmentPolicyAssignment struct {
+	// AccountId AWS management account id or GCP billing account id, matching `managementAccountId` / `billingAccountId` elsewhere in this API.
+	//
+	// Example: 123456789012
+	AccountId string `json:"accountId"`
+
+	// Cloud Cloud the scope belongs to.
+	Cloud CommitmentPolicyAssignmentCloud `json:"cloud"`
+
+	// Region Region scope in `lower_snake_case` wire form (for example `us_east1`) for product lines assigned per region (GCP `cloud_sql`). `null` for every scope assigned per account (all AWS scopes, GCP `compute`); the settings endpoints report the same scope as `global`.
+	//
+	// Example: us_east1
+	Region nullable.Nullable[string] `json:"region"`
+
+	// Service Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only.
+	Service CommitmentPolicyAssignmentService `json:"service"`
+}
+
+// CommitmentPolicyAssignmentCloud Cloud the scope belongs to.
+type CommitmentPolicyAssignmentCloud string
+
+// CommitmentPolicyAssignmentService Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only.
+type CommitmentPolicyAssignmentService string
+
+// CommitmentPolicyDetail A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
+// `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
+// inventory coverage fields.
+type CommitmentPolicyDetail struct {
+	// Assignments Scopes explicitly assigned to this policy across AWS and GCP, sorted by `cloud`, `accountId`, `service`, `region`. Empty when the policy is not assigned anywhere.
+	Assignments []CommitmentPolicyAssignment `json:"assignments"`
+
+	// BootstrapPercent Share of the target commitment purchased in the first (immediate) step, as a percentage.
+	//
+	// Example: 35
+	BootstrapPercent float64 `json:"bootstrapPercent"`
+
+	// CreatedTime When the policy was created, RFC 3339 UTC. `null` if unknown.
+	//
+	// Example: 2026-08-20T09:12:31Z
+	CreatedTime nullable.Nullable[time.Time] `json:"createdTime"`
+
+	// Id Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
+	Id CommitmentPolicyId `json:"id"`
+
+	// IsBuiltIn `true` for the three immutable built-in policies, `false` for tenant-defined policies.
+	IsBuiltIn bool `json:"isBuiltIn"`
+
+	// LadderIntervalDays Days between consecutive laddering steps.
+	//
+	// Example: 7
+	LadderIntervalDays int `json:"ladderIntervalDays"`
+
+	// LadderStepPercent Size of each incremental laddering step, as a percentage of the target commitment.
+	//
+	// Example: 10
+	LadderStepPercent float64 `json:"ladderStepPercent"`
+
+	// LookbackDays Days of historical usage analyzed to build the recommendation baseline.
+	//
+	// Example: 60
+	LookbackDays int `json:"lookbackDays"`
+
+	// Name Display name. Built-in names are fixed; custom names are chosen by the tenant.
+	//
+	// Example: Balanced
+	Name string `json:"name"`
+
+	// TargetCoverage Share of the optimal commitment the engine aims to purchase, as a percentage.
+	//
+	// Example: 80
+	TargetCoverage float64 `json:"targetCoverage"`
+
+	// UpdatedTime When the policy was last written, RFC 3339 UTC. For custom policies this is the last edit; for built-in policies it also advances when DoiT re-publishes the catalog, even if the parameters did not change. `null` if unknown.
+	//
+	// Example: 2026-08-20T09:12:31Z
+	UpdatedTime nullable.Nullable[time.Time] `json:"updatedTime"`
+}
+
+// CommitmentPolicyId ID of a commitment policy: either one of the built-in policies — `conservative` (lower
+// coverage target, ~65%), `balanced` (moderate, ~80%), `max_savings` (aggressive, ~90%) — or the
+// ID of a policy the customer defined in the DoiT Console. One catalog is shared by AWS and GCP,
+// and the same policy may be assigned to any AWS organization or GCP billing account product
+// line. Custom policies make this an open list, so it is not an enum; treat the value as an
+// opaque identifier and use the commitment-policies endpoint to resolve it.
+//
+// Example: balanced
+type CommitmentPolicyId = string
+
 // CommitmentTerm Preferred or actual commitment term length for Savings Plans and related settings.
 type CommitmentTerm string
 
@@ -8519,6 +8688,17 @@ type ListBudgets200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ListCommitmentPolicies200Response defines model for ListCommitmentPolicies200Response.
+type ListCommitmentPolicies200Response struct {
+	Items []CommitmentPolicy `json:"items"`
+
+	// PageToken Opaque cursor for the next page. `null` when this is the last page.
+	PageToken nullable.Nullable[string] `json:"pageToken"`
+
+	// RowCount Total number of policies available to the tenant across all pages.
+	RowCount int64 `json:"rowCount"`
+}
+
 // ListCustomThemes200Response defines model for ListCustomThemes200Response.
 type ListCustomThemes200Response struct {
 	// RowCount Total number of custom themes in the result set.
@@ -9697,6 +9877,9 @@ type NameContains = string
 // PageToken defines model for pageToken.
 type PageToken = string
 
+// PolicyId Example: balanced
+type PolicyId = string
+
 // Ps4cMaxResults defines model for ps4cMaxResults.
 type Ps4cMaxResults = int
 
@@ -10383,6 +10566,32 @@ type ListGcpBillingAccountsSettingsParams struct {
 	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
 	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
 
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListCommitmentPoliciesParams defines parameters for ListCommitmentPolicies.
+type ListCommitmentPoliciesParams struct {
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetCommitmentPolicyParams defines parameters for GetCommitmentPolicy.
+type GetCommitmentPolicyParams struct {
 	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
@@ -12217,6 +12426,42 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
 	ListGcpBillingAccountsSettings(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCommitmentPolicies List commitment policies
+	//
+	// Returns every commitment policy available to the tenant: the three built-in policies
+	// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+	//
+	// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+	// same policy may be assigned to AWS and GCP product lines alike.
+	//
+	// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+	// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+	// entered in the DoiT Console. This differs from the coverage and utilization fields on
+	// recommendations and inventory, which are fractions from 0 to 1.
+	//
+	// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+	// Console on the Commitment Policies page.
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+	ListCommitmentPolicies(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCommitmentPolicy Get a commitment policy
+	//
+	// Returns one commitment policy by id, with its creation and last-update times and the list of
+	// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+	//
+	// `assignments` lists explicit assignments only. An account whose settings have not yet been
+	// materialized falls back to `balanced` implicitly and does not appear here, even though the
+	// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+	// tenant and applied to every onboarded organization, so each organization appears once per
+	// product line. The list is not paginated.
+	//
+	// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+	// queried the request fails rather than returning a partial list.
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+	GetCommitmentPolicy(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListGeographicAccessCountries List countries available for geographic access
 	//
@@ -14941,6 +15186,62 @@ func (c *Client) ListGcpResourceCuds(ctx context.Context, billingAccountId Billi
 // Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
 func (c *Client) ListGcpBillingAccountsSettings(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListGcpBillingAccountsSettingsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCommitmentPolicies List commitment policies
+//
+// Returns every commitment policy available to the tenant: the three built-in policies
+// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+//
+// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+// same policy may be assigned to AWS and GCP product lines alike.
+//
+// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+// entered in the DoiT Console. This differs from the coverage and utilization fields on
+// recommendations and inventory, which are fractions from 0 to 1.
+//
+// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+// Console on the Commitment Policies page.
+//
+// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+func (c *Client) ListCommitmentPolicies(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCommitmentPoliciesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCommitmentPolicy Get a commitment policy
+//
+// Returns one commitment policy by id, with its creation and last-update times and the list of
+// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+//
+// `assignments` lists explicit assignments only. An account whose settings have not yet been
+// materialized falls back to `balanced` implicitly and does not appear here, even though the
+// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+// tenant and applied to every onboarded organization, so each organization appears once per
+// product line. The list is not paginated.
+//
+// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+// queried the request fails rather than returning a partial list.
+//
+// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+func (c *Client) GetCommitmentPolicy(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCommitmentPolicyRequest(c.Server, policyId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -21000,6 +21301,136 @@ func NewListGcpBillingAccountsSettingsRequest(server string, params *ListGcpBill
 	return req, nil
 }
 
+// NewListCommitmentPoliciesRequest constructs an http.Request for the ListCommitmentPolicies method
+func NewListCommitmentPoliciesRequest(server string, params *ListCommitmentPoliciesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/general/policies")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetCommitmentPolicyRequest constructs an http.Request for the GetCommitmentPolicy method
+func NewGetCommitmentPolicyRequest(server string, policyId PolicyId, params *GetCommitmentPolicyParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "policyId", policyId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/general/policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListGeographicAccessCountriesRequest constructs an http.Request for the ListGeographicAccessCountries method
 func NewListGeographicAccessCountriesRequest(server string, params *ListGeographicAccessCountriesParams) (*http.Request, error) {
 	var err error
@@ -22906,6 +23337,46 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
 	ListGcpBillingAccountsSettingsWithResponse(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*ListGcpBillingAccountsSettingsResp, error)
+
+	// ListCommitmentPoliciesWithResponse List commitment policies
+	//
+	// Returns every commitment policy available to the tenant: the three built-in policies
+	// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+	//
+	// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+	// same policy may be assigned to AWS and GCP product lines alike.
+	//
+	// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+	// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+	// entered in the DoiT Console. This differs from the coverage and utilization fields on
+	// recommendations and inventory, which are fractions from 0 to 1.
+	//
+	// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+	// Console on the Commitment Policies page.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+	ListCommitmentPoliciesWithResponse(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*ListCommitmentPoliciesResp, error)
+
+	// GetCommitmentPolicyWithResponse Get a commitment policy
+	//
+	// Returns one commitment policy by id, with its creation and last-update times and the list of
+	// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+	//
+	// `assignments` lists explicit assignments only. An account whose settings have not yet been
+	// materialized falls back to `balanced` implicitly and does not appear here, even though the
+	// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+	// tenant and applied to every onboarded organization, so each organization appears once per
+	// product line. The list is not paginated.
+	//
+	// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+	// queried the request fails rather than returning a partial list.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+	GetCommitmentPolicyWithResponse(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*GetCommitmentPolicyResp, error)
 
 	// ListGeographicAccessCountriesWithResponse List countries available for geographic access
 	//
@@ -30976,6 +31447,273 @@ func (r ListGcpBillingAccountsSettingsResp) ContentType() string {
 	return ""
 }
 
+// ListCommitmentPoliciesResp200Headers the declared response headers of an HTTP 200 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp400Headers the declared response headers of an HTTP 400 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp401Headers the declared response headers of an HTTP 401 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListCommitmentPoliciesResp403Headers the declared response headers of an HTTP 403 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp500Headers the declared response headers of an HTTP 500 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp503Headers the declared response headers of an HTTP 503 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListCommitmentPoliciesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListCommitmentPolicies200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListCommitmentPoliciesResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListCommitmentPoliciesResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListCommitmentPoliciesResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListCommitmentPoliciesResp403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListCommitmentPoliciesResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListCommitmentPoliciesResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCommitmentPoliciesResp) GetJSON200() *ListCommitmentPolicies200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCommitmentPoliciesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCommitmentPoliciesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCommitmentPoliciesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCommitmentPoliciesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetCommitmentPolicyResp200Headers the declared response headers of an HTTP 200 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp400Headers the declared response headers of an HTTP 400 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp401Headers the declared response headers of an HTTP 401 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetCommitmentPolicyResp403Headers the declared response headers of an HTTP 403 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp404Headers the declared response headers of an HTTP 404 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp500Headers the declared response headers of an HTTP 500 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp503Headers the declared response headers of an HTTP 503 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type GetCommitmentPolicyResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CommitmentPolicyDetail
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetCommitmentPolicyResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetCommitmentPolicyResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetCommitmentPolicyResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetCommitmentPolicyResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetCommitmentPolicyResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetCommitmentPolicyResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetCommitmentPolicyResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCommitmentPolicyResp) GetJSON200() *CommitmentPolicyDetail {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCommitmentPolicyResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCommitmentPolicyResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCommitmentPolicyResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCommitmentPolicyResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListGeographicAccessCountriesResp200Headers the declared response headers of an HTTP 200 response for ListGeographicAccessCountries
 type ListGeographicAccessCountriesResp200Headers struct {
 	ContentLanguage *string
@@ -33952,6 +34690,58 @@ func (c *ClientWithResponses) ListGcpBillingAccountsSettingsWithResponse(ctx con
 		return nil, err
 	}
 	return ParseListGcpBillingAccountsSettingsResp(rsp)
+}
+
+// ListCommitmentPoliciesWithResponse List commitment policies
+//
+// Returns every commitment policy available to the tenant: the three built-in policies
+// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+//
+// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+// same policy may be assigned to AWS and GCP product lines alike.
+//
+// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+// entered in the DoiT Console. This differs from the coverage and utilization fields on
+// recommendations and inventory, which are fractions from 0 to 1.
+//
+// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+// Console on the Commitment Policies page.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+func (c *ClientWithResponses) ListCommitmentPoliciesWithResponse(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*ListCommitmentPoliciesResp, error) {
+	rsp, err := c.ListCommitmentPolicies(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCommitmentPoliciesResp(rsp)
+}
+
+// GetCommitmentPolicyWithResponse Get a commitment policy
+//
+// Returns one commitment policy by id, with its creation and last-update times and the list of
+// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+//
+// `assignments` lists explicit assignments only. An account whose settings have not yet been
+// materialized falls back to `balanced` implicitly and does not appear here, even though the
+// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+// tenant and applied to every onboarded organization, so each organization appears once per
+// product line. The list is not paginated.
+//
+// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+// queried the request fails rather than returning a partial list.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+func (c *ClientWithResponses) GetCommitmentPolicyWithResponse(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*GetCommitmentPolicyResp, error) {
+	rsp, err := c.GetCommitmentPolicy(ctx, policyId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCommitmentPolicyResp(rsp)
 }
 
 // ListGeographicAccessCountriesWithResponse List countries available for geographic access
@@ -41188,6 +41978,390 @@ func ParseListGcpBillingAccountsSettingsResp(rsp *http.Response) (*ListGcpBillin
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers ListGcpBillingAccountsSettingsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListCommitmentPoliciesResp parses an HTTP response from a ListCommitmentPoliciesWithResponse call
+func ParseListCommitmentPoliciesResp(rsp *http.Response) (*ListCommitmentPoliciesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCommitmentPoliciesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListCommitmentPolicies200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListCommitmentPoliciesResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListCommitmentPoliciesResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListCommitmentPoliciesResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListCommitmentPoliciesResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListCommitmentPoliciesResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListCommitmentPoliciesResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetCommitmentPolicyResp parses an HTTP response from a GetCommitmentPolicyWithResponse call
+func ParseGetCommitmentPolicyResp(rsp *http.Response) (*GetCommitmentPolicyResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCommitmentPolicyResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CommitmentPolicyDetail
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetCommitmentPolicyResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetCommitmentPolicyResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetCommitmentPolicyResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetCommitmentPolicyResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetCommitmentPolicyResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetCommitmentPolicyResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetCommitmentPolicyResp503Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

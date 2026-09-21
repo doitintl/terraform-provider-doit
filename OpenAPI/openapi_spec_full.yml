@@ -94,6 +94,8 @@ tags:
     description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
   - name: PerfectScale for Commitments GCP
     description: Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
+  - name: PerfectScale for Commitments General
+    description: Cloud-agnostic PerfectScale for Commitments resources — commitment policies shared by AWS and GCP.
   - name: Signup
     description: >-
       Start a Cloud Intelligence trial for an organization that is not yet a DoiT customer. These operations
@@ -10800,8 +10802,244 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/general/policies:
+    get:
+      operationId: listCommitmentPolicies
+      tags:
+        - PerfectScale for Commitments General
+      summary: List commitment policies
+      description: |-
+        Returns every commitment policy available to the tenant: the three built-in policies
+        (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+
+        Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+        same policy may be assigned to AWS and GCP product lines alike.
+
+        Built-in policies are listed first, ordered from least to most aggressive target coverage;
+        custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+        entered in the DoiT Console. This differs from the coverage and utilization fields on
+        recommendations and inventory, which are fractions from 0 to 1.
+
+        This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+        Console on the Commitment Policies page.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: One page of the tenant's commitment policies.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - pageToken
+                  - rowCount
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CommitmentPolicy"
+                  pageToken:
+                    type: string
+                    description: Opaque cursor for the next page. `null` when this is the last page.
+                    nullable: true
+                  rowCount:
+                    type: integer
+                    format: int64
+                    description: Total number of policies available to the tenant across all pages.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/general/policies/{policyId}:
+    get:
+      operationId: getCommitmentPolicy
+      tags:
+        - PerfectScale for Commitments General
+      summary: Get a commitment policy
+      description: |-
+        Returns one commitment policy by id, with its creation and last-update times and the list of
+        account × product-line scopes it is explicitly assigned to across AWS and GCP.
+
+        `assignments` lists explicit assignments only. An account whose settings have not yet been
+        materialized falls back to `balanced` implicitly and does not appear here, even though the
+        settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+        tenant and applied to every onboarded organization, so each organization appears once per
+        product line. The list is not paginated.
+
+        Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+        queried the request fails rather than returning a partial list.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/policyId"
+      responses:
+        "200":
+          description: The commitment policy with its assignments.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitmentPolicyDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
+    CommitmentPolicyId:
+      type: string
+      description: |-
+        ID of a commitment policy: either one of the built-in policies — `conservative` (lower
+        coverage target, ~65%), `balanced` (moderate, ~80%), `max_savings` (aggressive, ~90%) — or the
+        ID of a policy the customer defined in the DoiT Console. One catalog is shared by AWS and GCP,
+        and the same policy may be assigned to any AWS organization or GCP billing account product
+        line. Custom policies make this an open list, so it is not an enum; treat the value as an
+        opaque identifier and use the commitment-policies endpoint to resolve it.
+      example: balanced
+    CommitmentPolicy:
+      type: object
+      description: |-
+        A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
+        `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
+        inventory coverage fields.
+      required:
+        - id
+        - name
+        - isBuiltIn
+        - targetCoverage
+        - lookbackDays
+        - ladderStepPercent
+        - ladderIntervalDays
+        - bootstrapPercent
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
+        name:
+          type: string
+          description: Display name. Built-in names are fixed; custom names are chosen by the tenant.
+          example: Balanced
+        isBuiltIn:
+          type: boolean
+          description: "`true` for the three immutable built-in policies, `false` for tenant-defined policies."
+        targetCoverage:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Share of the optimal commitment the engine aims to purchase, as a percentage.
+          example: 80
+        lookbackDays:
+          type: integer
+          minimum: 1
+          description: Days of historical usage analyzed to build the recommendation baseline.
+          example: 60
+        ladderStepPercent:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Size of each incremental laddering step, as a percentage of the target commitment.
+          example: 10
+        ladderIntervalDays:
+          type: integer
+          minimum: 1
+          description: Days between consecutive laddering steps.
+          example: 7
+        bootstrapPercent:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Share of the target commitment purchased in the first (immediate) step, as a percentage.
+          example: 35
+    CommitmentPolicyAssignment:
+      type: object
+      description: One account × product-line scope a policy is explicitly assigned to, on either cloud.
+      required:
+        - cloud
+        - accountId
+        - service
+        - region
+      properties:
+        cloud:
+          type: string
+          enum:
+            - aws
+            - gcp
+          description: Cloud the scope belongs to.
+          x-enumDescriptions:
+            aws: An AWS organization (management account).
+            gcp: A GCP billing account.
+        accountId:
+          type: string
+          description: AWS management account id or GCP billing account id, matching `managementAccountId` / `billingAccountId` elsewhere in this API.
+          example: "123456789012"
+        service:
+          type: string
+          enum:
+            - compute
+            - database
+            - cloud_sql
+          description: Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only.
+        region:
+          type: string
+          description: Region scope in `lower_snake_case` wire form (for example `us_east1`) for product lines assigned per region (GCP `cloud_sql`). `null` for every scope assigned per account (all AWS scopes, GCP `compute`); the settings endpoints report the same scope as `global`.
+          nullable: true
+          example: us_east1
+    CommitmentPolicyDetail:
+      allOf:
+        - $ref: "#/components/schemas/CommitmentPolicy"
+        - type: object
+          required:
+            - createdTime
+            - updatedTime
+            - assignments
+          properties:
+            createdTime:
+              type: string
+              format: date-time
+              description: When the policy was created, RFC 3339 UTC. `null` if unknown.
+              nullable: true
+              example: "2026-08-20T09:12:31Z"
+            updatedTime:
+              type: string
+              format: date-time
+              description: When the policy was last written, RFC 3339 UTC. For custom policies this is the last edit; for built-in policies it also advances when DoiT re-publishes the catalog, even if the parameters did not change. `null` if unknown.
+              nullable: true
+              example: "2026-08-20T09:12:31Z"
+            assignments:
+              type: array
+              description: Scopes explicitly assigned to this policy across AWS and GCP, sorted by `cloud`, `accountId`, `service`, `region`. Empty when the policy is not assigned anywhere.
+              items:
+                $ref: "#/components/schemas/CommitmentPolicyAssignment"
     GcpOnboardingStatusEntry:
       type: object
       required:
@@ -22298,6 +22536,15 @@ components:
             code: rate_limited
             retryable: true
   parameters:
+    policyId:
+      name: policyId
+      in: path
+      required: true
+      description: Commitment policy id. Built-in policies use `conservative`, `balanced` or `max_savings`; custom policies have an opaque id returned by the list endpoint.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_-]{1,64}$
+        example: balanced
     signupRequestId:
       name: signupRequestId
       in: path
