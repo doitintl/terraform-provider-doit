@@ -2569,6 +2569,24 @@ func (e GcpOnboardingStatusByServiceStatus) Valid() bool {
 	}
 }
 
+// Defines values for GcpRecommendationService.
+const (
+	GcpRecommendationServiceCloudSql GcpRecommendationService = "cloud_sql"
+	GcpRecommendationServiceCompute  GcpRecommendationService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpRecommendationService enum.
+func (e GcpRecommendationService) Valid() bool {
+	switch e {
+	case GcpRecommendationServiceCloudSql:
+		return true
+	case GcpRecommendationServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GcpSavingsTotalsByServiceService.
 const (
 	GcpSavingsTotalsByServiceServiceCloudSql GcpSavingsTotalsByServiceService = "cloud_sql"
@@ -3730,6 +3748,48 @@ func (e UserListItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for EligibleSpendGranularity.
+const (
+	EligibleSpendGranularityDay   EligibleSpendGranularity = "day"
+	EligibleSpendGranularityHour  EligibleSpendGranularity = "hour"
+	EligibleSpendGranularityMonth EligibleSpendGranularity = "month"
+	EligibleSpendGranularityWeek  EligibleSpendGranularity = "week"
+)
+
+// Valid indicates whether the value is a known member of the EligibleSpendGranularity enum.
+func (e EligibleSpendGranularity) Valid() bool {
+	switch e {
+	case EligibleSpendGranularityDay:
+		return true
+	case EligibleSpendGranularityHour:
+		return true
+	case EligibleSpendGranularityMonth:
+		return true
+	case EligibleSpendGranularityWeek:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpService.
+const (
+	GcpServiceCloudSql GcpService = "cloud_sql"
+	GcpServiceCompute  GcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpService enum.
+func (e GcpService) Valid() bool {
+	switch e {
+	case GcpServiceCloudSql:
+		return true
+	case GcpServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResourceType.
 const (
 	ResourceTypeAlerts      ResourceType = "alerts"
@@ -4237,6 +4297,66 @@ func (e ListServiceQuotasParamsCloudProvider) Valid() bool {
 	case ListServiceQuotasParamsCloudProviderAws:
 		return true
 	case ListServiceQuotasParamsCloudProviderGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpRecommendationsParamsGcpService.
+const (
+	ListGcpRecommendationsParamsGcpServiceCloudSql ListGcpRecommendationsParamsGcpService = "cloud_sql"
+	ListGcpRecommendationsParamsGcpServiceCompute  ListGcpRecommendationsParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpRecommendationsParamsGcpService enum.
+func (e ListGcpRecommendationsParamsGcpService) Valid() bool {
+	switch e {
+	case ListGcpRecommendationsParamsGcpServiceCloudSql:
+		return true
+	case ListGcpRecommendationsParamsGcpServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetGcpRecommendationParamsGranularity.
+const (
+	GetGcpRecommendationParamsGranularityDay   GetGcpRecommendationParamsGranularity = "day"
+	GetGcpRecommendationParamsGranularityHour  GetGcpRecommendationParamsGranularity = "hour"
+	GetGcpRecommendationParamsGranularityMonth GetGcpRecommendationParamsGranularity = "month"
+	GetGcpRecommendationParamsGranularityWeek  GetGcpRecommendationParamsGranularity = "week"
+)
+
+// Valid indicates whether the value is a known member of the GetGcpRecommendationParamsGranularity enum.
+func (e GetGcpRecommendationParamsGranularity) Valid() bool {
+	switch e {
+	case GetGcpRecommendationParamsGranularityDay:
+		return true
+	case GetGcpRecommendationParamsGranularityHour:
+		return true
+	case GetGcpRecommendationParamsGranularityMonth:
+		return true
+	case GetGcpRecommendationParamsGranularityWeek:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetGcpRecommendationParamsGcpService.
+const (
+	GetGcpRecommendationParamsGcpServiceCloudSql GetGcpRecommendationParamsGcpService = "cloud_sql"
+	GetGcpRecommendationParamsGcpServiceCompute  GetGcpRecommendationParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GetGcpRecommendationParamsGcpService enum.
+func (e GetGcpRecommendationParamsGcpService) Valid() bool {
+	switch e {
+	case GetGcpRecommendationParamsGcpServiceCloudSql:
+		return true
+	case GetGcpRecommendationParamsGcpServiceCompute:
 		return true
 	default:
 		return false
@@ -7269,6 +7389,24 @@ type DimensionsExternalAPIListResponse struct {
 // DimensionsTypes Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 type DimensionsTypes string
 
+// EligibleSpendDataPoint One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.
+type EligibleSpendDataPoint struct {
+	// MaxUsage Maximum eligible usage ($/h) observed in the bucket (day/week/month views).
+	MaxUsage *float64 `json:"maxUsage,omitempty"`
+
+	// MedianUsage Median eligible usage ($/h) observed in the bucket (day/week/month views).
+	MedianUsage *float64 `json:"medianUsage,omitempty"`
+
+	// MinUsage Minimum eligible usage ($/h) observed in the bucket (day/week/month views).
+	MinUsage *float64 `json:"minUsage,omitempty"`
+
+	// TotalUsage Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities.
+	TotalUsage *float64 `json:"totalUsage,omitempty"`
+
+	// UsageTime Start of the time bucket for this data point (UTC).
+	UsageTime nullable.Nullable[time.Time] `json:"usageTime,omitempty"`
+}
+
 // Error Standard error response structure.
 type Error struct {
 	// Error Detailed error message.
@@ -8016,6 +8154,45 @@ type GcpOnboardingStatusByServiceService string
 
 // GcpOnboardingStatusByServiceStatus Current onboarding lifecycle stage for this product line.
 type GcpOnboardingStatusByServiceStatus string
+
+// GcpRecommendation A CUD purchase recommendation for a (service, region) scope.
+type GcpRecommendation struct {
+	// CurrentCommitment Active hourly commitment ($/h) currently applied to this billing account and product line, including commitments already purchased.
+	CurrentCommitment *float64 `json:"currentCommitment,omitempty"`
+
+	// EstimatedAverageCoverage Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields.
+	EstimatedAverageCoverage *float64 `json:"estimatedAverageCoverage,omitempty"`
+
+	// Policy Coverage target policy configured for this product line and region scope (built-in or customer-defined).
+	Policy *CommitmentPolicyId `json:"policy,omitempty"`
+
+	// PotentialAdditionalSavings Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`.
+	PotentialAdditionalSavings *float64 `json:"potentialAdditionalSavings,omitempty"`
+
+	// RecommendedCommitment Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk.
+	RecommendedCommitment *float64 `json:"recommendedCommitment,omitempty"`
+
+	// Region Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
+	Region *string `json:"region,omitempty"`
+
+	// Service PS4C product line (`gcp_service`) this recommendation belongs to.
+	Service *GcpRecommendationService `json:"service,omitempty"`
+}
+
+// GcpRecommendationService PS4C product line (`gcp_service`) this recommendation belongs to.
+type GcpRecommendationService string
+
+// GcpRecommendationWithEligibleSpend A single GCP recommendation paired with its eligible-spend usage series.
+type GcpRecommendationWithEligibleSpend struct {
+	// EligibleUsage Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window.
+	EligibleUsage *[]EligibleSpendDataPoint `json:"eligibleUsage,omitempty"`
+
+	// EstimatedEquivalentRecommendedCommitment Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the trailing window multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
+	EstimatedEquivalentRecommendedCommitment *float64 `json:"estimatedEquivalentRecommendedCommitment,omitempty"`
+
+	// Recommendation Recommended commitment metrics for the requested (service, region) scope.
+	Recommendation *GcpRecommendation `json:"recommendation,omitempty"`
+}
 
 // GcpResourceCud GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
 // document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").
@@ -8891,6 +9068,17 @@ type ListGcpBillingAccountsSettings200Response struct {
 	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
 
 	// RowCount Number of items returned in this page.
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// ListGcpRecommendations200Response defines model for ListGcpRecommendations200Response.
+type ListGcpRecommendations200Response struct {
+	Items []GcpRecommendation `json:"items"`
+
+	// PageToken Reserved for pagination. Currently always `null`.
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Number of recommendations returned in `items`.
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
@@ -9976,6 +10164,15 @@ type BillingExplainerInvoiceMonth = string
 // CustomerId defines model for customerId.
 type CustomerId = string
 
+// EligibleSpendGranularity defines model for eligibleSpendGranularity.
+type EligibleSpendGranularity string
+
+// GcpRegion defines model for gcp_region.
+type GcpRegion = string
+
+// GcpService defines model for gcp_service.
+type GcpService string
+
 // ManagementAccountId Example: 123456789012
 type ManagementAccountId = string
 
@@ -10646,6 +10843,63 @@ type GetGcpBillingAccountParams struct {
 	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
+
+// ListGcpRecommendationsParams defines parameters for ListGcpRecommendations.
+type ListGcpRecommendationsParams struct {
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+	GcpService *ListGcpRecommendationsParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
+
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpRecommendationsParamsGcpService defines parameters for ListGcpRecommendations.
+type ListGcpRecommendationsParamsGcpService string
+
+// GetGcpRecommendationParams defines parameters for GetGcpRecommendation.
+type GetGcpRecommendationParams struct {
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// Granularity Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals.
+	Granularity *GetGcpRecommendationParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetGcpRecommendationParamsGranularity defines parameters for GetGcpRecommendation.
+type GetGcpRecommendationParamsGranularity string
+
+// GetGcpRecommendationParamsGcpService defines parameters for GetGcpRecommendation.
+type GetGcpRecommendationParamsGcpService string
 
 // ListGcpResourceCudsParams defines parameters for ListGcpResourceCuds.
 type ListGcpResourceCudsParams struct {
@@ -12514,6 +12768,44 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 	GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGcpRecommendations List GCP recommendations
+	//
+	// Returns commitment purchase recommendations for the billing account, filtered to the
+	// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+	//
+	// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+	// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+	// alone to return all regions for that service; supply both to return a single
+	// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+	// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+	// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+	// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+	// region with no data returns `200` with an empty `items` array.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account with no matching recommendation documents returns `200` with an empty
+	// `items` array.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+	ListGcpRecommendations(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetGcpRecommendation Get a GCP recommendation
+	//
+	// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+	// billing account, including analysis metrics and time-bucketed eligible spend. Use
+	// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+	//
+	// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+	// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+	// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+	// A well-formed region the billing account has never had eligible spend in returns `404`
+	// with code `not_found` — the scope does not exist, same as an unknown billing account.
+	// When the scope exists but no stored recommendation matches, the response is `200` with
+	// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+	GetGcpRecommendation(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListGcpResourceCuds List GCP resource-based Committed Use Discounts
 	//
@@ -15261,6 +15553,64 @@ func (c *Client) ListGcpBillingAccounts(ctx context.Context, params *ListGcpBill
 // Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 func (c *Client) GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetGcpBillingAccountRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpRecommendations List GCP recommendations
+//
+// Returns commitment purchase recommendations for the billing account, filtered to the
+// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+//
+// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+// alone to return all regions for that service; supply both to return a single
+// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+// region with no data returns `200` with an empty `items` array.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account with no matching recommendation documents returns `200` with an empty
+// `items` array.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+func (c *Client) ListGcpRecommendations(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpRecommendationsRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetGcpRecommendation Get a GCP recommendation
+//
+// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+// billing account, including analysis metrics and time-bucketed eligible spend. Use
+// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+//
+// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+// A well-formed region the billing account has never had eligible spend in returns `404`
+// with code `not_found` — the scope does not exist, same as an unknown billing account.
+// When the scope exists but no stored recommendation matches, the response is `200` with
+// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+func (c *Client) GetGcpRecommendation(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGcpRecommendationRequest(c.Server, billingAccountId, gcpService, params)
 	if err != nil {
 		return nil, err
 	}
@@ -21245,6 +21595,189 @@ func NewGetGcpBillingAccountRequest(server string, billingAccountId BillingAccou
 	return req, nil
 }
 
+// NewListGcpRecommendationsRequest constructs an http.Request for the ListGcpRecommendations method
+func NewListGcpRecommendationsRequest(server string, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/recommendations", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.GcpService != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "gcp_service", *params.GcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetGcpRecommendationRequest constructs an http.Request for the GetGcpRecommendation method
+func NewGetGcpRecommendationRequest(server string, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "gcp_service", gcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/recommendations/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Granularity != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "granularity", *params.Granularity, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListGcpResourceCudsRequest constructs an http.Request for the ListGcpResourceCuds method
 func NewListGcpResourceCudsRequest(server string, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams) (*http.Request, error) {
 	var err error
@@ -23435,6 +23968,48 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 	GetGcpBillingAccountWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*GetGcpBillingAccountResp, error)
+
+	// ListGcpRecommendationsWithResponse List GCP recommendations
+	//
+	// Returns commitment purchase recommendations for the billing account, filtered to the
+	// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+	//
+	// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+	// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+	// alone to return all regions for that service; supply both to return a single
+	// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+	// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+	// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+	// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+	// region with no data returns `200` with an empty `items` array.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account with no matching recommendation documents returns `200` with an empty
+	// `items` array.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+	ListGcpRecommendationsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*ListGcpRecommendationsResp, error)
+
+	// GetGcpRecommendationWithResponse Get a GCP recommendation
+	//
+	// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+	// billing account, including analysis metrics and time-bucketed eligible spend. Use
+	// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+	//
+	// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+	// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+	// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+	// A well-formed region the billing account has never had eligible spend in returns `404`
+	// with code `not_found` — the scope does not exist, same as an unknown billing account.
+	// When the scope exists but no stored recommendation matches, the response is `200` with
+	// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+	GetGcpRecommendationWithResponse(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*GetGcpRecommendationResp, error)
 
 	// ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
 	//
@@ -31319,6 +31894,288 @@ func (r GetGcpBillingAccountResp) ContentType() string {
 	return ""
 }
 
+// ListGcpRecommendationsResp200Headers the declared response headers of an HTTP 200 response for ListGcpRecommendations
+type ListGcpRecommendationsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp400Headers the declared response headers of an HTTP 400 response for ListGcpRecommendations
+type ListGcpRecommendationsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp401Headers the declared response headers of an HTTP 401 response for ListGcpRecommendations
+type ListGcpRecommendationsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpRecommendationsResp403Headers the declared response headers of an HTTP 403 response for ListGcpRecommendations
+type ListGcpRecommendationsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp404Headers the declared response headers of an HTTP 404 response for ListGcpRecommendations
+type ListGcpRecommendationsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp500Headers the declared response headers of an HTTP 500 response for ListGcpRecommendations
+type ListGcpRecommendationsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp503Headers the declared response headers of an HTTP 503 response for ListGcpRecommendations
+type ListGcpRecommendationsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpRecommendationsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpRecommendations200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpRecommendationsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpRecommendationsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpRecommendationsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpRecommendationsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListGcpRecommendationsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpRecommendationsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpRecommendationsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpRecommendationsResp) GetJSON200() *ListGcpRecommendations200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpRecommendationsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpRecommendationsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpRecommendationsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpRecommendationsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetGcpRecommendationResp200Headers the declared response headers of an HTTP 200 response for GetGcpRecommendation
+type GetGcpRecommendationResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp400Headers the declared response headers of an HTTP 400 response for GetGcpRecommendation
+type GetGcpRecommendationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp401Headers the declared response headers of an HTTP 401 response for GetGcpRecommendation
+type GetGcpRecommendationResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetGcpRecommendationResp403Headers the declared response headers of an HTTP 403 response for GetGcpRecommendation
+type GetGcpRecommendationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp404Headers the declared response headers of an HTTP 404 response for GetGcpRecommendation
+type GetGcpRecommendationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp500Headers the declared response headers of an HTTP 500 response for GetGcpRecommendation
+type GetGcpRecommendationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp503Headers the declared response headers of an HTTP 503 response for GetGcpRecommendation
+type GetGcpRecommendationResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type GetGcpRecommendationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpRecommendationWithEligibleSpend
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetGcpRecommendationResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetGcpRecommendationResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetGcpRecommendationResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetGcpRecommendationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetGcpRecommendationResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetGcpRecommendationResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetGcpRecommendationResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetGcpRecommendationResp) GetJSON200() *GcpRecommendationWithEligibleSpend {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetGcpRecommendationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetGcpRecommendationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetGcpRecommendationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetGcpRecommendationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListGcpResourceCudsResp200Headers the declared response headers of an HTTP 200 response for ListGcpResourceCuds
 type ListGcpResourceCudsResp200Headers struct {
 	ContentLanguage *string
@@ -34790,6 +35647,60 @@ func (c *ClientWithResponses) GetGcpBillingAccountWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseGetGcpBillingAccountResp(rsp)
+}
+
+// ListGcpRecommendationsWithResponse List GCP recommendations
+//
+// Returns commitment purchase recommendations for the billing account, filtered to the
+// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+//
+// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+// alone to return all regions for that service; supply both to return a single
+// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+// region with no data returns `200` with an empty `items` array.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account with no matching recommendation documents returns `200` with an empty
+// `items` array.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+func (c *ClientWithResponses) ListGcpRecommendationsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*ListGcpRecommendationsResp, error) {
+	rsp, err := c.ListGcpRecommendations(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpRecommendationsResp(rsp)
+}
+
+// GetGcpRecommendationWithResponse Get a GCP recommendation
+//
+// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+// billing account, including analysis metrics and time-bucketed eligible spend. Use
+// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+//
+// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+// A well-formed region the billing account has never had eligible spend in returns `404`
+// with code `not_found` — the scope does not exist, same as an unknown billing account.
+// When the scope exists but no stored recommendation matches, the response is `200` with
+// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+func (c *ClientWithResponses) GetGcpRecommendationWithResponse(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*GetGcpRecommendationResp, error) {
+	rsp, err := c.GetGcpRecommendation(ctx, billingAccountId, gcpService, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGcpRecommendationResp(rsp)
 }
 
 // ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
@@ -41747,6 +42658,414 @@ func ParseGetGcpBillingAccountResp(rsp *http.Response) (*GetGcpBillingAccountRes
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers GetGcpBillingAccountResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGcpRecommendationsResp parses an HTTP response from a ListGcpRecommendationsWithResponse call
+func ParseListGcpRecommendationsResp(rsp *http.Response) (*ListGcpRecommendationsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpRecommendationsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpRecommendations200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpRecommendationsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpRecommendationsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpRecommendationsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpRecommendationsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListGcpRecommendationsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpRecommendationsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpRecommendationsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetGcpRecommendationResp parses an HTTP response from a GetGcpRecommendationWithResponse call
+func ParseGetGcpRecommendationResp(rsp *http.Response) (*GetGcpRecommendationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetGcpRecommendationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpRecommendationWithEligibleSpend
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetGcpRecommendationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetGcpRecommendationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetGcpRecommendationResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetGcpRecommendationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetGcpRecommendationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetGcpRecommendationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetGcpRecommendationResp503Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

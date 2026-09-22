@@ -304,3 +304,11 @@ data_sources:
     read:
       path: /ps4commitments/v1/general/policies
       method: GET
+  ps4c_gcp_recommendation:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service}
+      method: GET
+  ps4c_gcp_recommendations:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations
+      method: GET
