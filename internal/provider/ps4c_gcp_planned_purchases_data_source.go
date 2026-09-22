@@ -61,7 +61,6 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Schema(ctx context.Context, _ dataso
 func (d *ps4cGcpPlannedPurchasesDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
 	return []datasource.ConfigValidator{
 		ps4cGcpPlannedPurchasesServiceRegionValidator{},
-		ps4cGcpPlannedPurchasesPageTokenValidator{},
 	}
 }
 
@@ -126,6 +125,9 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Read(ctx context.Context, req dataso
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
 		data.RowCount = types.Int64Value(result.RowCount)
 	} else {
+		if !data.PageToken.IsNull() {
+			params.PageToken = new(data.PageToken.ValueString())
+		}
 		for {
 			apiResp, err := d.client.ListGcpPlannedPurchasesWithResponse(ctx, billingAccountId, params)
 			if err != nil {

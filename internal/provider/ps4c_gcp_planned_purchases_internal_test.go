@@ -315,12 +315,12 @@ func TestPs4cGcpPlannedPurchasesRead(t *testing.T) {
 						{"billingAccountId": "012345-6789AB-CDEF01", "service": "compute", "regions": []}
 					],
 					"pageToken": "next-cursor",
-					"rowCount": 10
+					"rowCount": 1
 				}`,
 			},
 			wantCalls:  1,
 			wantItems:  1,
-			wantCount:  10,
+			wantCount:  1,
 			wantCursor: "next-cursor",
 			checkParams: func(t *testing.T, r *http.Request) {
 				if q := r.URL.Query().Get("maxResults"); q != "1" {
@@ -341,12 +341,12 @@ func TestPs4cGcpPlannedPurchasesRead(t *testing.T) {
 						{"billingAccountId": "012345-6789AB-CDEF01", "service": "cloud_sql", "regions": []}
 					],
 					"pageToken": "after-cursor",
-					"rowCount": 5
+					"rowCount": 1
 				}`,
 			},
 			wantCalls:  1,
 			wantItems:  1,
-			wantCount:  5,
+			wantCount:  1,
 			wantCursor: "after-cursor",
 			checkParams: func(t *testing.T, r *http.Request) {
 				if q := r.URL.Query().Get("maxResults"); q != "1" {
@@ -356,6 +356,29 @@ func TestPs4cGcpPlannedPurchasesRead(t *testing.T) {
 					t.Errorf("pageToken = %q, want current-cursor", q)
 				}
 			},
+		},
+		{
+			name:      "auto-pagination from page_token cursor",
+			pageToken: new("start-cursor"),
+			responses: []string{
+				`{
+					"items": [
+						{"billingAccountId": "012345-6789AB-CDEF01", "service": "compute", "regions": []}
+					],
+					"pageToken": "page-2",
+					"rowCount": 1
+				}`,
+				`{
+					"items": [
+						{"billingAccountId": "012345-6789AB-CDEF01", "service": "cloud_sql", "regions": []}
+					],
+					"pageToken": null,
+					"rowCount": 1
+				}`,
+			},
+			wantCalls: 2,
+			wantItems: 2,
+			wantCount: 2,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
