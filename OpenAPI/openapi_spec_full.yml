@@ -4210,6 +4210,18 @@ paths:
                   message:
                     type: string
                     example: "Datasets deleted successfully"
+        "202":
+          description: Accepted - Dataset data deletion is running asynchronously. This response does not confirm completion, and dataset metadata may remain. No completion polling endpoint is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: "Deletion accepted for processing"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -4303,6 +4315,18 @@ paths:
                   message:
                     type: string
                     example: "Dataset deleted successfully"
+        "202":
+          description: Accepted - Dataset data deletion is running asynchronously. This response does not confirm completion, and dataset metadata may remain. No completion polling endpoint is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    example: "Deletion accepted for processing"
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -9104,16 +9128,16 @@ paths:
       description: |-
         Returns one item per onboarded AWS organization. Each item includes that AWS organization's commitments purchasing account (`purchaseAccountId`) and commitment settings for each commitment type activated on that AWS organization (`compute`, `database`).
 
-        Commitment settings cover recommendation and automation preferences (policy, term, payment option, automation mode, commitment limits, and related fields). They are stored at the customer level per commitment type and therefore have the same values on every AWS organization item. Only `purchaseAccountId` and which commitment types appear differ per AWS organization.
+        Commitment settings cover recommendation and automation preferences (policy, term, payment option, automation mode, commitment limits, and related fields). They are stored independently for each AWS organization and commitment type. Each item includes that organization's `purchaseAccountId` and activated commitment types.
 
-        In the DoiT Console, commitment settings are edited on an account's Settings tab but apply across all AWS organizations for that commitment type; the purchasing account is set per AWS organization on Accounts Settings.
+        In the DoiT Console, commitment settings are edited on an account's Settings tab and apply only to that AWS organization and commitment type; the purchasing account is set per AWS organization on Accounts Settings.
       parameters:
         - $ref: "#/components/parameters/tenantId"
         - $ref: "#/components/parameters/ps4cPageToken"
         - $ref: "#/components/parameters/ps4cMaxResults"
       responses:
         "200":
-          description: "Settings payload for one onboarded AWS organization, with that AWS organization's purchasing account (`purchaseAccountId`) and customer-level commitment settings for each activated commitment type (`services[].settings`)."
+          description: "Settings payload for one onboarded AWS organization, with that AWS organization's purchasing account (`purchaseAccountId`) and organization-specific commitment settings for each activated commitment type (`services[].settings`)."
           headers:
             Request-Id:
               $ref: "#/components/headers/RequestId"
@@ -21416,7 +21440,7 @@ components:
             $ref: "#/components/schemas/EligibleSpendDataPoint"
     AwsOrganizationSettings:
       type: object
-      description: "Customer-level recommendation and automation settings for one commitment type. The same values are returned on every AWS organization that has this commitment type activated."
+      description: "Organization-specific recommendation and automation settings for one activated commitment type."
       required:
         - purchaseMode
         - minimumCommitment
@@ -21504,7 +21528,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AwsOrganizationServiceSettings"
-          description: "Commitment settings for each commitment type activated on this AWS organization. Settings values are customer-level per commitment type."
+          description: "Commitment settings for each commitment type activated on this AWS organization. Settings values are independent per AWS organization and commitment type."
     BillingTransferProblemDetails:
       type: object
       description: >-
@@ -22723,7 +22747,7 @@ components:
 
         **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 
-        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
       schema:
         type: string
         example: Kp2mN8qL4vR0sT1wX3yZ
@@ -22815,7 +22839,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: "Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). Required when your credential can access more than one customer; otherwise the request fails with `400` and code `tenant_id_required`. A value outside your credential's tenants fails with `400` and code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens."
+      description: "Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens."
       in: header
     oauth2:
       type: oauth2
