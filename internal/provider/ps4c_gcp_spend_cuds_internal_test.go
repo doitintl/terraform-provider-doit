@@ -218,6 +218,16 @@ func TestPs4cGcpSpendCudsRead(t *testing.T) {
 			wantCount: 2,
 		},
 		{
+			name: "auto-pagination stops when pageToken is empty string",
+			responses: []string{
+				`{"items":[{"cudId":"CUD-1","cudProductName":"Compute Flexible","state":"ACTIVE"}],"pageToken":"page-2"}`,
+				`{"items":[{"cudId":"CUD-2","cudProductName":"Cloud SQL","state":"ACTIVE"}],"pageToken":""}`,
+			},
+			wantCalls: 2,
+			wantItems: 2,
+			wantCount: 2,
+		},
+		{
 			name:       "user-controlled pagination",
 			maxResults: new(int64(1)),
 			responses: []string{
@@ -332,6 +342,40 @@ func TestPs4cGcpSpendCudsDataSource_Read_Pagination(t *testing.T) {
 		}
 		if got := data.PageToken.ValueString(); got != "next-page-token" {
 			t.Errorf("page_token = %q, want %q", got, "next-page-token")
+		}
+	})
+
+	t.Run("max_results with empty string page_token in response normalizes to null", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprint(w, `{
+				"items": [
+					{"cudId": "CUD-1", "cudProductName": "Compute Flexible", "state": "ACTIVE"}
+				],
+				"pageToken": "",
+				"rowCount": 1
+			}`)
+		}))
+
+		resp := readPs4cGcpSpendCuds(t, server, map[string]tftypes.Value{
+			"max_results": tftypes.NewValue(tftypes.Number, 10.0),
+		})
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("Read() returned diagnostics: %v", resp.Diagnostics)
+		}
+
+		var data ps4cGcpSpendCudsDataSourceModel
+		if diags := resp.State.Get(t.Context(), &data); diags.HasError() {
+			t.Fatalf("failed to read state: %v", diags)
+		}
+		if !data.PageToken.IsNull() {
+			t.Errorf("expected page_token to be null, got %v", data.PageToken)
+		}
+		if got := data.RowCount.ValueInt64(); got != 1 {
+			t.Errorf("row_count = %d, want 1", got)
 		}
 	})
 

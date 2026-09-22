@@ -117,7 +117,11 @@ func (d *ps4cGcpSpendCudsDataSource) Read(ctx context.Context, req datasource.Re
 		result := apiResp.JSON200
 		allCuds = result.Items
 
-		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
+		if pageToken := nullableToPointer(result.PageToken); pageToken != nil && *pageToken != "" {
+			data.PageToken = types.StringValue(*pageToken)
+		} else {
+			data.PageToken = types.StringNull()
+		}
 		if rowCount := nullableToPointer(result.RowCount); rowCount != nil {
 			data.RowCount = types.Int64Value(*rowCount)
 		} else {
