@@ -4569,6 +4569,76 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based:
+    get:
+      operationId: listGcpSpendCuds
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP spend-based Committed Use Discounts
+      description: |-
+        Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+        CUD state (`status`); omit to return CUDs in all states.
+
+        **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+        line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+        region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+        returns `400` with code `gcp_service_required`. A `region` that is malformed or
+        incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+        returns `400` with code `validation_failed`; a well-formed, compatible region with no
+        matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+        uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+        echoes the raw provider value (`us-central1`).
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - in: query
+          name: status
+          required: false
+          description: Filter by CUD state. Omit to include all states.
+          schema:
+            type: string
+            enum:
+              - active
+              - expired
+              - creating
+              - pending
+              - cancelled
+              - not_yet_active
+            x-enumDescriptions:
+              active: CUD is active and providing coverage.
+              expired: CUD term has ended.
+              creating: CUD purchase is in progress; not yet providing coverage.
+              pending: CUD purchase is awaiting provider confirmation; not yet providing coverage.
+              cancelled: CUD was cancelled before or during its term.
+              not_yet_active: CUD has been purchased but its term has not started yet.
+        - $ref: "#/components/parameters/gcp_service"
+        - $ref: "#/components/parameters/gcp_region"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: Paginated list of spend-based CUDs.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpSpendCuds200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based:
     get:
       operationId: listGcpResourceCuds
@@ -10238,6 +10308,89 @@ components:
             - compute
             - cloud_sql
           description: Product line these savings totals belong to.
+    GcpSpendCud:
+      type: object
+      description: |-
+        GCP spend-based Committed Use Discount. Mirrors the stored provider document verbatim
+        (raw values, e.g. `state` "Active", `term` "P1Y", `commitmentAmount` as a plain double).
+      required:
+        - cudId
+        - cudProductName
+        - state
+      properties:
+        commitmentAmount:
+          type: number
+          format: double
+          description: Hourly commitment amount.
+          example: 0.01
+        commitmentUnit:
+          type: string
+          description: Unit for `commitmentAmount`.
+          example: $/hr
+        consumptionModelId:
+          type: string
+          description: Provider-assigned ID of the pricing model this CUD's discount is applied through.
+          example: D97B-0795-975B
+        cudId:
+          type: string
+          description: CUD ID (provider-assigned).
+        cudProductId:
+          type: string
+          description: Provider-assigned ID of the product family (`cudProductName`) this CUD applies to.
+        cudProductName:
+          type: string
+          description: Product family name (e.g. `Compute Flexible`, `Cloud Run`, `BigQuery`).
+          example: Compute Flexible
+        cudProductType:
+          type: string
+          description: Raw provider CUD type label.
+          example: Spend-Based
+        endTime:
+          type: string
+          format: date-time
+          description: When the CUD term ends. Null when unknown.
+          nullable: true
+        entitlementScope:
+          type: string
+          description: Provider resource path this CUD's discount is scoped to (typically the billing account).
+          example: billingAccounts/00BECC-389F90-CDF2E8
+        exportDate:
+          type: string
+          format: date-time
+          description: Timestamp of the BigQuery CUD export row this item was read from.
+        lastMonthSavings:
+          type: number
+          format: double
+          description: Realized savings in the last full calendar month.
+        lastMonthUtilization:
+          type: number
+          format: double
+          description: Utilization in the last full calendar month, as a fraction from 0 to 1.
+        name:
+          type: string
+          description: Provider commitment display name.
+          example: my-commitment1
+        region:
+          type: string
+          description: Region in raw provider form (`us-central1`), or `global` for cross-region spend CUDs. Not the `lower_snake_case` wire form used by the `region` query parameter.
+          example: global
+        startTime:
+          type: string
+          format: date-time
+          description: When the CUD term started. Null when unknown.
+          nullable: true
+        state:
+          type: string
+          description: Raw provider commitment state.
+          example: Active
+        subType:
+          type: string
+          description: Normalized coverage sub-type token (`UPPER_SNAKE`) identifying the product family within the product line.
+          example: COMPUTE_FLEXIBLE
+        term:
+          type: string
+          description: Raw provider commitment term (ISO-8601 duration).
+          example: P1Y
     GcpStats30dByService:
       description: Trailing 30-day aggregate metrics for one product line.
       type: object
@@ -11240,6 +11393,23 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GcpResourceCud"
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+          nullable: true
+    ListGcpSpendCuds200Response:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpSpendCud"
         pageToken:
           type: string
           nullable: true
