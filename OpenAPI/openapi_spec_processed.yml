@@ -4695,6 +4695,113 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations:
+    get:
+      operationId: listGcpRecommendations
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP recommendations
+      description: |-
+        Returns commitment purchase recommendations for the billing account, filtered to the
+        term preferred in each product line's settings (`preferredCommitmentPeriod`).
+
+        **`gcp_service` and `region` filters**: omit both to return recommendations for all
+        product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+        alone to return all regions for that service; supply both to return a single
+        service/region scope. `region` requires `gcp_service` — a request with `region` but no
+        `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+        or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+        regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+        region with no data returns `200` with an empty `items` array.
+
+        `404` is returned only when the billing account does not exist or the caller cannot access
+        it. A billing account with no matching recommendation documents returns `200` with an empty
+        `items` array.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - $ref: "#/components/parameters/gcp_service"
+        - $ref: "#/components/parameters/gcp_region"
+      responses:
+        "200":
+          description: List of GCP recommendations.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpRecommendations200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service}:
+    get:
+      operationId: getGcpRecommendation
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: Get a GCP recommendation
+      description: |-
+        Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+        billing account, including analysis metrics and time-bucketed eligible spend. Use
+        `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+
+        **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+        for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+        malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+        A well-formed region the billing account has never had eligible spend in returns `404`
+        with code `not_found` — the scope does not exist, same as an unknown billing account.
+        When the scope exists but no stored recommendation matches, the response is `200` with
+        `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - name: gcp_service
+          in: path
+          required: true
+          description: PS4C product line to fetch the recommendation for.
+          schema:
+            type: string
+            enum:
+              - compute
+              - cloud_sql
+        - $ref: "#/components/parameters/gcp_region"
+        - $ref: "#/components/parameters/eligibleSpendGranularity"
+      responses:
+        "200":
+          description: Recommendation detail with eligible-spend usage series.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GcpRecommendationWithEligibleSpend"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases:
     get:
       operationId: listGcpPlannedPurchases
@@ -9109,6 +9216,31 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: "Deprecated. Use allocation_rule."
         attribution_group: "Deprecated. Use allocation."
+    EligibleSpendDataPoint:
+      type: object
+      description: One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.
+      properties:
+        usageTime:
+          type: string
+          format: date-time
+          description: Start of the time bucket for this data point (UTC).
+          nullable: true
+        totalUsage:
+          type: number
+          format: double
+          description: Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities.
+        minUsage:
+          type: number
+          format: double
+          description: Minimum eligible usage ($/h) observed in the bucket (day/week/month views).
+        maxUsage:
+          type: number
+          format: double
+          description: Maximum eligible usage ($/h) observed in the bucket (day/week/month views).
+        medianUsage:
+          type: number
+          format: double
+          description: Median eligible usage ($/h) observed in the bucket (day/week/month views).
     Error:
       type: object
       description: Standard error response structure.
@@ -10391,6 +10523,58 @@ components:
             `true` when this step's `cumulativeCommitment` exceeds the customer-approved
             commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
             ladder even when the projection-level `purchaseApprovalStatus` is `approved`.
+    GcpRecommendation:
+      type: object
+      description: A CUD purchase recommendation for a (service, region) scope.
+      properties:
+        policy:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy configured for this product line and region scope (built-in or customer-defined).
+        region:
+          type: string
+          description: Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: PS4C product line (`gcp_service`) this recommendation belongs to.
+        currentCommitment:
+          type: number
+          format: double
+          description: Active hourly commitment ($/h) currently applied to this billing account and product line, including commitments already purchased.
+        recommendedCommitment:
+          type: number
+          format: double
+          description: Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk.
+        potentialAdditionalSavings:
+          type: number
+          format: double
+          description: Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`.
+        estimatedAverageCoverage:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields.
+    GcpRecommendationWithEligibleSpend:
+      type: object
+      description: A single GCP recommendation paired with its eligible-spend usage series.
+      properties:
+        estimatedEquivalentRecommendedCommitment:
+          type: number
+          format: double
+          description: Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the trailing window multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
+        recommendation:
+          allOf:
+            - $ref: "#/components/schemas/GcpRecommendation"
+          description: Recommended commitment metrics for the requested (service, region) scope.
+        eligibleUsage:
+          type: array
+          description: Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window.
+          items:
+            $ref: "#/components/schemas/EligibleSpendDataPoint"
     GcpResourceCud:
       type: object
       description: |-
@@ -11623,6 +11807,23 @@ components:
           type: integer
           format: int64
           description: Number of service groups in `items` for this response.
+    ListGcpRecommendations200Response:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpRecommendation"
+        pageToken:
+          type: string
+          description: Reserved for pagination. Currently always `null`.
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Number of recommendations returned in `items`.
     ListGcpResourceCuds200Response:
       type: object
       required:

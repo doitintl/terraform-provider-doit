@@ -13905,6 +13905,353 @@
 			}
 		},
 		{
+			"name": "ps4c_gcp_recommendation",
+			"schema": {
+				"attributes": [
+					{
+						"name": "billing_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "GCP Billing Account ID (format `XXXXXX-XXXXXX-XXXXXX`; the account that owns the CUDs) that scopes the request.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "gcp_service",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "PS4C product line to fetch the recommendation for.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"compute\",\n\"cloud_sql\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "region",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the\nliteral `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`\nreturns `400` with code `gcp_service_required`. When both are omitted, all available\nregions for all available product lines are returned.\n\nThe value is format-validated, not checked against a closed region list: `compute` accepts\nonly `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that\nis malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.\nA well-formed, service-compatible region with no data returns `200` with an empty result.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^(global|[a-z]+(_[a-z0-9]+)+)$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "granularity",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"hour\",\n\"day\",\n\"week\",\n\"month\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "eligible_usage",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "max_usage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Maximum eligible usage ($/h) observed in the bucket (day/week/month views)."
+										}
+									},
+									{
+										"name": "median_usage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Median eligible usage ($/h) observed in the bucket (day/week/month views)."
+										}
+									},
+									{
+										"name": "min_usage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Minimum eligible usage ($/h) observed in the bucket (day/week/month views)."
+										}
+									},
+									{
+										"name": "total_usage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities."
+										}
+									},
+									{
+										"name": "usage_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Start of the time bucket for this data point (UTC)."
+										}
+									}
+								]
+							},
+							"description": "Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window."
+						}
+					},
+					{
+						"name": "estimated_equivalent_recommended_commitment",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the trailing window multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts."
+						}
+					},
+					{
+						"name": "recommendation",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "current_commitment",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Active hourly commitment ($/h) currently applied to this billing account and product line, including commitments already purchased."
+									}
+								},
+								{
+									"name": "estimated_average_coverage",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields."
+									}
+								},
+								{
+									"name": "policy",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Coverage target policy configured for this product line and region scope (built-in or customer-defined)."
+									}
+								},
+								{
+									"name": "potential_additional_savings",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`."
+									}
+								},
+								{
+									"name": "recommended_commitment",
+									"float64": {
+										"computed_optional_required": "computed",
+										"description": "Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk."
+									}
+								},
+								{
+									"name": "region",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`."
+									}
+								},
+								{
+									"name": "service",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "PS4C product line (`gcp_service`) this recommendation belongs to."
+									}
+								}
+							],
+							"description": "Recommended commitment metrics for the requested (service, region) scope."
+						}
+					}
+				],
+				"description": "Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.",
+				"markdown_description": "Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments."
+			}
+		},
+		{
+			"name": "ps4c_gcp_recommendations",
+			"schema": {
+				"attributes": [
+					{
+						"name": "billing_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "GCP Billing Account ID (format `XXXXXX-XXXXXX-XXXXXX`; the account that owns the CUDs) that scopes the request.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "gcp_service",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"compute\",\n\"cloud_sql\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "region",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the\nliteral `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`\nreturns `400` with code `gcp_service_required`. When both are omitted, all available\nregions for all available product lines are returned.\n\nThe value is format-validated, not checked against a closed region list: `compute` accepts\nonly `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that\nis malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.\nA well-formed, service-compatible region with no data returns `200` with an empty result.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^(global|[a-z]+(_[a-z0-9]+)+)$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "current_commitment",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Active hourly commitment ($/h) currently applied to this billing account and product line, including commitments already purchased."
+										}
+									},
+									{
+										"name": "estimated_average_coverage",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields."
+										}
+									},
+									{
+										"name": "policy",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Coverage target policy configured for this product line and region scope (built-in or customer-defined)."
+										}
+									},
+									{
+										"name": "potential_additional_savings",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`."
+										}
+									},
+									{
+										"name": "recommended_commitment",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk."
+										}
+									},
+									{
+										"name": "region",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "PS4C product line (`gcp_service`) this recommendation belongs to."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Reserved for pagination. Currently always `null`."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Number of recommendations returned in `items`."
+						}
+					}
+				],
+				"description": "Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.",
+				"markdown_description": "Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments."
+			}
+		},
+		{
 			"name": "ps4c_gcp_resource_cuds",
 			"schema": {
 				"attributes": [

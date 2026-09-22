@@ -293,6 +293,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCloudconnectSupportedFeaturesDataSource,
 		NewPs4cAwsOrganizationDataSource,
 		NewPs4cGcpBillingAccountDataSource,
+		NewPs4cGcpRecommendationDataSource,
 		NewPs4cCommitmentPolicyDataSource,
 		// List data sources
 		NewBudgetsDataSource,
@@ -333,6 +334,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewPs4cGcpResourceCudsDataSource,
 		NewPs4cGcpPlannedPurchasesDataSource,
 		NewPs4cGcpSpendCudsDataSource,
+		NewPs4cGcpRecommendationsDataSource,
 		NewPs4cCommitmentPoliciesDataSource,
 		NewServiceQuotasDataSource,
 		NewBudgetSuggestionsDataSource,
