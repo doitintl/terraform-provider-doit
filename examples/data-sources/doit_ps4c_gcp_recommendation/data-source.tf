@@ -5,7 +5,7 @@ data "doit_ps4c_gcp_recommendation" "compute" {
 }
 
 output "compute_recommended_commitment" {
-  value = data.doit_ps4c_gcp_recommendation.compute.recommendation.recommended_commitment
+  value = try(data.doit_ps4c_gcp_recommendation.compute.recommendation.recommended_commitment, null)
 }
 
 output "compute_eligible_usage_points" {

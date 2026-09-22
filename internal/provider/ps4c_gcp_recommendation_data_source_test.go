@@ -61,18 +61,25 @@ func testAccPs4cGcpRecommendationDataSourceConfig(service, region string) string
 data "doit_ps4c_gcp_billing_accounts" "list" {}
 
 locals {
-  accounts = data.doit_ps4c_gcp_billing_accounts.list.items
-  first_billing_account_id = length(local.accounts) > 0 ? local.accounts[0].billing_account_id : "000000-000000-000000"
+  eligible_accounts = [
+    for account in data.doit_ps4c_gcp_billing_accounts.list.items :
+    account if anytrue(concat(
+      [for item in try(account.onboarding_status, []) : item.service == "` + service + `"],
+      [for item in try(account.stats30d, []) : item.service == "` + service + `"],
+      [for item in try(account.savings_totals, []) : item.service == "` + service + `"]
+    ))
+  ]
+  selected_billing_account_id = length(local.eligible_accounts) > 0 ? local.eligible_accounts[0].billing_account_id : "000000-000000-000000"
 }
 
 data "doit_ps4c_gcp_recommendation" "test" {
-  billing_account_id = local.first_billing_account_id
+  billing_account_id = local.selected_billing_account_id
   gcp_service        = "` + service + `"` + regionConfig + `
 
   lifecycle {
     precondition {
-      condition     = length(local.accounts) > 0
-      error_message = "No PS4C GCP billing accounts returned; cannot run doit_ps4c_gcp_recommendation tests."
+      condition     = length(local.eligible_accounts) > 0
+      error_message = "No PS4C GCP billing accounts with '` + service + `' onboarding/stats found; cannot run doit_ps4c_gcp_recommendation tests."
     }
   }
 }
