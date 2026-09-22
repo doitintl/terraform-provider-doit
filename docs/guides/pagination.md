@@ -86,6 +86,7 @@ The following table shows which data sources support pagination:
 | `doit_ps4c_commitment_policies` | ✓               | ✓                 |
 | `doit_ps4c_gcp_billing_accounts`| ✓               | ✓                 |
 | `doit_ps4c_gcp_resource_cuds`   | ✓               | ✓                 |
+| `doit_ps4c_gcp_spend_cuds`      | ✓               | ✓                 |
 | `doit_ps4c_gcp_settings`        | ✓               | ✓                 |
 | `doit_reports`                  | ✓               | ✓                 |
 | `doit_service_quotas`           | ✓               | ✓                 |

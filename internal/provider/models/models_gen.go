@@ -3730,6 +3730,24 @@ func (e UserListItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for GcpService.
+const (
+	GcpServiceCloudSql GcpService = "cloud_sql"
+	GcpServiceCompute  GcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpService enum.
+func (e GcpService) Valid() bool {
+	switch e {
+	case GcpServiceCloudSql:
+		return true
+	case GcpServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResourceType.
 const (
 	ResourceTypeAlerts      ResourceType = "alerts"
@@ -4267,6 +4285,54 @@ func (e ListGcpResourceCudsParamsStatus) Valid() bool {
 	case ListGcpResourceCudsParamsStatusNotYetActive:
 		return true
 	case ListGcpResourceCudsParamsStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpSpendCudsParamsStatus.
+const (
+	ListGcpSpendCudsParamsStatusActive       ListGcpSpendCudsParamsStatus = "active"
+	ListGcpSpendCudsParamsStatusCancelled    ListGcpSpendCudsParamsStatus = "cancelled"
+	ListGcpSpendCudsParamsStatusCreating     ListGcpSpendCudsParamsStatus = "creating"
+	ListGcpSpendCudsParamsStatusExpired      ListGcpSpendCudsParamsStatus = "expired"
+	ListGcpSpendCudsParamsStatusNotYetActive ListGcpSpendCudsParamsStatus = "not_yet_active"
+	ListGcpSpendCudsParamsStatusPending      ListGcpSpendCudsParamsStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpSpendCudsParamsStatus enum.
+func (e ListGcpSpendCudsParamsStatus) Valid() bool {
+	switch e {
+	case ListGcpSpendCudsParamsStatusActive:
+		return true
+	case ListGcpSpendCudsParamsStatusCancelled:
+		return true
+	case ListGcpSpendCudsParamsStatusCreating:
+		return true
+	case ListGcpSpendCudsParamsStatusExpired:
+		return true
+	case ListGcpSpendCudsParamsStatusNotYetActive:
+		return true
+	case ListGcpSpendCudsParamsStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpSpendCudsParamsGcpService.
+const (
+	ListGcpSpendCudsParamsGcpServiceCloudSql ListGcpSpendCudsParamsGcpService = "cloud_sql"
+	ListGcpSpendCudsParamsGcpServiceCompute  ListGcpSpendCudsParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpSpendCudsParamsGcpService enum.
+func (e ListGcpSpendCudsParamsGcpService) Valid() bool {
+	switch e {
+	case ListGcpSpendCudsParamsGcpServiceCloudSql:
+		return true
+	case ListGcpSpendCudsParamsGcpServiceCompute:
 		return true
 	default:
 		return false
@@ -8134,6 +8200,86 @@ type GcpSavingsTotalsByService struct {
 // GcpSavingsTotalsByServiceService Product line these savings totals belong to.
 type GcpSavingsTotalsByServiceService string
 
+// GcpSpendCud GCP spend-based Committed Use Discount. Mirrors the stored provider document verbatim
+// (raw values, e.g. `state` "Active", `term` "P1Y", `commitmentAmount` as a plain double).
+type GcpSpendCud struct {
+	// CommitmentAmount Hourly commitment amount.
+	//
+	// Example: 0.01
+	CommitmentAmount *float64 `json:"commitmentAmount,omitempty"`
+
+	// CommitmentUnit Unit for `commitmentAmount`.
+	//
+	// Example: $/hr
+	CommitmentUnit *string `json:"commitmentUnit,omitempty"`
+
+	// ConsumptionModelId Provider-assigned ID of the pricing model this CUD's discount is applied through.
+	//
+	// Example: D97B-0795-975B
+	ConsumptionModelId *string `json:"consumptionModelId,omitempty"`
+
+	// CudId CUD ID (provider-assigned).
+	CudId string `json:"cudId"`
+
+	// CudProductId Provider-assigned ID of the product family (`cudProductName`) this CUD applies to.
+	CudProductId *string `json:"cudProductId,omitempty"`
+
+	// CudProductName Product family name (e.g. `Compute Flexible`, `Cloud Run`, `BigQuery`).
+	//
+	// Example: Compute Flexible
+	CudProductName string `json:"cudProductName"`
+
+	// CudProductType Raw provider CUD type label.
+	//
+	// Example: Spend-Based
+	CudProductType *string `json:"cudProductType,omitempty"`
+
+	// EndTime When the CUD term ends. Null when unknown.
+	EndTime nullable.Nullable[time.Time] `json:"endTime,omitempty"`
+
+	// EntitlementScope Provider resource path this CUD's discount is scoped to (typically the billing account).
+	//
+	// Example: billingAccounts/00BECC-389F90-CDF2E8
+	EntitlementScope *string `json:"entitlementScope,omitempty"`
+
+	// ExportDate Timestamp of the BigQuery CUD export row this item was read from.
+	ExportDate *time.Time `json:"exportDate,omitempty"`
+
+	// LastMonthSavings Realized savings in the last full calendar month.
+	LastMonthSavings *float64 `json:"lastMonthSavings,omitempty"`
+
+	// LastMonthUtilization Utilization in the last full calendar month, as a fraction from 0 to 1.
+	LastMonthUtilization *float64 `json:"lastMonthUtilization,omitempty"`
+
+	// Name Provider commitment display name.
+	//
+	// Example: my-commitment1
+	Name *string `json:"name,omitempty"`
+
+	// Region Region in raw provider form (`us-central1`), or `global` for cross-region spend CUDs. Not the `lower_snake_case` wire form used by the `region` query parameter.
+	//
+	// Example: global
+	Region *string `json:"region,omitempty"`
+
+	// StartTime When the CUD term started. Null when unknown.
+	StartTime nullable.Nullable[time.Time] `json:"startTime,omitempty"`
+
+	// State Raw provider commitment state.
+	//
+	// Example: Active
+	State string `json:"state"`
+
+	// SubType Normalized coverage sub-type token (`UPPER_SNAKE`) identifying the product family within the product line.
+	//
+	// Example: COMPUTE_FLEXIBLE
+	SubType *string `json:"subType,omitempty"`
+
+	// Term Raw provider commitment term (ISO-8601 duration).
+	//
+	// Example: P1Y
+	Term *string `json:"term,omitempty"`
+}
+
 // GcpStats30dByService Trailing 30-day aggregate metrics for one product line.
 type GcpStats30dByService struct {
 	// Esr Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
@@ -8897,6 +9043,15 @@ type ListGcpBillingAccountsSettings200Response struct {
 // ListGcpResourceCuds200Response defines model for ListGcpResourceCuds200Response.
 type ListGcpResourceCuds200Response struct {
 	Items     []GcpResourceCud          `json:"items"`
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+	RowCount nullable.Nullable[int64] `json:"rowCount,omitempty"`
+}
+
+// ListGcpSpendCuds200Response defines model for ListGcpSpendCuds200Response.
+type ListGcpSpendCuds200Response struct {
+	Items     []GcpSpendCud             `json:"items"`
 	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
 
 	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
@@ -9976,6 +10131,12 @@ type BillingExplainerInvoiceMonth = string
 // CustomerId defines model for customerId.
 type CustomerId = string
 
+// GcpRegion defines model for gcp_region.
+type GcpRegion = string
+
+// GcpService defines model for gcp_service.
+type GcpService string
+
 // ManagementAccountId Example: 123456789012
 type ManagementAccountId = string
 
@@ -10668,6 +10829,45 @@ type ListGcpResourceCudsParams struct {
 
 // ListGcpResourceCudsParamsStatus defines parameters for ListGcpResourceCuds.
 type ListGcpResourceCudsParamsStatus string
+
+// ListGcpSpendCudsParams defines parameters for ListGcpSpendCuds.
+type ListGcpSpendCudsParams struct {
+	// Status Filter by CUD state. Omit to include all states.
+	Status *ListGcpSpendCudsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+	GcpService *ListGcpSpendCudsParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
+
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpSpendCudsParamsStatus defines parameters for ListGcpSpendCuds.
+type ListGcpSpendCudsParamsStatus string
+
+// ListGcpSpendCudsParamsGcpService defines parameters for ListGcpSpendCuds.
+type ListGcpSpendCudsParamsGcpService string
 
 // ListGcpBillingAccountsSettingsParams defines parameters for ListGcpBillingAccountsSettings.
 type ListGcpBillingAccountsSettingsParams struct {
@@ -12521,6 +12721,24 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
 	ListGcpResourceCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGcpSpendCuds List GCP spend-based Committed Use Discounts
+	//
+	// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+	// CUD state (`status`); omit to return CUDs in all states.
+	//
+	// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+	// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+	// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+	// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+	// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+	// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+	// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+	// echoes the raw provider value (`us-central1`).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+	ListGcpSpendCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListGcpBillingAccountsSettings List billing account engine settings
 	//
@@ -15278,6 +15496,34 @@ func (c *Client) GetGcpBillingAccount(ctx context.Context, billingAccountId Bill
 // Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
 func (c *Client) ListGcpResourceCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListGcpResourceCudsRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpSpendCuds List GCP spend-based Committed Use Discounts
+//
+// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+// CUD state (`status`); omit to return CUDs in all states.
+//
+// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+// echoes the raw provider value (`us-central1`).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+func (c *Client) ListGcpSpendCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpSpendCudsRequest(c.Server, billingAccountId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -21345,6 +21591,130 @@ func NewListGcpResourceCudsRequest(server string, billingAccountId BillingAccoun
 	return req, nil
 }
 
+// NewListGcpSpendCudsRequest constructs an http.Request for the ListGcpSpendCuds method
+func NewListGcpSpendCudsRequest(server string, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/spend-based", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "status", *params.Status, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.GcpService != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "gcp_service", *params.GcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListGcpBillingAccountsSettingsRequest constructs an http.Request for the ListGcpBillingAccountsSettings method
 func NewListGcpBillingAccountsSettingsRequest(server string, params *ListGcpBillingAccountsSettingsParams) (*http.Request, error) {
 	var err error
@@ -23444,6 +23814,26 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
 	ListGcpResourceCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*ListGcpResourceCudsResp, error)
+
+	// ListGcpSpendCudsWithResponse List GCP spend-based Committed Use Discounts
+	//
+	// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+	// CUD state (`status`); omit to return CUDs in all states.
+	//
+	// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+	// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+	// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+	// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+	// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+	// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+	// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+	// echoes the raw provider value (`us-central1`).
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+	ListGcpSpendCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*ListGcpSpendCudsResp, error)
 
 	// ListGcpBillingAccountsSettingsWithResponse List billing account engine settings
 	//
@@ -31460,6 +31850,147 @@ func (r ListGcpResourceCudsResp) ContentType() string {
 	return ""
 }
 
+// ListGcpSpendCudsResp200Headers the declared response headers of an HTTP 200 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp400Headers the declared response headers of an HTTP 400 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp401Headers the declared response headers of an HTTP 401 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpSpendCudsResp403Headers the declared response headers of an HTTP 403 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp404Headers the declared response headers of an HTTP 404 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp500Headers the declared response headers of an HTTP 500 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp503Headers the declared response headers of an HTTP 503 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpSpendCudsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpSpendCuds200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpSpendCudsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpSpendCudsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpSpendCudsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpSpendCudsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListGcpSpendCudsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpSpendCudsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpSpendCudsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpSpendCudsResp) GetJSON200() *ListGcpSpendCuds200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpSpendCudsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpSpendCudsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpSpendCudsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpSpendCudsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListGcpBillingAccountsSettingsResp200Headers the declared response headers of an HTTP 200 response for ListGcpBillingAccountsSettings
 type ListGcpBillingAccountsSettingsResp200Headers struct {
 	ContentLanguage *string
@@ -34805,6 +35336,32 @@ func (c *ClientWithResponses) ListGcpResourceCudsWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseListGcpResourceCudsResp(rsp)
+}
+
+// ListGcpSpendCudsWithResponse List GCP spend-based Committed Use Discounts
+//
+// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+// CUD state (`status`); omit to return CUDs in all states.
+//
+// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+// echoes the raw provider value (`us-central1`).
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+func (c *ClientWithResponses) ListGcpSpendCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*ListGcpSpendCudsResp, error) {
+	rsp, err := c.ListGcpSpendCuds(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpSpendCudsResp(rsp)
 }
 
 // ListGcpBillingAccountsSettingsWithResponse List billing account engine settings
@@ -41951,6 +42508,210 @@ func ParseListGcpResourceCudsResp(rsp *http.Response) (*ListGcpResourceCudsResp,
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers ListGcpResourceCudsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGcpSpendCudsResp parses an HTTP response from a ListGcpSpendCudsWithResponse call
+func ParseListGcpSpendCudsResp(rsp *http.Response) (*ListGcpSpendCudsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpSpendCudsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpSpendCuds200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpSpendCudsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpSpendCudsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpSpendCudsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpSpendCudsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListGcpSpendCudsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpSpendCudsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpSpendCudsResp503Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
