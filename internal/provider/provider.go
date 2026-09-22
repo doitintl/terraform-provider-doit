@@ -332,6 +332,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewPs4cGcpBillingAccountsDataSource,
 		NewPs4cGcpSettingsDataSource,
 		NewPs4cGcpResourceCudsDataSource,
+		NewPs4cGcpPlannedPurchasesDataSource,
 		NewPs4cGcpSpendCudsDataSource,
 		NewPs4cGcpRecommendationsDataSource,
 		NewPs4cCommitmentPoliciesDataSource,

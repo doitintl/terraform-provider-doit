@@ -308,6 +308,10 @@ data_sources:
     read:
       path: /ps4commitments/v1/general/policies
       method: GET
+  ps4c_gcp_planned_purchases:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases
+      method: GET
   ps4c_gcp_recommendation:
     read:
       path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service}

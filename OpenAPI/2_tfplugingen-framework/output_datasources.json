@@ -13527,6 +13527,384 @@
 			}
 		},
 		{
+			"name": "ps4c_gcp_planned_purchases",
+			"schema": {
+				"attributes": [
+					{
+						"name": "billing_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "GCP Billing Account ID (format `XXXXXX-XXXXXX-XXXXXX`; the account that owns the CUDs) that scopes the request.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "gcp_service",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"compute\",\n\"cloud_sql\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "region",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the\nliteral `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`\nreturns `400` with code `gcp_service_required`. When both are omitted, all available\nregions for all available product lines are returned.\n\nThe value is format-validated, not checked against a closed region list: `compute` accepts\nonly `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that\nis malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.\nA well-formed, service-compatible region with no data returns `200` with an empty result.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^(global|[a-z]+(_[a-z0-9]+)+)$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning."
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 500)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "billing_account_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "GCP Billing Account ID."
+										}
+									},
+									{
+										"name": "regions",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "estimated_savings",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Total estimated savings from the underlying recommendation. Currency is `USD` in v1."
+														}
+													},
+													{
+														"name": "final_commitment",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1."
+														}
+													},
+													{
+														"name": "pause_note",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Customer-visible pause reason, when purchases are paused."
+														}
+													},
+													{
+														"name": "planning_cycle_end_date",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Last day of the planning cycle for this projection. Null when not set."
+														}
+													},
+													{
+														"name": "planning_cycle_start_date",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "First day of the planning cycle for this projection. Null when not set."
+														}
+													},
+													{
+														"name": "profile",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking."
+														}
+													},
+													{
+														"name": "purchase_approval_status",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required."
+														}
+													},
+													{
+														"name": "region",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions."
+														}
+													},
+													{
+														"name": "requires_approval",
+														"bool": {
+															"computed_optional_required": "computed",
+															"description": "`true` when the projection as a whole requires customer approval before the planner\nstores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,\nand/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level\n`steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling."
+														}
+													},
+													{
+														"name": "status",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Projection lifecycle state. When the stored document has no `status`, the server returns `valid`."
+														}
+													},
+													{
+														"name": "steps",
+														"list_nested": {
+															"computed_optional_required": "computed",
+															"nested_object": {
+																"attributes": [
+																	{
+																		"name": "cumulative_commitment",
+																		"single_nested": {
+																			"computed_optional_required": "computed",
+																			"attributes": [
+																				{
+																					"name": "amount",
+																					"string": {
+																						"computed_optional_required": "computed",
+																						"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																					}
+																				},
+																				{
+																					"name": "currency",
+																					"string": {
+																						"computed_optional_required": "computed",
+																						"description": "ISO 4217 currency code."
+																					}
+																				}
+																			],
+																			"description": "Total hourly commitment after this step executes."
+																		}
+																	},
+																	{
+																		"name": "estimated_savings",
+																		"single_nested": {
+																			"computed_optional_required": "computed",
+																			"attributes": [
+																				{
+																					"name": "amount",
+																					"string": {
+																						"computed_optional_required": "computed",
+																						"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																					}
+																				},
+																				{
+																					"name": "currency",
+																					"string": {
+																						"computed_optional_required": "computed",
+																						"description": "ISO 4217 currency code."
+																					}
+																				}
+																			],
+																			"description": "This step's proportional share of the projection-level `estimatedSavings`\n(allocated by purchase amount). Zero when the recommendation total is unavailable."
+																		}
+																	},
+																	{
+																		"name": "is_bootstrap",
+																		"bool": {
+																			"computed_optional_required": "computed",
+																			"description": "`true` if this is the initial bootstrap purchase."
+																		}
+																	},
+																	{
+																		"name": "is_final",
+																		"bool": {
+																			"computed_optional_required": "computed",
+																			"description": "`true` if this step reaches the target commitment."
+																		}
+																	},
+																	{
+																		"name": "order",
+																		"int64": {
+																			"computed_optional_required": "computed",
+																			"description": "Step sequence number (1-based) within the ladder."
+																		}
+																	},
+																	{
+																		"name": "purchase_amount",
+																		"single_nested": {
+																			"computed_optional_required": "computed",
+																			"attributes": [
+																				{
+																					"name": "amount",
+																					"string": {
+																						"computed_optional_required": "computed",
+																						"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																					}
+																				},
+																				{
+																					"name": "currency",
+																					"string": {
+																						"computed_optional_required": "computed",
+																						"description": "ISO 4217 currency code."
+																					}
+																				}
+																			],
+																			"description": "Hourly commitment to purchase on this step."
+																		}
+																	},
+																	{
+																		"name": "requires_approval",
+																		"bool": {
+																			"computed_optional_required": "computed",
+																			"description": "`true` when this step's `cumulativeCommitment` exceeds the customer-approved\ncommitment ceiling (`approvedFinalCommitment`). Used for per-step status in the\nladder even when the projection-level `purchaseApprovalStatus` is `approved`."
+																		}
+																	},
+																	{
+																		"name": "scheduled_date",
+																		"string": {
+																			"computed_optional_required": "computed",
+																			"description": "Calendar date (UTC) when this purchase step is scheduled to execute, with format YYYY-MM-DD."
+																		}
+																	}
+																]
+															},
+															"description": "Weekly ladder steps from the projection output. Omitted when the stored document has\nno `output` section."
+														}
+													},
+													{
+														"name": "term",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Commitment term used for projected purchases."
+														}
+													},
+													{
+														"name": "weeks_to_target",
+														"int64": {
+															"computed_optional_required": "computed",
+															"description": "Number of ladder steps remaining to reach the target commitment."
+														}
+													},
+													{
+														"name": "wow_violation",
+														"bool": {
+															"computed_optional_required": "computed",
+															"description": "`true` when week-over-week eligible spend dropped beyond the allowed threshold."
+														}
+													}
+												]
+											},
+											"description": "Per-region projection entries for this service, sorted with `global` first, then\nremaining regions alphabetically."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Commitment type this projection group belongs to."
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Number of service groups in `items` for this response."
+						}
+					}
+				],
+				"description": "Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.",
+				"markdown_description": "Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments."
+			}
+		},
+		{
 			"name": "ps4c_gcp_recommendation",
 			"schema": {
 				"attributes": [
