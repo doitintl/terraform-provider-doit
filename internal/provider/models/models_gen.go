@@ -7061,6 +7061,12 @@ type DeleteDatahubDataset200Response struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// DeleteDatahubDataset202Response defines model for DeleteDatahubDataset202Response.
+type DeleteDatahubDataset202Response struct {
+	// Message Example: Deletion accepted for processing
+	Message string `json:"message"`
+}
+
 // DeleteUserResponse Response confirming user deletion.
 type DeleteUserResponse struct {
 	// Message Success message
@@ -10268,7 +10274,7 @@ type GetBillingExplainerPerPayerParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10496,7 +10502,7 @@ type ListAwsOrganizationsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10506,7 +10512,7 @@ type GetAwsOrganizationParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10522,7 +10528,7 @@ type ListGcpBillingAccountsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10532,7 +10538,7 @@ type GetGcpBillingAccountParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10551,7 +10557,7 @@ type ListGcpResourceCudsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10570,7 +10576,7 @@ type ListGcpBillingAccountsSettingsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10586,7 +10592,7 @@ type ListCommitmentPoliciesParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10596,7 +10602,7 @@ type GetCommitmentPolicyParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10606,7 +10612,7 @@ type ListGeographicAccessCountriesParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -30016,6 +30022,8 @@ type DeleteDatahubDatasetResp struct {
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *DeleteDatahubDataset200Response
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *DeleteDatahubDataset202Response
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -30031,6 +30039,11 @@ type DeleteDatahubDatasetResp struct {
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r DeleteDatahubDatasetResp) GetJSON200() *DeleteDatahubDataset200Response {
 	return r.JSON200
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r DeleteDatahubDatasetResp) GetJSON202() *DeleteDatahubDataset202Response {
+	return r.JSON202
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -40373,6 +40386,13 @@ func ParseDeleteDatahubDatasetResp(rsp *http.Response) (*DeleteDatahubDatasetRes
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest DeleteDatahubDataset202Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400

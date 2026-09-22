@@ -2500,6 +2500,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteDatahubDataset200Response'
+        "202":
+          description: Accepted - Dataset data deletion is running asynchronously. This response does not confirm completion, and dataset metadata may remain. No completion polling endpoint is available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteDatahubDataset202Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -8752,6 +8758,14 @@ components:
         message:
           type: string
           example: "Dataset deleted successfully"
+    DeleteDatahubDataset202Response:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "Deletion accepted for processing"
     DeleteUserResponse:
       type: object
       description: Response confirming user deletion.
@@ -12999,7 +13013,7 @@ components:
 
         **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 
-        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
       schema:
         type: string
         example: Kp2mN8qL4vR0sT1wX3yZ
@@ -13091,7 +13105,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: "Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). Required when your credential can access more than one customer; otherwise the request fails with `400` and code `tenant_id_required`. A value outside your credential's tenants fails with `400` and code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens."
+      description: "Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens."
       in: header
     oauth2:
       type: oauth2
