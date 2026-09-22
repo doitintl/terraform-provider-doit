@@ -13,6 +13,7 @@ import (
 
 var _ datasource.DataSource = (*ps4cGcpPlannedPurchasesDataSource)(nil)
 var _ datasource.DataSourceWithConfigure = (*ps4cGcpPlannedPurchasesDataSource)(nil)
+var _ datasource.DataSourceWithConfigValidators = (*ps4cGcpPlannedPurchasesDataSource)(nil)
 
 func NewPs4cGcpPlannedPurchasesDataSource() datasource.DataSource {
 	return &ps4cGcpPlannedPurchasesDataSource{}
@@ -55,6 +56,13 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Schema(ctx context.Context, _ dataso
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
+}
+
+func (d *ps4cGcpPlannedPurchasesDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
+	return []datasource.ConfigValidator{
+		ps4cGcpPlannedPurchasesServiceRegionValidator{},
+		ps4cGcpPlannedPurchasesPageTokenValidator{},
+	}
 }
 
 func (d *ps4cGcpPlannedPurchasesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -118,9 +126,6 @@ func (d *ps4cGcpPlannedPurchasesDataSource) Read(ctx context.Context, req dataso
 		data.PageToken = types.StringPointerValue(nullableToPointer(result.PageToken))
 		data.RowCount = types.Int64Value(result.RowCount)
 	} else {
-		if !data.PageToken.IsNull() {
-			params.PageToken = new(data.PageToken.ValueString())
-		}
 		for {
 			apiResp, err := d.client.ListGcpPlannedPurchasesWithResponse(ctx, billingAccountId, params)
 			if err != nil {

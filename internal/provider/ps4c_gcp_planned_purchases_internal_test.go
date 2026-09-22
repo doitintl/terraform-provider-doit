@@ -332,29 +332,6 @@ func TestPs4cGcpPlannedPurchasesRead(t *testing.T) {
 			},
 		},
 		{
-			name:      "page_token only auto-paginates to completion",
-			pageToken: new("start-cursor"),
-			responses: []string{
-				`{
-					"items": [
-						{"billingAccountId": "012345-6789AB-CDEF01", "service": "compute", "regions": []}
-					],
-					"pageToken": "second-cursor",
-					"rowCount": 1
-				}`,
-				`{
-					"items": [
-						{"billingAccountId": "012345-6789AB-CDEF01", "service": "cloud_sql", "regions": []}
-					],
-					"pageToken": null,
-					"rowCount": 1
-				}`,
-			},
-			wantCalls: 2,
-			wantItems: 2,
-			wantCount: 2,
-		},
-		{
 			name:       "user-controlled pagination with both max_results and page_token",
 			maxResults: new(int64(1)),
 			pageToken:  new("current-cursor"),
