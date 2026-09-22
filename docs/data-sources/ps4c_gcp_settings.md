@@ -53,15 +53,16 @@ Optional:
 Read-Only:
 
 - `billing_account_id` (String) GCP Billing Account ID.
-- `services` (Attributes List) Settings for each product line activated on this billing account. (see [below for nested schema](#nestedatt--items--services))
+- `services` (Attributes List) Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically. (see [below for nested schema](#nestedatt--items--services))
 
 <a id="nestedatt--items--services"></a>
 ### Nested Schema for `items.services`
 
 Read-Only:
 
+- `region` (String) Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
 - `service` (String) Product line these settings apply to.
-- `settings` (Attributes) Commitment settings for this product line. (see [below for nested schema](#nestedatt--items--services--settings))
+- `settings` (Attributes) Commitment settings for this product line and region. (see [below for nested schema](#nestedatt--items--services--settings))
 
 <a id="nestedatt--items--services--settings"></a>
 ### Nested Schema for `items.services.settings`
@@ -71,6 +72,6 @@ Read-Only:
 - `last_day_of_month_for_purchase` (Number) Latest calendar day of the month on which a purchase may be scheduled.
 - `maximum_commitment` (Number) Maximum total hourly commitment (USD). `0` means no cap.
 - `minimum_commitment` (Number) Minimum hourly commitment amount (USD) per purchase step.
-- `policy` (String) Coverage target policy for recommendations and purchases.
+- `policy` (String) Coverage target policy for recommendations and purchases (built-in or customer-defined).
 - `purchase_mode` (String) Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
 - `term` (String) Preferred commitment term length for new purchases.

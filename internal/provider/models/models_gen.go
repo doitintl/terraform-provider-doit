@@ -2457,12 +2457,15 @@ func (e ExternalSplitTargetType) Valid() bool {
 
 // Defines values for GcpBillingAccountServiceSettingsService.
 const (
-	GcpBillingAccountServiceSettingsServiceCompute GcpBillingAccountServiceSettingsService = "compute"
+	GcpBillingAccountServiceSettingsServiceCloudSql GcpBillingAccountServiceSettingsService = "cloud_sql"
+	GcpBillingAccountServiceSettingsServiceCompute  GcpBillingAccountServiceSettingsService = "compute"
 )
 
 // Valid indicates whether the value is a known member of the GcpBillingAccountServiceSettingsService enum.
 func (e GcpBillingAccountServiceSettingsService) Valid() bool {
 	switch e {
+	case GcpBillingAccountServiceSettingsServiceCloudSql:
+		return true
 	case GcpBillingAccountServiceSettingsServiceCompute:
 		return true
 	default:
@@ -2488,24 +2491,114 @@ func (e GcpBillingAccountSettingsPurchaseMode) Valid() bool {
 	}
 }
 
-// Defines values for GcpOnboardingStatusEntryStatus.
+// Defines values for GcpDailyCoverageByServiceService.
 const (
-	GcpOnboardingStatusEntryStatusDone       GcpOnboardingStatusEntryStatus = "done"
-	GcpOnboardingStatusEntryStatusError      GcpOnboardingStatusEntryStatus = "error"
-	GcpOnboardingStatusEntryStatusNotStarted GcpOnboardingStatusEntryStatus = "not_started"
-	GcpOnboardingStatusEntryStatusOnboarding GcpOnboardingStatusEntryStatus = "onboarding"
+	GcpDailyCoverageByServiceServiceCloudSql GcpDailyCoverageByServiceService = "cloud_sql"
+	GcpDailyCoverageByServiceServiceCompute  GcpDailyCoverageByServiceService = "compute"
 )
 
-// Valid indicates whether the value is a known member of the GcpOnboardingStatusEntryStatus enum.
-func (e GcpOnboardingStatusEntryStatus) Valid() bool {
+// Valid indicates whether the value is a known member of the GcpDailyCoverageByServiceService enum.
+func (e GcpDailyCoverageByServiceService) Valid() bool {
 	switch e {
-	case GcpOnboardingStatusEntryStatusDone:
+	case GcpDailyCoverageByServiceServiceCloudSql:
 		return true
-	case GcpOnboardingStatusEntryStatusError:
+	case GcpDailyCoverageByServiceServiceCompute:
 		return true
-	case GcpOnboardingStatusEntryStatusNotStarted:
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpMonthlyStatsByServiceService.
+const (
+	GcpMonthlyStatsByServiceServiceCloudSql GcpMonthlyStatsByServiceService = "cloud_sql"
+	GcpMonthlyStatsByServiceServiceCompute  GcpMonthlyStatsByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpMonthlyStatsByServiceService enum.
+func (e GcpMonthlyStatsByServiceService) Valid() bool {
+	switch e {
+	case GcpMonthlyStatsByServiceServiceCloudSql:
 		return true
-	case GcpOnboardingStatusEntryStatusOnboarding:
+	case GcpMonthlyStatsByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpOnboardingStatusByServiceService.
+const (
+	GcpOnboardingStatusByServiceServiceCloudSql GcpOnboardingStatusByServiceService = "cloud_sql"
+	GcpOnboardingStatusByServiceServiceCompute  GcpOnboardingStatusByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpOnboardingStatusByServiceService enum.
+func (e GcpOnboardingStatusByServiceService) Valid() bool {
+	switch e {
+	case GcpOnboardingStatusByServiceServiceCloudSql:
+		return true
+	case GcpOnboardingStatusByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpOnboardingStatusByServiceStatus.
+const (
+	GcpOnboardingStatusByServiceStatusDone       GcpOnboardingStatusByServiceStatus = "done"
+	GcpOnboardingStatusByServiceStatusError      GcpOnboardingStatusByServiceStatus = "error"
+	GcpOnboardingStatusByServiceStatusNotStarted GcpOnboardingStatusByServiceStatus = "not_started"
+	GcpOnboardingStatusByServiceStatusOnboarding GcpOnboardingStatusByServiceStatus = "onboarding"
+)
+
+// Valid indicates whether the value is a known member of the GcpOnboardingStatusByServiceStatus enum.
+func (e GcpOnboardingStatusByServiceStatus) Valid() bool {
+	switch e {
+	case GcpOnboardingStatusByServiceStatusDone:
+		return true
+	case GcpOnboardingStatusByServiceStatusError:
+		return true
+	case GcpOnboardingStatusByServiceStatusNotStarted:
+		return true
+	case GcpOnboardingStatusByServiceStatusOnboarding:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpSavingsTotalsByServiceService.
+const (
+	GcpSavingsTotalsByServiceServiceCloudSql GcpSavingsTotalsByServiceService = "cloud_sql"
+	GcpSavingsTotalsByServiceServiceCompute  GcpSavingsTotalsByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpSavingsTotalsByServiceService enum.
+func (e GcpSavingsTotalsByServiceService) Valid() bool {
+	switch e {
+	case GcpSavingsTotalsByServiceServiceCloudSql:
+		return true
+	case GcpSavingsTotalsByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpStats30dByServiceService.
+const (
+	GcpStats30dByServiceServiceCloudSql GcpStats30dByServiceService = "cloud_sql"
+	GcpStats30dByServiceServiceCompute  GcpStats30dByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpStats30dByServiceService enum.
+func (e GcpStats30dByServiceService) Valid() bool {
+	switch e {
+	case GcpStats30dByServiceServiceCloudSql:
+		return true
+	case GcpStats30dByServiceServiceCompute:
 		return true
 	default:
 		return false
@@ -2947,27 +3040,6 @@ func (e NotificationEventChannel) Valid() bool {
 	case NotificationEventChannelMsteams:
 		return true
 	case NotificationEventChannelSlack:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for Policy.
-const (
-	PolicyBalanced     Policy = "balanced"
-	PolicyConservative Policy = "conservative"
-	PolicyMaxSavings   Policy = "max_savings"
-)
-
-// Valid indicates whether the value is a known member of the Policy enum.
-func (e Policy) Valid() bool {
-	switch e {
-	case PolicyBalanced:
-		return true
-	case PolicyConservative:
-		return true
-	case PolicyMaxSavings:
 		return true
 	default:
 		return false
@@ -4178,6 +4250,7 @@ const (
 	ListGcpResourceCudsParamsStatusCreating     ListGcpResourceCudsParamsStatus = "creating"
 	ListGcpResourceCudsParamsStatusExpired      ListGcpResourceCudsParamsStatus = "expired"
 	ListGcpResourceCudsParamsStatusNotYetActive ListGcpResourceCudsParamsStatus = "not_yet_active"
+	ListGcpResourceCudsParamsStatusPending      ListGcpResourceCudsParamsStatus = "pending"
 )
 
 // Valid indicates whether the value is a known member of the ListGcpResourceCudsParamsStatus enum.
@@ -4192,6 +4265,8 @@ func (e ListGcpResourceCudsParamsStatus) Valid() bool {
 	case ListGcpResourceCudsParamsStatusExpired:
 		return true
 	case ListGcpResourceCudsParamsStatusNotYetActive:
+		return true
+	case ListGcpResourceCudsParamsStatusPending:
 		return true
 	default:
 		return false
@@ -7739,14 +7814,16 @@ type GcpBillingAccount struct {
 	Currency nullable.Nullable[string] `json:"currency,omitempty"`
 
 	// DisplayName Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
-	DisplayName      nullable.Nullable[string] `json:"displayName,omitempty"`
-	OnboardingStatus *GcpOnboardingStatus      `json:"onboardingStatus,omitempty"`
+	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
 
-	// SavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-	SavingsTotals *GcpBillingAccountSavingsTotals `json:"savingsTotals,omitempty"`
+	// OnboardingStatus PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+	OnboardingStatus *[]GcpOnboardingStatusByService `json:"onboardingStatus,omitempty"`
 
-	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-	Stats30d *GcpBillingAccountStats30d `json:"stats30d,omitempty"`
+	// SavingsTotals Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+	SavingsTotals *[]GcpSavingsTotalsByService `json:"savingsTotals,omitempty"`
+
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+	Stats30d *[]GcpStats30dByService `json:"stats30d,omitempty"`
 }
 
 // GcpBillingAccountDetail defines model for GcpBillingAccountDetail.
@@ -7767,45 +7844,34 @@ type GcpBillingAccountDetail struct {
 	// Example: USD
 	Currency nullable.Nullable[string] `json:"currency,omitempty"`
 
-	// DailyCoverage Trailing 30 days of CUD coverage, grouped by product line.
-	DailyCoverage *GcpBillingAccountDetailAllOf1DailyCoverage `json:"dailyCoverage,omitempty"`
+	// DailyCoverage Trailing 30 days of CUD coverage per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has coverage data.
+	DailyCoverage *[]GcpDailyCoverageByService `json:"dailyCoverage,omitempty"`
 
 	// DisplayName Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
 	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
 
-	// MonthlyStats Trailing 6 calendar months of billing account stats, grouped by product line.
-	MonthlyStats     *GcpBillingAccountDetailAllOf1MonthlyStats `json:"monthlyStats,omitempty"`
-	OnboardingStatus *GcpOnboardingStatus                       `json:"onboardingStatus,omitempty"`
+	// MonthlyStats Trailing 6 calendar months of billing account stats per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+	MonthlyStats *[]GcpMonthlyStatsByService `json:"monthlyStats,omitempty"`
 
-	// SavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-	SavingsTotals *GcpBillingAccountSavingsTotals `json:"savingsTotals,omitempty"`
+	// OnboardingStatus PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+	OnboardingStatus *[]GcpOnboardingStatusByService `json:"onboardingStatus,omitempty"`
 
-	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-	Stats30d *GcpBillingAccountStats30d `json:"stats30d,omitempty"`
-}
+	// SavingsTotals Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+	SavingsTotals *[]GcpSavingsTotalsByService `json:"savingsTotals,omitempty"`
 
-// GcpBillingAccountDetailAllOf1DailyCoverage Trailing 30 days of CUD coverage, grouped by product line.
-type GcpBillingAccountDetailAllOf1DailyCoverage struct {
-	Compute *[]GcpDailyCoverageEntry `json:"compute,omitempty"`
-}
-
-// GcpBillingAccountDetailAllOf1MonthlyStats Trailing 6 calendar months of billing account stats, grouped by product line.
-type GcpBillingAccountDetailAllOf1MonthlyStats struct {
-	Compute *[]GcpMonthlyStatsEntry `json:"compute,omitempty"`
-}
-
-// GcpBillingAccountSavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-type GcpBillingAccountSavingsTotals struct {
-	// Compute Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
-	Compute *GcpSavingsTotals `json:"compute,omitempty"`
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+	Stats30d *[]GcpStats30dByService `json:"stats30d,omitempty"`
 }
 
 // GcpBillingAccountServiceSettings defines model for GcpBillingAccountServiceSettings.
 type GcpBillingAccountServiceSettings struct {
+	// Region Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
+	Region string `json:"region"`
+
 	// Service Product line these settings apply to.
 	Service GcpBillingAccountServiceSettingsService `json:"service"`
 
-	// Settings Commitment settings for this product line.
+	// Settings Commitment settings for this product line and region.
 	Settings GcpBillingAccountSettings `json:"settings"`
 }
 
@@ -7823,8 +7889,8 @@ type GcpBillingAccountSettings struct {
 	// MinimumCommitment Minimum hourly commitment amount (USD) per purchase step.
 	MinimumCommitment float64 `json:"minimumCommitment"`
 
-	// Policy Coverage target policy for recommendations and purchases.
-	Policy Policy `json:"policy"`
+	// Policy Coverage target policy for recommendations and purchases (built-in or customer-defined).
+	Policy CommitmentPolicyId `json:"policy"`
 
 	// PurchaseMode Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
 	PurchaseMode GcpBillingAccountSettingsPurchaseMode `json:"purchaseMode"`
@@ -7843,17 +7909,23 @@ type GcpBillingAccountSettingsItem struct {
 	// Example: 01D4A2-4E3F1B-9C72A0
 	BillingAccountId string `json:"billingAccountId"`
 
-	// Services Settings for each product line activated on this billing account.
+	// Services Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically.
 	Services []GcpBillingAccountServiceSettings `json:"services"`
 }
 
-// GcpBillingAccountStats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-type GcpBillingAccountStats30d struct {
-	// Compute Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
-	Compute *Stats30dSummary `json:"compute,omitempty"`
+// GcpDailyCoverageByService Trailing 30 days of CUD coverage for one product line. `compute` entries carry every cost property except `cloudSql`; `cloud_sql` entries carry only `cloudSql` and `onDemand`, so each coverage sub-type appears exactly once across the array.
+type GcpDailyCoverageByService struct {
+	// Days Daily coverage rows, sorted ascending by `date`.
+	Days []GcpDailyCoverageEntry `json:"days"`
+
+	// Service Product line this coverage series belongs to.
+	Service GcpDailyCoverageByServiceService `json:"service"`
 }
 
-// GcpDailyCoverageEntry One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage sub-type had no spend for the day.
+// GcpDailyCoverageByServiceService Product line this coverage series belongs to.
+type GcpDailyCoverageByServiceService string
+
+// GcpDailyCoverageEntry One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Which cost properties are present depends on the product line of the enclosing entry — `compute` rows carry every property except `cloudSql`; `cloud_sql` rows carry only `cloudSql` and `onDemand`. A property that belongs to the product line is present even when the amount is `0.00`.
 type GcpDailyCoverageEntry struct {
 	// AlloyDb Spend covered by AlloyDB CUDs for the day.
 	AlloyDb *Money `json:"alloyDb,omitempty"`
@@ -7898,6 +7970,18 @@ type GcpDailyCoverageEntry struct {
 	ResourceBased *Money `json:"resourceBased,omitempty"`
 }
 
+// GcpMonthlyStatsByService Trailing 6 calendar months of billing account stats for one product line.
+type GcpMonthlyStatsByService struct {
+	// Months Monthly aggregates, sorted ascending by `month`.
+	Months []GcpMonthlyStatsEntry `json:"months"`
+
+	// Service Product line these monthly stats belong to.
+	Service GcpMonthlyStatsByServiceService `json:"service"`
+}
+
+// GcpMonthlyStatsByServiceService Product line these monthly stats belong to.
+type GcpMonthlyStatsByServiceService string
+
 // GcpMonthlyStatsEntry One calendar-month aggregate for the billing account. Money fields are wrapped objects (`{amount, currency}`).
 type GcpMonthlyStatsEntry struct {
 	// CostWithSavings Actual cost after commitments for the month.
@@ -7915,22 +7999,23 @@ type GcpMonthlyStatsEntry struct {
 	OnDemandCost Money `json:"onDemandCost"`
 }
 
-// GcpOnboardingStatus PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
-type GcpOnboardingStatus struct {
-	Compute *GcpOnboardingStatusEntry `json:"compute,omitempty"`
-}
-
-// GcpOnboardingStatusEntry defines model for GcpOnboardingStatusEntry.
-type GcpOnboardingStatusEntry struct {
+// GcpOnboardingStatusByService Onboarding status entry for one product line. When `done`, inventory and recommendations for that commitment type are available.
+type GcpOnboardingStatusByService struct {
 	// OnboardingStartedAt When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
 	OnboardingStartedAt nullable.Nullable[time.Time] `json:"onboardingStartedAt,omitempty"`
 
+	// Service Product line this onboarding status belongs to.
+	Service GcpOnboardingStatusByServiceService `json:"service"`
+
 	// Status Current onboarding lifecycle stage for this product line.
-	Status GcpOnboardingStatusEntryStatus `json:"status"`
+	Status GcpOnboardingStatusByServiceStatus `json:"status"`
 }
 
-// GcpOnboardingStatusEntryStatus Current onboarding lifecycle stage for this product line.
-type GcpOnboardingStatusEntryStatus string
+// GcpOnboardingStatusByServiceService Product line this onboarding status belongs to.
+type GcpOnboardingStatusByServiceService string
+
+// GcpOnboardingStatusByServiceStatus Current onboarding lifecycle stage for this product line.
+type GcpOnboardingStatusByServiceStatus string
 
 // GcpResourceCud GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
 // document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").
@@ -8034,14 +8119,37 @@ type GcpResourceCudReservedResourcesItem struct {
 	ResourceKind string `json:"resourceKind"`
 }
 
-// GcpSavingsTotals Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
-type GcpSavingsTotals struct {
+// GcpSavingsTotalsByService Year-to-date and lifetime realized savings for one product line.
+type GcpSavingsTotalsByService struct {
 	// Lifetime Lifetime realized savings since onboarding.
 	Lifetime Money `json:"lifetime"`
+
+	// Service Product line these savings totals belong to.
+	Service GcpSavingsTotalsByServiceService `json:"service"`
 
 	// Ytd Year-to-date realized savings.
 	Ytd Money `json:"ytd"`
 }
+
+// GcpSavingsTotalsByServiceService Product line these savings totals belong to.
+type GcpSavingsTotalsByServiceService string
+
+// GcpStats30dByService Trailing 30-day aggregate metrics for one product line.
+type GcpStats30dByService struct {
+	// Esr Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
+	//
+	// Example: 0.187
+	Esr nullable.Nullable[float64] `json:"esr,omitempty"`
+
+	// Savings Total savings realized over the last 30 days from active commitments (USD).
+	Savings *Money `json:"savings,omitempty"`
+
+	// Service Product line these metrics belong to.
+	Service GcpStats30dByServiceService `json:"service"`
+}
+
+// GcpStats30dByServiceService Product line these metrics belong to.
+type GcpStats30dByServiceService string
 
 // GeographicAccessCountriesResponse defines model for GeographicAccessCountriesResponse.
 type GeographicAccessCountriesResponse struct {
@@ -8917,9 +9025,6 @@ type PlatformAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
 }
-
-// Policy Coverage target policy that balances savings against underutilization risk. Used by recommendations and planned-purchase projections.
-type Policy string
 
 // ProblemDetails RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type ProblemDetails struct {
@@ -12401,7 +12506,7 @@ type ClientInterface interface {
 	//
 	// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 	//
-	// Fields that drive the Overview tab in the DoiT console:
+	// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 	// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 	// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -12421,7 +12526,14 @@ type ClientInterface interface {
 	//
 	// Returns one item per onboarded GCP Billing Account. Each item includes that billing
 	// account's recommendation and automation engine settings for each product line activated
-	// on it (`compute`).
+	// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+	// for `cloud_sql`.
+	//
+	// Cloud SQL regions come from the billing account's persisted settings: a region is added
+	// when eligible spend is first seen there and is never removed, so its settings entry
+	// remains listed even if spend later drops to zero. Items are sorted by
+	// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+	// `cloud_sql` regions sorted alphabetically.
 	//
 	// Settings are stored independently on each billing account. Existing customer-level
 	// settings are copied lazily when an account is first read or initialized; if no valid
@@ -15140,7 +15252,7 @@ func (c *Client) ListGcpBillingAccounts(ctx context.Context, params *ListGcpBill
 //
 // Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 //
-// Fields that drive the Overview tab in the DoiT console:
+// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 // - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 // - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 // - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -15180,7 +15292,14 @@ func (c *Client) ListGcpResourceCuds(ctx context.Context, billingAccountId Billi
 //
 // Returns one item per onboarded GCP Billing Account. Each item includes that billing
 // account's recommendation and automation engine settings for each product line activated
-// on it (`compute`).
+// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+// for `cloud_sql`.
+//
+// Cloud SQL regions come from the billing account's persisted settings: a region is added
+// when eligible spend is first seen there and is never removed, so its settings entry
+// remains listed even if spend later drops to zero. Items are sorted by
+// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+// `cloud_sql` regions sorted alphabetically.
 //
 // Settings are stored independently on each billing account. Existing customer-level
 // settings are copied lazily when an account is first read or initialized; if no valid
@@ -23306,7 +23425,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 	//
-	// Fields that drive the Overview tab in the DoiT console:
+	// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 	// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 	// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -23330,7 +23449,14 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns one item per onboarded GCP Billing Account. Each item includes that billing
 	// account's recommendation and automation engine settings for each product line activated
-	// on it (`compute`).
+	// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+	// for `cloud_sql`.
+	//
+	// Cloud SQL regions come from the billing account's persisted settings: a region is added
+	// when eligible spend is first seen there and is never removed, so its settings entry
+	// remains listed even if spend later drops to zero. Items are sorted by
+	// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+	// `cloud_sql` regions sorted alphabetically.
 	//
 	// Settings are stored independently on each billing account. Existing customer-level
 	// settings are copied lazily when an account is first read or initialized; if no valid
@@ -34649,7 +34775,7 @@ func (c *ClientWithResponses) ListGcpBillingAccountsWithResponse(ctx context.Con
 //
 // Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 //
-// Fields that drive the Overview tab in the DoiT console:
+// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 // - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 // - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 // - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -34685,7 +34811,14 @@ func (c *ClientWithResponses) ListGcpResourceCudsWithResponse(ctx context.Contex
 //
 // Returns one item per onboarded GCP Billing Account. Each item includes that billing
 // account's recommendation and automation engine settings for each product line activated
-// on it (`compute`).
+// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+// for `cloud_sql`.
+//
+// Cloud SQL regions come from the billing account's persisted settings: a region is added
+// when eligible spend is first seen there and is never removed, so its settings entry
+// remains listed even if spend later drops to zero. Items are sorted by
+// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+// `cloud_sql` regions sorted alphabetically.
 //
 // Settings are stored independently on each billing account. Existing customer-level
 // settings are copied lazily when an account is first read or initialized; if no valid

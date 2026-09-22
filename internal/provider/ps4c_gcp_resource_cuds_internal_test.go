@@ -162,6 +162,16 @@ func TestPs4cGcpResourceCudsRead(t *testing.T) {
 			wantCount: 1,
 		},
 		{
+			name:   "pending status is forwarded",
+			status: new("pending"),
+			responses: []string{
+				`{"items":[],"rowCount":0}`,
+			},
+			wantCalls: 1,
+			wantItems: 0,
+			wantCount: 0,
+		},
+		{
 			name: "auto-pagination multiple pages",
 			responses: []string{
 				`{"items":[{"commitmentNumericId":"CUD-1","state":"ACTIVE"}],"pageToken":"page-2"}`,

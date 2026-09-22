@@ -18,6 +18,11 @@ func TestAccPs4cGcpBillingAccountDataSource_Basic(t *testing.T) {
 				Config: testAccPs4cGcpBillingAccountDataSourceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_billing_account.test", "billing_account_id"),
+					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_billing_account.test", "onboarding_status.#"),
+					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_billing_account.test", "stats30d.#"),
+					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_billing_account.test", "savings_totals.#"),
+					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_billing_account.test", "monthly_stats.#"),
+					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_billing_account.test", "daily_coverage.#"),
 					resource.TestCheckResourceAttrPair(
 						"data.doit_ps4c_gcp_billing_account.test", "billing_account_id",
 						"data.doit_ps4c_gcp_billing_accounts.list", "items.0.billing_account_id",
@@ -67,6 +72,17 @@ data "doit_ps4c_gcp_billing_account" "test" {
     precondition {
       condition     = length(local.accounts) > 0
       error_message = "No PS4C GCP billing accounts returned; cannot run doit_ps4c_gcp_billing_account tests."
+    }
+
+    postcondition {
+      condition = (
+        alltrue([for item in self.onboarding_status : contains(["compute", "cloud_sql"], item.service)]) &&
+        alltrue([for item in self.stats30d : contains(["compute", "cloud_sql"], item.service)]) &&
+        alltrue([for item in self.savings_totals : contains(["compute", "cloud_sql"], item.service)]) &&
+        alltrue([for item in self.monthly_stats : contains(["compute", "cloud_sql"], item.service)]) &&
+        alltrue([for item in self.daily_coverage : contains(["compute", "cloud_sql"], item.service)])
+      )
+      error_message = "PS4C GCP account metrics must use compute or cloud_sql service entries."
     }
   }
 }

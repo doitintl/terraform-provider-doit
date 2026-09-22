@@ -77,12 +77,12 @@ func (d *ps4cGcpBillingAccountDataSource) Read(ctx context.Context, req datasour
 		data.CommitmentsSyncTime = types.StringUnknown()
 		data.CudExportHealthy = types.BoolUnknown()
 		data.Currency = types.StringUnknown()
-		data.DailyCoverage = datasource_ps4c_gcp_billing_account.NewDailyCoverageValueUnknown()
+		data.DailyCoverage = types.ListUnknown(datasource_ps4c_gcp_billing_account.DailyCoverageValue{}.Type(ctx))
 		data.DisplayName = types.StringUnknown()
-		data.MonthlyStats = datasource_ps4c_gcp_billing_account.NewMonthlyStatsValueUnknown()
-		data.OnboardingStatus = datasource_ps4c_gcp_billing_account.NewOnboardingStatusValueUnknown()
-		data.SavingsTotals = datasource_ps4c_gcp_billing_account.NewSavingsTotalsValueUnknown()
-		data.Stats30d = datasource_ps4c_gcp_billing_account.NewStats30dValueUnknown()
+		data.MonthlyStats = types.ListUnknown(datasource_ps4c_gcp_billing_account.MonthlyStatsValue{}.Type(ctx))
+		data.OnboardingStatus = types.ListUnknown(datasource_ps4c_gcp_billing_account.OnboardingStatusValue{}.Type(ctx))
+		data.SavingsTotals = types.ListUnknown(datasource_ps4c_gcp_billing_account.SavingsTotalsValue{}.Type(ctx))
+		data.Stats30d = types.ListUnknown(datasource_ps4c_gcp_billing_account.Stats30dValue{}.Type(ctx))
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}

@@ -9002,7 +9002,7 @@ paths:
         - $ref: "#/components/parameters/managementAccountId"
       responses:
         "200":
-          description: "List with recommendations for each onboarded commitment type. A commitment type property is present only when that commitment type is onboarded and a recommendation is available."
+          description: List with recommendations for each onboarded commitment type. A commitment type property is present only when that commitment type is onboarded and a recommendation is available.
           headers:
             Request-Id:
               $ref: "#/components/headers/RequestId"
@@ -9038,7 +9038,7 @@ paths:
         - $ref: "#/components/parameters/eligibleSpendGranularity"
       responses:
         "200":
-          description: "Commitment type recommendation together with the eligible-spend time series used for analysis and charting."
+          description: Commitment type recommendation together with the eligible-spend time series used for analysis and charting.
           headers:
             Request-Id:
               $ref: "#/components/headers/RequestId"
@@ -9137,7 +9137,7 @@ paths:
         - $ref: "#/components/parameters/ps4cMaxResults"
       responses:
         "200":
-          description: "Settings payload for one onboarded AWS organization, with that AWS organization's purchasing account (`purchaseAccountId`) and organization-specific commitment settings for each activated commitment type (`services[].settings`)."
+          description: Settings payload for one onboarded AWS organization, with that AWS organization's purchasing account (`purchaseAccountId`) and organization-specific commitment settings for each activated commitment type (`services[].settings`).
           headers:
             Request-Id:
               $ref: "#/components/headers/RequestId"
@@ -10402,7 +10402,7 @@ paths:
       description: |-
         Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 
-        Fields that drive the Overview tab in the DoiT console:
+        Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
         - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
         - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
         - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -10440,7 +10440,19 @@ paths:
       tags:
         - PerfectScale for Commitments GCP
       summary: List GCP spend-based Committed Use Discounts
-      description: Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
+      description: |-
+        Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+        CUD state (`status`); omit to return CUDs in all states.
+
+        **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+        line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+        region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+        returns `400` with code `gcp_service_required`. A `region` that is malformed or
+        incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+        returns `400` with code `validation_failed`; a well-formed, compatible region with no
+        matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+        uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+        echoes the raw provider value (`us-central1`).
       parameters:
         - $ref: "#/components/parameters/tenantId"
         - $ref: "#/components/parameters/billingAccountId"
@@ -10454,12 +10466,18 @@ paths:
               - active
               - expired
               - creating
+              - pending
               - cancelled
+              - not_yet_active
             x-enumDescriptions:
               active: CUD is active and providing coverage.
               expired: CUD term has ended.
               creating: CUD purchase is in progress; not yet providing coverage.
+              pending: CUD purchase is awaiting provider confirmation; not yet providing coverage.
               cancelled: CUD was cancelled before or during its term.
+              not_yet_active: CUD has been purchased but its term has not started yet.
+        - $ref: "#/components/parameters/gcp_service"
+        - $ref: "#/components/parameters/gcp_region"
         - $ref: "#/components/parameters/ps4cPageToken"
         - $ref: "#/components/parameters/ps4cMaxResults"
       responses:
@@ -10521,12 +10539,14 @@ paths:
               - active
               - expired
               - creating
+              - pending
               - cancelled
               - not_yet_active
             x-enumDescriptions:
               active: CUD is active and providing coverage.
               expired: CUD term has ended.
               creating: CUD purchase is in progress; not yet providing coverage.
+              pending: CUD purchase is awaiting provider confirmation; not yet providing coverage.
               cancelled: CUD was cancelled before or during its term.
               not_yet_active: CUD has been purchased but its term has not started yet.
         - $ref: "#/components/parameters/ps4cPageToken"
@@ -10578,15 +10598,16 @@ paths:
       summary: List GCP recommendations
       description: |-
         Returns commitment purchase recommendations for the billing account, filtered to the
-        term preferred in the customer's compute settings (`preferredCommitmentPeriod`).
+        term preferred in each product line's settings (`preferredCommitmentPeriod`).
 
-        **`gcp_service` and `region` filters**: a `gcp_service` is required to select which product
-        line's settings determine the term — omitting both returns no recommendations. Supply
-        `gcp_service` alone to return all regions for that service; supply both to return a single
+        **`gcp_service` and `region` filters**: omit both to return recommendations for all
+        product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+        alone to return all regions for that service; supply both to return a single
         service/region scope. `region` requires `gcp_service` — a request with `region` but no
-        `gcp_service` returns `400` with code `gcp_service_required`. Invalid `gcp_service` or
-        `region` values return `400`. In v1 the only supported values are `gcp_service=compute`
-        and `region=global`.
+        `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+        or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+        regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+        region with no data returns `200` with an empty `items` array.
 
         `404` is returned only when the billing account does not exist or the caller cannot access
         it. A billing account with no matching recommendation documents returns `200` with an empty
@@ -10646,9 +10667,13 @@ paths:
         billing account, including analysis metrics and time-bucketed eligible spend. Use
         `granularity` to choose the eligible-spend bucket size (defaults to `day`).
 
-        `region` is an optional query param, defaulting to `global`. In v1 the only supported values
-        are `gcp_service=compute` and `region=global`. When no stored recommendation matches the
-        scope, `recommendation` is omitted and `estimatedEquivalentRecommendedCommitment` is `0`.
+        **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+        for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+        malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+        A well-formed region the billing account has never had eligible spend in returns `404`
+        with code `not_found` — the scope does not exist, same as an unknown billing account.
+        When the scope exists but no stored recommendation matches, the response is `200` with
+        `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
       parameters:
         - $ref: "#/components/parameters/tenantId"
         - $ref: "#/components/parameters/billingAccountId"
@@ -10660,6 +10685,7 @@ paths:
             type: string
             enum:
               - compute
+              - cloud_sql
         - $ref: "#/components/parameters/gcp_region"
         - $ref: "#/components/parameters/eligibleSpendGranularity"
       responses:
@@ -10695,11 +10721,12 @@ paths:
       description: |-
         Returns the laddering projections for the billing account, grouped by PS4C product line
         (`service`) and region. Each service group lists one entry per available
-        `gcp-purchases-projection` document for that scope (v1: `compute` / `global` only).
+        `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+        `cloud_sql` scopes are per-region).
 
         With no filters, returns all existing projection documents in stable order: service groups
-        sorted alphabetically by `service`; within each group, regions sorted with `global` first,
-        then remaining regions alphabetically. Services with no projection documents are omitted
+        ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+        first, then remaining regions alphabetically. Services with no projection documents are omitted
         (not returned as empty groups). When a filter matches no documents, the response is an
         empty `items` array (not `404`). Partial projection documents return only the fields
         available in storage.
@@ -10716,7 +10743,7 @@ paths:
         `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
 
         **Pagination**: results are paginated by **service group** (a whole group is never split
-        across pages). Groups are sorted alphabetically by `service`. Use `maxResults` to limit
+        across pages). Groups keep the stable service order above. Use `maxResults` to limit
         page size (default 50, max 500). When more groups remain, the response includes a
         non-null `pageToken`; pass it unchanged on the next request with the same query parameters
         (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
@@ -10777,7 +10804,14 @@ paths:
       description: |-
         Returns one item per onboarded GCP Billing Account. Each item includes that billing
         account's recommendation and automation engine settings for each product line activated
-        on it (`compute`).
+        on it, per region scope: one `global` entry for `compute`, and one entry per known region
+        for `cloud_sql`.
+
+        Cloud SQL regions come from the billing account's persisted settings: a region is added
+        when eligible spend is first seen there and is never removed, so its settings entry
+        remains listed even if spend later drops to zero. Items are sorted by
+        `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+        `cloud_sql` regions sorted alphabetically.
 
         Settings are stored independently on each billing account. Existing customer-level
         settings are copied lazily when an account is first read or initialized; if no valid
@@ -10936,16 +10970,6 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
-    CommitmentPolicyId:
-      type: string
-      description: |-
-        ID of a commitment policy: either one of the built-in policies — `conservative` (lower
-        coverage target, ~65%), `balanced` (moderate, ~80%), `max_savings` (aggressive, ~90%) — or the
-        ID of a policy the customer defined in the DoiT Console. One catalog is shared by AWS and GCP,
-        and the same policy may be assigned to any AWS organization or GCP billing account product
-        line. Custom policies make this an open list, so it is not an enum; treat the value as an
-        opaque identifier and use the commitment-policies endpoint to resolve it.
-      example: balanced
     CommitmentPolicy:
       type: object
       description: |-
@@ -11087,12 +11111,20 @@ components:
           format: date-time
           description: When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
           nullable: true
-    GcpOnboardingStatus:
-      type: object
-      description: PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
-      properties:
-        compute:
-          $ref: "#/components/schemas/GcpOnboardingStatusEntry"
+    GcpOnboardingStatusByService:
+      description: Onboarding status entry for one product line. When `done`, inventory and recommendations for that commitment type are available.
+      allOf:
+        - $ref: "#/components/schemas/GcpOnboardingStatusEntry"
+        - type: object
+          required:
+            - service
+          properties:
+            service:
+              type: string
+              enum:
+                - compute
+                - cloud_sql
+              description: Product line this onboarding status belongs to.
     GcpBillingAccount:
       type: object
       required:
@@ -11112,8 +11144,10 @@ components:
           nullable: true
           example: USD
         onboardingStatus:
-          allOf:
-            - $ref: "#/components/schemas/GcpOnboardingStatus"
+          type: array
+          description: PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+          items:
+            $ref: "#/components/schemas/GcpOnboardingStatusByService"
         cudExportHealthy:
           type: boolean
           description: "`true` if the BigQuery CUD export is healthy and up to date."
@@ -11124,17 +11158,15 @@ components:
           description: Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
           nullable: true
         stats30d:
-          type: object
-          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-          properties:
-            compute:
-              $ref: "#/components/schemas/Stats30dSummary"
+          type: array
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+          items:
+            $ref: "#/components/schemas/GcpStats30dByService"
         savingsTotals:
-          type: object
-          description: Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-          properties:
-            compute:
-              $ref: "#/components/schemas/GcpSavingsTotals"
+          type: array
+          description: Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+          items:
+            $ref: "#/components/schemas/GcpSavingsTotalsByService"
     GcpMonthlyStatsEntry:
       type: object
       required:
@@ -11165,7 +11197,7 @@ components:
       type: object
       required:
         - date
-      description: One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage sub-type had no spend for the day.
+      description: One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Which cost properties are present depends on the product line of the enclosing entry — `compute` rows carry every property except `cloudSql`; `cloud_sql` rows carry only `cloudSql` and `onDemand`. A property that belongs to the product line is present even when the amount is `0.00`.
       properties:
         date:
           type: string
@@ -11223,6 +11255,70 @@ components:
           allOf:
             - $ref: "#/components/schemas/Money"
           description: On-demand spend not covered by any CUD for the day.
+    GcpStats30dByService:
+      description: Trailing 30-day aggregate metrics for one product line.
+      allOf:
+        - $ref: "#/components/schemas/Stats30dSummary"
+        - type: object
+          required:
+            - service
+          properties:
+            service:
+              type: string
+              enum:
+                - compute
+                - cloud_sql
+              description: Product line these metrics belong to.
+    GcpSavingsTotalsByService:
+      description: Year-to-date and lifetime realized savings for one product line.
+      allOf:
+        - $ref: "#/components/schemas/GcpSavingsTotals"
+        - type: object
+          required:
+            - service
+          properties:
+            service:
+              type: string
+              enum:
+                - compute
+                - cloud_sql
+              description: Product line these savings totals belong to.
+    GcpMonthlyStatsByService:
+      type: object
+      description: Trailing 6 calendar months of billing account stats for one product line.
+      required:
+        - service
+        - months
+      properties:
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Product line these monthly stats belong to.
+        months:
+          type: array
+          description: Monthly aggregates, sorted ascending by `month`.
+          items:
+            $ref: "#/components/schemas/GcpMonthlyStatsEntry"
+    GcpDailyCoverageByService:
+      type: object
+      description: Trailing 30 days of CUD coverage for one product line. `compute` entries carry every cost property except `cloudSql`; `cloud_sql` entries carry only `cloudSql` and `onDemand`, so each coverage sub-type appears exactly once across the array.
+      required:
+        - service
+        - days
+      properties:
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Product line this coverage series belongs to.
+        days:
+          type: array
+          description: Daily coverage rows, sorted ascending by `date`.
+          items:
+            $ref: "#/components/schemas/GcpDailyCoverageEntry"
     GcpSavingsTotals:
       type: object
       required:
@@ -11244,21 +11340,15 @@ components:
         - type: object
           properties:
             monthlyStats:
-              type: object
-              description: Trailing 6 calendar months of billing account stats, grouped by product line.
-              properties:
-                compute:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/GcpMonthlyStatsEntry"
+              type: array
+              description: Trailing 6 calendar months of billing account stats per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+              items:
+                $ref: "#/components/schemas/GcpMonthlyStatsByService"
             dailyCoverage:
-              type: object
-              description: Trailing 30 days of CUD coverage, grouped by product line.
-              properties:
-                compute:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/GcpDailyCoverageEntry"
+              type: array
+              description: Trailing 30 days of CUD coverage per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has coverage data.
+              items:
+                $ref: "#/components/schemas/GcpDailyCoverageByService"
     GcpSpendCud:
       type: object
       description: |-
@@ -11316,14 +11406,14 @@ components:
         lastMonthUtilization:
           type: number
           format: double
-          description: Utilization percentage (0–1) in the last full calendar month.
+          description: Utilization in the last full calendar month, as a fraction from 0 to 1.
         name:
           type: string
           description: Provider commitment display name.
           example: my-commitment1
         region:
           type: string
-          description: Region, or `global` for cross-region spend CUDs.
+          description: Region in raw provider form (`us-central1`), or `global` for cross-region spend CUDs. Not the `lower_snake_case` wire form used by the `region` query parameter.
           example: global
         startTime:
           type: string
@@ -11334,6 +11424,10 @@ components:
           type: string
           description: Raw provider commitment state.
           example: Active
+        subType:
+          type: string
+          description: Normalized coverage sub-type token (`UPPER_SNAKE`) identifying the product family within the product line.
+          example: COMPUTE_FLEXIBLE
         term:
           type: string
           description: Raw provider commitment term (ISO-8601 duration).
@@ -11508,11 +11602,7 @@ components:
       properties:
         region:
           type: string
-          enum:
-            - global
-          description: Region token for this projection scope (`lower_snake_case`). v1 compute uses `global` only; future regional scopes add values such as `us_east1`.
-          x-enumDescriptions:
-            global: Cross-region projection scope; the only supported region in v1.
+          description: Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
         status:
           type: string
           enum:
@@ -11549,8 +11639,8 @@ components:
           description: "`true` when week-over-week eligible spend dropped beyond the allowed threshold."
         profile:
           allOf:
-            - $ref: "#/components/schemas/Policy"
-          description: Coverage target policy used to generate this projection.
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking.
         term:
           allOf:
             - $ref: "#/components/schemas/CommitmentTerm"
@@ -11596,9 +11686,11 @@ components:
           type: string
           enum:
             - compute
+            - cloud_sql
           description: Commitment type this projection group belongs to.
           x-enumDescriptions:
             compute: Compute commitment type (CUDs).
+            cloud_sql: Cloud SQL commitment type (CUDs).
         billingAccountId:
           type: string
           description: GCP Billing Account ID.
@@ -11614,25 +11706,17 @@ components:
       description: A CUD purchase recommendation for a (service, region) scope.
       properties:
         policy:
-          type: string
-          enum:
-            - Conservative
-            - Balanced (Recommended)
-            - Max Savings
-          description: Coverage target policy currently configured for this commitment type (display name).
-          x-enumDescriptions:
-            Conservative: Lower coverage target; favors stable usage and lower underutilization risk.
-            Balanced (Recommended): Moderate coverage target; default balance of savings and buffer.
-            Max Savings: Aggressive coverage target; highest savings potential with a smaller buffer.
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy configured for this product line and region scope (built-in or customer-defined).
         region:
           type: string
-          enum:
-            - global
-          description: Region scope for this recommendation. v1 supports `global` only.
+          description: Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
         service:
           type: string
           enum:
             - compute
+            - cloud_sql
           description: PS4C product line (`gcp_service`) this recommendation belongs to.
         currentCommitment:
           type: number
@@ -11649,7 +11733,9 @@ components:
         estimatedAverageCoverage:
           type: number
           format: double
-          description: Estimated average coverage (0–1) of eligible spend if the recommended commitment were in place.
+          minimum: 0
+          maximum: 1
+          description: Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields.
     GcpRecommendationWithEligibleSpend:
       type: object
       description: A single GCP recommendation paired with its eligible-spend usage series.
@@ -11704,23 +11790,28 @@ components:
           description: Preferred commitment term length for new purchases.
         policy:
           allOf:
-            - $ref: "#/components/schemas/Policy"
-          description: Coverage target policy for recommendations and purchases.
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy for recommendations and purchases (built-in or customer-defined).
     GcpBillingAccountServiceSettings:
       type: object
       required:
         - service
+        - region
         - settings
       properties:
         service:
           type: string
           enum:
             - compute
+            - cloud_sql
           description: Product line these settings apply to.
+        region:
+          type: string
+          description: Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
         settings:
           allOf:
             - $ref: "#/components/schemas/GcpBillingAccountSettings"
-          description: Commitment settings for this product line.
+          description: Commitment settings for this product line and region.
     GcpBillingAccountSettingsItem:
       type: object
       required:
@@ -11735,7 +11826,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GcpBillingAccountServiceSettings"
-          description: Settings for each product line activated on this billing account.
+          description: Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically.
     GeographicAccessCountry:
       type: object
       additionalProperties: false
@@ -20584,17 +20675,16 @@ components:
       x-enumDescriptions:
         one_year: One-year commitment term.
         three_year: Three-year commitment term.
-    Policy:
+    CommitmentPolicyId:
       type: string
-      enum:
-        - conservative
-        - balanced
-        - max_savings
-      description: "Coverage target policy that balances savings against underutilization risk. Used by recommendations and planned-purchase projections."
-      x-enumDescriptions:
-        conservative: Lower coverage target (~65%); favors stable usage and lower underutilization risk.
-        balanced: Moderate coverage target (~80%); default balance of savings and buffer.
-        max_savings: Aggressive coverage target (~90%); highest savings potential with a smaller buffer.
+      description: |-
+        ID of a commitment policy: either one of the built-in policies — `conservative` (lower
+        coverage target, ~65%), `balanced` (moderate, ~80%), `max_savings` (aggressive, ~90%) — or the
+        ID of a policy the customer defined in the DoiT Console. One catalog is shared by AWS and GCP,
+        and the same policy may be assigned to any AWS organization or GCP billing account product
+        line. Custom policies make this an open list, so it is not an enum; treat the value as an
+        opaque identifier and use the commitment-policies endpoint to resolve it.
+      example: balanced
     PaymentOption:
       type: string
       enum:
@@ -20606,6 +20696,31 @@ components:
         no_upfront: All charges paid monthly; no upfront payment.
         partial_upfront: A portion paid upfront; remainder billed monthly.
         all_upfront: Full commitment paid upfront.
+    EligibleSpendDataPoint:
+      type: object
+      description: One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.
+      properties:
+        usageTime:
+          type: string
+          format: date-time
+          description: Start of the time bucket for this data point (UTC).
+          nullable: true
+        totalUsage:
+          type: number
+          format: double
+          description: Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities.
+        minUsage:
+          type: number
+          format: double
+          description: Minimum eligible usage ($/h) observed in the bucket (day/week/month views).
+        maxUsage:
+          type: number
+          format: double
+          description: Maximum eligible usage ($/h) observed in the bucket (day/week/month views).
+        medianUsage:
+          type: number
+          format: double
+          description: Median eligible usage ($/h) observed in the bucket (day/week/month views).
     Money:
       type: object
       required:
@@ -20629,13 +20744,13 @@ components:
         esr:
           type: number
           format: double
-          description: "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
+          description: Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
           nullable: true
           example: 0.187
         savings:
           allOf:
             - $ref: "#/components/schemas/Money"
-          description: "Total savings realized over the last 30 days from active commitments (USD)."
+          description: Total savings realized over the last 30 days from active commitments (USD).
     AwsOnboardingStatusEntry:
       type: object
       required:
@@ -20643,7 +20758,7 @@ components:
       properties:
         status:
           type: string
-          description: "Current onboarding lifecycle stage for this product line."
+          description: Current onboarding lifecycle stage for this product line.
           enum:
             - not_started
             - onboarding
@@ -20657,11 +20772,11 @@ components:
         onboardingStartedAt:
           type: string
           format: date-time
-          description: "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
+          description: When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
           nullable: true
     AwsOnboardingStatus:
       type: object
-      description: "PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available."
+      description: PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
       properties:
         compute:
           $ref: "#/components/schemas/AwsOnboardingStatusEntry"
@@ -20674,11 +20789,11 @@ components:
       properties:
         managementAccountId:
           type: string
-          description: "12-digit account number of the AWS organization's management (payer) account."
+          description: 12-digit account number of the AWS organization's management (payer) account.
           example: "123456789012"
         displayName:
           type: string
-          description: "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available."
+          description: Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
           nullable: true
           example: Acme Prod
         onboardingStatus:
@@ -20687,12 +20802,12 @@ components:
         savingsPlansSyncTime:
           type: string
           format: date-time
-          description: "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet."
+          description: Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.
           nullable: true
-          example: 2026-01-01T00:00:00Z
+          example: "2026-01-01T00:00:00Z"
         stats30d:
           type: object
-          description: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.
           properties:
             compute:
               $ref: "#/components/schemas/Stats30dSummary"
@@ -20700,7 +20815,7 @@ components:
               $ref: "#/components/schemas/Stats30dSummary"
         savingsTotals:
           type: object
-          description: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
+          description: Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.
           properties:
             compute:
               $ref: "#/components/schemas/AwsSavingsTotals"
@@ -20709,10 +20824,10 @@ components:
         monthlyPotentialSavings:
           allOf:
             - $ref: "#/components/schemas/AwsMonthlyPotentialSavings"
-          description: "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection."
+          description: Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection.
     AwsMonthlyPotentialSavings:
       type: object
-      description: "Estimated monthly additional savings per Savings Plan (SP) type, taken from the latest PerfectScale for Commitments purchase projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking estimate of the monthly savings achievable if the recommended commitments are purchased. For member accounts, the AWS organization figure is attributed by each member account's share of trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest projection is missing, expired, or empty. The field is omitted entirely only for accounts that have never had potential savings computed."
+      description: Estimated monthly additional savings per Savings Plan (SP) type, taken from the latest PerfectScale for Commitments purchase projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking estimate of the monthly savings achievable if the recommended commitments are purchased. For member accounts, the AWS organization figure is attributed by each member account's share of trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest projection is missing, expired, or empty. The field is omitted entirely only for accounts that have never had potential savings computed.
       properties:
         compute:
           $ref: "#/components/schemas/Money"
@@ -20725,17 +20840,17 @@ components:
         - esr
         - onDemandCost
         - costWithSavings
-      description: "One calendar-month aggregate for the AWS organization. Money fields are wrapped objects (`{amount, currency}`)."
+      description: One calendar-month aggregate for the AWS organization. Money fields are wrapped objects (`{amount, currency}`).
       properties:
         month:
           type: string
           pattern: ^\d{4}-(0[1-9]|1[0-2])$
-          description: "Calendar month in `YYYY-MM` form (UTC)."
+          description: Calendar month in `YYYY-MM` form (UTC).
           example: 2025-06
         esr:
           type: number
           format: double
-          description: "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost."
+          description: Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.
         onDemandCost:
           allOf:
             - $ref: "#/components/schemas/Money"
@@ -20748,12 +20863,12 @@ components:
       type: object
       required:
         - date
-      description: "One day of commitment-coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage type had no spend for the day."
+      description: One day of commitment-coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage type had no spend for the day.
       properties:
         date:
           type: string
           format: date
-          description: "Calendar day (UTC) for this coverage row in format YYYY-MM-DD."
+          description: Calendar day (UTC) for this coverage row in format YYYY-MM-DD.
         onDemandCost:
           allOf:
             - $ref: "#/components/schemas/Money"
@@ -20779,7 +20894,7 @@ components:
       required:
         - ytd
         - lifetime
-      description: "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
+      description: Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
       properties:
         ytd:
           allOf:
@@ -20796,7 +20911,7 @@ components:
           properties:
             monthlyStats:
               type: object
-              description: "Trailing 6 calendar months of AWS organization stats, grouped by SP type."
+              description: Trailing 6 calendar months of AWS organization stats, grouped by SP type.
               properties:
                 compute:
                   type: array
@@ -20968,11 +21083,11 @@ components:
           description: Recurring (typically hourly or monthly) payment amount after any upfront.
         ec2InstanceFamily:
           type: string
-          description: "EC2 instance family for `ec2_instance` plans (for example, `m5`). Null for other plan types."
+          description: EC2 instance family for `ec2_instance` plans (for example, `m5`). Null for other plan types.
           nullable: true
         region:
           type: string
-          description: "AWS region for plans that are region-scoped (for example, `us-east-1`). Null when not applicable."
+          description: AWS region for plans that are region-scoped (for example, `us-east-1`). Null when not applicable.
           nullable: true
         startTime:
           type: string
@@ -20987,7 +21102,7 @@ components:
         lastMonthUtilization:
           type: number
           format: double
-          description: Utilization percentage (0–1) in the last full calendar month. Null when not yet available.
+          description: Utilization in the last full calendar month, as a fraction from 0 to 1. Null when not yet available.
           nullable: true
         lastMonthSavings:
           allOf:
@@ -21028,7 +21143,7 @@ components:
           description: AWS account ID where the Reserved Instance exists.
         state:
           type: string
-          description: "Reserved Instance state, tracking the AWS EC2 Reserved Instance API verbatim in external snake_case form. Differs from Savings Plan states by design. For example, the terminal state is `retired` here vs `expired` on Savings Plans."
+          description: Reserved Instance state, tracking the AWS EC2 Reserved Instance API verbatim in external snake_case form. Differs from Savings Plan states by design. For example, the terminal state is `retired` here vs `expired` on Savings Plans.
           enum:
             - active
             - retired
@@ -21199,7 +21314,7 @@ components:
         utilizationPercentage:
           type: number
           format: double
-          description: Cost Explorer reported utilization percentage (0–1).
+          description: Cost Explorer reported utilization, as a fraction from 0 to 1.
           nullable: true
         utilizationPercentageInUnits:
           type: number
@@ -21213,7 +21328,7 @@ components:
         mtdUtilization:
           type: number
           format: double
-          description: "Month-to-date utilization (0–1). Null when not yet available. A stored 0% is indistinguishable from unavailable and is returned as null."
+          description: Month-to-date utilization (0–1). Null when not yet available. A stored 0% is indistinguishable from unavailable and is returned as null.
           nullable: true
         updatedAt:
           type: string
@@ -21256,7 +21371,7 @@ components:
         estimatedSavings:
           allOf:
             - $ref: "#/components/schemas/Money"
-          description: "This step's proportional share of the projection-level `estimatedSavings` (allocated by purchase amount). Zero when the recommendation total is unavailable."
+          description: This step's proportional share of the projection-level `estimatedSavings` (allocated by purchase amount). Zero when the recommendation total is unavailable.
         isBootstrap:
           type: boolean
           description: "`true` if this is the initial bootstrap purchase."
@@ -21290,7 +21405,7 @@ components:
           enum:
             - valid
             - expired
-          description: "Projection lifecycle state. `expired` means the planning cycle has lapsed and a new projection should be triggered by the automated scheduler. When the stored document has no `status`, the server returns `valid`."
+          description: Projection lifecycle state. `expired` means the planning cycle has lapsed and a new projection should be triggered by the automated scheduler. When the stored document has no `status`, the server returns `valid`.
           x-enumDescriptions:
             valid: Projection is current for the active planning cycle.
             expired: Planning cycle has lapsed; wait for the scheduler to produce a new projection.
@@ -21300,14 +21415,14 @@ components:
             - pending_approval
             - approved
             - paused
-          description: "Approval state for purchases of this commitment type. Approve or pause on the Planned Purchases tab in the DoiT Console. Absent or unrecognized stored values are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required."
+          description: Approval state for purchases of this commitment type. Approve or pause on the Planned Purchases tab in the DoiT Console. Absent or unrecognized stored values are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
           x-enumDescriptions:
             pending_approval: Approve the commitment ceiling on the Planned Purchases tab in the DoiT Console before purchases can run.
             approved: Purchases may run up to the approved commitment ceiling.
             paused: Purchases are paused (Pause Purchases on Planned Purchases); see `pauseNote` for the reason.
         pauseNote:
           type: string
-          description: "Customer-visible pause reason when `purchaseApprovalStatus` is `paused`. Null when purchases are not paused."
+          description: Customer-visible pause reason when `purchaseApprovalStatus` is `paused`. Null when purchases are not paused.
           nullable: true
         requiresApproval:
           type: boolean
@@ -21317,8 +21432,8 @@ components:
           description: "`true` when week-over-week eligible spend dropped beyond the allowed threshold."
         profile:
           allOf:
-            - $ref: "#/components/schemas/Policy"
-          description: Coverage target policy used to generate this projection.
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking.
         term:
           allOf:
             - $ref: "#/components/schemas/CommitmentTerm"
@@ -21330,12 +21445,12 @@ components:
             - partial_upfront
             - all_upfront
             - null
-          nullable: true
-          description: "Payment structure for projected purchases. May be null when not set on the stored projection."
+          description: Payment structure for projected purchases. May be null when not set on the stored projection.
           x-enumDescriptions:
             no_upfront: All charges paid monthly; no upfront payment.
             partial_upfront: A portion paid upfront; remainder billed monthly.
             all_upfront: Full commitment paid upfront.
+          nullable: true
         finalCommitment:
           allOf:
             - $ref: "#/components/schemas/Money"
@@ -21362,34 +21477,37 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AwsPurchasePlanStep"
-          description: "Weekly ladder steps from the projection output. Omitted when the stored document has no `output` section."
+          description: Weekly ladder steps from the projection output. Omitted when the stored document has no `output` section.
     AwsRecommendation:
       type: object
-      description: "Recommended commitment levels and savings estimates for one PerfectScale for Commitments commitment type on an AWS organization."
+      description: Recommended commitment levels and savings estimates for one PerfectScale for Commitments commitment type on an AWS organization.
       properties:
         policy:
-          type: string
-          description: "Coverage target policy currently configured for this commitment type (for example, `conservative`, `balanced`, or `max_savings`)."
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy this recommendation was generated for (built-in or customer-defined).
         currentCommitment:
           type: number
           format: double
-          description: "Active hourly commitment ($/h) currently applied to this AWS organization and commitment type, including commitments already purchased."
+          description: Active hourly commitment ($/h) currently applied to this AWS organization and commitment type, including commitments already purchased.
         recommendedCommitment:
           type: number
           format: double
-          description: "Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk."
+          description: Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk.
         potentialAdditionalSavings:
           type: number
           format: double
-          description: "Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`."
+          description: Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`.
         estimatedAverageCoverage:
           type: number
           format: double
-          description: "Estimated average coverage (0–1) of eligible spend if the recommended commitment were in place."
+          minimum: 0
+          maximum: 1
+          description: Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields.
         estimatedEquivalentRecommendedCommitment:
           type: number
           format: double
-          description: "Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the last 60 days multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts."
+          description: Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the last 60 days multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
     AwsRecommendations:
       type: object
       properties:
@@ -21401,31 +21519,6 @@ components:
           allOf:
             - $ref: "#/components/schemas/AwsRecommendation"
           description: Recommendation for the Database commitment type.
-    EligibleSpendDataPoint:
-      type: object
-      description: "One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization."
-      properties:
-        usageTime:
-          type: string
-          format: date-time
-          description: Start of the time bucket for this data point (UTC).
-          nullable: true
-        totalUsage:
-          type: number
-          format: double
-          description: "Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities."
-        minUsage:
-          type: number
-          format: double
-          description: Minimum eligible usage ($/h) observed in the bucket (day/week/month views).
-        maxUsage:
-          type: number
-          format: double
-          description: Maximum eligible usage ($/h) observed in the bucket (day/week/month views).
-        medianUsage:
-          type: number
-          format: double
-          description: Median eligible usage ($/h) observed in the bucket (day/week/month views).
     AwsRecommendationWithEligibleSpend:
       type: object
       properties:
@@ -21435,12 +21528,12 @@ components:
           description: Recommended commitment metrics for the requested commitment type.
         eligibleUsage:
           type: array
-          description: "Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window."
+          description: Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window.
           items:
             $ref: "#/components/schemas/EligibleSpendDataPoint"
     AwsOrganizationSettings:
       type: object
-      description: "Organization-specific recommendation and automation settings for one activated commitment type."
+      description: Organization-specific recommendation and automation settings for one activated commitment type.
       required:
         - purchaseMode
         - minimumCommitment
@@ -21455,7 +21548,7 @@ components:
           enum:
             - autonomous
             - requires_approval
-          description: "Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only."
+          description: Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
           x-enumDescriptions:
             autonomous: Purchases execute automatically within configured commitment limits. Set in the DoiT Console (Autonomous Purchasing).
             requires_approval: Purchases wait for customer approval in the DoiT Console before execution. Default mode; set in Console Settings.
@@ -21468,11 +21561,11 @@ components:
           minimum: 1
           maximum: 28
           default: 25
-          description: "Latest calendar day of the month (1–28) on which new purchases may be scheduled. After this day, the No Purchase Window applies until the next month. Default is 25; the maximum allowed value is 28 to leave a buffer before month-end billing cycles."
+          description: Latest calendar day of the month (1–28) on which new purchases may be scheduled. After this day, the No Purchase Window applies until the next month. Default is 25; the maximum allowed value is 28 to leave a buffer before month-end billing cycles.
         maximumCommitment:
           type: number
           format: double
-          description: "Maximum total hourly commitment (USD). `0` means no cap. Always present on settings responses."
+          description: Maximum total hourly commitment (USD). `0` means no cap. Always present on settings responses.
         term:
           allOf:
             - $ref: "#/components/schemas/CommitmentTerm"
@@ -21483,12 +21576,12 @@ components:
           description: Preferred payment structure for new commitments.
         policy:
           allOf:
-            - $ref: "#/components/schemas/Policy"
-          description: Coverage target policy for recommendations and purchases.
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy for recommendations and purchases (built-in or customer-defined).
         upfrontPercentage:
           type: number
           format: double
-          description: "Fraction of total cost paid upfront (0–1) when `paymentOption` is `partial_upfront`. In the DoiT Console this is set as 50–99% and applies to AWS Compute only; Database uses `no_upfront` only."
+          description: Fraction of total cost paid upfront (0–1) when `paymentOption` is `partial_upfront`. In the DoiT Console this is set as 50–99% and applies to AWS Compute only; Database uses `no_upfront` only.
     AwsOrganizationServiceSettings:
       type: object
       required:
@@ -21521,14 +21614,14 @@ components:
           example: "123456789012"
         purchaseAccountId:
           type: string
-          description: "AWS account used for commitment purchases for this AWS organization. Often a member account under the AWS organization, but it may also be the management (payer) account itself. Null if not configured."
+          description: AWS account used for commitment purchases for this AWS organization. Often a member account under the AWS organization, but it may also be the management (payer) account itself. Null if not configured.
           nullable: true
           example: "987654321098"
         services:
           type: array
           items:
             $ref: "#/components/schemas/AwsOrganizationServiceSettings"
-          description: "Commitment settings for each commitment type activated on this AWS organization. Settings values are independent per AWS organization and commitment type."
+          description: Commitment settings for each commitment type activated on this AWS organization. Settings values are independent per AWS organization and commitment type.
     BillingTransferProblemDetails:
       type: object
       description: >-
@@ -22473,25 +22566,6 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: not_found
             retryable: false
-    Conflict:
-      description: The request conflicts with the current state of the resource.
-      headers:
-        Request-Id:
-          $ref: "#/components/headers/RequestId"
-        Content-Language:
-          $ref: "#/components/headers/ContentLanguage"
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/ProblemDetails"
-          example:
-            type: https://developer.doit.com/errors/conflict
-            title: Conflict
-            status: 409
-            detail: The requested resource already exists.
-            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
-            code: conflict
-            retryable: false
     InternalServerError:
       description: Unexpected server error.
       headers:
@@ -22535,6 +22609,25 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: service_unavailable
             retryable: true
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/conflict
+            title: Conflict
+            status: 409
+            detail: The requested resource already exists.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: conflict
+            retryable: false
     TooManyRequests:
       description: Request rate limit exceeded; retry after the indicated delay.
       headers:
@@ -22581,23 +22674,32 @@ components:
       in: query
       name: gcp_service
       required: false
-      description: Filter GCP planned purchases by PS4C product line.
+      description: Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
       schema:
         type: string
         enum:
           - compute
+          - cloud_sql
+        x-enumDescriptions:
+          compute: Compute commitment type (CUDs). Global scope only (`region=global`).
+          cloud_sql: Cloud SQL commitment type (CUDs). Regional scope only (`region` is a concrete region, never `global`).
     gcp_region:
       in: query
       name: region
       required: false
       description: |-
-        Filter GCP planned purchases by region scope. Requires `gcp_service`; when omitted together
-        with `gcp_service`, all available regions for all available product lines are returned.
-        A request with `region` but no `gcp_service` returns `400` with code `gcp_service_required`.
+        Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+        literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+        returns `400` with code `gcp_service_required`. When both are omitted, all available
+        regions for all available product lines are returned.
+
+        The value is format-validated, not checked against a closed region list: `compute` accepts
+        only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+        is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+        A well-formed, service-compatible region with no data returns `200` with an empty result.
       schema:
         type: string
-        enum:
-          - global
+        pattern: ^(global|[a-z]+(_[a-z0-9]+)+)$
     billingAccountId:
       in: path
       name: billingAccountId
@@ -22764,7 +22866,7 @@ components:
       in: query
       name: pageToken
       required: false
-      description: "Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning."
+      description: Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
       schema:
         type: string
     ps4cMaxResults:
@@ -22781,7 +22883,7 @@ components:
       in: query
       name: service
       required: false
-      description: "Filter planned purchases by PerfectScale for Commitments commitment type. Omit to return all commitment types that have planned purchases for the AWS organization."
+      description: Filter planned purchases by PerfectScale for Commitments commitment type. Omit to return all commitment types that have planned purchases for the AWS organization.
       schema:
         type: string
         enum:
@@ -22794,7 +22896,7 @@ components:
       in: path
       name: serviceId
       required: true
-      description: "Commitment type whose recommendation to retrieve. Must be an onboarded commitment type for the AWS organization (`compute` or `database`)."
+      description: Commitment type whose recommendation to retrieve. Must be an onboarded commitment type for the AWS organization (`compute` or `database`).
       schema:
         type: string
         enum:
@@ -22807,7 +22909,7 @@ components:
       in: query
       name: granularity
       required: false
-      description: "Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals."
+      description: Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals.
       schema:
         type: string
         enum:
