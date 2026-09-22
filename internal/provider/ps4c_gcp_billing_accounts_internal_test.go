@@ -28,22 +28,39 @@ func TestMapGcpBillingAccountsToItemsList_FullyPopulated(t *testing.T) {
 			Currency:            valueToNullable("USD"),
 			CudExportHealthy:    valueToNullable(true),
 			CommitmentsSyncTime: valueToNullable(syncTime),
-			OnboardingStatus: &models.GcpOnboardingStatus{
-				Compute: &models.GcpOnboardingStatusEntry{
-					Status:              models.GcpOnboardingStatusEntryStatus("done"),
+			OnboardingStatus: &[]models.GcpOnboardingStatusByService{
+				{
+					Service:             models.GcpOnboardingStatusByServiceServiceCompute,
+					Status:              models.GcpOnboardingStatusByServiceStatus("done"),
 					OnboardingStartedAt: valueToNullable(onboardingStartedAt),
 				},
+				{
+					Service: models.GcpOnboardingStatusByServiceServiceCloudSql,
+					Status:  models.GcpOnboardingStatusByServiceStatus("onboarding"),
+				},
 			},
-			Stats30d: &models.GcpBillingAccountStats30d{
-				Compute: &models.Stats30dSummary{
+			Stats30d: &[]models.GcpStats30dByService{
+				{
+					Service: models.GcpStats30dByServiceServiceCompute,
 					Esr:     valueToNullable(0.25),
 					Savings: &models.Money{Amount: "250.75", Currency: "USD"},
 				},
+				{
+					Service: models.GcpStats30dByServiceServiceCloudSql,
+					Esr:     valueToNullable(0.4),
+					Savings: &models.Money{Amount: "80.25", Currency: "USD"},
+				},
 			},
-			SavingsTotals: &models.GcpBillingAccountSavingsTotals{
-				Compute: &models.GcpSavingsTotals{
+			SavingsTotals: &[]models.GcpSavingsTotalsByService{
+				{
+					Service:  models.GcpSavingsTotalsByServiceServiceCompute,
 					Lifetime: models.Money{Amount: "5000.00", Currency: "USD"},
 					Ytd:      models.Money{Amount: "1200.00", Currency: "USD"},
+				},
+				{
+					Service:  models.GcpSavingsTotalsByServiceServiceCloudSql,
+					Lifetime: models.Money{Amount: "800.00", Currency: "USD"},
+					Ytd:      models.Money{Amount: "300.00", Currency: "USD"},
 				},
 			},
 		},
@@ -77,25 +94,61 @@ func TestMapGcpBillingAccountsToItemsList_FullyPopulated(t *testing.T) {
 		t.Errorf("cud_export_healthy = %v, want true", got)
 	}
 
-	if item.OnboardingStatus.IsNull() {
-		t.Fatal("onboarding_status should not be null when populated")
+	onboarding := item.OnboardingStatus.Elements()
+	if len(onboarding) != 2 {
+		t.Fatalf("onboarding_status has %d elements, want 2", len(onboarding))
 	}
-	if got := item.OnboardingStatus.Compute.Status.ValueString(); got != "done" {
-		t.Errorf("onboarding_status.compute.status = %q, want %q", got, "done")
+	cloudSQLOnboarding := onboarding[1].(datasource_ps4c_gcp_billing_accounts.OnboardingStatusValue)
+	if got := cloudSQLOnboarding.Service.ValueString(); got != "cloud_sql" {
+		t.Errorf("onboarding_status[1].service = %q, want cloud_sql", got)
 	}
-
-	if got := item.Stats30d.Compute.Esr.ValueFloat64(); got != 0.25 {
-		t.Errorf("stats30d.compute.esr = %v, want 0.25", got)
-	}
-	if got := item.Stats30d.Compute.Savings.Amount.ValueString(); got != "250.75" {
-		t.Errorf("stats30d.compute.savings.amount = %q, want %q", got, "250.75")
+	if got := cloudSQLOnboarding.Status.ValueString(); got != "onboarding" {
+		t.Errorf("onboarding_status[1].status = %q, want onboarding", got)
 	}
 
-	if got := item.SavingsTotals.Compute.Lifetime.Amount.ValueString(); got != "5000.00" {
-		t.Errorf("savings_totals.compute.lifetime.amount = %q, want %q", got, "5000.00")
+	stats := item.Stats30d.Elements()
+	if len(stats) != 2 {
+		t.Fatalf("stats30d has %d elements, want 2", len(stats))
 	}
-	if got := item.SavingsTotals.Compute.Ytd.Amount.ValueString(); got != "1200.00" {
-		t.Errorf("savings_totals.compute.ytd.amount = %q, want %q", got, "1200.00")
+	computeStats := stats[0].(datasource_ps4c_gcp_billing_accounts.Stats30dValue)
+	if got := computeStats.Esr.ValueFloat64(); got != 0.25 {
+		t.Errorf("stats30d[0].esr = %v, want 0.25", got)
+	}
+	if got := computeStats.Savings.Amount.ValueString(); got != "250.75" {
+		t.Errorf("stats30d[0].savings.amount = %q, want 250.75", got)
+	}
+
+	totals := item.SavingsTotals.Elements()
+	if len(totals) != 2 {
+		t.Fatalf("savings_totals has %d elements, want 2", len(totals))
+	}
+	cloudSQLTotals := totals[1].(datasource_ps4c_gcp_billing_accounts.SavingsTotalsValue)
+	if got := cloudSQLTotals.Service.ValueString(); got != "cloud_sql" {
+		t.Errorf("savings_totals[1].service = %q, want cloud_sql", got)
+	}
+	if got := cloudSQLTotals.Lifetime.Amount.ValueString(); got != "800.00" {
+		t.Errorf("savings_totals[1].lifetime.amount = %q, want 800.00", got)
+	}
+}
+
+func TestMapGcpBillingAccountsToItemsList_OmittedComputedListsAreEmpty(t *testing.T) {
+	list, diags := mapGcpBillingAccountsToItemsList(t.Context(), []models.GcpBillingAccount{{BillingAccountId: "012345-6789AB-CDEF01"}})
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	item := list.Elements()[0].(datasource_ps4c_gcp_billing_accounts.ItemsValue)
+	for name, value := range map[string]interface{ IsNull() bool }{
+		"onboarding_status": item.OnboardingStatus,
+		"savings_totals":    item.SavingsTotals,
+		"stats30d":          item.Stats30d,
+	} {
+		if value.IsNull() {
+			t.Errorf("%s is null, want an empty list", name)
+		}
+	}
+	if len(item.OnboardingStatus.Elements()) != 0 || len(item.SavingsTotals.Elements()) != 0 || len(item.Stats30d.Elements()) != 0 {
+		t.Fatal("omitted computed lists should be empty")
 	}
 }
 

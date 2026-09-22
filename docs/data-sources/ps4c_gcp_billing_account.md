@@ -51,12 +51,12 @@ output "billing_account_savings_totals" {
 - `commitments_sync_time` (String) Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
 - `cud_export_healthy` (Boolean) `true` if the BigQuery CUD export is healthy and up to date.
 - `currency` (String) ISO 4217 currency code for this billing account.
-- `daily_coverage` (Attributes) Trailing 30 days of CUD coverage, grouped by product line. (see [below for nested schema](#nestedatt--daily_coverage))
+- `daily_coverage` (Attributes List) Trailing 30 days of CUD coverage per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has coverage data. (see [below for nested schema](#nestedatt--daily_coverage))
 - `display_name` (String) Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
-- `monthly_stats` (Attributes) Trailing 6 calendar months of billing account stats, grouped by product line. (see [below for nested schema](#nestedatt--monthly_stats))
-- `onboarding_status` (Attributes) PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available. (see [below for nested schema](#nestedatt--onboarding_status))
-- `savings_totals` (Attributes) Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date. (see [below for nested schema](#nestedatt--savings_totals))
-- `stats30d` (Attributes) Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line. (see [below for nested schema](#nestedatt--stats30d))
+- `monthly_stats` (Attributes List) Trailing 6 calendar months of billing account stats per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats. (see [below for nested schema](#nestedatt--monthly_stats))
+- `onboarding_status` (Attributes List) PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded. (see [below for nested schema](#nestedatt--onboarding_status))
+- `savings_totals` (Attributes List) Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date. (see [below for nested schema](#nestedatt--savings_totals))
+- `stats30d` (Attributes List) Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats. (see [below for nested schema](#nestedatt--stats30d))
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -71,39 +71,31 @@ Optional:
 
 Read-Only:
 
-- `compute` (Attributes List) (see [below for nested schema](#nestedatt--daily_coverage--compute))
+- `days` (Attributes List) Daily coverage rows, sorted ascending by `date`. (see [below for nested schema](#nestedatt--daily_coverage--days))
+- `service` (String) Product line this coverage series belongs to.
 
-<a id="nestedatt--daily_coverage--compute"></a>
-### Nested Schema for `daily_coverage.compute`
+<a id="nestedatt--daily_coverage--days"></a>
+### Nested Schema for `daily_coverage.days`
 
 Read-Only:
 
-- `alloy_db` (Attributes) Spend covered by AlloyDB CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--alloy_db))
-- `backup_for_oracle` (Attributes) Spend covered by Google Cloud Backup and DR for Oracle CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--backup_for_oracle))
-- `big_query` (Attributes) Spend covered by BigQuery CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--big_query))
-- `bigtable` (Attributes) Spend covered by Bigtable CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--bigtable))
-- `cloud_firestore` (Attributes) Spend covered by Cloud Firestore CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--cloud_firestore))
-- `cloud_run` (Attributes) Spend covered by Cloud Run CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--cloud_run))
-- `cloud_spanner` (Attributes) Spend covered by Cloud Spanner CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--cloud_spanner))
-- `cloud_sql` (Attributes) Spend covered by Cloud SQL CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--cloud_sql))
-- `compute_flexible` (Attributes) Spend covered by Compute Flexible CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--compute_flexible))
+- `alloy_db` (Attributes) Spend covered by AlloyDB CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--alloy_db))
+- `backup_for_oracle` (Attributes) Spend covered by Google Cloud Backup and DR for Oracle CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--backup_for_oracle))
+- `big_query` (Attributes) Spend covered by BigQuery CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--big_query))
+- `bigtable` (Attributes) Spend covered by Bigtable CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--bigtable))
+- `cloud_firestore` (Attributes) Spend covered by Cloud Firestore CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--cloud_firestore))
+- `cloud_run` (Attributes) Spend covered by Cloud Run CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--cloud_run))
+- `cloud_spanner` (Attributes) Spend covered by Cloud Spanner CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--cloud_spanner))
+- `cloud_sql` (Attributes) Spend covered by Cloud SQL CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--cloud_sql))
+- `compute_flexible` (Attributes) Spend covered by Compute Flexible CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--compute_flexible))
 - `date` (String) Calendar day (UTC) for this coverage row in format YYYY-MM-DD.
-- `kafka` (Attributes) Spend covered by Kafka CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--kafka))
-- `memorystore_for_redis` (Attributes) Spend covered by Memorystore for Redis CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--memorystore_for_redis))
-- `on_demand` (Attributes) On-demand spend not covered by any CUD for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--on_demand))
-- `resource_based` (Attributes) Spend covered by resource-based (vCPU / memory) CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--compute--resource_based))
+- `kafka` (Attributes) Spend covered by Kafka CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--kafka))
+- `memorystore_for_redis` (Attributes) Spend covered by Memorystore for Redis CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--memorystore_for_redis))
+- `on_demand` (Attributes) On-demand spend not covered by any CUD for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--on_demand))
+- `resource_based` (Attributes) Spend covered by resource-based (vCPU / memory) CUDs for the day. (see [below for nested schema](#nestedatt--daily_coverage--days--resource_based))
 
-<a id="nestedatt--daily_coverage--compute--alloy_db"></a>
-### Nested Schema for `daily_coverage.compute.alloy_db`
-
-Read-Only:
-
-- `amount` (String) Decimal monetary amount at ISO 4217 minor-unit precision (string).
-- `currency` (String) ISO 4217 currency code.
-
-
-<a id="nestedatt--daily_coverage--compute--backup_for_oracle"></a>
-### Nested Schema for `daily_coverage.compute.backup_for_oracle`
+<a id="nestedatt--daily_coverage--days--alloy_db"></a>
+### Nested Schema for `daily_coverage.days.alloy_db`
 
 Read-Only:
 
@@ -111,8 +103,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--big_query"></a>
-### Nested Schema for `daily_coverage.compute.big_query`
+<a id="nestedatt--daily_coverage--days--backup_for_oracle"></a>
+### Nested Schema for `daily_coverage.days.backup_for_oracle`
 
 Read-Only:
 
@@ -120,8 +112,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--bigtable"></a>
-### Nested Schema for `daily_coverage.compute.bigtable`
+<a id="nestedatt--daily_coverage--days--big_query"></a>
+### Nested Schema for `daily_coverage.days.big_query`
 
 Read-Only:
 
@@ -129,8 +121,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--cloud_firestore"></a>
-### Nested Schema for `daily_coverage.compute.cloud_firestore`
+<a id="nestedatt--daily_coverage--days--bigtable"></a>
+### Nested Schema for `daily_coverage.days.bigtable`
 
 Read-Only:
 
@@ -138,8 +130,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--cloud_run"></a>
-### Nested Schema for `daily_coverage.compute.cloud_run`
+<a id="nestedatt--daily_coverage--days--cloud_firestore"></a>
+### Nested Schema for `daily_coverage.days.cloud_firestore`
 
 Read-Only:
 
@@ -147,8 +139,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--cloud_spanner"></a>
-### Nested Schema for `daily_coverage.compute.cloud_spanner`
+<a id="nestedatt--daily_coverage--days--cloud_run"></a>
+### Nested Schema for `daily_coverage.days.cloud_run`
 
 Read-Only:
 
@@ -156,8 +148,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--cloud_sql"></a>
-### Nested Schema for `daily_coverage.compute.cloud_sql`
+<a id="nestedatt--daily_coverage--days--cloud_spanner"></a>
+### Nested Schema for `daily_coverage.days.cloud_spanner`
 
 Read-Only:
 
@@ -165,8 +157,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--compute_flexible"></a>
-### Nested Schema for `daily_coverage.compute.compute_flexible`
+<a id="nestedatt--daily_coverage--days--cloud_sql"></a>
+### Nested Schema for `daily_coverage.days.cloud_sql`
 
 Read-Only:
 
@@ -174,8 +166,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--kafka"></a>
-### Nested Schema for `daily_coverage.compute.kafka`
+<a id="nestedatt--daily_coverage--days--compute_flexible"></a>
+### Nested Schema for `daily_coverage.days.compute_flexible`
 
 Read-Only:
 
@@ -183,8 +175,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--memorystore_for_redis"></a>
-### Nested Schema for `daily_coverage.compute.memorystore_for_redis`
+<a id="nestedatt--daily_coverage--days--kafka"></a>
+### Nested Schema for `daily_coverage.days.kafka`
 
 Read-Only:
 
@@ -192,8 +184,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--on_demand"></a>
-### Nested Schema for `daily_coverage.compute.on_demand`
+<a id="nestedatt--daily_coverage--days--memorystore_for_redis"></a>
+### Nested Schema for `daily_coverage.days.memorystore_for_redis`
 
 Read-Only:
 
@@ -201,8 +193,17 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--daily_coverage--compute--resource_based"></a>
-### Nested Schema for `daily_coverage.compute.resource_based`
+<a id="nestedatt--daily_coverage--days--on_demand"></a>
+### Nested Schema for `daily_coverage.days.on_demand`
+
+Read-Only:
+
+- `amount` (String) Decimal monetary amount at ISO 4217 minor-unit precision (string).
+- `currency` (String) ISO 4217 currency code.
+
+
+<a id="nestedatt--daily_coverage--days--resource_based"></a>
+### Nested Schema for `daily_coverage.days.resource_based`
 
 Read-Only:
 
@@ -217,20 +218,21 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes List) (see [below for nested schema](#nestedatt--monthly_stats--compute))
+- `months` (Attributes List) Monthly aggregates, sorted ascending by `month`. (see [below for nested schema](#nestedatt--monthly_stats--months))
+- `service` (String) Product line these monthly stats belong to.
 
-<a id="nestedatt--monthly_stats--compute"></a>
-### Nested Schema for `monthly_stats.compute`
+<a id="nestedatt--monthly_stats--months"></a>
+### Nested Schema for `monthly_stats.months`
 
 Read-Only:
 
-- `cost_with_savings` (Attributes) Actual cost after commitments for the month. (see [below for nested schema](#nestedatt--monthly_stats--compute--cost_with_savings))
+- `cost_with_savings` (Attributes) Actual cost after commitments for the month. (see [below for nested schema](#nestedatt--monthly_stats--months--cost_with_savings))
 - `esr` (Number) Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.
 - `month` (String) Calendar month in `YYYY-MM` form (UTC).
-- `on_demand_cost` (Attributes) Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment. (see [below for nested schema](#nestedatt--monthly_stats--compute--on_demand_cost))
+- `on_demand_cost` (Attributes) Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment. (see [below for nested schema](#nestedatt--monthly_stats--months--on_demand_cost))
 
-<a id="nestedatt--monthly_stats--compute--cost_with_savings"></a>
-### Nested Schema for `monthly_stats.compute.cost_with_savings`
+<a id="nestedatt--monthly_stats--months--cost_with_savings"></a>
+### Nested Schema for `monthly_stats.months.cost_with_savings`
 
 Read-Only:
 
@@ -238,8 +240,8 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--monthly_stats--compute--on_demand_cost"></a>
-### Nested Schema for `monthly_stats.compute.on_demand_cost`
+<a id="nestedatt--monthly_stats--months--on_demand_cost"></a>
+### Nested Schema for `monthly_stats.months.on_demand_cost`
 
 Read-Only:
 
@@ -254,16 +256,9 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes) (see [below for nested schema](#nestedatt--onboarding_status--compute))
-
-<a id="nestedatt--onboarding_status--compute"></a>
-### Nested Schema for `onboarding_status.compute`
-
-Read-Only:
-
 - `onboarding_started_at` (String) When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
+- `service` (String) Product line this onboarding status belongs to.
 - `status` (String) Current onboarding lifecycle stage for this product line.
-
 
 
 <a id="nestedatt--savings_totals"></a>
@@ -271,18 +266,12 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes) Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated. (see [below for nested schema](#nestedatt--savings_totals--compute))
+- `lifetime` (Attributes) Lifetime realized savings since onboarding. (see [below for nested schema](#nestedatt--savings_totals--lifetime))
+- `service` (String) Product line these savings totals belong to.
+- `ytd` (Attributes) Year-to-date realized savings. (see [below for nested schema](#nestedatt--savings_totals--ytd))
 
-<a id="nestedatt--savings_totals--compute"></a>
-### Nested Schema for `savings_totals.compute`
-
-Read-Only:
-
-- `lifetime` (Attributes) Lifetime realized savings since onboarding. (see [below for nested schema](#nestedatt--savings_totals--compute--lifetime))
-- `ytd` (Attributes) Year-to-date realized savings. (see [below for nested schema](#nestedatt--savings_totals--compute--ytd))
-
-<a id="nestedatt--savings_totals--compute--lifetime"></a>
-### Nested Schema for `savings_totals.compute.lifetime`
+<a id="nestedatt--savings_totals--lifetime"></a>
+### Nested Schema for `savings_totals.lifetime`
 
 Read-Only:
 
@@ -290,14 +279,13 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--savings_totals--compute--ytd"></a>
-### Nested Schema for `savings_totals.compute.ytd`
+<a id="nestedatt--savings_totals--ytd"></a>
+### Nested Schema for `savings_totals.ytd`
 
 Read-Only:
 
 - `amount` (String) Decimal monetary amount at ISO 4217 minor-unit precision (string).
 - `currency` (String) ISO 4217 currency code.
-
 
 
 
@@ -306,18 +294,12 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes) Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD. (see [below for nested schema](#nestedatt--stats30d--compute))
-
-<a id="nestedatt--stats30d--compute"></a>
-### Nested Schema for `stats30d.compute`
-
-Read-Only:
-
 - `esr` (Number) Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
-- `savings` (Attributes) Total savings realized over the last 30 days from active commitments (USD). (see [below for nested schema](#nestedatt--stats30d--compute--savings))
+- `savings` (Attributes) Total savings realized over the last 30 days from active commitments (USD). (see [below for nested schema](#nestedatt--stats30d--savings))
+- `service` (String) Product line these metrics belong to.
 
-<a id="nestedatt--stats30d--compute--savings"></a>
-### Nested Schema for `stats30d.compute.savings`
+<a id="nestedatt--stats30d--savings"></a>
+### Nested Schema for `stats30d.savings`
 
 Read-Only:
 

@@ -55,6 +55,7 @@ func gcpSettingsServiceAttrs(ctx context.Context, service models.GcpBillingAccou
 	diags.Append(d...)
 
 	return map[string]attr.Value{
+		"region":   types.StringValue(service.Region),
 		"service":  types.StringValue(string(service.Service)),
 		"settings": settingsVal,
 	}, diags
@@ -67,7 +68,7 @@ func mapGcpSettingsDetails(ctx context.Context, s models.GcpBillingAccountSettin
 			"last_day_of_month_for_purchase": types.Int64Value(int64(s.LastDayOfMonthForPurchase)),
 			"maximum_commitment":             types.Float64Value(s.MaximumCommitment),
 			"minimum_commitment":             types.Float64Value(s.MinimumCommitment),
-			"policy":                         types.StringValue(string(s.Policy)),
+			"policy":                         types.StringValue(s.Policy),
 			"purchase_mode":                  types.StringValue(string(s.PurchaseMode)),
 			"term":                           types.StringValue(string(s.Term)),
 		},

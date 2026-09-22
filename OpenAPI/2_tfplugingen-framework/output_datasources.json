@@ -12717,327 +12717,337 @@
 					},
 					{
 						"name": "daily_coverage",
-						"single_nested": {
+						"list_nested": {
 							"computed_optional_required": "computed",
-							"attributes": [
-								{
-									"name": "compute",
-									"list_nested": {
-										"computed_optional_required": "computed",
-										"nested_object": {
-											"attributes": [
-												{
-													"name": "alloy_db",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "days",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "alloy_db",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
 																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
+															],
+															"description": "Spend covered by AlloyDB CUDs for the day."
+														}
+													},
+													{
+														"name": "backup_for_oracle",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
 																}
-															}
-														],
-														"description": "Spend covered by AlloyDB CUDs for the day."
+															],
+															"description": "Spend covered by Google Cloud Backup and DR for Oracle CUDs for the day."
+														}
+													},
+													{
+														"name": "big_query",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by BigQuery CUDs for the day."
+														}
+													},
+													{
+														"name": "bigtable",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Bigtable CUDs for the day."
+														}
+													},
+													{
+														"name": "cloud_firestore",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Cloud Firestore CUDs for the day."
+														}
+													},
+													{
+														"name": "cloud_run",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Cloud Run CUDs for the day."
+														}
+													},
+													{
+														"name": "cloud_spanner",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Cloud Spanner CUDs for the day."
+														}
+													},
+													{
+														"name": "cloud_sql",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Cloud SQL CUDs for the day."
+														}
+													},
+													{
+														"name": "compute_flexible",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Compute Flexible CUDs for the day."
+														}
+													},
+													{
+														"name": "date",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Calendar day (UTC) for this coverage row in format YYYY-MM-DD."
+														}
+													},
+													{
+														"name": "kafka",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Kafka CUDs for the day."
+														}
+													},
+													{
+														"name": "memorystore_for_redis",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by Memorystore for Redis CUDs for the day."
+														}
+													},
+													{
+														"name": "on_demand",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "On-demand spend not covered by any CUD for the day."
+														}
+													},
+													{
+														"name": "resource_based",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
+																}
+															],
+															"description": "Spend covered by resource-based (vCPU / memory) CUDs for the day."
+														}
 													}
-												},
-												{
-													"name": "backup_for_oracle",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Google Cloud Backup and DR for Oracle CUDs for the day."
-													}
-												},
-												{
-													"name": "big_query",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by BigQuery CUDs for the day."
-													}
-												},
-												{
-													"name": "bigtable",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Bigtable CUDs for the day."
-													}
-												},
-												{
-													"name": "cloud_firestore",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Cloud Firestore CUDs for the day."
-													}
-												},
-												{
-													"name": "cloud_run",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Cloud Run CUDs for the day."
-													}
-												},
-												{
-													"name": "cloud_spanner",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Cloud Spanner CUDs for the day."
-													}
-												},
-												{
-													"name": "cloud_sql",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Cloud SQL CUDs for the day."
-													}
-												},
-												{
-													"name": "compute_flexible",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Compute Flexible CUDs for the day."
-													}
-												},
-												{
-													"name": "date",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Calendar day (UTC) for this coverage row in format YYYY-MM-DD."
-													}
-												},
-												{
-													"name": "kafka",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Kafka CUDs for the day."
-													}
-												},
-												{
-													"name": "memorystore_for_redis",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by Memorystore for Redis CUDs for the day."
-													}
-												},
-												{
-													"name": "on_demand",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "On-demand spend not covered by any CUD for the day."
-													}
-												},
-												{
-													"name": "resource_based",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Spend covered by resource-based (vCPU / memory) CUDs for the day."
-													}
-												}
-											]
+												]
+											},
+											"description": "Daily coverage rows, sorted ascending by `date`."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Product line this coverage series belongs to."
 										}
 									}
-								}
-							],
-							"description": "Trailing 30 days of CUD coverage, grouped by product line."
+								]
+							},
+							"description": "Trailing 30 days of CUD coverage per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has coverage data."
 						}
 					},
 					{
@@ -13049,224 +13059,235 @@
 					},
 					{
 						"name": "monthly_stats",
-						"single_nested": {
+						"list_nested": {
 							"computed_optional_required": "computed",
-							"attributes": [
-								{
-									"name": "compute",
-									"list_nested": {
-										"computed_optional_required": "computed",
-										"nested_object": {
-											"attributes": [
-												{
-													"name": "cost_with_savings",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "months",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "cost_with_savings",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
 																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
+															],
+															"description": "Actual cost after commitments for the month."
+														}
+													},
+													{
+														"name": "esr",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost."
+														}
+													},
+													{
+														"name": "month",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Calendar month in `YYYY-MM` form (UTC)."
+														}
+													},
+													{
+														"name": "on_demand_cost",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
 																}
-															}
-														],
-														"description": "Actual cost after commitments for the month."
+															],
+															"description": "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment."
+														}
 													}
-												},
-												{
-													"name": "esr",
-													"float64": {
-														"computed_optional_required": "computed",
-														"description": "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost."
-													}
-												},
-												{
-													"name": "month",
-													"string": {
-														"computed_optional_required": "computed",
-														"description": "Calendar month in `YYYY-MM` form (UTC)."
-													}
-												},
-												{
-													"name": "on_demand_cost",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "amount",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																}
-															},
-															{
-																"name": "currency",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "ISO 4217 currency code."
-																}
-															}
-														],
-														"description": "Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment."
-													}
-												}
-											]
+												]
+											},
+											"description": "Monthly aggregates, sorted ascending by `month`."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Product line these monthly stats belong to."
 										}
 									}
-								}
-							],
-							"description": "Trailing 6 calendar months of billing account stats, grouped by product line."
+								]
+							},
+							"description": "Trailing 6 calendar months of billing account stats per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats."
 						}
 					},
 					{
 						"name": "onboarding_status",
-						"single_nested": {
+						"list_nested": {
 							"computed_optional_required": "computed",
-							"attributes": [
-								{
-									"name": "compute",
-									"single_nested": {
-										"computed_optional_required": "computed",
-										"attributes": [
-											{
-												"name": "onboarding_started_at",
-												"string": {
-													"computed_optional_required": "computed",
-													"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
-												}
-											},
-											{
-												"name": "status",
-												"string": {
-													"computed_optional_required": "computed",
-													"description": "Current onboarding lifecycle stage for this product line."
-												}
-											}
-										]
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "onboarding_started_at",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Product line this onboarding status belongs to."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Current onboarding lifecycle stage for this product line."
+										}
 									}
-								}
-							],
-							"description": "PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available."
+								]
+							},
+							"description": "PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded."
 						}
 					},
 					{
 						"name": "savings_totals",
-						"single_nested": {
+						"list_nested": {
 							"computed_optional_required": "computed",
-							"attributes": [
-								{
-									"name": "compute",
-									"single_nested": {
-										"computed_optional_required": "computed",
-										"attributes": [
-											{
-												"name": "lifetime",
-												"single_nested": {
-													"computed_optional_required": "computed",
-													"attributes": [
-														{
-															"name": "amount",
-															"string": {
-																"computed_optional_required": "computed",
-																"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-															}
-														},
-														{
-															"name": "currency",
-															"string": {
-																"computed_optional_required": "computed",
-																"description": "ISO 4217 currency code."
-															}
-														}
-													],
-													"description": "Lifetime realized savings since onboarding."
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "lifetime",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "amount",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+													}
+												},
+												{
+													"name": "currency",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "ISO 4217 currency code."
+													}
 												}
-											},
-											{
-												"name": "ytd",
-												"single_nested": {
-													"computed_optional_required": "computed",
-													"attributes": [
-														{
-															"name": "amount",
-															"string": {
-																"computed_optional_required": "computed",
-																"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-															}
-														},
-														{
-															"name": "currency",
-															"string": {
-																"computed_optional_required": "computed",
-																"description": "ISO 4217 currency code."
-															}
-														}
-													],
-													"description": "Year-to-date realized savings."
+											],
+											"description": "Lifetime realized savings since onboarding."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Product line these savings totals belong to."
+										}
+									},
+									{
+										"name": "ytd",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "amount",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+													}
+												},
+												{
+													"name": "currency",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "ISO 4217 currency code."
+													}
 												}
-											}
-										],
-										"description": "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
+											],
+											"description": "Year-to-date realized savings."
+										}
 									}
-								}
-							],
-							"description": "Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date."
+								]
+							},
+							"description": "Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date."
 						}
 					},
 					{
 						"name": "stats30d",
-						"single_nested": {
+						"list_nested": {
 							"computed_optional_required": "computed",
-							"attributes": [
-								{
-									"name": "compute",
-									"single_nested": {
-										"computed_optional_required": "computed",
-										"attributes": [
-											{
-												"name": "esr",
-												"float64": {
-													"computed_optional_required": "computed",
-													"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "esr",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
+										}
+									},
+									{
+										"name": "savings",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "amount",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+													}
+												},
+												{
+													"name": "currency",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "ISO 4217 currency code."
+													}
 												}
-											},
-											{
-												"name": "savings",
-												"single_nested": {
-													"computed_optional_required": "computed",
-													"attributes": [
-														{
-															"name": "amount",
-															"string": {
-																"computed_optional_required": "computed",
-																"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-															}
-														},
-														{
-															"name": "currency",
-															"string": {
-																"computed_optional_required": "computed",
-																"description": "ISO 4217 currency code."
-															}
-														}
-													],
-													"description": "Total savings realized over the last 30 days from active commitments (USD)."
-												}
-											}
-										],
-										"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD."
+											],
+											"description": "Total savings realized over the last 30 days from active commitments (USD)."
+										}
+									},
+									{
+										"name": "service",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Product line these metrics belong to."
+										}
 									}
-								}
-							],
-							"description": "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line."
+								]
+							},
+							"description": "Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats."
 						}
 					}
 				],
@@ -13347,145 +13368,146 @@
 									},
 									{
 										"name": "onboarding_status",
-										"single_nested": {
+										"list_nested": {
 											"computed_optional_required": "computed",
-											"attributes": [
-												{
-													"name": "compute",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "onboarding_started_at",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
-																}
-															},
-															{
-																"name": "status",
-																"string": {
-																	"computed_optional_required": "computed",
-																	"description": "Current onboarding lifecycle stage for this product line."
-																}
-															}
-														]
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "onboarding_started_at",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
+														}
+													},
+													{
+														"name": "service",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Product line this onboarding status belongs to."
+														}
+													},
+													{
+														"name": "status",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Current onboarding lifecycle stage for this product line."
+														}
 													}
-												}
-											],
-											"description": "PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available."
+												]
+											},
+											"description": "PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded."
 										}
 									},
 									{
 										"name": "savings_totals",
-										"single_nested": {
+										"list_nested": {
 											"computed_optional_required": "computed",
-											"attributes": [
-												{
-													"name": "compute",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "lifetime",
-																"single_nested": {
-																	"computed_optional_required": "computed",
-																	"attributes": [
-																		{
-																			"name": "amount",
-																			"string": {
-																				"computed_optional_required": "computed",
-																				"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																			}
-																		},
-																		{
-																			"name": "currency",
-																			"string": {
-																				"computed_optional_required": "computed",
-																				"description": "ISO 4217 currency code."
-																			}
-																		}
-																	],
-																	"description": "Lifetime realized savings since onboarding."
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "lifetime",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
 																}
-															},
-															{
-																"name": "ytd",
-																"single_nested": {
-																	"computed_optional_required": "computed",
-																	"attributes": [
-																		{
-																			"name": "amount",
-																			"string": {
-																				"computed_optional_required": "computed",
-																				"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																			}
-																		},
-																		{
-																			"name": "currency",
-																			"string": {
-																				"computed_optional_required": "computed",
-																				"description": "ISO 4217 currency code."
-																			}
-																		}
-																	],
-																	"description": "Year-to-date realized savings."
+															],
+															"description": "Lifetime realized savings since onboarding."
+														}
+													},
+													{
+														"name": "service",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Product line these savings totals belong to."
+														}
+													},
+													{
+														"name": "ytd",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
 																}
-															}
-														],
-														"description": "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
+															],
+															"description": "Year-to-date realized savings."
+														}
 													}
-												}
-											],
-											"description": "Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date."
+												]
+											},
+											"description": "Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date."
 										}
 									},
 									{
 										"name": "stats30d",
-										"single_nested": {
+										"list_nested": {
 											"computed_optional_required": "computed",
-											"attributes": [
-												{
-													"name": "compute",
-													"single_nested": {
-														"computed_optional_required": "computed",
-														"attributes": [
-															{
-																"name": "esr",
-																"float64": {
-																	"computed_optional_required": "computed",
-																	"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "esr",
+														"float64": {
+															"computed_optional_required": "computed",
+															"description": "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
+														}
+													},
+													{
+														"name": "savings",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "amount",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
+																	}
+																},
+																{
+																	"name": "currency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ISO 4217 currency code."
+																	}
 																}
-															},
-															{
-																"name": "savings",
-																"single_nested": {
-																	"computed_optional_required": "computed",
-																	"attributes": [
-																		{
-																			"name": "amount",
-																			"string": {
-																				"computed_optional_required": "computed",
-																				"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string)."
-																			}
-																		},
-																		{
-																			"name": "currency",
-																			"string": {
-																				"computed_optional_required": "computed",
-																				"description": "ISO 4217 currency code."
-																			}
-																		}
-																	],
-																	"description": "Total savings realized over the last 30 days from active commitments (USD)."
-																}
-															}
-														],
-														"description": "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD."
+															],
+															"description": "Total savings realized over the last 30 days from active commitments (USD)."
+														}
+													},
+													{
+														"name": "service",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Product line these metrics belong to."
+														}
 													}
-												}
-											],
-											"description": "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line."
+												]
+											},
+											"description": "Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats."
 										}
 									}
 								]
@@ -13543,7 +13565,7 @@
 												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 											}
 										],
-										"schema_definition": "stringvalidator.OneOf(\n\"active\",\n\"expired\",\n\"creating\",\n\"cancelled\",\n\"not_yet_active\",\n)"
+										"schema_definition": "stringvalidator.OneOf(\n\"active\",\n\"expired\",\n\"creating\",\n\"pending\",\n\"cancelled\",\n\"not_yet_active\",\n)"
 									}
 								}
 							]
@@ -13824,6 +13846,13 @@
 											"nested_object": {
 												"attributes": [
 													{
+														"name": "region",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`."
+														}
+													},
+													{
 														"name": "service",
 														"string": {
 															"computed_optional_required": "computed",
@@ -13860,7 +13889,7 @@
 																	"name": "policy",
 																	"string": {
 																		"computed_optional_required": "computed",
-																		"description": "Coverage target policy for recommendations and purchases."
+																		"description": "Coverage target policy for recommendations and purchases (built-in or customer-defined)."
 																	}
 																},
 																{
@@ -13878,12 +13907,12 @@
 																	}
 																}
 															],
-															"description": "Commitment settings for this product line."
+															"description": "Commitment settings for this product line and region."
 														}
 													}
 												]
 											},
-											"description": "Settings for each product line activated on this billing account."
+											"description": "Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically."
 										}
 									}
 								]

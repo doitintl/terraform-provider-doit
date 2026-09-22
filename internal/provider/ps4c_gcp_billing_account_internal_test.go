@@ -28,43 +28,87 @@ func TestMapGcpBillingAccountDetailToModel_FullyPopulated(t *testing.T) {
 		Currency:            valueToNullable("USD"),
 		CudExportHealthy:    valueToNullable(true),
 		CommitmentsSyncTime: valueToNullable(syncTime),
-		OnboardingStatus: &models.GcpOnboardingStatus{
-			Compute: &models.GcpOnboardingStatusEntry{
-				Status:              models.GcpOnboardingStatusEntryStatus("done"),
+		OnboardingStatus: &[]models.GcpOnboardingStatusByService{
+			{
+				Service:             models.GcpOnboardingStatusByServiceServiceCompute,
+				Status:              models.GcpOnboardingStatusByServiceStatus("done"),
 				OnboardingStartedAt: valueToNullable(onboardingStartedAt),
 			},
+			{
+				Service: models.GcpOnboardingStatusByServiceServiceCloudSql,
+				Status:  models.GcpOnboardingStatusByServiceStatus("onboarding"),
+			},
 		},
-		Stats30d: &models.GcpBillingAccountStats30d{
-			Compute: &models.Stats30dSummary{
+		Stats30d: &[]models.GcpStats30dByService{
+			{
+				Service: models.GcpStats30dByServiceServiceCompute,
 				Esr:     valueToNullable(0.25),
 				Savings: &models.Money{Amount: "250.75", Currency: "USD"},
 			},
+			{
+				Service: models.GcpStats30dByServiceServiceCloudSql,
+				Esr:     valueToNullable(0.4),
+				Savings: &models.Money{Amount: "80.25", Currency: "USD"},
+			},
 		},
-		SavingsTotals: &models.GcpBillingAccountSavingsTotals{
-			Compute: &models.GcpSavingsTotals{
+		SavingsTotals: &[]models.GcpSavingsTotalsByService{
+			{
+				Service:  models.GcpSavingsTotalsByServiceServiceCompute,
 				Lifetime: models.Money{Amount: "5000.00", Currency: "USD"},
 				Ytd:      models.Money{Amount: "1200.00", Currency: "USD"},
 			},
+			{
+				Service:  models.GcpSavingsTotalsByServiceServiceCloudSql,
+				Lifetime: models.Money{Amount: "800.00", Currency: "USD"},
+				Ytd:      models.Money{Amount: "300.00", Currency: "USD"},
+			},
 		},
-		MonthlyStats: &models.GcpBillingAccountDetailAllOf1MonthlyStats{
-			Compute: &[]models.GcpMonthlyStatsEntry{
-				{
-					Month:           "2026-06",
-					Esr:             0.25,
-					OnDemandCost:    models.Money{Amount: "1000.00", Currency: "USD"},
-					CostWithSavings: models.Money{Amount: "750.00", Currency: "USD"},
+		MonthlyStats: &[]models.GcpMonthlyStatsByService{
+			{
+				Service: models.GcpMonthlyStatsByServiceServiceCompute,
+				Months: []models.GcpMonthlyStatsEntry{
+					{
+						Month:           "2026-06",
+						Esr:             0.25,
+						OnDemandCost:    models.Money{Amount: "1000.00", Currency: "USD"},
+						CostWithSavings: models.Money{Amount: "750.00", Currency: "USD"},
+					},
+				},
+			},
+			{
+				Service: models.GcpMonthlyStatsByServiceServiceCloudSql,
+				Months: []models.GcpMonthlyStatsEntry{
+					{
+						Month:           "2026-06",
+						Esr:             0.4,
+						OnDemandCost:    models.Money{Amount: "200.00", Currency: "USD"},
+						CostWithSavings: models.Money{Amount: "120.00", Currency: "USD"},
+					},
 				},
 			},
 		},
-		DailyCoverage: &models.GcpBillingAccountDetailAllOf1DailyCoverage{
-			Compute: &[]models.GcpDailyCoverageEntry{
-				{
-					Date:          coverageDate,
-					BigQuery:      &models.Money{Amount: "15.00", Currency: "USD"},
-					CloudRun:      &models.Money{Amount: "25.00", Currency: "USD"},
-					CloudSql:      &models.Money{Amount: "30.00", Currency: "USD"},
-					OnDemand:      &models.Money{Amount: "50.00", Currency: "USD"},
-					ResourceBased: &models.Money{Amount: "40.00", Currency: "USD"},
+		DailyCoverage: &[]models.GcpDailyCoverageByService{
+			{
+				Service: models.GcpDailyCoverageByServiceServiceCompute,
+				Days: []models.GcpDailyCoverageEntry{
+					{
+						Date:            coverageDate,
+						BigQuery:        &models.Money{Amount: "15.00", Currency: "USD"},
+						CloudRun:        &models.Money{Amount: "25.00", Currency: "USD"},
+						ComputeFlexible: &models.Money{Amount: "30.00", Currency: "USD"},
+						OnDemand:        &models.Money{Amount: "50.00", Currency: "USD"},
+						ResourceBased:   &models.Money{Amount: "40.00", Currency: "USD"},
+					},
+				},
+			},
+			{
+				Service: models.GcpDailyCoverageByServiceServiceCloudSql,
+				Days: []models.GcpDailyCoverageEntry{
+					{
+						Date:     coverageDate,
+						CloudSql: &models.Money{Amount: "30.00", Currency: "USD"},
+						OnDemand: &models.Money{Amount: "10.00", Currency: "USD"},
+					},
 				},
 			},
 		},
@@ -92,58 +136,87 @@ func TestMapGcpBillingAccountDetailToModel_FullyPopulated(t *testing.T) {
 		t.Error("commitments_sync_time should be known and non-null")
 	}
 
-	if data.OnboardingStatus.IsNull() {
-		t.Fatal("onboarding_status should not be null when populated")
+	onboarding := data.OnboardingStatus.Elements()
+	if len(onboarding) != 2 {
+		t.Fatalf("onboarding_status has %d elements, want 2", len(onboarding))
 	}
-	if got := data.OnboardingStatus.Compute.Status.ValueString(); got != "done" {
-		t.Errorf("onboarding_status.compute.status = %q, want %q", got, "done")
+	computeOnboarding := onboarding[0].(datasource_ps4c_gcp_billing_account.OnboardingStatusValue)
+	if got := computeOnboarding.Status.ValueString(); got != "done" {
+		t.Errorf("onboarding_status[0].status = %q, want done", got)
 	}
-	if data.OnboardingStatus.Compute.OnboardingStartedAt.IsNull() {
-		t.Error("onboarding_status.compute.onboarding_started_at should be known")
-	}
-
-	if got := data.Stats30d.Compute.Esr.ValueFloat64(); got != 0.25 {
-		t.Errorf("stats30d.compute.esr = %v, want 0.25", got)
-	}
-	if got := data.Stats30d.Compute.Savings.Amount.ValueString(); got != "250.75" {
-		t.Errorf("stats30d.compute.savings.amount = %q, want %q", got, "250.75")
+	if computeOnboarding.OnboardingStartedAt.IsNull() {
+		t.Error("onboarding_status[0].onboarding_started_at should be known")
 	}
 
-	if got := data.SavingsTotals.Compute.Lifetime.Amount.ValueString(); got != "5000.00" {
-		t.Errorf("savings_totals.compute.lifetime.amount = %q, want %q", got, "5000.00")
+	stats := data.Stats30d.Elements()
+	if len(stats) != 2 {
+		t.Fatalf("stats30d has %d elements, want 2", len(stats))
 	}
-	if got := data.SavingsTotals.Compute.Ytd.Amount.ValueString(); got != "1200.00" {
-		t.Errorf("savings_totals.compute.ytd.amount = %q, want %q", got, "1200.00")
+	cloudSQLStats := stats[1].(datasource_ps4c_gcp_billing_account.Stats30dValue)
+	if got := cloudSQLStats.Service.ValueString(); got != "cloud_sql" {
+		t.Errorf("stats30d[1].service = %q, want cloud_sql", got)
+	}
+	if got := cloudSQLStats.Savings.Amount.ValueString(); got != "80.25" {
+		t.Errorf("stats30d[1].savings.amount = %q, want 80.25", got)
 	}
 
-	computeStats := data.MonthlyStats.Compute.Elements()
-	if len(computeStats) != 1 {
-		t.Fatalf("monthly_stats.compute has %d elements, want 1", len(computeStats))
+	totals := data.SavingsTotals.Elements()
+	if len(totals) != 2 {
+		t.Fatalf("savings_totals has %d elements, want 2", len(totals))
 	}
-	statsEntry, ok := computeStats[0].(datasource_ps4c_gcp_billing_account.MonthlyStatsComputeValue)
+	computeTotals := totals[0].(datasource_ps4c_gcp_billing_account.SavingsTotalsValue)
+	if got := computeTotals.Lifetime.Amount.ValueString(); got != "5000.00" {
+		t.Errorf("savings_totals[0].lifetime.amount = %q, want 5000.00", got)
+	}
+
+	monthlyStats := data.MonthlyStats.Elements()
+	if len(monthlyStats) != 2 {
+		t.Fatalf("monthly_stats has %d elements, want 2", len(monthlyStats))
+	}
+	computeMonthly := monthlyStats[0].(datasource_ps4c_gcp_billing_account.MonthlyStatsValue)
+	computeStats := computeMonthly.Months.Elements()
+	statsEntry, ok := computeStats[0].(datasource_ps4c_gcp_billing_account.MonthsValue)
 	if !ok {
-		t.Fatalf("monthly_stats.compute[0] has unexpected type %T", computeStats[0])
+		t.Fatalf("monthly_stats[0].months[0] has unexpected type %T", computeStats[0])
 	}
 	if got := statsEntry.Month.ValueString(); got != "2026-06" {
-		t.Errorf("monthly_stats.compute[0].month = %q, want %q", got, "2026-06")
+		t.Errorf("monthly_stats[0].months[0].month = %q, want 2026-06", got)
 	}
 	if got := statsEntry.CostWithSavings.Amount.ValueString(); got != "750.00" {
-		t.Errorf("monthly_stats.compute[0].cost_with_savings.amount = %q, want %q", got, "750.00")
+		t.Errorf("monthly_stats[0].months[0].cost_with_savings.amount = %q, want 750.00", got)
 	}
 
-	computeCoverage := data.DailyCoverage.Compute.Elements()
-	if len(computeCoverage) != 1 {
-		t.Fatalf("daily_coverage.compute has %d elements, want 1", len(computeCoverage))
+	dailyCoverage := data.DailyCoverage.Elements()
+	if len(dailyCoverage) != 2 {
+		t.Fatalf("daily_coverage has %d elements, want 2", len(dailyCoverage))
 	}
-	covEntry, ok := computeCoverage[0].(datasource_ps4c_gcp_billing_account.ComputeValue)
+	cloudSQLCoverage := dailyCoverage[1].(datasource_ps4c_gcp_billing_account.DailyCoverageValue)
+	cloudSQLDays := cloudSQLCoverage.Days.Elements()
+	covEntry, ok := cloudSQLDays[0].(datasource_ps4c_gcp_billing_account.DaysValue)
 	if !ok {
-		t.Fatalf("daily_coverage.compute[0] has unexpected type %T", computeCoverage[0])
+		t.Fatalf("daily_coverage[1].days[0] has unexpected type %T", cloudSQLDays[0])
 	}
-	if got := covEntry.BigQuery.Amount.ValueString(); got != "15.00" {
-		t.Errorf("daily_coverage.compute[0].big_query.amount = %q, want %q", got, "15.00")
+	if got := cloudSQLCoverage.Service.ValueString(); got != "cloud_sql" {
+		t.Errorf("daily_coverage[1].service = %q, want cloud_sql", got)
 	}
-	if got := covEntry.ResourceBased.Amount.ValueString(); got != "40.00" {
-		t.Errorf("daily_coverage.compute[0].resource_based.amount = %q, want %q", got, "40.00")
+	if got := covEntry.CloudSql.Amount.ValueString(); got != "30.00" {
+		t.Errorf("daily_coverage[1].days[0].cloud_sql.amount = %q, want 30.00", got)
+	}
+}
+
+func TestMapGcpBillingAccountDetailToModel_OmittedComputedListsAreEmpty(t *testing.T) {
+	apiResp := &models.GcpBillingAccountDetail{BillingAccountId: "012345-6789AB-CDEF01"}
+	var data ps4cGcpBillingAccountDataSourceModel
+	diags := mapGcpBillingAccountDetailToModel(t.Context(), apiResp, &data)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	if len(data.DailyCoverage.Elements()) != 0 || len(data.MonthlyStats.Elements()) != 0 || len(data.OnboardingStatus.Elements()) != 0 || len(data.SavingsTotals.Elements()) != 0 || len(data.Stats30d.Elements()) != 0 {
+		t.Fatal("omitted computed lists should be empty")
+	}
+	if data.DailyCoverage.IsNull() || data.MonthlyStats.IsNull() || data.OnboardingStatus.IsNull() || data.SavingsTotals.IsNull() || data.Stats30d.IsNull() {
+		t.Fatal("omitted computed lists should not be null")
 	}
 }
 

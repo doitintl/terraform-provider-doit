@@ -195,13 +195,14 @@ func Ps4cGcpResourceCudsDataSourceSchema(ctx context.Context) schema.Schema {
 			"status": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by CUD state. Omit to include all states.\nPossible values: `active`, `expired`, `creating`, `cancelled`, `not_yet_active`",
-				MarkdownDescription: "Filter by CUD state. Omit to include all states.\nPossible values: `active`, `expired`, `creating`, `cancelled`, `not_yet_active`",
+				Description:         "Filter by CUD state. Omit to include all states.\nPossible values: `active`, `expired`, `creating`, `pending`, `cancelled`, `not_yet_active`",
+				MarkdownDescription: "Filter by CUD state. Omit to include all states.\nPossible values: `active`, `expired`, `creating`, `pending`, `cancelled`, `not_yet_active`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"active",
 						"expired",
 						"creating",
+						"pending",
 						"cancelled",
 						"not_yet_active",
 					),

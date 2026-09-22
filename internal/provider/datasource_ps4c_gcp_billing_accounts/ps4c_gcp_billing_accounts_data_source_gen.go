@@ -48,156 +48,143 @@ func Ps4cGcpBillingAccountsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.",
 							MarkdownDescription: "Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.",
 						},
-						"onboarding_status": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"compute": schema.SingleNestedAttribute{
-									Attributes: map[string]schema.Attribute{
-										"onboarding_started_at": schema.StringAttribute{
-											Computed:            true,
-											Description:         "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
-											MarkdownDescription: "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
-										},
-										"status": schema.StringAttribute{
-											Computed:            true,
-											Description:         "Current onboarding lifecycle stage for this product line.",
-											MarkdownDescription: "Current onboarding lifecycle stage for this product line.",
-										},
+						"onboarding_status": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"onboarding_started_at": schema.StringAttribute{
+										Computed:            true,
+										Description:         "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
+										MarkdownDescription: "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.",
 									},
-									CustomType: ComputeType{
-										ObjectType: types.ObjectType{
-											AttrTypes: ComputeValue{}.AttributeTypes(ctx),
-										},
+									"service": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Product line this onboarding status belongs to.",
+										MarkdownDescription: "Product line this onboarding status belongs to.",
 									},
-									Computed: true,
+									"status": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Current onboarding lifecycle stage for this product line.",
+										MarkdownDescription: "Current onboarding lifecycle stage for this product line.",
+									},
 								},
-							},
-							CustomType: OnboardingStatusType{
-								ObjectType: types.ObjectType{
-									AttrTypes: OnboardingStatusValue{}.AttributeTypes(ctx),
+								CustomType: OnboardingStatusType{
+									ObjectType: types.ObjectType{
+										AttrTypes: OnboardingStatusValue{}.AttributeTypes(ctx),
+									},
 								},
 							},
 							Computed:            true,
-							Description:         "PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.",
-							MarkdownDescription: "PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.",
+							Description:         "PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.",
+							MarkdownDescription: "PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.",
 						},
-						"savings_totals": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"compute": schema.SingleNestedAttribute{
-									Attributes: map[string]schema.Attribute{
-										"lifetime": schema.SingleNestedAttribute{
-											Attributes: map[string]schema.Attribute{
-												"amount": schema.StringAttribute{
-													Computed:            true,
-													Description:         "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
-													MarkdownDescription: "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
-												},
-												"currency": schema.StringAttribute{
-													Computed:            true,
-													Description:         "ISO 4217 currency code.",
-													MarkdownDescription: "ISO 4217 currency code.",
-												},
+						"savings_totals": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"lifetime": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"amount": schema.StringAttribute{
+												Computed:            true,
+												Description:         "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+												MarkdownDescription: "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
 											},
-											CustomType: LifetimeType{
-												ObjectType: types.ObjectType{
-													AttrTypes: LifetimeValue{}.AttributeTypes(ctx),
-												},
+											"currency": schema.StringAttribute{
+												Computed:            true,
+												Description:         "ISO 4217 currency code.",
+												MarkdownDescription: "ISO 4217 currency code.",
 											},
-											Computed:            true,
-											Description:         "Lifetime realized savings since onboarding.",
-											MarkdownDescription: "Lifetime realized savings since onboarding.",
 										},
-										"ytd": schema.SingleNestedAttribute{
-											Attributes: map[string]schema.Attribute{
-												"amount": schema.StringAttribute{
-													Computed:            true,
-													Description:         "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
-													MarkdownDescription: "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
-												},
-												"currency": schema.StringAttribute{
-													Computed:            true,
-													Description:         "ISO 4217 currency code.",
-													MarkdownDescription: "ISO 4217 currency code.",
-												},
+										CustomType: LifetimeType{
+											ObjectType: types.ObjectType{
+												AttrTypes: LifetimeValue{}.AttributeTypes(ctx),
 											},
-											CustomType: YtdType{
-												ObjectType: types.ObjectType{
-													AttrTypes: YtdValue{}.AttributeTypes(ctx),
-												},
-											},
-											Computed:            true,
-											Description:         "Year-to-date realized savings.",
-											MarkdownDescription: "Year-to-date realized savings.",
 										},
+										Computed:            true,
+										Description:         "Lifetime realized savings since onboarding.",
+										MarkdownDescription: "Lifetime realized savings since onboarding.",
 									},
-									CustomType: SavingsTotalsComputeType{
-										ObjectType: types.ObjectType{
-											AttrTypes: SavingsTotalsComputeValue{}.AttributeTypes(ctx),
-										},
+									"service": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Product line these savings totals belong to.",
+										MarkdownDescription: "Product line these savings totals belong to.",
 									},
-									Computed:            true,
-									Description:         "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.",
-									MarkdownDescription: "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.",
+									"ytd": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"amount": schema.StringAttribute{
+												Computed:            true,
+												Description:         "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+												MarkdownDescription: "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+											},
+											"currency": schema.StringAttribute{
+												Computed:            true,
+												Description:         "ISO 4217 currency code.",
+												MarkdownDescription: "ISO 4217 currency code.",
+											},
+										},
+										CustomType: YtdType{
+											ObjectType: types.ObjectType{
+												AttrTypes: YtdValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "Year-to-date realized savings.",
+										MarkdownDescription: "Year-to-date realized savings.",
+									},
 								},
-							},
-							CustomType: SavingsTotalsType{
-								ObjectType: types.ObjectType{
-									AttrTypes: SavingsTotalsValue{}.AttributeTypes(ctx),
+								CustomType: SavingsTotalsType{
+									ObjectType: types.ObjectType{
+										AttrTypes: SavingsTotalsValue{}.AttributeTypes(ctx),
+									},
 								},
 							},
 							Computed:            true,
-							Description:         "Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.",
-							MarkdownDescription: "Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.",
+							Description:         "Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.",
+							MarkdownDescription: "Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.",
 						},
-						"stats30d": schema.SingleNestedAttribute{
-							Attributes: map[string]schema.Attribute{
-								"compute": schema.SingleNestedAttribute{
-									Attributes: map[string]schema.Attribute{
-										"esr": schema.Float64Attribute{
-											Computed:            true,
-											Description:         "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
-											MarkdownDescription: "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
-										},
-										"savings": schema.SingleNestedAttribute{
-											Attributes: map[string]schema.Attribute{
-												"amount": schema.StringAttribute{
-													Computed:            true,
-													Description:         "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
-													MarkdownDescription: "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
-												},
-												"currency": schema.StringAttribute{
-													Computed:            true,
-													Description:         "ISO 4217 currency code.",
-													MarkdownDescription: "ISO 4217 currency code.",
-												},
-											},
-											CustomType: SavingsType{
-												ObjectType: types.ObjectType{
-													AttrTypes: SavingsValue{}.AttributeTypes(ctx),
-												},
-											},
-											Computed:            true,
-											Description:         "Total savings realized over the last 30 days from active commitments (USD).",
-											MarkdownDescription: "Total savings realized over the last 30 days from active commitments (USD).",
-										},
+						"stats30d": schema.ListNestedAttribute{
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"esr": schema.Float64Attribute{
+										Computed:            true,
+										Description:         "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
+										MarkdownDescription: "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.",
 									},
-									CustomType: Stats30dComputeType{
-										ObjectType: types.ObjectType{
-											AttrTypes: Stats30dComputeValue{}.AttributeTypes(ctx),
+									"savings": schema.SingleNestedAttribute{
+										Attributes: map[string]schema.Attribute{
+											"amount": schema.StringAttribute{
+												Computed:            true,
+												Description:         "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+												MarkdownDescription: "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+											},
+											"currency": schema.StringAttribute{
+												Computed:            true,
+												Description:         "ISO 4217 currency code.",
+												MarkdownDescription: "ISO 4217 currency code.",
+											},
 										},
+										CustomType: SavingsType{
+											ObjectType: types.ObjectType{
+												AttrTypes: SavingsValue{}.AttributeTypes(ctx),
+											},
+										},
+										Computed:            true,
+										Description:         "Total savings realized over the last 30 days from active commitments (USD).",
+										MarkdownDescription: "Total savings realized over the last 30 days from active commitments (USD).",
 									},
-									Computed:            true,
-									Description:         "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.",
-									MarkdownDescription: "Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.",
+									"service": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Product line these metrics belong to.",
+										MarkdownDescription: "Product line these metrics belong to.",
+									},
 								},
-							},
-							CustomType: Stats30dType{
-								ObjectType: types.ObjectType{
-									AttrTypes: Stats30dValue{}.AttributeTypes(ctx),
+								CustomType: Stats30dType{
+									ObjectType: types.ObjectType{
+										AttrTypes: Stats30dValue{}.AttributeTypes(ctx),
+									},
 								},
 							},
 							Computed:            true,
-							Description:         "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.",
-							MarkdownDescription: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.",
+							Description:         "Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.",
+							MarkdownDescription: "Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.",
 						},
 					},
 					CustomType: ItemsType{
@@ -374,38 +361,12 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	onboardingStatusValuable, ok := onboardingStatusAttribute.(basetypes.ObjectValuable)
+	onboardingStatusVal, ok := onboardingStatusAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`onboarding_status expected to be basetypes.ObjectValuable, was: %T`, onboardingStatusAttribute))
-
-		return nil, diags
-	}
-
-	onboardingStatusObjVal, onboardingStatusObjValDiags := onboardingStatusValuable.ToObjectValue(ctx)
-	diags.Append(onboardingStatusObjValDiags...)
-
-	onboardingStatusTypable, ok := t.AttrTypes["onboarding_status"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`onboarding_status expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["onboarding_status"]))
-
-		return nil, diags
-	}
-
-	onboardingStatusConverted, onboardingStatusConvertedDiags := onboardingStatusTypable.ValueFromObject(ctx, onboardingStatusObjVal)
-	diags.Append(onboardingStatusConvertedDiags...)
-
-	onboardingStatusVal, ok := onboardingStatusConverted.(OnboardingStatusValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`onboarding_status expected to be OnboardingStatusValue, was: %T`, onboardingStatusConverted))
+			fmt.Sprintf(`onboarding_status expected to be basetypes.ListValue, was: %T`, onboardingStatusAttribute))
 	}
 
 	savingsTotalsAttribute, ok := attributes["savings_totals"]
@@ -418,38 +379,12 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	savingsTotalsValuable, ok := savingsTotalsAttribute.(basetypes.ObjectValuable)
+	savingsTotalsVal, ok := savingsTotalsAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`savings_totals expected to be basetypes.ObjectValuable, was: %T`, savingsTotalsAttribute))
-
-		return nil, diags
-	}
-
-	savingsTotalsObjVal, savingsTotalsObjValDiags := savingsTotalsValuable.ToObjectValue(ctx)
-	diags.Append(savingsTotalsObjValDiags...)
-
-	savingsTotalsTypable, ok := t.AttrTypes["savings_totals"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`savings_totals expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["savings_totals"]))
-
-		return nil, diags
-	}
-
-	savingsTotalsConverted, savingsTotalsConvertedDiags := savingsTotalsTypable.ValueFromObject(ctx, savingsTotalsObjVal)
-	diags.Append(savingsTotalsConvertedDiags...)
-
-	savingsTotalsVal, ok := savingsTotalsConverted.(SavingsTotalsValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`savings_totals expected to be SavingsTotalsValue, was: %T`, savingsTotalsConverted))
+			fmt.Sprintf(`savings_totals expected to be basetypes.ListValue, was: %T`, savingsTotalsAttribute))
 	}
 
 	stats30dAttribute, ok := attributes["stats30d"]
@@ -462,38 +397,12 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		return nil, diags
 	}
 
-	stats30dValuable, ok := stats30dAttribute.(basetypes.ObjectValuable)
+	stats30dVal, ok := stats30dAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`stats30d expected to be basetypes.ObjectValuable, was: %T`, stats30dAttribute))
-
-		return nil, diags
-	}
-
-	stats30dObjVal, stats30dObjValDiags := stats30dValuable.ToObjectValue(ctx)
-	diags.Append(stats30dObjValDiags...)
-
-	stats30dTypable, ok := t.AttrTypes["stats30d"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`stats30d expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["stats30d"]))
-
-		return nil, diags
-	}
-
-	stats30dConverted, stats30dConvertedDiags := stats30dTypable.ValueFromObject(ctx, stats30dObjVal)
-	diags.Append(stats30dConvertedDiags...)
-
-	stats30dVal, ok := stats30dConverted.(Stats30dValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`stats30d expected to be Stats30dValue, was: %T`, stats30dConverted))
+			fmt.Sprintf(`stats30d expected to be basetypes.ListValue, was: %T`, stats30dAttribute))
 	}
 
 	if diags.HasError() {
@@ -676,12 +585,12 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewItemsValueUnknown(), diags
 	}
 
-	onboardingStatusVal, ok := onboardingStatusAttribute.(OnboardingStatusValue)
+	onboardingStatusVal, ok := onboardingStatusAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`onboarding_status expected to be OnboardingStatusValue, was: %T`, onboardingStatusAttribute))
+			fmt.Sprintf(`onboarding_status expected to be basetypes.ListValue, was: %T`, onboardingStatusAttribute))
 	}
 
 	savingsTotalsAttribute, ok := attributes["savings_totals"]
@@ -694,12 +603,12 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewItemsValueUnknown(), diags
 	}
 
-	savingsTotalsVal, ok := savingsTotalsAttribute.(SavingsTotalsValue)
+	savingsTotalsVal, ok := savingsTotalsAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`savings_totals expected to be SavingsTotalsValue, was: %T`, savingsTotalsAttribute))
+			fmt.Sprintf(`savings_totals expected to be basetypes.ListValue, was: %T`, savingsTotalsAttribute))
 	}
 
 	stats30dAttribute, ok := attributes["stats30d"]
@@ -712,12 +621,12 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewItemsValueUnknown(), diags
 	}
 
-	stats30dVal, ok := stats30dAttribute.(Stats30dValue)
+	stats30dVal, ok := stats30dAttribute.(basetypes.ListValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`stats30d expected to be Stats30dValue, was: %T`, stats30dAttribute))
+			fmt.Sprintf(`stats30d expected to be basetypes.ListValue, was: %T`, stats30dAttribute))
 	}
 
 	if diags.HasError() {
@@ -810,9 +719,9 @@ type ItemsValue struct {
 	CudExportHealthy    basetypes.BoolValue   `tfsdk:"cud_export_healthy"`
 	Currency            basetypes.StringValue `tfsdk:"currency"`
 	DisplayName         basetypes.StringValue `tfsdk:"display_name"`
-	OnboardingStatus    OnboardingStatusValue `tfsdk:"onboarding_status"`
-	SavingsTotals       SavingsTotalsValue    `tfsdk:"savings_totals"`
-	Stats30d            Stats30dValue         `tfsdk:"stats30d"`
+	OnboardingStatus    basetypes.ListValue   `tfsdk:"onboarding_status"`
+	SavingsTotals       basetypes.ListValue   `tfsdk:"savings_totals"`
+	Stats30d            basetypes.ListValue   `tfsdk:"stats30d"`
 	state               attr.ValueState
 }
 
@@ -827,20 +736,14 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["cud_export_healthy"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["display_name"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["onboarding_status"] = OnboardingStatusType{
-		basetypes.ObjectType{
-			AttrTypes: OnboardingStatusValue{}.AttributeTypes(ctx),
-		},
+	attrTypes["onboarding_status"] = basetypes.ListType{
+		ElemType: OnboardingStatusValue{}.Type(ctx),
 	}.TerraformType(ctx)
-	attrTypes["savings_totals"] = SavingsTotalsType{
-		basetypes.ObjectType{
-			AttrTypes: SavingsTotalsValue{}.AttributeTypes(ctx),
-		},
+	attrTypes["savings_totals"] = basetypes.ListType{
+		ElemType: SavingsTotalsValue{}.Type(ctx),
 	}.TerraformType(ctx)
-	attrTypes["stats30d"] = Stats30dType{
-		basetypes.ObjectType{
-			AttrTypes: Stats30dValue{}.AttributeTypes(ctx),
-		},
+	attrTypes["stats30d"] = basetypes.ListType{
+		ElemType: Stats30dValue{}.Type(ctx),
 	}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
@@ -966,20 +869,14 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 		"cud_export_healthy":    basetypes.BoolType{},
 		"currency":              basetypes.StringType{},
 		"display_name":          basetypes.StringType{},
-		"onboarding_status": OnboardingStatusType{
-			basetypes.ObjectType{
-				AttrTypes: OnboardingStatusValue{}.AttributeTypes(ctx),
-			},
+		"onboarding_status": basetypes.ListType{
+			ElemType: OnboardingStatusValue{}.Type(ctx),
 		},
-		"savings_totals": SavingsTotalsType{
-			basetypes.ObjectType{
-				AttrTypes: SavingsTotalsValue{}.AttributeTypes(ctx),
-			},
+		"savings_totals": basetypes.ListType{
+			ElemType: SavingsTotalsValue{}.Type(ctx),
 		},
-		"stats30d": Stats30dType{
-			basetypes.ObjectType{
-				AttrTypes: Stats30dValue{}.AttributeTypes(ctx),
-			},
+		"stats30d": basetypes.ListType{
+			ElemType: Stats30dValue{}.Type(ctx),
 		},
 	}
 
@@ -1072,20 +969,14 @@ func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"cud_export_healthy":    basetypes.BoolType{},
 		"currency":              basetypes.StringType{},
 		"display_name":          basetypes.StringType{},
-		"onboarding_status": OnboardingStatusType{
-			basetypes.ObjectType{
-				AttrTypes: OnboardingStatusValue{}.AttributeTypes(ctx),
-			},
+		"onboarding_status": basetypes.ListType{
+			ElemType: OnboardingStatusValue{}.Type(ctx),
 		},
-		"savings_totals": SavingsTotalsType{
-			basetypes.ObjectType{
-				AttrTypes: SavingsTotalsValue{}.AttributeTypes(ctx),
-			},
+		"savings_totals": basetypes.ListType{
+			ElemType: SavingsTotalsValue{}.Type(ctx),
 		},
-		"stats30d": Stats30dType{
-			basetypes.ObjectType{
-				AttrTypes: Stats30dValue{}.AttributeTypes(ctx),
-			},
+		"stats30d": basetypes.ListType{
+			ElemType: Stats30dValue{}.Type(ctx),
 		},
 	}
 }
@@ -1123,48 +1014,58 @@ func (t OnboardingStatusType) ValueFromObject(ctx context.Context, in basetypes.
 
 	attributes := in.Attributes()
 
-	computeAttribute, ok := attributes["compute"]
+	onboardingStartedAtAttribute, ok := attributes["onboarding_started_at"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`compute is missing from object`)
+			`onboarding_started_at is missing from object`)
 
 		return nil, diags
 	}
 
-	computeValuable, ok := computeAttribute.(basetypes.ObjectValuable)
+	onboardingStartedAtVal, ok := onboardingStartedAtAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be basetypes.ObjectValuable, was: %T`, computeAttribute))
+			fmt.Sprintf(`onboarding_started_at expected to be basetypes.StringValue, was: %T`, onboardingStartedAtAttribute))
+	}
+
+	serviceAttribute, ok := attributes["service"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service is missing from object`)
 
 		return nil, diags
 	}
 
-	computeObjVal, computeObjValDiags := computeValuable.ToObjectValue(ctx)
-	diags.Append(computeObjValDiags...)
-
-	computeTypable, ok := t.AttrTypes["compute"].(basetypes.ObjectTypable)
+	serviceVal, ok := serviceAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["compute"]))
+			fmt.Sprintf(`service expected to be basetypes.StringValue, was: %T`, serviceAttribute))
+	}
+
+	statusAttribute, ok := attributes["status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`status is missing from object`)
 
 		return nil, diags
 	}
 
-	computeConverted, computeConvertedDiags := computeTypable.ValueFromObject(ctx, computeObjVal)
-	diags.Append(computeConvertedDiags...)
-
-	computeVal, ok := computeConverted.(ComputeValue)
+	statusVal, ok := statusAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be ComputeValue, was: %T`, computeConverted))
+			fmt.Sprintf(`status expected to be basetypes.StringValue, was: %T`, statusAttribute))
 	}
 
 	if diags.HasError() {
@@ -1172,8 +1073,10 @@ func (t OnboardingStatusType) ValueFromObject(ctx context.Context, in basetypes.
 	}
 
 	return OnboardingStatusValue{
-		Compute: computeVal,
-		state:   attr.ValueStateKnown,
+		OnboardingStartedAt: onboardingStartedAtVal,
+		Service:             serviceVal,
+		Status:              statusVal,
+		state:               attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1240,22 +1143,58 @@ func NewOnboardingStatusValue(attributeTypes map[string]attr.Type, attributes ma
 		return NewOnboardingStatusValueUnknown(), diags
 	}
 
-	computeAttribute, ok := attributes["compute"]
+	onboardingStartedAtAttribute, ok := attributes["onboarding_started_at"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`compute is missing from object`)
+			`onboarding_started_at is missing from object`)
 
 		return NewOnboardingStatusValueUnknown(), diags
 	}
 
-	computeVal, ok := computeAttribute.(ComputeValue)
+	onboardingStartedAtVal, ok := onboardingStartedAtAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be ComputeValue, was: %T`, computeAttribute))
+			fmt.Sprintf(`onboarding_started_at expected to be basetypes.StringValue, was: %T`, onboardingStartedAtAttribute))
+	}
+
+	serviceAttribute, ok := attributes["service"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service is missing from object`)
+
+		return NewOnboardingStatusValueUnknown(), diags
+	}
+
+	serviceVal, ok := serviceAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`service expected to be basetypes.StringValue, was: %T`, serviceAttribute))
+	}
+
+	statusAttribute, ok := attributes["status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`status is missing from object`)
+
+		return NewOnboardingStatusValueUnknown(), diags
+	}
+
+	statusVal, ok := statusAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`status expected to be basetypes.StringValue, was: %T`, statusAttribute))
 	}
 
 	if diags.HasError() {
@@ -1263,8 +1202,10 @@ func NewOnboardingStatusValue(attributeTypes map[string]attr.Type, attributes ma
 	}
 
 	return OnboardingStatusValue{
-		Compute: computeVal,
-		state:   attr.ValueStateKnown,
+		OnboardingStartedAt: onboardingStartedAtVal,
+		Service:             serviceVal,
+		Status:              statusVal,
+		state:               attr.ValueStateKnown,
 	}, diags
 }
 
@@ -1336,35 +1277,51 @@ func (t OnboardingStatusType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = OnboardingStatusValue{}
 
 type OnboardingStatusValue struct {
-	Compute ComputeValue `tfsdk:"compute"`
-	state   attr.ValueState
+	OnboardingStartedAt basetypes.StringValue `tfsdk:"onboarding_started_at"`
+	Service             basetypes.StringValue `tfsdk:"service"`
+	Status              basetypes.StringValue `tfsdk:"status"`
+	state               attr.ValueState
 }
 
 func (v OnboardingStatusValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["compute"] = ComputeType{
-		basetypes.ObjectType{
-			AttrTypes: ComputeValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
+	attrTypes["onboarding_started_at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["service"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["status"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 3)
 
-		val, err = v.Compute.ToTerraformValue(ctx)
+		val, err = v.OnboardingStartedAt.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["compute"] = val
+		vals["onboarding_started_at"] = val
+
+		val, err = v.Service.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["service"] = val
+
+		val, err = v.Status.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["status"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -1395,18 +1352,10 @@ func (v OnboardingStatusValue) String() string {
 func (v OnboardingStatusValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var compute attr.Value
-
-	{
-		compute = v.Compute
-	}
-
 	attributeTypes := map[string]attr.Type{
-		"compute": ComputeType{
-			basetypes.ObjectType{
-				AttrTypes: ComputeValue{}.AttributeTypes(ctx),
-			},
-		},
+		"onboarding_started_at": basetypes.StringType{},
+		"service":               basetypes.StringType{},
+		"status":                basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -1420,7 +1369,9 @@ func (v OnboardingStatusValue) ToObjectValue(ctx context.Context) (basetypes.Obj
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"compute": compute,
+			"onboarding_started_at": v.OnboardingStartedAt,
+			"service":               v.Service,
+			"status":                v.Status,
 		})
 
 	return objVal, diags
@@ -1441,7 +1392,15 @@ func (v OnboardingStatusValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.Compute.Equal(other.Compute) {
+	if !v.OnboardingStartedAt.Equal(other.OnboardingStartedAt) {
+		return false
+	}
+
+	if !v.Service.Equal(other.Service) {
+		return false
+	}
+
+	if !v.Status.Equal(other.Status) {
 		return false
 	}
 
@@ -1458,397 +1417,8 @@ func (v OnboardingStatusValue) Type(ctx context.Context) attr.Type {
 
 func (v OnboardingStatusValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"compute": ComputeType{
-			basetypes.ObjectType{
-				AttrTypes: ComputeValue{}.AttributeTypes(ctx),
-			},
-		},
-	}
-}
-
-var _ basetypes.ObjectTypable = ComputeType{}
-
-type ComputeType struct {
-	basetypes.ObjectType
-}
-
-func (t ComputeType) Equal(o attr.Type) bool {
-	other, ok := o.(ComputeType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t ComputeType) String() string {
-	return "ComputeType"
-}
-
-func (t ComputeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if in.IsNull() {
-		return NewComputeValueNull(), diags
-	}
-
-	if in.IsUnknown() {
-		return NewComputeValueUnknown(), diags
-	}
-
-	attributes := in.Attributes()
-
-	onboardingStartedAtAttribute, ok := attributes["onboarding_started_at"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`onboarding_started_at is missing from object`)
-
-		return nil, diags
-	}
-
-	onboardingStartedAtVal, ok := onboardingStartedAtAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`onboarding_started_at expected to be basetypes.StringValue, was: %T`, onboardingStartedAtAttribute))
-	}
-
-	statusAttribute, ok := attributes["status"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`status is missing from object`)
-
-		return nil, diags
-	}
-
-	statusVal, ok := statusAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`status expected to be basetypes.StringValue, was: %T`, statusAttribute))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return ComputeValue{
-		OnboardingStartedAt: onboardingStartedAtVal,
-		Status:              statusVal,
-		state:               attr.ValueStateKnown,
-	}, diags
-}
-
-func NewComputeValueNull() ComputeValue {
-	return ComputeValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewComputeValueUnknown() ComputeValue {
-	return ComputeValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewComputeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ComputeValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing ComputeValue Attribute Value",
-				"While creating a ComputeValue value, a missing attribute value was detected. "+
-					"A ComputeValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ComputeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid ComputeValue Attribute Type",
-				"While creating a ComputeValue value, an invalid attribute value was detected. "+
-					"A ComputeValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("ComputeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("ComputeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra ComputeValue Attribute Value",
-				"While creating a ComputeValue value, an extra attribute value was detected. "+
-					"A ComputeValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra ComputeValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewComputeValueUnknown(), diags
-	}
-
-	onboardingStartedAtAttribute, ok := attributes["onboarding_started_at"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`onboarding_started_at is missing from object`)
-
-		return NewComputeValueUnknown(), diags
-	}
-
-	onboardingStartedAtVal, ok := onboardingStartedAtAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`onboarding_started_at expected to be basetypes.StringValue, was: %T`, onboardingStartedAtAttribute))
-	}
-
-	statusAttribute, ok := attributes["status"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`status is missing from object`)
-
-		return NewComputeValueUnknown(), diags
-	}
-
-	statusVal, ok := statusAttribute.(basetypes.StringValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`status expected to be basetypes.StringValue, was: %T`, statusAttribute))
-	}
-
-	if diags.HasError() {
-		return NewComputeValueUnknown(), diags
-	}
-
-	return ComputeValue{
-		OnboardingStartedAt: onboardingStartedAtVal,
-		Status:              statusVal,
-		state:               attr.ValueStateKnown,
-	}, diags
-}
-
-func NewComputeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ComputeValue {
-	object, diags := NewComputeValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewComputeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t ComputeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewComputeValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewComputeValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewComputeValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewComputeValueMust(ComputeValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t ComputeType) ValueType(ctx context.Context) attr.Value {
-	return ComputeValue{}
-}
-
-var _ basetypes.ObjectValuable = ComputeValue{}
-
-type ComputeValue struct {
-	OnboardingStartedAt basetypes.StringValue `tfsdk:"onboarding_started_at"`
-	Status              basetypes.StringValue `tfsdk:"status"`
-	state               attr.ValueState
-}
-
-func (v ComputeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["onboarding_started_at"] = basetypes.StringType{}.TerraformType(ctx)
-	attrTypes["status"] = basetypes.StringType{}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
-
-		val, err = v.OnboardingStartedAt.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["onboarding_started_at"] = val
-
-		val, err = v.Status.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["status"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v ComputeValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v ComputeValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v ComputeValue) String() string {
-	return "ComputeValue"
-}
-
-func (v ComputeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	attributeTypes := map[string]attr.Type{
 		"onboarding_started_at": basetypes.StringType{},
-		"status":                basetypes.StringType{},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"onboarding_started_at": v.OnboardingStartedAt,
-			"status":                v.Status,
-		})
-
-	return objVal, diags
-}
-
-func (v ComputeValue) Equal(o attr.Value) bool {
-	other, ok := o.(ComputeValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.OnboardingStartedAt.Equal(other.OnboardingStartedAt) {
-		return false
-	}
-
-	if !v.Status.Equal(other.Status) {
-		return false
-	}
-
-	return true
-}
-
-func (v ComputeValue) Type(ctx context.Context) attr.Type {
-	return ComputeType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v ComputeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"onboarding_started_at": basetypes.StringType{},
+		"service":               basetypes.StringType{},
 		"status":                basetypes.StringType{},
 	}
 }
@@ -1886,48 +1456,110 @@ func (t SavingsTotalsType) ValueFromObject(ctx context.Context, in basetypes.Obj
 
 	attributes := in.Attributes()
 
-	computeAttribute, ok := attributes["compute"]
+	lifetimeAttribute, ok := attributes["lifetime"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`compute is missing from object`)
+			`lifetime is missing from object`)
 
 		return nil, diags
 	}
 
-	computeValuable, ok := computeAttribute.(basetypes.ObjectValuable)
+	lifetimeValuable, ok := lifetimeAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be basetypes.ObjectValuable, was: %T`, computeAttribute))
+			fmt.Sprintf(`lifetime expected to be basetypes.ObjectValuable, was: %T`, lifetimeAttribute))
 
 		return nil, diags
 	}
 
-	computeObjVal, computeObjValDiags := computeValuable.ToObjectValue(ctx)
-	diags.Append(computeObjValDiags...)
+	lifetimeObjVal, lifetimeObjValDiags := lifetimeValuable.ToObjectValue(ctx)
+	diags.Append(lifetimeObjValDiags...)
 
-	computeTypable, ok := t.AttrTypes["compute"].(basetypes.ObjectTypable)
+	lifetimeTypable, ok := t.AttrTypes["lifetime"].(basetypes.ObjectTypable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["compute"]))
+			fmt.Sprintf(`lifetime expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["lifetime"]))
 
 		return nil, diags
 	}
 
-	computeConverted, computeConvertedDiags := computeTypable.ValueFromObject(ctx, computeObjVal)
-	diags.Append(computeConvertedDiags...)
+	lifetimeConverted, lifetimeConvertedDiags := lifetimeTypable.ValueFromObject(ctx, lifetimeObjVal)
+	diags.Append(lifetimeConvertedDiags...)
 
-	computeVal, ok := computeConverted.(SavingsTotalsComputeValue)
+	lifetimeVal, ok := lifetimeConverted.(LifetimeValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be SavingsTotalsComputeValue, was: %T`, computeConverted))
+			fmt.Sprintf(`lifetime expected to be LifetimeValue, was: %T`, lifetimeConverted))
+	}
+
+	serviceAttribute, ok := attributes["service"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service is missing from object`)
+
+		return nil, diags
+	}
+
+	serviceVal, ok := serviceAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`service expected to be basetypes.StringValue, was: %T`, serviceAttribute))
+	}
+
+	ytdAttribute, ok := attributes["ytd"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ytd is missing from object`)
+
+		return nil, diags
+	}
+
+	ytdValuable, ok := ytdAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ytd expected to be basetypes.ObjectValuable, was: %T`, ytdAttribute))
+
+		return nil, diags
+	}
+
+	ytdObjVal, ytdObjValDiags := ytdValuable.ToObjectValue(ctx)
+	diags.Append(ytdObjValDiags...)
+
+	ytdTypable, ok := t.AttrTypes["ytd"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ytd expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["ytd"]))
+
+		return nil, diags
+	}
+
+	ytdConverted, ytdConvertedDiags := ytdTypable.ValueFromObject(ctx, ytdObjVal)
+	diags.Append(ytdConvertedDiags...)
+
+	ytdVal, ok := ytdConverted.(YtdValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ytd expected to be YtdValue, was: %T`, ytdConverted))
 	}
 
 	if diags.HasError() {
@@ -1935,8 +1567,10 @@ func (t SavingsTotalsType) ValueFromObject(ctx context.Context, in basetypes.Obj
 	}
 
 	return SavingsTotalsValue{
-		Compute: computeVal,
-		state:   attr.ValueStateKnown,
+		Lifetime: lifetimeVal,
+		Service:  serviceVal,
+		Ytd:      ytdVal,
+		state:    attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2003,22 +1637,58 @@ func NewSavingsTotalsValue(attributeTypes map[string]attr.Type, attributes map[s
 		return NewSavingsTotalsValueUnknown(), diags
 	}
 
-	computeAttribute, ok := attributes["compute"]
+	lifetimeAttribute, ok := attributes["lifetime"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`compute is missing from object`)
+			`lifetime is missing from object`)
 
 		return NewSavingsTotalsValueUnknown(), diags
 	}
 
-	computeVal, ok := computeAttribute.(SavingsTotalsComputeValue)
+	lifetimeVal, ok := lifetimeAttribute.(LifetimeValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be SavingsTotalsComputeValue, was: %T`, computeAttribute))
+			fmt.Sprintf(`lifetime expected to be LifetimeValue, was: %T`, lifetimeAttribute))
+	}
+
+	serviceAttribute, ok := attributes["service"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service is missing from object`)
+
+		return NewSavingsTotalsValueUnknown(), diags
+	}
+
+	serviceVal, ok := serviceAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`service expected to be basetypes.StringValue, was: %T`, serviceAttribute))
+	}
+
+	ytdAttribute, ok := attributes["ytd"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`ytd is missing from object`)
+
+		return NewSavingsTotalsValueUnknown(), diags
+	}
+
+	ytdVal, ok := ytdAttribute.(YtdValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`ytd expected to be YtdValue, was: %T`, ytdAttribute))
 	}
 
 	if diags.HasError() {
@@ -2026,8 +1696,10 @@ func NewSavingsTotalsValue(attributeTypes map[string]attr.Type, attributes map[s
 	}
 
 	return SavingsTotalsValue{
-		Compute: computeVal,
-		state:   attr.ValueStateKnown,
+		Lifetime: lifetimeVal,
+		Service:  serviceVal,
+		Ytd:      ytdVal,
+		state:    attr.ValueStateKnown,
 	}, diags
 }
 
@@ -2099,19 +1771,27 @@ func (t SavingsTotalsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = SavingsTotalsValue{}
 
 type SavingsTotalsValue struct {
-	Compute SavingsTotalsComputeValue `tfsdk:"compute"`
-	state   attr.ValueState
+	Lifetime LifetimeValue         `tfsdk:"lifetime"`
+	Service  basetypes.StringValue `tfsdk:"service"`
+	Ytd      YtdValue              `tfsdk:"ytd"`
+	state    attr.ValueState
 }
 
 func (v SavingsTotalsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["compute"] = SavingsTotalsComputeType{
+	attrTypes["lifetime"] = LifetimeType{
 		basetypes.ObjectType{
-			AttrTypes: SavingsTotalsComputeValue{}.AttributeTypes(ctx),
+			AttrTypes: LifetimeValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["service"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["ytd"] = YtdType{
+		basetypes.ObjectType{
+			AttrTypes: YtdValue{}.AttributeTypes(ctx),
 		},
 	}.TerraformType(ctx)
 
@@ -2119,15 +1799,31 @@ func (v SavingsTotalsValue) ToTerraformValue(ctx context.Context) (tftypes.Value
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 3)
 
-		val, err = v.Compute.ToTerraformValue(ctx)
+		val, err = v.Lifetime.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["compute"] = val
+		vals["lifetime"] = val
+
+		val, err = v.Service.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["service"] = val
+
+		val, err = v.Ytd.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["ytd"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -2158,16 +1854,28 @@ func (v SavingsTotalsValue) String() string {
 func (v SavingsTotalsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var compute attr.Value
+	var lifetime attr.Value
 
 	{
-		compute = v.Compute
+		lifetime = v.Lifetime
+	}
+
+	var ytd attr.Value
+
+	{
+		ytd = v.Ytd
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"compute": SavingsTotalsComputeType{
+		"lifetime": LifetimeType{
 			basetypes.ObjectType{
-				AttrTypes: SavingsTotalsComputeValue{}.AttributeTypes(ctx),
+				AttrTypes: LifetimeValue{}.AttributeTypes(ctx),
+			},
+		},
+		"service": basetypes.StringType{},
+		"ytd": YtdType{
+			basetypes.ObjectType{
+				AttrTypes: YtdValue{}.AttributeTypes(ctx),
 			},
 		},
 	}
@@ -2183,7 +1891,9 @@ func (v SavingsTotalsValue) ToObjectValue(ctx context.Context) (basetypes.Object
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"compute": compute,
+			"lifetime": lifetime,
+			"service":  v.Service,
+			"ytd":      ytd,
 		})
 
 	return objVal, diags
@@ -2204,7 +1914,15 @@ func (v SavingsTotalsValue) Equal(o attr.Value) bool {
 		return true
 	}
 
-	if !v.Compute.Equal(other.Compute) {
+	if !v.Lifetime.Equal(other.Lifetime) {
+		return false
+	}
+
+	if !v.Service.Equal(other.Service) {
+		return false
+	}
+
+	if !v.Ytd.Equal(other.Ytd) {
 		return false
 	}
 
@@ -2221,481 +1939,12 @@ func (v SavingsTotalsValue) Type(ctx context.Context) attr.Type {
 
 func (v SavingsTotalsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"compute": SavingsTotalsComputeType{
-			basetypes.ObjectType{
-				AttrTypes: SavingsTotalsComputeValue{}.AttributeTypes(ctx),
-			},
-		},
-	}
-}
-
-var _ basetypes.ObjectTypable = SavingsTotalsComputeType{}
-
-type SavingsTotalsComputeType struct {
-	basetypes.ObjectType
-}
-
-func (t SavingsTotalsComputeType) Equal(o attr.Type) bool {
-	other, ok := o.(SavingsTotalsComputeType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t SavingsTotalsComputeType) String() string {
-	return "SavingsTotalsComputeType"
-}
-
-func (t SavingsTotalsComputeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if in.IsNull() {
-		return NewSavingsTotalsComputeValueNull(), diags
-	}
-
-	if in.IsUnknown() {
-		return NewSavingsTotalsComputeValueUnknown(), diags
-	}
-
-	attributes := in.Attributes()
-
-	lifetimeAttribute, ok := attributes["lifetime"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`lifetime is missing from object`)
-
-		return nil, diags
-	}
-
-	lifetimeValuable, ok := lifetimeAttribute.(basetypes.ObjectValuable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`lifetime expected to be basetypes.ObjectValuable, was: %T`, lifetimeAttribute))
-
-		return nil, diags
-	}
-
-	lifetimeObjVal, lifetimeObjValDiags := lifetimeValuable.ToObjectValue(ctx)
-	diags.Append(lifetimeObjValDiags...)
-
-	lifetimeTypable, ok := t.AttrTypes["lifetime"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`lifetime expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["lifetime"]))
-
-		return nil, diags
-	}
-
-	lifetimeConverted, lifetimeConvertedDiags := lifetimeTypable.ValueFromObject(ctx, lifetimeObjVal)
-	diags.Append(lifetimeConvertedDiags...)
-
-	lifetimeVal, ok := lifetimeConverted.(LifetimeValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`lifetime expected to be LifetimeValue, was: %T`, lifetimeConverted))
-	}
-
-	ytdAttribute, ok := attributes["ytd"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`ytd is missing from object`)
-
-		return nil, diags
-	}
-
-	ytdValuable, ok := ytdAttribute.(basetypes.ObjectValuable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`ytd expected to be basetypes.ObjectValuable, was: %T`, ytdAttribute))
-
-		return nil, diags
-	}
-
-	ytdObjVal, ytdObjValDiags := ytdValuable.ToObjectValue(ctx)
-	diags.Append(ytdObjValDiags...)
-
-	ytdTypable, ok := t.AttrTypes["ytd"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`ytd expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["ytd"]))
-
-		return nil, diags
-	}
-
-	ytdConverted, ytdConvertedDiags := ytdTypable.ValueFromObject(ctx, ytdObjVal)
-	diags.Append(ytdConvertedDiags...)
-
-	ytdVal, ok := ytdConverted.(YtdValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`ytd expected to be YtdValue, was: %T`, ytdConverted))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return SavingsTotalsComputeValue{
-		Lifetime: lifetimeVal,
-		Ytd:      ytdVal,
-		state:    attr.ValueStateKnown,
-	}, diags
-}
-
-func NewSavingsTotalsComputeValueNull() SavingsTotalsComputeValue {
-	return SavingsTotalsComputeValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewSavingsTotalsComputeValueUnknown() SavingsTotalsComputeValue {
-	return SavingsTotalsComputeValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewSavingsTotalsComputeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SavingsTotalsComputeValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing SavingsTotalsComputeValue Attribute Value",
-				"While creating a SavingsTotalsComputeValue value, a missing attribute value was detected. "+
-					"A SavingsTotalsComputeValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("SavingsTotalsComputeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid SavingsTotalsComputeValue Attribute Type",
-				"While creating a SavingsTotalsComputeValue value, an invalid attribute value was detected. "+
-					"A SavingsTotalsComputeValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("SavingsTotalsComputeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("SavingsTotalsComputeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra SavingsTotalsComputeValue Attribute Value",
-				"While creating a SavingsTotalsComputeValue value, an extra attribute value was detected. "+
-					"A SavingsTotalsComputeValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra SavingsTotalsComputeValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewSavingsTotalsComputeValueUnknown(), diags
-	}
-
-	lifetimeAttribute, ok := attributes["lifetime"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`lifetime is missing from object`)
-
-		return NewSavingsTotalsComputeValueUnknown(), diags
-	}
-
-	lifetimeVal, ok := lifetimeAttribute.(LifetimeValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`lifetime expected to be LifetimeValue, was: %T`, lifetimeAttribute))
-	}
-
-	ytdAttribute, ok := attributes["ytd"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`ytd is missing from object`)
-
-		return NewSavingsTotalsComputeValueUnknown(), diags
-	}
-
-	ytdVal, ok := ytdAttribute.(YtdValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`ytd expected to be YtdValue, was: %T`, ytdAttribute))
-	}
-
-	if diags.HasError() {
-		return NewSavingsTotalsComputeValueUnknown(), diags
-	}
-
-	return SavingsTotalsComputeValue{
-		Lifetime: lifetimeVal,
-		Ytd:      ytdVal,
-		state:    attr.ValueStateKnown,
-	}, diags
-}
-
-func NewSavingsTotalsComputeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SavingsTotalsComputeValue {
-	object, diags := NewSavingsTotalsComputeValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewSavingsTotalsComputeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t SavingsTotalsComputeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewSavingsTotalsComputeValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewSavingsTotalsComputeValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewSavingsTotalsComputeValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewSavingsTotalsComputeValueMust(SavingsTotalsComputeValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t SavingsTotalsComputeType) ValueType(ctx context.Context) attr.Value {
-	return SavingsTotalsComputeValue{}
-}
-
-var _ basetypes.ObjectValuable = SavingsTotalsComputeValue{}
-
-type SavingsTotalsComputeValue struct {
-	Lifetime LifetimeValue `tfsdk:"lifetime"`
-	Ytd      YtdValue      `tfsdk:"ytd"`
-	state    attr.ValueState
-}
-
-func (v SavingsTotalsComputeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["lifetime"] = LifetimeType{
-		basetypes.ObjectType{
-			AttrTypes: LifetimeValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
-	attrTypes["ytd"] = YtdType{
-		basetypes.ObjectType{
-			AttrTypes: YtdValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
-
-		val, err = v.Lifetime.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["lifetime"] = val
-
-		val, err = v.Ytd.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["ytd"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v SavingsTotalsComputeValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v SavingsTotalsComputeValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v SavingsTotalsComputeValue) String() string {
-	return "SavingsTotalsComputeValue"
-}
-
-func (v SavingsTotalsComputeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	var lifetime attr.Value
-
-	{
-		lifetime = v.Lifetime
-	}
-
-	var ytd attr.Value
-
-	{
-		ytd = v.Ytd
-	}
-
-	attributeTypes := map[string]attr.Type{
 		"lifetime": LifetimeType{
 			basetypes.ObjectType{
 				AttrTypes: LifetimeValue{}.AttributeTypes(ctx),
 			},
 		},
-		"ytd": YtdType{
-			basetypes.ObjectType{
-				AttrTypes: YtdValue{}.AttributeTypes(ctx),
-			},
-		},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"lifetime": lifetime,
-			"ytd":      ytd,
-		})
-
-	return objVal, diags
-}
-
-func (v SavingsTotalsComputeValue) Equal(o attr.Value) bool {
-	other, ok := o.(SavingsTotalsComputeValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.Lifetime.Equal(other.Lifetime) {
-		return false
-	}
-
-	if !v.Ytd.Equal(other.Ytd) {
-		return false
-	}
-
-	return true
-}
-
-func (v SavingsTotalsComputeValue) Type(ctx context.Context) attr.Type {
-	return SavingsTotalsComputeType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v SavingsTotalsComputeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"lifetime": LifetimeType{
-			basetypes.ObjectType{
-				AttrTypes: LifetimeValue{}.AttributeTypes(ctx),
-			},
-		},
+		"service": basetypes.StringType{},
 		"ytd": YtdType{
 			basetypes.ObjectType{
 				AttrTypes: YtdValue{}.AttributeTypes(ctx),
@@ -3511,48 +2760,84 @@ func (t Stats30dType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 
 	attributes := in.Attributes()
 
-	computeAttribute, ok := attributes["compute"]
+	esrAttribute, ok := attributes["esr"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`compute is missing from object`)
+			`esr is missing from object`)
 
 		return nil, diags
 	}
 
-	computeValuable, ok := computeAttribute.(basetypes.ObjectValuable)
+	esrVal, ok := esrAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be basetypes.ObjectValuable, was: %T`, computeAttribute))
+			fmt.Sprintf(`esr expected to be basetypes.Float64Value, was: %T`, esrAttribute))
+	}
+
+	savingsAttribute, ok := attributes["savings"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`savings is missing from object`)
 
 		return nil, diags
 	}
 
-	computeObjVal, computeObjValDiags := computeValuable.ToObjectValue(ctx)
-	diags.Append(computeObjValDiags...)
-
-	computeTypable, ok := t.AttrTypes["compute"].(basetypes.ObjectTypable)
+	savingsValuable, ok := savingsAttribute.(basetypes.ObjectValuable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["compute"]))
+			fmt.Sprintf(`savings expected to be basetypes.ObjectValuable, was: %T`, savingsAttribute))
 
 		return nil, diags
 	}
 
-	computeConverted, computeConvertedDiags := computeTypable.ValueFromObject(ctx, computeObjVal)
-	diags.Append(computeConvertedDiags...)
+	savingsObjVal, savingsObjValDiags := savingsValuable.ToObjectValue(ctx)
+	diags.Append(savingsObjValDiags...)
 
-	computeVal, ok := computeConverted.(Stats30dComputeValue)
+	savingsTypable, ok := t.AttrTypes["savings"].(basetypes.ObjectTypable)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be Stats30dComputeValue, was: %T`, computeConverted))
+			fmt.Sprintf(`savings expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["savings"]))
+
+		return nil, diags
+	}
+
+	savingsConverted, savingsConvertedDiags := savingsTypable.ValueFromObject(ctx, savingsObjVal)
+	diags.Append(savingsConvertedDiags...)
+
+	savingsVal, ok := savingsConverted.(SavingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings expected to be SavingsValue, was: %T`, savingsConverted))
+	}
+
+	serviceAttribute, ok := attributes["service"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service is missing from object`)
+
+		return nil, diags
+	}
+
+	serviceVal, ok := serviceAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`service expected to be basetypes.StringValue, was: %T`, serviceAttribute))
 	}
 
 	if diags.HasError() {
@@ -3560,7 +2845,9 @@ func (t Stats30dType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 	}
 
 	return Stats30dValue{
-		Compute: computeVal,
+		Esr:     esrVal,
+		Savings: savingsVal,
+		Service: serviceVal,
 		state:   attr.ValueStateKnown,
 	}, diags
 }
@@ -3628,22 +2915,58 @@ func NewStats30dValue(attributeTypes map[string]attr.Type, attributes map[string
 		return NewStats30dValueUnknown(), diags
 	}
 
-	computeAttribute, ok := attributes["compute"]
+	esrAttribute, ok := attributes["esr"]
 
 	if !ok {
 		diags.AddError(
 			"Attribute Missing",
-			`compute is missing from object`)
+			`esr is missing from object`)
 
 		return NewStats30dValueUnknown(), diags
 	}
 
-	computeVal, ok := computeAttribute.(Stats30dComputeValue)
+	esrVal, ok := esrAttribute.(basetypes.Float64Value)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`compute expected to be Stats30dComputeValue, was: %T`, computeAttribute))
+			fmt.Sprintf(`esr expected to be basetypes.Float64Value, was: %T`, esrAttribute))
+	}
+
+	savingsAttribute, ok := attributes["savings"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`savings is missing from object`)
+
+		return NewStats30dValueUnknown(), diags
+	}
+
+	savingsVal, ok := savingsAttribute.(SavingsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings expected to be SavingsValue, was: %T`, savingsAttribute))
+	}
+
+	serviceAttribute, ok := attributes["service"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`service is missing from object`)
+
+		return NewStats30dValueUnknown(), diags
+	}
+
+	serviceVal, ok := serviceAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`service expected to be basetypes.StringValue, was: %T`, serviceAttribute))
 	}
 
 	if diags.HasError() {
@@ -3651,7 +2974,9 @@ func NewStats30dValue(attributeTypes map[string]attr.Type, attributes map[string
 	}
 
 	return Stats30dValue{
-		Compute: computeVal,
+		Esr:     esrVal,
+		Savings: savingsVal,
+		Service: serviceVal,
 		state:   attr.ValueStateKnown,
 	}, diags
 }
@@ -3724,35 +3049,55 @@ func (t Stats30dType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = Stats30dValue{}
 
 type Stats30dValue struct {
-	Compute Stats30dComputeValue `tfsdk:"compute"`
+	Esr     basetypes.Float64Value `tfsdk:"esr"`
+	Savings SavingsValue           `tfsdk:"savings"`
+	Service basetypes.StringValue  `tfsdk:"service"`
 	state   attr.ValueState
 }
 
 func (v Stats30dValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
 
-	attrTypes["compute"] = Stats30dComputeType{
+	attrTypes["esr"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["savings"] = SavingsType{
 		basetypes.ObjectType{
-			AttrTypes: Stats30dComputeValue{}.AttributeTypes(ctx),
+			AttrTypes: SavingsValue{}.AttributeTypes(ctx),
 		},
 	}.TerraformType(ctx)
+	attrTypes["service"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 3)
 
-		val, err = v.Compute.ToTerraformValue(ctx)
+		val, err = v.Esr.ToTerraformValue(ctx)
 
 		if err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
 		}
 
-		vals["compute"] = val
+		vals["esr"] = val
+
+		val, err = v.Savings.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["savings"] = val
+
+		val, err = v.Service.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["service"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -3783,430 +3128,6 @@ func (v Stats30dValue) String() string {
 func (v Stats30dValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var compute attr.Value
-
-	{
-		compute = v.Compute
-	}
-
-	attributeTypes := map[string]attr.Type{
-		"compute": Stats30dComputeType{
-			basetypes.ObjectType{
-				AttrTypes: Stats30dComputeValue{}.AttributeTypes(ctx),
-			},
-		},
-	}
-
-	if v.IsNull() {
-		return types.ObjectNull(attributeTypes), diags
-	}
-
-	if v.IsUnknown() {
-		return types.ObjectUnknown(attributeTypes), diags
-	}
-
-	objVal, diags := types.ObjectValue(
-		attributeTypes,
-		map[string]attr.Value{
-			"compute": compute,
-		})
-
-	return objVal, diags
-}
-
-func (v Stats30dValue) Equal(o attr.Value) bool {
-	other, ok := o.(Stats30dValue)
-
-	if !ok {
-		return false
-	}
-
-	if v.state != other.state {
-		return false
-	}
-
-	if v.state != attr.ValueStateKnown {
-		return true
-	}
-
-	if !v.Compute.Equal(other.Compute) {
-		return false
-	}
-
-	return true
-}
-
-func (v Stats30dValue) Type(ctx context.Context) attr.Type {
-	return Stats30dType{
-		basetypes.ObjectType{
-			AttrTypes: v.AttributeTypes(ctx),
-		},
-	}
-}
-
-func (v Stats30dValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
-	return map[string]attr.Type{
-		"compute": Stats30dComputeType{
-			basetypes.ObjectType{
-				AttrTypes: Stats30dComputeValue{}.AttributeTypes(ctx),
-			},
-		},
-	}
-}
-
-var _ basetypes.ObjectTypable = Stats30dComputeType{}
-
-type Stats30dComputeType struct {
-	basetypes.ObjectType
-}
-
-func (t Stats30dComputeType) Equal(o attr.Type) bool {
-	other, ok := o.(Stats30dComputeType)
-
-	if !ok {
-		return false
-	}
-
-	return t.ObjectType.Equal(other.ObjectType)
-}
-
-func (t Stats30dComputeType) String() string {
-	return "Stats30dComputeType"
-}
-
-func (t Stats30dComputeType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if in.IsNull() {
-		return NewStats30dComputeValueNull(), diags
-	}
-
-	if in.IsUnknown() {
-		return NewStats30dComputeValueUnknown(), diags
-	}
-
-	attributes := in.Attributes()
-
-	esrAttribute, ok := attributes["esr"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`esr is missing from object`)
-
-		return nil, diags
-	}
-
-	esrVal, ok := esrAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`esr expected to be basetypes.Float64Value, was: %T`, esrAttribute))
-	}
-
-	savingsAttribute, ok := attributes["savings"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`savings is missing from object`)
-
-		return nil, diags
-	}
-
-	savingsValuable, ok := savingsAttribute.(basetypes.ObjectValuable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`savings expected to be basetypes.ObjectValuable, was: %T`, savingsAttribute))
-
-		return nil, diags
-	}
-
-	savingsObjVal, savingsObjValDiags := savingsValuable.ToObjectValue(ctx)
-	diags.Append(savingsObjValDiags...)
-
-	savingsTypable, ok := t.AttrTypes["savings"].(basetypes.ObjectTypable)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`savings expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["savings"]))
-
-		return nil, diags
-	}
-
-	savingsConverted, savingsConvertedDiags := savingsTypable.ValueFromObject(ctx, savingsObjVal)
-	diags.Append(savingsConvertedDiags...)
-
-	savingsVal, ok := savingsConverted.(SavingsValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`savings expected to be SavingsValue, was: %T`, savingsConverted))
-	}
-
-	if diags.HasError() {
-		return nil, diags
-	}
-
-	return Stats30dComputeValue{
-		Esr:     esrVal,
-		Savings: savingsVal,
-		state:   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewStats30dComputeValueNull() Stats30dComputeValue {
-	return Stats30dComputeValue{
-		state: attr.ValueStateNull,
-	}
-}
-
-func NewStats30dComputeValueUnknown() Stats30dComputeValue {
-	return Stats30dComputeValue{
-		state: attr.ValueStateUnknown,
-	}
-}
-
-func NewStats30dComputeValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (Stats30dComputeValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
-	ctx := context.Background()
-
-	for name, attributeType := range attributeTypes {
-		attribute, ok := attributes[name]
-
-		if !ok {
-			diags.AddError(
-				"Missing Stats30dComputeValue Attribute Value",
-				"While creating a Stats30dComputeValue value, a missing attribute value was detected. "+
-					"A Stats30dComputeValue must contain values for all attributes, even if null or unknown. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Stats30dComputeValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
-			)
-
-			continue
-		}
-
-		if !attributeType.Equal(attribute.Type(ctx)) {
-			diags.AddError(
-				"Invalid Stats30dComputeValue Attribute Type",
-				"While creating a Stats30dComputeValue value, an invalid attribute value was detected. "+
-					"A Stats30dComputeValue must use a matching attribute type for the value. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Stats30dComputeValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
-					fmt.Sprintf("Stats30dComputeValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
-			)
-		}
-	}
-
-	for name := range attributes {
-		_, ok := attributeTypes[name]
-
-		if !ok {
-			diags.AddError(
-				"Extra Stats30dComputeValue Attribute Value",
-				"While creating a Stats30dComputeValue value, an extra attribute value was detected. "+
-					"A Stats30dComputeValue must not contain values beyond the expected attribute types. "+
-					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Extra Stats30dComputeValue Attribute Name: %s", name),
-			)
-		}
-	}
-
-	if diags.HasError() {
-		return NewStats30dComputeValueUnknown(), diags
-	}
-
-	esrAttribute, ok := attributes["esr"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`esr is missing from object`)
-
-		return NewStats30dComputeValueUnknown(), diags
-	}
-
-	esrVal, ok := esrAttribute.(basetypes.Float64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`esr expected to be basetypes.Float64Value, was: %T`, esrAttribute))
-	}
-
-	savingsAttribute, ok := attributes["savings"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`savings is missing from object`)
-
-		return NewStats30dComputeValueUnknown(), diags
-	}
-
-	savingsVal, ok := savingsAttribute.(SavingsValue)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`savings expected to be SavingsValue, was: %T`, savingsAttribute))
-	}
-
-	if diags.HasError() {
-		return NewStats30dComputeValueUnknown(), diags
-	}
-
-	return Stats30dComputeValue{
-		Esr:     esrVal,
-		Savings: savingsVal,
-		state:   attr.ValueStateKnown,
-	}, diags
-}
-
-func NewStats30dComputeValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) Stats30dComputeValue {
-	object, diags := NewStats30dComputeValue(attributeTypes, attributes)
-
-	if diags.HasError() {
-		// This could potentially be added to the diag package.
-		diagsStrings := make([]string, 0, len(diags))
-
-		for _, diagnostic := range diags {
-			diagsStrings = append(diagsStrings, fmt.Sprintf(
-				"%s | %s | %s",
-				diagnostic.Severity(),
-				diagnostic.Summary(),
-				diagnostic.Detail()))
-		}
-
-		panic("NewStats30dComputeValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
-	}
-
-	return object
-}
-
-func (t Stats30dComputeType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
-	if in.Type() == nil {
-		return NewStats30dComputeValueNull(), nil
-	}
-
-	if !in.Type().Equal(t.TerraformType(ctx)) {
-		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
-	}
-
-	if !in.IsKnown() {
-		return NewStats30dComputeValueUnknown(), nil
-	}
-
-	if in.IsNull() {
-		return NewStats30dComputeValueNull(), nil
-	}
-
-	attributes := map[string]attr.Value{}
-
-	val := map[string]tftypes.Value{}
-
-	err := in.As(&val)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range val {
-		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
-
-		if err != nil {
-			return nil, err
-		}
-
-		attributes[k] = a
-	}
-
-	return NewStats30dComputeValueMust(Stats30dComputeValue{}.AttributeTypes(ctx), attributes), nil
-}
-
-func (t Stats30dComputeType) ValueType(ctx context.Context) attr.Value {
-	return Stats30dComputeValue{}
-}
-
-var _ basetypes.ObjectValuable = Stats30dComputeValue{}
-
-type Stats30dComputeValue struct {
-	Esr     basetypes.Float64Value `tfsdk:"esr"`
-	Savings SavingsValue           `tfsdk:"savings"`
-	state   attr.ValueState
-}
-
-func (v Stats30dComputeValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
-
-	var val tftypes.Value
-	var err error
-
-	attrTypes["esr"] = basetypes.Float64Type{}.TerraformType(ctx)
-	attrTypes["savings"] = SavingsType{
-		basetypes.ObjectType{
-			AttrTypes: SavingsValue{}.AttributeTypes(ctx),
-		},
-	}.TerraformType(ctx)
-
-	objectType := tftypes.Object{AttributeTypes: attrTypes}
-
-	switch v.state {
-	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
-
-		val, err = v.Esr.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["esr"] = val
-
-		val, err = v.Savings.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["savings"] = val
-
-		if err := tftypes.ValidateValue(objectType, vals); err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		return tftypes.NewValue(objectType, vals), nil
-	case attr.ValueStateNull:
-		return tftypes.NewValue(objectType, nil), nil
-	case attr.ValueStateUnknown:
-		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
-	default:
-		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
-	}
-}
-
-func (v Stats30dComputeValue) IsNull() bool {
-	return v.state == attr.ValueStateNull
-}
-
-func (v Stats30dComputeValue) IsUnknown() bool {
-	return v.state == attr.ValueStateUnknown
-}
-
-func (v Stats30dComputeValue) String() string {
-	return "Stats30dComputeValue"
-}
-
-func (v Stats30dComputeValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
 	var savings attr.Value
 
 	{
@@ -4220,6 +3141,7 @@ func (v Stats30dComputeValue) ToObjectValue(ctx context.Context) (basetypes.Obje
 				AttrTypes: SavingsValue{}.AttributeTypes(ctx),
 			},
 		},
+		"service": basetypes.StringType{},
 	}
 
 	if v.IsNull() {
@@ -4235,13 +3157,14 @@ func (v Stats30dComputeValue) ToObjectValue(ctx context.Context) (basetypes.Obje
 		map[string]attr.Value{
 			"esr":     v.Esr,
 			"savings": savings,
+			"service": v.Service,
 		})
 
 	return objVal, diags
 }
 
-func (v Stats30dComputeValue) Equal(o attr.Value) bool {
-	other, ok := o.(Stats30dComputeValue)
+func (v Stats30dValue) Equal(o attr.Value) bool {
+	other, ok := o.(Stats30dValue)
 
 	if !ok {
 		return false
@@ -4263,18 +3186,22 @@ func (v Stats30dComputeValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.Service.Equal(other.Service) {
+		return false
+	}
+
 	return true
 }
 
-func (v Stats30dComputeValue) Type(ctx context.Context) attr.Type {
-	return Stats30dComputeType{
+func (v Stats30dValue) Type(ctx context.Context) attr.Type {
+	return Stats30dType{
 		basetypes.ObjectType{
 			AttrTypes: v.AttributeTypes(ctx),
 		},
 	}
 }
 
-func (v Stats30dComputeValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+func (v Stats30dValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"esr": basetypes.Float64Type{},
 		"savings": SavingsType{
@@ -4282,6 +3209,7 @@ func (v Stats30dComputeValue) AttributeTypes(ctx context.Context) map[string]att
 				AttrTypes: SavingsValue{}.AttributeTypes(ctx),
 			},
 		},
+		"service": basetypes.StringType{},
 	}
 }
 
