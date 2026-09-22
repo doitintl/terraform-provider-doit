@@ -4695,6 +4695,74 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases:
+    get:
+      operationId: listGcpPlannedPurchases
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP planned purchases
+      description: |-
+        Returns the laddering projections for the billing account, grouped by PS4C product line
+        (`service`) and region. Each service group lists one entry per available
+        `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+        `cloud_sql` scopes are per-region).
+
+        With no filters, returns all existing projection documents in stable order: service groups
+        ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+        first, then remaining regions alphabetically. Services with no projection documents are omitted
+        (not returned as empty groups). When a filter matches no documents, the response is an
+        empty `items` array (not `404`). Partial projection documents return only the fields
+        available in storage.
+
+        **`gcp_service` and `region` filters**: omit both to return all available services and
+        their regions; supply `gcp_service` alone to return all regions for that service; supply
+        both to return a single service/region scope. `region` requires `gcp_service` — a request
+        with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+        `gcp_service` or `region` values return `400` with code `validation_failed`.
+
+        `404` is returned only when the billing account does not exist or the caller cannot access
+        it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+        `items` array when no projection documents exist — use
+        `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+
+        **Pagination**: results are paginated by **service group** (a whole group is never split
+        across pages). Groups keep the stable service order above. Use `maxResults` to limit
+        page size (default 50, max 500). When more groups remain, the response includes a
+        non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+        (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+        this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+        expired token returns `400` with code `pagination_token_expired`.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - $ref: "#/components/parameters/gcp_service"
+        - $ref: "#/components/parameters/gcp_region"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: List of planned purchase projections grouped by service and region.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpPlannedPurchases200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /ps4commitments/v1/gcp/settings:
     get:
       operationId: listGcpBillingAccountsSettings
@@ -10169,6 +10237,160 @@ components:
             - compute
             - cloud_sql
           description: Product line this onboarding status belongs to.
+    GcpPlannedPurchase:
+      type: object
+      description: Laddering projection for one product-line and region scope.
+      required:
+        - region
+        - status
+      properties:
+        region:
+          type: string
+          description: Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
+        status:
+          type: string
+          enum:
+            - valid
+            - expired
+          description: Projection lifecycle state. When the stored document has no `status`, the server returns `valid`.
+          x-enumDescriptions:
+            valid: Projection is current for the active planning cycle.
+            expired: Planning cycle has lapsed; wait for the scheduler to produce a new projection.
+        purchaseApprovalStatus:
+          type: string
+          enum:
+            - pending_approval
+            - approved
+            - paused
+          description: Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
+          x-enumDescriptions:
+            pending_approval: Approve the commitment ceiling on the Planned Purchases tab in the DoiT Console before purchases can run.
+            approved: Purchases may run up to the approved commitment ceiling.
+            paused: Purchases are paused (Pause Purchases on Planned Purchases); see `pauseNote` for the reason.
+        pauseNote:
+          type: string
+          description: Customer-visible pause reason, when purchases are paused.
+          nullable: true
+        requiresApproval:
+          type: boolean
+          description: |-
+            `true` when the projection as a whole requires customer approval before the planner
+            stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
+            and/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level
+            `steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling.
+        wowViolation:
+          type: boolean
+          description: "`true` when week-over-week eligible spend dropped beyond the allowed threshold."
+        profile:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking.
+        term:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentTerm"
+          description: Commitment term used for projected purchases.
+        finalCommitment:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1.
+        weeksToTarget:
+          type: integer
+          description: Number of ladder steps remaining to reach the target commitment.
+          nullable: true
+        planningCycleStartDate:
+          type: string
+          format: date
+          description: First day of the planning cycle for this projection. Null when not set.
+          nullable: true
+        planningCycleEndDate:
+          type: string
+          format: date
+          description: Last day of the planning cycle for this projection. Null when not set.
+          nullable: true
+        estimatedSavings:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Total estimated savings from the underlying recommendation. Currency is `USD` in v1.
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpPurchasePlanStep"
+          description: |-
+            Weekly ladder steps from the projection output. Omitted when the stored document has
+            no `output` section.
+    GcpPlannedPurchaseByService:
+      type: object
+      description: Planned purchase projections for one PS4C product line.
+      required:
+        - service
+        - billingAccountId
+        - regions
+      properties:
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Commitment type this projection group belongs to.
+          x-enumDescriptions:
+            compute: Compute commitment type (CUDs).
+            cloud_sql: Cloud SQL commitment type (CUDs).
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+        regions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpPlannedPurchase"
+          description: |-
+            Per-region projection entries for this service, sorted with `global` first, then
+            remaining regions alphabetically.
+    GcpPurchasePlanStep:
+      type: object
+      description: A single weekly ladder step within a projection.
+      required:
+        - order
+        - scheduledDate
+        - purchaseAmount
+        - cumulativeCommitment
+        - estimatedSavings
+        - isBootstrap
+        - isFinal
+        - requiresApproval
+      properties:
+        order:
+          type: integer
+          description: Step sequence number (1-based) within the ladder.
+        scheduledDate:
+          type: string
+          format: date
+          description: Calendar date (UTC) when this purchase step is scheduled to execute, with format YYYY-MM-DD.
+        purchaseAmount:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Hourly commitment to purchase on this step.
+        cumulativeCommitment:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Total hourly commitment after this step executes.
+        estimatedSavings:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: |-
+            This step's proportional share of the projection-level `estimatedSavings`
+            (allocated by purchase amount). Zero when the recommendation total is unavailable.
+        isBootstrap:
+          type: boolean
+          description: "`true` if this is the initial bootstrap purchase."
+        isFinal:
+          type: boolean
+          description: "`true` if this step reaches the target commitment."
+        requiresApproval:
+          type: boolean
+          description: |-
+            `true` when this step's `cumulativeCommitment` exceeds the customer-approved
+            commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
+            ladder even when the projection-level `purchaseApprovalStatus` is `approved`.
     GcpResourceCud:
       type: object
       description: |-
@@ -11384,6 +11606,23 @@ components:
           type: integer
           format: int64
           description: Number of items returned in this page.
+    ListGcpPlannedPurchases200Response:
+      type: object
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpPlannedPurchaseByService"
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Number of service groups in `items` for this response.
     ListGcpResourceCuds200Response:
       type: object
       required:

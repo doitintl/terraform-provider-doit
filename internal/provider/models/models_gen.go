@@ -2569,6 +2569,63 @@ func (e GcpOnboardingStatusByServiceStatus) Valid() bool {
 	}
 }
 
+// Defines values for GcpPlannedPurchasePurchaseApprovalStatus.
+const (
+	GcpPlannedPurchasePurchaseApprovalStatusApproved        GcpPlannedPurchasePurchaseApprovalStatus = "approved"
+	GcpPlannedPurchasePurchaseApprovalStatusPaused          GcpPlannedPurchasePurchaseApprovalStatus = "paused"
+	GcpPlannedPurchasePurchaseApprovalStatusPendingApproval GcpPlannedPurchasePurchaseApprovalStatus = "pending_approval"
+)
+
+// Valid indicates whether the value is a known member of the GcpPlannedPurchasePurchaseApprovalStatus enum.
+func (e GcpPlannedPurchasePurchaseApprovalStatus) Valid() bool {
+	switch e {
+	case GcpPlannedPurchasePurchaseApprovalStatusApproved:
+		return true
+	case GcpPlannedPurchasePurchaseApprovalStatusPaused:
+		return true
+	case GcpPlannedPurchasePurchaseApprovalStatusPendingApproval:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpPlannedPurchaseStatus.
+const (
+	GcpPlannedPurchaseStatusExpired GcpPlannedPurchaseStatus = "expired"
+	GcpPlannedPurchaseStatusValid   GcpPlannedPurchaseStatus = "valid"
+)
+
+// Valid indicates whether the value is a known member of the GcpPlannedPurchaseStatus enum.
+func (e GcpPlannedPurchaseStatus) Valid() bool {
+	switch e {
+	case GcpPlannedPurchaseStatusExpired:
+		return true
+	case GcpPlannedPurchaseStatusValid:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpPlannedPurchaseByServiceService.
+const (
+	GcpPlannedPurchaseByServiceServiceCloudSql GcpPlannedPurchaseByServiceService = "cloud_sql"
+	GcpPlannedPurchaseByServiceServiceCompute  GcpPlannedPurchaseByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpPlannedPurchaseByServiceService enum.
+func (e GcpPlannedPurchaseByServiceService) Valid() bool {
+	switch e {
+	case GcpPlannedPurchaseByServiceServiceCloudSql:
+		return true
+	case GcpPlannedPurchaseByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GcpSavingsTotalsByServiceService.
 const (
 	GcpSavingsTotalsByServiceServiceCloudSql GcpSavingsTotalsByServiceService = "cloud_sql"
@@ -4255,6 +4312,24 @@ func (e ListServiceQuotasParamsCloudProvider) Valid() bool {
 	case ListServiceQuotasParamsCloudProviderAws:
 		return true
 	case ListServiceQuotasParamsCloudProviderGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpPlannedPurchasesParamsGcpService.
+const (
+	ListGcpPlannedPurchasesParamsGcpServiceCloudSql ListGcpPlannedPurchasesParamsGcpService = "cloud_sql"
+	ListGcpPlannedPurchasesParamsGcpServiceCompute  ListGcpPlannedPurchasesParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpPlannedPurchasesParamsGcpService enum.
+func (e ListGcpPlannedPurchasesParamsGcpService) Valid() bool {
+	switch e {
+	case ListGcpPlannedPurchasesParamsGcpServiceCloudSql:
+		return true
+	case ListGcpPlannedPurchasesParamsGcpServiceCompute:
 		return true
 	default:
 		return false
@@ -8083,6 +8158,107 @@ type GcpOnboardingStatusByServiceService string
 // GcpOnboardingStatusByServiceStatus Current onboarding lifecycle stage for this product line.
 type GcpOnboardingStatusByServiceStatus string
 
+// GcpPlannedPurchase Laddering projection for one product-line and region scope.
+type GcpPlannedPurchase struct {
+	// EstimatedSavings Total estimated savings from the underlying recommendation. Currency is `USD` in v1.
+	EstimatedSavings *Money `json:"estimatedSavings,omitempty"`
+
+	// FinalCommitment Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1.
+	FinalCommitment *Money `json:"finalCommitment,omitempty"`
+
+	// PauseNote Customer-visible pause reason, when purchases are paused.
+	PauseNote nullable.Nullable[string] `json:"pauseNote,omitempty"`
+
+	// PlanningCycleEndDate Last day of the planning cycle for this projection. Null when not set.
+	PlanningCycleEndDate nullable.Nullable[openapi_types.Date] `json:"planningCycleEndDate,omitempty"`
+
+	// PlanningCycleStartDate First day of the planning cycle for this projection. Null when not set.
+	PlanningCycleStartDate nullable.Nullable[openapi_types.Date] `json:"planningCycleStartDate,omitempty"`
+
+	// Profile Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking.
+	Profile *CommitmentPolicyId `json:"profile,omitempty"`
+
+	// PurchaseApprovalStatus Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
+	PurchaseApprovalStatus *GcpPlannedPurchasePurchaseApprovalStatus `json:"purchaseApprovalStatus,omitempty"`
+
+	// Region Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
+	Region string `json:"region"`
+
+	// RequiresApproval `true` when the projection as a whole requires customer approval before the planner
+	// stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
+	// and/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level
+	// `steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling.
+	RequiresApproval *bool `json:"requiresApproval,omitempty"`
+
+	// Status Projection lifecycle state. When the stored document has no `status`, the server returns `valid`.
+	Status GcpPlannedPurchaseStatus `json:"status"`
+
+	// Steps Weekly ladder steps from the projection output. Omitted when the stored document has
+	// no `output` section.
+	Steps *[]GcpPurchasePlanStep `json:"steps,omitempty"`
+
+	// Term Commitment term used for projected purchases.
+	Term *CommitmentTerm `json:"term,omitempty"`
+
+	// WeeksToTarget Number of ladder steps remaining to reach the target commitment.
+	WeeksToTarget nullable.Nullable[int] `json:"weeksToTarget,omitempty"`
+
+	// WowViolation `true` when week-over-week eligible spend dropped beyond the allowed threshold.
+	WowViolation *bool `json:"wowViolation,omitempty"`
+}
+
+// GcpPlannedPurchasePurchaseApprovalStatus Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
+type GcpPlannedPurchasePurchaseApprovalStatus string
+
+// GcpPlannedPurchaseStatus Projection lifecycle state. When the stored document has no `status`, the server returns `valid`.
+type GcpPlannedPurchaseStatus string
+
+// GcpPlannedPurchaseByService Planned purchase projections for one PS4C product line.
+type GcpPlannedPurchaseByService struct {
+	// BillingAccountId GCP Billing Account ID.
+	BillingAccountId string `json:"billingAccountId"`
+
+	// Regions Per-region projection entries for this service, sorted with `global` first, then
+	// remaining regions alphabetically.
+	Regions []GcpPlannedPurchase `json:"regions"`
+
+	// Service Commitment type this projection group belongs to.
+	Service GcpPlannedPurchaseByServiceService `json:"service"`
+}
+
+// GcpPlannedPurchaseByServiceService Commitment type this projection group belongs to.
+type GcpPlannedPurchaseByServiceService string
+
+// GcpPurchasePlanStep A single weekly ladder step within a projection.
+type GcpPurchasePlanStep struct {
+	// CumulativeCommitment Total hourly commitment after this step executes.
+	CumulativeCommitment Money `json:"cumulativeCommitment"`
+
+	// EstimatedSavings This step's proportional share of the projection-level `estimatedSavings`
+	// (allocated by purchase amount). Zero when the recommendation total is unavailable.
+	EstimatedSavings Money `json:"estimatedSavings"`
+
+	// IsBootstrap `true` if this is the initial bootstrap purchase.
+	IsBootstrap bool `json:"isBootstrap"`
+
+	// IsFinal `true` if this step reaches the target commitment.
+	IsFinal bool `json:"isFinal"`
+
+	// Order Step sequence number (1-based) within the ladder.
+	Order int `json:"order"`
+
+	// PurchaseAmount Hourly commitment to purchase on this step.
+	PurchaseAmount Money `json:"purchaseAmount"`
+
+	// RequiresApproval `true` when this step's `cumulativeCommitment` exceeds the customer-approved
+	// commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
+	// ladder even when the projection-level `purchaseApprovalStatus` is `approved`.
+	RequiresApproval bool `json:"requiresApproval"`
+
+	// ScheduledDate Calendar date (UTC) when this purchase step is scheduled to execute, with format YYYY-MM-DD.
+	ScheduledDate openapi_types.Date `json:"scheduledDate"`
+}
+
 // GcpResourceCud GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
 // document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").
 type GcpResourceCud struct {
@@ -9038,6 +9214,15 @@ type ListGcpBillingAccountsSettings200Response struct {
 
 	// RowCount Number of items returned in this page.
 	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// ListGcpPlannedPurchases200Response defines model for ListGcpPlannedPurchases200Response.
+type ListGcpPlannedPurchases200Response struct {
+	Items     []GcpPlannedPurchaseByService `json:"items"`
+	PageToken nullable.Nullable[string]     `json:"pageToken,omitempty"`
+
+	// RowCount Number of service groups in `items` for this response.
+	RowCount int64 `json:"rowCount"`
 }
 
 // ListGcpResourceCuds200Response defines model for ListGcpResourceCuds200Response.
@@ -10807,6 +10992,39 @@ type GetGcpBillingAccountParams struct {
 	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
+
+// ListGcpPlannedPurchasesParams defines parameters for ListGcpPlannedPurchases.
+type ListGcpPlannedPurchasesParams struct {
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+	GcpService *ListGcpPlannedPurchasesParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
+
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpPlannedPurchasesParamsGcpService defines parameters for ListGcpPlannedPurchases.
+type ListGcpPlannedPurchasesParamsGcpService string
 
 // ListGcpResourceCudsParams defines parameters for ListGcpResourceCuds.
 type ListGcpResourceCudsParams struct {
@@ -12714,6 +12932,42 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 	GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGcpPlannedPurchases List GCP planned purchases
+	//
+	// Returns the laddering projections for the billing account, grouped by PS4C product line
+	// (`service`) and region. Each service group lists one entry per available
+	// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+	// `cloud_sql` scopes are per-region).
+	//
+	// With no filters, returns all existing projection documents in stable order: service groups
+	// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+	// first, then remaining regions alphabetically. Services with no projection documents are omitted
+	// (not returned as empty groups). When a filter matches no documents, the response is an
+	// empty `items` array (not `404`). Partial projection documents return only the fields
+	// available in storage.
+	//
+	// **`gcp_service` and `region` filters**: omit both to return all available services and
+	// their regions; supply `gcp_service` alone to return all regions for that service; supply
+	// both to return a single service/region scope. `region` requires `gcp_service` — a request
+	// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+	// `gcp_service` or `region` values return `400` with code `validation_failed`.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+	// `items` array when no projection documents exist — use
+	// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+	//
+	// **Pagination**: results are paginated by **service group** (a whole group is never split
+	// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+	// page size (default 50, max 500). When more groups remain, the response includes a
+	// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+	// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+	// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+	// expired token returns `400` with code `pagination_token_expired`.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+	ListGcpPlannedPurchases(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListGcpResourceCuds List GCP resource-based Committed Use Discounts
 	//
@@ -15479,6 +15733,52 @@ func (c *Client) ListGcpBillingAccounts(ctx context.Context, params *ListGcpBill
 // Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 func (c *Client) GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetGcpBillingAccountRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpPlannedPurchases List GCP planned purchases
+//
+// Returns the laddering projections for the billing account, grouped by PS4C product line
+// (`service`) and region. Each service group lists one entry per available
+// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+// `cloud_sql` scopes are per-region).
+//
+// With no filters, returns all existing projection documents in stable order: service groups
+// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+// first, then remaining regions alphabetically. Services with no projection documents are omitted
+// (not returned as empty groups). When a filter matches no documents, the response is an
+// empty `items` array (not `404`). Partial projection documents return only the fields
+// available in storage.
+//
+// **`gcp_service` and `region` filters**: omit both to return all available services and
+// their regions; supply `gcp_service` alone to return all regions for that service; supply
+// both to return a single service/region scope. `region` requires `gcp_service` — a request
+// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+// `gcp_service` or `region` values return `400` with code `validation_failed`.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+// `items` array when no projection documents exist — use
+// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+//
+// **Pagination**: results are paginated by **service group** (a whole group is never split
+// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+// page size (default 50, max 500). When more groups remain, the response includes a
+// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+// expired token returns `400` with code `pagination_token_expired`.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+func (c *Client) ListGcpPlannedPurchases(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpPlannedPurchasesRequest(c.Server, billingAccountId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -21491,6 +21791,118 @@ func NewGetGcpBillingAccountRequest(server string, billingAccountId BillingAccou
 	return req, nil
 }
 
+// NewListGcpPlannedPurchasesRequest constructs an http.Request for the ListGcpPlannedPurchases method
+func NewListGcpPlannedPurchasesRequest(server string, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/planned-purchases", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.GcpService != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "gcp_service", *params.GcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListGcpResourceCudsRequest constructs an http.Request for the ListGcpResourceCuds method
 func NewListGcpResourceCudsRequest(server string, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams) (*http.Request, error) {
 	var err error
@@ -23805,6 +24217,44 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 	GetGcpBillingAccountWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*GetGcpBillingAccountResp, error)
+
+	// ListGcpPlannedPurchasesWithResponse List GCP planned purchases
+	//
+	// Returns the laddering projections for the billing account, grouped by PS4C product line
+	// (`service`) and region. Each service group lists one entry per available
+	// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+	// `cloud_sql` scopes are per-region).
+	//
+	// With no filters, returns all existing projection documents in stable order: service groups
+	// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+	// first, then remaining regions alphabetically. Services with no projection documents are omitted
+	// (not returned as empty groups). When a filter matches no documents, the response is an
+	// empty `items` array (not `404`). Partial projection documents return only the fields
+	// available in storage.
+	//
+	// **`gcp_service` and `region` filters**: omit both to return all available services and
+	// their regions; supply `gcp_service` alone to return all regions for that service; supply
+	// both to return a single service/region scope. `region` requires `gcp_service` — a request
+	// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+	// `gcp_service` or `region` values return `400` with code `validation_failed`.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+	// `items` array when no projection documents exist — use
+	// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+	//
+	// **Pagination**: results are paginated by **service group** (a whole group is never split
+	// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+	// page size (default 50, max 500). When more groups remain, the response includes a
+	// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+	// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+	// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+	// expired token returns `400` with code `pagination_token_expired`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+	ListGcpPlannedPurchasesWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*ListGcpPlannedPurchasesResp, error)
 
 	// ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
 	//
@@ -31709,6 +32159,147 @@ func (r GetGcpBillingAccountResp) ContentType() string {
 	return ""
 }
 
+// ListGcpPlannedPurchasesResp200Headers the declared response headers of an HTTP 200 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp400Headers the declared response headers of an HTTP 400 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp401Headers the declared response headers of an HTTP 401 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpPlannedPurchasesResp403Headers the declared response headers of an HTTP 403 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp404Headers the declared response headers of an HTTP 404 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp500Headers the declared response headers of an HTTP 500 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp503Headers the declared response headers of an HTTP 503 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpPlannedPurchasesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpPlannedPurchases200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpPlannedPurchasesResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpPlannedPurchasesResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpPlannedPurchasesResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpPlannedPurchasesResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListGcpPlannedPurchasesResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpPlannedPurchasesResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpPlannedPurchasesResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpPlannedPurchasesResp) GetJSON200() *ListGcpPlannedPurchases200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpPlannedPurchasesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpPlannedPurchasesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpPlannedPurchasesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpPlannedPurchasesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListGcpResourceCudsResp200Headers the declared response headers of an HTTP 200 response for ListGcpResourceCuds
 type ListGcpResourceCudsResp200Headers struct {
 	ContentLanguage *string
@@ -35321,6 +35912,50 @@ func (c *ClientWithResponses) GetGcpBillingAccountWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseGetGcpBillingAccountResp(rsp)
+}
+
+// ListGcpPlannedPurchasesWithResponse List GCP planned purchases
+//
+// Returns the laddering projections for the billing account, grouped by PS4C product line
+// (`service`) and region. Each service group lists one entry per available
+// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+// `cloud_sql` scopes are per-region).
+//
+// With no filters, returns all existing projection documents in stable order: service groups
+// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+// first, then remaining regions alphabetically. Services with no projection documents are omitted
+// (not returned as empty groups). When a filter matches no documents, the response is an
+// empty `items` array (not `404`). Partial projection documents return only the fields
+// available in storage.
+//
+// **`gcp_service` and `region` filters**: omit both to return all available services and
+// their regions; supply `gcp_service` alone to return all regions for that service; supply
+// both to return a single service/region scope. `region` requires `gcp_service` — a request
+// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+// `gcp_service` or `region` values return `400` with code `validation_failed`.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+// `items` array when no projection documents exist — use
+// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+//
+// **Pagination**: results are paginated by **service group** (a whole group is never split
+// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+// page size (default 50, max 500). When more groups remain, the response includes a
+// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+// expired token returns `400` with code `pagination_token_expired`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+func (c *ClientWithResponses) ListGcpPlannedPurchasesWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*ListGcpPlannedPurchasesResp, error) {
+	rsp, err := c.ListGcpPlannedPurchases(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpPlannedPurchasesResp(rsp)
 }
 
 // ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
@@ -42304,6 +42939,210 @@ func ParseGetGcpBillingAccountResp(rsp *http.Response) (*GetGcpBillingAccountRes
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers GetGcpBillingAccountResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGcpPlannedPurchasesResp parses an HTTP response from a ListGcpPlannedPurchasesWithResponse call
+func ParseListGcpPlannedPurchasesResp(rsp *http.Response) (*ListGcpPlannedPurchasesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpPlannedPurchasesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpPlannedPurchases200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpPlannedPurchasesResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpPlannedPurchasesResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpPlannedPurchasesResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpPlannedPurchasesResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListGcpPlannedPurchasesResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpPlannedPurchasesResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpPlannedPurchasesResp503Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
