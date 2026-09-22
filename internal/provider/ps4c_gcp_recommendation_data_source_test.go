@@ -94,3 +94,42 @@ data "doit_ps4c_gcp_recommendation" "test" {
 }
 `
 }
+
+func TestAccPs4cGcpRecommendationDataSource_InvalidCombination(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "doit_ps4c_gcp_recommendation" "test" {
+  billing_account_id = "012345-6789AB-CDEF01"
+  gcp_service        = "compute"
+  region             = "us_central1"
+}
+`,
+				ExpectError: regexp.MustCompile(`(?s)Compute.*support global scope`),
+			},
+			{
+				Config: `
+data "doit_ps4c_gcp_recommendation" "test" {
+  billing_account_id = "012345-6789AB-CDEF01"
+  gcp_service        = "cloud_sql"
+}
+`,
+				ExpectError: regexp.MustCompile(`region is required when gcp_service is "cloud_sql"`),
+			},
+			{
+				Config: `
+data "doit_ps4c_gcp_recommendation" "test" {
+  billing_account_id = "012345-6789AB-CDEF01"
+  gcp_service        = "cloud_sql"
+  region             = "global"
+}
+`,
+				ExpectError: regexp.MustCompile(`(?s)Cloud SQL.*concrete GCP region`),
+			},
+		},
+	})
+}

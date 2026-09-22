@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = (*ps4cGcpRecommendationDataSource)(nil)
-	_ datasource.DataSourceWithConfigure = (*ps4cGcpRecommendationDataSource)(nil)
+	_ datasource.DataSource                     = (*ps4cGcpRecommendationDataSource)(nil)
+	_ datasource.DataSourceWithConfigure        = (*ps4cGcpRecommendationDataSource)(nil)
+	_ datasource.DataSourceWithConfigValidators = (*ps4cGcpRecommendationDataSource)(nil)
 )
 
 func NewPs4cGcpRecommendationDataSource() datasource.DataSource {
@@ -56,6 +57,12 @@ func (d *ps4cGcpRecommendationDataSource) Schema(ctx context.Context, _ datasour
 	s.MarkdownDescription = "Retrieves a Google Cloud Platform (GCP) PerfectScale for Commitments purchase recommendation and eligible usage history."
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
+}
+
+func (d *ps4cGcpRecommendationDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
+	return []datasource.ConfigValidator{
+		ps4cGcpRecommendationConfigValidator{},
+	}
 }
 
 func (d *ps4cGcpRecommendationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

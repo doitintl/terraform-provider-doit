@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = (*ps4cGcpRecommendationsDataSource)(nil)
-	_ datasource.DataSourceWithConfigure = (*ps4cGcpRecommendationsDataSource)(nil)
+	_ datasource.DataSource                     = (*ps4cGcpRecommendationsDataSource)(nil)
+	_ datasource.DataSourceWithConfigure        = (*ps4cGcpRecommendationsDataSource)(nil)
+	_ datasource.DataSourceWithConfigValidators = (*ps4cGcpRecommendationsDataSource)(nil)
 )
 
 func NewPs4cGcpRecommendationsDataSource() datasource.DataSource {
@@ -58,6 +59,12 @@ func (d *ps4cGcpRecommendationsDataSource) Schema(ctx context.Context, _ datasou
 	resp.Schema = s
 }
 
+func (d *ps4cGcpRecommendationsDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
+	return []datasource.ConfigValidator{
+		ps4cGcpRecommendationsConfigValidator{},
+	}
+}
+
 func (d *ps4cGcpRecommendationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data ps4cGcpRecommendationsDataSourceModel
 
@@ -99,8 +106,9 @@ func (d *ps4cGcpRecommendationsDataSource) Read(ctx context.Context, req datasou
 
 	if apiResp.StatusCode() == 404 {
 		resp.Diagnostics.AddError(
-			"PS4C GCP Billing Account Not Found",
-			fmt.Sprintf("GCP Billing Account with ID %s not found", billingAccountId),
+			"PS4C GCP Billing Account Not Found or Inaccessible",
+			fmt.Sprintf("GCP Billing Account with ID %s not found or caller cannot access it, status: 404, body: %s",
+				billingAccountId, string(apiResp.Body)),
 		)
 		return
 	}
