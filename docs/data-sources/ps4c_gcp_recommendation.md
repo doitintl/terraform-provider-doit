@@ -34,7 +34,7 @@ output "compute_eligible_usage_points" {
 ### Required
 
 - `billing_account_id` (String) GCP Billing Account ID (format `XXXXXX-XXXXXX-XXXXXX`; the account that owns the CUDs) that scopes the request.
-- `gcp_service` (String) PS4C product line to fetch the recommendation for.
+- `gcp_service` (String) PS4C product line to fetch the recommendation for. Matching is case-insensitive; the value is lowercased before validation.
 Possible values: `compute`, `cloud_sql`
 
 ### Optional
@@ -50,6 +50,7 @@ The value is format-validated, not checked against a closed region list: `comput
 only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
 is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
 A well-formed, service-compatible region with no data returns `200` with an empty result.
+Matching is case-insensitive; the value is lowercased before validation.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only

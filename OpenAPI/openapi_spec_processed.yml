@@ -4770,7 +4770,7 @@ paths:
         - name: gcp_service
           in: path
           required: true
-          description: PS4C product line to fetch the recommendation for.
+          description: PS4C product line to fetch the recommendation for. Matching is case-insensitive; the value is lowercased before validation.
           schema:
             type: string
             enum:
@@ -8514,6 +8514,7 @@ components:
           description: Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only.
         region:
           type: string
+          pattern: ^(global|[a-z]+(_[a-z0-9]+)+)$
           description: Region scope in `lower_snake_case` wire form (for example `us_east1`) for product lines assigned per region (GCP `cloud_sql`). `null` for every scope assigned per account (all AWS scopes, GCP `compute`); the settings endpoints report the same scope as `global`.
           nullable: true
           example: us_east1
@@ -10154,7 +10155,8 @@ components:
             - cloud_sql
           description: Product line these settings apply to.
         region:
-          type: string
+          allOf:
+            - $ref: "#/components/schemas/GcpRegion"
           description: Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
         settings:
           allOf:
@@ -10377,7 +10379,8 @@ components:
         - status
       properties:
         region:
-          type: string
+          allOf:
+            - $ref: "#/components/schemas/GcpRegion"
           description: Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
         status:
           type: string
@@ -10532,7 +10535,8 @@ components:
             - $ref: "#/components/schemas/CommitmentPolicyId"
           description: Coverage target policy configured for this product line and region scope (built-in or customer-defined).
         region:
-          type: string
+          allOf:
+            - $ref: "#/components/schemas/GcpRegion"
           description: Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
         service:
           type: string
@@ -10575,6 +10579,15 @@ components:
           description: Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window.
           items:
             $ref: "#/components/schemas/EligibleSpendDataPoint"
+    GcpRegion:
+      type: string
+      pattern: ^(global|[a-z]+(_[a-z0-9]+)+)$
+      description: |-
+        GCP region scope in the DCI `lower_snake_case` wire form (for example `us_east1`), or the
+        literal `global` for cross-region scopes. This is not the raw provider spelling (`us-east1`);
+        the same pattern applies to the `region` query parameter. Regions are discovery-driven, so the
+        list is open rather than an enum.
+      example: us_east1
     GcpResourceCud:
       type: object
       description: |-
@@ -13511,7 +13524,7 @@ components:
       in: query
       name: gcp_service
       required: false
-      description: Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+      description: Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
       schema:
         type: string
         enum:
@@ -13534,9 +13547,9 @@ components:
         only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
         is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
         A well-formed, service-compatible region with no data returns `200` with an empty result.
+        Matching is case-insensitive; the value is lowercased before validation.
       schema:
-        type: string
-        pattern: ^(global|[a-z]+(_[a-z0-9]+)+)$
+        $ref: "#/components/schemas/GcpRegion"
     billingAccountId:
       in: path
       name: billingAccountId

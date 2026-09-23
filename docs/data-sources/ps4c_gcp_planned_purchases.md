@@ -46,7 +46,7 @@ output "planned_purchases" {
 
 ### Optional
 
-- `gcp_service` (String) Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+- `gcp_service` (String) Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
 Possible values: `compute`, `cloud_sql`
 - `max_results` (Number) Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
 - `page_token` (String) Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
@@ -59,6 +59,7 @@ The value is format-validated, not checked against a closed region list: `comput
 only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
 is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
 A well-formed, service-compatible region with no data returns `200` with an empty result.
+Matching is case-insensitive; the value is lowercased before validation.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
