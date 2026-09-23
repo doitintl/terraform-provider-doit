@@ -8127,7 +8127,7 @@ type GcpBillingAccountDetail struct {
 // GcpBillingAccountServiceSettings defines model for GcpBillingAccountServiceSettings.
 type GcpBillingAccountServiceSettings struct {
 	// Region Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
-	Region string `json:"region"`
+	Region GcpRegion `json:"region"`
 
 	// Service Product line these settings apply to.
 	Service GcpBillingAccountServiceSettingsService `json:"service"`
@@ -8302,7 +8302,7 @@ type GcpPlannedPurchase struct {
 	PurchaseApprovalStatus *GcpPlannedPurchasePurchaseApprovalStatus `json:"purchaseApprovalStatus,omitempty"`
 
 	// Region Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
-	Region string `json:"region"`
+	Region GcpRegion `json:"region"`
 
 	// RequiresApproval `true` when the projection as a whole requires customer approval before the planner
 	// stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
@@ -8397,7 +8397,7 @@ type GcpRecommendation struct {
 	RecommendedCommitment *float64 `json:"recommendedCommitment,omitempty"`
 
 	// Region Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
-	Region *string `json:"region,omitempty"`
+	Region *GcpRegion `json:"region,omitempty"`
 
 	// Service PS4C product line (`gcp_service`) this recommendation belongs to.
 	Service *GcpRecommendationService `json:"service,omitempty"`
@@ -8417,6 +8417,14 @@ type GcpRecommendationWithEligibleSpend struct {
 	// Recommendation Recommended commitment metrics for the requested (service, region) scope.
 	Recommendation *GcpRecommendation `json:"recommendation,omitempty"`
 }
+
+// GcpRegion GCP region scope in the DCI `lower_snake_case` wire form (for example `us_east1`), or the
+// literal `global` for cross-region scopes. This is not the raw provider spelling (`us-east1`);
+// the same pattern applies to the `region` query parameter. Regions are discovery-driven, so the
+// list is open rather than an enum.
+//
+// Example: us_east1
+type GcpRegion = string
 
 // GcpResourceCud GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
 // document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").
@@ -10489,9 +10497,6 @@ type CustomerId = string
 // EligibleSpendGranularity defines model for eligibleSpendGranularity.
 type EligibleSpendGranularity string
 
-// GcpRegion defines model for gcp_region.
-type GcpRegion = string
-
 // GcpService defines model for gcp_service.
 type GcpService string
 
@@ -11168,7 +11173,7 @@ type GetGcpBillingAccountParams struct {
 
 // ListGcpPlannedPurchasesParams defines parameters for ListGcpPlannedPurchases.
 type ListGcpPlannedPurchasesParams struct {
-	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
 	GcpService *ListGcpPlannedPurchasesParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
 
 	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
@@ -11180,6 +11185,7 @@ type ListGcpPlannedPurchasesParams struct {
 	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
 	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
 	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
 	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
 
 	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
@@ -11201,7 +11207,7 @@ type ListGcpPlannedPurchasesParamsGcpService string
 
 // ListGcpRecommendationsParams defines parameters for ListGcpRecommendations.
 type ListGcpRecommendationsParams struct {
-	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
 	GcpService *ListGcpRecommendationsParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
 
 	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
@@ -11213,6 +11219,7 @@ type ListGcpRecommendationsParams struct {
 	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
 	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
 	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
 	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
 
 	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
@@ -11237,6 +11244,7 @@ type GetGcpRecommendationParams struct {
 	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
 	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
 	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
 	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
 
 	// Granularity Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals.
@@ -11283,7 +11291,7 @@ type ListGcpSpendCudsParams struct {
 	// Status Filter by CUD state. Omit to include all states.
 	Status *ListGcpSpendCudsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
 
-	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
 	GcpService *ListGcpSpendCudsParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
 
 	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
@@ -11295,6 +11303,7 @@ type ListGcpSpendCudsParams struct {
 	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
 	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
 	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
 	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
 
 	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.

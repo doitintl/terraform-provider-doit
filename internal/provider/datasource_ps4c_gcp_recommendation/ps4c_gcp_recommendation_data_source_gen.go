@@ -75,8 +75,8 @@ func Ps4cGcpRecommendationDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"gcp_service": schema.StringAttribute{
 				Required:            true,
-				Description:         "PS4C product line to fetch the recommendation for.\nPossible values: `compute`, `cloud_sql`",
-				MarkdownDescription: "PS4C product line to fetch the recommendation for.\nPossible values: `compute`, `cloud_sql`",
+				Description:         "PS4C product line to fetch the recommendation for. Matching is case-insensitive; the value is lowercased before validation.\nPossible values: `compute`, `cloud_sql`",
+				MarkdownDescription: "PS4C product line to fetch the recommendation for. Matching is case-insensitive; the value is lowercased before validation.\nPossible values: `compute`, `cloud_sql`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"compute",
@@ -148,8 +148,8 @@ func Ps4cGcpRecommendationDataSourceSchema(ctx context.Context) schema.Schema {
 			"region": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the\nliteral `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`\nreturns `400` with code `gcp_service_required`. When both are omitted, all available\nregions for all available product lines are returned.\n\nThe value is format-validated, not checked against a closed region list: `compute` accepts\nonly `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that\nis malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.\nA well-formed, service-compatible region with no data returns `200` with an empty result.",
-				MarkdownDescription: "Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the\nliteral `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`\nreturns `400` with code `gcp_service_required`. When both are omitted, all available\nregions for all available product lines are returned.\n\nThe value is format-validated, not checked against a closed region list: `compute` accepts\nonly `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that\nis malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.\nA well-formed, service-compatible region with no data returns `200` with an empty result.",
+				Description:         "Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the\nliteral `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`\nreturns `400` with code `gcp_service_required`. When both are omitted, all available\nregions for all available product lines are returned.\n\nThe value is format-validated, not checked against a closed region list: `compute` accepts\nonly `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that\nis malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.\nA well-formed, service-compatible region with no data returns `200` with an empty result.\nMatching is case-insensitive; the value is lowercased before validation.",
+				MarkdownDescription: "Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the\nliteral `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`\nreturns `400` with code `gcp_service_required`. When both are omitted, all available\nregions for all available product lines are returned.\n\nThe value is format-validated, not checked against a closed region list: `compute` accepts\nonly `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that\nis malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.\nA well-formed, service-compatible region with no data returns `200` with an empty result.\nMatching is case-insensitive; the value is lowercased before validation.",
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^(global|[a-z]+(_[a-z0-9]+)+)$"), ""),
 				},

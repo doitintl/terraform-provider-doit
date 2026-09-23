@@ -41,7 +41,7 @@ output "recommendations" {
 
 ### Optional
 
-- `gcp_service` (String) Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines.
+- `gcp_service` (String) Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
 Possible values: `compute`, `cloud_sql`
 - `region` (String) Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
 literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
@@ -52,6 +52,7 @@ The value is format-validated, not checked against a closed region list: `comput
 only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
 is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
 A well-formed, service-compatible region with no data returns `200` with an empty result.
+Matching is case-insensitive; the value is lowercased before validation.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
