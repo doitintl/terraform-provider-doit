@@ -412,14 +412,14 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 							"operator": schema.StringAttribute{
 								Computed:            true,
-								Description:         "Comparison operator for period-over-period deltas.",
-								MarkdownDescription: "Comparison operator for period-over-period deltas.",
+								Description:         "Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`\n(Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`\n(Between), `nb` (Not Between).",
+								MarkdownDescription: "Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`\n(Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`\n(Between), `nb` (Not Between).",
 							},
 							"values": schema.ListAttribute{
 								ElementType:         types.Float64Type,
 								Computed:            true,
-								Description:         "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries.",
-								MarkdownDescription: "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries.",
+								Description:         "Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range\noperators (`b`, `nb`) require two ordered entries.",
+								MarkdownDescription: "Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range\noperators (`b`, `nb`) require two ordered entries.",
 							},
 						},
 						CustomType: LimitByChangeType{
@@ -462,8 +462,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 							"operator": schema.StringAttribute{
 								Computed:            true,
-								Description:         "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.",
-								MarkdownDescription: "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.",
+								Description:         "Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less\nThan), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),\n`nb` (Not Between), `e` (Equals), `ne` (Not Equals).",
+								MarkdownDescription: "Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less\nThan), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),\n`nb` (Not Between), `e` (Equals), `ne` (Not Equals).",
 							},
 							"values": schema.ListAttribute{
 								ElementType: types.Float64Type,

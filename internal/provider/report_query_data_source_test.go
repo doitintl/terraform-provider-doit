@@ -124,6 +124,65 @@ data "doit_report_query" "test" {
 `
 }
 
+// TestAccReportQueryDataSource_LimitByChange_InvalidOperator verifies that
+// report_query inherits the report resource schema's nested attribute validator
+// (via convertResourceAttrsToDataSource) and rejects deprecated SQL-style
+// operators (e.g. ">=", "between") at plan time.
+func TestAccReportQueryDataSource_LimitByChange_InvalidOperator(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportQueryDataSourceLimitByChangeOperator(">="),
+				ExpectError: regexp.MustCompile(`Attribute config\.limit_by_change\.operator value must be one of:`),
+			},
+			{
+				Config:      testAccReportQueryDataSourceLimitByChangeOperator("between"),
+				ExpectError: regexp.MustCompile(`Attribute config\.limit_by_change\.operator value must be one of:`),
+			},
+		},
+	})
+}
+
+func testAccReportQueryDataSourceLimitByChangeOperator(op string) string {
+	return fmt.Sprintf(`
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = false
+        }
+        limit_by_change = {
+          metric = {
+            type  = "basic"
+            value = "cost"
+          }
+          change_type             = "percentage"
+          operator                = %q
+          values                  = [50]
+          include_incomplete_data = false
+        }
+    }
+}
+`, op)
+}
+
 // TestAccReportQueryDataSource_WithTimeout verifies the timeouts block is wired
 // up and a generous read timeout is honored. Queries run asynchronously, so this
 // timeout bounds the whole poll loop — exceeding it cancels the operation. The

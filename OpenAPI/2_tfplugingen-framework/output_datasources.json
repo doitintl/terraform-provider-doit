@@ -15424,7 +15424,7 @@
 												"name": "operator",
 												"string": {
 													"computed_optional_required": "computed",
-													"description": "Comparison operator for period-over-period deltas."
+													"description": "Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`\n(Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`\n(Between), `nb` (Not Between)."
 												}
 											},
 											{
@@ -15434,7 +15434,7 @@
 													"element_type": {
 														"float64": {}
 													},
-													"description": "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries."
+													"description": "Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range\noperators (`b`, `nb`) require two ordered entries."
 												}
 											}
 										],
@@ -15480,7 +15480,7 @@
 												"name": "operator",
 												"string": {
 													"computed_optional_required": "computed",
-													"description": "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`\u003e`, `\u003e=`, …) instead."
+													"description": "Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less\nThan), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),\n`nb` (Not Between), `e` (Equals), `ne` (Not Equals)."
 												}
 											},
 											{

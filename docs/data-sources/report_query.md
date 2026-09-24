@@ -329,10 +329,12 @@ Required:
 - `change_type` (String) Possible values: `percentage`, `absolute`
 - `include_incomplete_data` (Boolean) When true, keeps rows whose deltas could not be evaluated.
 - `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--limit_by_change--metric))
-- `operator` (String) Comparison operator for period-over-period deltas.
-Possible values: `>`, `>=`, `<`, `<=`, `between`, `not_between`
-- `values` (List of Number) Threshold value(s). Unary operators use one entry; `between` and `not_between`
-require two ordered entries.
+- `operator` (String) Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+(Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+(Between), `nb` (Not Between).
+Possible values: `gt`, `gte`, `lt`, `lte`, `b`, `nb`
+- `values` (List of Number) Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range
+operators (`b`, `nb`) require two ordered entries.
 
 <a id="nestedatt--config--limit_by_change--metric"></a>
 ### Nested Schema for `config.limit_by_change.metric`
@@ -352,8 +354,9 @@ If using custom metrics, the value must refer to an existing custom metric ID.
 Required:
 
 - `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--metric_filter--metric))
-- `operator` (String) Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+- `operator` (String) Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+`nb` (Not Between), `e` (Equals), `ne` (Not Equals).
 Possible values: `gt`, `lt`, `lte`, `gte`, `b`, `nb`, `e`, `ne`
 - `values` (List of Number)
 
