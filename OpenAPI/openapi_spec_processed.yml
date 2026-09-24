@@ -6481,6 +6481,7 @@ components:
       additionalProperties: false
       required:
         - serviceCharges
+        - marketplaceCharges
         - discounts
         - tax
         - supportCharges
@@ -6491,6 +6492,8 @@ components:
         - total
       properties:
         serviceCharges:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        marketplaceCharges:
           $ref: "#/components/schemas/BillingExplainerCostLineItems"
         discounts:
           $ref: "#/components/schemas/BillingExplainerCostLineItems"

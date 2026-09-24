@@ -167,6 +167,7 @@ Read-Only:
 
 - `credits` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws--credits))
 - `discounts` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws--discounts))
+- `marketplace_charges` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws--marketplace_charges))
 - `other_charges` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws--other_charges))
 - `refunds` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws--refunds))
 - `savings` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws--savings))
@@ -203,6 +204,24 @@ Read-Only:
 
 <a id="nestedatt--payers--summary--aws--discounts--cost"></a>
 ### Nested Schema for `payers.summary.aws.discounts.cost`
+
+Read-Only:
+
+- `amount` (String) Decimal amount serialized at the currency's minor-unit precision.
+- `currency` (String) ISO 4217 three-letter uppercase currency code.
+
+
+
+<a id="nestedatt--payers--summary--aws--marketplace_charges"></a>
+### Nested Schema for `payers.summary.aws.marketplace_charges`
+
+Read-Only:
+
+- `cost` (Attributes) Monetary value represented as a decimal string and an ISO 4217 currency code. (see [below for nested schema](#nestedatt--payers--summary--aws--marketplace_charges--cost))
+- `cost_type` (String)
+
+<a id="nestedatt--payers--summary--aws--marketplace_charges--cost"></a>
+### Nested Schema for `payers.summary.aws.marketplace_charges.cost`
 
 Read-Only:
 
@@ -366,6 +385,7 @@ Read-Only:
 
 - `credits` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws_without_doit--credits))
 - `discounts` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws_without_doit--discounts))
+- `marketplace_charges` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws_without_doit--marketplace_charges))
 - `other_charges` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws_without_doit--other_charges))
 - `refunds` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws_without_doit--refunds))
 - `savings` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--aws_without_doit--savings))
@@ -402,6 +422,24 @@ Read-Only:
 
 <a id="nestedatt--payers--summary--aws_without_doit--discounts--cost"></a>
 ### Nested Schema for `payers.summary.aws_without_doit.discounts.cost`
+
+Read-Only:
+
+- `amount` (String) Decimal amount serialized at the currency's minor-unit precision.
+- `currency` (String) ISO 4217 three-letter uppercase currency code.
+
+
+
+<a id="nestedatt--payers--summary--aws_without_doit--marketplace_charges"></a>
+### Nested Schema for `payers.summary.aws_without_doit.marketplace_charges`
+
+Read-Only:
+
+- `cost` (Attributes) Monetary value represented as a decimal string and an ISO 4217 currency code. (see [below for nested schema](#nestedatt--payers--summary--aws_without_doit--marketplace_charges--cost))
+- `cost_type` (String)
+
+<a id="nestedatt--payers--summary--aws_without_doit--marketplace_charges--cost"></a>
+### Nested Schema for `payers.summary.aws_without_doit.marketplace_charges.cost`
 
 Read-Only:
 
@@ -565,6 +603,7 @@ Read-Only:
 
 - `credits` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--doit--credits))
 - `discounts` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--doit--discounts))
+- `marketplace_charges` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--doit--marketplace_charges))
 - `other_charges` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--doit--other_charges))
 - `refunds` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--doit--refunds))
 - `savings` (Attributes List) (see [below for nested schema](#nestedatt--payers--summary--doit--savings))
@@ -601,6 +640,24 @@ Read-Only:
 
 <a id="nestedatt--payers--summary--doit--discounts--cost"></a>
 ### Nested Schema for `payers.summary.doit.discounts.cost`
+
+Read-Only:
+
+- `amount` (String) Decimal amount serialized at the currency's minor-unit precision.
+- `currency` (String) ISO 4217 three-letter uppercase currency code.
+
+
+
+<a id="nestedatt--payers--summary--doit--marketplace_charges"></a>
+### Nested Schema for `payers.summary.doit.marketplace_charges`
+
+Read-Only:
+
+- `cost` (Attributes) Monetary value represented as a decimal string and an ISO 4217 currency code. (see [below for nested schema](#nestedatt--payers--summary--doit--marketplace_charges--cost))
+- `cost_type` (String)
+
+<a id="nestedatt--payers--summary--doit--marketplace_charges--cost"></a>
+### Nested Schema for `payers.summary.doit.marketplace_charges.cost`
 
 Read-Only:
 

@@ -28,6 +28,9 @@ func TestAccBillingExplainerDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_billing_explainer.test", "update_time"),
 					resource.TestCheckResourceAttrSet("data.doit_billing_explainer.test", "doit_credits.amount"),
 					resource.TestCheckResourceAttrSet("data.doit_billing_explainer.test", "payers.%"),
+					resource.TestCheckResourceAttr("data.doit_billing_explainer.test", "payers.630855515779.summary.aws.marketplace_charges.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_billing_explainer.test", "payers.630855515779.summary.doit.marketplace_charges.#", "0"),
+					resource.TestCheckResourceAttr("data.doit_billing_explainer.test", "payers.630855515779.summary.aws_without_doit.marketplace_charges.#", "0"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
