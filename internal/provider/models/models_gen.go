@@ -5566,14 +5566,15 @@ type BillingExplainerProviderCosts struct {
 
 // BillingExplainerServiceSummary defines model for BillingExplainerServiceSummary.
 type BillingExplainerServiceSummary struct {
-	Credits        BillingExplainerCostLineItems  `json:"credits"`
-	Discounts      BillingExplainerCostLineItems  `json:"discounts"`
-	OtherCharges   BillingExplainerCostLineItems  `json:"otherCharges"`
-	Refunds        BillingExplainerCostLineItems  `json:"refunds"`
-	Savings        BillingExplainerCostLineItems  `json:"savings"`
-	ServiceCharges BillingExplainerCostLineItems  `json:"serviceCharges"`
-	SupportCharges BillingExplainerSupportCharges `json:"supportCharges"`
-	Tax            BillingExplainerCostLineItems  `json:"tax"`
+	Credits            BillingExplainerCostLineItems  `json:"credits"`
+	Discounts          BillingExplainerCostLineItems  `json:"discounts"`
+	MarketplaceCharges BillingExplainerCostLineItems  `json:"marketplaceCharges"`
+	OtherCharges       BillingExplainerCostLineItems  `json:"otherCharges"`
+	Refunds            BillingExplainerCostLineItems  `json:"refunds"`
+	Savings            BillingExplainerCostLineItems  `json:"savings"`
+	ServiceCharges     BillingExplainerCostLineItems  `json:"serviceCharges"`
+	SupportCharges     BillingExplainerSupportCharges `json:"supportCharges"`
+	Tax                BillingExplainerCostLineItems  `json:"tax"`
 
 	// Total Monetary value represented as a decimal string and an ISO 4217 currency code.
 	//

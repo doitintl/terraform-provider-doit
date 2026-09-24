@@ -198,7 +198,7 @@ func mapSummary(ctx context.Context, s models.BillingExplainerSummary) (datasour
 	return val, diags
 }
 
-// mapServiceSummary builds the {credits, discounts, other_charges, refunds,
+// mapServiceSummary builds the {credits, discounts, marketplace_charges, other_charges, refunds,
 // savings, service_charges, support_charges, tax, total} shape shared
 // identically by SummaryAwsValue, SummaryDoitValue and AwsWithoutDoitValue -
 // three distinct generated types (path-qualified by the code generator since
@@ -220,6 +220,14 @@ func mapServiceSummary[V attr.Value](ctx context.Context, s models.BillingExplai
 		datasource_billing_explainer.DiscountsValue{}.Type(ctx),
 		datasource_billing_explainer.DiscountsValue{}.AttributeTypes(ctx),
 		datasource_billing_explainer.NewDiscountsValue,
+	)
+	diags.Append(d...)
+
+	marketplaceCharges, d := mapCostLineItems(
+		ctx, s.MarketplaceCharges,
+		datasource_billing_explainer.MarketplaceChargesValue{}.Type(ctx),
+		datasource_billing_explainer.MarketplaceChargesValue{}.AttributeTypes(ctx),
+		datasource_billing_explainer.NewMarketplaceChargesValue,
 	)
 	diags.Append(d...)
 
@@ -273,22 +281,23 @@ func mapServiceSummary[V attr.Value](ctx context.Context, s models.BillingExplai
 	diags.Append(d...)
 
 	val, d := newFn(attrTypes, map[string]attr.Value{
-		"credits":         credits,
-		"discounts":       discounts,
-		"other_charges":   otherCharges,
-		"refunds":         refunds,
-		"savings":         savings,
-		"service_charges": serviceCharges,
-		"support_charges": supportCharges,
-		"tax":             tax,
-		"total":           total,
+		"credits":             credits,
+		"discounts":           discounts,
+		"marketplace_charges": marketplaceCharges,
+		"other_charges":       otherCharges,
+		"refunds":             refunds,
+		"savings":             savings,
+		"service_charges":     serviceCharges,
+		"support_charges":     supportCharges,
+		"tax":                 tax,
+		"total":               total,
 	})
 	diags.Append(d...)
 	return val, diags
 }
 
 // mapCostLineItems maps a []BillingExplainerCostLineItem into a list of one
-// of the seven generated per-field types (CreditsValue, DiscountsValue, ...)
+// of the eight generated per-field types (CreditsValue, DiscountsValue, ...)
 // that all share the {cost, cost_type} shape.
 func mapCostLineItems[V attr.Value](ctx context.Context, items []models.BillingExplainerCostLineItem, elemType attr.Type, attrTypes map[string]attr.Type, newFn func(map[string]attr.Type, map[string]attr.Value) (V, diag.Diagnostics)) (types.List, diag.Diagnostics) {
 	return buildObjectList(elemType, attrTypes, len(items),
