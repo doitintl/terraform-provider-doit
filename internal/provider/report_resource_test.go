@@ -4194,16 +4194,16 @@ func TestAccReport_LimitByChange(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: create with a percentage/>=/[50] filter.
+			// Step 1: create with a percentage/gte/[50] filter.
 			{
-				Config: testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				Config: testAccReportLimitByChange(n, "percentage", "gte", "[50]", "false"),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("doit_report.lbc",
 						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("change_type"),
 						knownvalue.StringExact("percentage")),
 					statecheck.ExpectKnownValue("doit_report.lbc",
 						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
-						knownvalue.StringExact(">=")),
+						knownvalue.StringExact("gte")),
 					statecheck.ExpectKnownValue("doit_report.lbc",
 						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("include_incomplete_data"),
 						knownvalue.Bool(false)),
@@ -4217,7 +4217,7 @@ func TestAccReport_LimitByChange(t *testing.T) {
 			},
 			// Step 2: drift check.
 			{
-				Config: testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				Config: testAccReportLimitByChange(n, "percentage", "gte", "[50]", "false"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
@@ -4233,9 +4233,9 @@ func TestAccReport_LimitByChange(t *testing.T) {
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
-			// Step 4: update to absolute/between/[10,90], include_incomplete_data = true.
+			// Step 4: update to absolute/b/[10,90], include_incomplete_data = true.
 			{
-				Config: testAccReportLimitByChange(n, "absolute", "between", "[10, 90]", "true"),
+				Config: testAccReportLimitByChange(n, "absolute", "b", "[10, 90]", "true"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction("doit_report.lbc", plancheck.ResourceActionUpdate),
@@ -4247,7 +4247,7 @@ func TestAccReport_LimitByChange(t *testing.T) {
 						knownvalue.StringExact("absolute")),
 					statecheck.ExpectKnownValue("doit_report.lbc",
 						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
-						knownvalue.StringExact("between")),
+						knownvalue.StringExact("b")),
 					statecheck.ExpectKnownValue("doit_report.lbc",
 						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("include_incomplete_data"),
 						knownvalue.Bool(true)),
@@ -4258,7 +4258,7 @@ func TestAccReport_LimitByChange(t *testing.T) {
 			},
 			// Step 5: drift check after update.
 			{
-				Config: testAccReportLimitByChange(n, "absolute", "between", "[10, 90]", "true"),
+				Config: testAccReportLimitByChange(n, "absolute", "b", "[10, 90]", "true"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
@@ -4290,6 +4290,28 @@ func TestAccReport_LimitByChangeOmitted(t *testing.T) {
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitByChange_InvalidOperator verifies that deprecated SQL-style operators
+// (e.g. ">=", "between") are rejected at plan time by the schema validator.
+func TestAccReport_LimitByChange_InvalidOperator(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				ExpectError: regexp.MustCompile(`Attribute config\.limit_by_change\.operator value must be one of:`),
+			},
+			{
+				Config:      testAccReportLimitByChange(n, "percentage", "between", "[10, 50]", "false"),
+				ExpectError: regexp.MustCompile(`Attribute config\.limit_by_change\.operator value must be one of:`),
 			},
 		},
 	})
@@ -4465,7 +4487,7 @@ resource "doit_report" "three_limits" {
                 value = "cost"
             }
             change_type             = "percentage"
-            operator                = ">="
+            operator                = "gte"
             values                  = [50]
             include_incomplete_data = false
         }
@@ -4548,7 +4570,7 @@ resource "doit_report" "lbc_no_type" {
                 value = "cost"
             }
             change_type             = "percentage"
-            operator                = ">="
+            operator                = "gte"
             values                  = [50]
             include_incomplete_data = false
         }
@@ -4856,7 +4878,7 @@ func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 	present := statecheck.ExpectKnownValue(
 		"doit_report.lbc",
 		tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
-		knownvalue.StringExact(">="))
+		knownvalue.StringExact("gte"))
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -4865,7 +4887,7 @@ func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1: create WITH limit_by_change.
 			{
-				Config:            testAccReportLimitByChange(n, "percentage", ">=", "[50]", "false"),
+				Config:            testAccReportLimitByChange(n, "percentage", "gte", "[50]", "false"),
 				ConfigStateChecks: []statecheck.StateCheck{present},
 			},
 			// Step 2: omit limit_by_change — removal forces a replacement, and the

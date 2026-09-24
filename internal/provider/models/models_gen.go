@@ -2160,28 +2160,28 @@ func (e ExternalLimitByChangeChangeType) Valid() bool {
 
 // Defines values for ExternalLimitByChangeOperator.
 const (
-	ExternalLimitByChangeOperatorBetween          ExternalLimitByChangeOperator = "between"
-	ExternalLimitByChangeOperatorGreaterThan      ExternalLimitByChangeOperator = ">"
-	ExternalLimitByChangeOperatorGreaterThanEqual ExternalLimitByChangeOperator = ">="
-	ExternalLimitByChangeOperatorLessThan         ExternalLimitByChangeOperator = "<"
-	ExternalLimitByChangeOperatorLessThanEqual    ExternalLimitByChangeOperator = "<="
-	ExternalLimitByChangeOperatorNotBetween       ExternalLimitByChangeOperator = "not_between"
+	ExternalLimitByChangeOperatorB   ExternalLimitByChangeOperator = "b"
+	ExternalLimitByChangeOperatorGt  ExternalLimitByChangeOperator = "gt"
+	ExternalLimitByChangeOperatorGte ExternalLimitByChangeOperator = "gte"
+	ExternalLimitByChangeOperatorLt  ExternalLimitByChangeOperator = "lt"
+	ExternalLimitByChangeOperatorLte ExternalLimitByChangeOperator = "lte"
+	ExternalLimitByChangeOperatorNb  ExternalLimitByChangeOperator = "nb"
 )
 
 // Valid indicates whether the value is a known member of the ExternalLimitByChangeOperator enum.
 func (e ExternalLimitByChangeOperator) Valid() bool {
 	switch e {
-	case ExternalLimitByChangeOperatorBetween:
+	case ExternalLimitByChangeOperatorB:
 		return true
-	case ExternalLimitByChangeOperatorGreaterThan:
+	case ExternalLimitByChangeOperatorGt:
 		return true
-	case ExternalLimitByChangeOperatorGreaterThanEqual:
+	case ExternalLimitByChangeOperatorGte:
 		return true
-	case ExternalLimitByChangeOperatorLessThan:
+	case ExternalLimitByChangeOperatorLt:
 		return true
-	case ExternalLimitByChangeOperatorLessThanEqual:
+	case ExternalLimitByChangeOperatorLte:
 		return true
-	case ExternalLimitByChangeOperatorNotBetween:
+	case ExternalLimitByChangeOperatorNb:
 		return true
 	default:
 		return false
@@ -5261,7 +5261,7 @@ type AsyncOperationResponseStatus string
 type AsyncRunInlineRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
@@ -7265,7 +7265,7 @@ type CreateLabelRequestColor string
 type CreateReportRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -7567,7 +7567,7 @@ type ExternalBudgetAlert struct {
 
 // ExternalConfig Report configuration.
 //
-// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 type ExternalConfig struct {
 	// AdvancedAnalysis Advanced analysis options. Each can be set independently.
 	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
@@ -7624,7 +7624,7 @@ type ExternalConfig struct {
 	// LimitByChange Limit by change filter. A report may configure at most two of
 	// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
 	//
-	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]}
+	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
 
 	// MetricFilter Metric filter to limit report rows by metric value.
@@ -7755,8 +7755,9 @@ type ExternalConfigMetricFilter struct {
 	// echo the effective value (`single_value` or `series_total`).
 	Operand *ExternalConfigMetricFilterOperand `json:"operand,omitempty"`
 
-	// Operator Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-	// `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+	// Operator Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+	// Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+	// `nb` (Not Between), `e` (Equals), `ne` (Not Equals).
 	Operator ExternalConfigMetricFilterOperator `json:"operator"`
 	Values   []float64                          `json:"values"`
 }
@@ -7767,8 +7768,9 @@ type ExternalConfigMetricFilter struct {
 // echo the effective value (`single_value` or `series_total`).
 type ExternalConfigMetricFilterOperand string
 
-// ExternalConfigMetricFilterOperator Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-// `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+// ExternalConfigMetricFilterOperator Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+// Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+// `nb` (Not Between), `e` (Equals), `ne` (Not Equals).
 type ExternalConfigMetricFilterOperator string
 
 // ExternalDisplaySettings Display settings for the report.
@@ -7851,7 +7853,7 @@ type ExternalForecastSettingsMode string
 // ExternalLimitByChange Limit by change filter. A report may configure at most two of
 // `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
 //
-// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]}
+// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 type ExternalLimitByChange struct {
 	ChangeType ExternalLimitByChangeChangeType `json:"changeType"`
 
@@ -7863,18 +7865,22 @@ type ExternalLimitByChange struct {
 	// Example: {"type":"basic","value":"cost"}
 	Metric ExternalMetric `json:"metric"`
 
-	// Operator Comparison operator for period-over-period deltas.
+	// Operator Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+	// (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+	// (Between), `nb` (Not Between).
 	Operator ExternalLimitByChangeOperator `json:"operator"`
 
-	// Values Threshold value(s). Unary operators use one entry; `between` and `not_between`
-	// require two ordered entries.
+	// Values Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range
+	// operators (`b`, `nb`) require two ordered entries.
 	Values []float64 `json:"values"`
 }
 
 // ExternalLimitByChangeChangeType defines model for ExternalLimitByChange.ChangeType.
 type ExternalLimitByChangeChangeType string
 
-// ExternalLimitByChangeOperator Comparison operator for period-over-period deltas.
+// ExternalLimitByChangeOperator Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+// (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+// (Between), `nb` (Not Between).
 type ExternalLimitByChangeOperator string
 
 // ExternalMetric Metric selector used in reports and filters.
@@ -7915,7 +7921,7 @@ type ExternalRenderer string
 type ExternalReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -8000,7 +8006,7 @@ type ExternalSplitTargetType string
 type ExternalUpdateReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description
