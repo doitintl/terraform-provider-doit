@@ -160,6 +160,59 @@ resource "doit_budget" "this" {
 	})
 }
 
+// These plans exercise validation through Terraform, including values that
+// become known only after a dependency is applied. None of the steps call the API.
+func TestAccBudget_PeriodValidation(t *testing.T) {
+	cases := []struct {
+		name        string
+		budgetType  string
+		periodLines string
+		dependency  string
+		wantError   string
+	}{
+		{"invalid interval", "recurring", "time_interval = \"monthly\"\nstart_period = 1759276800000", "", "Invalid Budget Time Interval"},
+		{"missing start", "recurring", "time_interval = \"month\"", "", "Missing Required Attribute"},
+		{"missing recurring interval", "recurring", "start_period = 1759276800000", "", "Missing Required Attribute"},
+		{"fixed other interval", "fixed", "start_period = 1759276800000\nend_period = 1761955200000\ntime_interval = \"week\"", "", "Invalid Budget Time Interval"},
+		{"fixed omitted interval", "fixed", "start_period = 1759276800000\nend_period = 1761955200000", "", ""},
+		{"unknown start", "recurring", "time_interval = \"month\"\nstart_period = terraform_data.period.output", "resource \"terraform_data\" \"period\" { input = 1759276800000 }", ""},
+		{"unknown interval", "recurring", "start_period = 1759276800000\ntime_interval = terraform_data.period.output", "resource \"terraform_data\" \"period\" { input = \"month\" }", ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			step := resource.TestStep{
+				Config: fmt.Sprintf(`
+%s
+resource "doit_budget" "this" {
+  name = "test-budget-period-validation"
+  amount = 100
+  type = %q
+  %s
+  scopes = [{
+    id = "allocation_rule"
+    type = "allocation_rule"
+    mode = "is"
+    values = [%q]
+  }]
+}
+`, tc.dependency, tc.budgetType, tc.periodLines, testAttribution()),
+				PlanOnly: true,
+			}
+			if tc.wantError == "" {
+				step.ExpectNonEmptyPlan = true
+			} else {
+				step.ExpectError = regexp.MustCompile(tc.wantError)
+			}
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps:                    []resource.TestStep{step},
+			})
+		})
+	}
+}
+
 // legacyBudgetStartPeriod is the epoch-millisecond form of the timestamp
 // budgetStartPeriod renders in HCL, for callers that build a request body
 // directly rather than through Terraform.

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const budgetSchemaVersion = 1
@@ -33,6 +34,7 @@ var (
 	_ resource.ResourceWithUpgradeState     = (*budgetResource)(nil)
 	_ resource.ResourceWithImportState      = (*budgetResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*budgetResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*budgetResource)(nil)
 )
 
 // NewBudgetResource creates a new budget resource instance.
@@ -70,6 +72,14 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	s := resource_budget.BudgetResourceSchema(ctx)
 	s.Version = budgetSchemaVersion
 	appendDimensionsTypeDeprecationValidators(s.Attributes, "scopes[*].type")
+	if attr, ok := s.Attributes["start_period"].(schema.Int64Attribute); ok {
+		attr.Validators = append(attr.Validators, budgetStartPeriodValidator{})
+		s.Attributes["start_period"] = attr
+	}
+	if attr, ok := s.Attributes["time_interval"].(schema.StringAttribute); ok {
+		attr.Validators = append(attr.Validators, budgetTimeIntervalValidator{})
+		s.Attributes["time_interval"] = attr
+	}
 
 	// Add manual validator for end_period
 	if endPeriod, ok := s.Attributes["end_period"]; ok {
@@ -106,15 +116,15 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	// Classify Optional+Computed attributes (clearableattr).
 	// See: https://github.com/doitintl/terraform-provider-doit/issues/233
 
-	// Category B: API-computed defaults or legacy fields — not clearable.
+	// Category B: API defaults, state-retained values, or legacy fields — not clearable.
 	acknowledgeNotClearable(s,
 		"seasonal_amounts", // optional list, API returns empty list
 		"currency",         // API defaults to org currency
 		"type",             // API defaults budget type
-		"time_interval",    // API defaults time interval
+		"time_interval",    // omitting on update retains the prior value
 		"amount",           // API-computed for use_prev_spend budgets
 		"public",           // API defaults to false
-		"start_period",     // API defaults to current period
+		"start_period",     // omitting on update retains the prior value
 		"name",             // API auto-generates name when omitted
 		"end_period",       // API rejects clearing (endPeriod=0/null)
 		"recipients",       // API auto-assigns creator's email on create
@@ -170,6 +180,51 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		budgetSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		budgetScopeNAValidator{},
+	}
+}
+
+func (r *budgetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Optional+Computed values may be omitted on update and carried forward from
+	// state. On create, the backend has no prior values to use.
+	if req.Plan.Raw.Type() == nil || req.Plan.Raw.IsNull() || (req.State.Raw.Type() != nil && !req.State.Raw.IsNull()) {
+		return
+	}
+
+	var startPeriod types.Int64
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("start_period"), &startPeriod)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if startPeriod.IsNull() {
+		resp.Diagnostics.AddAttributeError(path.Root("start_period"), "Missing Required Attribute",
+			"Attribute start_period is required when creating a budget.")
+	}
+
+	var budgetType, timeInterval types.String
+	typeDiags := req.Config.GetAttribute(ctx, path.Root("type"), &budgetType)
+	intervalDiags := req.Config.GetAttribute(ctx, path.Root("time_interval"), &timeInterval)
+	resp.Diagnostics.Append(typeDiags...)
+	resp.Diagnostics.Append(intervalDiags...)
+	if typeDiags.HasError() || intervalDiags.HasError() {
+		return
+	}
+	if budgetType.IsNull() || budgetType.IsUnknown() || timeInterval.IsUnknown() {
+		return
+	}
+
+	switch budgetType.ValueString() {
+	case "recurring":
+		if timeInterval.IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("time_interval"), "Missing Required Attribute",
+				"Attribute time_interval is required when creating a recurring budget.")
+		}
+	case "fixed":
+		if !timeInterval.IsUnknown() && !timeInterval.IsNull() {
+			if timeInterval.ValueString() != "month" {
+				resp.Diagnostics.AddAttributeError(path.Root("time_interval"), "Invalid Budget Time Interval",
+					"A fixed budget can only use time_interval \"month\" when creating a budget.")
+			}
+		}
 	}
 }
 

@@ -14,18 +14,25 @@ import (
 
 var _ validator.Int64 = budgetStartPeriodValidator{}
 
+const budgetMinStartPeriodMs int64 = 1514764800000 // 2018-01-01 00:00 UTC
+
 type budgetStartPeriodValidator struct{}
 
 func (v budgetStartPeriodValidator) Description(_ context.Context) string {
-	return "Ensures that the start_period is at the beginning of the period for recurring budgets."
+	return "Ensures that start_period is no earlier than 2018-01-01 UTC and is aligned for recurring budgets."
 }
 
 func (v budgetStartPeriodValidator) MarkdownDescription(_ context.Context) string {
-	return "Ensures that the start_period is at the beginning of the period for recurring budgets."
+	return "Ensures that start_period is no earlier than 2018-01-01 UTC and is aligned for recurring budgets."
 }
 
 func (v budgetStartPeriodValidator) ValidateInt64(ctx context.Context, req validator.Int64Request, resp *validator.Int64Response) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	startPeriodMs := req.ConfigValue.ValueInt64()
+	if err := validateBudgetStartPeriodMinimum(startPeriodMs); err != nil {
+		resp.Diagnostics.AddAttributeError(req.Path, "Invalid Budget Start Period", err.Error())
 		return
 	}
 
@@ -55,8 +62,6 @@ func (v budgetStartPeriodValidator) ValidateInt64(ctx context.Context, req valid
 		return
 	}
 
-	startPeriodMs := req.ConfigValue.ValueInt64()
-
 	if err := validateBudgetStartPeriod(budgetType.ValueString(), timeInterval.ValueString(), startPeriodMs); err != nil {
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
@@ -67,6 +72,9 @@ func (v budgetStartPeriodValidator) ValidateInt64(ctx context.Context, req valid
 }
 
 func validateBudgetStartPeriod(budgetType, timeInterval string, startPeriodMs int64) error {
+	if err := validateBudgetStartPeriodMinimum(startPeriodMs); err != nil {
+		return err
+	}
 	if budgetType != "recurring" {
 		return nil
 	}
@@ -106,6 +114,13 @@ func validateBudgetStartPeriod(budgetType, timeInterval string, startPeriodMs in
 			startPeriodMs, startPeriodTime.Format(time.RFC3339),
 			expectedStartMs, expectedStart.Format(time.RFC3339),
 			timeInterval)
+	}
+	return nil
+}
+
+func validateBudgetStartPeriodMinimum(startPeriodMs int64) error {
+	if startPeriodMs < budgetMinStartPeriodMs {
+		return fmt.Errorf("start_period must be on or after 2018-01-01 00:00 UTC (%d). Provided: %d", budgetMinStartPeriodMs, startPeriodMs)
 	}
 	return nil
 }
