@@ -99,11 +99,19 @@ MIRROR_CONFIG_DIR=$(mktemp -d)
 THIRD_PARTY_FOUND=false
 
 # Collect unique provider sources from required_providers blocks (non-doit).
-# Uses awk to only match source= lines inside required_providers { } blocks.
+# Uses awk to match source= lines throughout nested required_providers blocks.
 PROVIDERS=$(find "$EXAMPLES_DIR" -name "*.tf" -print0 | \
-    xargs -0 awk '/required_providers\s*\{/{in_rp=1} in_rp && /source\s*=/{print} /\}/{if(in_rp) in_rp=0}' 2>/dev/null | \
+    xargs -0 awk '
+        FNR == 1 { depth = 0 }
+        /required_providers[[:space:]]*\{/ { depth = 1; next }
+        depth > 0 {
+            if (/source[[:space:]]*=/) print
+            line = $0
+            depth += gsub(/\{/, "", line) - gsub(/\}/, "", line)
+        }
+    ' 2>/dev/null | \
     grep -v 'doitintl/doit' | \
-    sed 's/.*source\s*=\s*"\([^"]*\)".*/\1/' | \
+    sed 's/.*source[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/' | \
     sort -u)
 
 # Also detect implicit providers from resource/data type prefixes.

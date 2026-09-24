@@ -1,8 +1,11 @@
 package provider_test
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -50,6 +53,65 @@ func TestAccReportResultDataSource(t *testing.T) {
 				},
 			},
 		},
+	})
+}
+
+func TestAccReportResultDataSource_FileOutput(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-rr-file")
+	filename := t.TempDir() + "/report.pdf"
+	config := strings.Replace(testAccReportResultDataSourceConfig(rName),
+		"id = doit_report.test.id", "id = doit_report.test.id\n    file_output = \"pdf\"", 1)
+	config += fmt.Sprintf(`
+data "http" "report_pdf" {
+    url = data.doit_report_result.test.file_output_url
+}
+
+resource "local_sensitive_file" "report_pdf" {
+    filename       = %q
+    content_base64 = data.http.report_pdf.response_body_base64
+}
+`, filename)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config:             config,
+			ExpectNonEmptyPlan: true, // A fresh signed URL makes the dependent file plan a replacement.
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+			},
+			Check: func(_ *terraform.State) error {
+				content, err := os.ReadFile(filename)
+				if err != nil {
+					return err
+				}
+				if !bytes.HasPrefix(content, []byte("%PDF-")) {
+					return fmt.Errorf("downloaded file does not have a PDF header")
+				}
+				return nil
+			},
+		}},
+	})
+}
+
+func TestAccReportResultDataSource_InvalidFileOutput(t *testing.T) {
+	config := strings.Replace(testAccReportResultDataSourceNotFoundConfig(),
+		"id = \"non-existent-report-id\"", "id = \"non-existent-report-id\"\n    file_output = \"csv\"", 1)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config:      config,
+			ExpectError: regexp.MustCompile(`(?i)file_output|one of`),
+		}},
 	})
 }
 

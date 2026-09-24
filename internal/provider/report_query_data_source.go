@@ -18,10 +18,12 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	rsschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -44,13 +46,15 @@ type reportQueryDataSource struct {
 // reportQueryDataSourceModel is the Terraform state model.
 type reportQueryDataSourceModel struct {
 	// Input: reuses the generated ConfigValue type from the report resource.
-	Config resource_report.ConfigValue `tfsdk:"config"`
+	Config     resource_report.ConfigValue `tfsdk:"config"`
+	FileOutput types.String                `tfsdk:"file_output"`
 
 	// Outputs
-	ResultJSON types.String   `tfsdk:"result_json"`
-	CacheHit   types.Bool     `tfsdk:"cache_hit"`
-	RowCount   types.Int64    `tfsdk:"row_count"`
-	Timeouts   timeouts.Value `tfsdk:"timeouts"`
+	ResultJSON    types.String   `tfsdk:"result_json"`
+	CacheHit      types.Bool     `tfsdk:"cache_hit"`
+	RowCount      types.Int64    `tfsdk:"row_count"`
+	FileOutputURL types.String   `tfsdk:"file_output_url"`
+	Timeouts      timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *reportQueryDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -83,6 +87,8 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			" as a JSON string in result_json. Use Terraform's jsondecode() to parse." +
 			"\n\nNote: Query results are dynamic — they change over time as new billing" +
 			" data is ingested. Every terraform plan will re-execute the query." +
+			" Set file_output to pdf or png to receive a signed file_output_url." +
+			" The URL lasts up to 7 days. A failed render leaves the result available and the URL null." +
 			"\n\nThe result_json field contains the full result object, including the" +
 			" schema (column definitions: name, type, and optional unit, currency, aggregation, and id)," +
 			" rows (data), forecastRows (forecast data), secondaryRows (secondary time range data)," +
@@ -92,6 +98,8 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			" as a JSON string in `result_json`. Use Terraform's `jsondecode()` to parse." +
 			"\n\n~> **Note:** Query results are dynamic — they change over time as new" +
 			" billing data is ingested. Every `terraform plan` will re-execute the query." +
+			" Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`." +
+			"\n\nThe signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. Terraform state contains the signed URL when one is returned." +
 			"\n\nThe `result_json` field contains the full result object including:" +
 			"\n\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
 			"\n- `rows`: Array of data rows, where each row is an array of cell values (`string`, `number`, or `null`)" +
@@ -107,6 +115,12 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 				Required:            true,
 				Description:         "The report configuration. Same structure as the config attribute on the doit_report resource.",
 				MarkdownDescription: "The report configuration. Same structure as the `config` attribute on the `doit_report` resource.",
+			},
+			"file_output": dsschema.StringAttribute{
+				Description:         "Optional file format to render from the query result: pdf or png.",
+				MarkdownDescription: "Optional file format to render from the query result: `pdf` or `png`.",
+				Optional:            true,
+				Validators:          []validator.String{stringvalidator.OneOf("pdf", "png")},
 			},
 
 			// --- Outputs ---
@@ -133,6 +147,12 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 				Description:         "The number of data rows in the result.",
 				MarkdownDescription: "The number of data rows in the result.",
 				Computed:            true,
+			},
+			"file_output_url": dsschema.StringAttribute{
+				Description:         "Signed download URL for the requested file. Null if no file was requested or rendering failed. Valid for up to 7 days.",
+				MarkdownDescription: "Signed download URL for the requested file. Null if no file was requested or rendering failed. Valid for up to 7 days.",
+				Computed:            true,
+				Sensitive:           true,
 			},
 			"timeouts": timeouts.Attributes(ctx),
 		},
@@ -200,6 +220,7 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 		data.ResultJSON = types.StringUnknown()
 		data.CacheHit = types.BoolUnknown()
 		data.RowCount = types.Int64Unknown()
+		data.FileOutputURL = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -236,11 +257,12 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// An inline run has no saved report behind it, so the results envelope
 	// carries only the result — no report metadata.
-	result, awaitDiags := awaitAsyncReport(ctx, d.client, "query", operationID)
+	result, awaitDiags := awaitAsyncReport(ctx, d.client, "query", operationID, fileOutputFormat(data.FileOutput))
 	resp.Diagnostics.Append(awaitDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	data.FileOutputURL = types.StringPointerValue(result.FileOutput)
 
 	// Map result to outputs
 	if result.Result != nil {

@@ -23,6 +23,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -37,6 +38,13 @@ type asyncSubmission struct {
 
 // asyncSubmitFunc issues one submit attempt with the given Idempotency-Key.
 type asyncSubmitFunc func(ctx context.Context, idempotencyKey string) (asyncSubmission, error)
+
+func fileOutputFormat(value types.String) *models.GetAsyncOperationResultsParamsFileOutput {
+	if value.IsNull() || value.IsUnknown() {
+		return nil
+	}
+	return new(models.GetAsyncOperationResultsParamsFileOutput(value.ValueString()))
+}
 
 // asyncOperationID picks the operation ID out of a submit response. A real run
 // answers 202, but the generated client models 200 (the dry-run shape) with the
@@ -248,6 +256,7 @@ func awaitAsyncReport(
 	ctx context.Context,
 	client *models.ClientWithResponses,
 	what, operationID string,
+	fileOutput *models.GetAsyncOperationResultsParamsFileOutput,
 ) (*models.GetAsyncOperationResults200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -282,7 +291,7 @@ func awaitAsyncReport(
 
 		switch pollResp.JSON200.Status {
 		case models.AsyncOperationPollResponseStatusSucceeded:
-			return fetchAsyncReportResults(ctx, client, what, operationID)
+			return fetchAsyncReportResults(ctx, client, what, operationID, fileOutput)
 
 		case models.AsyncOperationPollResponseStatusFailed:
 			diags.AddError(
@@ -348,11 +357,13 @@ func fetchAsyncReportResults(
 	ctx context.Context,
 	client *models.ClientWithResponses,
 	what, operationID string,
+	fileOutput *models.GetAsyncOperationResultsParamsFileOutput,
 ) (*models.GetAsyncOperationResults200Response, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	for {
-		resultsResp, err := client.GetAsyncOperationResultsWithResponse(ctx, operationID)
+		resultsResp, err := client.GetAsyncOperationResultsWithResponse(ctx, operationID,
+			&models.GetAsyncOperationResultsParams{FileOutput: fileOutput})
 		if err != nil {
 			diags.AddError(
 				"Error Running "+what,
