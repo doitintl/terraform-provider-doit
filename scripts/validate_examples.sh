@@ -102,12 +102,17 @@ THIRD_PARTY_FOUND=false
 # Uses awk to match source= lines throughout nested required_providers blocks.
 PROVIDERS=$(find "$EXAMPLES_DIR" -name "*.tf" -print0 | \
     xargs -0 awk '
-        FNR == 1 { depth = 0 }
-        /required_providers[[:space:]]*\{/ { depth = 1; next }
-        depth > 0 {
-            if (/source[[:space:]]*=/) print
+        FNR == 1 { depth = 0; in_rp = 0 }
+        /required_providers[[:space:]]*\{/ { in_rp = 1 }
+        in_rp {
+            scan = $0
+            while (match(scan, /source[[:space:]]*=[[:space:]]*"[^"]+"/)) {
+                print substr(scan, RSTART, RLENGTH)
+                scan = substr(scan, RSTART + RLENGTH)
+            }
             line = $0
             depth += gsub(/\{/, "", line) - gsub(/\}/, "", line)
+            if (depth <= 0) { depth = 0; in_rp = 0 }
         }
     ' 2>/dev/null | \
     grep -v 'doitintl/doit' | \
