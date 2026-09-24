@@ -442,7 +442,7 @@ func TestAccReportDataSource_NewLimitAttributes(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"data.doit_report.test",
 						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("operator"),
-						knownvalue.StringExact(">=")),
+						knownvalue.StringExact("gte")),
 					statecheck.ExpectKnownValue(
 						"data.doit_report.test",
 						tfjsonpath.New("config").AtMapKey("limit_by_change").AtMapKey("values").AtSliceIndex(0),
@@ -489,7 +489,7 @@ resource "doit_report" "test" {
                 value = "cost"
             }
             change_type             = "percentage"
-            operator                = ">="
+            operator                = "gte"
             values                  = [50]
             include_incomplete_data = false
         }

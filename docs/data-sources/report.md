@@ -245,9 +245,11 @@ Read-Only:
 - `change_type` (String)
 - `include_incomplete_data` (Boolean) When true, keeps rows whose deltas could not be evaluated.
 - `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--limit_by_change--metric))
-- `operator` (String) Comparison operator for period-over-period deltas.
-- `values` (List of Number) Threshold value(s). Unary operators use one entry; `between` and `not_between`
-require two ordered entries.
+- `operator` (String) Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+(Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+(Between), `nb` (Not Between).
+- `values` (List of Number) Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range
+operators (`b`, `nb`) require two ordered entries.
 
 <a id="nestedatt--config--limit_by_change--metric"></a>
 ### Nested Schema for `config.limit_by_change.metric`
@@ -270,8 +272,9 @@ Read-Only:
 Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
 `OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
 echo the effective value (`single_value` or `series_total`).
-- `operator` (String) Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-`limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+- `operator` (String) Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+`nb` (Not Between), `e` (Equals), `ne` (Not Equals).
 - `values` (List of Number)
 
 <a id="nestedatt--config--metric_filter--metric"></a>

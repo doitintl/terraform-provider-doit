@@ -103,7 +103,7 @@ resource "doit_report" "limited" {
     limit_by_change = {
       metric                  = { type = "basic", value = "cost" }
       change_type             = "percentage"
-      operator                = ">="
+      operator                = "gte"
       values                  = [50]
       include_incomplete_data = false
     }

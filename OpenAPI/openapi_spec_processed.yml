@@ -9448,7 +9448,7 @@ components:
             type: basic
             value: cost
           changeType: percentage
-          operator: ">="
+          operator: gte
           values:
             - 50
         aggregation: total
@@ -9601,8 +9601,9 @@ components:
           $ref: "#/components/schemas/ExternalMetric"
         operator:
           description: |-
-            Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-            `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+            Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+            Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+            `nb` (Not Between), `e` (Equals), `ne` (Not Equals).
           type: string
           enum:
             - gt
@@ -9760,19 +9761,22 @@ components:
             - absolute
         operator:
           type: string
-          description: Comparison operator for period-over-period deltas.
+          description: |-
+            Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+            (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+            (Between), `nb` (Not Between).
           enum:
-            - ">"
-            - ">="
-            - "<"
-            - "<="
-            - between
-            - not_between
+            - gt
+            - gte
+            - lt
+            - lte
+            - b
+            - nb
         values:
           type: array
           description: |-
-            Threshold value(s). Unary operators use one entry; `between` and `not_between`
-            require two ordered entries.
+            Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range
+            operators (`b`, `nb`) require two ordered entries.
           items:
             type: number
             format: double
@@ -9784,7 +9788,7 @@ components:
           type: basic
           value: cost
         changeType: percentage
-        operator: ">="
+        operator: gte
         values:
           - 50
         includeIncompleteData: false
