@@ -30,6 +30,11 @@ tags:
     description: View available dimensions for analysis.
   - name: Reports
     description: Manage Cloud Analytics reports and get reports data in JSON format.
+  - name: Widgets (Beta)
+    description: |-
+      Beta. Read precomputed current-month cloud spend and forecast metrics. Widget results are
+      refreshed in the background; reading a widget returns the latest cached result and never
+      starts a synchronous refresh. Use the list operation to discover the complete catalogue.
   - name: Sharing
     description: Manage permissions associated with specified Cloud Analytics resources.
   - name: Anomalies
@@ -2224,6 +2229,265 @@ paths:
           $ref: "#/components/responses/425"
         "500":
           $ref: "#/components/responses/500"
+  /analytics/v1/widgets:
+    get:
+      tags:
+        - Widgets (Beta)
+      summary: List widgets
+      description: |-
+        Returns the complete catalogue of preset widgets supported by the Analytics Widgets API.
+        Each entry contains a customer-specific `id` and a stable customer-facing `alias`; either
+        value can be passed to the get-widget operation. An `id` can vary by customer or service
+        tier, while an `alias` remains stable.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on multiple customers, send
+        `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+        selected customer is not authorized or entitled to use this API.
+      operationId: listWidgets
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK - The complete supported widget catalogue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetList"
+              example:
+                items:
+                  - id: widget-example-spend-01
+                    alias: current-month-cloud-spend
+                    name: Current Month Cloud Spend
+                    description: Total cloud spend accumulated during the current calendar month.
+                    type: preset
+                    kind: monetary_metric
+                  - id: widget-example-forecast-01
+                    alias: current-month-cloud-forecast
+                    name: Current Month Cloud Forecast
+                    description: Forecast of total cloud spend for the current calendar month.
+                    type: preset
+                    kind: monetary_metric
+                rowCount: 2
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/analytics/v1/widgets/{widgetId}":
+    get:
+      tags:
+        - Widgets (Beta)
+      summary: Get a widget
+      description: |-
+        Returns the latest precomputed cached result for one widget. This read does not refresh or
+        recompute the widget synchronously.
+
+        Use either the customer-specific `id` returned by the list-widgets operation or one of these
+        stable aliases:
+
+        - `current-month-cloud-spend` — total cloud spend accumulated during the current calendar month.
+        - `current-month-cloud-forecast` — forecast of total cloud spend for the current calendar month.
+
+        The two concrete alias requests are:
+
+        - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-spend`
+        - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-forecast`
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on multiple customers, send
+        `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+        selected customer is not authorized or entitled to use this API.
+
+        The result's `period.endTime` is exclusive. Monetary `amount` values are decimal strings and
+        `currency` values are ISO 4217 currency codes. `monthToMonthGrowthPercentage` and
+        `monthToMonthGrowthAmount` are both `null` when no comparable prior-period value exists.
+      operationId: getWidget
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - name: widgetId
+          in: path
+          description: |-
+            Stable widget alias or customer-specific widget ID returned by listWidgets. Use
+            current-month-cloud-spend for current-month accumulated spend or
+            current-month-cloud-forecast for the current-month forecast.
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          examples:
+            currentMonthCloudSpend:
+              summary: Current Month Cloud Spend
+              value: current-month-cloud-spend
+            currentMonthCloudForecast:
+              summary: Current Month Cloud Forecast
+              value: current-month-cloud-forecast
+            customerSpecificId:
+              summary: Customer-specific id from listWidgets
+              value: widget-example-spend-01
+      responses:
+        "200":
+          description: OK - The widget and its latest precomputed result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Widget"
+              examples:
+                currentMonthCloudSpend:
+                  summary: Current Month Cloud Spend
+                  description: Total cloud spend accumulated during the current calendar month.
+                  value:
+                    id: widget-example-spend-01
+                    alias: current-month-cloud-spend
+                    type: preset
+                    kind: monetary_metric
+                    generateTime: "2026-09-24T11:48:10.319Z"
+                    result:
+                      monetaryMetric:
+                        value:
+                          amount: "865.24"
+                          currency: USD
+                        period:
+                          startTime: "2026-09-01T00:00:00Z"
+                          endTime: "2026-10-01T00:00:00Z"
+                        monthToMonthGrowthPercentage: 12.34
+                        monthToMonthGrowthAmount:
+                          amount: "94.88"
+                          currency: USD
+                currentMonthCloudForecast:
+                  summary: Current Month Cloud Forecast
+                  description: Forecast total for the current calendar month.
+                  value:
+                    id: widget-example-forecast-01
+                    alias: current-month-cloud-forecast
+                    type: preset
+                    kind: monetary_metric
+                    generateTime: "2026-09-24T11:48:10.319Z"
+                    result:
+                      monetaryMetric:
+                        value:
+                          amount: "1024.50"
+                          currency: USD
+                        period:
+                          startTime: "2026-09-01T00:00:00Z"
+                          endTime: "2026-10-01T00:00:00Z"
+                        monthToMonthGrowthPercentage: null
+                        monthToMonthGrowthAmount: null
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: |-
+            The widget identifier is unknown, no cached result is available yet, or the customer has
+            no billing data. Inspect `code` to choose the recovery action.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                unknownWidget:
+                  summary: Use an alias or id returned by listWidgets
+                  value:
+                    type: https://developer.doit.com/errors/not_found
+                    title: Resource not found
+                    status: 404
+                    detail: no widget exists with that id
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: not_found
+                    retryable: false
+                widgetDataNotAvailable:
+                  summary: No cached result is available yet
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_data_not_available
+                    title: Widget data not available
+                    status: 404
+                    detail: no data has been computed for this customer yet
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_data_not_available
+                    retryable: false
+                widgetNoBillingData:
+                  summary: Connect a billing data source before retrying
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_no_billing_data
+                    title: No billing data
+                    status: 404
+                    detail: no billing data is available for this customer
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_no_billing_data
+                    retryable: false
+        "500":
+          description: |-
+            The cached result cannot be served or an unexpected internal error occurred. Inspect
+            `code`; contact DoiT support with the `Request-Id` for non-retryable or persistent errors.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                widgetResultTooLarge:
+                  summary: Contact DoiT support because the result exceeds response limits
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_result_too_large
+                    title: Widget data too large
+                    status: 500
+                    detail: widget data is too large to serve
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_result_too_large
+                    retryable: false
+                widgetNotSupported:
+                  summary: Contact DoiT support because the widget cannot be derived
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_not_supported
+                    title: Widget not supported
+                    status: 500
+                    detail: widget not supported
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_not_supported
+                    retryable: false
+                unexpectedInternalError:
+                  summary: Retry once, then contact DoiT support with Request-Id
+                  value:
+                    type: https://developer.doit.com/errors/internal_error
+                    title: Internal server error
+                    status: 500
+                    detail: an unexpected error occurred
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: internal_error
+                    retryable: true
+        "503":
+          description: The last background computation failed. This error is retryable; retry later.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                widgetComputationFailed:
+                  summary: Retry after the next background computation
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_computation_failed
+                    title: Widget data could not be computed
+                    status: 503
+                    detail: widget data could not be computed
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_computation_failed
+                    retryable: true
   "/sharing/v1/{resourceType}/{resourceId}":
     get:
       tags:
@@ -13317,6 +13581,152 @@ components:
         - type: string
         - type: number
         - type: integer
+    Widget:
+      type: object
+      description: Widget metadata and its latest precomputed cached result.
+      required:
+        - id
+        - alias
+        - type
+        - kind
+        - generateTime
+        - result
+      properties:
+        id:
+          type: string
+          description: Customer- and tier-specific widget id. This value can vary between customers.
+          example: widget-example-spend-01
+        alias:
+          type: string
+          description: Stable customer-facing widget identifier.
+          example: current-month-cloud-spend
+        type:
+          type: string
+          description: Whether the widget is supplied by DoiT or defined by a customer.
+          enum:
+            - custom
+            - preset
+        kind:
+          $ref: "#/components/schemas/WidgetKind"
+        generateTime:
+          type: string
+          format: date-time
+          description: Time when the cached result was generated by the background computation.
+          example: "2026-09-24T11:48:10.319Z"
+        result:
+          $ref: "#/components/schemas/WidgetResult"
+    WidgetItem:
+      type: object
+      description: Catalogue entry for one widget, without its computed result.
+      required:
+        - id
+        - alias
+        - name
+        - description
+        - type
+        - kind
+      properties:
+        id:
+          type: string
+          description: Customer- and tier-specific widget id. This value is accepted by getWidget and can vary between customers.
+          example: widget-example-spend-01
+        alias:
+          type: string
+          description: Stable customer-facing widget identifier. This value is also accepted by getWidget.
+          example: current-month-cloud-spend
+        name:
+          type: string
+          description: Human-readable widget name.
+          example: Current Month Cloud Spend
+        description:
+          type: string
+          description: What the widget value represents.
+          example: Total cloud spend accumulated during the current calendar month.
+        type:
+          type: string
+          description: Whether the widget is supplied by DoiT or defined by a customer.
+          enum:
+            - custom
+            - preset
+        kind:
+          $ref: "#/components/schemas/WidgetKind"
+    WidgetKind:
+      type: string
+      description: Determines which property is populated in the widget's `result`.
+      enum:
+        - monetary_metric
+    WidgetList:
+      type: object
+      description: Complete catalogue of widgets supported for the selected customer.
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          description: Supported widgets. Use an item's stable `alias` or customer-specific `id` with getWidget.
+          items:
+            $ref: "#/components/schemas/WidgetItem"
+        rowCount:
+          type: integer
+          description: Number of entries in `items`.
+          format: int64
+          minimum: 0
+          example: 2
+    WidgetMonetaryMetric:
+      type: object
+      description: |-
+        A monetary value over a period and its comparison with the equivalent prior period.
+        `monthToMonthGrowthPercentage` and `monthToMonthGrowthAmount` are both `null` when no
+        comparable prior-period value exists, such as when prior-period spend is zero.
+      required:
+        - value
+        - period
+        - monthToMonthGrowthPercentage
+        - monthToMonthGrowthAmount
+      properties:
+        value:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Current-period monetary value. `amount` is a decimal string and `currency` is an ISO 4217 code.
+        period:
+          $ref: "#/components/schemas/WidgetPeriod"
+        monthToMonthGrowthPercentage:
+          type: number
+          format: double
+          nullable: true
+          description: Percentage change from the comparable prior period, or `null` when no comparison is available.
+          example: 12.34
+        monthToMonthGrowthAmount:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          nullable: true
+          description: Absolute monetary change from the comparable prior period, or `null` when no comparison is available.
+    WidgetPeriod:
+      type: object
+      description: UTC date-time range covered by the widget result. `endTime` is exclusive.
+      required:
+        - startTime
+        - endTime
+      properties:
+        startTime:
+          type: string
+          format: date-time
+          description: Inclusive start of the period.
+          example: "2026-09-01T00:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          description: Exclusive end of the period.
+          example: "2026-10-01T00:00:00Z"
+    WidgetResult:
+      type: object
+      description: Computed widget result. The populated property corresponds to `kind`.
+      required:
+        - monetaryMetric
+      properties:
+        monetaryMetric:
+          $ref: "#/components/schemas/WidgetMonetaryMetric"
   responses:
     "400":
       description: >-

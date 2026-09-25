@@ -320,3 +320,11 @@ data_sources:
     read:
       path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations
       method: GET
+  widget:
+    read:
+      path: /analytics/v1/widgets/{widgetId}
+      method: GET
+  widgets:
+    read:
+      path: /analytics/v1/widgets
+      method: GET
