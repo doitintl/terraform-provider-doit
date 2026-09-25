@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -41,6 +42,37 @@ func TestAccReportQueryDataSource(t *testing.T) {
 				},
 			},
 		},
+	})
+}
+
+func TestAccReportQueryDataSource_FileOutput(t *testing.T) {
+	config := strings.Replace(testAccReportQueryDataSourceConfig(),
+		"data \"doit_report_query\" \"test\" {", "data \"doit_report_query\" \"test\" {\n    file_output = \"png\"", 1)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config: config,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("file_output_url"), knownvalue.StringRegexp(regexp.MustCompile(`^https://`))),
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+			},
+		}},
+	})
+}
+
+func TestAccReportQueryDataSource_InvalidFileOutput(t *testing.T) {
+	config := strings.Replace(testAccReportQueryDataSourceConfig(),
+		"data \"doit_report_query\" \"test\" {", "data \"doit_report_query\" \"test\" {\n    file_output = \"csv\"", 1)
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config:      config,
+			ExpectError: regexp.MustCompile(`(?i)file_output|one of`),
+		}},
 	})
 }
 

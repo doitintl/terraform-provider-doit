@@ -2737,12 +2737,31 @@ paths:
           schema:
             type: string
           description: The unique ID of the async operation.
+        - name: fileOutput
+          in: query
+          description: >-
+            Additionally render the operation's result as a file and return a
+            signed URL to it in `fileOutput`. The file is generated from the
+            result the operation already produced, not by re-running the query,
+            and is stored beside that result for the operation's lifetime, so a
+            repeat request for the same operation and format returns a fresh
+            signed URL to the same file rather than rendering it again. Omit
+            the parameter and the response is unchanged. Returns 422 when the
+            operation predates file output support and has no stored render
+            input; a transient rendering failure instead returns 200 with
+            `result` and no `fileOutput`, so retry the request for the file.
+          schema:
+            type: string
+            enum:
+              - pdf
+              - png
+            example: pdf
       responses:
         "200":
           description: >-
             OK — the operation succeeded; body is the report result, plus
             report metadata when the operation was started against a saved
-            report.
+            report, plus a fileOutput URL when one was requested.
           content:
             application/json:
               schema:
@@ -2857,6 +2876,65 @@ paths:
                               type: object
                               additionalProperties:
                                 type: string
+                  fileOutput:
+                    type: string
+                    format: uri
+                    description: >-
+                      Signed URL the rendered file can be downloaded from.
+                      Present only when the fileOutput parameter was supplied
+                      and the file was rendered. Never a variant of the
+                      response — the result property above is returned either
+                      way, so a render that fails leaves result intact and
+                      omits fileOutput rather than failing the call. The URL is
+                      valid for 7 days; request the endpoint again for a fresh
+                      one.
+                    example: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
+              examples:
+                withoutFileOutput:
+                  summary: Results of an operation started from a saved report
+                  value:
+                    id: aBcD1234efGH5678ijKL
+                    reportName: Daily cost by service
+                    owner: analyst@example.com
+                    type: custom
+                    createTime: 1788912000000
+                    updateTime: 1789516800000
+                    urlUI: https://console.doit.com/customers/1a2b3c/analyze/reports/aBcD1234efGH5678ijKL
+                    result:
+                      schema:
+                        - name: service
+                          type: string
+                        - name: cost
+                          type: float
+                      rows:
+                        - - Compute Engine
+                          - 1284.55
+                        - - Cloud Storage
+                          - 96.4
+                      cacheHit: false
+                withPdfFileOutput:
+                  summary: The same results with ?fileOutput=pdf, adding a signed URL
+                  value:
+                    id: aBcD1234efGH5678ijKL
+                    reportName: Daily cost by service
+                    owner: analyst@example.com
+                    type: custom
+                    createTime: 1788912000000
+                    updateTime: 1789516800000
+                    urlUI: https://console.doit.com/customers/1a2b3c/analyze/reports/aBcD1234efGH5678ijKL
+                    result:
+                      schema:
+                        - name: service
+                          type: string
+                        - name: cost
+                          type: float
+                      rows:
+                        - - Compute Engine
+                          - 1284.55
+                        - - Cloud Storage
+                          - 96.4
+                      cacheHit: false
+                    fileOutput: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
         "400":
           $ref: "#/components/responses/400"
         "401":

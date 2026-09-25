@@ -15,7 +15,9 @@ Runs an ad-hoc Cloud Analytics query without persisting a report.
 
 The query is executed with the provided config and results are returned as a JSON string in `result_json`. Use Terraform's `jsondecode()` to parse.
 
-~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query.
+~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query. Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`.
+
+The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. Terraform state contains the signed URL when one is returned.
 
 The `result_json` field contains the full result object including:
 
@@ -110,11 +112,13 @@ output "row_count" {
 
 ### Optional
 
+- `file_output` (String) Optional file format to render from the query result: `pdf` or `png`.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `cache_hit` (Boolean) If true, results were fetched from the cache.
+- `file_output_url` (String, Sensitive) Signed download URL for the requested file. Null if no file was requested or rendering failed. Valid for up to 7 days.
 - `result_json` (String) The full query result as a JSON string. Use `jsondecode()` to parse.
 
 Structure of the decoded JSON object:

@@ -4162,6 +4162,24 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for GetAsyncOperationResultsParamsFileOutput.
+const (
+	GetAsyncOperationResultsParamsFileOutputPdf GetAsyncOperationResultsParamsFileOutput = "pdf"
+	GetAsyncOperationResultsParamsFileOutputPng GetAsyncOperationResultsParamsFileOutput = "png"
+)
+
+// Valid indicates whether the value is a known member of the GetAsyncOperationResultsParamsFileOutput enum.
+func (e GetAsyncOperationResultsParamsFileOutput) Valid() bool {
+	switch e {
+	case GetAsyncOperationResultsParamsFileOutputPdf:
+		return true
+	case GetAsyncOperationResultsParamsFileOutputPng:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListAnomaliesParamsSortBy.
 const (
 	ListAnomaliesParamsSortByCostOfAnomaly ListAnomaliesParamsSortBy = "costOfAnomaly"
@@ -8815,6 +8833,11 @@ type GetAsyncOperationResults200Response struct {
 	// CreateTime The creation time of the report, in milliseconds since the epoch. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
+	// FileOutput Signed URL the rendered file can be downloaded from. Present only when the fileOutput parameter was supplied and the file was rendered. Never a variant of the response — the result property above is returned either way, so a render that fails leaves result intact and omits fileOutput rather than failing the call. The URL is valid for 7 days; request the endpoint again for a fresh one.
+	//
+	// Example: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
+	FileOutput *string `json:"fileOutput,omitempty"`
+
 	// Id The report's id. Present only when the operation was started against a saved report (run by id); omitted for ad hoc runs against an inline config.
 	Id *string `json:"id,omitempty"`
 
@@ -10836,6 +10859,15 @@ type CancelAsyncOperationParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
+// GetAsyncOperationResultsParams defines parameters for GetAsyncOperationResults.
+type GetAsyncOperationResultsParams struct {
+	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file.
+	FileOutput *GetAsyncOperationResultsParamsFileOutput `form:"fileOutput,omitempty" json:"fileOutput,omitempty"`
+}
+
+// GetAsyncOperationResultsParamsFileOutput defines parameters for GetAsyncOperationResults.
+type GetAsyncOperationResultsParamsFileOutput string
+
 // AsyncRunReportByIdParams defines parameters for AsyncRunReportById.
 type AsyncRunReportByIdParams struct {
 	// DryRun If true, validates the request and returns 200 without creating an operation or submitting a job.
@@ -12485,7 +12517,7 @@ type ClientInterface interface {
 	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 	//
 	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-	GetAsyncOperationResults(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteReport Delete a report
 	//
@@ -14553,8 +14585,8 @@ func (c *Client) CancelAsyncOperation(ctx context.Context, operationId string, p
 // Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 //
 // Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-func (c *Client) GetAsyncOperationResults(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetAsyncOperationResultsRequest(c.Server, operationId)
+func (c *Client) GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAsyncOperationResultsRequest(c.Server, operationId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -18867,7 +18899,7 @@ func NewCancelAsyncOperationRequest(server string, operationId string, params *C
 }
 
 // NewGetAsyncOperationResultsRequest constructs an http.Request for the GetAsyncOperationResults method
-func NewGetAsyncOperationResultsRequest(server string, operationId string) (*http.Request, error) {
+func NewGetAsyncOperationResultsRequest(server string, operationId string, params *GetAsyncOperationResultsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18890,6 +18922,33 @@ func NewGetAsyncOperationResultsRequest(server string, operationId string) (*htt
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.FileOutput != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "fileOutput", *params.FileOutput, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
@@ -23963,7 +24022,7 @@ type ClientWithResponsesInterface interface {
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-	GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error)
+	GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error)
 
 	// DeleteReportWithResponse Delete a report
 	//
@@ -35515,8 +35574,8 @@ func (c *ClientWithResponses) CancelAsyncOperationWithResponse(ctx context.Conte
 // Returns a wrapper object for the known response body format(s).
 //
 // Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-func (c *ClientWithResponses) GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error) {
-	rsp, err := c.GetAsyncOperationResults(ctx, operationId, reqEditors...)
+func (c *ClientWithResponses) GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error) {
+	rsp, err := c.GetAsyncOperationResults(ctx, operationId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
