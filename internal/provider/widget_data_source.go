@@ -91,6 +91,41 @@ func (d *widgetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 	if apiResp.StatusCode() == 404 {
+		if problem := apiResp.ApplicationproblemJSON404; problem != nil {
+			switch problem.Code {
+			case "analytics.widget_data_not_available":
+				resp.Diagnostics.AddError(
+					"Widget Data Not Available",
+					fmt.Sprintf("Widget %s data has not been computed for this customer yet: %s", widgetID, problem.Detail),
+				)
+				return
+			case "analytics.widget_no_billing_data":
+				resp.Diagnostics.AddError(
+					"No Billing Data Available",
+					fmt.Sprintf("No billing data is available to generate widget %s: %s", widgetID, problem.Detail),
+				)
+				return
+			case "not_found":
+				resp.Diagnostics.AddError(
+					"Widget Not Found",
+					fmt.Sprintf("Widget %s not found: %s", widgetID, problem.Detail),
+				)
+				return
+			case "":
+				// No specific problem code provided, fall through to generic 404 below
+			default:
+				detail := problem.Detail
+				if detail == "" {
+					detail = string(apiResp.Body)
+				}
+				resp.Diagnostics.AddError(
+					"Widget Unavailable",
+					fmt.Sprintf("Widget %s unavailable (%s): %s", widgetID, problem.Code, detail),
+				)
+				return
+			}
+		}
+
 		resp.Diagnostics.AddError(
 			"Widget Not Found",
 			fmt.Sprintf("Widget %s not found: %s", widgetID, string(apiResp.Body)),
