@@ -201,3 +201,16 @@ resources:
     update:
       path: /customers/v1/customers/{customerId}
       method: PATCH
+  service_account:
+    create:
+      path: /iam/v1/service-accounts
+      method: POST
+    read:
+      path: /iam/v1/service-accounts/{id}
+      method: GET
+    update:
+      path: /iam/v1/service-accounts/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/service-accounts/{id}
+      method: DELETE

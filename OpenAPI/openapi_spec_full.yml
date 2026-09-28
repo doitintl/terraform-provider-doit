@@ -65,6 +65,8 @@ tags:
     description: Manage user permissions and access levels in your organization.
   - name: Organizations
     description: Organizations help you segment data by your company or team structure.
+  - name: Service Accounts
+    description: Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.
   - name: Geographic Access
     description: Manage country-based access to tenants in your customer hierarchy.
   - name: Customer Groups
@@ -6093,6 +6095,252 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /iam/v1/service-accounts:
+    get:
+      tags:
+        - Service Accounts
+      summary: List service accounts
+      description: Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+      operationId: listServiceAccounts
+      responses:
+        "200":
+          description: OK - Service accounts returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountsResponse"
+              example:
+                items:
+                  - id: Lq3nO9rM5wS2tU0xY4zA
+                    customerId: Kp2mN8qL4vR0sT1wX3yZ
+                    name: terraform-ci
+                    description: Manages DoiT resources from CI
+                    permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                    createdBy: Jane Doe
+                    createdByEmail: jane.doe@example.com
+                    createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                    createTime: "2026-09-01T08:00:00Z"
+                    updateTime: "2026-09-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Service Accounts
+      summary: Create a service account
+      description: Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+      operationId: createServiceAccount
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The service account to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceAccountRequest"
+            example:
+              name: terraform-ci
+              description: Manages DoiT resources from CI
+              permissions: [cloudAnalyticsReadOnly, budgetsManager]
+      responses:
+        "200":
+          description: OK - Dry run only (`dryRun=true`). Every check of a real create passed and nothing was created; `id`, `createTime`, `updateTime` and `etag` are `null`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: null
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                createdBy: null
+                createdByEmail: null
+                createdByUserId: null
+                createTime: null
+                updateTime: null
+                etag: null
+        "201":
+          description: Created - Service account created.
+          headers:
+            Location:
+              description: URL of the created service account.
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                createdBy: Jane Doe
+                createdByEmail: jane.doe@example.com
+                createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                createTime: "2026-09-01T08:00:00Z"
+                updateTime: "2026-09-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/service-accounts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/serviceAccountId"
+    get:
+      tags:
+        - Service Accounts
+      summary: Get a service account
+      description: Returns a service account owned by the authenticated customer; an ID that belongs to another customer returns `404`. The `ETag` response header carries the value to send in `If-Match` on update and delete. Requires the `serviceAccountViewer` permission.
+      operationId: getServiceAccount
+      responses:
+        "200":
+          description: OK - Service account returned.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                createdBy: Jane Doe
+                createdByEmail: jane.doe@example.com
+                createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                createTime: "2026-09-01T08:00:00Z"
+                updateTime: "2026-09-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Service Accounts
+      summary: Update a service account
+      description: Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+      operationId: updateServiceAccount
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The fields to change.
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceAccountRequest"
+            example:
+              permissions: [cloudAnalyticsReadOnly]
+      responses:
+        "200":
+          description: OK - Service account updated, or previewed when `dryRun=true` (the body is the merged result, and `etag` is still the current one).
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly]
+                createdBy: Jane Doe
+                createdByEmail: jane.doe@example.com
+                createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                createTime: "2026-09-01T08:00:00Z"
+                updateTime: "2026-09-02T09:30:00Z"
+                etag: 9b2e4d6f8a0c1e3b5d7f9a1c3e5b7d9f1a3c5e7a9b1d3f5a7c9e1b3d5f7a9c1e
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Service Accounts
+      summary: Delete a service account
+      description: Permanently deletes a service account and all of its API tokens, which stop authenticating immediately. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+      operationId: deleteServiceAccount
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      responses:
+        "204":
+          description: No Content - Service account deleted, or validated when `dryRun=true`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /support/v1/metadata/platforms:
     get:
       tags:
@@ -12389,6 +12637,128 @@ components:
           description: Ready customer groups owned by the authenticated tenant.
           items:
             $ref: "#/components/schemas/CustomerGroup"
+    ServiceAccount:
+      type: object
+      description: A non-human identity owned by a customer. Its API tokens authenticate with exactly the permissions listed here.
+      required:
+        - id
+        - customerId
+        - name
+        - description
+        - permissions
+        - createdBy
+        - createdByEmail
+        - createdByUserId
+        - createTime
+        - updateTime
+        - etag
+      properties:
+        id:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Service account ID. `null` only on a dry-run create.
+          example: Lq3nO9rM5wS2tU0xY4zA
+        customerId:
+          type: string
+          readOnly: true
+          description: ID of the customer that owns the service account.
+          example: Kp2mN8qL4vR0sT1wX3yZ
+        name:
+          type: string
+          description: Name, unique among the customer's service accounts.
+        description:
+          type: string
+          description: Free-text description.
+        permissions:
+          type: array
+          description: Platform permission names in camelCase, as shown in the DoiT console role editor.
+          items:
+            type: string
+        createdBy:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Display name of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+        createdByEmail:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Email of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+        createdByUserId:
+          type: string
+          nullable: true
+          readOnly: true
+          description: ID of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+        createTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the service account was created.
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the service account was last changed.
+        etag:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Current version of the service account. Send it in `If-Match` to update or delete.
+    ServiceAccountsResponse:
+      type: object
+      description: Service accounts owned by the authenticated customer.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceAccount"
+    CreateServiceAccountRequest:
+      type: object
+      description: Fields of a new service account.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name, unique among the customer's service accounts. Leading or trailing whitespace returns `400`.
+          example: terraform-ci
+        description:
+          type: string
+          description: Free-text description.
+          example: Manages DoiT resources from CI
+        permissions:
+          type: array
+          description: Platform permission names in camelCase, for example `cloudAnalyticsReadOnly`. An unknown name returns `422`.
+          items:
+            type: string
+    UpdateServiceAccountRequest:
+      type: object
+      description: Fields to change on a service account, as a JSON Merge Patch document.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New name, unique among the customer's service accounts. Leading or trailing whitespace returns `400`.
+          example: terraform-ci
+        description:
+          type: string
+          nullable: true
+          description: New free-text description. `null` leaves it unchanged; an explicit empty string clears it.
+          example: Manages DoiT resources from CI
+        permissions:
+          type: array
+          nullable: true
+          description: Replaces the whole permission list. An unknown name returns `422`.
+          items:
+            type: string
     CustomerGroupUser:
       type: object
       additionalProperties: false
@@ -23136,6 +23506,82 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: conflict
             retryable: false
+    UnprocessableEntity:
+      description: The request is well-formed but a value is not accepted, such as an unknown permission name.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/console-iam.invalid_permission
+            title: Invalid permission
+            status: 422
+            detail: invalid permission value
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: console-iam.invalid_permission
+            retryable: false
+    PreconditionFailed:
+      description: The `If-Match` value no longer matches the current version of the resource.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/precondition_failed
+            title: Precondition failed
+            status: 412
+            detail: "ETag mismatch: the resource has been modified"
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: precondition_failed
+            retryable: false
+    PreconditionRequired:
+      description: The request is missing the required `If-Match` header.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/precondition_required
+            title: Precondition required
+            status: 428
+            detail: If-Match header is required
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: precondition_required
+            retryable: false
+    UnsupportedMediaType:
+      description: The request `Content-Type` is not accepted by this operation.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/unsupported_media_type
+            title: Unsupported media type
+            status: 415
+            detail: Content-Type must be application/merge-patch+json
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unsupported_media_type
+            retryable: false
     TooManyRequests:
       description: Request rate limit exceeded; retry after the indicated delay.
       headers:
@@ -23339,6 +23785,38 @@ components:
         type: string
         minLength: 1
         maxLength: 200
+    serviceAccountId:
+      name: id
+      in: path
+      required: true
+      description: Service account ID, as returned in the id field by the list and create operations.
+      schema:
+        type: string
+        minLength: 1
+    idempotencyKeyRequired:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+    dryRun:
+      name: dryRun
+      in: query
+      required: false
+      description: If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+      schema:
+        type: boolean
+        default: false
+    ifMatchRequired:
+      name: If-Match
+      in: header
+      required: true
+      description: The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+      schema:
+        type: string
     billingExplainerInvoiceMonth:
       name: invoiceMonth
       in: path
@@ -23460,6 +23938,16 @@ components:
           scopes:
             dci: Access All Data
   headers:
+    ETag:
+      description: Current version of the resource. Send it unchanged in `If-Match` on the next update or delete.
+      schema:
+        type: string
+    XDryRun:
+      description: Present with the value `true` when the request ran as a dry run and nothing was changed.
+      schema:
+        type: string
+        enum:
+          - "true"
     RequestId:
       description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
       schema:
