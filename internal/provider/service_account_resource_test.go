@@ -301,6 +301,138 @@ func TestAccServiceAccount_Import(t *testing.T) {
 	})
 }
 
+func TestAccServiceAccount_ExplicitEmptyPermissions(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-sa-empty")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create explicitly configuring permissions = []
+			{
+				Config: testAccServiceAccountConfig(rName, "Test empty permissions", "[]"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_service_account.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_service_account.this",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(rName),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_service_account.this",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListExact([]knownvalue.Check{}),
+					),
+				},
+			},
+			// Step 2: Drift check — re-apply same config, expect empty plan
+			{
+				Config: testAccServiceAccountConfig(rName, "Test empty permissions", "[]"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestAccServiceAccount_PermissionsReordering(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-sa-reorder")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with permissions in order A: ["budgetsReadOnly", "budgetsManager"]
+			{
+				Config: testAccServiceAccountConfig(rName, "Test permissions ordering", `["budgetsReadOnly", "budgetsManager"]`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_service_account.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_service_account.this",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact("budgetsReadOnly"),
+							knownvalue.StringExact("budgetsManager"),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check for order A
+			{
+				Config: testAccServiceAccountConfig(rName, "Test permissions ordering", `["budgetsReadOnly", "budgetsManager"]`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Update with permissions in reversed order B: ["budgetsManager", "budgetsReadOnly"]
+			{
+				Config: testAccServiceAccountConfig(rName, "Test permissions ordering", `["budgetsManager", "budgetsReadOnly"]`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_service_account.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_service_account.this",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact("budgetsManager"),
+							knownvalue.StringExact("budgetsReadOnly"),
+						}),
+					),
+				},
+			},
+			// Step 4: Drift check for order B
+			{
+				Config: testAccServiceAccountConfig(rName, "Test permissions ordering", `["budgetsManager", "budgetsReadOnly"]`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_service_account.this",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.StringExact("budgetsManager"),
+							knownvalue.StringExact("budgetsReadOnly"),
+						}),
+					),
+				},
+			},
+		},
+	})
+}
+
 func testAccServiceAccountConfig(name, description, permissionsJSON string) string {
 	return fmt.Sprintf(`
 resource "doit_service_account" "this" {
