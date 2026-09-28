@@ -163,6 +163,8 @@ linters:
               desc: "Use github.com/hashicorp/terraform-plugin-testing/terraform"
             - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2"
               desc: "Use Terraform Plugin Framework"
+            - pkg: "github.com/google/uuid"
+              desc: "Use standard library uuid"
     govet:
       enable:
         - shadow
