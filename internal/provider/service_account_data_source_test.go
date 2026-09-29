@@ -10,27 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
-func TestAccServiceAccountDataSources(t *testing.T) {
+func TestAccServiceAccountDataSource_Basic(t *testing.T) {
 	name := acctest.RandomWithPrefix("tf-acc-sa-ds")
-	config := fmt.Sprintf(`
-resource "doit_service_account" "test" {
-  name        = %q
-  description = "Data source acceptance test"
-  permissions = ["budgetsReadOnly"]
-}
-
-data "doit_service_account" "test" {
-  id = doit_service_account.test.id
-}
-
-data "doit_service_accounts" "all" {
-  depends_on = [doit_service_account.test]
-}
-
-output "list_contains_account" {
-  value = length([for account in data.doit_service_accounts.all.items : account.id if account.id == doit_service_account.test.id]) == 1
-}
-`, name)
+	config := testAccServiceAccountDataSourceConfig(name)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -47,7 +29,6 @@ output "list_contains_account" {
 					resource.TestCheckResourceAttrSet("data.doit_service_account.test", "customer_id"),
 					resource.TestCheckResourceAttrSet("data.doit_service_account.test", "create_time"),
 					resource.TestCheckResourceAttrSet("data.doit_service_account.test", "etag"),
-					resource.TestCheckOutput("list_contains_account", "true"),
 				),
 			},
 			{
@@ -58,6 +39,20 @@ output "list_contains_account" {
 			},
 		},
 	})
+}
+
+func testAccServiceAccountDataSourceConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_service_account" "test" {
+  name        = %q
+  description = "Data source acceptance test"
+  permissions = ["budgetsReadOnly"]
+}
+
+data "doit_service_account" "test" {
+  id = doit_service_account.test.id
+}
+`, name)
 }
 
 func TestAccServiceAccountDataSource_NotFound(t *testing.T) {

@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,6 +35,31 @@ func TestMapServiceAccountsToModel(t *testing.T) {
 	}
 	if !value.CreatedBy.IsNull() || value.Permissions.IsNull() || len(value.Permissions.Elements()) != 1 {
 		t.Fatalf("nullable metadata or permissions mapped incorrectly: %v", value)
+	}
+}
+
+func TestServiceAccountsDataSourceReadErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		status      int
+		contentType string
+		body        string
+		want        string
+	}{
+		{"forbidden", 403, "application/json", `{"error":"denied"}`, "status 403"},
+		{"non-JSON", 200, "text/plain", "wrong content type", "status 200"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", tc.contentType)
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			resp := readServiceAccountDataSourceForTest(t, server, nil)
+			if !resp.Diagnostics.HasError() || !strings.Contains(resp.Diagnostics.Errors()[0].Detail(), tc.want) {
+				t.Fatalf("diagnostics = %v, want %q", resp.Diagnostics, tc.want)
+			}
+		})
 	}
 }
 
