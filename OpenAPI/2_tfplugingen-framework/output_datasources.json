@@ -16088,6 +16088,206 @@
 			}
 		},
 		{
+			"name": "service_account",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Service account ID, as returned in the id field by the list and create operations.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the service account was created."
+						}
+					},
+					{
+						"name": "created_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Display name of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+						}
+					},
+					{
+						"name": "created_by_email",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+						}
+					},
+					{
+						"name": "created_by_user_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+						}
+					},
+					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the customer that owns the service account."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Free-text description."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Current version of the service account. Send it in `If-Match` to update or delete."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Name, unique among the customer's service accounts."
+						}
+					},
+					{
+						"name": "permissions",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Platform permission names in camelCase, as shown in the DoiT console role editor."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the service account was last changed."
+						}
+					}
+				],
+				"description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.",
+				"markdown_description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions."
+			}
+		},
+		{
+			"name": "service_accounts",
+			"schema": {
+				"attributes": [
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the service account was created."
+										}
+									},
+									{
+										"name": "created_by",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+										}
+									},
+									{
+										"name": "created_by_email",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Email of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+										}
+									},
+									{
+										"name": "created_by_user_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+										}
+									},
+									{
+										"name": "customer_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the customer that owns the service account."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Free-text description."
+										}
+									},
+									{
+										"name": "etag",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Current version of the service account. Send it in `If-Match` to update or delete."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Service account ID. `null` only on a dry-run create."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Name, unique among the customer's service accounts."
+										}
+									},
+									{
+										"name": "permissions",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Platform permission names in camelCase, as shown in the DoiT console role editor."
+										}
+									},
+									{
+										"name": "update_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the service account was last changed."
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.",
+				"markdown_description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions."
+			}
+		},
+		{
 			"name": "service_quotas",
 			"schema": {
 				"attributes": [

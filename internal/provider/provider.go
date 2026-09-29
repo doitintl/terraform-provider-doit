@@ -341,6 +341,8 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewRbacCountriesDataSource,
 		NewWidgetDataSource,
 		NewWidgetsDataSource,
+		NewServiceAccountDataSource,
+		NewServiceAccountsDataSource,
 	}
 }
 

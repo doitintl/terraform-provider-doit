@@ -9887,6 +9887,11 @@ type ServiceAccount struct {
 	UpdateTime nullable.Nullable[time.Time] `json:"updateTime,omitempty"`
 }
 
+// ServiceAccountsResponse Service accounts owned by the authenticated customer.
+type ServiceAccountsResponse struct {
+	Items []ServiceAccount `json:"items"`
+}
+
 // ServiceQuota defines model for ServiceQuota.
 type ServiceQuota struct {
 	// CloudProvider Cloud provider that owns the quota.
@@ -13482,6 +13487,13 @@ type ClientInterface interface {
 	// Corresponds with GET /iam/v1/roles (the `ListRoles` operationId).
 	ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListServiceAccounts List service accounts
+	//
+	// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+	//
+	// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+	ListServiceAccounts(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateServiceAccountWithBody Create a service account
 	//
 	// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
@@ -16333,6 +16345,23 @@ func (c *Client) ListOrganizations(ctx context.Context, reqEditors ...RequestEdi
 // Corresponds with GET /iam/v1/roles (the `ListRoles` operationId).
 func (c *Client) ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListRolesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListServiceAccounts List service accounts
+//
+// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+//
+// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+func (c *Client) ListServiceAccounts(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListServiceAccountsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -22439,6 +22468,33 @@ func NewListRolesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListServiceAccountsRequest constructs an http.Request for the ListServiceAccounts method
+func NewListServiceAccountsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateServiceAccountRequest calls the generic CreateServiceAccount builder with application/json body
 func NewCreateServiceAccountRequest(server string, params *CreateServiceAccountParams, body CreateServiceAccountJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -25714,6 +25770,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /iam/v1/roles (the `ListRoles` operationId).
 	ListRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListRolesResp, error)
+
+	// ListServiceAccountsWithResponse List service accounts
+	//
+	// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+	ListServiceAccountsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListServiceAccountsResp, error)
 
 	// CreateServiceAccountWithBodyWithResponse Create a service account
 	//
@@ -33255,6 +33320,76 @@ func (r ListRolesResp) ContentType() string {
 	return ""
 }
 
+// ListServiceAccountsResp500Headers the declared response headers of an HTTP 500 response for ListServiceAccounts
+type ListServiceAccountsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListServiceAccountsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountsResponse
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListServiceAccountsResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListServiceAccountsResp) GetJSON200() *ServiceAccountsResponse {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListServiceAccountsResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListServiceAccountsResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListServiceAccountsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListServiceAccountsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListServiceAccountsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListServiceAccountsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListServiceAccountsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateServiceAccountResp200Headers the declared response headers of an HTTP 200 response for CreateServiceAccount
 type CreateServiceAccountResp200Headers struct {
 	XDryRun *string
@@ -38547,6 +38682,21 @@ func (c *ClientWithResponses) ListRolesWithResponse(ctx context.Context, reqEdit
 		return nil, err
 	}
 	return ParseListRolesResp(rsp)
+}
+
+// ListServiceAccountsWithResponse List service accounts
+//
+// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+func (c *ClientWithResponses) ListServiceAccountsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListServiceAccountsResp, error) {
+	rsp, err := c.ListServiceAccounts(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListServiceAccountsResp(rsp)
 }
 
 // CreateServiceAccountWithBodyWithResponse Create a service account
@@ -45189,6 +45339,73 @@ func ParseListRolesResp(rsp *http.Response) (*ListRolesResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListServiceAccountsResp parses an HTTP response from a ListServiceAccountsWithResponse call
+func ParseListServiceAccountsResp(rsp *http.Response) (*ListServiceAccountsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListServiceAccountsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 500:
+		var headers ListServiceAccountsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil
