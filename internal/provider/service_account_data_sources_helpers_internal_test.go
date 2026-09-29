@@ -12,7 +12,8 @@ import (
 
 func readServiceAccountDataSourceForTest(t *testing.T, server *httptest.Server, id *tftypes.Value) datasource.ReadResponse {
 	t.Helper()
-	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
+	httpClient := server.Client()
+	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(httpClient))
 	if err != nil {
 		t.Fatal(err)
 	}
