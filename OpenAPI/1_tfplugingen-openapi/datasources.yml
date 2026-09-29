@@ -328,3 +328,11 @@ data_sources:
     read:
       path: /analytics/v1/widgets
       method: GET
+  service_account:
+    read:
+      path: /iam/v1/service-accounts/{id}
+      method: GET
+  service_accounts:
+    read:
+      path: /iam/v1/service-accounts
+      method: GET
