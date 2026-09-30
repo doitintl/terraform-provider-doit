@@ -166,3 +166,35 @@ func TestOverlayUserComputedFields_PhoneAndLanguage(t *testing.T) {
 		}
 	})
 }
+
+// TestMapUserToModel_NewAttributes tests that Read and ImportState correctly
+// map the new attributes (phone, phone_extension, language) from API response
+// objects into the Terraform resource model.
+func TestMapUserToModel_NewAttributes(t *testing.T) {
+	t.Parallel()
+
+	email := "test@example.com"
+	phone := "44" // tests normalizePhone adds "+"
+	phoneExt := "5551234567"
+	lang := models.UserListItemLanguageEn
+
+	user := &models.UserListItem{
+		Email:          &email,
+		Phone:          &phone,
+		PhoneExtension: &phoneExt,
+		Language:       &lang,
+	}
+
+	var state userResourceModel
+	mapUserToModel(user, &state)
+
+	if state.Phone.ValueString() != "+44" {
+		t.Errorf("got phone %q, want %q", state.Phone.ValueString(), "+44")
+	}
+	if state.PhoneExtension.ValueString() != "5551234567" {
+		t.Errorf("got phone_extension %q, want %q", state.PhoneExtension.ValueString(), "5551234567")
+	}
+	if state.Language.ValueString() != "en" {
+		t.Errorf("got language %q, want %q", state.Language.ValueString(), "en")
+	}
+}

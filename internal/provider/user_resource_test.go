@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
@@ -263,7 +264,8 @@ func TestAccUser_Update(t *testing.T) {
 	})
 }
 
-// TestAccUser_Import tests importing an existing user by email.
+// TestAccUser_Import tests importing an existing user by email and verifying
+// that all attributes (including phone, phone_extension, and language) are present.
 func TestAccUser_Import(t *testing.T) {
 	email := testAccInviteEmail(t)
 
@@ -275,20 +277,36 @@ func TestAccUser_Import(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Step 1: Create the user.
+			// Step 1: Create the user with all fields.
 			{
-				Config: testAccUserBasic(email),
+				Config: testAccUserAllFields(email),
 			},
-			// Step 2: Import by email.
+			// Step 2: Import by email and assert imported attributes.
 			{
 				ResourceName:      "doit_user.test",
 				ImportState:       true,
 				ImportStateId:     email,
 				ImportStateVerify: true,
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					if len(states) != 1 {
+						return fmt.Errorf("expected 1 instance state, got %d", len(states))
+					}
+					attrs := states[0].Attributes
+					if v := attrs["phone"]; v != "+44" {
+						return fmt.Errorf("expected imported phone to be '+44', got %q", v)
+					}
+					if v := attrs["phone_extension"]; v != "5551234567" {
+						return fmt.Errorf("expected imported phone_extension to be '5551234567', got %q", v)
+					}
+					if v := attrs["language"]; v != "en" {
+						return fmt.Errorf("expected imported language to be 'en', got %q", v)
+					}
+					return nil
+				},
 			},
 			// Step 3: Drift check — re-apply config after import.
 			{
-				Config: testAccUserBasic(email),
+				Config: testAccUserAllFields(email),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
