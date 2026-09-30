@@ -214,3 +214,16 @@ resources:
     delete:
       path: /iam/v1/service-accounts/{id}
       method: DELETE
+  role:
+    create:
+      path: /iam/v1/roles
+      method: POST
+    read:
+      path: /iam/v1/roles/{id}
+      method: GET
+    update:
+      path: /iam/v1/roles/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/roles/{id}
+      method: DELETE
