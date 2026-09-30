@@ -48,8 +48,12 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 		s.Attributes["id"] = attr
 	}
 
+	// customer_id is determined from the bearer token for this import-only resource;
+	// users do not set it in configuration, so override to Computed-only.
 	if attr, ok := s.Attributes["customer_id"].(schema.StringAttribute); ok {
+		attr.Required = false
 		attr.Optional = false
+		attr.Computed = true
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
 		s.Attributes["customer_id"] = attr
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
@@ -66,16 +65,10 @@ func (r *assetResource) ImportState(ctx context.Context, req resource.ImportStat
 func (r *assetResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_asset.AssetResourceSchema(ctx)
 
-	// Override id to be Required (user must specify the asset to manage).
-	// This is the only full override needed — import-only resources require
-	// the user to specify the identifier in their config.
-	s.Attributes["id"] = schema.StringAttribute{
-		Required:            true,
-		Description:         "The unique id of an asset.",
-		MarkdownDescription: "The unique id of an asset.",
-		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.RequiresReplace(),
-		},
+	// RequiresReplace on id so changing the target asset forces recreation.
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.RequiresReplace())
+		s.Attributes["id"] = attr
 	}
 
 	// Add UseStateForUnknown to computed-only fields so they don't show as

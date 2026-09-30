@@ -85,14 +85,12 @@ func SharingResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"resource_id": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).",
 				MarkdownDescription: "Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).",
 			},
 			"resource_type": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "Resource type.\nPossible values: `alerts`, `budgets`, `reports`, `allocations`",
 				MarkdownDescription: "Resource type.\nPossible values: `alerts`, `budgets`, `reports`, `allocations`",
 				Validators: []validator.String{
