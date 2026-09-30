@@ -21,6 +21,11 @@ import (
 // character class mirrors the API's whitespace set: \t-\r, U+0085 and the
 // Unicode separator category (which covers U+0020, U+00A0, U+1680,
 // U+2000-U+200A, U+2028, U+2029, U+202F, U+205F and U+3000).
+//
+// The spec expresses this as `not: { pattern }`, which codegen does not
+// translate into a validator yet
+// (https://github.com/doitintl/terraform-plugin-codegen-openapi/issues/12).
+// TestRoleNamePattern_MatchesSpec keeps this pattern in sync with the spec.
 var roleNamePattern = regexp.MustCompile(`^[^\t-\r\x{85}\p{Z}](?s:.*[^\t-\r\x{85}\p{Z}])?$`)
 
 type roleResource struct {

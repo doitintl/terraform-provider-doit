@@ -3,11 +3,23 @@ package provider
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"regexp"
 	"slices"
+	"strings"
 	"testing"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"gopkg.in/yaml.v3"
 )
 
 func TestMapRoleToModel(t *testing.T) {
@@ -362,6 +374,120 @@ func TestRoleNamePattern(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := roleNamePattern.MatchString(tt.input); got != tt.valid {
 				t.Errorf("roleNamePattern.MatchString(%q) = %v, want %v", tt.input, got, tt.valid)
+			}
+		})
+	}
+}
+
+// TestRoleNamePattern_MatchesSpec checks roleNamePattern against the API's own
+// constraint: the negated `not.pattern` on `name` in CreateRoleRequest and
+// UpdateRoleRequest. For every Unicode scalar value r, a name with r in the
+// leading or trailing position (or consisting only of r) must be rejected by
+// roleNamePattern exactly when the spec pattern matches it.
+func TestRoleNamePattern_MatchesSpec(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", "OpenAPI", "openapi_spec_full.yml"))
+	if err != nil {
+		t.Fatalf("reading OpenAPI spec: %v", err)
+	}
+
+	var spec struct {
+		Components struct {
+			Schemas map[string]struct {
+				Properties map[string]struct {
+					Not struct {
+						Pattern string `yaml:"pattern"`
+					} `yaml:"not"`
+				} `yaml:"properties"`
+			} `yaml:"schemas"`
+		} `yaml:"components"`
+	}
+	if err := yaml.Unmarshal(raw, &spec); err != nil {
+		t.Fatalf("parsing OpenAPI spec: %v", err)
+	}
+
+	for _, schemaName := range []string{"CreateRoleRequest", "UpdateRoleRequest"} {
+		t.Run(schemaName, func(t *testing.T) {
+			pattern := spec.Components.Schemas[schemaName].Properties["name"].Not.Pattern
+			if pattern == "" {
+				t.Fatalf("%s.name has no not.pattern; update roleNamePattern if the constraint changed", schemaName)
+			}
+			specForbidden := regexp.MustCompile(pattern)
+
+			mismatches := 0
+			for r := rune(0); r <= unicode.MaxRune; r++ {
+				if !utf8.ValidRune(r) {
+					continue
+				}
+				c := string(r)
+				for _, name := range []string{c, c + "x", "x" + c} {
+					if roleNamePattern.MatchString(name) == specForbidden.MatchString(name) {
+						mismatches++
+						if mismatches <= 10 {
+							t.Errorf("name %q (U+%04X): roleNamePattern accepts = %v, spec forbids = %v",
+								name, r, roleNamePattern.MatchString(name), specForbidden.MatchString(name))
+						}
+					}
+				}
+			}
+			if mismatches > 10 {
+				t.Errorf("%d mismatches in total", mismatches)
+			}
+		})
+	}
+}
+
+// TestRoleResource_NameValidators checks that the whitespace validator and the
+// generated length validator are attached to the name attribute in Schema().
+func TestRoleResource_NameValidators(t *testing.T) {
+	ctx := t.Context()
+
+	schemaResp := &resource.SchemaResponse{}
+	(&roleResource{}).Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("Schema() diagnostics: %v", schemaResp.Diagnostics)
+	}
+	nameAttr, ok := schemaResp.Schema.Attributes["name"].(schema.StringAttribute)
+	if !ok {
+		t.Fatalf("name attribute is %T, want schema.StringAttribute", schemaResp.Schema.Attributes["name"])
+	}
+
+	tests := []struct {
+		name      string
+		input     string
+		wantError string
+	}{
+		{"valid", "FinOps Analyst", ""},
+		{"leading space", " padded", "must not have leading or trailing whitespace"},
+		{"trailing ideographic space", "padded\u3000", "must not have leading or trailing whitespace"},
+		{"empty", "", "string length must be at least 1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var diags diag.Diagnostics
+			for _, v := range nameAttr.Validators {
+				resp := &validator.StringResponse{}
+				v.ValidateString(ctx, validator.StringRequest{
+					Path:        path.Root("name"),
+					ConfigValue: types.StringValue(tt.input),
+				}, resp)
+				diags.Append(resp.Diagnostics...)
+			}
+
+			if tt.wantError == "" {
+				if diags.HasError() {
+					t.Errorf("unexpected diagnostics for %q: %v", tt.input, diags)
+				}
+				return
+			}
+			found := false
+			for _, d := range diags.Errors() {
+				if strings.Contains(d.Detail(), tt.wantError) {
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("diagnostics for %q = %v, want an error containing %q", tt.input, diags, tt.wantError)
 			}
 		})
 	}
