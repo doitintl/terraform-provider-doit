@@ -14,6 +14,7 @@ import (
 )
 
 var _ datasource.DataSource = (*rolesDataSource)(nil)
+var _ datasource.DataSourceWithConfigure = (*rolesDataSource)(nil)
 
 func NewRolesDataSource() datasource.DataSource {
 	return &rolesDataSource{}
@@ -91,34 +92,42 @@ func (d *rolesDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
+	result := apiResp.JSON200
+
+	roleCount := int64(0)
+	if result.Roles != nil {
+		roleCount = int64(len(*result.Roles))
+	}
+
+	// Map row count with deterministic fallback
+	if result.RowCount != nil {
+		data.RowCount = types.Int64Value(int64(*result.RowCount))
+	} else {
+		data.RowCount = types.Int64Value(roleCount)
+	}
+
 	// Map API response to data source model
-	if apiResp.JSON200.Roles != nil && len(*apiResp.JSON200.Roles) > 0 {
-		roleVals := make([]datasource_roles.RolesValue, 0, len(*apiResp.JSON200.Roles))
-		for _, role := range *apiResp.JSON200.Roles {
+	if result.Roles != nil && len(*result.Roles) > 0 {
+		roleVals := make([]datasource_roles.RolesValue, 0, len(*result.Roles))
+		for _, role := range *result.Roles {
 			// Map permissions list
-			var permissionsList types.List
-			if role.Permissions != nil && len(*role.Permissions) > 0 {
-				permVals := make([]attr.Value, 0, len(*role.Permissions))
-				for _, p := range *role.Permissions {
-					permVals = append(permVals, types.StringValue(p))
-				}
-				permsListVal, diags := types.ListValue(types.StringType, permVals)
-				resp.Diagnostics.Append(diags...)
-				permissionsList = permsListVal
-			} else {
-				permsList, d := types.ListValueFrom(ctx, types.StringType, []string{})
-				resp.Diagnostics.Append(d...)
-				permissionsList = permsList
+			permissions := role.Permissions
+			if permissions == nil {
+				permissions = []string{}
 			}
+			permissionsList, diags := types.ListValueFrom(ctx, types.StringType, permissions)
+			resp.Diagnostics.Append(diags...)
 
 			roleVal, diags := datasource_roles.NewRolesValue(
 				datasource_roles.RolesValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"id":          types.StringPointerValue(role.Id),
-					"name":        types.StringPointerValue(role.Name),
-					"type":        types.StringPointerValue(role.Type),
-					"customer":    types.StringPointerValue(role.Customer),
-					"permissions": permissionsList,
+					"child_tenant_eligible": types.BoolValue(role.ChildTenantEligible),
+					"customer":              types.StringValue(role.Customer),
+					"description":           types.StringValue(role.Description),
+					"id":                    types.StringValue(role.Id),
+					"name":                  types.StringValue(role.Name),
+					"permissions":           permissionsList,
+					"type":                  types.StringValue(string(role.Type)),
 				},
 			)
 			resp.Diagnostics.Append(diags...)

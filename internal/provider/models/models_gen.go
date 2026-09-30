@@ -3178,6 +3178,24 @@ func (e ResourcePermissionsResponsePublic) Valid() bool {
 	}
 }
 
+// Defines values for RoleType.
+const (
+	RoleTypeCustom RoleType = "custom"
+	RoleTypePreset RoleType = "preset"
+)
+
+// Valid indicates whether the value is a known member of the RoleType enum.
+func (e RoleType) Valid() bool {
+	switch e {
+	case RoleTypeCustom:
+		return true
+	case RoleTypePreset:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SchemaFieldAggregation.
 const (
 	SchemaFieldAggregationCount          SchemaFieldAggregation = "count"
@@ -9573,6 +9591,9 @@ type ListProducts200Response struct {
 // ListRoles200Response defines model for ListRoles200Response.
 type ListRoles200Response struct {
 	Roles *[]Role `json:"roles,omitempty"`
+
+	// RowCount Number of roles returned.
+	RowCount *int `json:"rowCount,omitempty"`
 }
 
 // ListUsersResponseBody Response body for the list users endpoint.
@@ -9787,21 +9808,30 @@ type RiskAggregations struct {
 
 // Role Definition and permissions assigned to a role.
 type Role struct {
-	// Customer The customer ID if this is a custom role.
-	Customer *string `json:"customer,omitempty"`
+	// ChildTenantEligible Whether the owning tenant made this role available as a child tenant role.
+	ChildTenantEligible bool `json:"childTenantEligible"`
+
+	// Customer The customer ID if this is a custom role. An empty string for a preset role.
+	Customer string `json:"customer"`
+
+	// Description The description of the role. An empty string when no description is set.
+	Description string `json:"description"`
 
 	// Id The unique ID of the role.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id"`
 
 	// Name The name of the role.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 
-	// Permissions List of permission IDs assigned to the role.
-	Permissions *[]string `json:"permissions,omitempty"`
+	// Permissions Permission IDs in stored order. An empty array when no permissions are assigned.
+	Permissions []string `json:"permissions"`
 
 	// Type The type of the role (preset or custom).
-	Type *string `json:"type,omitempty"`
+	Type RoleType `json:"type"`
 }
+
+// RoleType The type of the role (preset or custom).
+type RoleType string
 
 // SchemaField Schema of a report result column.
 type SchemaField struct {
