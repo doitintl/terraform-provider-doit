@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -37,6 +38,25 @@ func UserResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The unique ID of the user to update.",
 				MarkdownDescription: "The unique ID of the user to update.",
 			},
+			"job_function": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.\nPossible values: `Data Engineer / Data Analysts`, `Executive Team`, `Finance / Accounting`, `Founder`, `Legal / Purchasing`, `Management`, `Sales / Marketing`, `Software / Ops Engineer`",
+				MarkdownDescription: "Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.\nPossible values: `Data Engineer / Data Analysts`, `Executive Team`, `Finance / Accounting`, `Founder`, `Legal / Purchasing`, `Management`, `Sales / Marketing`, `Software / Ops Engineer`",
+				DeprecationMessage:  "This attribute is deprecated.",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"Data Engineer / Data Analysts",
+						"Executive Team",
+						"Finance / Accounting",
+						"Founder",
+						"Legal / Purchasing",
+						"Management",
+						"Sales / Marketing",
+						"Software / Ops Engineer",
+					),
+				},
+			},
 			"job_title": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -52,6 +72,18 @@ func UserResourceSchema(ctx context.Context) schema.Schema {
 						"Management",
 						"Sales / Marketing",
 						"Software / Ops Engineer",
+					),
+				},
+			},
+			"language": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The user's preferred language.\nPossible values: `en`, `ja`",
+				MarkdownDescription: "The user's preferred language.\nPossible values: `en`, `ja`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"en",
+						"ja",
 					),
 				},
 			},
@@ -71,6 +103,24 @@ func UserResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "The ID of the organization to assign the user to.",
 				MarkdownDescription: "The ID of the organization to assign the user to.",
+			},
+			"phone": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The user's country code (e.g., +44).",
+				MarkdownDescription: "The user's country code (e.g., +44).",
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile("^\\+[0-9]+$"), ""),
+				},
+			},
+			"phone_extension": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "The user's phone extension (8-15 digits).",
+				MarkdownDescription: "The user's phone extension (8-15 digits).",
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9]{8,15}$"), ""),
+				},
 			},
 			"role_id": schema.StringAttribute{
 				Optional:            true,
@@ -160,10 +210,14 @@ type UserModel struct {
 	Email          types.String `tfsdk:"email"`
 	FirstName      types.String `tfsdk:"first_name"`
 	Id             types.String `tfsdk:"id"`
+	JobFunction    types.String `tfsdk:"job_function"`
 	JobTitle       types.String `tfsdk:"job_title"`
+	Language       types.String `tfsdk:"language"`
 	LastName       types.String `tfsdk:"last_name"`
 	Message        types.String `tfsdk:"message"`
 	OrganizationId types.String `tfsdk:"organization_id"`
+	Phone          types.String `tfsdk:"phone"`
+	PhoneExtension types.String `tfsdk:"phone_extension"`
 	RoleId         types.String `tfsdk:"role_id"`
 	User           UserValue    `tfsdk:"user"`
 }

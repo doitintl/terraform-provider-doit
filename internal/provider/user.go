@@ -107,9 +107,15 @@ func overlayUserComputedFields(user *models.UserListItem, plan *userResourceMode
 	if plan.OrganizationId.IsUnknown() {
 		plan.OrganizationId = resolved.OrganizationId
 	}
-
-	// Note: phone, phone_extension, and language are Optional-only (not Computed).
-	// They should always preserve the plan value regardless of Unknown/Known state.
+	if plan.Phone.IsUnknown() {
+		plan.Phone = resolved.Phone
+	}
+	if plan.PhoneExtension.IsUnknown() {
+		plan.PhoneExtension = resolved.PhoneExtension
+	}
+	if plan.Language.IsUnknown() {
+		plan.Language = resolved.Language
+	}
 }
 
 // resolveInternalID looks up the current internal UUID for a user by their
@@ -235,13 +241,13 @@ func (plan *userResourceModel) toUpdateRequest() models.UpdateUserRequest {
 	if !plan.RoleId.IsNull() && !plan.RoleId.IsUnknown() {
 		req.RoleId = plan.RoleId.ValueStringPointer()
 	}
-	if !plan.Phone.IsNull() {
+	if !plan.Phone.IsNull() && !plan.Phone.IsUnknown() {
 		req.Phone = plan.Phone.ValueStringPointer()
 	}
-	if !plan.PhoneExtension.IsNull() {
+	if !plan.PhoneExtension.IsNull() && !plan.PhoneExtension.IsUnknown() {
 		req.PhoneExtension = plan.PhoneExtension.ValueStringPointer()
 	}
-	if !plan.Language.IsNull() {
+	if !plan.Language.IsNull() && !plan.Language.IsUnknown() {
 		req.Language = new(models.UpdateUserRequestLanguage(plan.Language.ValueString()))
 	}
 

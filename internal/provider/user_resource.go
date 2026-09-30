@@ -4,18 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -88,8 +85,9 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	s := resource_user.UserResourceSchema(ctx)
 
 	// --- Remove response-only artifacts that leaked from the PATCH response ---
-	delete(s.Attributes, "message") // UpdateUserResponse.message
-	delete(s.Attributes, "user")    // UpdateUserResponse.user (nested)
+	delete(s.Attributes, "message")      // UpdateUserResponse.message
+	delete(s.Attributes, "user")         // UpdateUserResponse.user (nested)
+	delete(s.Attributes, "job_function") // Deprecated in API; job_title is used instead
 
 	// --- Fix `id`: should be Computed-only, not Optional+Computed ---
 	s.Attributes["id"] = schema.StringAttribute{
@@ -114,9 +112,12 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 
 	// Category B: API-assigned, not clearable.
 	acknowledgeNotClearable(s,
-		"first_name", // API ignores "" PATCH — not clearable once set
-		"last_name",  // API ignores "" PATCH — not clearable once set
-		"job_title",  // API ignores "" PATCH — not clearable once set
+		"first_name",      // API ignores "" PATCH — not clearable once set
+		"last_name",       // API ignores "" PATCH — not clearable once set
+		"job_title",       // API ignores "" PATCH — not clearable once set
+		"phone",           // API ignores "" PATCH — not clearable once set
+		"phone_extension", // API ignores "" PATCH — not clearable once set
+		"language",        // API ignores "" PATCH — not clearable once set
 	)
 
 	// organization_id: RequiresReplace (immutable after invite) + UseStateForUnknown
@@ -148,33 +149,6 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 		MarkdownDescription: "The status of the user (`active` or `invited`).",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.UseStateForUnknown(),
-		},
-	}
-
-	s.Attributes["phone"] = schema.StringAttribute{
-		Optional:            true,
-		Description:         "The user's country code (e.g., `+44`).",
-		MarkdownDescription: "The user's country code (e.g., `+44`).",
-		Validators: []validator.String{
-			stringvalidator.RegexMatches(
-				regexp.MustCompile(`^\+[0-9]+$`),
-				"must start with '+' followed by digits (e.g., +1, +44)",
-			),
-		},
-	}
-
-	s.Attributes["phone_extension"] = schema.StringAttribute{
-		Optional:            true,
-		Description:         "The user's phone extension.",
-		MarkdownDescription: "The user's phone extension.",
-	}
-
-	s.Attributes["language"] = schema.StringAttribute{
-		Optional:            true,
-		Description:         "The user's preferred language.\nPossible values: `en`, `ja`",
-		MarkdownDescription: "The user's preferred language.\nPossible values: `en`, `ja`",
-		Validators: []validator.String{
-			stringvalidator.OneOf("en", "ja"),
 		},
 	}
 
