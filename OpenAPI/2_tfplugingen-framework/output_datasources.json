@@ -16041,10 +16041,24 @@
 							"nested_object": {
 								"attributes": [
 									{
+										"name": "child_tenant_eligible",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the owning tenant made this role available as a child tenant role."
+										}
+									},
+									{
 										"name": "customer",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "The customer ID if this is a custom role."
+											"description": "The customer ID if this is a custom role. An empty string for a preset role."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The description of the role. An empty string when no description is set."
 										}
 									},
 									{
@@ -16068,7 +16082,7 @@
 											"element_type": {
 												"string": {}
 											},
-											"description": "List of permission IDs assigned to the role."
+											"description": "Permission IDs in stored order. An empty array when no permissions are assigned."
 										}
 									},
 									{
@@ -16080,6 +16094,13 @@
 									}
 								]
 							}
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Number of roles returned."
 						}
 					}
 				],

@@ -6052,6 +6052,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  rowCount:
+                    type: integer
+                    description: Number of roles returned.
                   roles:
                     type: array
                     items:
@@ -19170,6 +19173,14 @@ components:
     Role:
       type: object
       description: Definition and permissions assigned to a role.
+      required:
+        - id
+        - name
+        - type
+        - description
+        - customer
+        - permissions
+        - childTenantEligible
       properties:
         id:
           type: string
@@ -19179,15 +19190,22 @@ components:
           description: The name of the role.
         type:
           type: string
+          enum: [preset, custom]
           description: The type of the role (preset or custom).
+        description:
+          type: string
+          description: The description of the role. An empty string when no description is set.
         customer:
           type: string
-          description: The customer ID if this is a custom role.
+          description: The customer ID if this is a custom role. An empty string for a preset role.
         permissions:
           type: array
-          description: List of permission IDs assigned to the role.
+          description: Permission IDs in stored order. An empty array when no permissions are assigned.
           items:
             type: string
+        childTenantEligible:
+          type: boolean
+          description: Whether the owning tenant made this role available as a child tenant role.
     FindCloudDiagramsRequest:
       type: object
       required:

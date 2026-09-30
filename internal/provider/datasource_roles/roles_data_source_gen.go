@@ -21,10 +21,20 @@ func RolesDataSourceSchema(ctx context.Context) schema.Schema {
 			"roles": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"child_tenant_eligible": schema.BoolAttribute{
+							Computed:            true,
+							Description:         "Whether the owning tenant made this role available as a child tenant role.",
+							MarkdownDescription: "Whether the owning tenant made this role available as a child tenant role.",
+						},
 						"customer": schema.StringAttribute{
 							Computed:            true,
-							Description:         "The customer ID if this is a custom role.",
-							MarkdownDescription: "The customer ID if this is a custom role.",
+							Description:         "The customer ID if this is a custom role. An empty string for a preset role.",
+							MarkdownDescription: "The customer ID if this is a custom role. An empty string for a preset role.",
+						},
+						"description": schema.StringAttribute{
+							Computed:            true,
+							Description:         "The description of the role. An empty string when no description is set.",
+							MarkdownDescription: "The description of the role. An empty string when no description is set.",
 						},
 						"id": schema.StringAttribute{
 							Computed:            true,
@@ -39,8 +49,8 @@ func RolesDataSourceSchema(ctx context.Context) schema.Schema {
 						"permissions": schema.ListAttribute{
 							ElementType:         types.StringType,
 							Computed:            true,
-							Description:         "List of permission IDs assigned to the role.",
-							MarkdownDescription: "List of permission IDs assigned to the role.",
+							Description:         "Permission IDs in stored order. An empty array when no permissions are assigned.",
+							MarkdownDescription: "Permission IDs in stored order. An empty array when no permissions are assigned.",
 						},
 						"type": schema.StringAttribute{
 							Computed:            true,
@@ -56,6 +66,11 @@ func RolesDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 				Computed: true,
 			},
+			"row_count": schema.Int64Attribute{
+				Computed:            true,
+				Description:         "Number of roles returned.",
+				MarkdownDescription: "Number of roles returned.",
+			},
 		},
 		Description:         "Manage user permissions and access levels in your organization.",
 		MarkdownDescription: "Manage user permissions and access levels in your organization.",
@@ -63,7 +78,8 @@ func RolesDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type RolesModel struct {
-	Roles types.List `tfsdk:"roles"`
+	Roles    types.List  `tfsdk:"roles"`
+	RowCount types.Int64 `tfsdk:"row_count"`
 }
 
 var _ basetypes.ObjectTypable = RolesType{}
@@ -99,6 +115,24 @@ func (t RolesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 
 	attributes := in.Attributes()
 
+	childTenantEligibleAttribute, ok := attributes["child_tenant_eligible"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`child_tenant_eligible is missing from object`)
+
+		return nil, diags
+	}
+
+	childTenantEligibleVal, ok := childTenantEligibleAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`child_tenant_eligible expected to be basetypes.BoolValue, was: %T`, childTenantEligibleAttribute))
+	}
+
 	customerAttribute, ok := attributes["customer"]
 
 	if !ok {
@@ -115,6 +149,24 @@ func (t RolesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`customer expected to be basetypes.StringValue, was: %T`, customerAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return nil, diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
 	}
 
 	idAttribute, ok := attributes["id"]
@@ -194,12 +246,14 @@ func (t RolesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 	}
 
 	return RolesValue{
-		Customer:    customerVal,
-		Id:          idVal,
-		Name:        nameVal,
-		Permissions: permissionsVal,
-		RolesType:   typeVal,
-		state:       attr.ValueStateKnown,
+		ChildTenantEligible: childTenantEligibleVal,
+		Customer:            customerVal,
+		Description:         descriptionVal,
+		Id:                  idVal,
+		Name:                nameVal,
+		Permissions:         permissionsVal,
+		RolesType:           typeVal,
+		state:               attr.ValueStateKnown,
 	}, diags
 }
 
@@ -266,6 +320,24 @@ func NewRolesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		return NewRolesValueUnknown(), diags
 	}
 
+	childTenantEligibleAttribute, ok := attributes["child_tenant_eligible"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`child_tenant_eligible is missing from object`)
+
+		return NewRolesValueUnknown(), diags
+	}
+
+	childTenantEligibleVal, ok := childTenantEligibleAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`child_tenant_eligible expected to be basetypes.BoolValue, was: %T`, childTenantEligibleAttribute))
+	}
+
 	customerAttribute, ok := attributes["customer"]
 
 	if !ok {
@@ -282,6 +354,24 @@ func NewRolesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`customer expected to be basetypes.StringValue, was: %T`, customerAttribute))
+	}
+
+	descriptionAttribute, ok := attributes["description"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`description is missing from object`)
+
+		return NewRolesValueUnknown(), diags
+	}
+
+	descriptionVal, ok := descriptionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`description expected to be basetypes.StringValue, was: %T`, descriptionAttribute))
 	}
 
 	idAttribute, ok := attributes["id"]
@@ -361,12 +451,14 @@ func NewRolesValue(attributeTypes map[string]attr.Type, attributes map[string]at
 	}
 
 	return RolesValue{
-		Customer:    customerVal,
-		Id:          idVal,
-		Name:        nameVal,
-		Permissions: permissionsVal,
-		RolesType:   typeVal,
-		state:       attr.ValueStateKnown,
+		ChildTenantEligible: childTenantEligibleVal,
+		Customer:            customerVal,
+		Description:         descriptionVal,
+		Id:                  idVal,
+		Name:                nameVal,
+		Permissions:         permissionsVal,
+		RolesType:           typeVal,
+		state:               attr.ValueStateKnown,
 	}, diags
 }
 
@@ -438,21 +530,25 @@ func (t RolesType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = RolesValue{}
 
 type RolesValue struct {
-	Customer    basetypes.StringValue `tfsdk:"customer"`
-	Id          basetypes.StringValue `tfsdk:"id"`
-	Name        basetypes.StringValue `tfsdk:"name"`
-	Permissions basetypes.ListValue   `tfsdk:"permissions"`
-	RolesType   basetypes.StringValue `tfsdk:"type"`
-	state       attr.ValueState
+	ChildTenantEligible basetypes.BoolValue   `tfsdk:"child_tenant_eligible"`
+	Customer            basetypes.StringValue `tfsdk:"customer"`
+	Description         basetypes.StringValue `tfsdk:"description"`
+	Id                  basetypes.StringValue `tfsdk:"id"`
+	Name                basetypes.StringValue `tfsdk:"name"`
+	Permissions         basetypes.ListValue   `tfsdk:"permissions"`
+	RolesType           basetypes.StringValue `tfsdk:"type"`
+	state               attr.ValueState
 }
 
 func (v RolesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 7)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["child_tenant_eligible"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["customer"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["description"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["permissions"] = basetypes.ListType{
@@ -464,7 +560,15 @@ func (v RolesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 7)
+
+		val, err = v.ChildTenantEligible.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["child_tenant_eligible"] = val
 
 		val, err = v.Customer.ToTerraformValue(ctx)
 
@@ -473,6 +577,14 @@ func (v RolesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["customer"] = val
+
+		val, err = v.Description.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["description"] = val
 
 		val, err = v.Id.ToTerraformValue(ctx)
 
@@ -549,9 +661,11 @@ func (v RolesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 
 	if diags.HasError() {
 		return types.ObjectUnknown(map[string]attr.Type{
-			"customer": basetypes.StringType{},
-			"id":       basetypes.StringType{},
-			"name":     basetypes.StringType{},
+			"child_tenant_eligible": basetypes.BoolType{},
+			"customer":              basetypes.StringType{},
+			"description":           basetypes.StringType{},
+			"id":                    basetypes.StringType{},
+			"name":                  basetypes.StringType{},
 			"permissions": basetypes.ListType{
 				ElemType: types.StringType,
 			},
@@ -560,9 +674,11 @@ func (v RolesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	}
 
 	attributeTypes := map[string]attr.Type{
-		"customer": basetypes.StringType{},
-		"id":       basetypes.StringType{},
-		"name":     basetypes.StringType{},
+		"child_tenant_eligible": basetypes.BoolType{},
+		"customer":              basetypes.StringType{},
+		"description":           basetypes.StringType{},
+		"id":                    basetypes.StringType{},
+		"name":                  basetypes.StringType{},
 		"permissions": basetypes.ListType{
 			ElemType: types.StringType,
 		},
@@ -580,11 +696,13 @@ func (v RolesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"customer":    v.Customer,
-			"id":          v.Id,
-			"name":        v.Name,
-			"permissions": permissionsVal,
-			"type":        v.RolesType,
+			"child_tenant_eligible": v.ChildTenantEligible,
+			"customer":              v.Customer,
+			"description":           v.Description,
+			"id":                    v.Id,
+			"name":                  v.Name,
+			"permissions":           permissionsVal,
+			"type":                  v.RolesType,
 		})
 
 	return objVal, diags
@@ -605,7 +723,15 @@ func (v RolesValue) Equal(o attr.Value) bool {
 		return true
 	}
 
+	if !v.ChildTenantEligible.Equal(other.ChildTenantEligible) {
+		return false
+	}
+
 	if !v.Customer.Equal(other.Customer) {
+		return false
+	}
+
+	if !v.Description.Equal(other.Description) {
 		return false
 	}
 
@@ -638,9 +764,11 @@ func (v RolesValue) Type(ctx context.Context) attr.Type {
 
 func (v RolesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"customer": basetypes.StringType{},
-		"id":       basetypes.StringType{},
-		"name":     basetypes.StringType{},
+		"child_tenant_eligible": basetypes.BoolType{},
+		"customer":              basetypes.StringType{},
+		"description":           basetypes.StringType{},
+		"id":                    basetypes.StringType{},
+		"name":                  basetypes.StringType{},
 		"permissions": basetypes.ListType{
 			ElemType: types.StringType,
 		},

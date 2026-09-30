@@ -10,3 +10,8 @@ output "role_names" {
 output "admin_role" {
   value = [for r in data.doit_roles.all.roles : r if r.name == "Admin"][0]
 }
+
+# Output total count of roles
+output "total_roles" {
+  value = data.doit_roles.all.row_count
+}
