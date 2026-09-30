@@ -6067,6 +6067,201 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Roles
+      summary: Create role
+      description: Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+      operationId: createRole
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Caller-chosen key (1-255 characters) that makes retries safe; the same key with the same body returns the original response.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+            example:
+              name: FinOps Analyst
+              description: Read-only access to cost reports and budgets
+              permissions: [oeuwhFPi8UTccU1nYjdl, 8zXuFyohNSiiLy2ZQ6Xu]
+      responses:
+        "201":
+          description: Created - Role created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "400":
+          description: Bad Request - Missing, blank or whitespace-padded `name`, duplicate permission IDs, or a permission ID that does not exist or is not available to the customer. A missing `Idempotency-Key` returns `application/problem+json`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "409":
+          description: Conflict - A role with the same `name` already exists for the customer. The same `Idempotency-Key` still being processed by another request returns `application/problem+json`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "422":
+          description: Unprocessable Entity - The `Idempotency-Key` was already used with a different request body.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "500":
+          $ref: "#/components/responses/500"
+  "/iam/v1/roles/{id}":
+    get:
+      tags:
+        - Roles
+      summary: Get role
+      description: Returns a single role by ID. Preset roles are visible to every customer; a custom role is returned only to the customer that owns it. A service account of a parent tenant can read a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: getRole
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the role.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Role returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Roles
+      summary: Update role
+      description: Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: updateRole
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the role to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleRequest"
+            example:
+              name: FinOps Analyst
+              description: Read-only access to cost reports and budgets
+              permissions: [oeuwhFPi8UTccU1nYjdl, 8zXuFyohNSiiLy2ZQ6Xu]
+      responses:
+        "200":
+          description: OK - Role updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "400":
+          description: Bad Request - Empty body, blank or whitespace-padded `name`, duplicate permission IDs, unknown field, a permission ID that does not exist or is not available to the customer, or the role is a preset role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - Another role of the customer, custom or preset, already has the requested `name`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Roles
+      summary: Delete role
+      description: Deletes a custom role. Preset roles cannot be deleted, and a role still assigned to users or groups must be unassigned first. A service account of a parent tenant can delete a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: deleteRole
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the role to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content - Role deleted.
+        "400":
+          description: Bad Request - The role is a preset role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - The role is still assigned to users or groups, or held as a child tenant role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service Unavailable - Role graph cleanup is temporarily unavailable. Retry the deletion.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
   /iam/v1/organizations:
     get:
       tags:
@@ -19206,6 +19401,49 @@ components:
         childTenantEligible:
           type: boolean
           description: Whether the owning tenant made this role available as a child tenant role.
+    CreateRoleRequest:
+      type: object
+      description: Request body to create a custom role.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          not:
+            type: string
+            pattern: "^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]$"
+          description: The name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles.
+        description:
+          type: string
+          description: The description of the role.
+        permissions:
+          type: array
+          uniqueItems: true
+          description: Permission IDs to assign to the role, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. Omission or an empty array creates a role without permissions.
+          items:
+            type: string
+    UpdateRoleRequest:
+      type: object
+      description: Fields allowed when updating a custom role. At least one field is required.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          not:
+            type: string
+            pattern: "^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]$"
+          description: The new name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles. Omission leaves the name unchanged.
+        description:
+          type: string
+          description: The new description of the role. An empty string clears it; omission leaves it unchanged.
+        permissions:
+          type: array
+          uniqueItems: true
+          description: Permission IDs that replace the role's current permissions, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. An empty array clears all permissions; omission leaves them unchanged.
+          items:
+            type: string
     FindCloudDiagramsRequest:
       type: object
       required:

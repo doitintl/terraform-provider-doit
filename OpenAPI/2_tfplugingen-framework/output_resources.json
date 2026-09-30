@@ -3414,6 +3414,91 @@
 			}
 		},
 		{
+			"name": "role",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The description of the role."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "permissions",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Permission IDs to assign to the role, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. Omission or an empty array creates a role without permissions.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.UniqueValues()"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "child_tenant_eligible",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the owning tenant made this role available as a child tenant role."
+						}
+					},
+					{
+						"name": "customer",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The customer ID if this is a custom role. An empty string for a preset role."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The unique ID of the role."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The type of the role (preset or custom)."
+						}
+					}
+				],
+				"description": "Manage user permissions and access levels in your organization.",
+				"markdown_description": "Manage user permissions and access levels in your organization."
+			}
+		},
+		{
 			"name": "service_account",
 			"schema": {
 				"attributes": [
