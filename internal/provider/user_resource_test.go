@@ -159,6 +159,14 @@ func TestAccUser_AllFields(t *testing.T) {
 						knownvalue.StringExact("en")),
 					statecheck.ExpectKnownValue(
 						"doit_user.test",
+						tfjsonpath.New("phone"),
+						knownvalue.StringExact("+44")),
+					statecheck.ExpectKnownValue(
+						"doit_user.test",
+						tfjsonpath.New("phone_extension"),
+						knownvalue.StringExact("5551234567")),
+					statecheck.ExpectKnownValue(
+						"doit_user.test",
 						tfjsonpath.New("status"),
 						knownvalue.StringExact("invited")),
 				},
@@ -170,6 +178,29 @@ func TestAccUser_AllFields(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
 					},
+				},
+			},
+			// Step 3: Omit Optional+Computed fields (phone, phone_extension, language) — verify prior state is preserved without drift.
+			{
+				Config: testAccUserBasicWithName(email, "Test", "User"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_user.test",
+						tfjsonpath.New("phone"),
+						knownvalue.StringExact("+44")),
+					statecheck.ExpectKnownValue(
+						"doit_user.test",
+						tfjsonpath.New("phone_extension"),
+						knownvalue.StringExact("5551234567")),
+					statecheck.ExpectKnownValue(
+						"doit_user.test",
+						tfjsonpath.New("language"),
+						knownvalue.StringExact("en")),
 				},
 			},
 		},
@@ -326,7 +357,7 @@ resource "doit_user" "test" {
   job_title       = "Software / Ops Engineer"
   language        = "en"
   phone           = "+44"
-  phone_extension = "12345"
+  phone_extension = "5551234567"
 }
 `, email)
 }
