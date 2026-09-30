@@ -25,8 +25,7 @@ import (
 // single "update" endpoint). Like labelAssignmentsResource, its schema is
 // hand-written rather than taken from the generated resource_support_request_tags
 // package: that package is derived from the POST request/response shapes
-// (tags as a List, a write-only applied_tags echo field, ticket_id as
-// Optional+Computed) and cannot model a desired-state association resource. The
+// (tags as a List, a write-only applied_tags echo field) and cannot model a desired-state association resource. The
 // generated package is therefore intentionally unused.
 type (
 	supportRequestTagsResource struct {

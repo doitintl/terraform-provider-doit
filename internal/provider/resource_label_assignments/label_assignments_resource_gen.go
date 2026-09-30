@@ -80,8 +80,7 @@ func LabelAssignmentsResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Array of objects currently assigned to the label.",
 			},
 			"id": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "Label ID",
 				MarkdownDescription: "Label ID",
 			},

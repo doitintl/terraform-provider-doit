@@ -66,20 +66,14 @@ func (r *sharingResource) Metadata(_ context.Context, req resource.MetadataReque
 func (r *sharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_sharing.SharingResourceSchema(ctx)
 
-	// resource_type: make Required + RequiresReplace (codegen sets Optional+Computed for path params)
+	// resource_type: RequiresReplace
 	if attr, ok := s.Attributes["resource_type"].(schema.StringAttribute); ok {
-		attr.Required = true
-		attr.Optional = false
-		attr.Computed = false
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.RequiresReplace())
 		s.Attributes["resource_type"] = attr
 	}
 
-	// resource_id: make Required + RequiresReplace
+	// resource_id: RequiresReplace
 	if attr, ok := s.Attributes["resource_id"].(schema.StringAttribute); ok {
-		attr.Required = true
-		attr.Optional = false
-		attr.Computed = false
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.RequiresReplace())
 		s.Attributes["resource_id"] = attr
 	}
