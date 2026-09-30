@@ -16031,6 +16031,67 @@
 			}
 		},
 		{
+			"name": "role",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The unique ID of the role."
+						}
+					},
+					{
+						"name": "child_tenant_eligible",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the owning tenant made this role available as a child tenant role."
+						}
+					},
+					{
+						"name": "customer",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The customer ID if this is a custom role. An empty string for a preset role."
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The description of the role. An empty string when no description is set."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The name of the role."
+						}
+					},
+					{
+						"name": "permissions",
+						"list": {
+							"computed_optional_required": "computed",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Permission IDs in stored order. An empty array when no permissions are assigned."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The type of the role (preset or custom)."
+						}
+					}
+				],
+				"description": "Manage user permissions and access levels in your organization.",
+				"markdown_description": "Manage user permissions and access levels in your organization."
+			}
+		},
+		{
 			"name": "roles",
 			"schema": {
 				"attributes": [

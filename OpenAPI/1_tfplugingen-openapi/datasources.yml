@@ -65,6 +65,10 @@ data_sources:
     read:
       path: /analytics/v1/dimensions
       method: GET
+  role:
+    read:
+      path: /iam/v1/roles/{id}
+      method: GET
   roles:
     read:
       path: /iam/v1/roles
