@@ -48,8 +48,8 @@ Possible values: `Data Engineer / Data Analysts`, `Executive Team`, `Finance / A
 Possible values: `en`, `ja`
 - `last_name` (String) The last name of the user being invited.
 - `organization_id` (String) The ID of the organization to assign the user to.
-- `phone` (String) The user's country code (e.g., `+44`).
-- `phone_extension` (String) The user's phone extension.
+- `phone` (String) The user's country code (e.g., +44).
+- `phone_extension` (String) The user's phone extension (8-15 digits).
 - `role_id` (String) The ID of the role to assign to the user.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 

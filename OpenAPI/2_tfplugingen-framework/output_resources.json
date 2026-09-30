@@ -3746,6 +3746,89 @@
 						}
 					},
 					{
+						"name": "job_function",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"deprecation_message": "This attribute is deprecated.",
+							"description": "Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"Data Engineer / Data Analysts\",\n\"Executive Team\",\n\"Finance / Accounting\",\n\"Founder\",\n\"Legal / Purchasing\",\n\"Management\",\n\"Sales / Marketing\",\n\"Software / Ops Engineer\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "language",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The user's preferred language.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"en\",\n\"ja\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "phone",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The user's country code (e.g., +44).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\+[0-9]+$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "phone_extension",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The user's phone extension (8-15 digits).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9]{8,15}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
 						"name": "message",
 						"string": {
 							"computed_optional_required": "computed",
