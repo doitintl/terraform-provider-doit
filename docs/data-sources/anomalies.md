@@ -74,6 +74,7 @@ output "anomaly_summary" {
     entity_name           = a.entity_name
     provider_display_name = a.provider_display_name
     linked_anomalies      = a.linked_anomalies
+    allocations           = a.allocations
     status                = a.status
     deactivation_reason   = a.deactivation_reason
   }]
@@ -323,7 +324,8 @@ Read-Only:
 - `acknowledged_at` (String) When the anomaly was first acknowledged
 - `acknowledged_by` (String) Email of the user who first acknowledged the anomaly
 - `actual_cost` (Number) Observed (actual) cost of the anomaly.
-- `attribution` (String) Attribution ID.
+- `allocations` (Attributes List) Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list. (see [below for nested schema](#nestedatt--anomalies--allocations))
+- `attribution` (String, Deprecated) Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
 - `billing_account` (String) Billing account ID.
 - `cost_of_anomaly` (Number) Excess cost over and above the expected normal cost.
 - `deactivation_reason` (String) Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
@@ -345,6 +347,15 @@ Read-Only:
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly
 - `top3skus` (Attributes List) Array of SKU entries contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--top3skus))
+
+<a id="nestedatt--anomalies--allocations"></a>
+### Nested Schema for `anomalies.allocations`
+
+Read-Only:
+
+- `id` (String) Allocation ID. Use it with the Allocations API to read the allocation.
+- `name` (String) Allocation name.
+
 
 <a id="nestedatt--anomalies--notifications"></a>
 ### Nested Schema for `anomalies.notifications`

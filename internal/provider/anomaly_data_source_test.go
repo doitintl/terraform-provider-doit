@@ -33,6 +33,7 @@ func TestAccAnomalyDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "acknowledged"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "notifications.#"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "linked_anomalies.#"),
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "allocations.#"),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -398,6 +399,53 @@ data "doit_anomaly" "test" {
 
 output "linked_anomalies" {
   value = data.doit_anomaly.test.linked_anomalies
+}
+`, id)
+}
+
+// TestAccAnomalyDataSource_Allocations verifies that the allocations
+// attribute is accessible on anomaly and produces an empty plan on drift check.
+func TestAccAnomalyDataSource_Allocations(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	config := testAccAnomalyDataSourceAllocationsConfig(anomalyID)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "allocations.#"),
+				),
+			},
+			// Drift verification
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceAllocationsConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "anomaly_allocations" {
+  value = data.doit_anomaly.test.allocations
 }
 `, id)
 }

@@ -5114,7 +5114,11 @@ type AnomalyItem struct {
 	// ActualCost Observed (actual) cost of the anomaly.
 	ActualCost nullable.Nullable[float64] `json:"actualCost,omitempty"`
 
-	// Attribution Attribution ID.
+	// Allocations Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+	Allocations []AnomalyItemAllocationsItem `json:"allocations"`
+
+	// Attribution Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Attribution string `json:"attribution"`
 
 	// BillingAccount Billing account ID.
@@ -5185,6 +5189,15 @@ type AnomalyItemMonitorLevel string
 
 // AnomalyItemStatus defines model for AnomalyItem.Status.
 type AnomalyItemStatus string
+
+// AnomalyItemAllocationsItem defines model for AnomalyItemAllocationsItem.
+type AnomalyItemAllocationsItem struct {
+	// Id Allocation ID. Use it with the Allocations API to read the allocation.
+	Id string `json:"id"`
+
+	// Name Allocation name.
+	Name string `json:"name"`
+}
 
 // AnomalyResource Resource-specific contribution to an anomaly.
 type AnomalyResource struct {
@@ -8794,7 +8807,11 @@ type GetAnomaly200Response struct {
 	// ActualCost Observed (actual) cost of the anomaly.
 	ActualCost nullable.Nullable[float64] `json:"actualCost,omitempty"`
 
-	// Attribution Attribution ID
+	// Allocations Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+	Allocations []GetAnomaly200ResponseAllocationsItem `json:"allocations"`
+
+	// Attribution Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Attribution string `json:"attribution"`
 
 	// BillingAccount Billing account ID
@@ -8864,6 +8881,15 @@ type GetAnomaly200ResponseMonitorLevel string
 
 // GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
 type GetAnomaly200ResponseStatus string
+
+// GetAnomaly200ResponseAllocationsItem defines model for GetAnomaly200ResponseAllocationsItem.
+type GetAnomaly200ResponseAllocationsItem struct {
+	// Id Allocation ID. Use it with the Allocations API to read the allocation.
+	Id string `json:"id"`
+
+	// Name Allocation name.
+	Name string `json:"name"`
+}
 
 // GetAnomalyExplanation200Response defines model for GetAnomalyExplanation200Response.
 type GetAnomalyExplanation200Response struct {

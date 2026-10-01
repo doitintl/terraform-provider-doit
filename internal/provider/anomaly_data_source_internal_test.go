@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_anomaly"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -19,7 +20,8 @@ import (
 func readAnomalyHelper(t *testing.T, server *httptest.Server, overrides map[string]tftypes.Value) (anomalyDataSourceModel, tfsdk.State, diag.Diagnostics) {
 	t.Helper()
 
-	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
+	httpClient := server.Client()
+	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(httpClient))
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -105,6 +107,9 @@ func TestAnomalyDataSource_UnknownID(t *testing.T) {
 	}
 	if !data.LinkedAnomalies.IsUnknown() {
 		t.Errorf("expected LinkedAnomalies to be unknown, got %v", data.LinkedAnomalies)
+	}
+	if !data.Allocations.IsUnknown() {
+		t.Errorf("expected Allocations to be unknown, got %v", data.Allocations)
 	}
 }
 
@@ -328,6 +333,138 @@ func TestAnomalyDataSource_LinkedAnomalies(t *testing.T) {
 			for i, want := range tc.wantLinkedElements {
 				if i < len(gotElements) && gotElements[i] != want {
 					t.Errorf("LinkedAnomalies[%d] = %q, want %q", i, gotElements[i], want)
+				}
+			}
+		})
+	}
+}
+
+func TestAnomalyDataSource_AllocationsMapping(t *testing.T) {
+	t.Parallel()
+
+	type expectedAlloc struct {
+		id   string
+		name string
+	}
+
+	testCases := []struct {
+		name            string
+		responseJSON    string
+		wantAllocations []expectedAlloc
+	}{
+		{
+			name: "populated allocations (multiple, primary first)",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"allocations": [
+					{"id": "alloc-prod-eks", "name": "Production EKS"},
+					{"id": "alloc-shared-db", "name": "Shared DB"}
+				]
+			}`,
+			wantAllocations: []expectedAlloc{
+				{id: "alloc-prod-eks", name: "Production EKS"},
+				{id: "alloc-shared-db", name: "Shared DB"},
+			},
+		},
+		{
+			name: "single allocation",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"allocations": [
+					{"id": "alloc-single", "name": "Single Allocation"}
+				]
+			}`,
+			wantAllocations: []expectedAlloc{
+				{id: "alloc-single", name: "Single Allocation"},
+			},
+		},
+		{
+			name: "empty allocations",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"allocations": []
+			}`,
+			wantAllocations: []expectedAlloc{},
+		},
+		{
+			name: "omitted allocations",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day"
+			}`,
+			wantAllocations: []expectedAlloc{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprint(w, tc.responseJSON)
+			}))
+
+			overrides := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
+			}
+
+			data, _, diags := readAnomalyHelper(t, server, overrides)
+			if diags.HasError() {
+				t.Fatalf("Read() returned unexpected diagnostics: %v", diags)
+			}
+
+			if data.Allocations.IsNull() {
+				t.Fatal("expected Allocations not to be null (computed list convention)")
+			}
+			if data.Allocations.IsUnknown() {
+				t.Fatal("expected Allocations not to be unknown")
+			}
+
+			var gotElements []datasource_anomaly.AllocationsValue
+			d := data.Allocations.ElementsAs(t.Context(), &gotElements, false)
+			if d.HasError() {
+				t.Fatalf("ElementsAs() returned diagnostics: %v", d)
+			}
+
+			if len(gotElements) != len(tc.wantAllocations) {
+				t.Fatalf("len(Allocations) = %d, want %d", len(gotElements), len(tc.wantAllocations))
+			}
+
+			for i, want := range tc.wantAllocations {
+				if gotElements[i].Id.ValueString() != want.id {
+					t.Errorf("Allocations[%d].id = %q, want %q", i, gotElements[i].Id.ValueString(), want.id)
+				}
+				if gotElements[i].Name.ValueString() != want.name {
+					t.Errorf("Allocations[%d].name = %q, want %q", i, gotElements[i].Name.ValueString(), want.name)
 				}
 			}
 		})

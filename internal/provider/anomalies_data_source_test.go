@@ -29,6 +29,7 @@ func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "page_token"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.notifications.#"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.allocations.#"),
 					resource.TestMatchResourceAttr("data.doit_anomalies.limited", "anomalies.0.monitor_level", regexp.MustCompile(`^(service|sku)$`)),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "total_count"),
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "total_count_exact", "true"),
@@ -827,6 +828,46 @@ data "doit_anomalies" "linked_test" {
 
 output "anomaly_linked_anomalies" {
   value = [for a in data.doit_anomalies.linked_test.anomalies : a.linked_anomalies]
+}
+`
+}
+
+// TestAccAnomaliesDataSource_Allocations verifies that the allocations
+// attribute is accessible on anomalies list items and produces an empty plan on drift check.
+func TestAccAnomaliesDataSource_Allocations(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceAllocationsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.alloc_test", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.alloc_test", "anomalies.0.allocations.#"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceAllocationsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceAllocationsConfig() string {
+	return `
+data "doit_anomalies" "alloc_test" {
+  max_results = 1
+}
+
+output "anomaly_allocations" {
+  value = [for a in data.doit_anomalies.alloc_test.anomalies : a.allocations]
 }
 `
 }
