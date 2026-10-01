@@ -1504,6 +1504,24 @@ func (e CreateLabelRequestColor) Valid() bool {
 	}
 }
 
+// Defines values for CreateServiceAccountTokenResponseState.
+const (
+	CreateServiceAccountTokenResponseStateActive   CreateServiceAccountTokenResponseState = "active"
+	CreateServiceAccountTokenResponseStateDisabled CreateServiceAccountTokenResponseState = "disabled"
+)
+
+// Valid indicates whether the value is a known member of the CreateServiceAccountTokenResponseState enum.
+func (e CreateServiceAccountTokenResponseState) Valid() bool {
+	switch e {
+	case CreateServiceAccountTokenResponseStateActive:
+		return true
+	case CreateServiceAccountTokenResponseStateDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Currency.
 const (
 	CurrencyAED Currency = "AED"
@@ -3271,6 +3289,24 @@ func (e SchemaFieldUnit) Valid() bool {
 	}
 }
 
+// Defines values for ServiceAccountTokenState.
+const (
+	ServiceAccountTokenStateActive   ServiceAccountTokenState = "active"
+	ServiceAccountTokenStateDisabled ServiceAccountTokenState = "disabled"
+)
+
+// Valid indicates whether the value is a known member of the ServiceAccountTokenState enum.
+func (e ServiceAccountTokenState) Valid() bool {
+	switch e {
+	case ServiceAccountTokenStateActive:
+		return true
+	case ServiceAccountTokenStateDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ServiceQuotaCloudProvider.
 const (
 	ServiceQuotaCloudProviderAws ServiceQuotaCloudProvider = "aws"
@@ -3601,6 +3637,24 @@ func (e UpdateResourcePermissionRequestBodyPublic) Valid() bool {
 	case UpdateResourcePermissionRequestBodyPublicEditor:
 		return true
 	case UpdateResourcePermissionRequestBodyPublicViewer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateServiceAccountTokenRequestState.
+const (
+	UpdateServiceAccountTokenRequestStateActive   UpdateServiceAccountTokenRequestState = "active"
+	UpdateServiceAccountTokenRequestStateDisabled UpdateServiceAccountTokenRequestState = "disabled"
+)
+
+// Valid indicates whether the value is a known member of the UpdateServiceAccountTokenRequestState enum.
+func (e UpdateServiceAccountTokenRequestState) Valid() bool {
+	switch e {
+	case UpdateServiceAccountTokenRequestStateActive:
+		return true
+	case UpdateServiceAccountTokenRequestStateDisabled:
 		return true
 	default:
 		return false
@@ -7403,6 +7457,72 @@ type CreateServiceAccountRequest struct {
 	Permissions *[]string `json:"permissions,omitempty"`
 }
 
+// CreateServiceAccountTokenRequest Fields of a new API token.
+type CreateServiceAccountTokenRequest struct {
+	// ExpiresTime When the token should stop authenticating. Omit to let the server set the default expiry.
+	//
+	// Example: 2027-09-01T08:00:00Z
+	ExpiresTime *time.Time `json:"expiresTime,omitempty"`
+
+	// Name Name, unique among the service account's tokens. Leading or trailing whitespace returns `400`.
+	//
+	// Example: ci-pipeline-prod
+	Name string `json:"name"`
+}
+
+// CreateServiceAccountTokenResponse A newly created API token, together with the credential that authenticates as it.
+type CreateServiceAccountTokenResponse struct {
+	// AccessToken The token credential, and the secret that authenticates as this service account. Returned only by this operation and never retrievable again, so store it somewhere safe on receipt; an empty string on a dry-run create. Treat it like a password.
+	//
+	// Example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+	AccessToken *string `json:"accessToken,omitempty"`
+
+	// CreateTime When the token was created. `null` only on a dry-run create.
+	//
+	// Example: 2026-09-01T08:00:00Z
+	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
+
+	// CustomerId ID of the customer whose service account the token belongs to.
+	//
+	// Example: Kp2mN8qL4vR0sT1wX3yZ
+	CustomerId *string `json:"customerId,omitempty"`
+
+	// ExpiresTime When the token stops authenticating. `null` when it does not expire.
+	//
+	// Example: 2027-09-01T08:00:00Z
+	ExpiresTime nullable.Nullable[time.Time] `json:"expiresTime"`
+
+	// Id API token ID. `null` only on a dry-run create.
+	//
+	// Example: Mr0sN7pQ4tU2vW5xY8zC
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// LastUsedTime When the token last authenticated a request. `null` until it is first used.
+	//
+	// Example: 2026-09-20T14:31:00Z
+	LastUsedTime nullable.Nullable[time.Time] `json:"lastUsedTime,omitempty"`
+
+	// Name Name, unique among the service account's tokens.
+	//
+	// Example: ci-pipeline-prod
+	Name string `json:"name"`
+
+	// ServiceAccountId ID of the service account that owns the token.
+	//
+	// Example: Lq3nO9rM5wS2tU0xY4zA
+	ServiceAccountId *string `json:"serviceAccountId,omitempty"`
+
+	// State The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+	//
+	// Example: active
+	State CreateServiceAccountTokenResponseState `json:"state"`
+}
+
+// CreateServiceAccountTokenResponseState The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+//
+// Example: active
+type CreateServiceAccountTokenResponseState string
+
 // Currency Currency code for monetary values.
 type Currency string
 
@@ -9929,6 +10049,54 @@ type ServiceAccount struct {
 	UpdateTime nullable.Nullable[time.Time] `json:"updateTime,omitempty"`
 }
 
+// ServiceAccountToken An API token of a service account. It authenticates with the service account's permissions, and carries no secret material after the create response.
+type ServiceAccountToken struct {
+	// CreateTime When the token was created. `null` only on a dry-run create.
+	//
+	// Example: 2026-09-01T08:00:00Z
+	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
+
+	// CustomerId ID of the customer whose service account the token belongs to.
+	//
+	// Example: Kp2mN8qL4vR0sT1wX3yZ
+	CustomerId *string `json:"customerId,omitempty"`
+
+	// ExpiresTime When the token stops authenticating. `null` when it does not expire.
+	//
+	// Example: 2027-09-01T08:00:00Z
+	ExpiresTime nullable.Nullable[time.Time] `json:"expiresTime"`
+
+	// Id API token ID. `null` only on a dry-run create.
+	//
+	// Example: Mr0sN7pQ4tU2vW5xY8zC
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// LastUsedTime When the token last authenticated a request. `null` until it is first used.
+	//
+	// Example: 2026-09-20T14:31:00Z
+	LastUsedTime nullable.Nullable[time.Time] `json:"lastUsedTime,omitempty"`
+
+	// Name Name, unique among the service account's tokens.
+	//
+	// Example: ci-pipeline-prod
+	Name string `json:"name"`
+
+	// ServiceAccountId ID of the service account that owns the token.
+	//
+	// Example: Lq3nO9rM5wS2tU0xY4zA
+	ServiceAccountId *string `json:"serviceAccountId,omitempty"`
+
+	// State The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+	//
+	// Example: active
+	State ServiceAccountTokenState `json:"state"`
+}
+
+// ServiceAccountTokenState The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+//
+// Example: active
+type ServiceAccountTokenState string
+
 // ServiceAccountsResponse Service accounts owned by the authenticated customer.
 type ServiceAccountsResponse struct {
 	Items []ServiceAccount `json:"items"`
@@ -10536,6 +10704,19 @@ type UpdateServiceAccountRequest struct {
 	Permissions nullable.Nullable[[]string] `json:"permissions,omitempty"`
 }
 
+// UpdateServiceAccountTokenRequest The state to move an API token to.
+type UpdateServiceAccountTokenRequest struct {
+	// State `active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`.
+	//
+	// Example: disabled
+	State UpdateServiceAccountTokenRequestState `json:"state"`
+}
+
+// UpdateServiceAccountTokenRequestState `active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`.
+//
+// Example: disabled
+type UpdateServiceAccountTokenRequestState string
+
 // UpdateUserRequest Fields allowed when updating an existing user.
 type UpdateUserRequest struct {
 	// FirstName The user's first name.
@@ -10869,6 +11050,12 @@ type ResourceType string
 
 // ServiceAccountId defines model for serviceAccountId.
 type ServiceAccountId = string
+
+// ServiceAccountTokenId defines model for serviceAccountTokenId.
+type ServiceAccountTokenId = string
+
+// ServiceAccountTokenParentId defines model for serviceAccountTokenParentId.
+type ServiceAccountTokenParentId = string
 
 // SortOrder defines model for sortOrder.
 type SortOrder string
@@ -11536,6 +11723,33 @@ type UpdateServiceAccountParams struct {
 	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
 }
 
+// CreateServiceAccountTokenParams defines parameters for CreateServiceAccountToken.
+type CreateServiceAccountTokenParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteServiceAccountTokenParams defines parameters for DeleteServiceAccountToken.
+type DeleteServiceAccountTokenParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// UpdateServiceAccountTokenParams defines parameters for UpdateServiceAccountToken.
+type UpdateServiceAccountTokenParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
 	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
@@ -11934,6 +12148,12 @@ type CreateServiceAccountJSONRequestBody = CreateServiceAccountRequest
 
 // UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody defines body for UpdateServiceAccount for application/merge-patch+json ContentType.
 type UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody = UpdateServiceAccountRequest
+
+// CreateServiceAccountTokenJSONRequestBody defines body for CreateServiceAccountToken for application/json ContentType.
+type CreateServiceAccountTokenJSONRequestBody = CreateServiceAccountTokenRequest
+
+// UpdateServiceAccountTokenJSONRequestBody defines body for UpdateServiceAccountToken for application/json ContentType.
+type UpdateServiceAccountTokenJSONRequestBody = UpdateServiceAccountTokenRequest
 
 // InviteUserJSONRequestBody defines body for InviteUser for application/json ContentType.
 type InviteUserJSONRequestBody = InviteUserRequest
@@ -13612,7 +13832,7 @@ type ClientInterface interface {
 
 	// CreateServiceAccountWithBody Create a service account
 	//
-	// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -13621,7 +13841,7 @@ type ClientInterface interface {
 
 	// CreateServiceAccount Create a service account
 	//
-	// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -13659,6 +13879,94 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
 	UpdateServiceAccountWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateServiceAccountTokenWithBody Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateServiceAccountToken Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteServiceAccountToken Delete an API token
+	//
+	// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+	//
+	// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+	DeleteServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetServiceAccountToken Get an API token
+	//
+	// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+	GetServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateServiceAccountTokenWithBody Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateServiceAccountToken Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListUsers List users
 	//
@@ -16600,7 +16908,7 @@ func (c *Client) ListServiceAccounts(ctx context.Context, reqEditors ...RequestE
 
 // CreateServiceAccountWithBody Create a service account
 //
-// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 //
 // Takes any type of body and a specified content type.
 //
@@ -16619,7 +16927,7 @@ func (c *Client) CreateServiceAccountWithBody(ctx context.Context, params *Creat
 
 // CreateServiceAccount Create a service account
 //
-// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -16698,6 +17006,154 @@ func (c *Client) UpdateServiceAccountWithBody(ctx context.Context, id ServiceAcc
 // Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
 func (c *Client) UpdateServiceAccountWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateServiceAccountRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateServiceAccountTokenWithBody Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *Client) CreateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateServiceAccountTokenRequestWithBody(c.Server, serviceAccountId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateServiceAccountToken Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *Client) CreateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateServiceAccountTokenRequest(c.Server, serviceAccountId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteServiceAccountToken Delete an API token
+//
+// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+//
+// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+func (c *Client) DeleteServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteServiceAccountTokenRequest(c.Server, serviceAccountId, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetServiceAccountToken Get an API token
+//
+// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+func (c *Client) GetServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetServiceAccountTokenRequest(c.Server, serviceAccountId, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateServiceAccountTokenWithBody Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *Client) UpdateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateServiceAccountTokenRequestWithBody(c.Server, serviceAccountId, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateServiceAccountToken Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *Client) UpdateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateServiceAccountTokenRequest(c.Server, serviceAccountId, id, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -23182,6 +23638,309 @@ func NewUpdateServiceAccountRequestWithBody(server string, id ServiceAccountId, 
 	return req, nil
 }
 
+// NewCreateServiceAccountTokenRequest calls the generic CreateServiceAccountToken builder with application/json body
+func NewCreateServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateServiceAccountTokenRequestWithBody(server, serviceAccountId, params, "application/json", bodyReader)
+}
+
+// NewCreateServiceAccountTokenRequestWithBody constructs an http.Request for the CreateServiceAccountToken method, with any body, and a specified content type
+func NewCreateServiceAccountTokenRequestWithBody(server string, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteServiceAccountTokenRequest constructs an http.Request for the DeleteServiceAccountToken method
+func NewDeleteServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetServiceAccountTokenRequest constructs an http.Request for the GetServiceAccountToken method
+func NewGetServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateServiceAccountTokenRequest calls the generic UpdateServiceAccountToken builder with application/json body
+func NewUpdateServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateServiceAccountTokenRequestWithBody(server, serviceAccountId, id, params, "application/json", bodyReader)
+}
+
+// NewUpdateServiceAccountTokenRequestWithBody constructs an http.Request for the UpdateServiceAccountToken method, with any body, and a specified content type
+func NewUpdateServiceAccountTokenRequestWithBody(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
 // NewListUsersRequest constructs an http.Request for the ListUsers method
 func NewListUsersRequest(server string, params *ListUsersParams) (*http.Request, error) {
 	var err error
@@ -26230,7 +26989,7 @@ type ClientWithResponsesInterface interface {
 
 	// CreateServiceAccountWithBodyWithResponse Create a service account
 	//
-	// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -26239,7 +26998,7 @@ type ClientWithResponsesInterface interface {
 
 	// CreateServiceAccountWithResponse Create a service account
 	//
-	// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -26281,6 +27040,98 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
 	UpdateServiceAccountWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountResp, error)
+
+	// CreateServiceAccountTokenWithBodyWithResponse Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error)
+
+	// CreateServiceAccountTokenWithResponse Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error)
+
+	// DeleteServiceAccountTokenWithResponse Delete an API token
+	//
+	// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+	DeleteServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*DeleteServiceAccountTokenResp, error)
+
+	// GetServiceAccountTokenWithResponse Get an API token
+	//
+	// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+	GetServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*GetServiceAccountTokenResp, error)
+
+	// UpdateServiceAccountTokenWithBodyWithResponse Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error)
+
+	// UpdateServiceAccountTokenWithResponse Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error)
 
 	// ListUsersWithResponse List users
 	//
@@ -34727,6 +35578,464 @@ func (r UpdateServiceAccountResp) ContentType() string {
 	return ""
 }
 
+// CreateServiceAccountTokenResp200Headers the declared response headers of an HTTP 200 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp200Headers struct {
+	XDryRun *string
+}
+
+// CreateServiceAccountTokenResp201Headers the declared response headers of an HTTP 201 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp201Headers struct {
+	Location *string
+}
+
+// CreateServiceAccountTokenResp400Headers the declared response headers of an HTTP 400 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp409Headers the declared response headers of an HTTP 409 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp422Headers the declared response headers of an HTTP 422 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type CreateServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CreateServiceAccountTokenResponse
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *CreateServiceAccountTokenResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateServiceAccountTokenResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateServiceAccountTokenResp201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateServiceAccountTokenResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *CreateServiceAccountTokenResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateServiceAccountTokenResp409Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateServiceAccountTokenResp422Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateServiceAccountTokenResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON200() *CreateServiceAccountTokenResponse {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON201() *CreateServiceAccountTokenResponse {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateServiceAccountTokenResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteServiceAccountTokenResp204Headers the declared response headers of an HTTP 204 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp204Headers struct {
+	XDryRun *string
+}
+
+// DeleteServiceAccountTokenResp400Headers the declared response headers of an HTTP 400 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type DeleteServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteServiceAccountTokenResp204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteServiceAccountTokenResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteServiceAccountTokenResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DeleteServiceAccountTokenResp500Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteServiceAccountTokenResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DeleteServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r DeleteServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DeleteServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteServiceAccountTokenResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for GetServiceAccountToken
+type GetServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for GetServiceAccountToken
+type GetServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountToken
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetServiceAccountTokenResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetServiceAccountTokenResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetServiceAccountTokenResp) GetJSON200() *ServiceAccountToken {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetServiceAccountTokenResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateServiceAccountTokenResp200Headers the declared response headers of an HTTP 200 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp200Headers struct {
+	XDryRun *string
+}
+
+// UpdateServiceAccountTokenResp400Headers the declared response headers of an HTTP 400 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountTokenResp422Headers the declared response headers of an HTTP 422 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type UpdateServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountToken
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateServiceAccountTokenResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateServiceAccountTokenResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateServiceAccountTokenResp404Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateServiceAccountTokenResp422Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateServiceAccountTokenResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateServiceAccountTokenResp) GetJSON200() *ServiceAccountToken {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r UpdateServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateServiceAccountTokenResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListUsersResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -39571,7 +40880,7 @@ func (c *ClientWithResponses) ListServiceAccountsWithResponse(ctx context.Contex
 
 // CreateServiceAccountWithBodyWithResponse Create a service account
 //
-// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -39586,7 +40895,7 @@ func (c *ClientWithResponses) CreateServiceAccountWithBodyWithResponse(ctx conte
 
 // CreateServiceAccountWithResponse Create a service account
 //
-// Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -39657,6 +40966,134 @@ func (c *ClientWithResponses) UpdateServiceAccountWithApplicationMergePatchPlusJ
 		return nil, err
 	}
 	return ParseUpdateServiceAccountResp(rsp)
+}
+
+// CreateServiceAccountTokenWithBodyWithResponse Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *ClientWithResponses) CreateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error) {
+	rsp, err := c.CreateServiceAccountTokenWithBody(ctx, serviceAccountId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateServiceAccountTokenResp(rsp)
+}
+
+// CreateServiceAccountTokenWithResponse Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *ClientWithResponses) CreateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error) {
+	rsp, err := c.CreateServiceAccountToken(ctx, serviceAccountId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateServiceAccountTokenResp(rsp)
+}
+
+// DeleteServiceAccountTokenWithResponse Delete an API token
+//
+// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+func (c *ClientWithResponses) DeleteServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*DeleteServiceAccountTokenResp, error) {
+	rsp, err := c.DeleteServiceAccountToken(ctx, serviceAccountId, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteServiceAccountTokenResp(rsp)
+}
+
+// GetServiceAccountTokenWithResponse Get an API token
+//
+// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+func (c *ClientWithResponses) GetServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*GetServiceAccountTokenResp, error) {
+	rsp, err := c.GetServiceAccountToken(ctx, serviceAccountId, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetServiceAccountTokenResp(rsp)
+}
+
+// UpdateServiceAccountTokenWithBodyWithResponse Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *ClientWithResponses) UpdateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error) {
+	rsp, err := c.UpdateServiceAccountTokenWithBody(ctx, serviceAccountId, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateServiceAccountTokenResp(rsp)
+}
+
+// UpdateServiceAccountTokenWithResponse Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *ClientWithResponses) UpdateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error) {
+	rsp, err := c.UpdateServiceAccountToken(ctx, serviceAccountId, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateServiceAccountTokenResp(rsp)
 }
 
 // ListUsersWithResponse List users
@@ -47255,6 +48692,557 @@ func ParseUpdateServiceAccountResp(rsp *http.Response) (*UpdateServiceAccountRes
 		response.Headers428 = &headers
 	case rsp.StatusCode == 500:
 		var headers UpdateServiceAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateServiceAccountTokenResp parses an HTTP response from a CreateServiceAccountTokenWithResponse call
+func ParseCreateServiceAccountTokenResp(rsp *http.Response) (*CreateServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CreateServiceAccountTokenResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CreateServiceAccountTokenResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateServiceAccountTokenResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateServiceAccountTokenResp201Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateServiceAccountTokenResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers CreateServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateServiceAccountTokenResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateServiceAccountTokenResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateServiceAccountTokenResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteServiceAccountTokenResp parses an HTTP response from a DeleteServiceAccountTokenWithResponse call
+func ParseDeleteServiceAccountTokenResp(rsp *http.Response) (*DeleteServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteServiceAccountTokenResp204Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteServiceAccountTokenResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers DeleteServiceAccountTokenResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetServiceAccountTokenResp parses an HTTP response from a GetServiceAccountTokenWithResponse call
+func ParseGetServiceAccountTokenResp(rsp *http.Response) (*GetServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountToken
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 404:
+		var headers GetServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetServiceAccountTokenResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateServiceAccountTokenResp parses an HTTP response from a UpdateServiceAccountTokenWithResponse call
+func ParseUpdateServiceAccountTokenResp(rsp *http.Response) (*UpdateServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountToken
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateServiceAccountTokenResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateServiceAccountTokenResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateServiceAccountTokenResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateServiceAccountTokenResp500Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

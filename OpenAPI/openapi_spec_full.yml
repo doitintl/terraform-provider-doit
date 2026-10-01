@@ -6330,7 +6330,7 @@ paths:
       tags:
         - Service Accounts
       summary: Create a service account
-      description: Creates a service account owned by the authenticated customer. API tokens for the service account are managed separately in the DoiT console. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+      description: Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
       operationId: createServiceAccount
       parameters:
         - $ref: "#/components/parameters/idempotencyKeyRequired"
@@ -6537,6 +6537,244 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
         "428":
           $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/service-accounts/{serviceAccountId}/api-tokens:
+    parameters:
+      - $ref: "#/components/parameters/serviceAccountTokenParentId"
+    get:
+      tags:
+        - Service Accounts
+      summary: List API tokens for a service account
+      description: Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+      operationId: listServiceAccountTokens
+      responses:
+        "200":
+          description: OK - API tokens returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountTokensResponse"
+              example:
+                items:
+                  - id: Mr0sN7pQ4tU2vW5xY8zC
+                    serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                    customerId: Kp2mN8qL4vR0sT1wX3yZ
+                    name: ci-pipeline-prod
+                    state: active
+                    createTime: "2026-09-01T08:00:00Z"
+                    expiresTime: "2027-09-01T08:00:00Z"
+                    lastUsedTime: "2026-09-20T14:31:00Z"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Service Accounts
+      summary: Create an API token for a service account
+      description: |
+        Mints an API token for the service account and returns its `accessToken` once. The token
+        inherits the service account's permissions as they stand at creation; there is no per-token
+        scoping. Returns `409` when the service account already has a token of the same name, and
+        `422` at the cap of 10 tokens.
+
+        `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+        It does **not** verify that the service account exists, that the name is unused, or that the
+        account is under the token cap, so a dry run can succeed where the real create then returns
+        `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+      operationId: createServiceAccountToken
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The API token to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceAccountTokenRequest"
+            example:
+              name: ci-pipeline-prod
+              expiresTime: "2027-09-01T08:00:00Z"
+      responses:
+        "200":
+          description: OK - Dry run only (`dryRun=true`). The name passed its bounds check and nothing was created; `id` and `createTime` are `null` and `accessToken` is an empty string. Not a guarantee that a real create would succeed — see the operation description.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateServiceAccountTokenResponse"
+              example:
+                id: null
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: active
+                createTime: null
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: null
+                accessToken: ""
+        "201":
+          description: Created - API token created. This is the only response that carries `accessToken`.
+          headers:
+            Location:
+              description: URL of the created API token.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateServiceAccountTokenResponse"
+              example:
+                id: Mr0sN7pQ4tU2vW5xY8zC
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: active
+                createTime: "2026-09-01T08:00:00Z"
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: null
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}:
+    parameters:
+      - $ref: "#/components/parameters/serviceAccountTokenParentId"
+      - $ref: "#/components/parameters/serviceAccountTokenId"
+    get:
+      tags:
+        - Service Accounts
+      summary: Get an API token
+      description: Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+      operationId: getServiceAccountToken
+      responses:
+        "200":
+          description: OK - API token returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountToken"
+              example:
+                id: Mr0sN7pQ4tU2vW5xY8zC
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: active
+                createTime: "2026-09-01T08:00:00Z"
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: "2026-09-20T14:31:00Z"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Service Accounts
+      summary: Enable or disable an API token
+      description: |
+        Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+        immediately: the token stops authenticating until it is re-enabled. Setting the state a
+        token already has succeeds and changes nothing.
+
+        The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+        but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+        created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+        the delete operation, and expires on its own.
+
+        With `dryRun=true` nothing is written and the response body is the token as it would look
+        after the change, so a `422` here means a real request would also be refused. Requires the
+        `serviceAccountManager` permission.
+      operationId: updateServiceAccountToken
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The state to move the token to.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceAccountTokenRequest"
+            example:
+              state: disabled
+      responses:
+        "200":
+          description: OK - API token state changed, or previewed when `dryRun=true`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountToken"
+              example:
+                id: Mr0sN7pQ4tU2vW5xY8zC
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: disabled
+                createTime: "2026-09-01T08:00:00Z"
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: "2026-09-20T14:31:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Service Accounts
+      summary: Delete an API token
+      description: Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+      operationId: deleteServiceAccountToken
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      responses:
+        "204":
+          description: No Content - API token deleted, or validated when `dryRun=true`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
   /support/v1/metadata/platforms:
@@ -12957,6 +13195,131 @@ components:
           description: Replaces the whole permission list. An unknown name returns `422`.
           items:
             type: string
+    ServiceAccountToken:
+      type: object
+      description: An API token of a service account. It authenticates with the service account's permissions, and carries no secret material after the create response.
+      required:
+        - id
+        - serviceAccountId
+        - customerId
+        - name
+        - state
+        - createTime
+        - expiresTime
+        - lastUsedTime
+      properties:
+        id:
+          type: string
+          nullable: true
+          readOnly: true
+          description: API token ID. `null` only on a dry-run create.
+          example: Mr0sN7pQ4tU2vW5xY8zC
+        serviceAccountId:
+          type: string
+          readOnly: true
+          description: ID of the service account that owns the token.
+          example: Lq3nO9rM5wS2tU0xY4zA
+        customerId:
+          type: string
+          readOnly: true
+          description: ID of the customer whose service account the token belongs to.
+          example: Kp2mN8qL4vR0sT1wX3yZ
+        name:
+          type: string
+          description: Name, unique among the service account's tokens.
+          example: ci-pipeline-prod
+        state:
+          type: string
+          enum:
+            - active
+            - disabled
+          description: "The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set."
+          example: active
+        createTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the token was created. `null` only on a dry-run create.
+          example: "2026-09-01T08:00:00Z"
+        expiresTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the token stops authenticating. `null` when it does not expire.
+          example: "2027-09-01T08:00:00Z"
+        lastUsedTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the token last authenticated a request. `null` until it is first used.
+          example: "2026-09-20T14:31:00Z"
+    ServiceAccountTokensResponse:
+      type: object
+      description: API tokens of a service account, at most 10.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          maxItems: 10
+          description: The service account's non-deleted API tokens.
+          items:
+            $ref: "#/components/schemas/ServiceAccountToken"
+          example:
+            - id: Mr0sN7pQ4tU2vW5xY8zC
+              serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+              customerId: Kp2mN8qL4vR0sT1wX3yZ
+              name: ci-pipeline-prod
+              state: active
+              createTime: "2026-09-01T08:00:00Z"
+              expiresTime: "2027-09-01T08:00:00Z"
+              lastUsedTime: "2026-09-20T14:31:00Z"
+    CreateServiceAccountTokenRequest:
+      type: object
+      description: Fields of a new API token.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name, unique among the service account's tokens. Leading or trailing whitespace returns `400`.
+          example: ci-pipeline-prod
+        expiresTime:
+          type: string
+          format: date-time
+          description: When the token should stop authenticating. Omit to let the server set the default expiry.
+          example: "2027-09-01T08:00:00Z"
+    CreateServiceAccountTokenResponse:
+      description: A newly created API token, together with the credential that authenticates as it.
+      allOf:
+        - $ref: "#/components/schemas/ServiceAccountToken"
+        - type: object
+          required:
+            - accessToken
+          properties:
+            accessToken:
+              type: string
+              format: password
+              readOnly: true
+              description: The token credential, and the secret that authenticates as this service account. Returned only by this operation and never retrievable again, so store it somewhere safe on receipt; an empty string on a dry-run create. Treat it like a password.
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+    UpdateServiceAccountTokenRequest:
+      type: object
+      description: The state to move an API token to.
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum:
+            - active
+            - disabled
+          description: "`active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`."
+          example: disabled
     CustomerGroupUser:
       type: object
       additionalProperties: false
@@ -24046,6 +24409,22 @@ components:
       in: path
       required: true
       description: Service account ID, as returned in the id field by the list and create operations.
+      schema:
+        type: string
+        minLength: 1
+    serviceAccountTokenId:
+      name: id
+      in: path
+      required: true
+      description: API token ID, as returned in the id field by the token list and create operations.
+      schema:
+        type: string
+        minLength: 1
+    serviceAccountTokenParentId:
+      name: serviceAccountId
+      in: path
+      required: true
+      description: ID of the service account that owns the token, as returned in the id field by the service account list and create operations.
       schema:
         type: string
         minLength: 1

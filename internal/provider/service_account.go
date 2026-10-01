@@ -48,6 +48,26 @@ func (r *serviceAccountResource) populateState(ctx context.Context, state *servi
 	return mapServiceAccountToModel(ctx, getResp.JSON200, state)
 }
 
+// canonicalServiceAccount re-reads the service account after a create or update.
+//
+// The create and update responses report update_time at nanosecond precision and
+// an ETag derived from it, but GET truncates update_time to microseconds and
+// returns a different ETag. Storing the write response's ETag makes the next
+// If-Match request (update or delete from that state) fail with 412 until a
+// refresh runs. The GET response is what Read would store, so use it; fall back
+// to the write response if the re-read fails.
+func (r *serviceAccountResource) canonicalServiceAccount(ctx context.Context, written *models.ServiceAccount) *models.ServiceAccount {
+	id := nullableToPointer(written.Id)
+	if id == nil {
+		return written
+	}
+	getResp, err := r.client.GetServiceAccountWithResponse(ctx, *id)
+	if err != nil || getResp.StatusCode() != 200 || getResp.JSON200 == nil {
+		return written
+	}
+	return getResp.JSON200
+}
+
 // mapServiceAccountToModel maps the API response to the Terraform model.
 func mapServiceAccountToModel(ctx context.Context, resp *models.ServiceAccount, state *serviceAccountResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics

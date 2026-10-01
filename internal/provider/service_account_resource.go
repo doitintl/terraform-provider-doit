@@ -159,7 +159,7 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 	}
 
 	// Plan-first state pattern: overlay Computed-only and resolved fields from API response.
-	resp.Diagnostics.Append(overlayServiceAccountComputedFields(ctx, createResp.JSON201, &plan)...)
+	resp.Diagnostics.Append(overlayServiceAccountComputedFields(ctx, r.canonicalServiceAccount(ctx, createResp.JSON201), &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -264,7 +264,7 @@ func (r *serviceAccountResource) Update(ctx context.Context, req resource.Update
 	}
 
 	// Plan-first state pattern: overlay Computed-only and resolved fields from API response.
-	resp.Diagnostics.Append(overlayServiceAccountComputedFields(ctx, updateResp.JSON200, &plan)...)
+	resp.Diagnostics.Append(overlayServiceAccountComputedFields(ctx, r.canonicalServiceAccount(ctx, updateResp.JSON200), &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -290,30 +290,30 @@ func (r *serviceAccountResource) Delete(ctx context.Context, req resource.Delete
 	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
 	defer cancel()
 
-	etag := state.Etag.ValueString()
-	if etag == "" {
-		// If state lacks ETag, fetch it from API
-		getResp, err := r.client.GetServiceAccountWithResponse(ctx, state.Id.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Deleting Service Account",
-				"Could not fetch service account to get ETag: "+err.Error(),
-			)
-			return
-		}
-		if getResp.StatusCode() == 404 {
-			return
-		}
-		if getResp.StatusCode() != 200 || getResp.JSON200 == nil {
-			resp.Diagnostics.AddError(
-				"Error Deleting Service Account",
-				fmt.Sprintf("Could not fetch service account to get ETag, status: %d, body: %s", getResp.StatusCode(), string(getResp.Body)),
-			)
-			return
-		}
-		if getResp.JSON200.Etag.IsSpecified() && !getResp.JSON200.Etag.IsNull() {
-			etag = getResp.JSON200.Etag.MustGet()
-		}
+	// Always send the current ETag instead of the one in state: it may predate an
+	// out-of-band change, or come from a create/update response (see
+	// canonicalServiceAccount), and a stale value fails the delete with 412.
+	etag := ""
+	getResp, err := r.client.GetServiceAccountWithResponse(ctx, state.Id.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting Service Account",
+			"Could not fetch service account to get ETag: "+err.Error(),
+		)
+		return
+	}
+	if getResp.StatusCode() == 404 {
+		return
+	}
+	if getResp.StatusCode() != 200 || getResp.JSON200 == nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting Service Account",
+			fmt.Sprintf("Could not fetch service account to get ETag, status: %d, body: %s", getResp.StatusCode(), string(getResp.Body)),
+		)
+		return
+	}
+	if getResp.JSON200.Etag.IsSpecified() && !getResp.JSON200.Etag.IsNull() {
+		etag = getResp.JSON200.Etag.MustGet()
 	}
 
 	params := &models.DeleteServiceAccountParams{

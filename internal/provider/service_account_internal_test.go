@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func TestMapServiceAccountToModel(t *testing.T) {
@@ -266,5 +269,91 @@ func TestServiceAccount_PopulateState_NotFound(t *testing.T) {
 	}
 	if !state.Id.IsNull() {
 		t.Errorf("expected state.Id to be set to null on 404, got '%s'", state.Id.ValueString())
+	}
+}
+
+// The create/update responses carry an ETag that GET never returns (nanosecond
+// vs microsecond updateTime). canonicalServiceAccount must hand back the GET
+// view so state holds an ETag the API accepts in If-Match.
+func TestServiceAccount_CanonicalServiceAccount(t *testing.T) {
+	written := &models.ServiceAccount{
+		Id:         valueToNullable("sa-1"),
+		Name:       "sa",
+		Etag:       valueToNullable("etag-from-write"),
+		UpdateTime: valueToNullable(time.Date(2026, 10, 1, 6, 45, 34, 626962627, time.UTC)),
+	}
+
+	t.Run("uses the GET response", func(t *testing.T) {
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"sa-1","name":"sa","etag":"etag-from-get","updateTime":"2026-10-01T06:45:34.626962Z","permissions":[]}`))
+		}))
+		res := &serviceAccountResource{client: newTestAPIClient(t, srv)}
+
+		got := res.canonicalServiceAccount(t.Context(), written)
+		if etag := nullableToPointer(got.Etag); etag == nil || *etag != "etag-from-get" {
+			t.Errorf("etag = %v, want etag-from-get", etag)
+		}
+	})
+
+	t.Run("falls back to the write response when GET fails", func(t *testing.T) {
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		res := &serviceAccountResource{client: newTestAPIClient(t, srv)}
+
+		if got := res.canonicalServiceAccount(t.Context(), written); got != written {
+			t.Errorf("expected the write response as fallback")
+		}
+	})
+}
+
+// Delete must send the live ETag, not the one in state, which may come from a
+// create/update response or predate an out-of-band change.
+func TestServiceAccountDelete_UsesFreshETag(t *testing.T) {
+	var deleteIfMatch string
+	srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"sa-1","name":"sa","etag":"fresh","permissions":[]}`))
+		case http.MethodDelete:
+			deleteIfMatch = r.Header.Get("If-Match")
+			if deleteIfMatch != "fresh" {
+				w.WriteHeader(http.StatusPreconditionFailed)
+				return
+			}
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}))
+	res := &serviceAccountResource{client: newTestAPIClient(t, srv)}
+
+	ctx := t.Context()
+	schemaResp := &resource.SchemaResponse{}
+	res.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+
+	stateValues := map[string]tftypes.Value{}
+	for name, attr := range schemaResp.Schema.Attributes {
+		stateValues[name] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+	}
+	stateValues["id"] = tftypes.NewValue(tftypes.String, "sa-1")
+	stateValues["etag"] = tftypes.NewValue(tftypes.String, "stale-from-state")
+
+	state := tfsdk.State{
+		Schema: schemaResp.Schema,
+		Raw: tftypes.NewValue(
+			tftypes.Object{AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes)},
+			stateValues,
+		),
+	}
+
+	deleteResp := &resource.DeleteResponse{}
+	res.Delete(ctx, resource.DeleteRequest{State: state}, deleteResp)
+
+	if deleteResp.Diagnostics.HasError() {
+		t.Fatalf("Delete() failed: %v", deleteResp.Diagnostics)
+	}
+	if deleteIfMatch != "fresh" {
+		t.Errorf("If-Match = %q, want the ETag from GET", deleteIfMatch)
 	}
 }
