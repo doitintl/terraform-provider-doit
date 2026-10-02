@@ -224,10 +224,10 @@ func TestAccServiceAccountToken_Import(t *testing.T) {
 }
 
 // A malformed import ID must fail with a clear error. The failed import step
-// leaves the state of step 1 untouched, so the post-test destroy runs against
-// the create-time state: it is also a regression test that deleting the service
-// account works with the ETag the provider stored after create (the create
-// response's ETag differs from what GET returns).
+// leaves the state of step 1 untouched, so the post-test destroy deletes the
+// service account using the ETag the API returned from create. That is a
+// regression test for create responses returning an ETag that GET does not
+// (CMP-53578), which made the delete fail with 412.
 func TestAccServiceAccountToken_ImportInvalidID(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-sat-badimp")
 
