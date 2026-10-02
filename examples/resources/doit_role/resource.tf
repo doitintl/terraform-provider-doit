@@ -19,3 +19,19 @@ resource "doit_role" "finops_analyst" {
   description = "Read-only access to the DoiT Console"
   permissions = local.view_only_permissions
 }
+
+# Create a role that combines the permissions of two preset roles
+locals {
+  preset_permissions = {
+    for r in data.doit_roles.all.roles : r.name => r.permissions if r.type == "preset"
+  }
+}
+
+resource "doit_role" "finops_reviewer" {
+  name        = "FinOps Reviewer"
+  description = "View Only plus everything a Finance User can see"
+  permissions = sort(distinct(concat(
+    local.preset_permissions["View Only"],
+    local.preset_permissions["Finance User"],
+  )))
+}

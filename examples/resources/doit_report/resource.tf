@@ -342,3 +342,55 @@ resource "doit_report" "multi_cloud_costs" {
     currency = "USD"
   }
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Forecast report with a custom theme
+# ─────────────────────────────────────────────────────────────────────────────
+# forecast_settings projects future spend from historical data.
+# display_settings.theme_id applies a custom theme to the chart, including
+# in PDF and PNG exports (see doit_report_result).
+# sort_dimensions = "a_to_z" keeps the months in chronological order in
+# rendered exports.
+
+resource "doit_custom_theme" "brand" {
+  name          = "Brand"
+  primary_color = "#1A73E8"
+  colors = {
+    light = ["#1A73E8", "#34A853", "#FBBC04", "#EA4335", "#A142F4", "#24C1E0"]
+    dark  = ["#8AB4F8", "#81C995", "#FDD663", "#F28B82", "#C58AF9", "#78D9EC"]
+  }
+}
+
+resource "doit_report" "forecast" {
+  name        = "Spend Forecast"
+  description = "Last 12 months of spend with a 3-month forecast"
+  config = {
+    metrics       = [{ type = "basic", value = "cost" }]
+    aggregation   = "total"
+    time_interval = "month"
+    currency      = "USD"
+    data_source   = "billing"
+    time_range = {
+      mode            = "last"
+      amount          = 12
+      unit            = "month"
+      include_current = true
+    }
+    dimensions = [
+      { id = "year", type = "datetime" },
+      { id = "month", type = "datetime" },
+    ]
+    forecast_settings = {
+      mode                      = "totals"
+      historical_time_intervals = 12
+      future_time_intervals     = 3
+    }
+    layout          = "column_and_line_chart"
+    display_values  = "actuals_only"
+    sort_dimensions = "a_to_z"
+    display_settings = {
+      theme_id     = doit_custom_theme.brand.id
+      number_scale = "thousands"
+    }
+  }
+}
