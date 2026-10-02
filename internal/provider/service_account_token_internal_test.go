@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/oapi-codegen/nullable"
 )
@@ -257,5 +260,47 @@ func TestMapServiceAccountTokenToModel_DefaultExpiryFractionalSeconds(t *testing
 
 	if fromCreate.ExpiresTime.ValueString() != "2027-10-01T06:47:25Z" || fromRead.ExpiresTime != fromCreate.ExpiresTime {
 		t.Errorf("expires_time create=%v read=%v, want both 2027-10-01T06:47:25Z", fromCreate.ExpiresTime, fromRead.ExpiresTime)
+	}
+}
+
+// expires_time combines the canonical-format regex with the RFC 3339 validator:
+// the regex alone accepts impossible values like month 99.
+func TestServiceAccountTokenExpiresTimeValidators(t *testing.T) {
+	ctx := t.Context()
+
+	r := &serviceAccountTokenResource{}
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	attr, ok := schemaResp.Schema.Attributes["expires_time"].(schema.StringAttribute)
+	if !ok {
+		t.Fatal("expires_time is not a string attribute")
+	}
+
+	tests := []struct {
+		name  string
+		value types.String
+		want  int // number of error diagnostics
+	}{
+		{"canonical", types.StringValue("2027-01-01T00:00:00Z"), 0},
+		{"null", types.StringNull(), 0},
+		{"unknown", types.StringUnknown(), 0},
+		{"offset", types.StringValue("2027-06-01T10:00:00+02:00"), 1},
+		{"fractional seconds", types.StringValue("2027-06-01T08:00:00.123Z"), 1},
+		{"impossible month and day", types.StringValue("2027-99-99T00:00:00Z"), 1},
+		{"impossible time", types.StringValue("2027-01-01T99:99:99Z"), 1},
+		{"not a timestamp", types.StringValue("tomorrow"), 2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var errs int
+			for _, v := range attr.Validators {
+				resp := &validator.StringResponse{}
+				v.ValidateString(ctx, validator.StringRequest{Path: path.Root("expires_time"), ConfigValue: tt.value}, resp)
+				errs += resp.Diagnostics.ErrorsCount()
+			}
+			if errs != tt.want {
+				t.Errorf("error count = %d, want %d", errs, tt.want)
+			}
+		})
 	}
 }

@@ -112,7 +112,13 @@ func (r *serviceAccountTokenResource) Schema(ctx context.Context, _ resource.Sch
 	}
 
 	if attr, ok := s.Attributes["expires_time"].(schema.StringAttribute); ok {
-		attr.Validators = append(attr.Validators, stringvalidator.RegexMatches(serviceAccountTokenExpiresTimePattern, serviceAccountTokenExpiresTimeMessage))
+		// The regex pins the canonical spelling (UTC, whole seconds); it only checks
+		// digit placement, so the RFC 3339 validator rejects impossible values such
+		// as month 99 at plan time instead of at apply.
+		attr.Validators = append(attr.Validators,
+			rfc3339Validator{},
+			stringvalidator.RegexMatches(serviceAccountTokenExpiresTimePattern, serviceAccountTokenExpiresTimeMessage),
+		)
 		attr.Description += " When omitted, the API sets it to one year after creation, so tokens always expire. Must be an RFC 3339 timestamp in UTC with whole seconds (for example `2027-01-01T00:00:00Z`). Changing it replaces the token."
 		attr.MarkdownDescription = attr.Description
 		s.Attributes["expires_time"] = attr
