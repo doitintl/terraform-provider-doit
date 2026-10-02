@@ -59,6 +59,10 @@ tags:
     description: Read and update your organization's general settings.
   - name: Contract Templates
     description: Manage contract templates for PartnerOps resellers (T1/T2).
+  - name: Shared Payers
+    description: >-
+      Link and manage shared-payer account mappings for PartnerOps resellers (T2), reassigning
+      AWS accounts under a shared payer to T3 end customers.
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Roles
@@ -257,6 +261,56 @@ paths:
                 $ref: "#/components/schemas/SignupProblem"
         "429":
           description: Too many attempts (verification_locked) or rate limited.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+  /signup/v1/requests/{signupRequestId}/session:
+    post:
+      tags: [Signup]
+      summary: Sign the verified prospect in
+      description: >-
+        Exchanges the one-time activationToken returned by verifySignupRequest for a Firebase custom token once
+        the request is completed, so the browser that entered the code lands in the new tenant without a second
+        email. The token is bound to the request, single-use and valid for 10 minutes. Sign in with
+        signInWithCustomToken against tenantId, then open consoleUrl.
+      operationId: createSignupSession
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/signupRequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupSessionRequest"
+      responses:
+        "200":
+          description: OK - a session for the tenant admin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupSession"
+        "400":
+          description: code is one of invalid_request, activation_token_invalid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "404":
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "409":
+          description: activation_not_ready (provisioning still running, retry) or activation_token_used.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
+        "410":
+          description: activation_token_expired - use the sign-in link from the completion page instead.
           content:
             application/problem+json:
               schema:
@@ -3334,7 +3388,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MTSContractInput"
+              $ref: "#/components/schemas/MTSContractCreateInput"
       responses:
         "201":
           description: Created - The contract draft was created.
@@ -5648,6 +5702,139 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+  "/customers/v1/customers/{customerId}/shared-payer-accounts":
+    get:
+      tags:
+        - Shared Payers
+      summary: List shared-payer account mappings
+      description: >-
+        Lists the AWS accounts under the reseller's linked shared payers, together with the
+        end customer each is currently mapped to. `{customerId}` (the reseller itself) means
+        the account has not yet been reassigned to an end customer. Each payer's own
+        management account is included alongside its member accounts. Requires the
+        `SharedPayersAdmin` permission and DoiT API access (`platform:externalApi`). User API
+        tokens must include the permission in their scope.
+      operationId: listSharedPayerAccountMappings
+      parameters:
+        - $ref: "#/components/parameters/customerId"
+        - name: managementAccount
+          in: query
+          description: Restricts the results to accounts under this AWS management (payer) account ID.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Shared-payer account mappings returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedPayerAccountMappingList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/customers/v1/customers/{customerId}/shared-payer-accounts/management-accounts":
+    get:
+      tags:
+        - Shared Payers
+      summary: List shared-payer management accounts
+      description: >-
+        Lists the reseller's linked shared-payer management (payer) accounts that have
+        completed onboarding, for use in an account picker. Requires the `SharedPayersAdmin`
+        permission and DoiT API access (`platform:externalApi`). User API tokens must include
+        the permission in their scope.
+      operationId: listSharedPayerManagementAccounts
+      parameters:
+        - $ref: "#/components/parameters/customerId"
+      responses:
+        "200":
+          description: OK - Shared-payer management accounts returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedPayerManagementAccountList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/customers/v1/customers/{customerId}/shared-payer-accounts/payers":
+    get:
+      tags:
+        - Shared Payers
+      summary: List shared payers with mapping progress
+      description: >-
+        Lists every shared payer linked to the reseller, including ones still mid-onboarding,
+        with per-payer counts of linked and mapped accounts. Requires the `SharedPayersAdmin`
+        permission and DoiT API access (`platform:externalApi`). User API tokens must include
+        the permission in their scope.
+      operationId: listSharedPayers
+      parameters:
+        - $ref: "#/components/parameters/customerId"
+      responses:
+        "200":
+          description: OK - Shared payers returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedPayerList"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  "/customers/v1/customers/{customerId}/shared-payer-accounts/{assetId}":
+    patch:
+      tags:
+        - Shared Payers
+      summary: Reassign a shared-payer account
+      description: >-
+        Reassigns one AWS account under a linked shared payer - a member account or the
+        payer's own management account - to the reseller itself or to a T3 end customer
+        within its hierarchy. Requires the `SharedPayersAdmin` permission and DoiT API access
+        (`platform:externalApi`). User API tokens must include the permission in their scope.
+      operationId: reassignSharedPayerAccount
+      parameters:
+        - $ref: "#/components/parameters/customerId"
+        - name: assetId
+          in: path
+          required: true
+          description: Asset ID of the AWS account to reassign, as returned by `listSharedPayerAccountMappings`.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SharedPayerAccountReassignRequest"
+      responses:
+        "200":
+          description: OK - Account reassigned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedPayerAccountReassignResult"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
   "/cloudflow/v1/trigger/{flowId}":
@@ -15864,6 +16051,110 @@ components:
           type: string
           description: Identifier of the created draft contract.
 
+    SharedPayerAccountMapping:
+      type: object
+      description: >-
+        One AWS account under a linked shared payer - a member account or the payer's own
+        management account - and the customer it is currently mapped to.
+      properties:
+        assetId:
+          type: string
+          description: Asset ID of the AWS account.
+        accountName:
+          type: string
+          description: Display name of the AWS account.
+        accountId:
+          type: string
+          description: AWS account ID.
+        payerId:
+          type: string
+          description: AWS account ID of the management (payer) account this account is under.
+        payerName:
+          type: string
+          description: Display name of the management (payer) account.
+        customerId:
+          type: string
+          description: >-
+            Customer the account is currently mapped to. Equal to `{customerId}` (the reseller
+            itself) when the account has not been reassigned to an end customer.
+        customerName:
+          type: string
+          description: Display name of `customerId`.
+    SharedPayerAccountMappingList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SharedPayerAccountMapping"
+    SharedPayerManagementAccount:
+      type: object
+      description: A linked shared-payer management (payer) account that has completed onboarding.
+      properties:
+        payerId:
+          type: string
+          description: AWS account ID of the management (payer) account.
+        payerName:
+          type: string
+          description: Display name of the management (payer) account.
+    SharedPayerManagementAccountList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SharedPayerManagementAccount"
+    SharedPayer:
+      type: object
+      description: A shared payer linked to the reseller, with its account-mapping progress.
+      properties:
+        payerId:
+          type: string
+          description: AWS account ID of the management (payer) account.
+        payerName:
+          type: string
+          description: Display name of the management (payer) account.
+        linkedAccounts:
+          type: integer
+          description: Number of AWS accounts under this payer, including the payer's own management account.
+        mappedAssets:
+          type: integer
+          description: Number of those accounts already reassigned to an end customer.
+        totalAssets:
+          type: integer
+          description: Same as `linkedAccounts`.
+        completed:
+          type: boolean
+          description: >-
+            Whether the payer has finished onboarding. A payer still mid-onboarding has no
+            accounts yet.
+    SharedPayerList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SharedPayer"
+    SharedPayerAccountReassignRequest:
+      type: object
+      required:
+        - customerId
+      properties:
+        customerId:
+          type: string
+          description: >-
+            Customer to reassign the account to: `{customerId}` (the reseller itself) or a T3
+            end customer within its hierarchy.
+    SharedPayerAccountReassignResult:
+      type: object
+      properties:
+        assetId:
+          type: string
+          description: Asset ID of the reassigned account.
+        customerId:
+          type: string
+          description: Customer the account was reassigned to.
+
     CreateAllocationRequest:
       required:
         - name
@@ -17454,7 +17745,7 @@ components:
           properties:
             version:
               type: string
-              description: Terms version shown to the requester; must match the current version.
+              description: Terms version shown to the requester; must be a version the API currently accepts, otherwise terms_version_outdated.
             accepted:
               type: boolean
     SignupVerificationCode:
@@ -17467,6 +17758,27 @@ components:
           maxLength: 6
           pattern: "^[0-9]{6}$"
           description: The 6-digit code from the verification email.
+    SignupSessionRequest:
+      type: object
+      required: [activationToken]
+      properties:
+        activationToken:
+          type: string
+          description: The one-time token returned by verifySignupRequest.
+    SignupSession:
+      type: object
+      required: [customToken, tenantId, customerId]
+      properties:
+        customToken:
+          type: string
+          description: Firebase custom token for the tenant admin; exchange it with signInWithCustomToken.
+        tenantId:
+          type: string
+        customerId:
+          type: string
+        consoleUrl:
+          type: string
+          format: uri
     SignupVerification:
       type: object
       description: Present while the request awaits the emailed code.
@@ -17503,6 +17815,11 @@ components:
           type: string
           format: uri
           description: Page where the organization's admin verifies the request (pending_consent only).
+        activationToken:
+          type: string
+          description: >-
+            Returned once, by the verifySignupRequest call that performed the verification. Redeem it with
+            createSignupSession after the request is completed.
         verification:
           $ref: "#/components/schemas/SignupVerification"
         expiresAt:
@@ -21498,6 +21815,18 @@ components:
           type: array
           items:
             type: object
+    MTSContractCreateInput:
+      allOf:
+        - $ref: "#/components/schemas/MTSContractInput"
+        - type: object
+          properties:
+            templateId:
+              type: string
+              description: >-
+                ID of a contract template owned by the authenticated tenant. When specified,
+                the template's billing rules, price books, and custom line items are copied
+                onto the new contract. Mutually exclusive with billingRules, priceBooks, and
+                customLineItems in the request body.
     CreateContractResponse:
       type: object
       description: The result of creating a contract or contract version.
