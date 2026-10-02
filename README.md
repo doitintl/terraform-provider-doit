@@ -75,6 +75,9 @@ provider "doit" {
 | `doit_label`                    | Labels for categorizing annotations                               |
 | `doit_label_assignments`        | Assign labels to resources                                        |
 | `doit_report`                   | Cloud Analytics reports with filters, metrics, and grouping       |
+| `doit_role`                     | Custom roles and permissions                                      |
+| `doit_service_account`          | Service accounts for API access                                   |
+| `doit_service_account_token`    | API tokens for service accounts                                   |
 | `doit_sharing`                  | Sharing permissions for reports, budgets, alerts, and allocations |
 | `doit_support_request_tags`     | Support request tag management                                    |
 | `doit_user`                     | Invite and manage platform users                                  |
@@ -95,6 +98,7 @@ provider "doit" {
 | `doit_report` / `doit_reports`         | Get or list Cloud Analytics reports  |
 | `doit_report_query`                    | Run ad-hoc Cloud Analytics queries   |
 | `doit_report_result`                   | Get results from an existing report  |
+| `doit_widget` / `doit_widgets`         | Get or list Cloud Analytics widgets  |
 
 </details>
 
@@ -105,6 +109,7 @@ provider "doit" {
 | ------------------------------------------------------------------ | ----------------------------------------- |
 | `doit_anomaly` / `doit_anomalies`                                  | Get or list cost anomalies                |
 | `doit_anomaly_explanation`                                         | Explain a cost anomaly                    |
+| `doit_asset` / `doit_assets`                                       | Get or list cloud assets                  |
 | `doit_billing_explainer`                                           | Get an invoice cost breakdown             |
 | `doit_cloud_diagrams`                                              | Search cloud infrastructure diagrams      |
 | `doit_cloud_diagrams_activity_groups`                              | List activity groups for a diagram        |
@@ -118,15 +123,18 @@ provider "doit" {
 | `doit_cloud_diagrams_snapshots`                                    | List diagram snapshots                    |
 | `doit_cloud_diagrams_stats`                                        | Get diagram statistics                    |
 | `doit_cloud_diagrams_statussheet`                                  | Get diagram status sheet                  |
-| `doit_cloudconnect_supported_features`                             | Read AWS CloudConnect feature permissions |
 | `doit_cloud_incident` / `doit_cloud_incidents`                     | Get or list cloud provider incidents      |
+| `doit_cloudconnect_supported_features`                             | Read AWS CloudConnect feature permissions |
 | `doit_commitment` / `doit_commitments`                             | Get or list commitments                   |
-| `doit_asset` / `doit_assets`                                       | Get or list cloud assets                  |
 | `doit_invoice` / `doit_invoices`                                   | Get or list invoices                      |
 | `doit_ps4c_aws_organization` / `doit_ps4c_aws_organizations`       | Get or list PS4C AWS organizations        |
+| `doit_ps4c_commitment_policy` / `doit_ps4c_commitment_policies`    | Get or list PS4C commitment policies      |
 | `doit_ps4c_gcp_billing_account` / `doit_ps4c_gcp_billing_accounts` | Get or list PS4C GCP billing accounts     |
+| `doit_ps4c_gcp_planned_purchases`                                  | List PS4C GCP planned purchases           |
+| `doit_ps4c_gcp_recommendation` / `doit_ps4c_gcp_recommendations`   | Get or list PS4C GCP recommendations      |
 | `doit_ps4c_gcp_resource_cuds`                                      | List PS4C GCP resource CUDs               |
 | `doit_ps4c_gcp_settings`                                           | Get PS4C GCP settings                     |
+| `doit_ps4c_gcp_spend_cuds`                                         | List PS4C GCP spend-based CUDs            |
 | `doit_service_quotas`                                              | List cloud service quota usage            |
 | `doit_support_request` / `doit_support_requests`                   | Get or list support requests              |
 | `doit_support_request_comments`                                    | List comments on a support request        |
@@ -152,7 +160,8 @@ provider "doit" {
 | `doit_platforms`                                             | List available cloud platforms         |
 | `doit_products`                                              | List available cloud products          |
 | `doit_rbac_countries`                                        | List RBAC countries                    |
-| `doit_roles`                                                 | List available roles                   |
+| `doit_role` / `doit_roles`                                   | Get or list roles                      |
+| `doit_service_account` / `doit_service_accounts`             | Get or list service accounts           |
 | `doit_service_account_token` / `doit_service_account_tokens` | Get or list service account API tokens |
 | `doit_users`                                                 | List users                             |
 
