@@ -59,6 +59,9 @@ tags:
     description: Read and update your organization's general settings.
   - name: Contract Templates
     description: Manage contract templates for PartnerOps resellers (T1/T2).
+  - name: Shared Payers
+    description: >-
+      Link and manage shared-payer account mappings for PartnerOps resellers (T2), reassigning AWS accounts under a shared payer to T3 end customers.
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Roles
