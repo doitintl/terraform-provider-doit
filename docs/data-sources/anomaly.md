@@ -60,6 +60,11 @@ output "anomaly_linked_anomalies" {
   value       = data.doit_anomaly.example.linked_anomalies
 }
 
+output "anomaly_allocations" {
+  description = "Allocations the anomaly belongs to, primary allocation first"
+  value       = data.doit_anomaly.example.allocations
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
@@ -103,7 +108,8 @@ output "anomaly_deactivation_reason" {
 - `acknowledged_at` (String) When the anomaly was first acknowledged
 - `acknowledged_by` (String) Email of the user who first acknowledged the anomaly
 - `actual_cost` (Number) Observed (actual) cost of the anomaly.
-- `attribution` (String) Attribution ID
+- `allocations` (Attributes List) Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list. (see [below for nested schema](#nestedatt--allocations))
+- `attribution` (String, Deprecated) Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
 - `billing_account` (String) Billing account ID
 - `cost_of_anomaly` (Number) The difference between the actual cost and the maximum cost in the normal range.
 - `deactivation_reason` (String) Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
@@ -131,6 +137,15 @@ output "anomaly_deactivation_reason" {
 Optional:
 
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
+
+<a id="nestedatt--allocations"></a>
+### Nested Schema for `allocations`
+
+Read-Only:
+
+- `id` (String) Allocation ID. Use it with the Allocations API to read the allocation.
+- `name` (String) Allocation name.
 
 
 <a id="nestedatt--notifications"></a>

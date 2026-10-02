@@ -6501,6 +6501,7 @@ components:
     AnomalyItem:
       required:
         - attribution
+        - allocations
         - billingAccount
         - costOfAnomaly
         - platform
@@ -6519,7 +6520,15 @@ components:
       properties:
         attribution:
           type: string
-          description: Attribution ID.
+          deprecated: true
+          description: >-
+            Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+        allocations:
+          type: array
+          description: >-
+            Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+          items:
+            $ref: '#/components/schemas/AnomalyItemAllocationsItem'
         billingAccount:
           type: string
           description: Billing account ID.
@@ -6617,6 +6626,18 @@ components:
           $ref: "#/components/schemas/NotificationEventArray"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
+    AnomalyItemAllocationsItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Allocation ID. Use it with the Allocations API to read the allocation.
+        name:
+          type: string
+          description: Allocation name.
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -11674,6 +11695,7 @@ components:
     GetAnomaly200Response:
       required:
         - attribution
+        - allocations
         - billingAccount
         - costOfAnomaly
         - platform
@@ -11689,7 +11711,15 @@ components:
       properties:
         attribution:
           type: string
-          description: Attribution ID
+          deprecated: true
+          description: >-
+            Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+        allocations:
+          type: array
+          description: >-
+            Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+          items:
+            $ref: '#/components/schemas/GetAnomaly200ResponseAllocationsItem'
         billingAccount:
           type: string
           description: Billing account ID
@@ -11785,6 +11815,18 @@ components:
           $ref: "#/components/schemas/NotificationEventArray"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
+    GetAnomaly200ResponseAllocationsItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Allocation ID. Use it with the Allocations API to read the allocation.
+        name:
+          type: string
+          description: Allocation name.
     GetAnomalyExplanation200Response:
       required:
         - facts

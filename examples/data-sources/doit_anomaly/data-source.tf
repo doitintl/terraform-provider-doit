@@ -45,6 +45,11 @@ output "anomaly_linked_anomalies" {
   value       = data.doit_anomaly.example.linked_anomalies
 }
 
+output "anomaly_allocations" {
+  description = "Allocations the anomaly belongs to, primary allocation first"
+  value       = data.doit_anomaly.example.allocations
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status

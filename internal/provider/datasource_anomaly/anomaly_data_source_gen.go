@@ -38,10 +38,35 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "Observed (actual) cost of the anomaly.",
 				MarkdownDescription: "Observed (actual) cost of the anomaly.",
 			},
+			"allocations": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Allocation ID. Use it with the Allocations API to read the allocation.",
+							MarkdownDescription: "Allocation ID. Use it with the Allocations API to read the allocation.",
+						},
+						"name": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Allocation name.",
+							MarkdownDescription: "Allocation name.",
+						},
+					},
+					CustomType: AllocationsType{
+						ObjectType: types.ObjectType{
+							AttrTypes: AllocationsValue{}.AttributeTypes(ctx),
+						},
+					},
+				},
+				Computed:            true,
+				Description:         "Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.",
+				MarkdownDescription: "Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.",
+			},
 			"attribution": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Attribution ID",
-				MarkdownDescription: "Attribution ID",
+				Description:         "Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.",
+				MarkdownDescription: "Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.",
+				DeprecationMessage:  "This attribute is deprecated.",
 			},
 			"billing_account": schema.StringAttribute{
 				Computed:            true,
@@ -244,6 +269,7 @@ type AnomalyModel struct {
 	AcknowledgedAt      types.String  `tfsdk:"acknowledged_at"`
 	AcknowledgedBy      types.String  `tfsdk:"acknowledged_by"`
 	ActualCost          types.Float64 `tfsdk:"actual_cost"`
+	Allocations         types.List    `tfsdk:"allocations"`
 	Attribution         types.String  `tfsdk:"attribution"`
 	BillingAccount      types.String  `tfsdk:"billing_account"`
 	CostOfAnomaly       types.Float64 `tfsdk:"cost_of_anomaly"`
@@ -266,6 +292,393 @@ type AnomalyModel struct {
 	Status              types.String  `tfsdk:"status"`
 	TimeFrame           types.String  `tfsdk:"time_frame"`
 	Top3skus            types.List    `tfsdk:"top3skus"`
+}
+
+var _ basetypes.ObjectTypable = AllocationsType{}
+
+type AllocationsType struct {
+	basetypes.ObjectType
+}
+
+func (t AllocationsType) Equal(o attr.Type) bool {
+	other, ok := o.(AllocationsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t AllocationsType) String() string {
+	return "AllocationsType"
+}
+
+func (t AllocationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewAllocationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewAllocationsValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return nil, diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return nil, diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return AllocationsValue{
+		Id:    idVal,
+		Name:  nameVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAllocationsValueNull() AllocationsValue {
+	return AllocationsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewAllocationsValueUnknown() AllocationsValue {
+	return AllocationsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewAllocationsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (AllocationsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing AllocationsValue Attribute Value",
+				"While creating a AllocationsValue value, a missing attribute value was detected. "+
+					"A AllocationsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AllocationsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid AllocationsValue Attribute Type",
+				"While creating a AllocationsValue value, an invalid attribute value was detected. "+
+					"A AllocationsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("AllocationsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("AllocationsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra AllocationsValue Attribute Value",
+				"While creating a AllocationsValue value, an extra attribute value was detected. "+
+					"A AllocationsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra AllocationsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewAllocationsValueUnknown(), diags
+	}
+
+	idAttribute, ok := attributes["id"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`id is missing from object`)
+
+		return NewAllocationsValueUnknown(), diags
+	}
+
+	idVal, ok := idAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
+	}
+
+	nameAttribute, ok := attributes["name"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`name is missing from object`)
+
+		return NewAllocationsValueUnknown(), diags
+	}
+
+	nameVal, ok := nameAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`name expected to be basetypes.StringValue, was: %T`, nameAttribute))
+	}
+
+	if diags.HasError() {
+		return NewAllocationsValueUnknown(), diags
+	}
+
+	return AllocationsValue{
+		Id:    idVal,
+		Name:  nameVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewAllocationsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) AllocationsValue {
+	object, diags := NewAllocationsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewAllocationsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t AllocationsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewAllocationsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewAllocationsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewAllocationsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewAllocationsValueMust(AllocationsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t AllocationsType) ValueType(ctx context.Context) attr.Value {
+	return AllocationsValue{}
+}
+
+var _ basetypes.ObjectValuable = AllocationsValue{}
+
+type AllocationsValue struct {
+	Id    basetypes.StringValue `tfsdk:"id"`
+	Name  basetypes.StringValue `tfsdk:"name"`
+	state attr.ValueState
+}
+
+func (v AllocationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Id.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["id"] = val
+
+		val, err = v.Name.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["name"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v AllocationsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v AllocationsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v AllocationsValue) String() string {
+	return "AllocationsValue"
+}
+
+func (v AllocationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"id":   basetypes.StringType{},
+		"name": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"id":   v.Id,
+			"name": v.Name,
+		})
+
+	return objVal, diags
+}
+
+func (v AllocationsValue) Equal(o attr.Value) bool {
+	other, ok := o.(AllocationsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Id.Equal(other.Id) {
+		return false
+	}
+
+	if !v.Name.Equal(other.Name) {
+		return false
+	}
+
+	return true
+}
+
+func (v AllocationsValue) Type(ctx context.Context) attr.Type {
+	return AllocationsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v AllocationsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":   basetypes.StringType{},
+		"name": basetypes.StringType{},
+	}
 }
 
 var _ basetypes.ObjectTypable = NotificationsType{}
