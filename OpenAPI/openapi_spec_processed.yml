@@ -3855,6 +3855,37 @@ paths:
   /iam/v1/service-accounts/{serviceAccountId}/api-tokens:
     parameters:
       - $ref: "#/components/parameters/serviceAccountTokenParentId"
+    get:
+      tags:
+        - Service Accounts
+      summary: List API tokens for a service account
+      description: Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+      operationId: listServiceAccountTokens
+      responses:
+        "200":
+          description: OK - API tokens returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountTokensResponse"
+              example:
+                items:
+                  - id: Mr0sN7pQ4tU2vW5xY8zC
+                    serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                    customerId: Kp2mN8qL4vR0sT1wX3yZ
+                    name: ci-pipeline-prod
+                    state: active
+                    createTime: "2026-09-01T08:00:00Z"
+                    expiresTime: "2027-09-01T08:00:00Z"
+                    lastUsedTime: "2026-09-20T14:31:00Z"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags:
         - Service Accounts
@@ -13623,6 +13654,27 @@ components:
           readOnly: true
           description: When the token last authenticated a request. `null` until it is first used.
           example: "2026-09-20T14:31:00Z"
+    ServiceAccountTokensResponse:
+      type: object
+      description: API tokens of a service account, at most 10.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          maxItems: 10
+          description: The service account's non-deleted API tokens.
+          items:
+            $ref: "#/components/schemas/ServiceAccountToken"
+          example:
+            - id: Mr0sN7pQ4tU2vW5xY8zC
+              serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+              customerId: Kp2mN8qL4vR0sT1wX3yZ
+              name: ci-pipeline-prod
+              state: active
+              createTime: "2026-09-01T08:00:00Z"
+              expiresTime: "2027-09-01T08:00:00Z"
+              lastUsedTime: "2026-09-20T14:31:00Z"
     ServiceAccountsResponse:
       type: object
       description: Service accounts owned by the authenticated customer.

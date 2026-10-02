@@ -16323,6 +16323,190 @@
 			}
 		},
 		{
+			"name": "service_account_token",
+			"schema": {
+				"attributes": [
+					{
+						"name": "service_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "ID of the service account that owns the token, as returned in the id field by the service account list and create operations.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "API token ID, as returned in the id field by the token list and create operations.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the token was created. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the customer whose service account the token belongs to."
+						}
+					},
+					{
+						"name": "expires_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the token stops authenticating. `null` when it does not expire."
+						}
+					},
+					{
+						"name": "last_used_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the token last authenticated a request. `null` until it is first used."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Name, unique among the service account's tokens."
+						}
+					},
+					{
+						"name": "state",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set."
+						}
+					}
+				],
+				"description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.",
+				"markdown_description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions."
+			}
+		},
+		{
+			"name": "service_account_tokens",
+			"schema": {
+				"attributes": [
+					{
+						"name": "service_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "ID of the service account that owns the token, as returned in the id field by the service account list and create operations.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "create_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the token was created. `null` only on a dry-run create."
+										}
+									},
+									{
+										"name": "customer_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the customer whose service account the token belongs to."
+										}
+									},
+									{
+										"name": "expires_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the token stops authenticating. `null` when it does not expire."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "API token ID. `null` only on a dry-run create."
+										}
+									},
+									{
+										"name": "last_used_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the token last authenticated a request. `null` until it is first used."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Name, unique among the service account's tokens."
+										}
+									},
+									{
+										"name": "service_account_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the service account that owns the token."
+										}
+									},
+									{
+										"name": "state",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set."
+										}
+									}
+								]
+							},
+							"description": "The service account's non-deleted API tokens."
+						}
+					}
+				],
+				"description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.",
+				"markdown_description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions."
+			}
+		},
+		{
 			"name": "service_accounts",
 			"schema": {
 				"attributes": [
