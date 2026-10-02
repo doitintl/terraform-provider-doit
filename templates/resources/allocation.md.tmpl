@@ -18,6 +18,10 @@ description: |-
 
 ## Managing Group Memberships
 
+### Building Group Allocations
+
+Build a group allocation from separate single `doit_allocation` resources and reference each one in the group's `rules` with `action = "select"` and its `id`, as shown in the examples above. Inline rules with `action = "create"` produce the same single allocations in the DoiT API, but those allocations are not Terraform resources of their own, so settings such as `anomaly_detection` or `folder_id` can't be managed for them.
+
 ### Removing Selected Member Allocations from a Group
 
 !> **Warning** Single allocations selected into a group allocation (`action = "select"`) cannot be removed from the group and destroyed in the same `terraform apply`. The DoiT API enforces referential integrity: it rejects deleting any single allocation that is currently referenced by a group allocation with `409 Conflict`. Because Terraform executes resource updates and destroys concurrently without cross-resource ordering between update and destroy nodes, the single allocation's deletion may be attempted before the group allocation's update completes.

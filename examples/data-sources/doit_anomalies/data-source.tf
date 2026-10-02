@@ -262,3 +262,41 @@ output "acknowledgment_audit" {
     acknowledged_at = a.acknowledged_at
   }]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Anomaly cost per allocation, with an AI explanation for the costliest one
+# ─────────────────────────────────────────────────────────────────────────────
+
+data "doit_anomalies" "costliest" {
+  sort_by     = "costOfAnomaly"
+  sort_order  = "desc"
+  max_results = 50
+}
+
+locals {
+  # An anomaly can belong to several allocations; count it under each one
+  anomaly_cost_by_allocation = {
+    for name, costs in {
+      for pair in flatten([
+        for a in data.doit_anomalies.costliest.anomalies : [
+          for al in a.allocations : { name = al.name, cost = a.cost_of_anomaly }
+        ]
+      ]) : pair.name => pair.cost...
+    } : name => { anomalies = length(costs), total_cost = sum(costs) }
+  }
+}
+
+output "anomaly_cost_by_allocation" {
+  value = local.anomaly_cost_by_allocation
+}
+
+data "doit_anomaly_explanation" "costliest" {
+  count = length(data.doit_anomalies.costliest.anomalies) > 0 ? 1 : 0
+  id    = data.doit_anomalies.costliest.anomalies[0].id
+}
+
+output "costliest_anomaly_explanation" {
+  description = "AI-generated likely cause of the costliest anomaly"
+  value       = one(data.doit_anomaly_explanation.costliest[*].explanation.text)
+  sensitive   = true
+}
