@@ -340,3 +340,11 @@ data_sources:
     read:
       path: /iam/v1/service-accounts
       method: GET
+  service_account_token:
+    read:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: GET
+  service_account_tokens:
+    read:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens
+      method: GET

@@ -10123,6 +10123,14 @@ type ServiceAccountToken struct {
 // Example: active
 type ServiceAccountTokenState string
 
+// ServiceAccountTokensResponse API tokens of a service account, at most 10.
+type ServiceAccountTokensResponse struct {
+	// Items The service account's non-deleted API tokens.
+	//
+	// Example: [{"createTime":"2026-09-01T08:00:00Z","customerId":"Kp2mN8qL4vR0sT1wX3yZ","expiresTime":"2027-09-01T08:00:00Z","id":"Mr0sN7pQ4tU2vW5xY8zC","lastUsedTime":"2026-09-20T14:31:00Z","name":"ci-pipeline-prod","serviceAccountId":"Lq3nO9rM5wS2tU0xY4zA","state":"active"}]
+	Items []ServiceAccountToken `json:"items"`
+}
+
 // ServiceAccountsResponse Service accounts owned by the authenticated customer.
 type ServiceAccountsResponse struct {
 	Items []ServiceAccount `json:"items"`
@@ -13906,6 +13914,13 @@ type ClientInterface interface {
 	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
 	UpdateServiceAccountWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListServiceAccountTokens List API tokens for a service account
+	//
+	// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+	ListServiceAccountTokens(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateServiceAccountTokenWithBody Create an API token for a service account
 	//
 	// Mints an API token for the service account and returns its `accessToken` once. The token
@@ -17032,6 +17047,23 @@ func (c *Client) UpdateServiceAccountWithBody(ctx context.Context, id ServiceAcc
 // Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
 func (c *Client) UpdateServiceAccountWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateServiceAccountRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListServiceAccountTokens List API tokens for a service account
+//
+// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+func (c *Client) ListServiceAccountTokens(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListServiceAccountTokensRequest(c.Server, serviceAccountId)
 	if err != nil {
 		return nil, err
 	}
@@ -23664,6 +23696,40 @@ func NewUpdateServiceAccountRequestWithBody(server string, id ServiceAccountId, 
 	return req, nil
 }
 
+// NewListServiceAccountTokensRequest constructs an http.Request for the ListServiceAccountTokens method
+func NewListServiceAccountTokensRequest(server string, serviceAccountId ServiceAccountTokenParentId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateServiceAccountTokenRequest calls the generic CreateServiceAccountToken builder with application/json body
 func NewCreateServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -27066,6 +27132,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
 	UpdateServiceAccountWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountResp, error)
+
+	// ListServiceAccountTokensWithResponse List API tokens for a service account
+	//
+	// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+	ListServiceAccountTokensWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*ListServiceAccountTokensResp, error)
 
 	// CreateServiceAccountTokenWithBodyWithResponse Create an API token for a service account
 	//
@@ -35604,6 +35679,91 @@ func (r UpdateServiceAccountResp) ContentType() string {
 	return ""
 }
 
+// ListServiceAccountTokensResp404Headers the declared response headers of an HTTP 404 response for ListServiceAccountTokens
+type ListServiceAccountTokensResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListServiceAccountTokensResp500Headers the declared response headers of an HTTP 500 response for ListServiceAccountTokens
+type ListServiceAccountTokensResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListServiceAccountTokensResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountTokensResponse
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListServiceAccountTokensResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListServiceAccountTokensResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListServiceAccountTokensResp) GetJSON200() *ServiceAccountTokensResponse {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListServiceAccountTokensResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListServiceAccountTokensResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListServiceAccountTokensResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListServiceAccountTokensResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListServiceAccountTokensResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListServiceAccountTokensResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListServiceAccountTokensResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListServiceAccountTokensResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateServiceAccountTokenResp200Headers the declared response headers of an HTTP 200 response for CreateServiceAccountToken
 type CreateServiceAccountTokenResp200Headers struct {
 	XDryRun *string
@@ -40992,6 +41152,21 @@ func (c *ClientWithResponses) UpdateServiceAccountWithApplicationMergePatchPlusJ
 		return nil, err
 	}
 	return ParseUpdateServiceAccountResp(rsp)
+}
+
+// ListServiceAccountTokensWithResponse List API tokens for a service account
+//
+// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+func (c *ClientWithResponses) ListServiceAccountTokensWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*ListServiceAccountTokensResp, error) {
+	rsp, err := c.ListServiceAccountTokens(ctx, serviceAccountId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListServiceAccountTokensResp(rsp)
 }
 
 // CreateServiceAccountTokenWithBodyWithResponse Create an API token for a service account
@@ -48718,6 +48893,97 @@ func ParseUpdateServiceAccountResp(rsp *http.Response) (*UpdateServiceAccountRes
 		response.Headers428 = &headers
 	case rsp.StatusCode == 500:
 		var headers UpdateServiceAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListServiceAccountTokensResp parses an HTTP response from a ListServiceAccountTokensWithResponse call
+func ParseListServiceAccountTokensResp(rsp *http.Response) (*ListServiceAccountTokensResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListServiceAccountTokensResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountTokensResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 404:
+		var headers ListServiceAccountTokensResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListServiceAccountTokensResp500Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

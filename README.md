@@ -136,24 +136,25 @@ provider "doit" {
 <details>
 <summary><strong>Organization</strong> — users, labels, annotations, platforms, datasets</summary>
 
-| Data Source                                      | Description                    |
-| ------------------------------------------------ | ------------------------------ |
-| `doit_account_team`                              | Get account team information   |
-| `doit_active_theme`                              | Get active console theme       |
-| `doit_annotation` / `doit_annotations`           | Get or list annotations        |
-| `doit_ava`                                       | Query the Ava AI assistant     |
-| `doit_current_user`                              | Get current authenticated user |
-| `doit_custom_theme` / `doit_custom_themes`       | Get or list custom themes      |
-| `doit_customer`                                  | Get customer settings          |
-| `doit_datahub_dataset` / `doit_datahub_datasets` | Get or list DataHub datasets   |
-| `doit_label` / `doit_labels`                     | Get or list labels             |
-| `doit_label_assignments`                         | List label assignments         |
-| `doit_organizations`                             | List organizations             |
-| `doit_platforms`                                 | List available cloud platforms |
-| `doit_products`                                  | List available cloud products  |
-| `doit_rbac_countries`                            | List RBAC countries            |
-| `doit_roles`                                     | List available roles           |
-| `doit_users`                                     | List users                     |
+| Data Source                                                  | Description                            |
+| ------------------------------------------------------------ | -------------------------------------- |
+| `doit_account_team`                                          | Get account team information           |
+| `doit_active_theme`                                          | Get active console theme               |
+| `doit_annotation` / `doit_annotations`                       | Get or list annotations                |
+| `doit_ava`                                                   | Query the Ava AI assistant             |
+| `doit_current_user`                                          | Get current authenticated user         |
+| `doit_custom_theme` / `doit_custom_themes`                   | Get or list custom themes              |
+| `doit_customer`                                              | Get customer settings                  |
+| `doit_datahub_dataset` / `doit_datahub_datasets`             | Get or list DataHub datasets           |
+| `doit_label` / `doit_labels`                                 | Get or list labels                     |
+| `doit_label_assignments`                                     | List label assignments                 |
+| `doit_organizations`                                         | List organizations                     |
+| `doit_platforms`                                             | List available cloud platforms         |
+| `doit_products`                                              | List available cloud products          |
+| `doit_rbac_countries`                                        | List RBAC countries                    |
+| `doit_roles`                                                 | List available roles                   |
+| `doit_service_account_token` / `doit_service_account_tokens` | Get or list service account API tokens |
+| `doit_users`                                                 | List users                             |
 
 </details>
 
