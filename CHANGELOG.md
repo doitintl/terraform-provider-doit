@@ -1,5 +1,48 @@
 # Changelog
 
+## v1.10.0 (2026-10-02)
+
+### BREAKING CHANGES
+
+- **resource/doit_report, data-source/doit_report, data-source/doit_report_query**: `limit_by_change` operators now use the short enum codes `gt`, `gte`, `lt`, `lte`, `b` and `nb` instead of `>`, `>=`, `<`, `<=`, `between` and `not_between`, following a breaking upstream API change. Update existing configurations accordingly ([#365](https://github.com/doitintl/terraform-provider-doit/pull/365))
+- **data-source/doit_ps4c_gcp_billing_account, data-source/doit_ps4c_gcp_billing_accounts**: Onboarding status, 30-day stats, savings totals, monthly stats and daily coverage are now lists of service-tagged objects (supporting `compute` and `cloud_sql`) instead of compute-keyed nested objects, following upstream API changes. References to the previous `.compute` paths must select the list entry by `service` ([#358](https://github.com/doitintl/terraform-provider-doit/pull/358))
+
+### FEATURES
+
+- **resource/doit_service_account, resource/doit_service_account_token**: Add resources for managing service accounts and their API tokens ([#370](https://github.com/doitintl/terraform-provider-doit/pull/370), [#379](https://github.com/doitintl/terraform-provider-doit/pull/379))
+- **data-source/doit_service_account, data-source/doit_service_accounts, data-source/doit_service_account_token, data-source/doit_service_account_tokens**: Add data sources for service accounts and their tokens ([#371](https://github.com/doitintl/terraform-provider-doit/pull/371), [#380](https://github.com/doitintl/terraform-provider-doit/pull/380))
+- **resource/doit_role**: Add resource for managing custom roles ([#376](https://github.com/doitintl/terraform-provider-doit/pull/376))
+- **data-source/doit_role**: Add data source to read a single role ([#377](https://github.com/doitintl/terraform-provider-doit/pull/377))
+- **data-source/doit_widget, data-source/doit_widgets**: Add data sources exposing Cloud Analytics widget metrics and the widget catalogue ([#368](https://github.com/doitintl/terraform-provider-doit/pull/368))
+- **data-source/doit_ps4c_commitment_policy, data-source/doit_ps4c_commitment_policies**: Add data sources for PerfectScale for Commitments commitment policies ([#356](https://github.com/doitintl/terraform-provider-doit/pull/356))
+- **data-source/doit_ps4c_gcp_spend_cuds**: Add data source for PerfectScale for Commitments GCP spend-based CUDs ([#359](https://github.com/doitintl/terraform-provider-doit/pull/359))
+- **data-source/doit_ps4c_gcp_planned_purchases**: Add data source for PerfectScale for Commitments GCP planned purchases ([#360](https://github.com/doitintl/terraform-provider-doit/pull/360))
+- **data-source/doit_ps4c_gcp_recommendation, data-source/doit_ps4c_gcp_recommendations**: Add data sources for PerfectScale for Commitments GCP recommendations ([#361](https://github.com/doitintl/terraform-provider-doit/pull/361))
+
+### ENHANCEMENTS
+
+- **data-source/doit_report_query, data-source/doit_report_result**: Add `file_output` (`pdf`/`png`) and sensitive computed `file_output_url` ([#367](https://github.com/doitintl/terraform-provider-doit/pull/367))
+- **data-source/doit_billing_explainer**: Add `marketplace_charges` ([#366](https://github.com/doitintl/terraform-provider-doit/pull/366))
+- **data-source/doit_anomaly, data-source/doit_anomalies**: Add `allocations` attribute ([#378](https://github.com/doitintl/terraform-provider-doit/pull/378))
+- **data-source/doit_roles**: Add `description` and `child_tenant_eligible` attributes and align with upstream schema changes ([#373](https://github.com/doitintl/terraform-provider-doit/pull/373))
+- **data-source/doit_ps4c_gcp_settings, data-source/doit_ps4c_gcp_resource_cuds**: Expose settings `region`, accept customer-defined policy IDs, and support the `pending` resource CUD status ([#358](https://github.com/doitintl/terraform-provider-doit/pull/358))
+- **resource/doit_alert, resource/doit_budget, resource/doit_report, data-source/doit_dimension, data-source/doit_report_query**: Warn when the legacy `attribution` or `attribution_group` dimension types are used; prefer `allocation_rule` or `allocation` ([#352](https://github.com/doitintl/terraform-provider-doit/pull/352))
+- **data-source/doit_ps4c_gcp_recommendations, data-source/doit_ps4c_gcp_planned_purchases**: Document that `gcp_service` and `region` are matched case-insensitively ([#363](https://github.com/doitintl/terraform-provider-doit/pull/363))
+- **resource/doit_report**: Rename top/bottom `group` limits to rank limits in schema descriptions (upstream spec sync) ([#355](https://github.com/doitintl/terraform-provider-doit/pull/355))
+
+### BUG FIXES
+
+- **resource/doit_budget**: Restore `start_period` and `time_interval` validation (start periods before 2018-01-01 UTC are rejected, recurring period alignment is checked) ([#364](https://github.com/doitintl/terraform-provider-doit/pull/364))
+- **resource/doit_user**: Remove the deprecated `job_function` attribute and generate `phone`, `phone_extension` and `language` from the API schema ([#375](https://github.com/doitintl/terraform-provider-doit/pull/375))
+
+### INTERNAL
+
+- Bumped `terraform-plugin-codegen-openapi` so OpenAPI path parameters generate as `Required` and removed the corresponding manual schema overrides ([#374](https://github.com/doitintl/terraform-provider-doit/pull/374), [#375](https://github.com/doitintl/terraform-provider-doit/pull/375))
+- Load `.envrc.local` from the main repository in secondary git worktrees ([#354](https://github.com/doitintl/terraform-provider-doit/pull/354), [#362](https://github.com/doitintl/terraform-provider-doit/pull/362))
+- Synced the OpenAPI spec from upstream ([#353](https://github.com/doitintl/terraform-provider-doit/pull/353), [#357](https://github.com/doitintl/terraform-provider-doit/pull/357), [#381](https://github.com/doitintl/terraform-provider-doit/pull/381))
+- Upgraded golangci-lint to v2.14.0 (`.custom-gcl.yml`, CI workflow) and re-pinned nixpkgs to a revision providing Go 1.27.1, Terraform 1.16.4 and golangci-lint 2.14.0
+- Upgraded indirect dependencies: gRPC v1.83.2→v1.84.0, `go-uuid` v1.0.3→v1.0.4, and `genproto`
+
 ## v1.9.0 (2026-09-17)
 
 ### FEATURES
