@@ -214,6 +214,19 @@ resources:
     delete:
       path: /iam/v1/service-accounts/{id}
       method: DELETE
+  service_account_token:
+    create:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens
+      method: POST
+    read:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: GET
+    update:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: DELETE
   role:
     create:
       path: /iam/v1/roles

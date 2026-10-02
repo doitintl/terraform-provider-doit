@@ -3600,6 +3600,103 @@
 			}
 		},
 		{
+			"name": "service_account_token",
+			"schema": {
+				"attributes": [
+					{
+						"name": "expires_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "When the token should stop authenticating. Omit to let the server set the default expiry."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Name, unique among the service account's tokens. Leading or trailing whitespace returns `400`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 100)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "state",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "`active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"active\",\n\"disabled\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "access_token",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The token credential, and the secret that authenticates as this service account. Returned only by this operation and never retrievable again, so store it somewhere safe on receipt; an empty string on a dry-run create. Treat it like a password.",
+							"sensitive": true
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the token was created. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the customer whose service account the token belongs to."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "API token ID. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "last_used_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the token last authenticated a request. `null` until it is first used."
+						}
+					},
+					{
+						"name": "service_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "ID of the service account that owns the token."
+						}
+					}
+				],
+				"description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.",
+				"markdown_description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions."
+			}
+		},
+		{
 			"name": "sharing",
 			"schema": {
 				"attributes": [
