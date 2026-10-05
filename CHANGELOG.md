@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### BUG FIXES
+
+- **resource/doit_alert**: No longer warn that `config.scopes[*].type = "attribution"` is deprecated in favor of `allocation_rule`; the alerts API rejects `allocation_rule`, so following the warning broke the alert ([#384](https://github.com/doitintl/terraform-provider-doit/issues/384))
+- **data-source/doit_dimension**: No longer warn that `type = "attribution"` is deprecated in favor of `allocation_rule`; the dimensions API returns "Dimension not found" for `allocation_rule`, so following the warning broke the lookup ([#384](https://github.com/doitintl/terraform-provider-doit/issues/384))
+
 ## v1.10.0 (2026-10-02)
 
 ### BREAKING CHANGES
