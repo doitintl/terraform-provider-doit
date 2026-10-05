@@ -376,8 +376,7 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Rules removed from the group no longer reference their allocation, which the API leaves
-	// behind. Delete the inline ones before saving state, so a failure surfaces
-	// here instead of leaving an orphan.
+	// behind. Delete the inline ones; a failed delete is reported as a warning.
 	prior, d := rulesFromList(ctx, priorRules)
 	resp.Diagnostics.Append(d...)
 	planned, d := rulesFromList(ctx, plan.Rules)
@@ -428,8 +427,8 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	// The API does not delete group members with the group. Remove the inline ones
-	// (action="create" or "update") now that nothing references them. Rerunning after a failure is safe: the
-	// group is already gone (404 above) and deleted members are skipped the same way.
+	// (action="create" or "update") now that nothing references them. A failed delete is
+	// reported as a warning, since a retry is impossible once the group is gone.
 	rules, d := rulesFromList(ctx, state.Rules)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
@@ -439,23 +438,27 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 }
 
 // deleteAllocations deletes the given allocations, treating 404 as already deleted. It attempts
-// every id and reports one error per failure.
+// every id. A failure is reported as a warning naming the allocation rather than an error: by
+// the time this runs the group is already deleted or updated, so failing would keep the old
+// state, and the next refresh would drop the ids (the group is gone, or no longer lists the
+// rule) and make the cleanup impossible to retry. The warning gives the id to delete by hand.
 func (r *allocationResource) deleteAllocations(ctx context.Context, ids []string) diag.Diagnostics {
 	var diags diag.Diagnostics
+	warn := func(id, reason string) {
+		diags.AddWarning(
+			"Inline allocation was not deleted",
+			fmt.Sprintf("The group no longer references allocation %s, which it defined inline, but deleting it failed (%s). "+
+				"It still exists and is no longer managed by Terraform; delete it manually.", id, reason),
+		)
+	}
 	for _, id := range ids {
 		delResp, err := r.client.DeleteAllocationWithResponse(ctx, id)
 		if err != nil {
-			diags.AddError(
-				"Error Deleting DoiT Allocation",
-				fmt.Sprintf("Could not delete allocation %s defined inline by this group, unexpected error: %s", id, err),
-			)
+			warn(id, "unexpected error: "+err.Error())
 			continue
 		}
 		if sc := delResp.StatusCode(); sc != 200 && sc != 204 && sc != 404 {
-			diags.AddError(
-				"Error Deleting DoiT Allocation",
-				fmt.Sprintf("Could not delete allocation %s defined inline by this group, status: %d, body: %s", id, sc, string(delResp.Body)),
-			)
+			warn(id, fmt.Sprintf("status: %d, body: %s", sc, string(delResp.Body)))
 		}
 	}
 	return diags

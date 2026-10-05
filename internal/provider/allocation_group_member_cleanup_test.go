@@ -443,3 +443,39 @@ resource "doit_allocation" "group" {
 }
 `, rName, rName, rName)
 }
+
+// An inline member can be referenced from other resources through rules[*].id. Destroy order then
+// runs the dependent first, then the group, and the group's cleanup removes the member.
+func TestAccAllocation_Group_InlineMemberReferencedByOtherResource(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+	ids := map[string]string{}
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckGroupMembersDestroy(t, ids, false, rName+"-jp"),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationGroupCreateRules(rName, "jp") + fmt.Sprintf(`
+resource "doit_allocation" "dependent" {
+  name        = "%s-dependent"
+  description = "references an inline member of the group"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "allocation_rule"
+        mode   = "is"
+        type   = "allocation_rule"
+        values = [doit_allocation.group.rules[0].id]
+      }
+    ]
+  }
+}
+`, rName),
+				Check: recordGroupRuleIDs("doit_allocation.group", ids),
+			},
+		},
+	})
+}
