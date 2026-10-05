@@ -376,6 +376,9 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		var stateRules []resource_allocation.RulesValue
 		existingActionsByID := make(map[string]string)
 		existingActionsByIndex := make([]string, 0)
+		// Positions whose prior rule has no known id yet (new rules in a plan). Only these may
+		// hand their action to a response rule by position.
+		unidentifiedByIndex := make([]bool, 0)
 
 		if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
 			// We try to extract existing rules to preserve the "action" field which is not returned by the API.
@@ -384,6 +387,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				for _, rule := range stateRules {
 					action := rule.Action.ValueString()
 					existingActionsByIndex = append(existingActionsByIndex, action)
+					unidentifiedByIndex = append(unidentifiedByIndex, rule.Id.IsNull() || rule.Id.IsUnknown() || rule.Id.ValueString() == "")
 					if !rule.Id.IsNull() && !rule.Id.IsUnknown() {
 						existingActionsByID[rule.Id.ValueString()] = action
 					}
@@ -407,7 +411,11 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 					action = a
 				}
 			}
-			if action == "" && ruleIndex < len(existingActionsByIndex) {
+			// Fall back to position only for a prior rule that has no id yet (a rule being
+			// created in this plan). A prior rule with a known id that is absent from the response
+			// was replaced outside Terraform: its action must not carry over to whatever now sits
+			// at that position, because "create"/"update" mark allocations the provider deletes.
+			if action == "" && ruleIndex < len(existingActionsByIndex) && unidentifiedByIndex[ruleIndex] {
 				action = existingActionsByIndex[ruleIndex]
 			}
 			if action == "" {
