@@ -17,7 +17,7 @@ The query is executed with the provided config and results are returned as a JSO
 
 ~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query. Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`.
 
-The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. Terraform state contains the signed URL when one is returned.
+The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately.
 
 The `result_json` field contains the full result object including:
 
@@ -124,7 +124,8 @@ output "row_count" {
 # ─────────────────────────────────────────────────────────────────────────────
 # Set file_output to "png" (or "pdf") to receive a signed download URL for the
 # rendered chart, without saving a report first. The URL is sensitive and
-# valid for up to seven days.
+# valid for up to seven days. This example stores the URL and the file contents
+# in Terraform state, so protect that state appropriately.
 
 data "doit_report_query" "top_services_png" {
   file_output = "png"

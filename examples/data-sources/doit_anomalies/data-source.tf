@@ -267,10 +267,11 @@ output "acknowledgment_audit" {
 # Anomaly cost per allocation, with an AI explanation for the costliest one
 # ─────────────────────────────────────────────────────────────────────────────
 
-data "doit_anomalies" "costliest" {
-  sort_by     = "costOfAnomaly"
-  sort_order  = "desc"
-  max_results = 50
+# All anomalies (no max_results, so every page is fetched), sorted so the
+# costliest one comes first
+data "doit_anomalies" "by_cost" {
+  sort_by    = "costOfAnomaly"
+  sort_order = "desc"
 }
 
 locals {
@@ -278,7 +279,7 @@ locals {
   anomaly_cost_by_allocation = {
     for name, costs in {
       for pair in flatten([
-        for a in data.doit_anomalies.costliest.anomalies : [
+        for a in data.doit_anomalies.by_cost.anomalies : [
           for al in a.allocations : { name = al.name, cost = a.cost_of_anomaly }
         ]
       ]) : pair.name => pair.cost...
@@ -291,8 +292,8 @@ output "anomaly_cost_by_allocation" {
 }
 
 data "doit_anomaly_explanation" "costliest" {
-  count = length(data.doit_anomalies.costliest.anomalies) > 0 ? 1 : 0
-  id    = data.doit_anomalies.costliest.anomalies[0].id
+  count = length(data.doit_anomalies.by_cost.anomalies) > 0 ? 1 : 0
+  id    = data.doit_anomalies.by_cost.anomalies[0].id
 }
 
 output "costliest_anomaly_explanation" {

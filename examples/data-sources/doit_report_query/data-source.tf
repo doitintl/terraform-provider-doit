@@ -77,7 +77,8 @@ output "row_count" {
 # ─────────────────────────────────────────────────────────────────────────────
 # Set file_output to "png" (or "pdf") to receive a signed download URL for the
 # rendered chart, without saving a report first. The URL is sensitive and
-# valid for up to seven days.
+# valid for up to seven days. This example stores the URL and the file contents
+# in Terraform state, so protect that state appropriately.
 
 data "doit_report_query" "top_services_png" {
   file_output = "png"

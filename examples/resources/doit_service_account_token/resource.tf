@@ -15,8 +15,11 @@ terraform {
   }
 }
 
+# A token authenticates with the permissions its service account has when the
+# token is created, so give the service account its permissions first.
 resource "doit_service_account" "ci_cd" {
-  name = "ci-cd-pipeline"
+  name        = "ci-cd-pipeline"
+  permissions = ["cloudAnalyticsUser", "budgetsReadOnly"]
 }
 
 # Create an API token with the server-assigned default expiry
