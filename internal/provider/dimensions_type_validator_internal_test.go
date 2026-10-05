@@ -45,6 +45,14 @@ func TestDeprecatedDimensionsTypeValidator(t *testing.T) {
 			value: types.StringValue("allocation_rule"),
 		},
 		{
+			name:  "empty string",
+			value: types.StringValue(""),
+		},
+		{
+			name:  "case-sensitive match",
+			value: types.StringValue("Attribution"),
+		},
+		{
 			name:       "attribution",
 			value:      types.StringValue("attribution"),
 			wantDetail: `Dimension type "attribution" is deprecated and will soon no longer be supported by the DoiT API. Use "allocation_rule" instead.`,
@@ -113,10 +121,6 @@ func TestDeprecatedDimensionsTypeValidatorResourceSchemaWiring(t *testing.T) {
 		schema resourceschema.Schema
 		paths  []string
 	}{
-		"alert": {
-			schema: resourceSchemaForTest(ctx, &alertResource{}),
-			paths:  []string{"config.scopes[*].type"},
-		},
 		"budget": {
 			schema: resourceSchemaForTest(ctx, &budgetResource{}),
 			paths:  []string{"scopes[*].type"},
@@ -139,23 +143,98 @@ func TestDeprecatedDimensionsTypeValidatorResourceSchemaWiring(t *testing.T) {
 	}
 }
 
+// The dimensions API returns "Dimension not found" for the replacement types
+// ("allocation_rule"/"allocation"), so the deprecation warning must not be
+// attached to the dimension data source type (#384).
+func TestDeprecatedDimensionsTypeValidatorNotWiredForDimensionDataSource(t *testing.T) {
+	t.Parallel()
+
+	var response datasource.SchemaResponse
+	(&dimensionDataSource{}).Schema(t.Context(), datasource.SchemaRequest{}, &response)
+	if response.Diagnostics.HasError() {
+		t.Fatalf("building dimension schema: %v", response.Diagnostics.Errors())
+	}
+
+	attribute := dataSourceStringAttributeAtPath(t, response.Schema.Attributes, "type")
+	for _, candidate := range attribute.Validators {
+		if _, ok := candidate.(deprecatedDimensionsTypeValidator); ok {
+			t.Fatal("dimension data source type must not carry the deprecated dimension type validator: the dimensions API returns not found for the replacement types")
+		}
+	}
+}
+
+// The alerts API rejects the replacement types ("allocation_rule"/"allocation")
+// with a 400, so the deprecation warning must not be attached to alert scopes (#384).
+func TestDeprecatedDimensionsTypeValidatorNotWiredForAlert(t *testing.T) {
+	t.Parallel()
+
+	alertSchema := resourceSchemaForTest(t.Context(), &alertResource{})
+	attribute := resourceStringAttributeAtPath(t, alertSchema.Attributes, "config.scopes[*].type")
+	for _, candidate := range attribute.Validators {
+		if _, ok := candidate.(deprecatedDimensionsTypeValidator); ok {
+			t.Fatal("alert config.scopes[*].type must not carry the deprecated dimension type validator")
+		}
+	}
+}
+
+func TestAppendDimensionsTypeDeprecationValidatorsPaths(t *testing.T) {
+	t.Parallel()
+
+	newAttributes := func() map[string]resourceschema.Attribute {
+		leaf := func() map[string]resourceschema.Attribute {
+			return map[string]resourceschema.Attribute{"type": resourceschema.StringAttribute{Optional: true}}
+		}
+		return map[string]resourceschema.Attribute{
+			"top":    resourceschema.StringAttribute{Optional: true},
+			"single": resourceschema.SingleNestedAttribute{Attributes: leaf()},
+			"list":   resourceschema.ListNestedAttribute{NestedObject: resourceschema.NestedAttributeObject{Attributes: leaf()}},
+			"set":    resourceschema.SetNestedAttribute{NestedObject: resourceschema.NestedAttributeObject{Attributes: leaf()}},
+			"map":    resourceschema.MapNestedAttribute{NestedObject: resourceschema.NestedAttributeObject{Attributes: leaf()}},
+			"nested": resourceschema.SingleNestedAttribute{Attributes: map[string]resourceschema.Attribute{
+				"items": resourceschema.ListNestedAttribute{NestedObject: resourceschema.NestedAttributeObject{Attributes: leaf()}},
+			}},
+		}
+	}
+
+	t.Run("resolves every nested attribute kind", func(t *testing.T) {
+		t.Parallel()
+
+		attributes := newAttributes()
+		appendDimensionsTypeDeprecationValidators(attributes,
+			"top", "single.type", "list[*].type", "set[*].type", "map[*].type", "nested.items[*].type")
+
+		assertHasDeprecatedDimensionsTypeValidator(t, attributes["top"].(resourceschema.StringAttribute).Validators)
+		assertHasDeprecatedDimensionsTypeValidator(t, attributes["single"].(resourceschema.SingleNestedAttribute).Attributes["type"].(resourceschema.StringAttribute).Validators)
+		assertHasDeprecatedDimensionsTypeValidator(t, attributes["list"].(resourceschema.ListNestedAttribute).NestedObject.Attributes["type"].(resourceschema.StringAttribute).Validators)
+		assertHasDeprecatedDimensionsTypeValidator(t, attributes["set"].(resourceschema.SetNestedAttribute).NestedObject.Attributes["type"].(resourceschema.StringAttribute).Validators)
+		assertHasDeprecatedDimensionsTypeValidator(t, attributes["map"].(resourceschema.MapNestedAttribute).NestedObject.Attributes["type"].(resourceschema.StringAttribute).Validators)
+		items := attributes["nested"].(resourceschema.SingleNestedAttribute).Attributes["items"].(resourceschema.ListNestedAttribute)
+		assertHasDeprecatedDimensionsTypeValidator(t, items.NestedObject.Attributes["type"].(resourceschema.StringAttribute).Validators)
+	})
+
+	for name, attributePath := range map[string]string{
+		"missing root":      "nope.type",
+		"missing leaf":      "list[*].nope",
+		"non-nested parent": "top.type",
+		"non-string leaf":   "list",
+	} {
+		t.Run("panics on "+name, func(t *testing.T) {
+			t.Parallel()
+
+			defer func() {
+				if recover() == nil {
+					t.Errorf("expected panic for path %q", attributePath)
+				}
+			}()
+			appendDimensionsTypeDeprecationValidators(newAttributes(), attributePath)
+		})
+	}
+}
+
 func TestDeprecatedDimensionsTypeValidatorDataSourceSchemaWiring(t *testing.T) {
 	t.Parallel()
 
 	ctx := t.Context()
-
-	t.Run("dimension", func(t *testing.T) {
-		t.Parallel()
-
-		var response datasource.SchemaResponse
-		(&dimensionDataSource{}).Schema(ctx, datasource.SchemaRequest{}, &response)
-		if response.Diagnostics.HasError() {
-			t.Fatalf("building dimension schema: %v", response.Diagnostics.Errors())
-		}
-
-		attribute := dataSourceStringAttributeAtPath(t, response.Schema.Attributes, "type")
-		assertHasDeprecatedDimensionsTypeValidator(t, attribute.Validators)
-	})
 
 	t.Run("report query", func(t *testing.T) {
 		t.Parallel()

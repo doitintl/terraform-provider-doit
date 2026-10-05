@@ -995,7 +995,8 @@ resource "doit_alert" "test_recipient" {
 
 // TestAccAlert_ScopesAliasTypes tests that using the "allocation_rule" alias type
 // in alert scopes is handled correctly. Note: As of now, the alert API only accepts
-// "attribution" (not the "allocation_rule" alias), so we test with "attribution".
+// "attribution" (not the "allocation_rule" alias), so we test with "attribution"
+// and the provider deliberately emits no deprecation warning for it (#384).
 // The normalization code in the provider ensures that if the API is updated to accept
 // aliases in the future, or if the user imports a resource that was created with aliases,
 // the state will remain consistent.
