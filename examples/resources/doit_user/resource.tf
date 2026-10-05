@@ -15,3 +15,25 @@ resource "doit_user" "full" {
   phone_extension = "5551234567"
   language        = "en"
 }
+
+# Invite a team from a map and assign everyone a custom role
+resource "doit_role" "analyst" {
+  name = "Analyst"
+}
+
+locals {
+  analysts = {
+    "ana@example.com"  = { first_name = "Ana", last_name = "Lopez" }
+    "ravi@example.com" = { first_name = "Ravi", last_name = "Patel" }
+  }
+}
+
+resource "doit_user" "analyst" {
+  for_each = local.analysts
+
+  email      = each.key
+  first_name = each.value.first_name
+  last_name  = each.value.last_name
+  job_title  = "Finance / Accounting"
+  role_id    = doit_role.analyst.id
+}

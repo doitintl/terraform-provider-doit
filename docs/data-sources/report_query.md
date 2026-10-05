@@ -17,7 +17,7 @@ The query is executed with the provided config and results are returned as a JSO
 
 ~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query. Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`.
 
-The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. Terraform state contains the signed URL when one is returned.
+The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately.
 
 The `result_json` field contains the full result object including:
 
@@ -45,6 +45,23 @@ If the `read` timeout is reached — or you interrupt Terraform — the provider
 ## Example Usage
 
 ```terraform
+terraform {
+  required_providers {
+    doit = {
+      source  = "doitintl/doit"
+      version = "~> 1.0"
+    }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
+  }
+}
+
 # Fetch the last 3 months of cost data grouped by cloud provider
 data "doit_report_query" "cost_by_provider" {
   config = {
@@ -100,6 +117,55 @@ resource "local_file" "query_csv" {
 
 output "row_count" {
   value = data.doit_report_query.cost_by_provider.row_count
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Render an ad-hoc query as a PNG chart
+# ─────────────────────────────────────────────────────────────────────────────
+# Set file_output to "png" (or "pdf") to receive a signed download URL for the
+# rendered chart, without saving a report first. The URL is sensitive and
+# valid for up to seven days. This example stores the URL and the file contents
+# in Terraform state, so protect that state appropriately.
+
+data "doit_report_query" "top_services_png" {
+  file_output = "png"
+  config = {
+    metrics       = [{ type = "basic", value = "cost" }]
+    aggregation   = "total"
+    time_interval = "month"
+    currency      = "USD"
+    time_range = {
+      mode            = "last"
+      amount          = 3
+      unit            = "month"
+      include_current = false
+    }
+    dimensions = [
+      { id = "year", type = "datetime" },
+      { id = "month", type = "datetime" },
+    ]
+    # Top 5 services by cost
+    group = [{
+      id   = "service_description"
+      type = "fixed"
+      limit = {
+        value  = 5
+        sort   = "desc"
+        metric = { type = "basic", value = "cost" }
+      }
+    }]
+    layout          = "stacked_column_chart"
+    sort_dimensions = "a_to_z" # chronological x-axis in the rendered chart
+  }
+}
+
+data "http" "top_services_png" {
+  url = data.doit_report_query.top_services_png.file_output_url
+}
+
+resource "local_sensitive_file" "top_services_png" {
+  filename       = "${path.module}/top-services.png"
+  content_base64 = data.http.top_services_png.response_body_base64
 }
 ```
 

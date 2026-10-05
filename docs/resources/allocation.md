@@ -57,36 +57,48 @@ resource "doit_allocation" "allocation_dev_clusters_us" {
   }
 }
 
-# Create a group allocation that combines multiple rules.
+# Create a group allocation from separate single allocations.
 # Group allocations use "rules" (plural) and require "unallocated_costs"
-# to label costs that don't match any rule.
+# to label costs that don't match any rule. Define each member as its own
+# single allocation and reference it with action = "select", so every member
+# is a Terraform-managed resource. (Inline rules with action = "create" produce
+# the same single allocations in the DoiT API, but they are not Terraform
+# resources of their own, so settings like anomaly_detection can't be managed.)
+resource "doit_allocation" "region_us" {
+  name        = "US"
+  description = "Costs in the US"
+  rule = {
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["US"]
+    }]
+  }
+}
+
+resource "doit_allocation" "region_europe" {
+  name        = "Europe"
+  description = "Costs in Germany, France, the UK and the Netherlands"
+  rule = {
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["DE", "FR", "GB", "NL"]
+    }]
+  }
+}
+
 resource "doit_allocation" "allocation_by_region" {
   name              = "By Region"
   description       = "Group costs by region"
   unallocated_costs = "Other Regions"
   rules = [
-    {
-      action  = "create"
-      name    = "US"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        values = ["US"]
-      }]
-    },
-    {
-      action  = "create"
-      name    = "Europe"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        values = ["DE", "FR", "GB", "NL"]
-      }]
-    }
+    { action = "select", id = doit_allocation.region_us.id },
+    { action = "select", id = doit_allocation.region_europe.id },
   ]
 }
 
@@ -207,36 +219,83 @@ data "doit_dimension" "country" {
   id   = "country"
 }
 
-# Create a group allocation that dynamically uses country values
+# Create one single allocation per country group, using values from the API,
+# and combine them into a group allocation with action = "select"
+locals {
+  country_groups = {
+    "US Countries"     = ["US"]
+    "Europe Countries" = ["DE", "FR", "GB", "NL"]
+  }
+}
+
+resource "doit_allocation" "country_group" {
+  for_each = local.country_groups
+
+  name        = each.key
+  description = "Costs in ${join(", ", each.value)}"
+  rule = {
+    formula = "A"
+    components = [{
+      key  = "country"
+      mode = "is"
+      type = "fixed"
+      # Use values from the API — filter to the ones we want
+      values = [for v in data.doit_dimension.country.values : v.value if contains(each.value, v.value)]
+    }]
+  }
+}
+
 resource "doit_allocation" "dynamic_countries" {
   name              = "Dynamic Countries"
   description       = "Group costs using country values discovered from the API"
   unallocated_costs = "Other Countries"
-  rules = [
-    {
-      action  = "create"
-      name    = "US"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        # Use values from the API — filter to the ones we want
-        values = [for v in data.doit_dimension.country.values : v.value if v.value == "US"]
-      }]
-    },
-    {
-      action  = "create"
-      name    = "Europe"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        values = [for v in data.doit_dimension.country.values : v.value if contains(["DE", "FR", "GB", "NL"], v.value)]
-      }]
-    }
-  ]
+  rules = [for a in doit_allocation.country_group : {
+    action = "select"
+    id     = a.id
+  }]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Allocation factory: one allocation per team, plus a group view of all teams
+# ─────────────────────────────────────────────────────────────────────────────
+# Define teams once and derive every allocation from the map. Each team gets a
+# single allocation with anomaly detection enabled. The group allocation
+# selects those singles (action = "select"), so every member of the group is
+# a Terraform-managed resource that budgets, alerts and reports can reference.
+
+locals {
+  teams = {
+    payments = { label = "payments" }
+    search   = { label = "search" }
+    platform = { label = "platform" }
+  }
+}
+
+resource "doit_allocation" "team" {
+  for_each = local.teams
+
+  name              = "Team: ${each.key}"
+  description       = "All costs labeled owner=${each.value.label}"
+  anomaly_detection = true
+  rule = {
+    formula = "A"
+    components = [{
+      type   = "label"
+      key    = "owner"
+      mode   = "is"
+      values = [each.value.label]
+    }]
+  }
+}
+
+resource "doit_allocation" "by_team" {
+  name              = "Cost by Team"
+  description       = "Team allocations combined into one group"
+  unallocated_costs = "Unowned"
+  rules = [for team in doit_allocation.team : {
+    action = "select"
+    id     = team.id
+  }]
 }
 ```
 
@@ -342,6 +401,10 @@ Optional:
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 
 ## Managing Group Memberships
+
+### Building Group Allocations
+
+Build a group allocation from separate single `doit_allocation` resources and reference each one in the group's `rules` with `action = "select"` and its `id`, as shown in the examples above. Inline rules with `action = "create"` produce the same single allocations in the DoiT API, but those allocations are not Terraform resources of their own, so settings such as `anomaly_detection` or `folder_id` can't be managed for them.
 
 ### Removing Selected Member Allocations from a Group
 

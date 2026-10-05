@@ -27,3 +27,21 @@ output "budget_risks" {
     for b in data.doit_budgets.all.budgets : b.budget_name => b.risk_status
   }
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Budget health check during plan
+# ─────────────────────────────────────────────────────────────────────────────
+# A check block runs on every plan and apply. It reports a warning (not an
+# error) listing any matching budget the API classifies as at risk.
+
+check "team_budgets_on_track" {
+  data "doit_budgets" "team_at_risk" {
+    name_contains = "Team: "
+    filter        = "riskStatus:atRisk"
+  }
+
+  assert {
+    condition     = data.doit_budgets.team_at_risk.row_count == 0
+    error_message = "Budgets at risk: ${join(", ", [for b in data.doit_budgets.team_at_risk.budgets : b.budget_name])}"
+  }
+}
