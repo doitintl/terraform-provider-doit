@@ -143,8 +143,9 @@ func TestDeprecatedDimensionsTypeValidatorResourceSchemaWiring(t *testing.T) {
 	}
 }
 
-// The alerts API rejects the replacement types ("allocation_rule"/"allocation")
-// with a 400, so the deprecation warning must not be attached to alert scopes (#384).
+// The dimensions API returns "Dimension not found" for the replacement types
+// ("allocation_rule"/"allocation"), so the deprecation warning must not be
+// attached to the dimension data source type (#384).
 func TestDeprecatedDimensionsTypeValidatorNotWiredForDimensionDataSource(t *testing.T) {
 	t.Parallel()
 
@@ -162,6 +163,8 @@ func TestDeprecatedDimensionsTypeValidatorNotWiredForDimensionDataSource(t *test
 	}
 }
 
+// The alerts API rejects the replacement types ("allocation_rule"/"allocation")
+// with a 400, so the deprecation warning must not be attached to alert scopes (#384).
 func TestDeprecatedDimensionsTypeValidatorNotWiredForAlert(t *testing.T) {
 	t.Parallel()
 
