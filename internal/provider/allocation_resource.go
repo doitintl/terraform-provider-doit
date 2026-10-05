@@ -7,6 +7,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -325,6 +326,14 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
+	// Prior-state rules identify the members this group defines inline, so ones dropped by this
+	// update can be deleted afterwards.
+	var priorRules types.List
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("rules"), &priorRules)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Update the allocation
 	updateResp, err := r.client.UpdateAllocationWithResponse(ctx, stateId.ValueString(), allocation)
 	if err != nil {
@@ -366,6 +375,21 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
+	// Rules removed from the group no longer reference their allocation, which the API leaves
+	// behind. Delete the inline ones before saving state, so a failure surfaces
+	// here instead of leaving an orphan.
+	prior, d := rulesFromList(ctx, priorRules)
+	resp.Diagnostics.Append(d...)
+	planned, d := rulesFromList(ctx, plan.Rules)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(r.deleteAllocations(ctx, removedInlineRuleIDs(prior, planned))...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -402,6 +426,96 @@ func (r *allocationResource) Delete(ctx context.Context, req resource.DeleteRequ
 		)
 		return
 	}
+
+	// The API does not delete group members with the group. Remove the inline ones
+	// (action="create" or "update") now that nothing references them. Rerunning after a failure is safe: the
+	// group is already gone (404 above) and deleted members are skipped the same way.
+	rules, d := rulesFromList(ctx, state.Rules)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(r.deleteAllocations(ctx, inlineRuleIDs(rules))...)
+}
+
+// deleteAllocations deletes the given allocations, treating 404 as already deleted. It attempts
+// every id and reports one error per failure.
+func (r *allocationResource) deleteAllocations(ctx context.Context, ids []string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	for _, id := range ids {
+		delResp, err := r.client.DeleteAllocationWithResponse(ctx, id)
+		if err != nil {
+			diags.AddError(
+				"Error Deleting DoiT Allocation",
+				fmt.Sprintf("Could not delete allocation %s defined inline by this group, unexpected error: %s", id, err),
+			)
+			continue
+		}
+		if sc := delResp.StatusCode(); sc != 200 && sc != 204 && sc != 404 {
+			diags.AddError(
+				"Error Deleting DoiT Allocation",
+				fmt.Sprintf("Could not delete allocation %s defined inline by this group, status: %d, body: %s", id, sc, string(delResp.Body)),
+			)
+		}
+	}
+	return diags
+}
+
+// rulesFromList decodes a group's rules list, tolerating unknown elements (plans can contain
+// them). Null and unknown lists yield no rules.
+func rulesFromList(ctx context.Context, rules types.List) ([]resource_allocation.RulesValue, diag.Diagnostics) {
+	if rules.IsNull() || rules.IsUnknown() {
+		return nil, nil
+	}
+	var out []resource_allocation.RulesValue
+	diags := rules.ElementsAs(ctx, &out, true)
+	return out, diags
+}
+
+// inlineRuleIDs returns the ids of allocations a group defines itself. The API has no notion of
+// inline rules: a rule sent with action="create" becomes an ordinary single allocation, identical
+// to one referenced with action="select", and "update" is the verb the API expects to change
+// such a rule later (the provider sends it for create rules that already have an id). The action
+// kept in state is therefore the only record of ownership: "create" and "update" rules are
+// inline definitions, "select" rules only reference an allocation managed elsewhere. Rules
+// without an id, and the all-"select" rules of an imported group, are never owned.
+func inlineRuleIDs(rules []resource_allocation.RulesValue) []string {
+	var ids []string
+	seen := make(map[string]struct{}, len(rules))
+	for _, rule := range rules {
+		if action := rule.Action.ValueString(); action != "create" && action != "update" {
+			continue
+		}
+		if rule.Id.IsNull() || rule.Id.IsUnknown() || rule.Id.ValueString() == "" {
+			continue
+		}
+		id := rule.Id.ValueString()
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+// removedInlineRuleIDs returns inline allocations present in the prior rules that no planned
+// rule references any more. Matching is by id regardless of action, so a rule that merely
+// changed action (or was renamed and kept its id) is not deleted.
+func removedInlineRuleIDs(prior, planned []resource_allocation.RulesValue) []string {
+	stillReferenced := make(map[string]struct{}, len(planned))
+	for _, rule := range planned {
+		if !rule.Id.IsNull() && !rule.Id.IsUnknown() {
+			stillReferenced[rule.Id.ValueString()] = struct{}{}
+		}
+	}
+	var removed []string
+	for _, id := range inlineRuleIDs(prior) {
+		if _, ok := stillReferenced[id]; !ok {
+			removed = append(removed, id)
+		}
+	}
+	return removed
 }
 
 // ModifyPlan implements identity-aware rule ID matching for group allocation in-line rules.

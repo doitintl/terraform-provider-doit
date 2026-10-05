@@ -404,7 +404,18 @@ Optional:
 
 ### Building Group Allocations
 
-Build a group allocation from separate single `doit_allocation` resources and reference each one in the group's `rules` with `action = "select"` and its `id`, as shown in the examples above. Inline rules with `action = "create"` produce the same single allocations in the DoiT API, but those allocations are not Terraform resources of their own, so settings such as `anomaly_detection` or `folder_id` can't be managed for them.
+Build a group allocation from separate single `doit_allocation` resources and reference each one in the group's `rules` with `action = "select"` and its `id`, as shown in the examples above. Inline rules with `action = "create"` produce the same single allocations in the DoiT API, but those allocations are not Terraform resources of their own, so settings such as `anomaly_detection` or `folder_id` can't be managed for them, and other resources can't reference them.
+
+### Inline rules (`create` and `update`)
+
+The DoiT API has no concept of "inline" group members. A rule with `action = "create"` makes the API create an ordinary single allocation and reference it from the group, which is exactly the object you get from a separate `doit_allocation` with `rule` that the group references with `action = "select"`. The API never returns the action, so the provider remembers it in state.
+
+Because the API does not delete members together with a group, the provider deletes the allocations a group defines inline (`action = "create"` or `"update"`) itself:
+
+- When the group is destroyed, after the group is deleted.
+- When an inline rule is removed from `rules`, after the group is updated.
+
+Rules with `action = "update"` are the same inline definitions (it is the verb the API expects to change a rule created earlier, and the provider sends it for `create` rules that already exist), so they are deleted the same way. Allocations referenced with `action = "select"` are never deleted by the group. Do not set `id` on a rule with `action = "create"` or `"update"` to point at an allocation managed elsewhere: the provider treats it as part of the group and deletes it with the group; use `action = "select"` for that. A group that was imported has every rule recorded as `select`, so destroying it leaves its members in place.
 
 ### Removing Selected Member Allocations from a Group
 
