@@ -2,13 +2,16 @@ package provider
 
 import (
 	"context"
+	"maps"
 	"slices"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/oapi-codegen/nullable"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 )
 
@@ -89,5 +92,89 @@ func TestRemovedInlineRuleIDs(t *testing.T) {
 				t.Errorf("removedInlineRuleIDs() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// ownershipStateRule builds a prior-state/plan rule for mapAllocationToModel tests.
+func ownershipStateRule(t *testing.T, action string, id types.String) attr.Value {
+	t.Helper()
+	return ownershipRuleWith(t, action, id, map[string]attr.Value{
+		"name":    types.StringValue("n"),
+		"formula": types.StringValue("A"),
+	})
+}
+
+func ownershipRuleWith(t *testing.T, action string, id types.String, extra map[string]attr.Value) attr.Value {
+	t.Helper()
+	ctx := t.Context()
+	attrTypes := resource_allocation.RulesValue{}.AttributeTypes(ctx)
+	attrs := make(map[string]attr.Value, len(attrTypes))
+	for name, typ := range attrTypes {
+		attrs[name] = tftypesNull(ctx, typ)
+	}
+	attrs["action"] = types.StringValue(action)
+	attrs["id"] = id
+	maps.Copy(attrs, extra)
+	return resource_allocation.NewRulesValueMust(attrTypes, attrs)
+}
+
+func ownershipGroupResponse(ids ...string) *models.Allocation {
+	groupType := models.AllocationAllocationType("group")
+	rules := make([]nullable.Nullable[models.GroupAllocationRule], 0, len(ids))
+	for _, id := range ids {
+		formula := "A"
+		components := []models.AllocationComponent{{Key: "country", Mode: "is", Type: "fixed", Values: []string{"JP"}}}
+		rules = append(rules, valueToNullable(models.GroupAllocationRule{
+			Id: &id, Name: &id, Formula: &formula, Components: &components,
+		}))
+	}
+	return &models.Allocation{AllocationType: &groupType, Rules: &rules}
+}
+
+func ownershipMappedActions(t *testing.T, prior []attr.Value, apiResp *models.Allocation) []string {
+	t.Helper()
+	ctx := t.Context()
+	state := &allocationResourceModel{}
+	state.Id = types.StringValue("group")
+	state.Rule = resource_allocation.NewRuleValueNull()
+	state.Rules = types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), prior)
+	if diags := mapAllocationToModel(ctx, nil, apiResp, state); diags.HasError() {
+		t.Fatalf("mapAllocationToModel: %v", diags)
+	}
+	rules, diags := rulesFromList(ctx, state.Rules)
+	if diags.HasError() {
+		t.Fatalf("rulesFromList: %v", diags)
+	}
+	actions := make([]string, len(rules))
+	for i, r := range rules {
+		actions[i] = r.Action.ValueString()
+	}
+	return actions
+}
+
+// A rule that was replaced outside Terraform shows up with an id the prior state does not know.
+// It must not inherit the prior rule's "create" action by position: the provider would then treat
+// someone else's allocation as its own and delete it.
+func TestMapAllocationToModel_ReplacedRuleDoesNotInheritOwnershipByIndex(t *testing.T) {
+	prior := []attr.Value{
+		ownershipStateRule(t, "create", types.StringValue("mine")),
+		ownershipStateRule(t, "select", types.StringValue("shared")),
+	}
+	got := ownershipMappedActions(t, prior, ownershipGroupResponse("someone-elses", "shared"))
+	if want := []string{"select", "select"}; !slices.Equal(got, want) {
+		t.Errorf("actions = %v, want %v", got, want)
+	}
+}
+
+// Right after Create/Update the plan's new rules have unknown ids, so matching them to the API
+// response by position is the only way to keep their configured action.
+func TestMapAllocationToModel_NewRuleWithUnknownIDKeepsActionByIndex(t *testing.T) {
+	prior := []attr.Value{
+		ownershipStateRule(t, "select", types.StringValue("shared")),
+		ownershipStateRule(t, "create", types.StringUnknown()),
+	}
+	got := ownershipMappedActions(t, prior, ownershipGroupResponse("shared", "new-id"))
+	if want := []string{"select", "create"}; !slices.Equal(got, want) {
+		t.Errorf("actions = %v, want %v", got, want)
 	}
 }

@@ -404,7 +404,7 @@ Optional:
 
 ### Building Group Allocations
 
-Build a group allocation from separate single `doit_allocation` resources and reference each one in the group's `rules` with `action = "select"` and its `id`, as shown in the examples above. Inline rules with `action = "create"` produce the same single allocations in the DoiT API, but those allocations are not Terraform resources of their own, so settings such as `anomaly_detection` or `folder_id` can't be managed for them, so they can't be managed as independent resources.
+Build a group allocation from separate single `doit_allocation` resources and reference each one in the group's `rules` with `action = "select"` and its `id`, as shown in the examples above. Inline rules with `action = "create"` produce the same single allocations in the DoiT API, but those allocations are not Terraform resources of their own. They can still be referenced through `rules[*].id`, but settings such as `anomaly_detection` or `folder_id` can't be managed for them.
 
 ### Inline rules (`create` and `update`)
 
@@ -415,7 +415,7 @@ Because the API does not delete members together with a group, the provider dele
 - When the group is destroyed, after the group is deleted.
 - When an inline rule is removed from `rules`, after the group is updated.
 
-Rules with `action = "update"` are the same inline definitions (it is the verb the API expects to change a rule created earlier, and the provider sends it for `create` rules that already exist), so they are deleted the same way. Allocations referenced with `action = "select"` are never deleted by the group. Do not set `id` on a rule with `action = "create"` or `"update"` to point at an allocation managed elsewhere: the provider treats it as part of the group and deletes it with the group; use `action = "select"` for that. If deleting such an allocation fails (for example because something else still references it), the provider reports a warning with its id instead of an error, because the group is already gone; delete it manually. A group that was imported has every rule recorded as `select`, so destroying it leaves its members in place.
+Rules with `action = "update"` are the same inline definitions (it is the verb the API expects to change a rule created earlier, and the provider sends it for `create` rules that already exist), so they are deleted the same way. Allocations referenced with `action = "select"` are never deleted by the group. Do not set `id` on a rule with `action = "create"` or `"update"` to point at an allocation managed elsewhere: the provider treats it as part of the group and deletes it with the group; use `action = "select"` for that. If deleting such an allocation fails (for example because something else still references it), the provider reports a warning with its id instead of an error. The group has already been deleted, or already updated so that it no longer references the allocation, and Terraform could not retry the cleanup afterwards. Delete the allocation manually. A group that was imported has every rule recorded as `select`, so destroying it leaves its members in place.
 
 ### Removing Selected Member Allocations from a Group
 
