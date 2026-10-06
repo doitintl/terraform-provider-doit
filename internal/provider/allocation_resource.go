@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
@@ -414,25 +415,24 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Plan-first state pattern: keep all user-configured values from the plan
 	// exactly as-is, and only overlay Computed-only fields from the API response.
+	prior, d := rulesFromList(ctx, priorRules)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, updateResp.JSON200, &plan)...)
+	// The PATCH has already changed group membership. Delete removed owned members
+	// even if reading details of a surviving member failed during the overlay.
+	if removed, confirmed := removedInlineRuleIDsFromResponse(prior, updateResp.JSON200); confirmed {
+		resp.Diagnostics.Append(r.deleteAllocations(ctx, removed)...)
+	} else if ids := inlineRuleIDs(prior); len(ids) > 0 {
+		resp.Diagnostics.AddWarning("Inline allocation cleanup could not be confirmed",
+			"The update response omitted complete group membership; check previously owned allocation IDs for orphaned members: "+strings.Join(ids, ", "))
+	}
 	if resp.Diagnostics.HasError() {
 		if !plan.Id.IsUnknown() && !plan.Id.IsNull() {
 			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 		}
-		return
-	}
-
-	// Rules removed from the group no longer reference their allocation, which the API leaves
-	// behind. Delete the inline ones; a failed delete is reported as a warning.
-	prior, d := rulesFromList(ctx, priorRules)
-	resp.Diagnostics.Append(d...)
-	planned, d := rulesFromList(ctx, plan.Rules)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(r.deleteAllocations(ctx, removedInlineRuleIDs(prior, planned))...)
-	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -566,6 +566,29 @@ func removedInlineRuleIDs(prior, planned []resource_allocation.RulesValue) []str
 		}
 	}
 	return removed
+}
+
+// removedInlineRuleIDsFromResponse uses confirmed post-PATCH membership. A nil
+// rules field does not prove that every prior member was removed.
+func removedInlineRuleIDsFromResponse(prior []resource_allocation.RulesValue, response *models.Allocation) ([]string, bool) {
+	if response.Rules == nil {
+		return nil, false
+	}
+	stillReferenced := make(map[string]struct{}, len(*response.Rules))
+	for _, rule := range *response.Rules {
+		member := nullableToPointer(rule)
+		if member == nil || member.Id == nil || *member.Id == "" {
+			return nil, false
+		}
+		stillReferenced[*member.Id] = struct{}{}
+	}
+	var removed []string
+	for _, id := range inlineRuleIDs(prior) {
+		if _, ok := stillReferenced[id]; !ok {
+			removed = append(removed, id)
+		}
+	}
+	return removed, true
 }
 
 // ModifyPlan implements identity-aware rule ID matching for group allocation in-line rules.

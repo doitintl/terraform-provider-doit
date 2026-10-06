@@ -647,24 +647,17 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 	}
 
 	if resp.Rules != nil && len(*resp.Rules) > 0 {
-		// Parse state rules once for reuse (actions, component types, include_null)
+		// Parse state rules once for action and metadata recovery.
 		var stateRules []resource_allocation.RulesValue
-		existingActionsByID := make(map[string]string)
-		existingActionsByIndex := make([]string, 0)
-		// Positions whose prior rule has no known id yet (new rules in a plan). Only these may
-		// hand their action to a response rule by position.
-		unidentifiedByIndex := make([]bool, 0)
+		stateRuleIndexByID := make(map[string]int)
 
 		if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
 			// We try to extract existing rules to preserve the "action" field which is not returned by the API.
 			// If this fails, we proceed without existing actions.
 			if d := state.Rules.ElementsAs(ctx, &stateRules, false); !d.HasError() {
-				for _, rule := range stateRules {
-					action := rule.Action.ValueString()
-					existingActionsByIndex = append(existingActionsByIndex, action)
-					unidentifiedByIndex = append(unidentifiedByIndex, rule.Id.IsNull() || rule.Id.IsUnknown() || rule.Id.ValueString() == "")
-					if !rule.Id.IsNull() && !rule.Id.IsUnknown() {
-						existingActionsByID[rule.Id.ValueString()] = action
+				for i, rule := range stateRules {
+					if !rule.Id.IsNull() && !rule.Id.IsUnknown() && rule.Id.ValueString() != "" {
+						stateRuleIndexByID[rule.Id.ValueString()] = i
 					}
 				}
 			}
@@ -679,19 +672,23 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				continue
 			}
 			rule := *rulePtr
-			// Determine Action
-			var action string
+			// A known ID identifies the prior rule even if the API reorders members.
+			// Position is safe only while the prior rule has no assigned ID.
+			var priorRule *resource_allocation.RulesValue
 			if rule.Id != nil {
-				if a, ok := existingActionsByID[*rule.Id]; ok {
-					action = a
+				if i, ok := stateRuleIndexByID[*rule.Id]; ok {
+					priorRule = &stateRules[i]
 				}
 			}
-			// Fall back to position only for a prior rule that has no id yet (a rule being
-			// created in this plan). A prior rule with a known id that is absent from the response
-			// was replaced outside Terraform: its action must not carry over to whatever now sits
-			// at that position, because "create"/"update" mark allocations the provider deletes.
-			if action == "" && ruleIndex < len(existingActionsByIndex) && unidentifiedByIndex[ruleIndex] {
-				action = existingActionsByIndex[ruleIndex]
+			if priorRule == nil && ruleIndex < len(stateRules) {
+				candidate := &stateRules[ruleIndex]
+				if candidate.Id.IsNull() || candidate.Id.IsUnknown() || candidate.Id.ValueString() == "" {
+					priorRule = candidate
+				}
+			}
+			var action string
+			if priorRule != nil {
+				action = priorRule.Action.ValueString()
 			}
 			if action == "" {
 				// Default to "select" if we can't determine the action (e.g. import)
@@ -709,21 +706,31 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				components = *rule.Components
 			}
 
+			detailFailed := false
+			detailSucceeded := false
 			if (formula == "" || components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified()) && rule.Id != nil && action != "select" && client != nil {
 				// Fetch full allocation to get formula, components, validity periods, and value extraction
 				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
 				if err != nil {
+					detailFailed = true
 					diags.AddError(
 						"Error Reading Allocation Rule Details",
 						"Could not read child allocation ID "+*rule.Id+": "+err.Error(),
 					)
 				} else if respHTTPFullAlloc.StatusCode() != 200 || respHTTPFullAlloc.JSON200 == nil {
+					detailFailed = true
 					diags.AddError(
 						"Error Reading Allocation Rule Details",
 						fmt.Sprintf("Could not read child allocation ID %s, status: %d, body: %s", *rule.Id, respHTTPFullAlloc.StatusCode(), string(respHTTPFullAlloc.Body)),
 					)
 				} else {
 					fullAlloc := respHTTPFullAlloc.JSON200
+					if rule.Name == nil {
+						rule.Name = fullAlloc.Name
+					}
+					if rule.Description == nil {
+						rule.Description = fullAlloc.Description
+					}
 					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
 						if formula == "" {
 							formula = rulePtr.Formula
@@ -741,6 +748,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 						} `json:"rule"`
 					}
 					if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr != nil {
+						detailFailed = true
 						diags.AddError(
 							"Error Reading Allocation Rule Details",
 							fmt.Sprintf("Could not parse child allocation value extraction for ID %s: %s", *rule.Id, uerr.Error()),
@@ -748,18 +756,21 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 					} else if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
 						rule.ValueExtraction = allocDetail.Rule.ValueExtraction
 					}
+					if !detailFailed {
+						detailSucceeded = true
+					}
 				}
 			}
 
-			// If fetching child allocation details failed, fall back to prior state/plan values
-			// so the rule can be constructed and saved to preserve recoverable state.
-			if formula == "" && ruleIndex < len(stateRules) && !stateRules[ruleIndex].Formula.IsNull() && !stateRules[ruleIndex].Formula.IsUnknown() {
-				formula = stateRules[ruleIndex].Formula.ValueString()
+			// Recover prior values only after a failed detail read. A successful read
+			// with omitted metadata means the field was cleared outside Terraform.
+			if detailFailed && formula == "" && priorRule != nil && !priorRule.Formula.IsNull() && !priorRule.Formula.IsUnknown() {
+				formula = priorRule.Formula.ValueString()
 			}
 
 			var validityPeriodsList basetypes.ListValue
-			if !rule.ValidityPeriods.IsSpecified() && ruleIndex < len(stateRules) && !stateRules[ruleIndex].ValidityPeriods.IsNull() && !stateRules[ruleIndex].ValidityPeriods.IsUnknown() {
-				validityPeriodsList = stateRules[ruleIndex].ValidityPeriods
+			if detailFailed && !rule.ValidityPeriods.IsSpecified() && priorRule != nil && !priorRule.ValidityPeriods.IsNull() && !priorRule.ValidityPeriods.IsUnknown() {
+				validityPeriodsList = priorRule.ValidityPeriods
 			} else {
 				var vpDiags diag.Diagnostics
 				validityPeriodsList, vpDiags = toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
@@ -770,8 +781,8 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 			}
 
 			var valueExtractionVal resource_allocation.ValueExtractionValue
-			if !rule.ValueExtraction.IsSpecified() && ruleIndex < len(stateRules) && !stateRules[ruleIndex].ValueExtraction.IsNull() && !stateRules[ruleIndex].ValueExtraction.IsUnknown() {
-				valueExtractionVal = stateRules[ruleIndex].ValueExtraction
+			if detailFailed && !rule.ValueExtraction.IsSpecified() && priorRule != nil && !priorRule.ValueExtraction.IsNull() && !priorRule.ValueExtraction.IsUnknown() {
+				valueExtractionVal = priorRule.ValueExtraction
 			} else {
 				var veDiags diag.Diagnostics
 				valueExtractionVal, veDiags = toValueExtractionValue(ctx, rule.ValueExtraction)
@@ -782,13 +793,13 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 			}
 
 			descVal := types.StringPointerValue(rule.Description)
-			if rule.Description == nil && ruleIndex < len(stateRules) && !stateRules[ruleIndex].Description.IsNull() && !stateRules[ruleIndex].Description.IsUnknown() {
-				descVal = stateRules[ruleIndex].Description
+			if !detailSucceeded && rule.Description == nil && priorRule != nil && !priorRule.Description.IsNull() && !priorRule.Description.IsUnknown() {
+				descVal = priorRule.Description
 			}
 
 			nameVal := types.StringPointerValue(rule.Name)
-			if rule.Name == nil && ruleIndex < len(stateRules) && !stateRules[ruleIndex].Name.IsNull() && !stateRules[ruleIndex].Name.IsUnknown() {
-				nameVal = stateRules[ruleIndex].Name
+			if !detailSucceeded && rule.Name == nil && priorRule != nil && !priorRule.Name.IsNull() && !priorRule.Name.IsUnknown() {
+				nameVal = priorRule.Name
 			}
 
 			m := map[string]attr.Value{
@@ -802,12 +813,11 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 			}
 			if len(components) > 0 {
 				// Get existing component values from state for alias normalization and state preservation.
-				// We reuse stateRules (parsed once before the loop) instead of re-parsing state.Rules on each iteration.
+				// Preserve aliases only from the matching prior rule.
 				var existingComponents []resource_allocation.ComponentsValue
-				if ruleIndex < len(stateRules) {
-					sr := stateRules[ruleIndex]
-					if !sr.Components.IsNull() && !sr.Components.IsUnknown() {
-						if d := sr.Components.ElementsAs(ctx, &existingComponents, false); d.HasError() {
+				if priorRule != nil {
+					if !priorRule.Components.IsNull() && !priorRule.Components.IsUnknown() {
+						if d := priorRule.Components.ElementsAs(ctx, &existingComponents, false); d.HasError() {
 							diags.Append(d...)
 							return
 						}
@@ -819,8 +829,8 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				if d.HasError() {
 					return
 				}
-			} else if ruleIndex < len(stateRules) && !stateRules[ruleIndex].Components.IsNull() && !stateRules[ruleIndex].Components.IsUnknown() {
-				m["components"] = stateRules[ruleIndex].Components
+			} else if detailFailed && priorRule != nil && !priorRule.Components.IsNull() && !priorRule.Components.IsUnknown() {
+				m["components"] = priorRule.Components
 			} else {
 				var d diag.Diagnostics
 				m["components"], d = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
@@ -866,11 +876,32 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		return
 	}
 	stateComponents := make([]attr.Value, len(components))
+	usedPrior := make([]bool, len(existingComponents))
 	for i, component := range components {
+		// Match normalization values to the same component, even if the API changes
+		// component order. Ambiguous duplicate identities have no safe prior match.
+		var prior *resource_allocation.ComponentsValue
+		matchIndex := -1
+		for j := range existingComponents {
+			if usedPrior[j] || existingComponents[j].Key.ValueString() != component.Key ||
+				existingComponents[j].Mode.ValueString() != string(component.Mode) ||
+				normalizeDimensionsType(string(component.Type), existingComponents[j].ComponentsType.ValueString()) != existingComponents[j].ComponentsType.ValueString() {
+				continue
+			}
+			if matchIndex != -1 {
+				matchIndex = -1
+				break
+			}
+			matchIndex = j
+		}
+		if matchIndex >= 0 {
+			prior = &existingComponents[matchIndex]
+			usedPrior[matchIndex] = true
+		}
 		// Normalize alias types to preserve user's configured value
 		compType := string(component.Type)
-		if i < len(existingComponents) {
-			compType = normalizeDimensionsType(compType, existingComponents[i].ComponentsType.ValueString())
+		if prior != nil {
+			compType = normalizeDimensionsType(compType, prior.ComponentsType.ValueString())
 		}
 
 		// Field echo behavior (verified via API probe): includeNull, inverse and
@@ -881,22 +912,22 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		caseInsensitiveVal := types.BoolValue(false)
 		if component.CaseInsensitive != nil {
 			caseInsensitiveVal = types.BoolValue(*component.CaseInsensitive)
-		} else if i < len(existingComponents) {
-			caseInsensitiveVal = types.BoolValue(existingComponents[i].CaseInsensitive.ValueBool())
+		} else if prior != nil {
+			caseInsensitiveVal = types.BoolValue(prior.CaseInsensitive.ValueBool())
 		}
 
 		includeNullVal := types.BoolValue(false)
 		if component.IncludeNull != nil {
 			includeNullVal = types.BoolValue(*component.IncludeNull)
-		} else if i < len(existingComponents) {
-			includeNullVal = types.BoolValue(existingComponents[i].IncludeNull.ValueBool())
+		} else if prior != nil {
+			includeNullVal = types.BoolValue(prior.IncludeNull.ValueBool())
 		}
 
 		inverseVal := types.BoolValue(false)
 		if component.Inverse != nil {
 			inverseVal = types.BoolValue(*component.Inverse)
-		} else if i < len(existingComponents) {
-			inverseVal = types.BoolValue(existingComponents[i].Inverse.ValueBool())
+		} else if prior != nil {
+			inverseVal = types.BoolValue(prior.Inverse.ValueBool())
 		}
 
 		m := map[string]attr.Value{
@@ -913,14 +944,26 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		// The Create/Update path uses plan-first state and doesn't need this.
 		apiIncludeNull := component.IncludeNull != nil && *component.IncludeNull
 		apiValues := component.Values
-		if i < len(existingComponents) {
+		if prior != nil {
 			var stateVals []string
-			stateValsDiags := existingComponents[i].Values.ElementsAs(ctx, &stateVals, false)
+			stateValsDiags := prior.Values.ElementsAs(ctx, &stateVals, false)
 			diags.Append(stateValsDiags...)
 			if diags.HasError() {
 				return
 			}
-			apiValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
+			// The shared merge helper preserves the entire prior list when the API
+			// returns empty. Here a successful read must expose external clears.
+			apiSet := make(map[string]struct{}, len(apiValues))
+			for _, value := range apiValues {
+				apiSet[value] = struct{}{}
+			}
+			eligiblePrior := make([]string, 0, len(stateVals))
+			for _, value := range stateVals {
+				if _, present := apiSet[value]; present || isNAFallback(value) {
+					eligiblePrior = append(eligiblePrior, value)
+				}
+			}
+			apiValues = mergeSentinelValues(apiValues, eligiblePrior, apiIncludeNull)
 		}
 		values := make([]attr.Value, len(apiValues))
 		for j := range apiValues {
