@@ -91,11 +91,36 @@ func TestAllocationValidityPeriodsValidator(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "single period null element passes",
+			name: "single period null element fails",
 			configValue: basetypes.NewListValueMust(elemType, []attr.Value{
 				resource_allocation.NewValidityPeriodsValueNull(),
 			}),
-			expectError: false,
+			expectError:   true,
+			expectedDiag:  "validity_periods[0]: null element is not permitted",
+			expectedPath:  "rules[0].validity_periods[0]",
+			severityCount: 1,
+		},
+		{
+			name: "multi-period unknown element before null element still reports error",
+			configValue: basetypes.NewListValueMust(elemType, []attr.Value{
+				resource_allocation.NewValidityPeriodsValueUnknown(),
+				resource_allocation.NewValidityPeriodsValueNull(),
+			}),
+			expectError:   true,
+			expectedDiag:  "validity_periods[1]: null element is not permitted",
+			expectedPath:  "rules[0].validity_periods[1]",
+			severityCount: 1,
+		},
+		{
+			name: "multi-period unknown element after null element still reports error",
+			configValue: basetypes.NewListValueMust(elemType, []attr.Value{
+				resource_allocation.NewValidityPeriodsValueNull(),
+				resource_allocation.NewValidityPeriodsValueUnknown(),
+			}),
+			expectError:   true,
+			expectedDiag:  "validity_periods[0]: null element is not permitted",
+			expectedPath:  "rules[0].validity_periods[0]",
+			severityCount: 1,
 		},
 		{
 			name: "single period unknown start_date is deferred",

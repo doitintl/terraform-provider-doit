@@ -250,14 +250,19 @@ func convertValidityPeriodsToModels(ctx context.Context, list basetypes.ListValu
 	if len(values) == 0 {
 		return valueToNullable([]models.AllocationRulePeriod{}), diags
 	}
-	periods := make([]models.AllocationRulePeriod, len(values))
-	for i, v := range values {
+	periods := make([]models.AllocationRulePeriod, 0, len(values))
+	for _, v := range values {
+		if v.IsNull() || v.IsUnknown() {
+			continue
+		}
+		var p models.AllocationRulePeriod
 		if !v.StartDate.IsNull() && !v.StartDate.IsUnknown() {
-			periods[i].StartDate = valueToNullable(v.StartDate.ValueString())
+			p.StartDate = valueToNullable(v.StartDate.ValueString())
 		}
 		if !v.EndDate.IsNull() && !v.EndDate.IsUnknown() {
-			periods[i].EndDate = valueToNullable(v.EndDate.ValueString())
+			p.EndDate = valueToNullable(v.EndDate.ValueString())
 		}
+		periods = append(periods, p)
 	}
 	return valueToNullable(periods), diags
 }
@@ -315,7 +320,10 @@ func convertValueExtractionToModel(ctx context.Context, ve resource_allocation.V
 		}
 	}
 
-	onMissingStr := ve.OnMissing.ValueString()
+	onMissingStr := string(models.AllocationValueExtractionOnMissingUseFallback)
+	if !ve.OnMissing.IsNull() && !ve.OnMissing.IsUnknown() && ve.OnMissing.ValueString() != "" {
+		onMissingStr = ve.OnMissing.ValueString()
+	}
 	modelVE := models.AllocationValueExtraction{
 		OnMissing: new(models.AllocationValueExtractionOnMissing(onMissingStr)),
 		Sources:   modelSources,

@@ -5396,3 +5396,118 @@ resource "doit_allocation" "group_select" {
 }
 `, rName, rName, rName)
 }
+
+func TestAccAllocation_ValidityPeriods_NullElement(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	config := fmt.Sprintf(`
+resource "doit_allocation" "this" {
+  name        = "%s"
+  description = "test null validity period element"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+    validity_periods = [null]
+  }
+}
+`, rName)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(`null element is not permitted`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_GroupValueExtraction_EmptyFallback(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	emptyFallback := ""
+	sources := []testAccExtractionSource{
+		{
+			Type:      "tag",
+			Key:       "Environment",
+			Providers: []string{"amazon-web-services"},
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupValueExtraction(rName, "useFallback", &emptyFallback, sources),
+				ExpectError: regexp.MustCompile(`fallback is required when on_missing is 'useFallback'`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_GroupValueExtraction_OmittedOnMissing(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	fallbackVal := "defaultFallback"
+	sources := []testAccExtractionSource{
+		{
+			Type:      "tag",
+			Key:       "Environment",
+			Providers: []string{"amazon-web-services"},
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create group with omitted on_missing (onMissing = "")
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("on_missing"),
+						knownvalue.StringExact("useFallback"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.StringExact("defaultFallback"),
+					),
+				},
+			},
+			// Step 2: Drift check (re-apply same config)
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}

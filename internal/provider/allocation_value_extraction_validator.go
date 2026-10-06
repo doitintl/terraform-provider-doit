@@ -53,7 +53,7 @@ func (v allocationValueExtractionValidator) ValidateObject(ctx context.Context, 
 		if fallback.IsNull() || fallback.ValueString() == "" {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("fallback"),
-				"Missing Required Attribute",
+				"Invalid Attribute Configuration",
 				"fallback is required when on_missing is 'useFallback'",
 			)
 		}
@@ -61,7 +61,7 @@ func (v allocationValueExtractionValidator) ValidateObject(ctx context.Context, 
 		if !fallback.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("fallback"),
-				"Conflicting Attribute Configuration",
+				"Invalid Attribute Configuration",
 				"fallback is not allowed when on_missing is 'nextRule'",
 			)
 		}

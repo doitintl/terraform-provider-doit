@@ -155,6 +155,32 @@ func TestAllocationValueExtractionValidator(t *testing.T) {
 			severityCount: 1,
 		},
 		{
+			name: "null on_missing with empty fallback fails",
+			configValue: createTestValueExtractionObject(
+				ctx,
+				t,
+				basetypes.NewStringNull(),
+				basetypes.NewStringValue(""),
+			),
+			expectError:   true,
+			expectedDiag:  "fallback is required when on_missing is 'useFallback'",
+			expectedPath:  "rules[0].value_extraction.fallback",
+			severityCount: 1,
+		},
+		{
+			name: "nextRule with empty fallback fails",
+			configValue: createTestValueExtractionObject(
+				ctx,
+				t,
+				basetypes.NewStringValue("nextRule"),
+				basetypes.NewStringValue(""),
+			),
+			expectError:   true,
+			expectedDiag:  "fallback is not allowed when on_missing is 'nextRule'",
+			expectedPath:  "rules[0].value_extraction.fallback",
+			severityCount: 1,
+		},
+		{
 			name: "null on_missing with null fallback fails",
 			configValue: createTestValueExtractionObject(
 				ctx,

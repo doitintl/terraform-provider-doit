@@ -45,7 +45,16 @@ func (v allocationValidityPeriodsValidator) ValidateList(ctx context.Context, re
 			continue
 		}
 
-		if periodVal.IsNull() || periodVal.IsUnknown() {
+		if periodVal.IsUnknown() {
+			continue
+		}
+
+		if periodVal.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtListIndex(i),
+				"Invalid Attribute Value",
+				fmt.Sprintf("validity_periods[%d]: null element is not permitted", i),
+			)
 			continue
 		}
 
@@ -67,7 +76,11 @@ func (v allocationValidityPeriodsValidator) ValidateList(ctx context.Context, re
 			continue
 		}
 
-		if currentVal.IsNull() || currentVal.IsUnknown() || nextVal.IsNull() || nextVal.IsUnknown() {
+		if currentVal.IsUnknown() || nextVal.IsUnknown() {
+			continue
+		}
+
+		if currentVal.IsNull() || nextVal.IsNull() {
 			continue
 		}
 
