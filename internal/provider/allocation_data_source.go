@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_allocation"
@@ -11,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/oapi-codegen/nullable"
 )
 
 var _ datasource.DataSource = (*allocationDataSource)(nil)
@@ -158,15 +161,22 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 		componentsList, componentDiags := ds.mapComponentsToList(ctx, rule.Components)
 		diags.Append(componentDiags...)
 		if diags.HasError() {
-			return
+			return diags
 		}
 		ruleMap["components"] = componentsList
+
+		vpList, vpDiags := ds.mapValidityPeriodsToList(ctx, rule.ValidityPeriods)
+		diags.Append(vpDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		ruleMap["validity_periods"] = vpList
 
 		var ruleDiags diag.Diagnostics
 		data.Rule, ruleDiags = datasource_allocation.NewRuleValue(datasource_allocation.RuleValue{}.AttributeTypes(ctx), ruleMap)
 		diags.Append(ruleDiags...)
 		if diags.HasError() {
-			return
+			return diags
 		}
 	} else {
 		data.Rule = datasource_allocation.NewRuleValueNull()
@@ -189,6 +199,34 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 				"name":        types.StringPointerValue(rule.Name),
 			}
 
+			if (rule.Formula == nil || rule.Components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified()) && rule.Id != nil && ds.client != nil {
+				respHTTPFullAlloc, err := ds.client.GetAllocationWithResponse(ctx, *rule.Id)
+				if err == nil && respHTTPFullAlloc.JSON200 != nil {
+					fullAlloc := respHTTPFullAlloc.JSON200
+					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
+						if rule.Formula == nil {
+							rule.Formula = &rulePtr.Formula
+						}
+						if rule.Components == nil && rulePtr.Components != nil {
+							rule.Components = &rulePtr.Components
+						}
+						if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
+							rule.ValidityPeriods = rulePtr.ValidityPeriods
+						}
+					}
+					var allocDetail struct {
+						Rule struct {
+							ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
+						} `json:"rule"`
+					}
+					if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr == nil {
+						if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
+							rule.ValueExtraction = allocDetail.Rule.ValueExtraction
+						}
+					}
+				}
+			}
+
 			if rule.Formula != nil {
 				ruleMap["formula"] = types.StringValue(*rule.Formula)
 			}
@@ -200,15 +238,29 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 			componentsList, componentDiags := ds.mapComponentsToList(ctx, ruleComponents)
 			diags.Append(componentDiags...)
 			if diags.HasError() {
-				return
+				return diags
 			}
 			ruleMap["components"] = componentsList
+
+			vpList, vpDiags := ds.mapValidityPeriodsToList(ctx, rule.ValidityPeriods)
+			diags.Append(vpDiags...)
+			if diags.HasError() {
+				return diags
+			}
+			ruleMap["validity_periods"] = vpList
+
+			veVal, veDiags := ds.mapValueExtraction(ctx, rule.ValueExtraction)
+			diags.Append(veDiags...)
+			if diags.HasError() {
+				return diags
+			}
+			ruleMap["value_extraction"] = veVal
 
 			var ruleDiags diag.Diagnostics
 			ruleVal, ruleDiags := datasource_allocation.NewRulesValue(datasource_allocation.RulesValue{}.AttributeTypes(ctx), ruleMap)
 			diags.Append(ruleDiags...)
 			if diags.HasError() {
-				return
+				return diags
 			}
 			rules = append(rules, ruleVal)
 		}
@@ -271,4 +323,97 @@ func (ds *allocationDataSource) mapComponentsToList(ctx context.Context, compone
 	componentsList, listDiags := types.ListValueFrom(ctx, datasource_allocation.ComponentsValue{}.Type(ctx), componentValues)
 	diags.Append(listDiags...)
 	return componentsList, diags
+}
+
+// mapValidityPeriodsToList converts API rule periods to a Terraform List.
+func (ds *allocationDataSource) mapValidityPeriodsToList(ctx context.Context, nullablePeriods nullable.Nullable[[]models.AllocationRulePeriod]) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	periods := nullableToPointer(nullablePeriods)
+	if periods == nil || len(*periods) == 0 {
+		emptyList, d := types.ListValueFrom(ctx, datasource_allocation.ValidityPeriodsValue{}.Type(ctx), []datasource_allocation.ValidityPeriodsValue{})
+		diags.Append(d...)
+		return emptyList, diags
+	}
+
+	vals := make([]attr.Value, len(*periods))
+	for i, p := range *periods {
+		m := map[string]attr.Value{
+			"start_date": types.StringPointerValue(nullableToPointer(p.StartDate)),
+			"end_date":   types.StringPointerValue(nullableToPointer(p.EndDate)),
+		}
+		vpVal, d := datasource_allocation.NewValidityPeriodsValue(datasource_allocation.ValidityPeriodsValue{}.AttributeTypes(ctx), m)
+		diags.Append(d...)
+		if diags.HasError() {
+			emptyList, d2 := types.ListValueFrom(ctx, datasource_allocation.ValidityPeriodsValue{}.Type(ctx), []datasource_allocation.ValidityPeriodsValue{})
+			diags.Append(d2...)
+			return emptyList, diags
+		}
+		vals[i] = vpVal
+	}
+	res, d := types.ListValue(datasource_allocation.ValidityPeriodsValue{}.Type(ctx), vals)
+	diags.Append(d...)
+	return res, diags
+}
+
+// mapValueExtraction converts API value extraction to a Terraform ValueExtractionValue.
+func (ds *allocationDataSource) mapValueExtraction(ctx context.Context, nullableVE nullable.Nullable[models.AllocationValueExtraction]) (datasource_allocation.ValueExtractionValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	ve := nullableToPointer(nullableVE)
+	if ve == nil {
+		return datasource_allocation.NewValueExtractionValueNull(), diags
+	}
+
+	sourceVals := make([]attr.Value, len(ve.Sources))
+	for i, s := range ve.Sources {
+		var provList basetypes.ListValue
+		if provs := nullableToPointer(s.Providers); provs != nil {
+			pVals := make([]attr.Value, len(*provs))
+			for j, p := range *provs {
+				pVals[j] = types.StringValue(p)
+			}
+			var d diag.Diagnostics
+			provList, d = types.ListValue(types.StringType, pVals)
+			diags.Append(d...)
+			if diags.HasError() {
+				return datasource_allocation.NewValueExtractionValueNull(), diags
+			}
+		} else {
+			provList = types.ListNull(types.StringType)
+		}
+
+		mSource := map[string]attr.Value{
+			"key":       types.StringValue(s.Key),
+			"type":      types.StringValue(string(s.Type)),
+			"providers": provList,
+		}
+		sVal, d := datasource_allocation.NewSourcesValue(datasource_allocation.SourcesValue{}.AttributeTypes(ctx), mSource)
+		diags.Append(d...)
+		if diags.HasError() {
+			return datasource_allocation.NewValueExtractionValueNull(), diags
+		}
+		sourceVals[i] = sVal
+	}
+
+	sourcesList, d := types.ListValue(datasource_allocation.SourcesValue{}.Type(ctx), sourceVals)
+	diags.Append(d...)
+	if diags.HasError() {
+		return datasource_allocation.NewValueExtractionValueNull(), diags
+	}
+
+	onMissingVal := types.StringValue("useFallback")
+	if ve.OnMissing != nil {
+		onMissingVal = types.StringValue(string(*ve.OnMissing))
+	}
+
+	fallbackVal := types.StringPointerValue(nullableToPointer(ve.Fallback))
+
+	mVE := map[string]attr.Value{
+		"fallback":   fallbackVal,
+		"on_missing": onMissingVal,
+		"sources":    sourcesList,
+	}
+
+	veVal, d := datasource_allocation.NewValueExtractionValue(datasource_allocation.ValueExtractionValue{}.AttributeTypes(ctx), mVE)
+	diags.Append(d...)
+	return veVal, diags
 }

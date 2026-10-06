@@ -4113,3 +4113,1113 @@ resource "doit_allocation" "group" {
 }
 `, rName, rName, rName)
 }
+
+func TestAccAllocation_SingleRuleValidityPeriods(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	initialPeriods := []map[string]string{
+		{
+			"start_date": "2025-01-01",
+			"end_date":   "2025-06-30",
+		},
+	}
+	clearedEndDatePeriods := []map[string]string{
+		{
+			"start_date": "2025-01-01",
+		},
+	}
+	clearedStartDatePeriods := []map[string]string{
+		{
+			"end_date": "2025-12-31",
+		},
+	}
+	multiPeriodsOpenBounds := []map[string]string{
+		{
+			"end_date": "2025-03-31",
+		},
+		{
+			"start_date": "2025-04-01",
+			"end_date":   "2025-09-30",
+		},
+		{
+			"start_date": "2025-10-01",
+		},
+	}
+	emptyPeriods := []map[string]string{}
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with validity_periods populated (both bounded).
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &initialPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.this",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.this",
+						tfjsonpath.New("rule").AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-01-01"),
+								"end_date":   knownvalue.StringExact("2025-06-30"),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &initialPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear end_date (leaving only start_date -> open-ended future).
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &clearedEndDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.this",
+						tfjsonpath.New("rule").AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-01-01"),
+								"end_date":   knownvalue.Null(),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 4: Drift check after clearing end_date.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &clearedEndDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 5: Clear start_date and set end_date (leaving only end_date -> open-ended past).
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &clearedStartDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.this",
+						tfjsonpath.New("rule").AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.Null(),
+								"end_date":   knownvalue.StringExact("2025-12-31"),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 6: Drift check after clearing start_date.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &clearedStartDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 7: Multi-period configuration with open outer boundaries.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &multiPeriodsOpenBounds),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.this",
+						tfjsonpath.New("rule").AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.Null(),
+								"end_date":   knownvalue.StringExact("2025-03-31"),
+							}),
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-04-01"),
+								"end_date":   knownvalue.StringExact("2025-09-30"),
+							}),
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-10-01"),
+								"end_date":   knownvalue.Null(),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 8: Drift check after multi-period with open boundaries.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &multiPeriodsOpenBounds),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 9: Import verification with open outer boundaries.
+			{
+				ResourceName:      "doit_allocation.this",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"update_time",
+				},
+			},
+			// Step 10: Explicit empty list validity_periods = [].
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &emptyPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.this",
+						tfjsonpath.New("rule").AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{}),
+					),
+				},
+			},
+			// Step 11: Drift check after explicit empty list.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &emptyPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 12: Re-populate validity_periods.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &initialPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+			},
+			// Step 13: Drift check.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, &initialPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 14: Clear by omitting validity_periods (clearing lifecycle modifier).
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.this",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.this",
+						tfjsonpath.New("rule").AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{}),
+					),
+				},
+			},
+			// Step 15: Drift check after clearing.
+			{
+				Config: testAccAllocationSingleValidityPeriods(rName, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	initialPeriods := []map[string]string{
+		{
+			"start_date": "2025-01-01",
+			"end_date":   "2025-06-30",
+		},
+	}
+	clearedEndDatePeriods := []map[string]string{
+		{
+			"start_date": "2025-01-01",
+		},
+	}
+	clearedStartDatePeriods := []map[string]string{
+		{
+			"end_date": "2025-12-31",
+		},
+	}
+	multiPeriodsOpenBounds := []map[string]string{
+		{
+			"end_date": "2025-03-31",
+		},
+		{
+			"start_date": "2025-04-01",
+			"end_date":   "2025-09-30",
+		},
+		{
+			"start_date": "2025-10-01",
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create group with validity_periods on inline rule.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &initialPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-01-01"),
+								"end_date":   knownvalue.StringExact("2025-06-30"),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &initialPeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Clear end_date on inline rule.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &clearedEndDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-01-01"),
+								"end_date":   knownvalue.Null(),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 4: Drift check after clearing end_date.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &clearedEndDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 5: Clear start_date and set end_date on inline rule.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &clearedStartDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.Null(),
+								"end_date":   knownvalue.StringExact("2025-12-31"),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 6: Drift check after clearing start_date.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &clearedStartDatePeriods),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 7: Multi-period configuration with open outer bounds on inline rule.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &multiPeriodsOpenBounds),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.Null(),
+								"end_date":   knownvalue.StringExact("2025-03-31"),
+							}),
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-04-01"),
+								"end_date":   knownvalue.StringExact("2025-09-30"),
+							}),
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-10-01"),
+								"end_date":   knownvalue.Null(),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 8: Drift check after multi-period with open boundaries.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, &multiPeriodsOpenBounds),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 9: Clear validity_periods by omitting it.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{}),
+					),
+				},
+			},
+			// Step 10: Drift check after clearing.
+			{
+				Config: testAccAllocationGroupValidityPeriods(rName, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestAccAllocation_GroupValueExtraction_UseFallback(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	fallback1 := "Unassigned"
+	fallback2 := "UnknownEnv"
+
+	sources1 := []testAccExtractionSource{
+		{
+			Type:      "tag",
+			Key:       "Environment",
+			Providers: []string{"amazon-web-services"},
+		},
+	}
+	sources2 := []testAccExtractionSource{
+		{
+			Type:      "tag",
+			Key:       "Environment",
+			Providers: []string{"amazon-web-services"},
+		},
+		{
+			Type:      "label",
+			Key:       "env",
+			Providers: []string{"google-cloud-platform"},
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create group with value_extraction (useFallback).
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback1, sources1),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("on_missing"),
+						knownvalue.StringExact("useFallback"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.StringExact("Unassigned"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("sources"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type": knownvalue.StringExact("tag"),
+								"key":  knownvalue.StringExact("Environment"),
+								"providers": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("amazon-web-services"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback1, sources1),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Update fallback and add second source.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback2, sources2),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.StringExact("UnknownEnv"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("sources"),
+						knownvalue.ListSizeExact(2),
+					),
+				},
+			},
+			// Step 4: Drift check after update.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback2, sources2),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 5: Import verification.
+			{
+				ResourceName:      "doit_allocation.group",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"update_time",
+					"rules",
+				},
+			},
+		},
+	})
+}
+
+func TestAccAllocation_GroupValueExtraction_ProvidersClearable(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+	fallback := "DefaultVal"
+
+	sourcesWithProv := []testAccExtractionSource{
+		{
+			Type:      "tag",
+			Key:       "Environment",
+			Providers: []string{"amazon-web-services"},
+		},
+	}
+	sourcesWithoutProv := []testAccExtractionSource{
+		{
+			Type: "tag",
+			Key:  "Environment",
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with providers populated.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback, sourcesWithProv),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("sources").AtSliceIndex(0).AtMapKey("providers"),
+						knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("amazon-web-services")}),
+					),
+				},
+			},
+			// Step 2: Clear providers by omitting it.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback, sourcesWithoutProv),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("sources").AtSliceIndex(0).AtMapKey("providers"),
+						knownvalue.Null(),
+					),
+				},
+			},
+			// Step 3: Drift check after clearing.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback, sourcesWithoutProv),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: Re-populate providers.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback, sourcesWithProv),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("sources").AtSliceIndex(0).AtMapKey("providers"),
+						knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("amazon-web-services")}),
+					),
+				},
+			},
+			// Step 5: Drift check after re-populating.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallback, sourcesWithProv),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestAccAllocation_GroupValueExtraction_NextRule(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	fallbackVal := "DefaultVal"
+
+	sources := []testAccExtractionSource{
+		{
+			Type: "tag",
+			Key:  "Team",
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: Create with on_missing = "useFallback" and fallback populated.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("on_missing"),
+						knownvalue.StringExact("useFallback"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.StringExact("DefaultVal"),
+					),
+				},
+			},
+			// Step 2: Drift check.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Update to on_missing = "nextRule" and clear fallback (omitted).
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "nextRule", nil, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("on_missing"),
+						knownvalue.StringExact("nextRule"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.Null(),
+					),
+				},
+			},
+			// Step 4: Drift check after clearing fallback.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "nextRule", nil, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 5: Update back to on_missing = "useFallback" and set fallback again.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.StringExact("DefaultVal"),
+					),
+				},
+			},
+			// Step 6: Drift check.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationSingleValidityPeriods(rName string, periods *[]map[string]string) string {
+	vpBlock := ""
+	if periods != nil {
+		if len(*periods) == 0 {
+			vpBlock = "    validity_periods = []\n"
+		} else {
+			vpBlock = "    validity_periods = [\n"
+			for _, p := range *periods {
+				vpBlock += "      {\n"
+				if s, ok := p["start_date"]; ok && s != "" {
+					vpBlock += fmt.Sprintf("        start_date = %q\n", s)
+				}
+				if e, ok := p["end_date"]; ok && e != "" {
+					vpBlock += fmt.Sprintf("        end_date = %q\n", e)
+				}
+				vpBlock += "      },\n"
+			}
+			vpBlock += "    ]\n"
+		}
+	}
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+  name        = "%s"
+  description = "test allocation with validity periods"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+%s  }
+}
+`, rName, vpBlock)
+}
+
+func testAccAllocationGroupValidityPeriods(rName string, periods *[]map[string]string) string {
+	vpBlock := ""
+	if periods != nil {
+		if len(*periods) == 0 {
+			vpBlock = "      validity_periods = []\n"
+		} else {
+			vpBlock = "      validity_periods = [\n"
+			for _, p := range *periods {
+				vpBlock += "        {\n"
+				if s, ok := p["start_date"]; ok && s != "" {
+					vpBlock += fmt.Sprintf("          start_date = %q\n", s)
+				}
+				if e, ok := p["end_date"]; ok && e != "" {
+					vpBlock += fmt.Sprintf("          end_date = %q\n", e)
+				}
+				vpBlock += "        },\n"
+			}
+			vpBlock += "      ]\n"
+		}
+	}
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test allocation group with validity periods"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action  = "create"
+      name    = "%s-rule"
+      formula = "A"
+      components = [
+        {
+          key    = "country"
+          mode   = "is"
+          type   = "fixed"
+          values = ["JP"]
+        }
+      ]
+%s    }
+  ]
+}
+`, rName, rName, rName, vpBlock)
+}
+
+type testAccExtractionSource struct {
+	Type      string
+	Key       string
+	Providers []string
+}
+
+func testAccAllocationGroupValueExtraction(rName string, onMissing string, fallback *string, sources []testAccExtractionSource) string {
+	veBlock := "      value_extraction = {\n"
+	if onMissing != "" {
+		veBlock += fmt.Sprintf("        on_missing = %q\n", onMissing)
+	}
+	if fallback != nil {
+		veBlock += fmt.Sprintf("        fallback = %q\n", *fallback)
+	}
+	veBlock += "        sources = [\n"
+	for _, s := range sources {
+		veBlock += "          {\n"
+		veBlock += fmt.Sprintf("            type = %q\n", s.Type)
+		veBlock += fmt.Sprintf("            key  = %q\n", s.Key)
+		if s.Providers != nil {
+			if len(s.Providers) == 0 {
+				veBlock += "            providers = []\n"
+			} else {
+				veBlock += "            providers = ["
+				for j, p := range s.Providers {
+					if j > 0 {
+						veBlock += ", "
+					}
+					veBlock += fmt.Sprintf("%q", p)
+				}
+				veBlock += "]\n"
+			}
+		}
+		veBlock += "          },\n"
+	}
+	veBlock += "        ]\n"
+	veBlock += "      }\n"
+
+	return fmt.Sprintf(`
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test allocation group with value extraction"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action  = "create"
+      name    = "%s-rule"
+      formula = "A"
+      components = [
+        {
+          key    = "country"
+          mode   = "is"
+          type   = "fixed"
+          values = ["JP"]
+        }
+      ]
+%s    }
+  ]
+}
+`, rName, rName, rName, veBlock)
+}
+
+func TestAccAllocation_ValueExtraction_MissingFallback(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	sources := []testAccExtractionSource{
+		{
+			Type: "tag",
+			Key:  "Team",
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupValueExtraction(rName, "useFallback", nil, sources),
+				ExpectError: regexp.MustCompile(`fallback is required when on_missing is 'useFallback'`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_ValueExtraction_NextRuleWithFallback(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	fallbackVal := "illegalFallback"
+	sources := []testAccExtractionSource{
+		{
+			Type: "tag",
+			Key:  "Team",
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupValueExtraction(rName, "nextRule", &fallbackVal, sources),
+				ExpectError: regexp.MustCompile(`fallback is not allowed when on_missing is 'nextRule'`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_ValidityPeriods_IntermediateMissingStartDate(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	periods := []map[string]string{
+		{"start_date": "2026-01-01", "end_date": "2026-03-14"},
+		{"end_date": "2026-06-15"},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupValidityPeriods(rName, &periods),
+				ExpectError: regexp.MustCompile(`only the first period in the list may omit start_date`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_ValidityPeriods_IntermediateMissingEndDate(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	periods := []map[string]string{
+		{"start_date": "2026-01-01"},
+		{"start_date": "2026-06-16", "end_date": "2026-08-01"},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupValidityPeriods(rName, &periods),
+				ExpectError: regexp.MustCompile(`only the last period in the list may omit end_date`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_ValidityPeriods_StartDateAfterEndDate(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	periods := []map[string]string{
+		{"start_date": "2026-02-01", "end_date": "2026-01-01"},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationSingleValidityPeriods(rName, &periods),
+				ExpectError: regexp.MustCompile(`start_date.*must be on or before end_date`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_ValidityPeriods_OverlappingPeriods(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	periods := []map[string]string{
+		{"start_date": "2026-01-01", "end_date": "2026-03-15"},
+		{"start_date": "2026-03-15", "end_date": "2026-06-15"},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationGroupValidityPeriods(rName, &periods),
+				ExpectError: regexp.MustCompile(`must be after previous period's`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_ValidityPeriods_InvalidDateFormat(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	periods := []map[string]string{
+		{"start_date": "invalid-date", "end_date": "2026-03-15"},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccAllocationSingleValidityPeriods(rName, &periods),
+				ExpectError: regexp.MustCompile(`Value must be a date in yyyy-mm-dd format`),
+			},
+		},
+	})
+}

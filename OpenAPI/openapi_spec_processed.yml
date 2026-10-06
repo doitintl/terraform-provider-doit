@@ -6624,6 +6624,82 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.).
           example: "A AND B"
+        validityPeriods:
+          type: array
+          nullable: true
+          description: >-
+            Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+          items:
+            $ref: "#/components/schemas/AllocationRulePeriod"
+    AllocationRulePeriod:
+      type: object
+      description: >-
+        A date range when a rule applies. startDate and endDate are both inclusive, so a handover between two rules needs a one-day gap: the first rule's endDate the day before, the second rule's startDate the handover day. Only the first period in the list may omit startDate, and only the last may omit endDate.
+      properties:
+        startDate:
+          type: string
+          nullable: true
+          description: Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+          example: "2026-03-15"
+        endDate:
+          type: string
+          nullable: true
+          description: End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+          example: "2026-06-15"
+    AllocationValueExtraction:
+      type: object
+      nullable: true
+      required:
+        - sources
+      description: >-
+        Makes the rule emit a value extracted from the first non-empty source instead of the rule name.
+      properties:
+        sources:
+          type: array
+          minItems: 1
+          maxItems: 5
+          description: Ordered extraction sources; the first non-empty value wins.
+          items:
+            $ref: "#/components/schemas/AllocationValueExtractionSource"
+        onMissing:
+          type: string
+          description: >-
+            What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+          enum:
+            - useFallback
+            - nextRule
+          default: useFallback
+        fallback:
+          type: string
+          nullable: true
+          description: >-
+            Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+    AllocationValueExtractionSource:
+      type: object
+      required:
+        - type
+        - key
+      properties:
+        type:
+          type: string
+          description: >-
+            The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+          enum:
+            - label
+            - tag
+            - project_label
+            - system_label
+            - gke_label
+            - fixed
+        key:
+          type: string
+          description: The label/tag key, or the fixed dimension ID, whose value is extracted.
+        providers:
+          type: array
+          nullable: true
+          description: Optional cloud providers this source applies to.
+          items:
+            type: string
     AnnotationListItem:
       required:
         - id
@@ -12504,6 +12580,15 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.)
           example: "A AND B"
+        valueExtraction:
+          $ref: "#/components/schemas/AllocationValueExtraction"
+        validityPeriods:
+          type: array
+          nullable: true
+          description: >-
+            Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+          items:
+            $ref: "#/components/schemas/AllocationRulePeriod"
     HexColor:
       type: string
       description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.

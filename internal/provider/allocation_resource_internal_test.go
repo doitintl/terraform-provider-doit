@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"maps"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -63,9 +64,17 @@ func modifyPlanTestTimeouts(t *testing.T, sch schema.Schema) timeouts.Value {
 func modifyPlanTestRule(t *testing.T, attrs map[string]attr.Value) resource_allocation.RulesValue {
 	t.Helper()
 	ctx := t.Context()
+	mergedAttrs := make(map[string]attr.Value, len(attrs)+2)
+	maps.Copy(mergedAttrs, attrs)
+	if _, ok := mergedAttrs["validity_periods"]; !ok {
+		mergedAttrs["validity_periods"] = types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx))
+	}
+	if _, ok := mergedAttrs["value_extraction"]; !ok {
+		mergedAttrs["value_extraction"] = resource_allocation.NewValueExtractionValueNull()
+	}
 	return resource_allocation.NewRulesValueMust(
 		resource_allocation.RulesValue{}.AttributeTypes(ctx),
-		attrs,
+		mergedAttrs,
 	)
 }
 

@@ -332,6 +332,10 @@ Required:
 - `components` (Attributes List) List of allocation filter components. (see [below for nested schema](#nestedatt--rule--components))
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.).
 
+Optional:
+
+- `validity_periods` (Attributes List) Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies. (see [below for nested schema](#nestedatt--rule--validity_periods))
+
 <a id="nestedatt--rule--components"></a>
 ### Nested Schema for `rule.components`
 
@@ -352,6 +356,15 @@ Optional:
 - `inverse` (Boolean) If true, all selected values will be excluded.
 
 
+<a id="nestedatt--rule--validity_periods"></a>
+### Nested Schema for `rule.validity_periods`
+
+Optional:
+
+- `end_date` (String) End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+- `start_date` (String) Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+
+
 
 <a id="nestedatt--rules"></a>
 ### Nested Schema for `rules`
@@ -368,6 +381,8 @@ Optional:
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.)
 - `id` (String) ID of existing allocation (required for 'update' or 'select' action).
 - `name` (String) Name of the allocation rule.
+- `validity_periods` (Attributes List) Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies. (see [below for nested schema](#nestedatt--rules--validity_periods))
+- `value_extraction` (Attributes) Makes the rule emit a value extracted from the first non-empty source instead of the rule name. (see [below for nested schema](#nestedatt--rules--value_extraction))
 
 <a id="nestedatt--rules--components"></a>
 ### Nested Schema for `rules.components`
@@ -387,6 +402,43 @@ Optional:
 - `case_insensitive` (Boolean) If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; rejected otherwise.
 - `include_null` (Boolean) Include null values.
 - `inverse` (Boolean) If true, all selected values will be excluded.
+
+
+<a id="nestedatt--rules--validity_periods"></a>
+### Nested Schema for `rules.validity_periods`
+
+Optional:
+
+- `end_date` (String) End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+- `start_date` (String) Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+
+
+<a id="nestedatt--rules--value_extraction"></a>
+### Nested Schema for `rules.value_extraction`
+
+Required:
+
+- `sources` (Attributes List) Ordered extraction sources; the first non-empty value wins. (see [below for nested schema](#nestedatt--rules--value_extraction--sources))
+
+Optional:
+
+- `fallback` (String) Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+- `on_missing` (String) What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+Possible values: `useFallback`, `nextRule`
+
+<a id="nestedatt--rules--value_extraction--sources"></a>
+### Nested Schema for `rules.value_extraction.sources`
+
+Required:
+
+- `key` (String) The label/tag key, or the fixed dimension ID, whose value is extracted.
+- `type` (String) The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+Possible values: `label`, `tag`, `project_label`, `system_label`, `gke_label`, `fixed`
+
+Optional:
+
+- `providers` (List of String) Optional cloud providers this source applies to.
+
 
 
 

@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -73,10 +74,7 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	if plan.Rule.IsUnknown() {
 		plan.Rule = resolved.Rule
 	} else if !plan.Rule.IsNull() {
-		// Components is the only Optional+Computed subfield; formula is Required.
-		if plan.Rule.Components.IsUnknown() {
-			plan.Rule.Components = resolved.Rule.Components
-		}
+		diags.Append(overlayAllocationSingleRule(ctx, &resolved.Rule, &plan.Rule)...)
 	}
 
 	// ── Rules (list): resolve whole list when Unknown, overlay elements when Known ──
@@ -93,7 +91,27 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 // Each helper resolves Unknown subfields from the resolved element.
 // Known values are never touched — the user's plan is the source of truth.
 
-func overlayAllocationRule(_ context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
+func overlayAllocationSingleRule(ctx context.Context, resolved, plan *resource_allocation.RuleValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.Components.IsUnknown() {
+		plan.Components = resolved.Components
+	}
+	if plan.ValidityPeriods.IsUnknown() {
+		plan.ValidityPeriods = resolved.ValidityPeriods
+	} else if !plan.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsUnknown() {
+		diags.Append(overlayListElements(ctx, &resolved.ValidityPeriods, &plan.ValidityPeriods, overlayAllocationValidityPeriod)...)
+	}
+	return diags
+}
+
+func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
 	if plan.Description.IsUnknown() {
 		plan.Description = resolved.Description
 	}
@@ -109,7 +127,58 @@ func overlayAllocationRule(_ context.Context, resolved, plan *resource_allocatio
 	if plan.Components.IsUnknown() {
 		plan.Components = resolved.Components
 	}
-	return nil
+	if plan.ValidityPeriods.IsUnknown() {
+		plan.ValidityPeriods = resolved.ValidityPeriods
+	} else if !plan.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsUnknown() {
+		diags.Append(overlayListElements(ctx, &resolved.ValidityPeriods, &plan.ValidityPeriods, overlayAllocationValidityPeriod)...)
+	}
+	if plan.ValueExtraction.IsUnknown() {
+		plan.ValueExtraction = resolved.ValueExtraction
+	} else if !plan.ValueExtraction.IsNull() && !resolved.ValueExtraction.IsNull() && !resolved.ValueExtraction.IsUnknown() {
+		diags.Append(overlayAllocationValueExtraction(ctx, &resolved.ValueExtraction, &plan.ValueExtraction)...)
+	}
+	return diags
+}
+
+func overlayAllocationValidityPeriod(_ context.Context, resolved, plan *resource_allocation.ValidityPeriodsValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.EndDate.IsUnknown() {
+		plan.EndDate = resolved.EndDate
+	}
+	if plan.StartDate.IsUnknown() {
+		plan.StartDate = resolved.StartDate
+	}
+	return diags
+}
+
+func overlayAllocationValueExtraction(ctx context.Context, resolved, plan *resource_allocation.ValueExtractionValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.Fallback.IsUnknown() {
+		plan.Fallback = resolved.Fallback
+	}
+	if plan.Sources.IsUnknown() {
+		plan.Sources = resolved.Sources
+	} else if !plan.Sources.IsNull() && !resolved.Sources.IsNull() && !resolved.Sources.IsUnknown() {
+		diags.Append(overlayListElements(ctx, &resolved.Sources, &plan.Sources, overlayAllocationSource)...)
+	}
+	return diags
+}
+
+func overlayAllocationSource(_ context.Context, resolved, plan *resource_allocation.SourcesValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.Providers.IsUnknown() {
+		plan.Providers = resolved.Providers
+	}
+	return diags
 }
 
 func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req models.CreateAllocationRequest, diags diag.Diagnostics) {
@@ -169,6 +238,161 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 	return
 }
 
+func convertValidityPeriodsToModels(ctx context.Context, list basetypes.ListValue) (nullable.Nullable[[]models.AllocationRulePeriod], diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if list.IsNull() || list.IsUnknown() {
+		return nullable.Nullable[[]models.AllocationRulePeriod]{}, diags
+	}
+	var values []resource_allocation.ValidityPeriodsValue
+	diags.Append(list.ElementsAs(ctx, &values, false)...)
+	if diags.HasError() {
+		return nullable.Nullable[[]models.AllocationRulePeriod]{}, diags
+	}
+	if len(values) == 0 {
+		return valueToNullable([]models.AllocationRulePeriod{}), diags
+	}
+	periods := make([]models.AllocationRulePeriod, len(values))
+	for i, v := range values {
+		if !v.StartDate.IsNull() && !v.StartDate.IsUnknown() {
+			periods[i].StartDate = valueToNullable(v.StartDate.ValueString())
+		}
+		if !v.EndDate.IsNull() && !v.EndDate.IsUnknown() {
+			periods[i].EndDate = valueToNullable(v.EndDate.ValueString())
+		}
+	}
+	return valueToNullable(periods), diags
+}
+
+func toValidityPeriodsListValue(ctx context.Context, nullablePeriods nullable.Nullable[[]models.AllocationRulePeriod]) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	periods := nullableToPointer(nullablePeriods)
+	if periods == nil || len(*periods) == 0 {
+		return types.ListValueFrom(ctx, resource_allocation.ValidityPeriodsValue{}.Type(ctx), []resource_allocation.ValidityPeriodsValue{})
+	}
+	vals := make([]attr.Value, len(*periods))
+	for i, p := range *periods {
+		m := map[string]attr.Value{
+			"start_date": types.StringPointerValue(nullableToPointer(p.StartDate)),
+			"end_date":   types.StringPointerValue(nullableToPointer(p.EndDate)),
+		}
+		vpVal, d := resource_allocation.NewValidityPeriodsValue(resource_allocation.ValidityPeriodsValue{}.AttributeTypes(ctx), m)
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx)), diags
+		}
+		vals[i] = vpVal
+	}
+	res, d := types.ListValue(resource_allocation.ValidityPeriodsValue{}.Type(ctx), vals)
+	diags.Append(d...)
+	return res, diags
+}
+
+func convertValueExtractionToModel(ctx context.Context, ve resource_allocation.ValueExtractionValue) (nullable.Nullable[models.AllocationValueExtraction], diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if ve.IsNull() || ve.IsUnknown() {
+		return nullable.Nullable[models.AllocationValueExtraction]{}, diags
+	}
+
+	var sources []resource_allocation.SourcesValue
+	diags.Append(ve.Sources.ElementsAs(ctx, &sources, false)...)
+	if diags.HasError() {
+		return nullable.Nullable[models.AllocationValueExtraction]{}, diags
+	}
+
+	modelSources := make([]models.AllocationValueExtractionSource, len(sources))
+	for i, s := range sources {
+		modelSources[i] = models.AllocationValueExtractionSource{
+			Key:  s.Key.ValueString(),
+			Type: models.AllocationValueExtractionSourceType(s.SourcesType.ValueString()),
+		}
+		if !s.Providers.IsNull() && !s.Providers.IsUnknown() {
+			var provs []string
+			d := s.Providers.ElementsAs(ctx, &provs, false)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nullable.Nullable[models.AllocationValueExtraction]{}, diags
+			}
+			modelSources[i].Providers = valueToNullable(provs)
+		}
+	}
+
+	onMissingStr := ve.OnMissing.ValueString()
+	modelVE := models.AllocationValueExtraction{
+		OnMissing: new(models.AllocationValueExtractionOnMissing(onMissingStr)),
+		Sources:   modelSources,
+	}
+
+	// Omit Fallback when on_missing is "nextRule", per API requirements:
+	// "Fallback is not allowed with onMissing 'nextRule'".
+	if onMissingStr != string(models.AllocationValueExtractionOnMissingNextRule) {
+		if !ve.Fallback.IsNull() && !ve.Fallback.IsUnknown() {
+			modelVE.Fallback = valueToNullable(ve.Fallback.ValueString())
+		}
+	}
+
+	return valueToNullable(modelVE), diags
+}
+
+func toValueExtractionValue(ctx context.Context, nullableVE nullable.Nullable[models.AllocationValueExtraction]) (resource_allocation.ValueExtractionValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	ve := nullableToPointer(nullableVE)
+	if ve == nil {
+		return resource_allocation.NewValueExtractionValueNull(), diags
+	}
+
+	sourceVals := make([]attr.Value, len(ve.Sources))
+	for i, s := range ve.Sources {
+		var provList basetypes.ListValue
+		if provs := nullableToPointer(s.Providers); provs != nil {
+			pVals := make([]attr.Value, len(*provs))
+			for j, p := range *provs {
+				pVals[j] = types.StringValue(p)
+			}
+			var d diag.Diagnostics
+			provList, d = types.ListValue(types.StringType, pVals)
+			diags.Append(d...)
+			if diags.HasError() {
+				return resource_allocation.NewValueExtractionValueNull(), diags
+			}
+		} else {
+			provList = types.ListNull(types.StringType)
+		}
+
+		mSource := map[string]attr.Value{
+			"key":       types.StringValue(s.Key),
+			"type":      types.StringValue(string(s.Type)),
+			"providers": provList,
+		}
+		sVal, d := resource_allocation.NewSourcesValue(resource_allocation.SourcesValue{}.AttributeTypes(ctx), mSource)
+		diags.Append(d...)
+		if diags.HasError() {
+			return resource_allocation.NewValueExtractionValueNull(), diags
+		}
+		sourceVals[i] = sVal
+	}
+
+	sourcesList, d := types.ListValue(resource_allocation.SourcesValue{}.Type(ctx), sourceVals)
+	diags.Append(d...)
+	if diags.HasError() {
+		return resource_allocation.NewValueExtractionValueNull(), diags
+	}
+
+	onMissingVal := types.StringValue("useFallback")
+	if ve.OnMissing != nil {
+		onMissingVal = types.StringValue(string(*ve.OnMissing))
+	}
+
+	fallbackVal := types.StringPointerValue(nullableToPointer(ve.Fallback))
+
+	mVE := map[string]attr.Value{
+		"fallback":   fallbackVal,
+		"on_missing": onMissingVal,
+		"sources":    sourcesList,
+	}
+
+	return resource_allocation.NewValueExtractionValue(resource_allocation.ValueExtractionValue{}.AttributeTypes(ctx), mVE)
+}
+
 // Helper to fill common fields into UpdateAllocationRequest model (which uses pointers).
 func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
 	req.Description = pointerToNullable(plan.Description.ValueStringPointer())
@@ -204,6 +428,14 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 				return diags
 			}
 			rule.Components, diags = convertComponentsToModels(ctx, planComponents)
+			if diags.HasError() {
+				return diags
+			}
+		}
+		if !plan.Rule.ValidityPeriods.IsNull() && !plan.Rule.ValidityPeriods.IsUnknown() {
+			var vpDiags diag.Diagnostics
+			rule.ValidityPeriods, vpDiags = convertValidityPeriodsToModels(ctx, plan.Rule.ValidityPeriods)
+			diags.Append(vpDiags...)
 			if diags.HasError() {
 				return diags
 			}
@@ -259,6 +491,22 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 						return diags
 					}
 					rule.Components = &createComponents
+				}
+				if !planRules[i].ValidityPeriods.IsNull() && !planRules[i].ValidityPeriods.IsUnknown() {
+					var vpDiags diag.Diagnostics
+					rule.ValidityPeriods, vpDiags = convertValidityPeriodsToModels(ctx, planRules[i].ValidityPeriods)
+					diags.Append(vpDiags...)
+					if diags.HasError() {
+						return diags
+					}
+				}
+				if !planRules[i].ValueExtraction.IsNull() && !planRules[i].ValueExtraction.IsUnknown() {
+					var veDiags diag.Diagnostics
+					rule.ValueExtraction, veDiags = convertValueExtractionToModel(ctx, planRules[i].ValueExtraction)
+					diags.Append(veDiags...)
+					if diags.HasError() {
+						return diags
+					}
 				}
 				rules[i].Set(rule)
 			}
@@ -340,6 +588,12 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 	if rule := nullableToPointer(resp.Rule); rule != nil {
 		m := map[string]attr.Value{
 			"formula": types.StringValue(rule.Formula),
+		}
+		var vpDiags diag.Diagnostics
+		m["validity_periods"], vpDiags = toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
+		diags.Append(vpDiags...)
+		if diags.HasError() {
+			return
 		}
 		if rule.Components != nil {
 			// Preserve existing component values from state for alias-type normalization.
@@ -434,15 +688,30 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				components = *rule.Components
 			}
 
-			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
-				// Fetch full allocation to get formula and components
+			if (formula == "" || components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified()) && rule.Id != nil && action != "select" && client != nil {
+				// Fetch full allocation to get formula, components, validity periods, and value extraction
 				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
 				if err == nil && respHTTPFullAlloc.JSON200 != nil {
 					fullAlloc := respHTTPFullAlloc.JSON200
 					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
-						formula = rulePtr.Formula
-						if rulePtr.Components != nil {
+						if formula == "" {
+							formula = rulePtr.Formula
+						}
+						if components == nil && rulePtr.Components != nil {
 							components = rulePtr.Components
+						}
+						if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
+							rule.ValidityPeriods = rulePtr.ValidityPeriods
+						}
+					}
+					var allocDetail struct {
+						Rule struct {
+							ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
+						} `json:"rule"`
+					}
+					if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr == nil {
+						if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
+							rule.ValueExtraction = allocDetail.Rule.ValueExtraction
 						}
 					}
 				} else {
@@ -450,12 +719,25 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				}
 			}
 
+			validityPeriodsList, vpDiags := toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
+			diags.Append(vpDiags...)
+			if diags.HasError() {
+				return
+			}
+			valueExtractionVal, veDiags := toValueExtractionValue(ctx, rule.ValueExtraction)
+			diags.Append(veDiags...)
+			if diags.HasError() {
+				return
+			}
+
 			m := map[string]attr.Value{
-				"action":      types.StringValue(action),
-				"description": types.StringPointerValue(rule.Description),
-				"formula":     types.StringValue(formula),
-				"id":          types.StringPointerValue(rule.Id),
-				"name":        types.StringPointerValue(rule.Name),
+				"action":           types.StringValue(action),
+				"description":      types.StringPointerValue(rule.Description),
+				"formula":          types.StringValue(formula),
+				"id":               types.StringPointerValue(rule.Id),
+				"name":             types.StringPointerValue(rule.Name),
+				"validity_periods": validityPeriodsList,
+				"value_extraction": valueExtractionVal,
 			}
 			if len(components) > 0 {
 				// Get existing component values from state for alias normalization and state preservation.
