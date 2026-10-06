@@ -41,9 +41,6 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	// normalization can compare against user-configured values in the existing state.
 	resolved := *plan
 	diags.Append(mapAllocationToModel(ctx, r.client, apiResp, &resolved)...)
-	if diags.HasError() {
-		return diags
-	}
 
 	// Phase 2: Overlay known plan values on top of resolved state.
 
@@ -616,7 +613,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		var vpDiags diag.Diagnostics
 		m["validity_periods"], vpDiags = toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
 		diags.Append(vpDiags...)
-		if diags.HasError() {
+		if vpDiags.HasError() {
 			return
 		}
 		if rule.Components != nil {
@@ -635,14 +632,14 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 			var d diag.Diagnostics
 			m["components"], d = toAllocationRuleComponentsListValue(ctx, rule.Components, existingComponents)
 			diags.Append(d...)
-			if diags.HasError() {
+			if d.HasError() {
 				return
 			}
 		}
 		var d diag.Diagnostics
 		state.Rule, d = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
 		diags.Append(d...)
-		if diags.HasError() {
+		if d.HasError() {
 			return
 		}
 	} else {
@@ -720,61 +717,86 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 						"Error Reading Allocation Rule Details",
 						"Could not read child allocation ID "+*rule.Id+": "+err.Error(),
 					)
-					return
-				}
-				if respHTTPFullAlloc.StatusCode() != 200 || respHTTPFullAlloc.JSON200 == nil {
+				} else if respHTTPFullAlloc.StatusCode() != 200 || respHTTPFullAlloc.JSON200 == nil {
 					diags.AddError(
 						"Error Reading Allocation Rule Details",
 						fmt.Sprintf("Could not read child allocation ID %s, status: %d, body: %s", *rule.Id, respHTTPFullAlloc.StatusCode(), string(respHTTPFullAlloc.Body)),
 					)
-					return
-				}
-				fullAlloc := respHTTPFullAlloc.JSON200
-				if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
-					if formula == "" {
-						formula = rulePtr.Formula
+				} else {
+					fullAlloc := respHTTPFullAlloc.JSON200
+					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
+						if formula == "" {
+							formula = rulePtr.Formula
+						}
+						if components == nil && rulePtr.Components != nil {
+							components = rulePtr.Components
+						}
+						if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
+							rule.ValidityPeriods = rulePtr.ValidityPeriods
+						}
 					}
-					if components == nil && rulePtr.Components != nil {
-						components = rulePtr.Components
+					var allocDetail struct {
+						Rule struct {
+							ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
+						} `json:"rule"`
 					}
-					if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
-						rule.ValidityPeriods = rulePtr.ValidityPeriods
+					if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr != nil {
+						diags.AddError(
+							"Error Reading Allocation Rule Details",
+							fmt.Sprintf("Could not parse child allocation value extraction for ID %s: %s", *rule.Id, uerr.Error()),
+						)
+					} else if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
+						rule.ValueExtraction = allocDetail.Rule.ValueExtraction
 					}
-				}
-				var allocDetail struct {
-					Rule struct {
-						ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
-					} `json:"rule"`
-				}
-				if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr != nil {
-					diags.AddError(
-						"Error Reading Allocation Rule Details",
-						fmt.Sprintf("Could not parse child allocation value extraction for ID %s: %s", *rule.Id, uerr.Error()),
-					)
-					return
-				}
-				if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
-					rule.ValueExtraction = allocDetail.Rule.ValueExtraction
 				}
 			}
 
-			validityPeriodsList, vpDiags := toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
-			diags.Append(vpDiags...)
-			if diags.HasError() {
-				return
+			// If fetching child allocation details failed, fall back to prior state/plan values
+			// so the rule can be constructed and saved to preserve recoverable state.
+			if formula == "" && ruleIndex < len(stateRules) && !stateRules[ruleIndex].Formula.IsNull() && !stateRules[ruleIndex].Formula.IsUnknown() {
+				formula = stateRules[ruleIndex].Formula.ValueString()
 			}
-			valueExtractionVal, veDiags := toValueExtractionValue(ctx, rule.ValueExtraction)
-			diags.Append(veDiags...)
-			if diags.HasError() {
-				return
+
+			var validityPeriodsList basetypes.ListValue
+			if !rule.ValidityPeriods.IsSpecified() && ruleIndex < len(stateRules) && !stateRules[ruleIndex].ValidityPeriods.IsNull() && !stateRules[ruleIndex].ValidityPeriods.IsUnknown() {
+				validityPeriodsList = stateRules[ruleIndex].ValidityPeriods
+			} else {
+				var vpDiags diag.Diagnostics
+				validityPeriodsList, vpDiags = toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
+				diags.Append(vpDiags...)
+				if vpDiags.HasError() {
+					return
+				}
+			}
+
+			var valueExtractionVal resource_allocation.ValueExtractionValue
+			if !rule.ValueExtraction.IsSpecified() && ruleIndex < len(stateRules) && !stateRules[ruleIndex].ValueExtraction.IsNull() && !stateRules[ruleIndex].ValueExtraction.IsUnknown() {
+				valueExtractionVal = stateRules[ruleIndex].ValueExtraction
+			} else {
+				var veDiags diag.Diagnostics
+				valueExtractionVal, veDiags = toValueExtractionValue(ctx, rule.ValueExtraction)
+				diags.Append(veDiags...)
+				if veDiags.HasError() {
+					return
+				}
+			}
+
+			descVal := types.StringPointerValue(rule.Description)
+			if rule.Description == nil && ruleIndex < len(stateRules) && !stateRules[ruleIndex].Description.IsNull() && !stateRules[ruleIndex].Description.IsUnknown() {
+				descVal = stateRules[ruleIndex].Description
+			}
+
+			nameVal := types.StringPointerValue(rule.Name)
+			if rule.Name == nil && ruleIndex < len(stateRules) && !stateRules[ruleIndex].Name.IsNull() && !stateRules[ruleIndex].Name.IsUnknown() {
+				nameVal = stateRules[ruleIndex].Name
 			}
 
 			m := map[string]attr.Value{
 				"action":           types.StringValue(action),
-				"description":      types.StringPointerValue(rule.Description),
+				"description":      descVal,
 				"formula":          types.StringValue(formula),
 				"id":               types.StringPointerValue(rule.Id),
-				"name":             types.StringPointerValue(rule.Name),
+				"name":             nameVal,
 				"validity_periods": validityPeriodsList,
 				"value_extraction": valueExtractionVal,
 			}
@@ -794,17 +816,22 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				var d diag.Diagnostics
 				m["components"], d = toAllocationRuleComponentsListValue(ctx, components, existingComponents)
 				diags.Append(d...)
-				if diags.HasError() {
+				if d.HasError() {
 					return
 				}
+			} else if ruleIndex < len(stateRules) && !stateRules[ruleIndex].Components.IsNull() && !stateRules[ruleIndex].Components.IsUnknown() {
+				m["components"] = stateRules[ruleIndex].Components
 			} else {
 				var d diag.Diagnostics
 				m["components"], d = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
 				diags.Append(d...)
+				if d.HasError() {
+					return
+				}
 			}
 			ruleVal, d := resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
-			if diags.HasError() {
+			if d.HasError() {
 				return
 			}
 			rules = append(rules, ruleVal)
@@ -813,7 +840,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		var d diag.Diagnostics
 		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
 		diags.Append(d...)
-		if diags.HasError() {
+		if d.HasError() {
 			return
 		}
 	} else if nullableToPointer(resp.Rule) != nil {

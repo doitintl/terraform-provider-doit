@@ -291,6 +291,9 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	// Read and ImportState still use mapAllocationToModel for the full API response.
 	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, allocationResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
+		if !plan.Id.IsUnknown() && !plan.Id.IsNull() {
+			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+		}
 		return
 	}
 
@@ -413,6 +416,9 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 	// exactly as-is, and only overlay Computed-only fields from the API response.
 	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, updateResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
+		if !plan.Id.IsUnknown() && !plan.Id.IsNull() {
+			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+		}
 		return
 	}
 

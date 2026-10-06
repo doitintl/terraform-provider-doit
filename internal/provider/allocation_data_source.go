@@ -395,7 +395,7 @@ func (ds *allocationDataSource) mapValueExtraction(ctx context.Context, nullable
 				return datasource_allocation.NewValueExtractionValueNull(), diags
 			}
 		} else {
-			provList = types.ListNull(types.StringType)
+			provList = types.ListValueMust(types.StringType, []attr.Value{})
 		}
 
 		mSource := map[string]attr.Value{

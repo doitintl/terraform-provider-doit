@@ -859,3 +859,74 @@ func TestToValueExtractionValue(t *testing.T) {
 		t.Errorf("unexpected sources: %v", sources)
 	}
 }
+
+func TestAllocation_OverlayComputedFields_ChildGetFailurePreservesIDs(t *testing.T) {
+	ctx := t.Context()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+
+	r := &allocationResource{client: newTestAPIClient(t, server)}
+
+	rule := modifyPlanTestRule(t, map[string]attr.Value{
+		"action":      types.StringValue("create"),
+		"name":        types.StringValue("rule-1"),
+		"description": types.StringNull(),
+		"formula":     types.StringValue("A"),
+		"components":  modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"})),
+		"id":          types.StringUnknown(),
+	})
+
+	plan := &allocationResourceModel{
+		Id:             types.StringUnknown(),
+		Name:           types.StringValue("group-alloc"),
+		Description:    types.StringValue("desc"),
+		AllocationType: types.StringUnknown(),
+		Type:           types.StringUnknown(),
+		CreateTime:     types.Int64Unknown(),
+		UpdateTime:     types.Int64Unknown(),
+		Rule:           resource_allocation.NewRuleValueNull(),
+		Rules:          types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), []attr.Value{rule}),
+	}
+
+	childID := "child-rule-1"
+	childName := "rule-1"
+	groupType := models.AllocationAllocationTypeGroup
+	apiResp := &models.Allocation{
+		Id:             new("group-123"),
+		Name:           new("group-alloc"),
+		AllocationType: &groupType,
+		CreateTime:     new(int64(1000)),
+		UpdateTime:     new(int64(2000)),
+		Rules: &[]nullable.Nullable[models.GroupAllocationRule]{
+			valueToNullable(models.GroupAllocationRule{
+				Id:   &childID,
+				Name: &childName,
+			}),
+		},
+	}
+
+	diags := r.overlayAllocationComputedFields(ctx, apiResp, plan)
+	if !diags.HasError() {
+		t.Fatalf("expected error diagnostics when child allocation GET returns 500, got none")
+	}
+
+	if plan.Id.IsUnknown() || plan.Id.IsNull() || plan.Id.ValueString() != "group-123" {
+		t.Errorf("expected plan.Id to be 'group-123', got %v", plan.Id)
+	}
+
+	var planRules []resource_allocation.RulesValue
+	if d := plan.Rules.ElementsAs(ctx, &planRules, false); d.HasError() {
+		t.Fatalf("ElementsAs failed: %v", d)
+	}
+	if len(planRules) != 1 {
+		t.Fatalf("expected 1 rule in plan, got %d", len(planRules))
+	}
+	if planRules[0].Id.IsUnknown() || planRules[0].Id.IsNull() || planRules[0].Id.ValueString() != "child-rule-1" {
+		t.Errorf("expected plan.Rules[0].Id to be 'child-rule-1', got %v", planRules[0].Id)
+	}
+	if planRules[0].Formula.ValueString() != "A" {
+		t.Errorf("expected plan.Rules[0].Formula to remain 'A', got %v", planRules[0].Formula)
+	}
+}
