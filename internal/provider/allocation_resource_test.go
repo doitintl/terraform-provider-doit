@@ -5511,3 +5511,87 @@ func TestAccAllocation_GroupValueExtraction_OmittedOnMissing(t *testing.T) {
 		},
 	})
 }
+
+func TestAccAllocation_GroupValueExtraction_Sources_NullElement(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	config := fmt.Sprintf(`
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test null source element"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action  = "create"
+      name    = "%s-rule"
+      formula = "A"
+      components = [
+        {
+          key    = "country"
+          mode   = "is"
+          type   = "fixed"
+          values = ["JP"]
+        }
+      ]
+      value_extraction = {
+        on_missing = "useFallback"
+        fallback   = "prod"
+        sources    = [null]
+      }
+    }
+  ]
+}
+`, rName, rName, rName)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(`null element is not permitted`),
+			},
+		},
+	})
+}
+
+func TestAccAllocation_GroupValidityPeriods_NullElement(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	config := fmt.Sprintf(`
+resource "doit_allocation" "group" {
+  name              = "%s-group"
+  description       = "test null validity period element in group rule"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action  = "create"
+      name    = "%s-rule"
+      formula = "A"
+      components = [
+        {
+          key    = "country"
+          mode   = "is"
+          type   = "fixed"
+          values = ["JP"]
+        }
+      ]
+      validity_periods = [null]
+    }
+  ]
+}
+`, rName, rName, rName)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(`null element is not permitted`),
+			},
+		},
+	})
+}

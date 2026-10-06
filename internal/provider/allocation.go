@@ -303,9 +303,19 @@ func convertValueExtractionToModel(ctx context.Context, ve resource_allocation.V
 		return nullable.Nullable[models.AllocationValueExtraction]{}, diags
 	}
 
-	modelSources := make([]models.AllocationValueExtractionSource, len(sources))
+	modelSources := make([]models.AllocationValueExtractionSource, 0, len(sources))
 	for i, s := range sources {
-		modelSources[i] = models.AllocationValueExtractionSource{
+		if s.IsNull() {
+			diags.AddError(
+				"Invalid extraction source",
+				fmt.Sprintf("sources[%d]: null element is not permitted", i),
+			)
+			continue
+		}
+		if s.IsUnknown() {
+			continue
+		}
+		src := models.AllocationValueExtractionSource{
 			Key:  s.Key.ValueString(),
 			Type: models.AllocationValueExtractionSourceType(s.SourcesType.ValueString()),
 		}
@@ -316,8 +326,9 @@ func convertValueExtractionToModel(ctx context.Context, ve resource_allocation.V
 			if diags.HasError() {
 				return nullable.Nullable[models.AllocationValueExtraction]{}, diags
 			}
-			modelSources[i].Providers = valueToNullable(provs)
+			src.Providers = valueToNullable(provs)
 		}
+		modelSources = append(modelSources, src)
 	}
 
 	onMissingStr := string(models.AllocationValueExtractionOnMissingUseFallback)

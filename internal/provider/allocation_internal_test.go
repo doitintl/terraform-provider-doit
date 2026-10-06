@@ -745,6 +745,72 @@ func TestConvertValueExtractionToModel(t *testing.T) {
 	if nullableToPointer(model.Fallback) != nil {
 		t.Errorf("expected fallback to be nil when nextRule, got: %v", nullableToPointer(model.Fallback))
 	}
+
+	// Case 5: sources with null element returns diagnostic error
+	sourcesWithNull, d := types.ListValue(
+		resource_allocation.SourcesValue{}.Type(ctx),
+		[]attr.Value{src, resource_allocation.NewSourcesValueNull()},
+	)
+	if d.HasError() {
+		t.Fatalf("ListValue: %v", d)
+	}
+	veWithNullSource, d := resource_allocation.NewValueExtractionValue(
+		resource_allocation.ValueExtractionValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"fallback":   types.StringValue("prod"),
+			"on_missing": types.StringValue("useFallback"),
+			"sources":    sourcesWithNull,
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("NewValueExtractionValue: %v", d)
+	}
+	_, diags = convertValueExtractionToModel(ctx, veWithNullSource)
+	if !diags.HasError() {
+		t.Fatalf("expected error for null source element, got none")
+	}
+	expectedMsg := "sources[1]: null element is not permitted"
+	foundMsg := false
+	for _, errDiag := range diags.Errors() {
+		if errDiag.Detail() == expectedMsg {
+			foundMsg = true
+			break
+		}
+	}
+	if !foundMsg {
+		t.Errorf("expected diagnostic error %q, got: %v", expectedMsg, diags)
+	}
+
+	// Case 6: sources with unknown element skips the unknown element
+	sourcesWithUnknown, d := types.ListValue(
+		resource_allocation.SourcesValue{}.Type(ctx),
+		[]attr.Value{src, resource_allocation.NewSourcesValueUnknown()},
+	)
+	if d.HasError() {
+		t.Fatalf("ListValue: %v", d)
+	}
+	veWithUnknownSource, d := resource_allocation.NewValueExtractionValue(
+		resource_allocation.ValueExtractionValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"fallback":   types.StringValue("prod"),
+			"on_missing": types.StringValue("useFallback"),
+			"sources":    sourcesWithUnknown,
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("NewValueExtractionValue: %v", d)
+	}
+	res, diags = convertValueExtractionToModel(ctx, veWithUnknownSource)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics for unknown source element: %v", diags)
+	}
+	model, err = res.Get()
+	if err != nil {
+		t.Fatalf("expected non-null model: %v", err)
+	}
+	if len(model.Sources) != 1 || model.Sources[0].Key != "env" {
+		t.Errorf("expected 1 source with unknown element skipped, got: %+v", model.Sources)
+	}
 }
 
 func TestToValueExtractionValue(t *testing.T) {

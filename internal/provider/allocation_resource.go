@@ -107,6 +107,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 				ve.Attributes["fallback"] = fb
 			}
 			if sources, ok := ve.Attributes["sources"].(schema.ListNestedAttribute); ok {
+				sources.Validators = append(sources.Validators, allocationValueExtractionSourcesValidator{})
 				if prov, ok := sources.NestedObject.Attributes["providers"].(schema.ListAttribute); ok {
 					prov.PlanModifiers = append(prov.PlanModifiers, useNullForUnknownListNullWhenConfigNull(types.StringType))
 					sources.NestedObject.Attributes["providers"] = prov
