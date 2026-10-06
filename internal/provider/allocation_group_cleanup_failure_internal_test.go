@@ -73,6 +73,9 @@ func (f *failingMemberServer) handler(patchBody string) http.Handler {
 		case r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/group-123") && f.groupDeleted:
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = w.Write([]byte(`{"error":"not found"}`))
+		case r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/keep-1"):
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"id":"keep-1","name":"k1","type":"custom","rule":{"formula":"A","components":[{"dimension":{"id":"country","type":"preset"},"mode":"include","values":["JP"]}]}}`))
 		case r.Method == http.MethodPatch:
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(patchBody))

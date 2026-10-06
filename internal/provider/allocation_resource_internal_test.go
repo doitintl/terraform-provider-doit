@@ -2,6 +2,9 @@ package provider
 
 import (
 	"maps"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -659,5 +662,46 @@ func TestAllocationResource_ModifyPlan_ExplicitIdReservesCandidate(t *testing.T)
 	// Rule B should NOT get "shared-id" — the candidate is reserved by rule A.
 	if result.rules[1].Id.ValueString() == "shared-id" {
 		t.Errorf("rule B: incorrectly claimed candidate already reserved by rule A's explicit id")
+	}
+}
+
+func TestAllocationCreate_NilIDReturnsError(t *testing.T) {
+	ctx := t.Context()
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"name":"test-alloc"}`)) // Note: id is omitted / nil
+	}))
+
+	r := &allocationResource{client: newTestAPIClient(t, server)}
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+	rule := modifyPlanTestRule(t, map[string]attr.Value{
+		"action":      types.StringValue("create"),
+		"name":        types.StringValue("rule-1"),
+		"description": types.StringNull(),
+		"formula":     types.StringValue("A"),
+		"components":  modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"})),
+		"id":          types.StringNull(),
+	})
+	planModel := modifyPlanTestModel(t, []attr.Value{rule}, tv)
+	planRaw := allocationRawForTest(t, sch, planModel)
+	plan := tfsdk.Plan{Schema: sch, Raw: planRaw.Raw}
+
+	resp := &resource.CreateResponse{State: tfsdk.State{Schema: sch}}
+	r.Create(ctx, resource.CreateRequest{Plan: plan}, resp)
+
+	if !resp.Diagnostics.HasError() {
+		t.Fatalf("expected error diagnostic for response missing ID, got none")
+	}
+	var found bool
+	for _, err := range resp.Diagnostics.Errors() {
+		if strings.Contains(err.Detail(), "response missing ID") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected diagnostic mentioning 'response missing ID', got: %v", resp.Diagnostics)
 	}
 }

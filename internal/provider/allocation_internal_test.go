@@ -2,12 +2,16 @@ package provider
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/oapi-codegen/nullable"
 )
 
 // TestToAllocationRuleComponentsListValue_EmptySlice verifies that passing an
@@ -166,5 +170,151 @@ func TestMapAllocationToModel_SingleRule_RulesNull(t *testing.T) {
 			"state.Rules.IsNull()=%v, elements=%d\n"+
 			"For single allocations, Rules should remain null so it's omitted from update requests.",
 			state.Rules.IsNull(), len(state.Rules.Elements()))
+	}
+}
+
+func TestFillAllocationCommon_GroupRule_ClearsValueExtraction(t *testing.T) {
+	ctx := t.Context()
+
+	plan := &allocationResourceModel{
+		Id:             types.StringValue("group-123"),
+		Name:           types.StringValue("group-alloc"),
+		Description:    types.StringValue("desc"),
+		AllocationType: types.StringValue("group"),
+		Rule:           resource_allocation.NewRuleValueNull(),
+	}
+
+	rule := modifyPlanTestRule(t, map[string]attr.Value{
+		"action":           types.StringValue("update"),
+		"name":             types.StringValue("rule-1"),
+		"description":      types.StringNull(),
+		"formula":          types.StringValue("A"),
+		"components":       modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"})),
+		"id":               types.StringValue("rule-id-1"),
+		"value_extraction": resource_allocation.NewValueExtractionValueNull(),
+	})
+	plan.Rules = types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), []attr.Value{rule})
+
+	req := new(models.UpdateAllocationRequest)
+	diags := plan.fillAllocationCommon(ctx, req)
+	if diags.HasError() {
+		t.Fatalf("fillAllocationCommon returned error: %v", diags)
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		t.Fatalf("json.Marshal: %v", err)
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
+
+	rules, ok := parsed["rules"].([]any)
+	if !ok || len(rules) == 0 {
+		t.Fatalf("expected non-empty rules in serialized request: %s", string(body))
+	}
+	r0 := rules[0].(map[string]any)
+	ve, hasVE := r0["valueExtraction"]
+	if !hasVE {
+		t.Fatalf("expected valueExtraction to be present in rule payload to clear it, but was omitted: %s", string(body))
+	}
+	if ve != nil {
+		t.Fatalf("expected valueExtraction to be null in rule payload, got: %v", ve)
+	}
+}
+
+func TestUseNullForUnknownValueExtractionModifier(t *testing.T) {
+	ctx := t.Context()
+	m := useNullForUnknownValueExtraction()
+
+	attrTypes := resource_allocation.ValueExtractionValue{}.AttributeTypes(ctx)
+
+	// Case 1: Config is null -> plan value should be set to null
+	req := planmodifier.ObjectRequest{
+		ConfigValue: types.ObjectNull(attrTypes),
+		PlanValue:   types.ObjectUnknown(attrTypes),
+	}
+	resp := &planmodifier.ObjectResponse{
+		PlanValue: req.PlanValue,
+	}
+	m.PlanModifyObject(ctx, req, resp)
+	if !resp.PlanValue.IsNull() {
+		t.Errorf("expected plan value to be null when config is null, got %v", resp.PlanValue)
+	}
+
+	// Case 2: Config is known/not null -> plan value should not be modified to null
+	objVal, d := types.ObjectValue(
+		attrTypes,
+		map[string]attr.Value{
+			"fallback":   types.StringValue("fb"),
+			"on_missing": types.StringValue("nextRule"),
+			"sources":    types.ListNull(resource_allocation.SourcesValue{}.Type(ctx)),
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("ObjectValue: %v", d)
+	}
+	req2 := planmodifier.ObjectRequest{
+		ConfigValue: objVal,
+		PlanValue:   objVal,
+	}
+	resp2 := &planmodifier.ObjectResponse{
+		PlanValue: req2.PlanValue,
+	}
+	m.PlanModifyObject(ctx, req2, resp2)
+	if resp2.PlanValue.IsNull() {
+		t.Error("expected plan value to remain unchanged when config is not null")
+	}
+}
+
+func TestMapAllocationToModel_ChildAllocationErrorReturnsDiags(t *testing.T) {
+	ctx := t.Context()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+
+	client := newTestAPIClient(t, server)
+
+	ruleID := "child-rule-1"
+	ruleName := "child-rule-name"
+	allocType := models.AllocationAllocationTypeGroup
+	alloc := &models.Allocation{
+		Id:             new("group-1"),
+		Name:           new("group-name"),
+		AllocationType: &allocType,
+		Rules: &[]nullable.Nullable[models.GroupAllocationRule]{
+			valueToNullable(models.GroupAllocationRule{
+				Id:   &ruleID,
+				Name: &ruleName,
+				// Formula is nil, so it attempts to fetch child allocation
+			}),
+		},
+	}
+
+	state := &allocationResourceModel{}
+	existingRule, d := resource_allocation.NewRulesValue(
+		resource_allocation.RulesValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"action":           types.StringValue("update"),
+			"components":       types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx)),
+			"description":      types.StringNull(),
+			"formula":          types.StringNull(),
+			"id":               types.StringValue(ruleID),
+			"name":             types.StringValue(ruleName),
+			"validity_periods": types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx)),
+			"value_extraction": resource_allocation.NewValueExtractionValueNull(),
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("NewRulesValue: %v", d)
+	}
+	state.Rules = types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), []attr.Value{existingRule})
+
+	diags := mapAllocationToModel(ctx, client, alloc, state)
+	if !diags.HasError() {
+		t.Fatalf("expected error diagnostic when child allocation fetch fails with 500, got none")
 	}
 }

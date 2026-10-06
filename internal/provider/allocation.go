@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
@@ -439,6 +438,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 			if diags.HasError() {
 				return diags
 			}
+		} else if plan.Rule.ValidityPeriods.IsNull() {
+			rule.ValidityPeriods.SetNull()
 		}
 		req.Rule.Set(rule)
 	}
@@ -499,6 +500,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 					if diags.HasError() {
 						return diags
 					}
+				} else if planRules[i].ValidityPeriods.IsNull() && planRules[i].Action.ValueString() != "select" {
+					rule.ValidityPeriods.SetNull()
 				}
 				if !planRules[i].ValueExtraction.IsNull() && !planRules[i].ValueExtraction.IsUnknown() {
 					var veDiags diag.Diagnostics
@@ -507,6 +510,8 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 					if diags.HasError() {
 						return diags
 					}
+				} else if planRules[i].ValueExtraction.IsNull() && planRules[i].Action.ValueString() != "select" {
+					rule.ValueExtraction.SetNull()
 				}
 				rules[i].Set(rule)
 			}
@@ -691,31 +696,41 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 			if (formula == "" || components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified()) && rule.Id != nil && action != "select" && client != nil {
 				// Fetch full allocation to get formula, components, validity periods, and value extraction
 				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
-				if err == nil && respHTTPFullAlloc.JSON200 != nil {
-					fullAlloc := respHTTPFullAlloc.JSON200
-					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
-						if formula == "" {
-							formula = rulePtr.Formula
-						}
-						if components == nil && rulePtr.Components != nil {
-							components = rulePtr.Components
-						}
-						if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
-							rule.ValidityPeriods = rulePtr.ValidityPeriods
-						}
+				if err != nil {
+					diags.AddError(
+						"Error Reading Allocation Rule Details",
+						"Could not read child allocation ID "+*rule.Id+": "+err.Error(),
+					)
+					return
+				}
+				if respHTTPFullAlloc.StatusCode() != 200 || respHTTPFullAlloc.JSON200 == nil {
+					diags.AddError(
+						"Error Reading Allocation Rule Details",
+						fmt.Sprintf("Could not read child allocation ID %s, status: %d, body: %s", *rule.Id, respHTTPFullAlloc.StatusCode(), string(respHTTPFullAlloc.Body)),
+					)
+					return
+				}
+				fullAlloc := respHTTPFullAlloc.JSON200
+				if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
+					if formula == "" {
+						formula = rulePtr.Formula
 					}
-					var allocDetail struct {
-						Rule struct {
-							ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
-						} `json:"rule"`
+					if components == nil && rulePtr.Components != nil {
+						components = rulePtr.Components
 					}
-					if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr == nil {
-						if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
-							rule.ValueExtraction = allocDetail.Rule.ValueExtraction
-						}
+					if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
+						rule.ValidityPeriods = rulePtr.ValidityPeriods
 					}
-				} else {
-					log.Printf("[WARN] Failed to fetch allocation details for rule %s: %v", *rule.Id, err)
+				}
+				var allocDetail struct {
+					Rule struct {
+						ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
+					} `json:"rule"`
+				}
+				if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr == nil {
+					if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
+						rule.ValueExtraction = allocDetail.Rule.ValueExtraction
+					}
 				}
 			}
 

@@ -201,28 +201,40 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 
 			if (rule.Formula == nil || rule.Components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified()) && rule.Id != nil && ds.client != nil {
 				respHTTPFullAlloc, err := ds.client.GetAllocationWithResponse(ctx, *rule.Id)
-				if err == nil && respHTTPFullAlloc.JSON200 != nil {
-					fullAlloc := respHTTPFullAlloc.JSON200
-					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
-						if rule.Formula == nil {
-							rule.Formula = &rulePtr.Formula
-						}
-						if rule.Components == nil && rulePtr.Components != nil {
-							rule.Components = &rulePtr.Components
-						}
-						if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
-							rule.ValidityPeriods = rulePtr.ValidityPeriods
-						}
+				if err != nil {
+					diags.AddError(
+						"Error Reading Allocation Rule Details",
+						"Could not read child allocation ID "+*rule.Id+": "+err.Error(),
+					)
+					return diags
+				}
+				if respHTTPFullAlloc.StatusCode() != 200 || respHTTPFullAlloc.JSON200 == nil {
+					diags.AddError(
+						"Error Reading Allocation Rule Details",
+						fmt.Sprintf("Could not read child allocation ID %s, status: %d, body: %s", *rule.Id, respHTTPFullAlloc.StatusCode(), string(respHTTPFullAlloc.Body)),
+					)
+					return diags
+				}
+				fullAlloc := respHTTPFullAlloc.JSON200
+				if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
+					if rule.Formula == nil {
+						rule.Formula = &rulePtr.Formula
 					}
-					var allocDetail struct {
-						Rule struct {
-							ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
-						} `json:"rule"`
+					if rule.Components == nil && rulePtr.Components != nil {
+						rule.Components = &rulePtr.Components
 					}
-					if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr == nil {
-						if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
-							rule.ValueExtraction = allocDetail.Rule.ValueExtraction
-						}
+					if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
+						rule.ValidityPeriods = rulePtr.ValidityPeriods
+					}
+				}
+				var allocDetail struct {
+					Rule struct {
+						ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
+					} `json:"rule"`
+				}
+				if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr == nil {
+					if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
+						rule.ValueExtraction = allocDetail.Rule.ValueExtraction
 					}
 				}
 			}

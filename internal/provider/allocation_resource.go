@@ -101,6 +101,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 
 		if ve, ok := rules.NestedObject.Attributes["value_extraction"].(schema.SingleNestedAttribute); ok {
 			ve.Validators = append(ve.Validators, allocationValueExtractionValidator{})
+			ve.PlanModifiers = append(ve.PlanModifiers, useNullForUnknownValueExtraction())
 			if fb, ok := ve.Attributes["fallback"].(schema.StringAttribute); ok {
 				fb.PlanModifiers = append(fb.PlanModifiers, useNullForUnknownStringWhenConfigNull())
 				ve.Attributes["fallback"] = fb
@@ -270,6 +271,14 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 		resp.Diagnostics.AddError(
 			"Error creating allocation",
 			"Could not create allocation, empty response",
+		)
+		return
+	}
+
+	if allocationResp.JSON200.Id == nil {
+		resp.Diagnostics.AddError(
+			"Error creating allocation",
+			"Could not create allocation, response missing ID",
 		)
 		return
 	}

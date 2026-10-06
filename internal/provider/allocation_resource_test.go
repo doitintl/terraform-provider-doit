@@ -4925,6 +4925,67 @@ func TestAccAllocation_GroupValueExtraction_NextRule(t *testing.T) {
 					},
 				},
 			},
+			// Step 7: Clear value_extraction completely.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "", nil, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction"),
+						knownvalue.Null(),
+					),
+				},
+			},
+			// Step 8: Drift check after clearing value_extraction.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "", nil, nil),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 9: Re-add value_extraction.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("on_missing"),
+						knownvalue.StringExact("useFallback"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.StringExact("DefaultVal"),
+					),
+				},
+			},
+			// Step 10: Drift check after re-adding value_extraction.
+			{
+				Config: testAccAllocationGroupValueExtraction(rName, "useFallback", &fallbackVal, sources),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
 }
@@ -5019,36 +5080,39 @@ type testAccExtractionSource struct {
 }
 
 func testAccAllocationGroupValueExtraction(rName string, onMissing string, fallback *string, sources []testAccExtractionSource) string {
-	veBlock := "      value_extraction = {\n"
-	if onMissing != "" {
-		veBlock += fmt.Sprintf("        on_missing = %q\n", onMissing)
-	}
-	if fallback != nil {
-		veBlock += fmt.Sprintf("        fallback = %q\n", *fallback)
-	}
-	veBlock += "        sources = [\n"
-	for _, s := range sources {
-		veBlock += "          {\n"
-		veBlock += fmt.Sprintf("            type = %q\n", s.Type)
-		veBlock += fmt.Sprintf("            key  = %q\n", s.Key)
-		if s.Providers != nil {
-			if len(s.Providers) == 0 {
-				veBlock += "            providers = []\n"
-			} else {
-				veBlock += "            providers = ["
-				for j, p := range s.Providers {
-					if j > 0 {
-						veBlock += ", "
-					}
-					veBlock += fmt.Sprintf("%q", p)
-				}
-				veBlock += "]\n"
-			}
+	veBlock := ""
+	if onMissing != "" || len(sources) > 0 {
+		veBlock = "      value_extraction = {\n"
+		if onMissing != "" {
+			veBlock += fmt.Sprintf("        on_missing = %q\n", onMissing)
 		}
-		veBlock += "          },\n"
+		if fallback != nil {
+			veBlock += fmt.Sprintf("        fallback = %q\n", *fallback)
+		}
+		veBlock += "        sources = [\n"
+		for _, s := range sources {
+			veBlock += "          {\n"
+			veBlock += fmt.Sprintf("            type = %q\n", s.Type)
+			veBlock += fmt.Sprintf("            key  = %q\n", s.Key)
+			if s.Providers != nil {
+				if len(s.Providers) == 0 {
+					veBlock += "            providers = []\n"
+				} else {
+					veBlock += "            providers = ["
+					for j, p := range s.Providers {
+						if j > 0 {
+							veBlock += ", "
+						}
+						veBlock += fmt.Sprintf("%q", p)
+					}
+					veBlock += "]\n"
+				}
+			}
+			veBlock += "          },\n"
+		}
+		veBlock += "        ]\n"
+		veBlock += "      }\n"
 	}
-	veBlock += "        ]\n"
-	veBlock += "      }\n"
 
 	return fmt.Sprintf(`
 resource "doit_allocation" "group" {
