@@ -232,10 +232,15 @@ func (ds *allocationDataSource) mapAllocationToModel(ctx context.Context, alloca
 						ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
 					} `json:"rule"`
 				}
-				if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr == nil {
-					if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
-						rule.ValueExtraction = allocDetail.Rule.ValueExtraction
-					}
+				if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr != nil {
+					diags.AddError(
+						"Error Reading Allocation Rule Details",
+						fmt.Sprintf("Could not parse child allocation value extraction for ID %s: %s", *rule.Id, uerr.Error()),
+					)
+					return diags
+				}
+				if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
+					rule.ValueExtraction = allocDetail.Rule.ValueExtraction
 				}
 			}
 

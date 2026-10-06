@@ -318,3 +318,165 @@ func TestMapAllocationToModel_ChildAllocationErrorReturnsDiags(t *testing.T) {
 		t.Fatalf("expected error diagnostic when child allocation fetch fails with 500, got none")
 	}
 }
+
+func TestMapAllocationToModel_ChildAllocationMalformedValueExtraction_ReturnsDiags(t *testing.T) {
+	ctx := t.Context()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"id":"child-rule-1","name":"child-rule-name","rule":{"formula":"A","components":[],"valueExtraction":{"sources":"invalid-not-an-array"}}}`))
+	}))
+
+	client := newTestAPIClient(t, server)
+
+	ruleID := "child-rule-1"
+	ruleName := "child-rule-name"
+	allocType := models.AllocationAllocationTypeGroup
+	alloc := &models.Allocation{
+		Id:             new("group-1"),
+		Name:           new("group-name"),
+		AllocationType: &allocType,
+		Rules: &[]nullable.Nullable[models.GroupAllocationRule]{
+			valueToNullable(models.GroupAllocationRule{
+				Id:   &ruleID,
+				Name: &ruleName,
+			}),
+		},
+	}
+
+	state := &allocationResourceModel{}
+	existingRule, d := resource_allocation.NewRulesValue(
+		resource_allocation.RulesValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"action":           types.StringValue("update"),
+			"components":       types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx)),
+			"description":      types.StringNull(),
+			"formula":          types.StringNull(),
+			"id":               types.StringValue(ruleID),
+			"name":             types.StringValue(ruleName),
+			"validity_periods": types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx)),
+			"value_extraction": resource_allocation.NewValueExtractionValueNull(),
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("NewRulesValue: %v", d)
+	}
+	state.Rules = types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), []attr.Value{existingRule})
+
+	diags := mapAllocationToModel(ctx, client, alloc, state)
+	if !diags.HasError() {
+		t.Fatalf("expected error diagnostic when child allocation valueExtraction is malformed, got none")
+	}
+}
+
+func TestMapAllocationToModel_SelectRuleDoesNotFetchChildDetails(t *testing.T) {
+	ctx := t.Context()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("unexpected HTTP request to fetch child allocation for action=select: %s", r.URL.Path)
+	}))
+
+	client := newTestAPIClient(t, server)
+
+	ruleID := "child-rule-1"
+	ruleName := "child-rule-name"
+	allocType := models.AllocationAllocationTypeGroup
+	alloc := &models.Allocation{
+		Id:             new("group-1"),
+		Name:           new("group-name"),
+		AllocationType: &allocType,
+		Rules: &[]nullable.Nullable[models.GroupAllocationRule]{
+			valueToNullable(models.GroupAllocationRule{
+				Id:   &ruleID,
+				Name: &ruleName,
+			}),
+		},
+	}
+
+	state := &allocationResourceModel{}
+	existingRule, d := resource_allocation.NewRulesValue(
+		resource_allocation.RulesValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"action":           types.StringValue("select"),
+			"components":       types.ListNull(resource_allocation.ComponentsValue{}.Type(ctx)),
+			"description":      types.StringNull(),
+			"formula":          types.StringNull(),
+			"id":               types.StringValue(ruleID),
+			"name":             types.StringValue(ruleName),
+			"validity_periods": types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx)),
+			"value_extraction": resource_allocation.NewValueExtractionValueNull(),
+		},
+	)
+	if d.HasError() {
+		t.Fatalf("NewRulesValue: %v", d)
+	}
+	state.Rules = types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx), []attr.Value{existingRule})
+
+	diags := mapAllocationToModel(ctx, client, alloc, state)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	var mappedRules []resource_allocation.RulesValue
+	diags = state.Rules.ElementsAs(ctx, &mappedRules, false)
+	if diags.HasError() || len(mappedRules) != 1 {
+		t.Fatalf("failed to decode mapped rules: %v", diags)
+	}
+	if len(mappedRules[0].ValidityPeriods.Elements()) != 0 {
+		t.Errorf("expected validity_periods to be empty list for action=select, got: %v", mappedRules[0].ValidityPeriods)
+	}
+	if !mappedRules[0].ValueExtraction.IsNull() {
+		t.Errorf("expected value_extraction to be null for action=select, got: %v", mappedRules[0].ValueExtraction)
+	}
+}
+
+func TestMapAllocationToModel_ImportDefaultsToSelectAndDoesNotFetchChildDetails(t *testing.T) {
+	ctx := t.Context()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("unexpected HTTP request to fetch child allocation on import: %s", r.URL.Path)
+	}))
+
+	client := newTestAPIClient(t, server)
+
+	ruleID := "child-rule-1"
+	ruleName := "child-rule-name"
+	allocType := models.AllocationAllocationTypeGroup
+	alloc := &models.Allocation{
+		Id:             new("group-1"),
+		Name:           new("group-name"),
+		AllocationType: &allocType,
+		Rules: &[]nullable.Nullable[models.GroupAllocationRule]{
+			valueToNullable(models.GroupAllocationRule{
+				Id:   &ruleID,
+				Name: &ruleName,
+			}),
+		},
+	}
+
+	// On import, state.Rules is null.
+	state := &allocationResourceModel{
+		Rules: types.ListNull(resource_allocation.RulesValue{}.Type(ctx)),
+	}
+
+	diags := mapAllocationToModel(ctx, client, alloc, state)
+	if diags.HasError() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+
+	var mappedRules []resource_allocation.RulesValue
+	diags = state.Rules.ElementsAs(ctx, &mappedRules, false)
+	if diags.HasError() || len(mappedRules) != 1 {
+		t.Fatalf("failed to decode mapped rules: %v", diags)
+	}
+	if action := mappedRules[0].Action.ValueString(); action != "select" {
+		t.Errorf("expected imported rule action to default to select, got: %q", action)
+	}
+	if len(mappedRules[0].ValidityPeriods.Elements()) != 0 {
+		t.Errorf("expected validity_periods to be empty list on import, got: %v", mappedRules[0].ValidityPeriods)
+	}
+	if !mappedRules[0].ValueExtraction.IsNull() {
+		t.Errorf("expected value_extraction to be null on import, got: %v", mappedRules[0].ValueExtraction)
+	}
+}

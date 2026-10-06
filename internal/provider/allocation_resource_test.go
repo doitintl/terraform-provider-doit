@@ -5287,3 +5287,112 @@ func TestAccAllocation_ValidityPeriods_InvalidDateFormat(t *testing.T) {
 		},
 	})
 }
+
+// TestAccAllocation_Group_SelectMemberWithValidityPeriods_NoDrift verifies that when a group
+// allocation references a member allocation (action = "select") that has validity_periods
+// configured on the child allocation, the group allocation rule does not inherit or duplicate
+// child metadata into parent state, keeps validity_periods empty and value_extraction null,
+// and produces an empty plan (no drift) on subsequent applies and imports.
+func TestAccAllocation_Group_SelectMemberWithValidityPeriods_NoDrift(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationGroupSelectWithValidityPeriods(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectNonEmptyPlan(),
+						plancheck.ExpectResourceAction(
+							"doit_allocation.group_select",
+							plancheck.ResourceActionCreate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.this",
+						tfjsonpath.New("rule").AtMapKey("validity_periods").AtSliceIndex(0).AtMapKey("start_date"),
+						knownvalue.StringExact("2026-01-01"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group_select",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("action"),
+						knownvalue.StringExact("select"),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group_select",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{}),
+					),
+					statecheck.ExpectKnownValue(
+						"doit_allocation.group_select",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction"),
+						knownvalue.Null(),
+					),
+				},
+			},
+			// Step 2: Re-apply to verify zero drift.
+			{
+				Config: testAccAllocationGroupSelectWithValidityPeriods(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 3: Import verification.
+			{
+				ResourceName:      "doit_allocation.group_select",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"update_time",
+					"rules",
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationGroupSelectWithValidityPeriods(rName string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "this" {
+  name        = "%s-source"
+  description = "test allocation source"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+    validity_periods = [
+      {
+        start_date = "2026-01-01"
+        end_date   = "2026-03-15"
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "group_select" {
+  name              = "%s-group-select"
+  description       = "test allocation group select"
+  unallocated_costs = "%s-other"
+  rules = [
+    {
+      action = "select"
+      id     = doit_allocation.this.id
+    }
+  ]
+}
+`, rName, rName, rName)
+}
