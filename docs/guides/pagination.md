@@ -70,7 +70,7 @@ The following table shows which data sources support pagination:
 
 | Data Source                 | Auto-Pagination | Manual Pagination |
 | --------------------------- | --------------- | ----------------- |
-| `doit_alert_slack_channels`  | ✓               | ✓                 |
+| `doit_alert_slack_channels` | ✓               | ✓                 |
 | `doit_alerts`               | ✓               | ✓                 |
 | `doit_allocations`          | ✓               | ✓                 |
 | `doit_annotations`          | ✓               | ✓                 |
