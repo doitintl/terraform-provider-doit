@@ -1026,6 +1026,31 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 			(api.IncludeNull == nil || *api.IncludeNull == state.IncludeNull.ValueBool()) &&
 			(api.Inverse == nil || *api.Inverse == state.Inverse.ValueBool())
 	}
+	equivalentPrior := func(a, b int) bool {
+		if prior[a].Equal(prior[b]) {
+			return true
+		}
+		left, right := prior[a], prior[b]
+		if left.Values.IsNull() || left.Values.IsUnknown() || right.Values.IsNull() || right.Values.IsUnknown() ||
+			!left.Key.Equal(right.Key) || !left.Mode.Equal(right.Mode) || !left.ComponentsType.Equal(right.ComponentsType) ||
+			!left.CaseInsensitive.Equal(right.CaseInsensitive) || !left.IncludeNull.Equal(right.IncludeNull) || !left.Inverse.Equal(right.Inverse) ||
+			len(priorValues[a]) != len(priorValues[b]) {
+			return false
+		}
+		counts := make(map[string]int, len(priorValues[a]))
+		for _, value := range priorValues[a] {
+			counts[value]++
+		}
+		for _, value := range priorValues[b] {
+			counts[value]--
+		}
+		for _, count := range counts {
+			if count != 0 {
+				return false
+			}
+		}
+		return true
+	}
 	criteria := []func(int, int) bool{
 		func(i, j int) bool { return identityMatches(i, j) && valuesMatch(i, j) && flagsMatch(i, j) },
 		func(i, j int) bool { return identityMatches(i, j) && valuesMatch(i, j) },
@@ -1068,8 +1093,9 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 				break
 			}
 		}
-		// Truly identical prior components carry interchangeable normalization
-		// metadata. Pair equal-sized indistinguishable groups in response order.
+		// Responses with the same candidates cannot reveal value order. Pair
+		// equal-sized groups in order when prior components differ only by
+		// value order, preserving each configured list and its sentinel position.
 		for i := range components {
 			if matches[i] >= 0 {
 				continue
@@ -1085,7 +1111,7 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 			}
 			interchangeable := true
 			for _, j := range candidates[1:] {
-				if !prior[candidates[0]].Equal(prior[j]) {
+				if !equivalentPrior(candidates[0], j) {
 					interchangeable = false
 					break
 				}

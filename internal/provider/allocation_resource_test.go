@@ -1343,6 +1343,71 @@ resource "doit_allocation" "sentinel_mixed" {
 `, rName)
 }
 
+func TestAccAllocation_DuplicateSentinelValueOrder(t *testing.T) {
+	rName := acctest.RandomWithPrefix(testAllocPrefix)
+	config := fmt.Sprintf(`
+resource "doit_allocation" "duplicate_sentinel_order" {
+    name        = "%s-duplicate-sentinel-order"
+    description = "test duplicate components with different sentinel positions"
+    rule = {
+        formula = "A OR B"
+        components = [
+            {
+                key          = "service_description"
+                mode         = "is"
+                type         = "fixed"
+                include_null = true
+                values       = ["[Service N/A]", "AmazonCloudWatch"]
+            },
+            {
+                key          = "service_description"
+                mode         = "is"
+                type         = "fixed"
+                include_null = true
+                values       = ["AmazonCloudWatch", "[Service N/A]"]
+            },
+        ]
+    }
+}
+`, rName)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckAllocationDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_allocation.duplicate_sentinel_order",
+						tfjsonpath.New("rule").AtMapKey("components"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("[Service N/A]"), knownvalue.StringExact("AmazonCloudWatch"),
+								}),
+							}),
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("AmazonCloudWatch"), knownvalue.StringExact("[Service N/A]"),
+								}),
+							}),
+						}),
+					),
+				},
+			},
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
 // TestAccAllocation_CanonicalServiceName tests that a single allocation with a
 // long canonical service_description value creates successfully and produces no
 // drift on re-apply.

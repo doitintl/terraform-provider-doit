@@ -1140,6 +1140,7 @@ func TestAllocationComponents_DuplicateIdentityMatching(t *testing.T) {
 	apiAliasA := componentSpec{key: "allocation_rule", componentType: "attribution", values: []string{"id-a"}}
 	apiAliasB := componentSpec{key: "allocation_rule", componentType: "attribution", values: []string{"id-b"}}
 	sentinelA := componentSpec{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine"}, includeNull: true}
+	reversedSentinelA := componentSpec{key: "service_description", componentType: "fixed", values: []string{"Compute Engine", "[Service N/A]"}, includeNull: true}
 	sentinelB := componentSpec{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Cloud Storage"}, includeNull: true}
 	apiSentinelA := componentSpec{key: "service_description", componentType: "fixed", values: []string{"Compute Engine"}, includeNull: true}
 	apiSentinelB := componentSpec{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage"}, includeNull: true}
@@ -1154,6 +1155,8 @@ func TestAllocationComponents_DuplicateIdentityMatching(t *testing.T) {
 		{"aliases reordered", []componentSpec{aliasA, aliasB}, []componentSpec{apiAliasB, apiAliasA}, []componentSpec{aliasB, aliasA}},
 		{"sentinels in stable order", []componentSpec{sentinelA, sentinelB}, []componentSpec{apiSentinelA, apiSentinelB}, []componentSpec{sentinelA, sentinelB}},
 		{"sentinels reordered", []componentSpec{sentinelA, sentinelB}, []componentSpec{apiSentinelB, apiSentinelA}, []componentSpec{sentinelB, sentinelA}},
+		{"duplicate normalized values retain both sentinel positions", []componentSpec{sentinelA, reversedSentinelA},
+			[]componentSpec{apiSentinelA, apiSentinelA}, []componentSpec{sentinelA, reversedSentinelA}},
 		{"values reordered within a component", []componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine", "Cloud Storage"}, includeNull: true}, sentinelB},
 			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage", "Compute Engine"}, includeNull: true}, apiSentinelB},
 			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine", "Cloud Storage"}, includeNull: true}, sentinelB}},
