@@ -233,9 +233,18 @@ Possible values: `none`, `top`, `all`
 - `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
-- `sort_dimensions` (String) This option has no impact when reading reports via API.
+- `sort_dimensions` (String) Orders the columns produced by `dimensions`, both in the console and in a rendered
+`fileOutput` export. It does not reorder the `rows` of a JSON result.
+`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+dimensions of a time series means chronologically. The default `desc` orders them by the
+metric instead, so a monthly report charts its priciest month first rather than in time
+order — set `a_to_z` for a time series you intend to export.
+A report with a forecast is always charted chronologically and ignores this field, and a
+comparative `displayValues` mode requires `a_to_z`.
 Possible values: `asc`, `desc`, `a_to_z`
-- `sort_groups` (String) This option has no impact when reading reports via API.
+- `sort_groups` (String) Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+not reorder the `rows` of a JSON result.
 Possible values: `asc`, `desc`, `a_to_z`
 - `splits` (Attributes List) The splits to use in the report. (see [below for nested schema](#nestedatt--config--splits))
 - `time_interval` (String) Time interval for grouping data in the report.

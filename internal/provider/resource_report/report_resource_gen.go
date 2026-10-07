@@ -889,8 +889,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"sort_dimensions": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
-						MarkdownDescription: "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
+						Description:         "Orders the columns produced by `dimensions`, both in the console and in a rendered\n`fileOutput` export. It does not reorder the `rows` of a JSON result.\n`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`\ndimensions of a time series means chronologically. The default `desc` orders them by the\nmetric instead, so a monthly report charts its priciest month first rather than in time\norder — set `a_to_z` for a time series you intend to export.\nA report with a forecast is always charted chronologically and ignores this field, and a\ncomparative `displayValues` mode requires `a_to_z`.\nPossible values: `asc`, `desc`, `a_to_z`",
+						MarkdownDescription: "Orders the columns produced by `dimensions`, both in the console and in a rendered\n`fileOutput` export. It does not reorder the `rows` of a JSON result.\n`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`\ndimensions of a time series means chronologically. The default `desc` orders them by the\nmetric instead, so a monthly report charts its priciest month first rather than in time\norder — set `a_to_z` for a time series you intend to export.\nA report with a forecast is always charted chronologically and ignores this field, and a\ncomparative `displayValues` mode requires `a_to_z`.\nPossible values: `asc`, `desc`, `a_to_z`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"asc",
@@ -903,8 +903,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"sort_groups": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
-						MarkdownDescription: "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
+						Description:         "Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`\nexport. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does\nnot reorder the `rows` of a JSON result.\nPossible values: `asc`, `desc`, `a_to_z`",
+						MarkdownDescription: "Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`\nexport. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does\nnot reorder the `rows` of a JSON result.\nPossible values: `asc`, `desc`, `a_to_z`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"asc",

@@ -72,6 +72,8 @@ locals {
   result = jsondecode(data.doit_report_result.example.result_json)
   # Extract column names (schema objects contain name, type, and optional unit, currency, aggregation, id)
   columns = [for s in local.result.schema : s.name]
+  # Extract forecast rows if the report has forecast_settings configured
+  forecast_rows = try(local.result.forecastRows, [])
 }
 
 # Write results to a CSV file
@@ -97,6 +99,8 @@ data "doit_report_result" "last_week" {
 }
 
 # Render the existing report result as a PDF and download the signed URL.
+# If the report is configured with forecast_settings, the rendered chart
+# automatically includes the forecast trendline.
 data "doit_report_result" "pdf" {
   id          = "your-report-id"
   file_output = "pdf"
