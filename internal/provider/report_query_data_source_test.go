@@ -506,8 +506,7 @@ func TestAccReportQueryDataSource_ForecastFileOutput(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:             config,
-				ExpectNonEmptyPlan: true, // A fresh signed URL makes the dependent file plan a replacement.
+				Config: config,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
