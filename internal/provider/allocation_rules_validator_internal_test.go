@@ -35,12 +35,14 @@ func createRulesValue(ctx context.Context, action, name string, nameIsNull, name
 
 	// Build attributes map
 	attributes := map[string]attr.Value{
-		"action":      actionVal,
-		"name":        nameVal,
-		"description": basetypes.NewStringNull(),
-		"id":          basetypes.NewStringNull(),
-		"formula":     basetypes.NewStringValue("A"),
-		"components":  basetypes.NewListNull(attrTypes["components"].(types.ListType).ElemType),
+		"action":           actionVal,
+		"name":             nameVal,
+		"description":      basetypes.NewStringNull(),
+		"id":               basetypes.NewStringNull(),
+		"formula":          basetypes.NewStringValue("A"),
+		"components":       basetypes.NewListNull(attrTypes["components"].(types.ListType).ElemType),
+		"validity_periods": types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx)),
+		"value_extraction": resource_allocation.NewValueExtractionValueNull(),
 	}
 
 	return resource_allocation.NewRulesValueMust(attrTypes, attributes)

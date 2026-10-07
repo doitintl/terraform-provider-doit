@@ -283,6 +283,54 @@ func (e AllocationListItemAllocationType) Valid() bool {
 	}
 }
 
+// Defines values for AllocationValueExtractionOnMissing.
+const (
+	AllocationValueExtractionOnMissingNextRule    AllocationValueExtractionOnMissing = "nextRule"
+	AllocationValueExtractionOnMissingUseFallback AllocationValueExtractionOnMissing = "useFallback"
+)
+
+// Valid indicates whether the value is a known member of the AllocationValueExtractionOnMissing enum.
+func (e AllocationValueExtractionOnMissing) Valid() bool {
+	switch e {
+	case AllocationValueExtractionOnMissingNextRule:
+		return true
+	case AllocationValueExtractionOnMissingUseFallback:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AllocationValueExtractionSourceType.
+const (
+	AllocationValueExtractionSourceTypeFixed        AllocationValueExtractionSourceType = "fixed"
+	AllocationValueExtractionSourceTypeGkeLabel     AllocationValueExtractionSourceType = "gke_label"
+	AllocationValueExtractionSourceTypeLabel        AllocationValueExtractionSourceType = "label"
+	AllocationValueExtractionSourceTypeProjectLabel AllocationValueExtractionSourceType = "project_label"
+	AllocationValueExtractionSourceTypeSystemLabel  AllocationValueExtractionSourceType = "system_label"
+	AllocationValueExtractionSourceTypeTag          AllocationValueExtractionSourceType = "tag"
+)
+
+// Valid indicates whether the value is a known member of the AllocationValueExtractionSourceType enum.
+func (e AllocationValueExtractionSourceType) Valid() bool {
+	switch e {
+	case AllocationValueExtractionSourceTypeFixed:
+		return true
+	case AllocationValueExtractionSourceTypeGkeLabel:
+		return true
+	case AllocationValueExtractionSourceTypeLabel:
+		return true
+	case AllocationValueExtractionSourceTypeProjectLabel:
+		return true
+	case AllocationValueExtractionSourceTypeSystemLabel:
+		return true
+	case AllocationValueExtractionSourceTypeTag:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AnomalyItemDeactivationReason.
 const (
 	AnomalyItemDeactivationReasonExpired  AnomalyItemDeactivationReason = "expired"
@@ -5088,7 +5136,53 @@ type AllocationRule struct {
 	//
 	// Example: A AND B
 	Formula string `json:"formula"`
+
+	// ValidityPeriods Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+	ValidityPeriods nullable.Nullable[[]AllocationRulePeriod] `json:"validityPeriods,omitempty"`
 }
+
+// AllocationRulePeriod A date range when a rule applies. startDate and endDate are both inclusive, so a handover between two rules needs a one-day gap: the first rule's endDate the day before, the second rule's startDate the handover day. Only the first period in the list may omit startDate, and only the last may omit endDate.
+type AllocationRulePeriod struct {
+	// EndDate End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+	//
+	// Example: 2026-06-15
+	EndDate nullable.Nullable[string] `json:"endDate,omitempty"`
+
+	// StartDate Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+	//
+	// Example: 2026-03-15
+	StartDate nullable.Nullable[string] `json:"startDate,omitempty"`
+}
+
+// AllocationValueExtraction Makes the rule emit a value extracted from the first non-empty source instead of the rule name.
+type AllocationValueExtraction struct {
+	// Fallback Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+	Fallback nullable.Nullable[string] `json:"fallback,omitempty"`
+
+	// OnMissing What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+	OnMissing *AllocationValueExtractionOnMissing `json:"onMissing,omitempty"`
+
+	// Sources Ordered extraction sources; the first non-empty value wins.
+	Sources []AllocationValueExtractionSource `json:"sources"`
+}
+
+// AllocationValueExtractionOnMissing What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+type AllocationValueExtractionOnMissing string
+
+// AllocationValueExtractionSource defines model for AllocationValueExtractionSource.
+type AllocationValueExtractionSource struct {
+	// Key The label/tag key, or the fixed dimension ID, whose value is extracted.
+	Key string `json:"key"`
+
+	// Providers Optional cloud providers this source applies to.
+	Providers nullable.Nullable[[]string] `json:"providers,omitempty"`
+
+	// Type The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+	Type AllocationValueExtractionSourceType `json:"type"`
+}
+
+// AllocationValueExtractionSourceType The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+type AllocationValueExtractionSourceType string
 
 // AnnotationListItem Summary information about an annotation.
 type AnnotationListItem struct {
@@ -9287,6 +9381,12 @@ type GroupAllocationRule struct {
 
 	// Name Name of the allocation rule.
 	Name *string `json:"name,omitempty"`
+
+	// ValidityPeriods Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+	ValidityPeriods nullable.Nullable[[]AllocationRulePeriod] `json:"validityPeriods,omitempty"`
+
+	// ValueExtraction Makes the rule emit a value extracted from the first non-empty source instead of the rule name.
+	ValueExtraction nullable.Nullable[AllocationValueExtraction] `json:"valueExtraction,omitempty"`
 }
 
 // GroupAllocationRuleAction Action to perform with this rule.

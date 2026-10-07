@@ -15,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/oapi-codegen/nullable"
 )
 
 // inlineRule builds a state/plan rule with the given action and id and one fixed component.
@@ -73,6 +75,9 @@ func (f *failingMemberServer) handler(patchBody string) http.Handler {
 		case r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/group-123") && f.groupDeleted:
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = w.Write([]byte(`{"error":"not found"}`))
+		case r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/keep-1"):
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"id":"keep-1","name":"k1","type":"custom","rule":{"formula":"A","components":[{"dimension":{"id":"country","type":"preset"},"mode":"include","values":["JP"]}]}}`))
 		case r.Method == http.MethodPatch:
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(patchBody))
@@ -179,5 +184,63 @@ func TestAllocationUpdate_RemovedMemberCleanupFailureWarns(t *testing.T) {
 	var rules []resource_allocation.RulesValue
 	if d := got.Rules.ElementsAs(ctx, &rules, true); d.HasError() || len(rules) != 1 {
 		t.Errorf("expected the new state to hold the 1 remaining rule, got %d (%v)", len(rules), d)
+	}
+}
+
+func TestAllocationUpdate_RemovedMemberCleanedUpAfterChildReadFailure(t *testing.T) {
+	ctx := t.Context()
+	var deleted []string
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodPatch:
+			_, _ = w.Write([]byte(`{"id":"group-123","name":"group-alloc","description":"desc","allocationType":"group","type":"custom","unallocatedCosts":"other","createTime":100,"updateTime":300,"folderId":"root","rules":[{"id":"keep-1","name":"k1"}]}`))
+		case http.MethodGet:
+			w.WriteHeader(http.StatusInternalServerError)
+		case http.MethodDelete:
+			deleted = append(deleted, r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:])
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	r := &allocationResource{client: newTestAPIClient(t, server)}
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+	state := allocationRawForTest(t, sch, modifyPlanTestModel(t, []attr.Value{
+		inlineRuleForTest(t, "create", "keep-1", "k1"), inlineRuleForTest(t, "create", "removed-1", "removed"),
+	}, tv))
+	planModel := modifyPlanTestModel(t, []attr.Value{inlineRuleForTest(t, "create", "keep-1", "k1")}, tv)
+	planModel.UnallocatedCosts = types.StringValue("other")
+	planState := allocationRawForTest(t, sch, planModel)
+	resp := &resource.UpdateResponse{State: state}
+	r.Update(ctx, resource.UpdateRequest{State: state, Plan: tfsdk.Plan{Schema: sch, Raw: planState.Raw}}, resp)
+	if !resp.Diagnostics.HasError() {
+		t.Fatal("expected child detail error")
+	}
+	if len(deleted) != 1 || deleted[0] != "removed-1" {
+		t.Errorf("deleted = %v, want [removed-1]", deleted)
+	}
+	var got allocationResourceModel
+	if diags := resp.State.Get(ctx, &got); diags.HasError() {
+		t.Fatal(diags)
+	}
+	if got.Id.ValueString() != "group-123" {
+		t.Errorf("group ID = %q", got.Id.ValueString())
+	}
+	var rules []resource_allocation.RulesValue
+	if diags := got.Rules.ElementsAs(ctx, &rules, false); diags.HasError() || len(rules) != 1 || rules[0].Id.ValueString() != "keep-1" {
+		t.Errorf("recoverable rules = %v (%v)", rules, diags)
+	}
+}
+
+func TestRemovedInlineRuleIDsFromResponse_RequiresMemberIDs(t *testing.T) {
+	prior := []resource_allocation.RulesValue{allocationRuleWithMetadataForTest(t, "owned-1", "prior")}
+	rules := []nullable.Nullable[models.GroupAllocationRule]{
+		valueToNullable(models.GroupAllocationRule{Name: new("member-without-id")}),
+	}
+	removed, confirmed := removedInlineRuleIDsFromResponse(prior, &models.Allocation{Rules: &rules})
+	if confirmed || len(removed) != 0 {
+		t.Errorf("incomplete membership must not authorize deletion: confirmed=%t, removed=%v", confirmed, removed)
 	}
 }

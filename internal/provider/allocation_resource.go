@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
@@ -74,33 +75,74 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 
 	// Inject validator for rules attribute to enforce 'name' is required for 'create'/'update' actions.
 	// See allocationRulesValidator for context on why this workaround is needed.
-	if rules, ok := s.Attributes["rules"]; ok {
-		if listAttr, ok := rules.(schema.ListNestedAttribute); ok {
-			listAttr.Validators = append(listAttr.Validators, allocationRulesValidator{})
+	if rules, ok := s.Attributes["rules"].(schema.ListNestedAttribute); ok {
+		rules.Validators = append(rules.Validators, allocationRulesValidator{})
 
-			// Also inject components validator into rules[].components
-			if components, ok := listAttr.NestedObject.Attributes["components"]; ok {
-				if compListAttr, ok := components.(schema.ListNestedAttribute); ok {
-					compListAttr.Validators = append(compListAttr.Validators, allocationComponentsValidator{})
-					listAttr.NestedObject.Attributes["components"] = compListAttr
-				}
-			}
-
-			s.Attributes["rules"] = listAttr
+		// Also inject components validator into rules[].components
+		if components, ok := rules.NestedObject.Attributes["components"].(schema.ListNestedAttribute); ok {
+			components.Validators = append(components.Validators, allocationComponentsValidator{})
+			rules.NestedObject.Attributes["components"] = components
 		}
+
+		if vp, ok := rules.NestedObject.Attributes["validity_periods"].(schema.ListNestedAttribute); ok {
+			vp.Validators = append(vp.Validators, allocationValidityPeriodsValidator{})
+			vp.PlanModifiers = append(vp.PlanModifiers, useNullForUnknownListWhenConfigNull())
+			if sd, ok := vp.NestedObject.Attributes["start_date"].(schema.StringAttribute); ok {
+				sd.Validators = append(sd.Validators, dateValidator{})
+				sd.PlanModifiers = append(sd.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				vp.NestedObject.Attributes["start_date"] = sd
+			}
+			if ed, ok := vp.NestedObject.Attributes["end_date"].(schema.StringAttribute); ok {
+				ed.Validators = append(ed.Validators, dateValidator{})
+				ed.PlanModifiers = append(ed.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				vp.NestedObject.Attributes["end_date"] = ed
+			}
+			rules.NestedObject.Attributes["validity_periods"] = vp
+		}
+
+		if ve, ok := rules.NestedObject.Attributes["value_extraction"].(schema.SingleNestedAttribute); ok {
+			ve.Validators = append(ve.Validators, allocationValueExtractionValidator{})
+			ve.PlanModifiers = append(ve.PlanModifiers, useNullForUnknownValueExtraction())
+			if fb, ok := ve.Attributes["fallback"].(schema.StringAttribute); ok {
+				fb.PlanModifiers = append(fb.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				ve.Attributes["fallback"] = fb
+			}
+			if sources, ok := ve.Attributes["sources"].(schema.ListNestedAttribute); ok {
+				sources.Validators = append(sources.Validators, allocationValueExtractionSourcesValidator{})
+				if prov, ok := sources.NestedObject.Attributes["providers"].(schema.ListAttribute); ok {
+					prov.PlanModifiers = append(prov.PlanModifiers, useNullForUnknownListNullWhenConfigNull(types.StringType))
+					sources.NestedObject.Attributes["providers"] = prov
+				}
+				ve.Attributes["sources"] = sources
+			}
+			rules.NestedObject.Attributes["value_extraction"] = ve
+		}
+
+		s.Attributes["rules"] = rules
 	}
 
 	// Inject components validator into rule.components
-	if rule, ok := s.Attributes["rule"]; ok {
-		if singleAttr, ok := rule.(schema.SingleNestedAttribute); ok {
-			if components, ok := singleAttr.Attributes["components"]; ok {
-				if compListAttr, ok := components.(schema.ListNestedAttribute); ok {
-					compListAttr.Validators = append(compListAttr.Validators, allocationComponentsValidator{})
-					singleAttr.Attributes["components"] = compListAttr
-				}
-			}
-			s.Attributes["rule"] = singleAttr
+	if rule, ok := s.Attributes["rule"].(schema.SingleNestedAttribute); ok {
+		if components, ok := rule.Attributes["components"].(schema.ListNestedAttribute); ok {
+			components.Validators = append(components.Validators, allocationComponentsValidator{})
+			rule.Attributes["components"] = components
 		}
+		if vp, ok := rule.Attributes["validity_periods"].(schema.ListNestedAttribute); ok {
+			vp.Validators = append(vp.Validators, allocationValidityPeriodsValidator{})
+			vp.PlanModifiers = append(vp.PlanModifiers, useNullForUnknownListWhenConfigNull())
+			if sd, ok := vp.NestedObject.Attributes["start_date"].(schema.StringAttribute); ok {
+				sd.Validators = append(sd.Validators, dateValidator{})
+				sd.PlanModifiers = append(sd.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				vp.NestedObject.Attributes["start_date"] = sd
+			}
+			if ed, ok := vp.NestedObject.Attributes["end_date"].(schema.StringAttribute); ok {
+				ed.Validators = append(ed.Validators, dateValidator{})
+				ed.PlanModifiers = append(ed.PlanModifiers, useNullForUnknownStringWhenConfigNull())
+				vp.NestedObject.Attributes["end_date"] = ed
+			}
+			rule.Attributes["validity_periods"] = vp
+		}
+		s.Attributes["rule"] = rule
 	}
 
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
@@ -250,6 +292,9 @@ func (r *allocationResource) Create(ctx context.Context, req resource.CreateRequ
 	// Read and ImportState still use mapAllocationToModel for the full API response.
 	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, allocationResp.JSON200, &plan)...)
 	if resp.Diagnostics.HasError() {
+		if !plan.Id.IsUnknown() && !plan.Id.IsNull() {
+			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+		}
 		return
 	}
 
@@ -370,22 +415,24 @@ func (r *allocationResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	// Plan-first state pattern: keep all user-configured values from the plan
 	// exactly as-is, and only overlay Computed-only fields from the API response.
-	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, updateResp.JSON200, &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Rules removed from the group no longer reference their allocation, which the API leaves
-	// behind. Delete the inline ones; a failed delete is reported as a warning.
 	prior, d := rulesFromList(ctx, priorRules)
 	resp.Diagnostics.Append(d...)
-	planned, d := rulesFromList(ctx, plan.Rules)
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	resp.Diagnostics.Append(r.deleteAllocations(ctx, removedInlineRuleIDs(prior, planned))...)
+	resp.Diagnostics.Append(r.overlayAllocationComputedFields(ctx, updateResp.JSON200, &plan)...)
+	// The PATCH has already changed group membership. Delete removed owned members
+	// even if reading details of a surviving member failed during the overlay.
+	if removed, confirmed := removedInlineRuleIDsFromResponse(prior, updateResp.JSON200); confirmed {
+		resp.Diagnostics.Append(r.deleteAllocations(ctx, removed)...)
+	} else if ids := inlineRuleIDs(prior); len(ids) > 0 {
+		resp.Diagnostics.AddWarning("Inline allocation cleanup could not be confirmed",
+			"The update response omitted complete group membership; check previously owned allocation IDs for orphaned members: "+strings.Join(ids, ", "))
+	}
 	if resp.Diagnostics.HasError() {
+		if !plan.Id.IsUnknown() && !plan.Id.IsNull() {
+			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+		}
 		return
 	}
 
@@ -519,6 +566,29 @@ func removedInlineRuleIDs(prior, planned []resource_allocation.RulesValue) []str
 		}
 	}
 	return removed
+}
+
+// removedInlineRuleIDsFromResponse uses confirmed post-PATCH membership. A nil
+// rules field does not prove that every prior member was removed.
+func removedInlineRuleIDsFromResponse(prior []resource_allocation.RulesValue, response *models.Allocation) ([]string, bool) {
+	if response.Rules == nil {
+		return nil, false
+	}
+	stillReferenced := make(map[string]struct{}, len(*response.Rules))
+	for _, rule := range *response.Rules {
+		member := nullableToPointer(rule)
+		if member == nil || member.Id == nil || *member.Id == "" {
+			return nil, false
+		}
+		stillReferenced[*member.Id] = struct{}{}
+	}
+	var removed []string
+	for _, id := range inlineRuleIDs(prior) {
+		if _, ok := stillReferenced[id]; !ok {
+			removed = append(removed, id)
+		}
+	}
+	return removed, true
 }
 
 // ModifyPlan implements identity-aware rule ID matching for group allocation in-line rules.
