@@ -76,3 +76,92 @@ data "doit_alerts" "test" {
 		t.Errorf("expected Terraform Core to defer ReadDataSource, got %d call(s)", calls)
 	}
 }
+
+func TestAccDimensionsDataSource_UnknownConfigDeferredByCore(t *testing.T) {
+	var readDataSourceCalls atomic.Int64
+	providerFactory := providerserver.NewProtocol6WithError(provider.New("dev")())
+	providerFactories := map[string]func() (tfprotov6.ProviderServer, error){
+		"doit": func() (tfprotov6.ProviderServer, error) {
+			server, err := providerFactory()
+			if err != nil {
+				return nil, err
+			}
+
+			return &readDataSourceCountingProviderServer{
+				ProviderServer:      server,
+				readDataSourceCalls: &readDataSourceCalls,
+			}, nil
+		},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: providerFactories,
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "doit" {
+  api_token = "unused"
+  host      = "http://127.0.0.1:1"
+}
+
+resource "terraform_data" "upstream" {}
+
+data "doit_dimensions" "test" {
+  max_results = 2
+  filter      = terraform_data.upstream.id
+}
+
+resource "terraform_data" "downstream" {
+  input = data.doit_dimensions.test.page_token
+}
+`,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPreRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("data.doit_dimensions.test", plancheck.ResourceActionRead),
+						plancheck.ExpectUnknownValue("data.doit_dimensions.test", tfjsonpath.New("dimensions")),
+						plancheck.ExpectUnknownValue("data.doit_dimensions.test", tfjsonpath.New("row_count")),
+						plancheck.ExpectUnknownValue("data.doit_dimensions.test", tfjsonpath.New("page_token")),
+						plancheck.ExpectUnknownValue("terraform_data.downstream", tfjsonpath.New("input")),
+					},
+				},
+			},
+			{
+				Config: `
+provider "doit" {
+  api_token = "unused"
+  host      = "http://127.0.0.1:1"
+}
+
+resource "terraform_data" "upstream" {}
+
+data "doit_dimensions" "test" {
+  max_results = 2
+  page_token  = terraform_data.upstream.id
+}
+
+resource "terraform_data" "downstream" {
+  input = data.doit_dimensions.test.dimensions
+}
+`,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPreRefresh: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("data.doit_dimensions.test", plancheck.ResourceActionRead),
+						plancheck.ExpectUnknownValue("data.doit_dimensions.test", tfjsonpath.New("dimensions")),
+						plancheck.ExpectUnknownValue("data.doit_dimensions.test", tfjsonpath.New("row_count")),
+						plancheck.ExpectUnknownValue("data.doit_dimensions.test", tfjsonpath.New("page_token")),
+						plancheck.ExpectUnknownValue("terraform_data.downstream", tfjsonpath.New("input")),
+					},
+				},
+			},
+		},
+	})
+
+	if calls := readDataSourceCalls.Load(); calls != 0 {
+		t.Errorf("expected Terraform Core to defer ReadDataSource, got %d call(s)", calls)
+	}
+}

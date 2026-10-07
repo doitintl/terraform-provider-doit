@@ -212,6 +212,13 @@ func TestDimensionsDataSource_UnknownGuards(t *testing.T) {
 				"page_token": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
 			},
 		},
+		{
+			name: "unknown filter with max_results",
+			overrides: map[string]tftypes.Value{
+				"filter":      tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				"max_results": tftypes.NewValue(tftypes.Number, int64(2)),
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -235,6 +242,77 @@ func TestDimensionsDataSource_UnknownGuards(t *testing.T) {
 			if !model.RowCount.IsUnknown() {
 				t.Errorf("expected RowCount to be unknown, got %v", model.RowCount)
 			}
+		})
+	}
+}
+
+func TestDimensionsDataSource_UnknownGuards_PageTokenSemantics(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		overrides      map[string]tftypes.Value
+		checkPageToken func(t *testing.T, pt types.String)
+	}{
+		{
+			name: "configured page_token preserved when filter is unknown",
+			overrides: map[string]tftypes.Value{
+				"filter":     tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				"page_token": tftypes.NewValue(tftypes.String, "preset-token"),
+			},
+			checkPageToken: func(t *testing.T, pt types.String) {
+				if pt.IsNull() || pt.IsUnknown() || pt.ValueString() != "preset-token" {
+					t.Errorf("expected PageToken to preserve configured value 'preset-token', got %v", pt)
+				}
+			},
+		},
+		{
+			name: "omitted page_token with max_results and unknown filter preserves config null in protocol fallback",
+			overrides: map[string]tftypes.Value{
+				"filter":      tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+				"max_results": tftypes.NewValue(tftypes.Number, int64(2)),
+			},
+			checkPageToken: func(t *testing.T, pt types.String) {
+				// In the direct Read() protocol fallback, PageToken is not overwritten;
+				// Terraform Core defers ReadDataSource during plan (verified in TestAccDimensionsDataSource_UnknownConfigDeferredByCore).
+				if !pt.IsNull() {
+					t.Errorf("expected PageToken to remain null from config in direct fallback, got %v", pt)
+				}
+			},
+		},
+		{
+			name: "auto-pagination with unknown filter preserves config null in protocol fallback",
+			overrides: map[string]tftypes.Value{
+				"filter": tftypes.NewValue(tftypes.String, tftypes.UnknownValue),
+			},
+			checkPageToken: func(t *testing.T, pt types.String) {
+				if !pt.IsNull() {
+					t.Errorf("expected PageToken to remain null for auto-pagination, got %v", pt)
+				}
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var requestCount atomic.Int32
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requestCount.Add(1)
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			model, resp := readDimensionsHelper(t, server, tc.overrides)
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+			}
+			if count := requestCount.Load(); count != 0 {
+				t.Errorf("expected 0 HTTP requests, got %d", count)
+			}
+			if !model.Dimensions.IsUnknown() {
+				t.Errorf("expected Dimensions to be unknown, got %v", model.Dimensions)
+			}
+			if !model.RowCount.IsUnknown() {
+				t.Errorf("expected RowCount to be unknown, got %v", model.RowCount)
+			}
+			tc.checkPageToken(t, model.PageToken)
 		})
 	}
 }
