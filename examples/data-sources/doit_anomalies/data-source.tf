@@ -28,6 +28,10 @@ output "notification_audit" {
       channel   = n.channel
       timestamp = n.timestamp
     }]
+    initial_notifications = [for n in a.initial_notifications : {
+      channel   = n.channel
+      timestamp = n.timestamp
+    }]
   }]
 }
 
@@ -61,6 +65,7 @@ output "anomaly_summary" {
     provider_display_name = a.provider_display_name
     linked_anomalies      = a.linked_anomalies
     allocations           = a.allocations
+    initial_notifications = a.initial_notifications
     status                = a.status
     deactivation_reason   = a.deactivation_reason
   }]

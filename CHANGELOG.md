@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### ENHANCEMENTS
+
+- **data-source/doit_anomaly, data-source/doit_anomalies**: Add `initial_notifications` attribute
+
 ### BUG FIXES
 
 - **resource/doit_alert**: No longer warn that `config.scopes[*].type = "attribution"` is deprecated in favor of `allocation_rule`; the alerts API rejects `allocation_rule`, so following the warning broke the alert ([#384](https://github.com/doitintl/terraform-provider-doit/issues/384))

@@ -5197,6 +5197,9 @@ type AnomalyItem struct {
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 	Id              *string                    `json:"id,omitempty"`
 
+	// InitialNotifications The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+	InitialNotifications []NotificationEvent `json:"initialNotifications"`
+
 	// LinkedAnomalies IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 	LinkedAnomalies LinkedAnomalies `json:"linkedAnomalies"`
 
@@ -8954,6 +8957,9 @@ type GetAnomaly200Response struct {
 
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
+
+	// InitialNotifications The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+	InitialNotifications []NotificationEvent `json:"initialNotifications"`
 
 	// LinkedAnomalies IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 	LinkedAnomalies *LinkedAnomalies `json:"linkedAnomalies,omitempty"`

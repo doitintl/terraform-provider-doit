@@ -1566,6 +1566,31 @@
 										}
 									},
 									{
+										"name": "initial_notifications",
+										"list_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "channel",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Dispatch channel."
+														}
+													},
+													{
+														"name": "timestamp",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Dispatch timestamp in RFC3339 UTC."
+														}
+													}
+												]
+											},
+											"description": "The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified."
+										}
+									},
+									{
 										"name": "linked_anomalies",
 										"list": {
 											"computed_optional_required": "computed",
@@ -1953,6 +1978,31 @@
 						"float64": {
 							"computed_optional_required": "computed",
 							"description": "Maximum cost within the expected normal range."
+						}
+					},
+					{
+						"name": "initial_notifications",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "channel",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Dispatch channel."
+										}
+									},
+									{
+										"name": "timestamp",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Dispatch timestamp in RFC3339 UTC."
+										}
+									}
+								]
+							},
+							"description": "The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified."
 						}
 					},
 					{

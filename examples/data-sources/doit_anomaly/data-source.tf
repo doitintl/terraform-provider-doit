@@ -50,6 +50,11 @@ output "anomaly_allocations" {
   value       = data.doit_anomaly.example.allocations
 }
 
+output "anomaly_initial_notifications" {
+  description = "First notification sent on each channel for this anomaly"
+  value       = data.doit_anomaly.example.initial_notifications
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
