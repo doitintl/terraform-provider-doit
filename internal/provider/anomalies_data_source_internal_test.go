@@ -712,7 +712,7 @@ func TestAnomaliesDataSource_InitialNotificationsMapping(t *testing.T) {
 					"monitorLevel": "service",
 					"timeFrame": "day",
 					"initialNotifications": [
-						{"channel": "teams", "timestamp": "2024-01-01T12:10:00Z"}
+						{"channel": "msteams", "timestamp": "2024-01-01T12:10:00Z"}
 					]
 				},
 				{
@@ -803,8 +803,8 @@ func TestAnomaliesDataSource_InitialNotificationsMapping(t *testing.T) {
 	if len(secondNotifications) != 1 {
 		t.Fatalf("expected 1 initial notification, got %d", len(secondNotifications))
 	}
-	if secondNotifications[0].Channel.ValueString() != "teams" || secondNotifications[0].Timestamp.ValueString() != "2024-01-01T12:10:00Z" {
-		t.Errorf("expected teams/2024-01-01T12:10:00Z, got %s/%s", secondNotifications[0].Channel.ValueString(), secondNotifications[0].Timestamp.ValueString())
+	if secondNotifications[0].Channel.ValueString() != "msteams" || secondNotifications[0].Timestamp.ValueString() != "2024-01-01T12:10:00Z" {
+		t.Errorf("expected msteams/2024-01-01T12:10:00Z, got %s/%s", secondNotifications[0].Channel.ValueString(), secondNotifications[0].Timestamp.ValueString())
 	}
 
 	// Third anomaly: empty initial notifications
