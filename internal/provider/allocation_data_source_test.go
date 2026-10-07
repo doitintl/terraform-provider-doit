@@ -113,20 +113,20 @@ data "doit_allocation" "test" {
 func testAccAllocationDataSourceGroupConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "test" {
-    name        = %q
+    name        = %[1]q
     description = "test allocation group for data source"
     unallocated_costs = "Other"
     rules = [
         {
             action  = "create"
-            name    = "Group 1"
+            name    = "%[1]s-rule"
             formula = "A"
             components = [
              {
                 key    = "project_id"
                 mode   = "is"
                 type   = "fixed"
-                values = ["%s"]
+                values = ["%[2]s"]
               }
             ]
         }
@@ -347,13 +347,13 @@ func TestAccAllocationDataSource_Group_ValueExtraction(t *testing.T) {
 func testAccAllocationDataSourceGroupValueExtractionConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "test" {
-  name              = %q
+  name              = %[1]q
   description       = "test allocation group with value extraction for data source"
   unallocated_costs = "Other"
   rules = [
     {
       action  = "create"
-      name    = "Extracted Env"
+      name    = "%[1]s-rule"
       formula = "A"
       components = [
         {
@@ -388,4 +388,26 @@ data "doit_allocation" "test" {
   id = doit_allocation.test.id
 }
 `, name)
+}
+
+func TestAllocationDataSourceGroupConfigs_UniqueChildNames(t *testing.T) {
+	childName := regexp.MustCompile(`(?s)action\s*=\s*"create"\s+name\s*=\s*"([^"]+)"`)
+	for _, tc := range []struct {
+		name   string
+		config func(string) string
+	}{
+		{"group", testAccAllocationDataSourceGroupConfig},
+		{"group with value extraction", testAccAllocationDataSourceGroupValueExtractionConfig},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			first := childName.FindStringSubmatch(tc.config("parent-one"))
+			second := childName.FindStringSubmatch(tc.config("parent-two"))
+			if len(first) != 2 || len(second) != 2 {
+				t.Fatal("could not find inline allocation names in generated configs")
+			}
+			if first[1] == second[1] {
+				t.Errorf("different parent allocations use the same inline child name %q", first[1])
+			}
+		})
+	}
 }
