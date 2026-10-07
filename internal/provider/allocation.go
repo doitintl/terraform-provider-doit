@@ -708,7 +708,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 
 			detailFailed := false
 			detailSucceeded := false
-			if (formula == "" || components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified()) && rule.Id != nil && action != "select" && client != nil {
+			if (formula == "" || components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified() || rule.Name == nil || rule.Description == nil) && rule.Id != nil && action != "select" && client != nil {
 				// Fetch full allocation to get formula, components, validity periods, and value extraction
 				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
 				if err != nil {
@@ -1033,16 +1033,27 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 		left, right := prior[a], prior[b]
 		if left.Values.IsNull() || left.Values.IsUnknown() || right.Values.IsNull() || right.Values.IsUnknown() ||
 			!left.Key.Equal(right.Key) || !left.Mode.Equal(right.Mode) || !left.ComponentsType.Equal(right.ComponentsType) ||
-			!left.CaseInsensitive.Equal(right.CaseInsensitive) || !left.IncludeNull.Equal(right.IncludeNull) || !left.Inverse.Equal(right.Inverse) ||
-			len(priorValues[a]) != len(priorValues[b]) {
+			!left.CaseInsensitive.Equal(right.CaseInsensitive) || !left.IncludeNull.Equal(right.IncludeNull) || !left.Inverse.Equal(right.Inverse) {
 			return false
 		}
 		counts := make(map[string]int, len(priorValues[a]))
+		normalizedLength := 0
 		for _, value := range priorValues[a] {
+			if left.IncludeNull.ValueBool() && isNAFallback(value) {
+				continue
+			}
 			counts[value]++
+			normalizedLength++
 		}
 		for _, value := range priorValues[b] {
+			if right.IncludeNull.ValueBool() && isNAFallback(value) {
+				continue
+			}
 			counts[value]--
+			normalizedLength--
+		}
+		if normalizedLength != 0 {
+			return false
 		}
 		for _, count := range counts {
 			if count != 0 {
@@ -1095,7 +1106,7 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 		}
 		// Responses with the same candidates cannot reveal value order. Pair
 		// equal-sized groups in order when prior components differ only by
-		// value order, preserving each configured list and its sentinel position.
+		// value order or stripped sentinels, preserving each configured list.
 		for i := range components {
 			if matches[i] >= 0 {
 				continue

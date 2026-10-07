@@ -1069,6 +1069,58 @@ func TestMapAllocationToModel_SuccessfulDetailReadShowsClearedFields(t *testing.
 	}
 }
 
+func TestMapAllocationToModel_MissingRuleMetadataTriggersDetailRead(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		omitName, omitDesc bool
+	}{
+		{name: "description omitted", omitDesc: true},
+		{name: "name omitted", omitName: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := t.Context()
+			requests := make(chan struct{}, 1)
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				requests <- struct{}{}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"id":"A","rule":{"formula":"A","components":[]}}`))
+			}))
+			client := newTestAPIClient(t, server)
+			state := &allocationResourceModel{Rules: types.ListValueMust(resource_allocation.RulesValue{}.Type(ctx),
+				[]attr.Value{allocationRuleWithMetadataForTest(t, "A", "prior")})}
+			rule := models.GroupAllocationRule{
+				Id: new("A"), Formula: new("A"), Components: &[]models.AllocationComponent{},
+				ValidityPeriods: nullable.NewNullNullable[[]models.AllocationRulePeriod](),
+				ValueExtraction: nullable.NewNullNullable[models.AllocationValueExtraction](),
+			}
+			if !tc.omitName {
+				rule.Name = new("name-from-group")
+			}
+			if !tc.omitDesc {
+				rule.Description = new("description-from-group")
+			}
+			group := allocationGroupForTest("A")
+			group.Rules = &[]nullable.Nullable[models.GroupAllocationRule]{valueToNullable(rule)}
+			if diags := mapAllocationToModel(ctx, client, group, state); diags.HasError() {
+				t.Fatal(diags)
+			}
+			if len(requests) != 1 {
+				t.Fatal("missing rule metadata did not trigger child detail GET")
+			}
+			var rules []resource_allocation.RulesValue
+			if diags := state.Rules.ElementsAs(ctx, &rules, false); diags.HasError() {
+				t.Fatal(diags)
+			}
+			if tc.omitName && !rules[0].Name.IsNull() {
+				t.Errorf("externally cleared name restored from prior state: %s", rules[0].Name)
+			}
+			if tc.omitDesc && !rules[0].Description.IsNull() {
+				t.Errorf("externally cleared description restored from prior state: %s", rules[0].Description)
+			}
+		})
+	}
+}
+
 func TestAllocationComponents_ReorderKeepsSentinelsWithKeys(t *testing.T) {
 	ctx := t.Context()
 	prior := make([]resource_allocation.ComponentsValue, 2)
@@ -1157,6 +1209,15 @@ func TestAllocationComponents_DuplicateIdentityMatching(t *testing.T) {
 		{"sentinels reordered", []componentSpec{sentinelA, sentinelB}, []componentSpec{apiSentinelB, apiSentinelA}, []componentSpec{sentinelB, sentinelA}},
 		{"duplicate normalized values retain both sentinel positions", []componentSpec{sentinelA, reversedSentinelA},
 			[]componentSpec{apiSentinelA, apiSentinelA}, []componentSpec{sentinelA, reversedSentinelA}},
+		{"mixed sentinel and plain duplicates retain both value lists", []componentSpec{sentinelA, apiSentinelA},
+			[]componentSpec{apiSentinelA, apiSentinelA}, []componentSpec{sentinelA, apiSentinelA}},
+		{"sentinel-only and empty duplicates retain distinct value lists",
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]"}, includeNull: true},
+				{key: "service_description", componentType: "fixed", includeNull: true}},
+			[]componentSpec{{key: "service_description", componentType: "fixed", includeNull: true},
+				{key: "service_description", componentType: "fixed", includeNull: true}},
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]"}, includeNull: true},
+				{key: "service_description", componentType: "fixed", includeNull: true}}},
 		{"values reordered within a component", []componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine", "Cloud Storage"}, includeNull: true}, sentinelB},
 			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage", "Compute Engine"}, includeNull: true}, apiSentinelB},
 			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine", "Cloud Storage"}, includeNull: true}, sentinelB}},

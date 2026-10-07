@@ -1350,7 +1350,7 @@ resource "doit_allocation" "duplicate_sentinel_order" {
     name        = "%s-duplicate-sentinel-order"
     description = "test duplicate components with different sentinel positions"
     rule = {
-        formula = "A OR B"
+        formula = "A OR B OR C"
         components = [
             {
                 key          = "service_description"
@@ -1365,6 +1365,13 @@ resource "doit_allocation" "duplicate_sentinel_order" {
                 type         = "fixed"
                 include_null = true
                 values       = ["AmazonCloudWatch", "[Service N/A]"]
+            },
+            {
+                key          = "service_description"
+                mode         = "is"
+                type         = "fixed"
+                include_null = true
+                values       = ["AmazonCloudWatch"]
             },
         ]
     }
@@ -1392,6 +1399,11 @@ resource "doit_allocation" "duplicate_sentinel_order" {
 							knownvalue.ObjectPartial(map[string]knownvalue.Check{
 								"values": knownvalue.ListExact([]knownvalue.Check{
 									knownvalue.StringExact("AmazonCloudWatch"), knownvalue.StringExact("[Service N/A]"),
+								}),
+							}),
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"values": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("AmazonCloudWatch"),
 								}),
 							}),
 						}),
