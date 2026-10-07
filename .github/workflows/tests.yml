@@ -17,7 +17,7 @@ permissions:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: github.event.pull_request.draft == false
     outputs:
       code: ${{ steps.filter.outputs.code }}
@@ -48,7 +48,7 @@ jobs:
 
   validate-examples:
     name: Validate Examples
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: changes
     if: |
       github.event.pull_request.draft == false &&
@@ -73,7 +73,7 @@ jobs:
 
   validate-docs:
     name: Validate Docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: changes
     if: |
       github.event.pull_request.draft == false &&
@@ -99,7 +99,7 @@ jobs:
 
   unit-test:
     name: Run Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: changes
     if: |
       github.event.pull_request.draft == false &&
@@ -119,7 +119,7 @@ jobs:
 
   test:
     name: Run Acceptance Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: changes
     if: |
       github.event.pull_request.draft == false &&

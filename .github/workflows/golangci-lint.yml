@@ -11,7 +11,7 @@ permissions:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: github.event.pull_request.draft == false
     outputs:
       lint: ${{ steps.filter.outputs.lint }}
@@ -33,7 +33,7 @@ jobs:
 
   golangci:
     name: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: changes
     if: |
       github.event.pull_request.draft == false &&

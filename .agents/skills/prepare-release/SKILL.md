@@ -138,6 +138,29 @@ Check for newer versions of all GitHub Actions used in `.github/workflows/`:
 
 **Format:** `uses: owner/action@<full-sha> # <version-tag>`
 
+### Update GitHub-hosted runner OS labels
+
+The build, validation, lint, acceptance-test, and release jobs use an explicit
+Ubuntu OS label (`ubuntu-24.04`) so OS upgrades happen during release prep.
+The two `Detect Changes` jobs use `ubuntu-slim` for their lightweight work.
+
+1. Check which OS label currently backs `ubuntu-latest` in the
+   [runner-images supported images table](https://github.com/actions/runner-images#available-images).
+   During a gradual migration, check the migration announcement for its status
+   before selecting the new OS label.
+2. Update the explicit Ubuntu OS labels in **all three workflow files** above
+   to the current stable OS behind `ubuntu-latest` (for example,
+   `ubuntu-24.04` → `ubuntu-26.04`), and update the label documented here.
+3. Keep the two `Detect Changes` jobs on `ubuntu-slim`. Check its current
+   [tools and limitations](https://docs.github.com/en/actions/reference/runners/github-hosted-runners#single-cpu-runners)
+   for compatibility with checkout and paths-filter.
+4. Validate the workflow syntax and confirm CI passes on the selected runners.
+
+Standard GitHub-hosted `runs-on` labels cannot be pinned to a commit SHA or
+image digest. An explicit OS label pins the OS version; GitHub still updates
+the software in that image. `ubuntu-slim` has no version-specific label.
+Continue pinning **actions** to full commit SHAs as described above.
+
 ---
 
 ## Step 5: Update Pre-commit Hooks
