@@ -28,9 +28,10 @@ func TestMapBillingExplainerToModel_FullyPopulated(t *testing.T) {
 	ctx := t.Context()
 
 	awsSummary := models.BillingExplainerServiceSummary{
-		ServiceCharges: []models.BillingExplainerCostLineItem{lineItem("usage", "937.78", "USD")},
-		Discounts:      []models.BillingExplainerCostLineItem{lineItem("sppDiscount", "-65.64", "USD")},
-		Tax:            []models.BillingExplainerCostLineItem{},
+		ServiceCharges:     []models.BillingExplainerCostLineItem{lineItem("usage", "937.78", "USD")},
+		Discounts:          []models.BillingExplainerCostLineItem{lineItem("sppDiscount", "-65.64", "USD")},
+		MarketplaceCharges: []models.BillingExplainerCostLineItem{lineItem("marketplaceFee", "12.34", "USD")},
+		Tax:                []models.BillingExplainerCostLineItem{},
 		SupportCharges: models.BillingExplainerSupportCharges{
 			Cost: money("0.00", "USD"),
 			Details: []models.BillingExplainerSupportDetail{
@@ -51,27 +52,29 @@ func TestMapBillingExplainerToModel_FullyPopulated(t *testing.T) {
 	}
 
 	doitSummary := models.BillingExplainerServiceSummary{
-		ServiceCharges: []models.BillingExplainerCostLineItem{lineItem("usage", "937.78", "USD")},
-		Discounts:      []models.BillingExplainerCostLineItem{},
-		Tax:            []models.BillingExplainerCostLineItem{},
-		SupportCharges: models.BillingExplainerSupportCharges{Cost: money("0.00", "USD"), Details: []models.BillingExplainerSupportDetail{}},
-		Credits:        []models.BillingExplainerCostLineItem{},
-		Savings:        []models.BillingExplainerCostLineItem{lineItem("flexsaveSavings", "0.00", "USD")},
-		OtherCharges:   []models.BillingExplainerCostLineItem{},
-		Refunds:        []models.BillingExplainerCostLineItem{},
-		Total:          money("937.78", "USD"),
+		ServiceCharges:     []models.BillingExplainerCostLineItem{lineItem("usage", "937.78", "USD")},
+		Discounts:          []models.BillingExplainerCostLineItem{},
+		MarketplaceCharges: []models.BillingExplainerCostLineItem{},
+		Tax:                []models.BillingExplainerCostLineItem{},
+		SupportCharges:     models.BillingExplainerSupportCharges{Cost: money("0.00", "USD"), Details: []models.BillingExplainerSupportDetail{}},
+		Credits:            []models.BillingExplainerCostLineItem{},
+		Savings:            []models.BillingExplainerCostLineItem{lineItem("flexsaveSavings", "0.00", "USD")},
+		OtherCharges:       []models.BillingExplainerCostLineItem{},
+		Refunds:            []models.BillingExplainerCostLineItem{},
+		Total:              money("937.78", "USD"),
 	}
 
 	awsWithoutDoitSummary := models.BillingExplainerServiceSummary{
-		ServiceCharges: []models.BillingExplainerCostLineItem{lineItem("usage", "937.78", "USD")},
-		Discounts:      []models.BillingExplainerCostLineItem{lineItem("bundledDiscount", "0.00", "USD")},
-		Tax:            []models.BillingExplainerCostLineItem{},
-		SupportCharges: models.BillingExplainerSupportCharges{Cost: money("0.00", "USD"), Details: []models.BillingExplainerSupportDetail{}},
-		Credits:        []models.BillingExplainerCostLineItem{lineItem("credit", "0.00", "USD")},
-		Savings:        []models.BillingExplainerCostLineItem{lineItem("savingsPlanNegation", "0.00", "USD")},
-		OtherCharges:   []models.BillingExplainerCostLineItem{lineItem("ocbCharges", "0.00", "USD")},
-		Refunds:        []models.BillingExplainerCostLineItem{lineItem("refund", "0.00", "USD")},
-		Total:          money("937.78", "USD"),
+		ServiceCharges:     []models.BillingExplainerCostLineItem{lineItem("usage", "937.78", "USD")},
+		Discounts:          []models.BillingExplainerCostLineItem{lineItem("bundledDiscount", "0.00", "USD")},
+		MarketplaceCharges: []models.BillingExplainerCostLineItem{},
+		Tax:                []models.BillingExplainerCostLineItem{},
+		SupportCharges:     models.BillingExplainerSupportCharges{Cost: money("0.00", "USD"), Details: []models.BillingExplainerSupportDetail{}},
+		Credits:            []models.BillingExplainerCostLineItem{lineItem("credit", "0.00", "USD")},
+		Savings:            []models.BillingExplainerCostLineItem{lineItem("savingsPlanNegation", "0.00", "USD")},
+		OtherCharges:       []models.BillingExplainerCostLineItem{lineItem("ocbCharges", "0.00", "USD")},
+		Refunds:            []models.BillingExplainerCostLineItem{lineItem("refund", "0.00", "USD")},
+		Total:              money("937.78", "USD"),
 	}
 
 	updateTime, err := time.Parse(time.RFC3339, "2026-08-13T09:08:12Z")
@@ -154,6 +157,29 @@ func TestMapBillingExplainerToModel_FullyPopulated(t *testing.T) {
 		t.Errorf("credits[0].cost_type = %q, want credit", got)
 	}
 
+	awsMarketplace := payer.Summary.Aws.MarketplaceCharges.Elements()
+	if len(awsMarketplace) != 1 {
+		t.Fatalf("summary.aws.marketplace_charges has %d elements, want 1", len(awsMarketplace))
+	}
+	marketplaceItem, ok := awsMarketplace[0].(datasource_billing_explainer.MarketplaceChargesValue)
+	if !ok {
+		t.Fatalf("marketplace_charges[0] has type %T, want MarketplaceChargesValue", awsMarketplace[0])
+	}
+	if got := marketplaceItem.CostType.ValueString(); got != "marketplaceFee" {
+		t.Errorf("marketplace_charges[0].cost_type = %q, want marketplaceFee", got)
+	}
+	if got := marketplaceItem.Cost.Amount.ValueString(); got != "12.34" {
+		t.Errorf("marketplace_charges[0].cost.amount = %q, want 12.34", got)
+	}
+	if got := marketplaceItem.Cost.Currency.ValueString(); got != "USD" {
+		t.Errorf("marketplace_charges[0].cost.currency = %q, want USD", got)
+	}
+
+	awsWithoutDoitMarketplace := awsWithoutDoit.MarketplaceCharges.Elements()
+	if len(awsWithoutDoitMarketplace) != 0 {
+		t.Errorf("summary.aws_without_doit.marketplace_charges has %d elements, want 0", len(awsWithoutDoitMarketplace))
+	}
+
 	supportDetails := awsWithoutDoit.SupportCharges.Details.Elements()
 	if len(supportDetails) != 0 {
 		t.Errorf("aws_without_doit.support_charges.details has %d elements, want 0", len(supportDetails))
@@ -199,15 +225,16 @@ func TestMapBillingExplainerToModel_EmptyCollections(t *testing.T) {
 	ctx := t.Context()
 
 	emptySummary := models.BillingExplainerServiceSummary{
-		ServiceCharges: []models.BillingExplainerCostLineItem{},
-		Discounts:      []models.BillingExplainerCostLineItem{},
-		Tax:            []models.BillingExplainerCostLineItem{},
-		SupportCharges: models.BillingExplainerSupportCharges{Cost: money("0.00", "USD"), Details: []models.BillingExplainerSupportDetail{}},
-		Credits:        []models.BillingExplainerCostLineItem{},
-		Savings:        []models.BillingExplainerCostLineItem{},
-		OtherCharges:   []models.BillingExplainerCostLineItem{},
-		Refunds:        []models.BillingExplainerCostLineItem{},
-		Total:          money("0.00", "USD"),
+		ServiceCharges:     []models.BillingExplainerCostLineItem{},
+		Discounts:          []models.BillingExplainerCostLineItem{},
+		MarketplaceCharges: []models.BillingExplainerCostLineItem{},
+		Tax:                []models.BillingExplainerCostLineItem{},
+		SupportCharges:     models.BillingExplainerSupportCharges{Cost: money("0.00", "USD"), Details: []models.BillingExplainerSupportDetail{}},
+		Credits:            []models.BillingExplainerCostLineItem{},
+		Savings:            []models.BillingExplainerCostLineItem{},
+		OtherCharges:       []models.BillingExplainerCostLineItem{},
+		Refunds:            []models.BillingExplainerCostLineItem{},
+		Total:              money("0.00", "USD"),
 	}
 
 	apiResp := &models.BillingExplainerCustomer{
@@ -256,6 +283,12 @@ func TestMapBillingExplainerToModel_EmptyCollections(t *testing.T) {
 	}
 	if len(payer.Summary.Aws.Credits.Elements()) != 0 {
 		t.Errorf("summary.aws.credits has %d elements, want 0", len(payer.Summary.Aws.Credits.Elements()))
+	}
+	if payer.Summary.Aws.MarketplaceCharges.IsNull() {
+		t.Error("summary.aws.marketplace_charges should be an empty list, not null")
+	}
+	if len(payer.Summary.Aws.MarketplaceCharges.Elements()) != 0 {
+		t.Errorf("summary.aws.marketplace_charges has %d elements, want 0", len(payer.Summary.Aws.MarketplaceCharges.Elements()))
 	}
 	if payer.Summary.Aws.SupportCharges.Details.IsNull() {
 		t.Error("summary.aws.support_charges.details should be an empty list, not null")

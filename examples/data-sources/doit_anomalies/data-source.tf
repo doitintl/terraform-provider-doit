@@ -28,6 +28,10 @@ output "notification_audit" {
       channel   = n.channel
       timestamp = n.timestamp
     }]
+    initial_notifications = [for n in a.initial_notifications : {
+      channel   = n.channel
+      timestamp = n.timestamp
+    }]
   }]
 }
 
@@ -60,6 +64,8 @@ output "anomaly_summary" {
     entity_name           = a.entity_name
     provider_display_name = a.provider_display_name
     linked_anomalies      = a.linked_anomalies
+    allocations           = a.allocations
+    initial_notifications = a.initial_notifications
     status                = a.status
     deactivation_reason   = a.deactivation_reason
   }]
@@ -260,4 +266,43 @@ output "acknowledgment_audit" {
     acknowledged_by = a.acknowledged_by
     acknowledged_at = a.acknowledged_at
   }]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Anomaly cost per allocation, with an AI explanation for the costliest one
+# ─────────────────────────────────────────────────────────────────────────────
+
+# All anomalies (no max_results, so every page is fetched), sorted so the
+# costliest one comes first
+data "doit_anomalies" "by_cost" {
+  sort_by    = "costOfAnomaly"
+  sort_order = "desc"
+}
+
+locals {
+  # An anomaly can belong to several allocations; count it under each one
+  anomaly_cost_by_allocation = {
+    for name, costs in {
+      for pair in flatten([
+        for a in data.doit_anomalies.by_cost.anomalies : [
+          for al in a.allocations : { name = al.name, cost = a.cost_of_anomaly }
+        ]
+      ]) : pair.name => pair.cost...
+    } : name => { anomalies = length(costs), total_cost = sum(costs) }
+  }
+}
+
+output "anomaly_cost_by_allocation" {
+  value = local.anomaly_cost_by_allocation
+}
+
+data "doit_anomaly_explanation" "costliest" {
+  count = length(data.doit_anomalies.by_cost.anomalies) > 0 ? 1 : 0
+  id    = data.doit_anomalies.by_cost.anomalies[0].id
+}
+
+output "costliest_anomaly_explanation" {
+  description = "AI-generated likely cause of the costliest anomaly"
+  value       = one(data.doit_anomaly_explanation.costliest[*].explanation.text)
+  sensitive   = true
 }

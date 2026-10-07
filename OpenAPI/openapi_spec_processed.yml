@@ -30,6 +30,11 @@ tags:
     description: View available dimensions for analysis.
   - name: Reports
     description: Manage Cloud Analytics reports and get reports data in JSON format.
+  - name: Widgets (Beta)
+    description: |-
+      Beta. Read precomputed current-month cloud spend and forecast metrics. Widget results are
+      refreshed in the background; reading a widget returns the latest cached result and never
+      starts a synchronous refresh. Use the list operation to discover the complete catalogue.
   - name: Sharing
     description: Manage permissions associated with specified Cloud Analytics resources.
   - name: Anomalies
@@ -54,12 +59,17 @@ tags:
     description: Read and update your organization's general settings.
   - name: Contract Templates
     description: Manage contract templates for PartnerOps resellers (T1/T2).
+  - name: Shared Payers
+    description: >-
+      Link and manage shared-payer account mappings for PartnerOps resellers (T2), reassigning AWS accounts under a shared payer to T3 end customers.
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Roles
     description: Manage user permissions and access levels in your organization.
   - name: Organizations
     description: Organizations help you segment data by your company or team structure.
+  - name: Service Accounts
+    description: Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.
   - name: Geographic Access
     description: Manage country-based access to tenants in your customer hierarchy.
   - name: Customer Groups
@@ -94,6 +104,11 @@ tags:
     description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers and end customers, and list program management accounts.
   - name: PerfectScale for Commitments GCP
     description: Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
+  - name: PerfectScale for Commitments General
+    description: Cloud-agnostic PerfectScale for Commitments resources — commitment policies shared by AWS and GCP.
+  - name: Signup
+    description: >-
+      Start a Cloud Intelligence trial for an organization that is not yet a DoiT customer. These operations require no API key: they are rate limited, idempotent, and provision nothing until the organization's admin verifies the request. Agents create a request and hand the returned consentUrl to the admin; the admin verifies by entering the emailed code (or signing the request on the console), after which the tenant is provisioned and the request reports its customer id.
 paths:
   /analytics/v1/alerts:
     get:
@@ -2176,14 +2191,70 @@ paths:
           schema:
             type: string
           description: The unique ID of the async operation.
+        - name: fileOutput
+          in: query
+          description: >-
+            Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file.
+          schema:
+            type: string
+            enum:
+              - pdf
+              - png
+            example: pdf
       responses:
         "200":
           description: >-
-            OK — the operation succeeded; body is the report result, plus report metadata when the operation was started against a saved report.
+            OK — the operation succeeded; body is the report result, plus report metadata when the operation was started against a saved report, plus a fileOutput URL when one was requested.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetAsyncOperationResults200Response'
+              examples:
+                withoutFileOutput:
+                  summary: Results of an operation started from a saved report
+                  value:
+                    id: aBcD1234efGH5678ijKL
+                    reportName: Daily cost by service
+                    owner: analyst@example.com
+                    type: custom
+                    createTime: 1788912000000
+                    updateTime: 1789516800000
+                    urlUI: https://console.doit.com/customers/1a2b3c/analyze/reports/aBcD1234efGH5678ijKL
+                    result:
+                      schema:
+                        - name: service
+                          type: string
+                        - name: cost
+                          type: float
+                      rows:
+                        - - Compute Engine
+                          - 1284.55
+                        - - Cloud Storage
+                          - 96.4
+                      cacheHit: false
+                withPdfFileOutput:
+                  summary: The same results with ?fileOutput=pdf, adding a signed URL
+                  value:
+                    id: aBcD1234efGH5678ijKL
+                    reportName: Daily cost by service
+                    owner: analyst@example.com
+                    type: custom
+                    createTime: 1788912000000
+                    updateTime: 1789516800000
+                    urlUI: https://console.doit.com/customers/1a2b3c/analyze/reports/aBcD1234efGH5678ijKL
+                    result:
+                      schema:
+                        - name: service
+                          type: string
+                        - name: cost
+                          type: float
+                      rows:
+                        - - Compute Engine
+                          - 1284.55
+                        - - Cloud Storage
+                          - 96.4
+                      cacheHit: false
+                    fileOutput: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -2198,6 +2269,265 @@ paths:
           $ref: "#/components/responses/425"
         "500":
           $ref: "#/components/responses/500"
+  /analytics/v1/widgets:
+    get:
+      tags:
+        - Widgets (Beta)
+      summary: List widgets
+      description: |-
+        Returns the complete catalogue of preset widgets supported by the Analytics Widgets API.
+        Each entry contains a customer-specific `id` and a stable customer-facing `alias`; either
+        value can be passed to the get-widget operation. An `id` can vary by customer or service
+        tier, while an `alias` remains stable.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on multiple customers, send
+        `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+        selected customer is not authorized or entitled to use this API.
+      operationId: listWidgets
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK - The complete supported widget catalogue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetList"
+              example:
+                items:
+                  - id: widget-example-spend-01
+                    alias: current-month-cloud-spend
+                    name: Current Month Cloud Spend
+                    description: Total cloud spend accumulated during the current calendar month.
+                    type: preset
+                    kind: monetary_metric
+                  - id: widget-example-forecast-01
+                    alias: current-month-cloud-forecast
+                    name: Current Month Cloud Forecast
+                    description: Forecast of total cloud spend for the current calendar month.
+                    type: preset
+                    kind: monetary_metric
+                rowCount: 2
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/analytics/v1/widgets/{widgetId}":
+    get:
+      tags:
+        - Widgets (Beta)
+      summary: Get a widget
+      description: |-
+        Returns the latest precomputed cached result for one widget. This read does not refresh or
+        recompute the widget synchronously.
+
+        Use either the customer-specific `id` returned by the list-widgets operation or one of these
+        stable aliases:
+
+        - `current-month-cloud-spend` — total cloud spend accumulated during the current calendar month.
+        - `current-month-cloud-forecast` — forecast of total cloud spend for the current calendar month.
+
+        The two concrete alias requests are:
+
+        - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-spend`
+        - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-forecast`
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on multiple customers, send
+        `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+        selected customer is not authorized or entitled to use this API.
+
+        The result's `period.endTime` is exclusive. Monetary `amount` values are decimal strings and
+        `currency` values are ISO 4217 currency codes. `monthToMonthGrowthPercentage` and
+        `monthToMonthGrowthAmount` are both `null` when no comparable prior-period value exists.
+      operationId: getWidget
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - name: widgetId
+          in: path
+          description: |-
+            Stable widget alias or customer-specific widget ID returned by listWidgets. Use
+            current-month-cloud-spend for current-month accumulated spend or
+            current-month-cloud-forecast for the current-month forecast.
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          examples:
+            currentMonthCloudSpend:
+              summary: Current Month Cloud Spend
+              value: current-month-cloud-spend
+            currentMonthCloudForecast:
+              summary: Current Month Cloud Forecast
+              value: current-month-cloud-forecast
+            customerSpecificId:
+              summary: Customer-specific id from listWidgets
+              value: widget-example-spend-01
+      responses:
+        "200":
+          description: OK - The widget and its latest precomputed result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Widget"
+              examples:
+                currentMonthCloudSpend:
+                  summary: Current Month Cloud Spend
+                  description: Total cloud spend accumulated during the current calendar month.
+                  value:
+                    id: widget-example-spend-01
+                    alias: current-month-cloud-spend
+                    type: preset
+                    kind: monetary_metric
+                    generateTime: "2026-09-24T11:48:10.319Z"
+                    result:
+                      monetaryMetric:
+                        value:
+                          amount: "865.24"
+                          currency: USD
+                        period:
+                          startTime: "2026-09-01T00:00:00Z"
+                          endTime: "2026-10-01T00:00:00Z"
+                        monthToMonthGrowthPercentage: 12.34
+                        monthToMonthGrowthAmount:
+                          amount: "94.88"
+                          currency: USD
+                currentMonthCloudForecast:
+                  summary: Current Month Cloud Forecast
+                  description: Forecast total for the current calendar month.
+                  value:
+                    id: widget-example-forecast-01
+                    alias: current-month-cloud-forecast
+                    type: preset
+                    kind: monetary_metric
+                    generateTime: "2026-09-24T11:48:10.319Z"
+                    result:
+                      monetaryMetric:
+                        value:
+                          amount: "1024.50"
+                          currency: USD
+                        period:
+                          startTime: "2026-09-01T00:00:00Z"
+                          endTime: "2026-10-01T00:00:00Z"
+                        monthToMonthGrowthPercentage: null
+                        monthToMonthGrowthAmount: null
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: |-
+            The widget identifier is unknown, no cached result is available yet, or the customer has
+            no billing data. Inspect `code` to choose the recovery action.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                unknownWidget:
+                  summary: Use an alias or id returned by listWidgets
+                  value:
+                    type: https://developer.doit.com/errors/not_found
+                    title: Resource not found
+                    status: 404
+                    detail: no widget exists with that id
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: not_found
+                    retryable: false
+                widgetDataNotAvailable:
+                  summary: No cached result is available yet
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_data_not_available
+                    title: Widget data not available
+                    status: 404
+                    detail: no data has been computed for this customer yet
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_data_not_available
+                    retryable: false
+                widgetNoBillingData:
+                  summary: Connect a billing data source before retrying
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_no_billing_data
+                    title: No billing data
+                    status: 404
+                    detail: no billing data is available for this customer
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_no_billing_data
+                    retryable: false
+        "500":
+          description: |-
+            The cached result cannot be served or an unexpected internal error occurred. Inspect
+            `code`; contact DoiT support with the `Request-Id` for non-retryable or persistent errors.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                widgetResultTooLarge:
+                  summary: Contact DoiT support because the result exceeds response limits
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_result_too_large
+                    title: Widget data too large
+                    status: 500
+                    detail: widget data is too large to serve
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_result_too_large
+                    retryable: false
+                widgetNotSupported:
+                  summary: Contact DoiT support because the widget cannot be derived
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_not_supported
+                    title: Widget not supported
+                    status: 500
+                    detail: widget not supported
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_not_supported
+                    retryable: false
+                unexpectedInternalError:
+                  summary: Retry once, then contact DoiT support with Request-Id
+                  value:
+                    type: https://developer.doit.com/errors/internal_error
+                    title: Internal server error
+                    status: 500
+                    detail: an unexpected error occurred
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: internal_error
+                    retryable: true
+        "503":
+          description: The last background computation failed. This error is retryable; retry later.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                widgetComputationFailed:
+                  summary: Retry after the next background computation
+                  value:
+                    type: https://developer.doit.com/errors/analytics.widget_computation_failed
+                    title: Widget data could not be computed
+                    status: 503
+                    detail: widget data could not be computed
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: analytics.widget_computation_failed
+                    retryable: true
   "/sharing/v1/{resourceType}/{resourceId}":
     get:
       tags:
@@ -2530,6 +2860,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteDatahubDataset200Response'
+        "202":
+          description: Accepted - Dataset data deletion is running asynchronously. This response does not confirm completion, and dataset metadata may remain. No completion polling endpoint is available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteDatahubDataset202Response'
         "400":
           $ref: "#/components/responses/400"
         "401":
@@ -3091,6 +3427,201 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+    post:
+      tags:
+        - Roles
+      summary: Create role
+      description: Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+      operationId: createRole
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Caller-chosen key (1-255 characters) that makes retries safe; the same key with the same body returns the original response.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+            example:
+              name: FinOps Analyst
+              description: Read-only access to cost reports and budgets
+              permissions: [oeuwhFPi8UTccU1nYjdl, 8zXuFyohNSiiLy2ZQ6Xu]
+      responses:
+        "201":
+          description: Created - Role created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "400":
+          description: Bad Request - Missing, blank or whitespace-padded `name`, duplicate permission IDs, or a permission ID that does not exist or is not available to the customer. A missing `Idempotency-Key` returns `application/problem+json`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "409":
+          description: Conflict - A role with the same `name` already exists for the customer. The same `Idempotency-Key` still being processed by another request returns `application/problem+json`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "422":
+          description: Unprocessable Entity - The `Idempotency-Key` was already used with a different request body.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "500":
+          $ref: "#/components/responses/500"
+  "/iam/v1/roles/{id}":
+    get:
+      tags:
+        - Roles
+      summary: Get role
+      description: Returns a single role by ID. Preset roles are visible to every customer; a custom role is returned only to the customer that owns it. A service account of a parent tenant can read a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: getRole
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the role.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - Role returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Roles
+      summary: Update role
+      description: Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: updateRole
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the role to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleRequest"
+            example:
+              name: FinOps Analyst
+              description: Read-only access to cost reports and budgets
+              permissions: [oeuwhFPi8UTccU1nYjdl, 8zXuFyohNSiiLy2ZQ6Xu]
+      responses:
+        "200":
+          description: OK - Role updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "400":
+          description: Bad Request - Empty body, blank or whitespace-padded `name`, duplicate permission IDs, unknown field, a permission ID that does not exist or is not available to the customer, or the role is a preset role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - Another role of the customer, custom or preset, already has the requested `name`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Roles
+      summary: Delete role
+      description: Deletes a custom role. Preset roles cannot be deleted, and a role still assigned to users or groups must be unassigned first. A service account of a parent tenant can delete a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: deleteRole
+      parameters:
+        - name: id
+          in: path
+          description: The unique ID of the role to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content - Role deleted.
+        "400":
+          description: Bad Request - The role is a preset role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - The role is still assigned to users or groups, or held as a child tenant role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Service Unavailable - Role graph cleanup is temporarily unavailable. Retry the deletion.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
   /iam/v1/organizations:
     get:
       tags:
@@ -3113,6 +3644,490 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /iam/v1/service-accounts:
+    get:
+      tags:
+        - Service Accounts
+      summary: List service accounts
+      description: Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+      operationId: listServiceAccounts
+      responses:
+        "200":
+          description: OK - Service accounts returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountsResponse"
+              example:
+                items:
+                  - id: Lq3nO9rM5wS2tU0xY4zA
+                    customerId: Kp2mN8qL4vR0sT1wX3yZ
+                    name: terraform-ci
+                    description: Manages DoiT resources from CI
+                    permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                    createdBy: Jane Doe
+                    createdByEmail: jane.doe@example.com
+                    createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                    createTime: "2026-09-01T08:00:00Z"
+                    updateTime: "2026-09-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Service Accounts
+      summary: Create a service account
+      description: Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+      operationId: createServiceAccount
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The service account to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceAccountRequest"
+            example:
+              name: terraform-ci
+              description: Manages DoiT resources from CI
+              permissions: [cloudAnalyticsReadOnly, budgetsManager]
+      responses:
+        "200":
+          description: OK - Dry run only (`dryRun=true`). Every check of a real create passed and nothing was created; `id`, `createTime`, `updateTime` and `etag` are `null`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: null
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                createdBy: null
+                createdByEmail: null
+                createdByUserId: null
+                createTime: null
+                updateTime: null
+                etag: null
+        "201":
+          description: Created - Service account created.
+          headers:
+            Location:
+              description: URL of the created service account.
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                createdBy: Jane Doe
+                createdByEmail: jane.doe@example.com
+                createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                createTime: "2026-09-01T08:00:00Z"
+                updateTime: "2026-09-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/service-accounts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/serviceAccountId"
+    get:
+      tags:
+        - Service Accounts
+      summary: Get a service account
+      description: Returns a service account owned by the authenticated customer; an ID that belongs to another customer returns `404`. The `ETag` response header carries the value to send in `If-Match` on update and delete. Requires the `serviceAccountViewer` permission.
+      operationId: getServiceAccount
+      responses:
+        "200":
+          description: OK - Service account returned.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly, budgetsManager]
+                createdBy: Jane Doe
+                createdByEmail: jane.doe@example.com
+                createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                createTime: "2026-09-01T08:00:00Z"
+                updateTime: "2026-09-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Service Accounts
+      summary: Update a service account
+      description: Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+      operationId: updateServiceAccount
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The fields to change.
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceAccountRequest"
+            example:
+              permissions: [cloudAnalyticsReadOnly]
+      responses:
+        "200":
+          description: OK - Service account updated, or previewed when `dryRun=true` (the body is the merged result, and `etag` is still the current one).
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccount"
+              example:
+                id: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: terraform-ci
+                description: Manages DoiT resources from CI
+                permissions: [cloudAnalyticsReadOnly]
+                createdBy: Jane Doe
+                createdByEmail: jane.doe@example.com
+                createdByUserId: Ab1cD2eF3gH4iJ5kL6mN
+                createTime: "2026-09-01T08:00:00Z"
+                updateTime: "2026-09-02T09:30:00Z"
+                etag: 9b2e4d6f8a0c1e3b5d7f9a1c3e5b7d9f1a3c5e7a9b1d3f5a7c9e1b3d5f7a9c1e
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Service Accounts
+      summary: Delete a service account
+      description: Permanently deletes a service account and all of its API tokens, which stop authenticating immediately. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+      operationId: deleteServiceAccount
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      responses:
+        "204":
+          description: No Content - Service account deleted, or validated when `dryRun=true`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/service-accounts/{serviceAccountId}/api-tokens:
+    parameters:
+      - $ref: "#/components/parameters/serviceAccountTokenParentId"
+    get:
+      tags:
+        - Service Accounts
+      summary: List API tokens for a service account
+      description: Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+      operationId: listServiceAccountTokens
+      responses:
+        "200":
+          description: OK - API tokens returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountTokensResponse"
+              example:
+                items:
+                  - id: Mr0sN7pQ4tU2vW5xY8zC
+                    serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                    customerId: Kp2mN8qL4vR0sT1wX3yZ
+                    name: ci-pipeline-prod
+                    state: active
+                    createTime: "2026-09-01T08:00:00Z"
+                    expiresTime: "2027-09-01T08:00:00Z"
+                    lastUsedTime: "2026-09-20T14:31:00Z"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Service Accounts
+      summary: Create an API token for a service account
+      description: |
+        Mints an API token for the service account and returns its `accessToken` once. The token
+        inherits the service account's permissions as they stand at creation; there is no per-token
+        scoping. Returns `409` when the service account already has a token of the same name, and
+        `422` at the cap of 10 tokens.
+
+        `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+        It does **not** verify that the service account exists, that the name is unused, or that the
+        account is under the token cap, so a dry run can succeed where the real create then returns
+        `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+      operationId: createServiceAccountToken
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The API token to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceAccountTokenRequest"
+            example:
+              name: ci-pipeline-prod
+              expiresTime: "2027-09-01T08:00:00Z"
+      responses:
+        "200":
+          description: OK - Dry run only (`dryRun=true`). The name passed its bounds check and nothing was created; `id` and `createTime` are `null` and `accessToken` is an empty string. Not a guarantee that a real create would succeed — see the operation description.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateServiceAccountTokenResponse"
+              example:
+                id: null
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: active
+                createTime: null
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: null
+                accessToken: ""
+        "201":
+          description: Created - API token created. This is the only response that carries `accessToken`.
+          headers:
+            Location:
+              description: URL of the created API token.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateServiceAccountTokenResponse"
+              example:
+                id: Mr0sN7pQ4tU2vW5xY8zC
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: active
+                createTime: "2026-09-01T08:00:00Z"
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: null
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}:
+    parameters:
+      - $ref: "#/components/parameters/serviceAccountTokenParentId"
+      - $ref: "#/components/parameters/serviceAccountTokenId"
+    get:
+      tags:
+        - Service Accounts
+      summary: Get an API token
+      description: Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+      operationId: getServiceAccountToken
+      responses:
+        "200":
+          description: OK - API token returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountToken"
+              example:
+                id: Mr0sN7pQ4tU2vW5xY8zC
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: active
+                createTime: "2026-09-01T08:00:00Z"
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: "2026-09-20T14:31:00Z"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Service Accounts
+      summary: Enable or disable an API token
+      description: |
+        Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+        immediately: the token stops authenticating until it is re-enabled. Setting the state a
+        token already has succeeds and changes nothing.
+
+        The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+        but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+        created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+        the delete operation, and expires on its own.
+
+        With `dryRun=true` nothing is written and the response body is the token as it would look
+        after the change, so a `422` here means a real request would also be refused. Requires the
+        `serviceAccountManager` permission.
+      operationId: updateServiceAccountToken
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        description: The state to move the token to.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceAccountTokenRequest"
+            example:
+              state: disabled
+      responses:
+        "200":
+          description: OK - API token state changed, or previewed when `dryRun=true`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountToken"
+              example:
+                id: Mr0sN7pQ4tU2vW5xY8zC
+                serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: ci-pipeline-prod
+                state: disabled
+                createTime: "2026-09-01T08:00:00Z"
+                expiresTime: "2027-09-01T08:00:00Z"
+                lastUsedTime: "2026-09-20T14:31:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Service Accounts
+      summary: Delete an API token
+      description: Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+      operationId: deleteServiceAccountToken
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      responses:
+        "204":
+          description: No Content - API token deleted, or validated when `dryRun=true`.
+          headers:
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /support/v1/metadata/platforms:
     get:
       tags:
@@ -4561,7 +5576,7 @@ paths:
       description: |-
         Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 
-        Fields that drive the Overview tab in the DoiT console:
+        Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
         - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
         - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
         - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -4581,6 +5596,76 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GcpBillingAccountDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based:
+    get:
+      operationId: listGcpSpendCuds
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP spend-based Committed Use Discounts
+      description: |-
+        Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+        CUD state (`status`); omit to return CUDs in all states.
+
+        **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+        line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+        region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+        returns `400` with code `gcp_service_required`. A `region` that is malformed or
+        incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+        returns `400` with code `validation_failed`; a well-formed, compatible region with no
+        matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+        uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+        echoes the raw provider value (`us-central1`).
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - in: query
+          name: status
+          required: false
+          description: Filter by CUD state. Omit to include all states.
+          schema:
+            type: string
+            enum:
+              - active
+              - expired
+              - creating
+              - pending
+              - cancelled
+              - not_yet_active
+            x-enumDescriptions:
+              active: CUD is active and providing coverage.
+              expired: CUD term has ended.
+              creating: CUD purchase is in progress; not yet providing coverage.
+              pending: CUD purchase is awaiting provider confirmation; not yet providing coverage.
+              cancelled: CUD was cancelled before or during its term.
+              not_yet_active: CUD has been purchased but its term has not started yet.
+        - $ref: "#/components/parameters/gcp_service"
+        - $ref: "#/components/parameters/gcp_region"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: Paginated list of spend-based CUDs.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpSpendCuds200Response'
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -4613,12 +5698,14 @@ paths:
               - active
               - expired
               - creating
+              - pending
               - cancelled
               - not_yet_active
             x-enumDescriptions:
               active: CUD is active and providing coverage.
               expired: CUD term has ended.
               creating: CUD purchase is in progress; not yet providing coverage.
+              pending: CUD purchase is awaiting provider confirmation; not yet providing coverage.
               cancelled: CUD was cancelled before or during its term.
               not_yet_active: CUD has been purchased but its term has not started yet.
         - $ref: "#/components/parameters/ps4cPageToken"
@@ -4647,6 +5734,181 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations:
+    get:
+      operationId: listGcpRecommendations
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP recommendations
+      description: |-
+        Returns commitment purchase recommendations for the billing account, filtered to the
+        term preferred in each product line's settings (`preferredCommitmentPeriod`).
+
+        **`gcp_service` and `region` filters**: omit both to return recommendations for all
+        product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+        alone to return all regions for that service; supply both to return a single
+        service/region scope. `region` requires `gcp_service` — a request with `region` but no
+        `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+        or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+        regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+        region with no data returns `200` with an empty `items` array.
+
+        `404` is returned only when the billing account does not exist or the caller cannot access
+        it. A billing account with no matching recommendation documents returns `200` with an empty
+        `items` array.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - $ref: "#/components/parameters/gcp_service"
+        - $ref: "#/components/parameters/gcp_region"
+      responses:
+        "200":
+          description: List of GCP recommendations.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpRecommendations200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service}:
+    get:
+      operationId: getGcpRecommendation
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: Get a GCP recommendation
+      description: |-
+        Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+        billing account, including analysis metrics and time-bucketed eligible spend. Use
+        `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+
+        **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+        for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+        malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+        A well-formed region the billing account has never had eligible spend in returns `404`
+        with code `not_found` — the scope does not exist, same as an unknown billing account.
+        When the scope exists but no stored recommendation matches, the response is `200` with
+        `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - name: gcp_service
+          in: path
+          required: true
+          description: PS4C product line to fetch the recommendation for. Matching is case-insensitive; the value is lowercased before validation.
+          schema:
+            type: string
+            enum:
+              - compute
+              - cloud_sql
+        - $ref: "#/components/parameters/gcp_region"
+        - $ref: "#/components/parameters/eligibleSpendGranularity"
+      responses:
+        "200":
+          description: Recommendation detail with eligible-spend usage series.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GcpRecommendationWithEligibleSpend"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases:
+    get:
+      operationId: listGcpPlannedPurchases
+      tags:
+        - PerfectScale for Commitments GCP
+      summary: List GCP planned purchases
+      description: |-
+        Returns the laddering projections for the billing account, grouped by PS4C product line
+        (`service`) and region. Each service group lists one entry per available
+        `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+        `cloud_sql` scopes are per-region).
+
+        With no filters, returns all existing projection documents in stable order: service groups
+        ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+        first, then remaining regions alphabetically. Services with no projection documents are omitted
+        (not returned as empty groups). When a filter matches no documents, the response is an
+        empty `items` array (not `404`). Partial projection documents return only the fields
+        available in storage.
+
+        **`gcp_service` and `region` filters**: omit both to return all available services and
+        their regions; supply `gcp_service` alone to return all regions for that service; supply
+        both to return a single service/region scope. `region` requires `gcp_service` — a request
+        with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+        `gcp_service` or `region` values return `400` with code `validation_failed`.
+
+        `404` is returned only when the billing account does not exist or the caller cannot access
+        it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+        `items` array when no projection documents exist — use
+        `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+
+        **Pagination**: results are paginated by **service group** (a whole group is never split
+        across pages). Groups keep the stable service order above. Use `maxResults` to limit
+        page size (default 50, max 500). When more groups remain, the response includes a
+        non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+        (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+        this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+        expired token returns `400` with code `pagination_token_expired`.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/billingAccountId"
+        - $ref: "#/components/parameters/gcp_service"
+        - $ref: "#/components/parameters/gcp_region"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: List of planned purchase projections grouped by service and region.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGcpPlannedPurchases200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /ps4commitments/v1/gcp/settings:
     get:
       operationId: listGcpBillingAccountsSettings
@@ -4656,7 +5918,14 @@ paths:
       description: |-
         Returns one item per onboarded GCP Billing Account. Each item includes that billing
         account's recommendation and automation engine settings for each product line activated
-        on it (`compute`).
+        on it, per region scope: one `global` entry for `compute`, and one entry per known region
+        for `cloud_sql`.
+
+        Cloud SQL regions come from the billing account's persisted settings: a region is added
+        when eligible spend is first seen there and is never removed, so its settings entry
+        remains listed even if spend later drops to zero. Items are sorted by
+        `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+        `cloud_sql` regions sorted alphabetically.
 
         Settings are stored independently on each billing account. Existing customer-level
         settings are copied lazily when an account is first read or initialized; if no valid
@@ -4686,6 +5955,97 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/general/policies:
+    get:
+      operationId: listCommitmentPolicies
+      tags:
+        - PerfectScale for Commitments General
+      summary: List commitment policies
+      description: |-
+        Returns every commitment policy available to the tenant: the three built-in policies
+        (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+
+        Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+        same policy may be assigned to AWS and GCP product lines alike.
+
+        Built-in policies are listed first, ordered from least to most aggressive target coverage;
+        custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+        entered in the DoiT Console. This differs from the coverage and utilization fields on
+        recommendations and inventory, which are fractions from 0 to 1.
+
+        This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+        Console on the Commitment Policies page.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/ps4cPageToken"
+        - $ref: "#/components/parameters/ps4cMaxResults"
+      responses:
+        "200":
+          description: One page of the tenant's commitment policies.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCommitmentPolicies200Response'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /ps4commitments/v1/general/policies/{policyId}:
+    get:
+      operationId: getCommitmentPolicy
+      tags:
+        - PerfectScale for Commitments General
+      summary: Get a commitment policy
+      description: |-
+        Returns one commitment policy by id, with its creation and last-update times and the list of
+        account × product-line scopes it is explicitly assigned to across AWS and GCP.
+
+        `assignments` lists explicit assignments only. An account whose settings have not yet been
+        materialized falls back to `balanced` implicitly and does not appear here, even though the
+        settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+        tenant and applied to every onboarded organization, so each organization appears once per
+        product line. The list is not paginated.
+
+        Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+        queried the request fails rather than returning a partial list.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/policyId"
+      responses:
+        "200":
+          description: The commitment policy with its assignments.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitmentPolicyDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
         "503":
@@ -5321,6 +6681,82 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.).
           example: "A AND B"
+        validityPeriods:
+          type: array
+          nullable: true
+          description: >-
+            Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+          items:
+            $ref: "#/components/schemas/AllocationRulePeriod"
+    AllocationRulePeriod:
+      type: object
+      description: >-
+        A date range when a rule applies. startDate and endDate are both inclusive, so a handover between two rules needs a one-day gap: the first rule's endDate the day before, the second rule's startDate the handover day. Only the first period in the list may omit startDate, and only the last may omit endDate.
+      properties:
+        startDate:
+          type: string
+          nullable: true
+          description: Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+          example: "2026-03-15"
+        endDate:
+          type: string
+          nullable: true
+          description: End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+          example: "2026-06-15"
+    AllocationValueExtraction:
+      type: object
+      nullable: true
+      required:
+        - sources
+      description: >-
+        Makes the rule emit a value extracted from the first non-empty source instead of the rule name.
+      properties:
+        sources:
+          type: array
+          minItems: 1
+          maxItems: 5
+          description: Ordered extraction sources; the first non-empty value wins.
+          items:
+            $ref: "#/components/schemas/AllocationValueExtractionSource"
+        onMissing:
+          type: string
+          description: >-
+            What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+          enum:
+            - useFallback
+            - nextRule
+          default: useFallback
+        fallback:
+          type: string
+          nullable: true
+          description: >-
+            Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+    AllocationValueExtractionSource:
+      type: object
+      required:
+        - type
+        - key
+      properties:
+        type:
+          type: string
+          description: >-
+            The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+          enum:
+            - label
+            - tag
+            - project_label
+            - system_label
+            - gke_label
+            - fixed
+        key:
+          type: string
+          description: The label/tag key, or the fixed dimension ID, whose value is extracted.
+        providers:
+          type: array
+          nullable: true
+          description: Optional cloud providers this source applies to.
+          items:
+            type: string
     AnnotationListItem:
       required:
         - id
@@ -5439,6 +6875,7 @@ components:
     AnomalyItem:
       required:
         - attribution
+        - allocations
         - billingAccount
         - costOfAnomaly
         - platform
@@ -5450,6 +6887,7 @@ components:
         - top3SKUs
         - monitorLevel
         - notifications
+        - initialNotifications
         - linkedAnomalies
       type: object
       description: >-
@@ -5457,7 +6895,15 @@ components:
       properties:
         attribution:
           type: string
-          description: Attribution ID.
+          deprecated: true
+          description: >-
+            Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+        allocations:
+          type: array
+          description: >-
+            Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+          items:
+            $ref: '#/components/schemas/AnomalyItemAllocationsItem'
         billingAccount:
           type: string
           description: Billing account ID.
@@ -5553,8 +6999,26 @@ components:
           nullable: true
         notifications:
           $ref: "#/components/schemas/NotificationEventArray"
+        initialNotifications:
+          type: array
+          description: >-
+            The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+          items:
+            $ref: "#/components/schemas/NotificationEvent"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
+    AnomalyItemAllocationsItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Allocation ID. Use it with the Allocations API to read the allocation.
+        name:
+          type: string
+          description: Allocation name.
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -5838,12 +7302,12 @@ components:
       type: object
       required:
         - date
-      description: "One day of commitment-coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage type had no spend for the day."
+      description: One day of commitment-coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage type had no spend for the day.
       properties:
         date:
           type: string
           format: date
-          description: "Calendar day (UTC) for this coverage row in format YYYY-MM-DD."
+          description: Calendar day (UTC) for this coverage row in format YYYY-MM-DD.
         onDemandCost:
           allOf:
             - $ref: "#/components/schemas/Money"
@@ -5866,7 +7330,7 @@ components:
           description: Spot Instance spend for the day.
     AwsMonthlyPotentialSavings:
       type: object
-      description: "Estimated monthly additional savings per Savings Plan (SP) type, taken from the latest PerfectScale for Commitments purchase projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking estimate of the monthly savings achievable if the recommended commitments are purchased. For member accounts, the AWS organization figure is attributed by each member account's share of trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest projection is missing, expired, or empty. The field is omitted entirely only for accounts that have never had potential savings computed."
+      description: Estimated monthly additional savings per Savings Plan (SP) type, taken from the latest PerfectScale for Commitments purchase projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking estimate of the monthly savings achievable if the recommended commitments are purchased. For member accounts, the AWS organization figure is attributed by each member account's share of trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest projection is missing, expired, or empty. The field is omitted entirely only for accounts that have never had potential savings computed.
       properties:
         compute:
           $ref: "#/components/schemas/Money"
@@ -5879,17 +7343,17 @@ components:
         - esr
         - onDemandCost
         - costWithSavings
-      description: "One calendar-month aggregate for the AWS organization. Money fields are wrapped objects (`{amount, currency}`)."
+      description: One calendar-month aggregate for the AWS organization. Money fields are wrapped objects (`{amount, currency}`).
       properties:
         month:
           type: string
           pattern: ^\d{4}-(0[1-9]|1[0-2])$
-          description: "Calendar month in `YYYY-MM` form (UTC)."
+          description: Calendar month in `YYYY-MM` form (UTC).
           example: 2025-06
         esr:
           type: number
           format: double
-          description: "Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost."
+          description: Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.
         onDemandCost:
           allOf:
             - $ref: "#/components/schemas/Money"
@@ -5900,7 +7364,7 @@ components:
           description: Actual cost after commitments for the month.
     AwsOnboardingStatus:
       type: object
-      description: "PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available."
+      description: PerfectScale for Commitments onboarding status for each commitment type on the AWS organization (`compute`, `database`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
       properties:
         compute:
           $ref: "#/components/schemas/AwsOnboardingStatusEntry"
@@ -5913,7 +7377,7 @@ components:
       properties:
         status:
           type: string
-          description: "Current onboarding lifecycle stage for this product line."
+          description: Current onboarding lifecycle stage for this product line.
           enum:
             - not_started
             - onboarding
@@ -5927,7 +7391,7 @@ components:
         onboardingStartedAt:
           type: string
           format: date-time
-          description: "When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started."
+          description: When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
           nullable: true
     AwsOrganization:
       type: object
@@ -5936,11 +7400,11 @@ components:
       properties:
         managementAccountId:
           type: string
-          description: "12-digit account number of the AWS organization's management (payer) account."
+          description: 12-digit account number of the AWS organization's management (payer) account.
           example: "123456789012"
         displayName:
           type: string
-          description: "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available."
+          description: Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
           nullable: true
           example: Acme Prod
         onboardingStatus:
@@ -5949,21 +7413,21 @@ components:
         savingsPlansSyncTime:
           type: string
           format: date-time
-          description: "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet."
+          description: Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.
           nullable: true
-          example: 2026-01-01T00:00:00Z
+          example: "2026-01-01T00:00:00Z"
         stats30d:
-          description: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationStats30d'
         savingsTotals:
-          description: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
+          description: Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationSavingsTotals'
         monthlyPotentialSavings:
           allOf:
             - $ref: "#/components/schemas/AwsMonthlyPotentialSavings"
-          description: "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection."
+          description: Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection.
     AwsOrganizationDetail:
       type: object
       required:
@@ -5971,11 +7435,11 @@ components:
       properties:
         managementAccountId:
           type: string
-          description: "12-digit account number of the AWS organization's management (payer) account."
+          description: 12-digit account number of the AWS organization's management (payer) account.
           example: "123456789012"
         displayName:
           type: string
-          description: "Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available."
+          description: Human-readable account name, if available. Defaults to the AWS Organizations account name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
           nullable: true
           example: Acme Prod
         onboardingStatus:
@@ -5984,23 +7448,23 @@ components:
         savingsPlansSyncTime:
           type: string
           format: date-time
-          description: "Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet."
+          description: Timestamp of the last successful Savings Plan inventory sync. Null when a sync has not completed yet.
           nullable: true
-          example: 2026-01-01T00:00:00Z
+          example: "2026-01-01T00:00:00Z"
         stats30d:
-          description: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationStats30d'
         savingsTotals:
-          description: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
+          description: Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationSavingsTotals'
         monthlyPotentialSavings:
           allOf:
             - $ref: "#/components/schemas/AwsMonthlyPotentialSavings"
-          description: "Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection."
+          description: Estimated monthly additional savings per SP type for this AWS organization from the latest purchase projection.
         monthlyStats:
-          description: "Trailing 6 calendar months of AWS organization stats, grouped by SP type."
+          description: Trailing 6 calendar months of AWS organization stats, grouped by SP type.
           allOf:
             - $ref: '#/components/schemas/AwsOrganizationDetailAllOf1MonthlyStats'
         dailyCoverage:
@@ -6021,7 +7485,7 @@ components:
             $ref: "#/components/schemas/AwsDailyCoverageEntry"
     AwsOrganizationDetailAllOf1MonthlyStats:
       type: object
-      description: "Trailing 6 calendar months of AWS organization stats, grouped by SP type."
+      description: Trailing 6 calendar months of AWS organization stats, grouped by SP type.
       properties:
         compute:
           type: array
@@ -6033,7 +7497,7 @@ components:
             $ref: "#/components/schemas/AwsMonthlyStatsEntry"
     AwsOrganizationSavingsTotals:
       type: object
-      description: "Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date."
+      description: Year-to-date and lifetime savings per Savings Plan (SP) type. Same values as returned by `GET /ps4commitments/v1/aws/organizations/{managementAccountId}` for this organization, so callers can sum totals across AWS organizations without making an extra get-by-id call per organization. Lifetime is bounded by each AWS organization's PerfectScale for Commitments onboarding start date.
       properties:
         compute:
           $ref: "#/components/schemas/AwsSavingsTotals"
@@ -6041,7 +7505,7 @@ components:
           $ref: "#/components/schemas/AwsSavingsTotals"
     AwsOrganizationStats30d:
       type: object
-      description: "Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type."
+      description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by SP type.
       properties:
         compute:
           $ref: "#/components/schemas/Stats30dSummary"
@@ -6052,7 +7516,7 @@ components:
       required:
         - ytd
         - lifetime
-      description: "Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated."
+      description: Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
       properties:
         ytd:
           allOf:
@@ -6182,6 +7646,7 @@ components:
       additionalProperties: false
       required:
         - serviceCharges
+        - marketplaceCharges
         - discounts
         - tax
         - supportCharges
@@ -6192,6 +7657,8 @@ components:
         - total
       properties:
         serviceCharges:
+          $ref: "#/components/schemas/BillingExplainerCostLineItems"
+        marketplaceCharges:
           $ref: "#/components/schemas/BillingExplainerCostLineItems"
         discounts:
           $ref: "#/components/schemas/BillingExplainerCostLineItems"
@@ -8126,6 +9593,187 @@ components:
           type: number
           format: double
           description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+    CommitmentPolicy:
+      type: object
+      description: |-
+        A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
+        `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
+        inventory coverage fields.
+      required:
+        - id
+        - name
+        - isBuiltIn
+        - targetCoverage
+        - lookbackDays
+        - ladderStepPercent
+        - ladderIntervalDays
+        - bootstrapPercent
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
+        name:
+          type: string
+          description: Display name. Built-in names are fixed; custom names are chosen by the tenant.
+          example: Balanced
+        isBuiltIn:
+          type: boolean
+          description: "`true` for the three immutable built-in policies, `false` for tenant-defined policies."
+        targetCoverage:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Share of the optimal commitment the engine aims to purchase, as a percentage.
+          example: 80
+        lookbackDays:
+          type: integer
+          minimum: 1
+          description: Days of historical usage analyzed to build the recommendation baseline.
+          example: 60
+        ladderStepPercent:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Size of each incremental laddering step, as a percentage of the target commitment.
+          example: 10
+        ladderIntervalDays:
+          type: integer
+          minimum: 1
+          description: Days between consecutive laddering steps.
+          example: 7
+        bootstrapPercent:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Share of the target commitment purchased in the first (immediate) step, as a percentage.
+          example: 35
+    CommitmentPolicyAssignment:
+      type: object
+      description: One account × product-line scope a policy is explicitly assigned to, on either cloud.
+      required:
+        - cloud
+        - accountId
+        - service
+        - region
+      properties:
+        cloud:
+          type: string
+          enum:
+            - aws
+            - gcp
+          description: Cloud the scope belongs to.
+          x-enumDescriptions:
+            aws: An AWS organization (management account).
+            gcp: A GCP billing account.
+        accountId:
+          type: string
+          description: AWS management account id or GCP billing account id, matching `managementAccountId` / `billingAccountId` elsewhere in this API.
+          example: "123456789012"
+        service:
+          type: string
+          enum:
+            - compute
+            - database
+            - cloud_sql
+          description: Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only.
+        region:
+          type: string
+          pattern: ^(global|[a-z]+(_[a-z0-9]+)+)$
+          description: Region scope in `lower_snake_case` wire form (for example `us_east1`) for product lines assigned per region (GCP `cloud_sql`). `null` for every scope assigned per account (all AWS scopes, GCP `compute`); the settings endpoints report the same scope as `global`.
+          nullable: true
+          example: us_east1
+    CommitmentPolicyDetail:
+      type: object
+      required:
+        - id
+        - name
+        - isBuiltIn
+        - targetCoverage
+        - lookbackDays
+        - ladderStepPercent
+        - ladderIntervalDays
+        - bootstrapPercent
+        - createdTime
+        - updatedTime
+        - assignments
+      properties:
+        id:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
+        name:
+          type: string
+          description: Display name. Built-in names are fixed; custom names are chosen by the tenant.
+          example: Balanced
+        isBuiltIn:
+          type: boolean
+          description: "`true` for the three immutable built-in policies, `false` for tenant-defined policies."
+        targetCoverage:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Share of the optimal commitment the engine aims to purchase, as a percentage.
+          example: 80
+        lookbackDays:
+          type: integer
+          minimum: 1
+          description: Days of historical usage analyzed to build the recommendation baseline.
+          example: 60
+        ladderStepPercent:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Size of each incremental laddering step, as a percentage of the target commitment.
+          example: 10
+        ladderIntervalDays:
+          type: integer
+          minimum: 1
+          description: Days between consecutive laddering steps.
+          example: 7
+        bootstrapPercent:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 100
+          description: Share of the target commitment purchased in the first (immediate) step, as a percentage.
+          example: 35
+        createdTime:
+          type: string
+          format: date-time
+          description: When the policy was created, RFC 3339 UTC. `null` if unknown.
+          nullable: true
+          example: "2026-08-20T09:12:31Z"
+        updatedTime:
+          type: string
+          format: date-time
+          description: When the policy was last written, RFC 3339 UTC. For custom policies this is the last edit; for built-in policies it also advances when DoiT re-publishes the catalog, even if the parameters did not change. `null` if unknown.
+          nullable: true
+          example: "2026-08-20T09:12:31Z"
+        assignments:
+          type: array
+          description: Scopes explicitly assigned to this policy across AWS and GCP, sorted by `cloud`, `accountId`, `service`, `region`. Empty when the policy is not assigned anywhere.
+          items:
+            $ref: "#/components/schemas/CommitmentPolicyAssignment"
+      description: |-
+        A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
+        `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
+        inventory coverage fields.
+    CommitmentPolicyId:
+      type: string
+      description: |-
+        ID of a commitment policy: either one of the built-in policies — `conservative` (lower
+        coverage target, ~65%), `balanced` (moderate, ~80%), `max_savings` (aggressive, ~90%) — or the
+        ID of a policy the customer defined in the DoiT Console. One catalog is shared by AWS and GCP,
+        and the same policy may be assigned to any AWS organization or GCP billing account product
+        line. Custom policies make this an open list, so it is not an enum; treat the value as an
+        opaque identifier and use the commitment-policies endpoint to resolve it.
+      example: balanced
     CommitmentTerm:
       type: string
       enum:
@@ -8388,6 +10036,133 @@ components:
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
           default: root
           example: root
+    CreateRoleRequest:
+      type: object
+      description: Request body to create a custom role.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          not:
+            type: string
+            pattern: "^[\t-\r \N   - \L\P  　]|[\t-\r \N   - \L\P  　]$"
+          description: The name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles.
+        description:
+          type: string
+          description: The description of the role.
+        permissions:
+          type: array
+          uniqueItems: true
+          description: Permission IDs to assign to the role, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. Omission or an empty array creates a role without permissions.
+          items:
+            type: string
+    CreateServiceAccountRequest:
+      type: object
+      description: Fields of a new service account.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name, unique among the customer's service accounts. Leading or trailing whitespace returns `400`.
+          example: terraform-ci
+        description:
+          type: string
+          description: Free-text description.
+          example: Manages DoiT resources from CI
+        permissions:
+          type: array
+          description: Platform permission names in camelCase, for example `cloudAnalyticsReadOnly`. An unknown name returns `422`.
+          items:
+            type: string
+    CreateServiceAccountTokenRequest:
+      type: object
+      description: Fields of a new API token.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name, unique among the service account's tokens. Leading or trailing whitespace returns `400`.
+          example: ci-pipeline-prod
+        expiresTime:
+          type: string
+          format: date-time
+          description: When the token should stop authenticating. Omit to let the server set the default expiry.
+          example: "2027-09-01T08:00:00Z"
+    CreateServiceAccountTokenResponse:
+      description: A newly created API token, together with the credential that authenticates as it.
+      type: object
+      required:
+        - id
+        - serviceAccountId
+        - customerId
+        - name
+        - state
+        - createTime
+        - expiresTime
+        - lastUsedTime
+        - accessToken
+      properties:
+        id:
+          type: string
+          nullable: true
+          readOnly: true
+          description: API token ID. `null` only on a dry-run create.
+          example: Mr0sN7pQ4tU2vW5xY8zC
+        serviceAccountId:
+          type: string
+          readOnly: true
+          description: ID of the service account that owns the token.
+          example: Lq3nO9rM5wS2tU0xY4zA
+        customerId:
+          type: string
+          readOnly: true
+          description: ID of the customer whose service account the token belongs to.
+          example: Kp2mN8qL4vR0sT1wX3yZ
+        name:
+          type: string
+          description: Name, unique among the service account's tokens.
+          example: ci-pipeline-prod
+        state:
+          type: string
+          enum:
+            - active
+            - disabled
+          description: "The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set."
+          example: active
+        createTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the token was created. `null` only on a dry-run create.
+          example: "2026-09-01T08:00:00Z"
+        expiresTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the token stops authenticating. `null` when it does not expire.
+          example: "2027-09-01T08:00:00Z"
+        lastUsedTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the token last authenticated a request. `null` until it is first used.
+          example: "2026-09-20T14:31:00Z"
+        accessToken:
+          type: string
+          format: password
+          readOnly: true
+          description: The token credential, and the secret that authenticates as this service account. Returned only by this operation and never retrievable again, so store it somewhere safe on receipt; an empty string on a dry-run create. Treat it like a password.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -8533,6 +10308,14 @@ components:
         message:
           type: string
           example: "Dataset deleted successfully"
+    DeleteDatahubDataset202Response:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "Deletion accepted for processing"
     DeleteUserResponse:
       type: object
       description: Response confirming user deletion.
@@ -8729,6 +10512,31 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: "Deprecated. Use allocation_rule."
         attribution_group: "Deprecated. Use allocation."
+    EligibleSpendDataPoint:
+      type: object
+      description: One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.
+      properties:
+        usageTime:
+          type: string
+          format: date-time
+          description: Start of the time bucket for this data point (UTC).
+          nullable: true
+        totalUsage:
+          type: number
+          format: double
+          description: Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities.
+        minUsage:
+          type: number
+          format: double
+          description: Minimum eligible usage ($/h) observed in the bucket (day/week/month views).
+        maxUsage:
+          type: number
+          format: double
+          description: Maximum eligible usage ($/h) observed in the bucket (day/week/month views).
+        medianUsage:
+          type: number
+          format: double
+          description: Median eligible usage ($/h) observed in the bucket (day/week/month views).
     Error:
       type: object
       description: Standard error response structure.
@@ -8935,7 +10743,7 @@ components:
             type: basic
             value: cost
           changeType: percentage
-          operator: ">="
+          operator: gte
           values:
             - 50
         aggregation: total
@@ -9088,8 +10896,9 @@ components:
           $ref: "#/components/schemas/ExternalMetric"
         operator:
           description: |-
-            Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-            `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+            Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+            Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+            `nb` (Not Between), `e` (Equals), `ne` (Not Equals).
           type: string
           enum:
             - gt
@@ -9229,7 +11038,7 @@ components:
     ExternalLimitByChange:
       description: |-
         Limit by change filter. A report may configure at most two of
-        `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+        `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
       type: object
       required:
         - metric
@@ -9247,19 +11056,22 @@ components:
             - absolute
         operator:
           type: string
-          description: Comparison operator for period-over-period deltas.
+          description: |-
+            Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+            (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+            (Between), `nb` (Not Between).
           enum:
-            - ">"
-            - ">="
-            - "<"
-            - "<="
-            - between
-            - not_between
+            - gt
+            - gte
+            - lt
+            - lte
+            - b
+            - nb
         values:
           type: array
           description: |-
-            Threshold value(s). Unary operators use one entry; `between` and `not_between`
-            require two ordered entries.
+            Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range
+            operators (`b`, `nb`) require two ordered entries.
           items:
             type: number
             format: double
@@ -9271,7 +11083,7 @@ components:
           type: basic
           value: cost
         changeType: percentage
-        operator: ">="
+        operator: gte
         values:
           - 50
         includeIncompleteData: false
@@ -9553,8 +11365,10 @@ components:
           nullable: true
           example: USD
         onboardingStatus:
-          allOf:
-            - $ref: "#/components/schemas/GcpOnboardingStatus"
+          type: array
+          description: PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+          items:
+            $ref: "#/components/schemas/GcpOnboardingStatusByService"
         cudExportHealthy:
           type: boolean
           description: "`true` if the BigQuery CUD export is healthy and up to date."
@@ -9565,13 +11379,15 @@ components:
           description: Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
           nullable: true
         stats30d:
-          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-          allOf:
-            - $ref: '#/components/schemas/GcpBillingAccountStats30d'
+          type: array
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+          items:
+            $ref: "#/components/schemas/GcpStats30dByService"
         savingsTotals:
-          description: Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-          allOf:
-            - $ref: '#/components/schemas/GcpBillingAccountSavingsTotals'
+          type: array
+          description: Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+          items:
+            $ref: "#/components/schemas/GcpSavingsTotalsByService"
     GcpBillingAccountDetail:
       type: object
       required:
@@ -9591,8 +11407,10 @@ components:
           nullable: true
           example: USD
         onboardingStatus:
-          allOf:
-            - $ref: "#/components/schemas/GcpOnboardingStatus"
+          type: array
+          description: PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+          items:
+            $ref: "#/components/schemas/GcpOnboardingStatusByService"
         cudExportHealthy:
           type: boolean
           description: "`true` if the BigQuery CUD export is healthy and up to date."
@@ -9603,58 +11421,46 @@ components:
           description: Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
           nullable: true
         stats30d:
-          description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-          allOf:
-            - $ref: '#/components/schemas/GcpBillingAccountStats30d'
+          type: array
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+          items:
+            $ref: "#/components/schemas/GcpStats30dByService"
         savingsTotals:
-          description: Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-          allOf:
-            - $ref: '#/components/schemas/GcpBillingAccountSavingsTotals'
+          type: array
+          description: Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+          items:
+            $ref: "#/components/schemas/GcpSavingsTotalsByService"
         monthlyStats:
-          description: Trailing 6 calendar months of billing account stats, grouped by product line.
-          allOf:
-            - $ref: '#/components/schemas/GcpBillingAccountDetailAllOf1MonthlyStats'
+          type: array
+          description: Trailing 6 calendar months of billing account stats per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+          items:
+            $ref: "#/components/schemas/GcpMonthlyStatsByService"
         dailyCoverage:
-          description: Trailing 30 days of CUD coverage, grouped by product line.
-          allOf:
-            - $ref: '#/components/schemas/GcpBillingAccountDetailAllOf1DailyCoverage'
-    GcpBillingAccountDetailAllOf1DailyCoverage:
-      type: object
-      description: Trailing 30 days of CUD coverage, grouped by product line.
-      properties:
-        compute:
           type: array
+          description: Trailing 30 days of CUD coverage per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has coverage data.
           items:
-            $ref: "#/components/schemas/GcpDailyCoverageEntry"
-    GcpBillingAccountDetailAllOf1MonthlyStats:
-      type: object
-      description: Trailing 6 calendar months of billing account stats, grouped by product line.
-      properties:
-        compute:
-          type: array
-          items:
-            $ref: "#/components/schemas/GcpMonthlyStatsEntry"
-    GcpBillingAccountSavingsTotals:
-      type: object
-      description: Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-      properties:
-        compute:
-          $ref: "#/components/schemas/GcpSavingsTotals"
+            $ref: "#/components/schemas/GcpDailyCoverageByService"
     GcpBillingAccountServiceSettings:
       type: object
       required:
         - service
+        - region
         - settings
       properties:
         service:
           type: string
           enum:
             - compute
+            - cloud_sql
           description: Product line these settings apply to.
+        region:
+          allOf:
+            - $ref: "#/components/schemas/GcpRegion"
+          description: Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
         settings:
           allOf:
             - $ref: "#/components/schemas/GcpBillingAccountSettings"
-          description: Commitment settings for this product line.
+          description: Commitment settings for this product line and region.
     GcpBillingAccountSettings:
       type: object
       description: Recommendation and automation engine settings for one product line on a GCP billing account.
@@ -9692,8 +11498,8 @@ components:
           description: Preferred commitment term length for new purchases.
         policy:
           allOf:
-            - $ref: "#/components/schemas/Policy"
-          description: Coverage target policy for recommendations and purchases.
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy for recommendations and purchases (built-in or customer-defined).
     GcpBillingAccountSettingsItem:
       type: object
       required:
@@ -9708,18 +11514,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GcpBillingAccountServiceSettings"
-          description: Settings for each product line activated on this billing account.
-    GcpBillingAccountStats30d:
+          description: Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically.
+    GcpDailyCoverageByService:
       type: object
-      description: Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
+      description: Trailing 30 days of CUD coverage for one product line. `compute` entries carry every cost property except `cloudSql`; `cloud_sql` entries carry only `cloudSql` and `onDemand`, so each coverage sub-type appears exactly once across the array.
+      required:
+        - service
+        - days
       properties:
-        compute:
-          $ref: "#/components/schemas/Stats30dSummary"
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Product line this coverage series belongs to.
+        days:
+          type: array
+          description: Daily coverage rows, sorted ascending by `date`.
+          items:
+            $ref: "#/components/schemas/GcpDailyCoverageEntry"
     GcpDailyCoverageEntry:
       type: object
       required:
         - date
-      description: One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage sub-type had no spend for the day.
+      description: One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Which cost properties are present depends on the product line of the enclosing entry — `compute` rows carry every property except `cloudSql`; `cloud_sql` rows carry only `cloudSql` and `onDemand`. A property that belongs to the product line is present even when the amount is `0.00`.
       properties:
         date:
           type: string
@@ -9777,6 +11595,24 @@ components:
           allOf:
             - $ref: "#/components/schemas/Money"
           description: On-demand spend not covered by any CUD for the day.
+    GcpMonthlyStatsByService:
+      type: object
+      description: Trailing 6 calendar months of billing account stats for one product line.
+      required:
+        - service
+        - months
+      properties:
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Product line these monthly stats belong to.
+        months:
+          type: array
+          description: Monthly aggregates, sorted ascending by `month`.
+          items:
+            $ref: "#/components/schemas/GcpMonthlyStatsEntry"
     GcpMonthlyStatsEntry:
       type: object
       required:
@@ -9803,16 +11639,12 @@ components:
           allOf:
             - $ref: "#/components/schemas/Money"
           description: Actual cost after commitments for the month.
-    GcpOnboardingStatus:
-      type: object
-      description: PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
-      properties:
-        compute:
-          $ref: "#/components/schemas/GcpOnboardingStatusEntry"
-    GcpOnboardingStatusEntry:
+    GcpOnboardingStatusByService:
+      description: Onboarding status entry for one product line. When `done`, inventory and recommendations for that commitment type are available.
       type: object
       required:
         - status
+        - service
       properties:
         status:
           type: string
@@ -9832,6 +11664,229 @@ components:
           format: date-time
           description: When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
           nullable: true
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Product line this onboarding status belongs to.
+    GcpPlannedPurchase:
+      type: object
+      description: Laddering projection for one product-line and region scope.
+      required:
+        - region
+        - status
+      properties:
+        region:
+          allOf:
+            - $ref: "#/components/schemas/GcpRegion"
+          description: Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
+        status:
+          type: string
+          enum:
+            - valid
+            - expired
+          description: Projection lifecycle state. When the stored document has no `status`, the server returns `valid`.
+          x-enumDescriptions:
+            valid: Projection is current for the active planning cycle.
+            expired: Planning cycle has lapsed; wait for the scheduler to produce a new projection.
+        purchaseApprovalStatus:
+          type: string
+          enum:
+            - pending_approval
+            - approved
+            - paused
+          description: Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
+          x-enumDescriptions:
+            pending_approval: Approve the commitment ceiling on the Planned Purchases tab in the DoiT Console before purchases can run.
+            approved: Purchases may run up to the approved commitment ceiling.
+            paused: Purchases are paused (Pause Purchases on Planned Purchases); see `pauseNote` for the reason.
+        pauseNote:
+          type: string
+          description: Customer-visible pause reason, when purchases are paused.
+          nullable: true
+        requiresApproval:
+          type: boolean
+          description: |-
+            `true` when the projection as a whole requires customer approval before the planner
+            stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
+            and/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level
+            `steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling.
+        wowViolation:
+          type: boolean
+          description: "`true` when week-over-week eligible spend dropped beyond the allowed threshold."
+        profile:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking.
+        term:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentTerm"
+          description: Commitment term used for projected purchases.
+        finalCommitment:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1.
+        weeksToTarget:
+          type: integer
+          description: Number of ladder steps remaining to reach the target commitment.
+          nullable: true
+        planningCycleStartDate:
+          type: string
+          format: date
+          description: First day of the planning cycle for this projection. Null when not set.
+          nullable: true
+        planningCycleEndDate:
+          type: string
+          format: date
+          description: Last day of the planning cycle for this projection. Null when not set.
+          nullable: true
+        estimatedSavings:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Total estimated savings from the underlying recommendation. Currency is `USD` in v1.
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpPurchasePlanStep"
+          description: |-
+            Weekly ladder steps from the projection output. Omitted when the stored document has
+            no `output` section.
+    GcpPlannedPurchaseByService:
+      type: object
+      description: Planned purchase projections for one PS4C product line.
+      required:
+        - service
+        - billingAccountId
+        - regions
+      properties:
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Commitment type this projection group belongs to.
+          x-enumDescriptions:
+            compute: Compute commitment type (CUDs).
+            cloud_sql: Cloud SQL commitment type (CUDs).
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+        regions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpPlannedPurchase"
+          description: |-
+            Per-region projection entries for this service, sorted with `global` first, then
+            remaining regions alphabetically.
+    GcpPurchasePlanStep:
+      type: object
+      description: A single weekly ladder step within a projection.
+      required:
+        - order
+        - scheduledDate
+        - purchaseAmount
+        - cumulativeCommitment
+        - estimatedSavings
+        - isBootstrap
+        - isFinal
+        - requiresApproval
+      properties:
+        order:
+          type: integer
+          description: Step sequence number (1-based) within the ladder.
+        scheduledDate:
+          type: string
+          format: date
+          description: Calendar date (UTC) when this purchase step is scheduled to execute, with format YYYY-MM-DD.
+        purchaseAmount:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Hourly commitment to purchase on this step.
+        cumulativeCommitment:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Total hourly commitment after this step executes.
+        estimatedSavings:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: |-
+            This step's proportional share of the projection-level `estimatedSavings`
+            (allocated by purchase amount). Zero when the recommendation total is unavailable.
+        isBootstrap:
+          type: boolean
+          description: "`true` if this is the initial bootstrap purchase."
+        isFinal:
+          type: boolean
+          description: "`true` if this step reaches the target commitment."
+        requiresApproval:
+          type: boolean
+          description: |-
+            `true` when this step's `cumulativeCommitment` exceeds the customer-approved
+            commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
+            ladder even when the projection-level `purchaseApprovalStatus` is `approved`.
+    GcpRecommendation:
+      type: object
+      description: A CUD purchase recommendation for a (service, region) scope.
+      properties:
+        policy:
+          allOf:
+            - $ref: "#/components/schemas/CommitmentPolicyId"
+          description: Coverage target policy configured for this product line and region scope (built-in or customer-defined).
+        region:
+          allOf:
+            - $ref: "#/components/schemas/GcpRegion"
+          description: Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: PS4C product line (`gcp_service`) this recommendation belongs to.
+        currentCommitment:
+          type: number
+          format: double
+          description: Active hourly commitment ($/h) currently applied to this billing account and product line, including commitments already purchased.
+        recommendedCommitment:
+          type: number
+          format: double
+          description: Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk.
+        potentialAdditionalSavings:
+          type: number
+          format: double
+          description: Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`.
+        estimatedAverageCoverage:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields.
+    GcpRecommendationWithEligibleSpend:
+      type: object
+      description: A single GCP recommendation paired with its eligible-spend usage series.
+      properties:
+        estimatedEquivalentRecommendedCommitment:
+          type: number
+          format: double
+          description: Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the trailing window multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
+        recommendation:
+          allOf:
+            - $ref: "#/components/schemas/GcpRecommendation"
+          description: Recommended commitment metrics for the requested (service, region) scope.
+        eligibleUsage:
+          type: array
+          description: Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window.
+          items:
+            $ref: "#/components/schemas/EligibleSpendDataPoint"
+    GcpRegion:
+      type: string
+      pattern: ^(global|[a-z]+(_[a-z0-9]+)+)$
+      description: |-
+        GCP region scope in the DCI `lower_snake_case` wire form (for example `us_east1`), or the
+        literal `global` for cross-region scopes. This is not the raw provider spelling (`us-east1`);
+        the same pattern applies to the `region` query parameter. Regions are discovery-driven, so the
+        list is open rather than an enum.
+      example: us_east1
     GcpResourceCud:
       type: object
       description: |-
@@ -9949,12 +12004,13 @@ components:
         resourceKind:
           type: string
           example: VCPU
-    GcpSavingsTotals:
+    GcpSavingsTotalsByService:
+      description: Year-to-date and lifetime realized savings for one product line.
       type: object
       required:
         - ytd
         - lifetime
-      description: Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
+        - service
       properties:
         ytd:
           allOf:
@@ -9964,6 +12020,117 @@ components:
           allOf:
             - $ref: "#/components/schemas/Money"
           description: Lifetime realized savings since onboarding.
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Product line these savings totals belong to.
+    GcpSpendCud:
+      type: object
+      description: |-
+        GCP spend-based Committed Use Discount. Mirrors the stored provider document verbatim
+        (raw values, e.g. `state` "Active", `term` "P1Y", `commitmentAmount` as a plain double).
+      required:
+        - cudId
+        - cudProductName
+        - state
+      properties:
+        commitmentAmount:
+          type: number
+          format: double
+          description: Hourly commitment amount.
+          example: 0.01
+        commitmentUnit:
+          type: string
+          description: Unit for `commitmentAmount`.
+          example: $/hr
+        consumptionModelId:
+          type: string
+          description: Provider-assigned ID of the pricing model this CUD's discount is applied through.
+          example: D97B-0795-975B
+        cudId:
+          type: string
+          description: CUD ID (provider-assigned).
+        cudProductId:
+          type: string
+          description: Provider-assigned ID of the product family (`cudProductName`) this CUD applies to.
+        cudProductName:
+          type: string
+          description: Product family name (e.g. `Compute Flexible`, `Cloud Run`, `BigQuery`).
+          example: Compute Flexible
+        cudProductType:
+          type: string
+          description: Raw provider CUD type label.
+          example: Spend-Based
+        endTime:
+          type: string
+          format: date-time
+          description: When the CUD term ends. Null when unknown.
+          nullable: true
+        entitlementScope:
+          type: string
+          description: Provider resource path this CUD's discount is scoped to (typically the billing account).
+          example: billingAccounts/00BECC-389F90-CDF2E8
+        exportDate:
+          type: string
+          format: date-time
+          description: Timestamp of the BigQuery CUD export row this item was read from.
+        lastMonthSavings:
+          type: number
+          format: double
+          description: Realized savings in the last full calendar month.
+        lastMonthUtilization:
+          type: number
+          format: double
+          description: Utilization in the last full calendar month, as a fraction from 0 to 1.
+        name:
+          type: string
+          description: Provider commitment display name.
+          example: my-commitment1
+        region:
+          type: string
+          description: Region in raw provider form (`us-central1`), or `global` for cross-region spend CUDs. Not the `lower_snake_case` wire form used by the `region` query parameter.
+          example: global
+        startTime:
+          type: string
+          format: date-time
+          description: When the CUD term started. Null when unknown.
+          nullable: true
+        state:
+          type: string
+          description: Raw provider commitment state.
+          example: Active
+        subType:
+          type: string
+          description: Normalized coverage sub-type token (`UPPER_SNAKE`) identifying the product family within the product line.
+          example: COMPUTE_FLEXIBLE
+        term:
+          type: string
+          description: Raw provider commitment term (ISO-8601 duration).
+          example: P1Y
+    GcpStats30dByService:
+      description: Trailing 30-day aggregate metrics for one product line.
+      type: object
+      required:
+        - service
+      properties:
+        esr:
+          type: number
+          format: double
+          description: Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
+          nullable: true
+          example: 0.187
+        savings:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Total savings realized over the last 30 days from active commitments (USD).
+        service:
+          type: string
+          enum:
+            - compute
+            - cloud_sql
+          description: Product line these metrics belong to.
     GeographicAccessCountriesResponse:
       type: object
       additionalProperties: false
@@ -9993,6 +12160,7 @@ components:
     GetAnomaly200Response:
       required:
         - attribution
+        - allocations
         - billingAccount
         - costOfAnomaly
         - platform
@@ -10004,11 +12172,20 @@ components:
         - top3SKUs
         - monitorLevel
         - notifications
+        - initialNotifications
       type: object
       properties:
         attribution:
           type: string
-          description: Attribution ID
+          deprecated: true
+          description: >-
+            Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+        allocations:
+          type: array
+          description: >-
+            Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+          items:
+            $ref: '#/components/schemas/GetAnomaly200ResponseAllocationsItem'
         billingAccount:
           type: string
           description: Billing account ID
@@ -10102,8 +12279,26 @@ components:
           nullable: true
         notifications:
           $ref: "#/components/schemas/NotificationEventArray"
+        initialNotifications:
+          type: array
+          description: >-
+            The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+          items:
+            $ref: "#/components/schemas/NotificationEvent"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
+    GetAnomaly200ResponseAllocationsItem:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Allocation ID. Use it with the Allocations API to read the allocation.
+        name:
+          type: string
+          description: Allocation name.
     GetAnomalyExplanation200Response:
       required:
         - facts
@@ -10230,6 +12425,12 @@ components:
             The URL of the report in DoiT console. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
         result:
           $ref: '#/components/schemas/GetAsyncOperationResults200ResponseResult'
+        fileOutput:
+          type: string
+          format: uri
+          description: >-
+            Signed URL the rendered file can be downloaded from. Present only when the fileOutput parameter was supplied and the file was rendered. Never a variant of the response — the result property above is returned either way, so a render that fails leaves result intact and omits fileOutput rather than failing the call. The URL is valid for 7 days; request the endpoint again for a fresh one.
+          example: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
     GetAsyncOperationResults200ResponseResult:
       type: object
       properties:
@@ -10450,6 +12651,15 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.)
           example: "A AND B"
+        valueExtraction:
+          $ref: "#/components/schemas/AllocationValueExtraction"
+        validityPeriods:
+          type: array
+          nullable: true
+          description: >-
+            Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+          items:
+            $ref: "#/components/schemas/AllocationRulePeriod"
     HexColor:
       type: string
       description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
@@ -10712,7 +12922,7 @@ components:
     Limit:
       type: object
       description: |-
-        To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+        To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
       required:
         - metric
       properties:
@@ -10820,6 +13030,25 @@ components:
           format: int64
         riskAggregations:
           $ref: "#/components/schemas/RiskAggregations"
+    ListCommitmentPolicies200Response:
+      type: object
+      required:
+        - items
+        - pageToken
+        - rowCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommitmentPolicy"
+        pageToken:
+          type: string
+          description: Opaque cursor for the next page. `null` when this is the last page.
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Total number of policies available to the tenant across all pages.
     ListCustomThemes200Response:
       type: object
       properties:
@@ -10916,6 +13145,40 @@ components:
           type: integer
           format: int64
           description: Number of items returned in this page.
+    ListGcpPlannedPurchases200Response:
+      type: object
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpPlannedPurchaseByService"
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Number of service groups in `items` for this response.
+    ListGcpRecommendations200Response:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpRecommendation"
+        pageToken:
+          type: string
+          description: Reserved for pagination. Currently always `null`.
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Number of recommendations returned in `items`.
     ListGcpResourceCuds200Response:
       type: object
       required:
@@ -10925,6 +13188,23 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GcpResourceCud"
+        pageToken:
+          type: string
+          nullable: true
+        rowCount:
+          type: integer
+          format: int64
+          description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+          nullable: true
+    ListGcpSpendCuds200Response:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GcpSpendCud"
         pageToken:
           type: string
           nullable: true
@@ -11009,6 +13289,9 @@ components:
     ListRoles200Response:
       type: object
       properties:
+        rowCount:
+          type: integer
+          description: Number of roles returned.
         roles:
           type: array
           items:
@@ -11105,17 +13388,6 @@ components:
           type: string
         id:
           type: string
-    Policy:
-      type: string
-      enum:
-        - conservative
-        - balanced
-        - max_savings
-      description: "Coverage target policy that balances savings against underutilization risk. Used by recommendations and planned-purchase projections."
-      x-enumDescriptions:
-        conservative: Lower coverage target (~65%); favors stable usage and lower underutilization risk.
-        balanced: Moderate coverage target (~80%); default balance of savings and buffer.
-        max_savings: Aggressive coverage target (~90%); highest savings potential with a smaller buffer.
     ProblemDetails:
       type: object
       required:
@@ -11322,6 +13594,14 @@ components:
     Role:
       type: object
       description: Definition and permissions assigned to a role.
+      required:
+        - id
+        - name
+        - type
+        - description
+        - customer
+        - permissions
+        - childTenantEligible
       properties:
         id:
           type: string
@@ -11331,15 +13611,22 @@ components:
           description: The name of the role.
         type:
           type: string
+          enum: [preset, custom]
           description: The type of the role (preset or custom).
+        description:
+          type: string
+          description: The description of the role. An empty string when no description is set.
         customer:
           type: string
-          description: The customer ID if this is a custom role.
+          description: The customer ID if this is a custom role. An empty string for a preset role.
         permissions:
           type: array
-          description: List of permission IDs assigned to the role.
+          description: Permission IDs in stored order. An empty array when no permissions are assigned.
           items:
             type: string
+        childTenantEligible:
+          type: boolean
+          description: Whether the owning tenant made this role available as a child tenant role.
     SchemaField:
       type: object
       description: Schema of a report result column.
@@ -11396,6 +13683,167 @@ components:
           type: integer
           description: The number of committed seats. Applies to annual commitment plans.
           format: int64
+    ServiceAccount:
+      type: object
+      description: A non-human identity owned by a customer. Its API tokens authenticate with exactly the permissions listed here.
+      required:
+        - id
+        - customerId
+        - name
+        - description
+        - permissions
+        - createdBy
+        - createdByEmail
+        - createdByUserId
+        - createTime
+        - updateTime
+        - etag
+      properties:
+        id:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Service account ID. `null` only on a dry-run create.
+          example: Lq3nO9rM5wS2tU0xY4zA
+        customerId:
+          type: string
+          readOnly: true
+          description: ID of the customer that owns the service account.
+          example: Kp2mN8qL4vR0sT1wX3yZ
+        name:
+          type: string
+          description: Name, unique among the customer's service accounts.
+        description:
+          type: string
+          description: Free-text description.
+        permissions:
+          type: array
+          description: Platform permission names in camelCase, as shown in the DoiT console role editor.
+          items:
+            type: string
+        createdBy:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Display name of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+        createdByEmail:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Email of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+        createdByUserId:
+          type: string
+          nullable: true
+          readOnly: true
+          description: ID of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+        createTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the service account was created.
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the service account was last changed.
+        etag:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Current version of the service account. Send it in `If-Match` to update or delete.
+    ServiceAccountToken:
+      type: object
+      description: An API token of a service account. It authenticates with the service account's permissions, and carries no secret material after the create response.
+      required:
+        - id
+        - serviceAccountId
+        - customerId
+        - name
+        - state
+        - createTime
+        - expiresTime
+        - lastUsedTime
+      properties:
+        id:
+          type: string
+          nullable: true
+          readOnly: true
+          description: API token ID. `null` only on a dry-run create.
+          example: Mr0sN7pQ4tU2vW5xY8zC
+        serviceAccountId:
+          type: string
+          readOnly: true
+          description: ID of the service account that owns the token.
+          example: Lq3nO9rM5wS2tU0xY4zA
+        customerId:
+          type: string
+          readOnly: true
+          description: ID of the customer whose service account the token belongs to.
+          example: Kp2mN8qL4vR0sT1wX3yZ
+        name:
+          type: string
+          description: Name, unique among the service account's tokens.
+          example: ci-pipeline-prod
+        state:
+          type: string
+          enum:
+            - active
+            - disabled
+          description: "The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set."
+          example: active
+        createTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the token was created. `null` only on a dry-run create.
+          example: "2026-09-01T08:00:00Z"
+        expiresTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the token stops authenticating. `null` when it does not expire.
+          example: "2027-09-01T08:00:00Z"
+        lastUsedTime:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the token last authenticated a request. `null` until it is first used.
+          example: "2026-09-20T14:31:00Z"
+    ServiceAccountTokensResponse:
+      type: object
+      description: API tokens of a service account, at most 10.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          maxItems: 10
+          description: The service account's non-deleted API tokens.
+          items:
+            $ref: "#/components/schemas/ServiceAccountToken"
+          example:
+            - id: Mr0sN7pQ4tU2vW5xY8zC
+              serviceAccountId: Lq3nO9rM5wS2tU0xY4zA
+              customerId: Kp2mN8qL4vR0sT1wX3yZ
+              name: ci-pipeline-prod
+              state: active
+              createTime: "2026-09-01T08:00:00Z"
+              expiresTime: "2027-09-01T08:00:00Z"
+              lastUsedTime: "2026-09-20T14:31:00Z"
+    ServiceAccountsResponse:
+      type: object
+      description: Service accounts owned by the authenticated customer.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceAccount"
     ServiceQuota:
       type: object
       required:
@@ -11533,13 +13981,13 @@ components:
         esr:
           type: number
           format: double
-          description: "Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available."
+          description: Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
           nullable: true
           example: 0.187
         savings:
           allOf:
             - $ref: "#/components/schemas/Money"
-          description: "Total savings realized over the last 30 days from active commitments (USD)."
+          description: Total savings realized over the last 30 days from active commitments (USD).
     Subscription:
       type: object
       description: Subscription details for a G Suite or Office 365 asset.
@@ -12133,6 +14581,61 @@ components:
             - editor
             - viewer
           nullable: true
+    UpdateRoleRequest:
+      type: object
+      description: Fields allowed when updating a custom role. At least one field is required.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          not:
+            type: string
+            pattern: "^[\t-\r \N   - \L\P  　]|[\t-\r \N   - \L\P  　]$"
+          description: The new name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles. Omission leaves the name unchanged.
+        description:
+          type: string
+          description: The new description of the role. An empty string clears it; omission leaves it unchanged.
+        permissions:
+          type: array
+          uniqueItems: true
+          description: Permission IDs that replace the role's current permissions, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. An empty array clears all permissions; omission leaves them unchanged.
+          items:
+            type: string
+    UpdateServiceAccountRequest:
+      type: object
+      description: Fields to change on a service account, as a JSON Merge Patch document.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New name, unique among the customer's service accounts. Leading or trailing whitespace returns `400`.
+          example: terraform-ci
+        description:
+          type: string
+          nullable: true
+          description: New free-text description. `null` leaves it unchanged; an explicit empty string clears it.
+          example: Manages DoiT resources from CI
+        permissions:
+          type: array
+          nullable: true
+          description: Replaces the whole permission list. An unknown name returns `422`.
+          items:
+            type: string
+    UpdateServiceAccountTokenRequest:
+      type: object
+      description: The state to move an API token to.
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          enum:
+            - active
+            - disabled
+          description: "`active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`."
+          example: disabled
     UpdateUserRequest:
       type: object
       description: Fields allowed when updating an existing user.
@@ -12321,6 +14824,152 @@ components:
         - type: string
         - type: number
         - type: integer
+    Widget:
+      type: object
+      description: Widget metadata and its latest precomputed cached result.
+      required:
+        - id
+        - alias
+        - type
+        - kind
+        - generateTime
+        - result
+      properties:
+        id:
+          type: string
+          description: Customer- and tier-specific widget id. This value can vary between customers.
+          example: widget-example-spend-01
+        alias:
+          type: string
+          description: Stable customer-facing widget identifier.
+          example: current-month-cloud-spend
+        type:
+          type: string
+          description: Whether the widget is supplied by DoiT or defined by a customer.
+          enum:
+            - custom
+            - preset
+        kind:
+          $ref: "#/components/schemas/WidgetKind"
+        generateTime:
+          type: string
+          format: date-time
+          description: Time when the cached result was generated by the background computation.
+          example: "2026-09-24T11:48:10.319Z"
+        result:
+          $ref: "#/components/schemas/WidgetResult"
+    WidgetItem:
+      type: object
+      description: Catalogue entry for one widget, without its computed result.
+      required:
+        - id
+        - alias
+        - name
+        - description
+        - type
+        - kind
+      properties:
+        id:
+          type: string
+          description: Customer- and tier-specific widget id. This value is accepted by getWidget and can vary between customers.
+          example: widget-example-spend-01
+        alias:
+          type: string
+          description: Stable customer-facing widget identifier. This value is also accepted by getWidget.
+          example: current-month-cloud-spend
+        name:
+          type: string
+          description: Human-readable widget name.
+          example: Current Month Cloud Spend
+        description:
+          type: string
+          description: What the widget value represents.
+          example: Total cloud spend accumulated during the current calendar month.
+        type:
+          type: string
+          description: Whether the widget is supplied by DoiT or defined by a customer.
+          enum:
+            - custom
+            - preset
+        kind:
+          $ref: "#/components/schemas/WidgetKind"
+    WidgetKind:
+      type: string
+      description: Determines which property is populated in the widget's `result`.
+      enum:
+        - monetary_metric
+    WidgetList:
+      type: object
+      description: Complete catalogue of widgets supported for the selected customer.
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          description: Supported widgets. Use an item's stable `alias` or customer-specific `id` with getWidget.
+          items:
+            $ref: "#/components/schemas/WidgetItem"
+        rowCount:
+          type: integer
+          description: Number of entries in `items`.
+          format: int64
+          minimum: 0
+          example: 2
+    WidgetMonetaryMetric:
+      type: object
+      description: |-
+        A monetary value over a period and its comparison with the equivalent prior period.
+        `monthToMonthGrowthPercentage` and `monthToMonthGrowthAmount` are both `null` when no
+        comparable prior-period value exists, such as when prior-period spend is zero.
+      required:
+        - value
+        - period
+        - monthToMonthGrowthPercentage
+        - monthToMonthGrowthAmount
+      properties:
+        value:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: Current-period monetary value. `amount` is a decimal string and `currency` is an ISO 4217 code.
+        period:
+          $ref: "#/components/schemas/WidgetPeriod"
+        monthToMonthGrowthPercentage:
+          type: number
+          format: double
+          nullable: true
+          description: Percentage change from the comparable prior period, or `null` when no comparison is available.
+          example: 12.34
+        monthToMonthGrowthAmount:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          nullable: true
+          description: Absolute monetary change from the comparable prior period, or `null` when no comparison is available.
+    WidgetPeriod:
+      type: object
+      description: UTC date-time range covered by the widget result. `endTime` is exclusive.
+      required:
+        - startTime
+        - endTime
+      properties:
+        startTime:
+          type: string
+          format: date-time
+          description: Inclusive start of the period.
+          example: "2026-09-01T00:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          description: Exclusive end of the period.
+          example: "2026-10-01T00:00:00Z"
+    WidgetResult:
+      type: object
+      description: Computed widget result. The populated property corresponds to `kind`.
+      required:
+        - monetaryMetric
+      properties:
+        monetaryMetric:
+          $ref: "#/components/schemas/WidgetMonetaryMetric"
   responses:
     "400":
       description: >-
@@ -12575,28 +15224,149 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: service_unavailable
             retryable: true
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/conflict
+            title: Conflict
+            status: 409
+            detail: The requested resource already exists.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: conflict
+            retryable: false
+    UnprocessableEntity:
+      description: The request is well-formed but a value is not accepted, such as an unknown permission name.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/console-iam.invalid_permission
+            title: Invalid permission
+            status: 422
+            detail: invalid permission value
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: console-iam.invalid_permission
+            retryable: false
+    PreconditionFailed:
+      description: The `If-Match` value no longer matches the current version of the resource.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/precondition_failed
+            title: Precondition failed
+            status: 412
+            detail: "ETag mismatch: the resource has been modified"
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: precondition_failed
+            retryable: false
+    PreconditionRequired:
+      description: The request is missing the required `If-Match` header.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/precondition_required
+            title: Precondition required
+            status: 428
+            detail: If-Match header is required
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: precondition_required
+            retryable: false
+    UnsupportedMediaType:
+      description: The request `Content-Type` is not accepted by this operation.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/unsupported_media_type
+            title: Unsupported media type
+            status: 415
+            detail: Content-Type must be application/merge-patch+json
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unsupported_media_type
+            retryable: false
   parameters:
+    policyId:
+      name: policyId
+      in: path
+      required: true
+      description: Commitment policy id. Built-in policies use `conservative`, `balanced` or `max_savings`; custom policies have an opaque id returned by the list endpoint.
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_-]{1,64}$
+        example: balanced
+    signupRequestId:
+      name: signupRequestId
+      in: path
+      required: true
+      description: Public signup request id (sr_ prefix).
+      schema:
+        type: string
+        pattern: "^sr_[0-9a-f]{32}$"
     gcp_service:
       in: query
       name: gcp_service
       required: false
-      description: Filter GCP planned purchases by PS4C product line.
+      description: Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
       schema:
         type: string
         enum:
           - compute
+          - cloud_sql
+        x-enumDescriptions:
+          compute: Compute commitment type (CUDs). Global scope only (`region=global`).
+          cloud_sql: Cloud SQL commitment type (CUDs). Regional scope only (`region` is a concrete region, never `global`).
     gcp_region:
       in: query
       name: region
       required: false
       description: |-
-        Filter GCP planned purchases by region scope. Requires `gcp_service`; when omitted together
-        with `gcp_service`, all available regions for all available product lines are returned.
-        A request with `region` but no `gcp_service` returns `400` with code `gcp_service_required`.
+        Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+        literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+        returns `400` with code `gcp_service_required`. When both are omitted, all available
+        regions for all available product lines are returned.
+
+        The value is format-validated, not checked against a closed region list: `compute` accepts
+        only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+        is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+        A well-formed, service-compatible region with no data returns `200` with an empty result.
+        Matching is case-insensitive; the value is lowercased before validation.
       schema:
-        type: string
-        enum:
-          - global
+        $ref: "#/components/schemas/GcpRegion"
     billingAccountId:
       in: path
       name: billingAccountId
@@ -12726,6 +15496,54 @@ components:
         type: string
         minLength: 1
         maxLength: 200
+    serviceAccountId:
+      name: id
+      in: path
+      required: true
+      description: Service account ID, as returned in the id field by the list and create operations.
+      schema:
+        type: string
+        minLength: 1
+    serviceAccountTokenId:
+      name: id
+      in: path
+      required: true
+      description: API token ID, as returned in the id field by the token list and create operations.
+      schema:
+        type: string
+        minLength: 1
+    serviceAccountTokenParentId:
+      name: serviceAccountId
+      in: path
+      required: true
+      description: ID of the service account that owns the token, as returned in the id field by the service account list and create operations.
+      schema:
+        type: string
+        minLength: 1
+    idempotencyKeyRequired:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+    dryRun:
+      name: dryRun
+      in: query
+      required: false
+      description: If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+      schema:
+        type: boolean
+        default: false
+    ifMatchRequired:
+      name: If-Match
+      in: header
+      required: true
+      description: The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+      schema:
+        type: string
     billingExplainerInvoiceMonth:
       name: invoiceMonth
       in: path
@@ -12744,7 +15562,7 @@ components:
 
         **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 
-        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
       schema:
         type: string
         example: Kp2mN8qL4vR0sT1wX3yZ
@@ -12761,7 +15579,7 @@ components:
       in: query
       name: pageToken
       required: false
-      description: "Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning."
+      description: Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
       schema:
         type: string
     ps4cMaxResults:
@@ -12778,7 +15596,7 @@ components:
       in: query
       name: service
       required: false
-      description: "Filter planned purchases by PerfectScale for Commitments commitment type. Omit to return all commitment types that have planned purchases for the AWS organization."
+      description: Filter planned purchases by PerfectScale for Commitments commitment type. Omit to return all commitment types that have planned purchases for the AWS organization.
       schema:
         type: string
         enum:
@@ -12791,7 +15609,7 @@ components:
       in: path
       name: serviceId
       required: true
-      description: "Commitment type whose recommendation to retrieve. Must be an onboarded commitment type for the AWS organization (`compute` or `database`)."
+      description: Commitment type whose recommendation to retrieve. Must be an onboarded commitment type for the AWS organization (`compute` or `database`).
       schema:
         type: string
         enum:
@@ -12804,7 +15622,7 @@ components:
       in: query
       name: granularity
       required: false
-      description: "Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals."
+      description: Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals.
       schema:
         type: string
         enum:
@@ -12836,7 +15654,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: "Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). Required when your credential can access more than one customer; otherwise the request fails with `400` and code `tenant_id_required`. A value outside your credential's tenants fails with `400` and code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens."
+      description: "Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens."
       in: header
     oauth2:
       type: oauth2
@@ -12847,6 +15665,16 @@ components:
           scopes:
             dci: Access All Data
   headers:
+    ETag:
+      description: Current version of the resource. Send it unchanged in `If-Match` on the next update or delete.
+      schema:
+        type: string
+    XDryRun:
+      description: Present with the value `true` when the request ran as a dry run and nothing was changed.
+      schema:
+        type: string
+        enum:
+          - "true"
     RequestId:
       description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
       schema:

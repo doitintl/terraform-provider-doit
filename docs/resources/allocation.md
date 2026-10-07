@@ -57,36 +57,48 @@ resource "doit_allocation" "allocation_dev_clusters_us" {
   }
 }
 
-# Create a group allocation that combines multiple rules.
+# Create a group allocation from separate single allocations.
 # Group allocations use "rules" (plural) and require "unallocated_costs"
-# to label costs that don't match any rule.
+# to label costs that don't match any rule. Define each member as its own
+# single allocation and reference it with action = "select", so every member
+# is a Terraform-managed resource. (Inline rules with action = "create" produce
+# the same single allocations in the DoiT API, but they are not Terraform
+# resources of their own, so settings like anomaly_detection can't be managed.)
+resource "doit_allocation" "region_us" {
+  name        = "US"
+  description = "Costs in the US"
+  rule = {
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["US"]
+    }]
+  }
+}
+
+resource "doit_allocation" "region_europe" {
+  name        = "Europe"
+  description = "Costs in Germany, France, the UK and the Netherlands"
+  rule = {
+    formula = "A"
+    components = [{
+      key    = "country"
+      mode   = "is"
+      type   = "fixed"
+      values = ["DE", "FR", "GB", "NL"]
+    }]
+  }
+}
+
 resource "doit_allocation" "allocation_by_region" {
   name              = "By Region"
   description       = "Group costs by region"
   unallocated_costs = "Other Regions"
   rules = [
-    {
-      action  = "create"
-      name    = "US"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        values = ["US"]
-      }]
-    },
-    {
-      action  = "create"
-      name    = "Europe"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        values = ["DE", "FR", "GB", "NL"]
-      }]
-    }
+    { action = "select", id = doit_allocation.region_us.id },
+    { action = "select", id = doit_allocation.region_europe.id },
   ]
 }
 
@@ -207,36 +219,83 @@ data "doit_dimension" "country" {
   id   = "country"
 }
 
-# Create a group allocation that dynamically uses country values
+# Create one single allocation per country group, using values from the API,
+# and combine them into a group allocation with action = "select"
+locals {
+  country_groups = {
+    "US Countries"     = ["US"]
+    "Europe Countries" = ["DE", "FR", "GB", "NL"]
+  }
+}
+
+resource "doit_allocation" "country_group" {
+  for_each = local.country_groups
+
+  name        = each.key
+  description = "Costs in ${join(", ", each.value)}"
+  rule = {
+    formula = "A"
+    components = [{
+      key  = "country"
+      mode = "is"
+      type = "fixed"
+      # Use values from the API — filter to the ones we want
+      values = [for v in data.doit_dimension.country.values : v.value if contains(each.value, v.value)]
+    }]
+  }
+}
+
 resource "doit_allocation" "dynamic_countries" {
   name              = "Dynamic Countries"
   description       = "Group costs using country values discovered from the API"
   unallocated_costs = "Other Countries"
-  rules = [
-    {
-      action  = "create"
-      name    = "US"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        # Use values from the API — filter to the ones we want
-        values = [for v in data.doit_dimension.country.values : v.value if v.value == "US"]
-      }]
-    },
-    {
-      action  = "create"
-      name    = "Europe"
-      formula = "A"
-      components = [{
-        key    = "country"
-        mode   = "is"
-        type   = "fixed"
-        values = [for v in data.doit_dimension.country.values : v.value if contains(["DE", "FR", "GB", "NL"], v.value)]
-      }]
-    }
-  ]
+  rules = [for a in doit_allocation.country_group : {
+    action = "select"
+    id     = a.id
+  }]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Allocation factory: one allocation per team, plus a group view of all teams
+# ─────────────────────────────────────────────────────────────────────────────
+# Define teams once and derive every allocation from the map. Each team gets a
+# single allocation with anomaly detection enabled. The group allocation
+# selects those singles (action = "select"), so every member of the group is
+# a Terraform-managed resource that budgets, alerts and reports can reference.
+
+locals {
+  teams = {
+    payments = { label = "payments" }
+    search   = { label = "search" }
+    platform = { label = "platform" }
+  }
+}
+
+resource "doit_allocation" "team" {
+  for_each = local.teams
+
+  name              = "Team: ${each.key}"
+  description       = "All costs labeled owner=${each.value.label}"
+  anomaly_detection = true
+  rule = {
+    formula = "A"
+    components = [{
+      type   = "label"
+      key    = "owner"
+      mode   = "is"
+      values = [each.value.label]
+    }]
+  }
+}
+
+resource "doit_allocation" "by_team" {
+  name              = "Cost by Team"
+  description       = "Team allocations combined into one group"
+  unallocated_costs = "Unowned"
+  rules = [for team in doit_allocation.team : {
+    action = "select"
+    id     = team.id
+  }]
 }
 ```
 
@@ -273,6 +332,10 @@ Required:
 - `components` (Attributes List) List of allocation filter components. (see [below for nested schema](#nestedatt--rule--components))
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.).
 
+Optional:
+
+- `validity_periods` (Attributes List) Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies. (see [below for nested schema](#nestedatt--rule--validity_periods))
+
 <a id="nestedatt--rule--components"></a>
 ### Nested Schema for `rule.components`
 
@@ -293,6 +356,15 @@ Optional:
 - `inverse` (Boolean) If true, all selected values will be excluded.
 
 
+<a id="nestedatt--rule--validity_periods"></a>
+### Nested Schema for `rule.validity_periods`
+
+Optional:
+
+- `end_date` (String) End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+- `start_date` (String) Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+
+
 
 <a id="nestedatt--rules"></a>
 ### Nested Schema for `rules`
@@ -309,6 +381,8 @@ Optional:
 - `formula` (String) Formula for combining components (A is the first component, B is the second one, etc.)
 - `id` (String) ID of existing allocation (required for 'update' or 'select' action).
 - `name` (String) Name of the allocation rule.
+- `validity_periods` (Attributes List) Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies. (see [below for nested schema](#nestedatt--rules--validity_periods))
+- `value_extraction` (Attributes) Makes the rule emit a value extracted from the first non-empty source instead of the rule name. (see [below for nested schema](#nestedatt--rules--value_extraction))
 
 <a id="nestedatt--rules--components"></a>
 ### Nested Schema for `rules.components`
@@ -330,6 +404,43 @@ Optional:
 - `inverse` (Boolean) If true, all selected values will be excluded.
 
 
+<a id="nestedatt--rules--validity_periods"></a>
+### Nested Schema for `rules.validity_periods`
+
+Optional:
+
+- `end_date` (String) End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+- `start_date` (String) Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+
+
+<a id="nestedatt--rules--value_extraction"></a>
+### Nested Schema for `rules.value_extraction`
+
+Required:
+
+- `sources` (Attributes List) Ordered extraction sources; the first non-empty value wins. (see [below for nested schema](#nestedatt--rules--value_extraction--sources))
+
+Optional:
+
+- `fallback` (String) Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+- `on_missing` (String) What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+Possible values: `useFallback`, `nextRule`
+
+<a id="nestedatt--rules--value_extraction--sources"></a>
+### Nested Schema for `rules.value_extraction.sources`
+
+Required:
+
+- `key` (String) The label/tag key, or the fixed dimension ID, whose value is extracted.
+- `type` (String) The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+Possible values: `label`, `tag`, `project_label`, `system_label`, `gke_label`, `fixed`
+
+Optional:
+
+- `providers` (List of String) Optional cloud providers this source applies to.
+
+
+
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -342,6 +453,21 @@ Optional:
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
 
 ## Managing Group Memberships
+
+### Building Group Allocations
+
+Build a group allocation from separate single `doit_allocation` resources and reference each one in the group's `rules` with `action = "select"` and its `id`, as shown in the examples above. Inline rules with `action = "create"` produce the same single allocations in the DoiT API, but those allocations are not Terraform resources of their own. They can still be referenced through `rules[*].id`, but settings such as `anomaly_detection` or `folder_id` can't be managed for them.
+
+### Inline rules (`create` and `update`)
+
+The DoiT API has no concept of "inline" group members. A rule with `action = "create"` makes the API create an ordinary single allocation and reference it from the group, which is exactly the object you get from a separate `doit_allocation` with `rule` that the group references with `action = "select"`. The API never returns the action, so the provider remembers it in state.
+
+Because the API does not delete members together with a group, the provider deletes the allocations a group defines inline (`action = "create"` or `"update"`) itself:
+
+- When the group is destroyed, after the group is deleted.
+- When an inline rule is removed from `rules`, after the group is updated.
+
+Rules with `action = "update"` are the same inline definitions (it is the verb the API expects to change a rule created earlier, and the provider sends it for `create` rules that already exist), so they are deleted the same way. Allocations referenced with `action = "select"` are never deleted by the group. Do not set `id` on a rule with `action = "create"` or `"update"` to point at an allocation managed elsewhere: the provider treats it as part of the group and deletes it with the group; use `action = "select"` for that. If deleting such an allocation fails (for example because something else still references it), the provider reports a warning with its id instead of an error. The group has already been deleted, or already updated so that it no longer references the allocation, and Terraform could not retry the cleanup afterwards. Delete the allocation manually. A group that was imported has every rule recorded as `select`, so destroying it leaves its members in place.
 
 ### Removing Selected Member Allocations from a Group
 

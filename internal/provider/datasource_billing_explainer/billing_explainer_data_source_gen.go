@@ -275,6 +275,43 @@ func BillingExplainerDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											Computed: true,
 										},
+										"marketplace_charges": schema.ListNestedAttribute{
+											NestedObject: schema.NestedAttributeObject{
+												Attributes: map[string]schema.Attribute{
+													"cost": schema.SingleNestedAttribute{
+														Attributes: map[string]schema.Attribute{
+															"amount": schema.StringAttribute{
+																Computed:            true,
+																Description:         "Decimal amount serialized at the currency's minor-unit precision.",
+																MarkdownDescription: "Decimal amount serialized at the currency's minor-unit precision.",
+															},
+															"currency": schema.StringAttribute{
+																Computed:            true,
+																Description:         "ISO 4217 three-letter uppercase currency code.",
+																MarkdownDescription: "ISO 4217 three-letter uppercase currency code.",
+															},
+														},
+														CustomType: CostType{
+															ObjectType: types.ObjectType{
+																AttrTypes: CostValue{}.AttributeTypes(ctx),
+															},
+														},
+														Computed:            true,
+														Description:         "Monetary value represented as a decimal string and an ISO 4217 currency code.",
+														MarkdownDescription: "Monetary value represented as a decimal string and an ISO 4217 currency code.",
+													},
+													"cost_type": schema.StringAttribute{
+														Computed: true,
+													},
+												},
+												CustomType: MarketplaceChargesType{
+													ObjectType: types.ObjectType{
+														AttrTypes: MarketplaceChargesValue{}.AttributeTypes(ctx),
+													},
+												},
+											},
+											Computed: true,
+										},
 										"other_charges": schema.ListNestedAttribute{
 											NestedObject: schema.NestedAttributeObject{
 												Attributes: map[string]schema.Attribute{
@@ -663,6 +700,43 @@ func BillingExplainerDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											Computed: true,
 										},
+										"marketplace_charges": schema.ListNestedAttribute{
+											NestedObject: schema.NestedAttributeObject{
+												Attributes: map[string]schema.Attribute{
+													"cost": schema.SingleNestedAttribute{
+														Attributes: map[string]schema.Attribute{
+															"amount": schema.StringAttribute{
+																Computed:            true,
+																Description:         "Decimal amount serialized at the currency's minor-unit precision.",
+																MarkdownDescription: "Decimal amount serialized at the currency's minor-unit precision.",
+															},
+															"currency": schema.StringAttribute{
+																Computed:            true,
+																Description:         "ISO 4217 three-letter uppercase currency code.",
+																MarkdownDescription: "ISO 4217 three-letter uppercase currency code.",
+															},
+														},
+														CustomType: CostType{
+															ObjectType: types.ObjectType{
+																AttrTypes: CostValue{}.AttributeTypes(ctx),
+															},
+														},
+														Computed:            true,
+														Description:         "Monetary value represented as a decimal string and an ISO 4217 currency code.",
+														MarkdownDescription: "Monetary value represented as a decimal string and an ISO 4217 currency code.",
+													},
+													"cost_type": schema.StringAttribute{
+														Computed: true,
+													},
+												},
+												CustomType: MarketplaceChargesType{
+													ObjectType: types.ObjectType{
+														AttrTypes: MarketplaceChargesValue{}.AttributeTypes(ctx),
+													},
+												},
+											},
+											Computed: true,
+										},
 										"other_charges": schema.ListNestedAttribute{
 											NestedObject: schema.NestedAttributeObject{
 												Attributes: map[string]schema.Attribute{
@@ -1046,6 +1120,43 @@ func BillingExplainerDataSourceSchema(ctx context.Context) schema.Schema {
 												CustomType: DiscountsType{
 													ObjectType: types.ObjectType{
 														AttrTypes: DiscountsValue{}.AttributeTypes(ctx),
+													},
+												},
+											},
+											Computed: true,
+										},
+										"marketplace_charges": schema.ListNestedAttribute{
+											NestedObject: schema.NestedAttributeObject{
+												Attributes: map[string]schema.Attribute{
+													"cost": schema.SingleNestedAttribute{
+														Attributes: map[string]schema.Attribute{
+															"amount": schema.StringAttribute{
+																Computed:            true,
+																Description:         "Decimal amount serialized at the currency's minor-unit precision.",
+																MarkdownDescription: "Decimal amount serialized at the currency's minor-unit precision.",
+															},
+															"currency": schema.StringAttribute{
+																Computed:            true,
+																Description:         "ISO 4217 three-letter uppercase currency code.",
+																MarkdownDescription: "ISO 4217 three-letter uppercase currency code.",
+															},
+														},
+														CustomType: CostType{
+															ObjectType: types.ObjectType{
+																AttrTypes: CostValue{}.AttributeTypes(ctx),
+															},
+														},
+														Computed:            true,
+														Description:         "Monetary value represented as a decimal string and an ISO 4217 currency code.",
+														MarkdownDescription: "Monetary value represented as a decimal string and an ISO 4217 currency code.",
+													},
+													"cost_type": schema.StringAttribute{
+														Computed: true,
+													},
+												},
+												CustomType: MarketplaceChargesType{
+													ObjectType: types.ObjectType{
+														AttrTypes: MarketplaceChargesValue{}.AttributeTypes(ctx),
 													},
 												},
 											},
@@ -5031,6 +5142,24 @@ func (t SummaryAwsType) ValueFromObject(ctx context.Context, in basetypes.Object
 			fmt.Sprintf(`discounts expected to be basetypes.ListValue, was: %T`, discountsAttribute))
 	}
 
+	marketplaceChargesAttribute, ok := attributes["marketplace_charges"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_charges is missing from object`)
+
+		return nil, diags
+	}
+
+	marketplaceChargesVal, ok := marketplaceChargesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_charges expected to be basetypes.ListValue, was: %T`, marketplaceChargesAttribute))
+	}
+
 	otherChargesAttribute, ok := attributes["other_charges"]
 
 	if !ok {
@@ -5214,16 +5343,17 @@ func (t SummaryAwsType) ValueFromObject(ctx context.Context, in basetypes.Object
 	}
 
 	return SummaryAwsValue{
-		Credits:        creditsVal,
-		Discounts:      discountsVal,
-		OtherCharges:   otherChargesVal,
-		Refunds:        refundsVal,
-		Savings:        savingsVal,
-		ServiceCharges: serviceChargesVal,
-		SupportCharges: supportChargesVal,
-		Tax:            taxVal,
-		Total:          totalVal,
-		state:          attr.ValueStateKnown,
+		Credits:            creditsVal,
+		Discounts:          discountsVal,
+		MarketplaceCharges: marketplaceChargesVal,
+		OtherCharges:       otherChargesVal,
+		Refunds:            refundsVal,
+		Savings:            savingsVal,
+		ServiceCharges:     serviceChargesVal,
+		SupportCharges:     supportChargesVal,
+		Tax:                taxVal,
+		Total:              totalVal,
+		state:              attr.ValueStateKnown,
 	}, diags
 }
 
@@ -5324,6 +5454,24 @@ func NewSummaryAwsValue(attributeTypes map[string]attr.Type, attributes map[stri
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`discounts expected to be basetypes.ListValue, was: %T`, discountsAttribute))
+	}
+
+	marketplaceChargesAttribute, ok := attributes["marketplace_charges"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_charges is missing from object`)
+
+		return NewSummaryAwsValueUnknown(), diags
+	}
+
+	marketplaceChargesVal, ok := marketplaceChargesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_charges expected to be basetypes.ListValue, was: %T`, marketplaceChargesAttribute))
 	}
 
 	otherChargesAttribute, ok := attributes["other_charges"]
@@ -5457,16 +5605,17 @@ func NewSummaryAwsValue(attributeTypes map[string]attr.Type, attributes map[stri
 	}
 
 	return SummaryAwsValue{
-		Credits:        creditsVal,
-		Discounts:      discountsVal,
-		OtherCharges:   otherChargesVal,
-		Refunds:        refundsVal,
-		Savings:        savingsVal,
-		ServiceCharges: serviceChargesVal,
-		SupportCharges: supportChargesVal,
-		Tax:            taxVal,
-		Total:          totalVal,
-		state:          attr.ValueStateKnown,
+		Credits:            creditsVal,
+		Discounts:          discountsVal,
+		MarketplaceCharges: marketplaceChargesVal,
+		OtherCharges:       otherChargesVal,
+		Refunds:            refundsVal,
+		Savings:            savingsVal,
+		ServiceCharges:     serviceChargesVal,
+		SupportCharges:     supportChargesVal,
+		Tax:                taxVal,
+		Total:              totalVal,
+		state:              attr.ValueStateKnown,
 	}, diags
 }
 
@@ -5538,20 +5687,21 @@ func (t SummaryAwsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = SummaryAwsValue{}
 
 type SummaryAwsValue struct {
-	Credits        basetypes.ListValue `tfsdk:"credits"`
-	Discounts      basetypes.ListValue `tfsdk:"discounts"`
-	OtherCharges   basetypes.ListValue `tfsdk:"other_charges"`
-	Refunds        basetypes.ListValue `tfsdk:"refunds"`
-	Savings        basetypes.ListValue `tfsdk:"savings"`
-	ServiceCharges basetypes.ListValue `tfsdk:"service_charges"`
-	SupportCharges SupportChargesValue `tfsdk:"support_charges"`
-	Tax            basetypes.ListValue `tfsdk:"tax"`
-	Total          TotalValue          `tfsdk:"total"`
-	state          attr.ValueState
+	Credits            basetypes.ListValue `tfsdk:"credits"`
+	Discounts          basetypes.ListValue `tfsdk:"discounts"`
+	MarketplaceCharges basetypes.ListValue `tfsdk:"marketplace_charges"`
+	OtherCharges       basetypes.ListValue `tfsdk:"other_charges"`
+	Refunds            basetypes.ListValue `tfsdk:"refunds"`
+	Savings            basetypes.ListValue `tfsdk:"savings"`
+	ServiceCharges     basetypes.ListValue `tfsdk:"service_charges"`
+	SupportCharges     SupportChargesValue `tfsdk:"support_charges"`
+	Tax                basetypes.ListValue `tfsdk:"tax"`
+	Total              TotalValue          `tfsdk:"total"`
+	state              attr.ValueState
 }
 
 func (v SummaryAwsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 9)
+	attrTypes := make(map[string]tftypes.Type, 10)
 
 	var val tftypes.Value
 	var err error
@@ -5561,6 +5711,9 @@ func (v SummaryAwsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 	}.TerraformType(ctx)
 	attrTypes["discounts"] = basetypes.ListType{
 		ElemType: DiscountsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["marketplace_charges"] = basetypes.ListType{
+		ElemType: MarketplaceChargesValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["other_charges"] = basetypes.ListType{
 		ElemType: OtherChargesValue{}.Type(ctx),
@@ -5592,7 +5745,7 @@ func (v SummaryAwsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 9)
+		vals := make(map[string]tftypes.Value, 10)
 
 		val, err = v.Credits.ToTerraformValue(ctx)
 
@@ -5609,6 +5762,14 @@ func (v SummaryAwsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, e
 		}
 
 		vals["discounts"] = val
+
+		val, err = v.MarketplaceCharges.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["marketplace_charges"] = val
 
 		val, err = v.OtherCharges.ToTerraformValue(ctx)
 
@@ -5707,6 +5868,12 @@ func (v SummaryAwsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		discounts = v.Discounts
 	}
 
+	var marketplaceCharges attr.Value
+
+	{
+		marketplaceCharges = v.MarketplaceCharges
+	}
+
 	var otherCharges attr.Value
 
 	{
@@ -5756,6 +5923,9 @@ func (v SummaryAwsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 		"discounts": basetypes.ListType{
 			ElemType: DiscountsValue{}.Type(ctx),
 		},
+		"marketplace_charges": basetypes.ListType{
+			ElemType: MarketplaceChargesValue{}.Type(ctx),
+		},
 		"other_charges": basetypes.ListType{
 			ElemType: OtherChargesValue{}.Type(ctx),
 		},
@@ -5794,15 +5964,16 @@ func (v SummaryAwsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVal
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"credits":         credits,
-			"discounts":       discounts,
-			"other_charges":   otherCharges,
-			"refunds":         refunds,
-			"savings":         savings,
-			"service_charges": serviceCharges,
-			"support_charges": supportCharges,
-			"tax":             tax,
-			"total":           total,
+			"credits":             credits,
+			"discounts":           discounts,
+			"marketplace_charges": marketplaceCharges,
+			"other_charges":       otherCharges,
+			"refunds":             refunds,
+			"savings":             savings,
+			"service_charges":     serviceCharges,
+			"support_charges":     supportCharges,
+			"tax":                 tax,
+			"total":               total,
 		})
 
 	return objVal, diags
@@ -5828,6 +5999,10 @@ func (v SummaryAwsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Discounts.Equal(other.Discounts) {
+		return false
+	}
+
+	if !v.MarketplaceCharges.Equal(other.MarketplaceCharges) {
 		return false
 	}
 
@@ -5877,6 +6052,9 @@ func (v SummaryAwsValue) AttributeTypes(ctx context.Context) map[string]attr.Typ
 		},
 		"discounts": basetypes.ListType{
 			ElemType: DiscountsValue{}.Type(ctx),
+		},
+		"marketplace_charges": basetypes.ListType{
+			ElemType: MarketplaceChargesValue{}.Type(ctx),
 		},
 		"other_charges": basetypes.ListType{
 			ElemType: OtherChargesValue{}.Type(ctx),
@@ -7145,6 +7323,437 @@ func (v DiscountsValue) Type(ctx context.Context) attr.Type {
 }
 
 func (v DiscountsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"cost": CostType{
+			basetypes.ObjectType{
+				AttrTypes: CostValue{}.AttributeTypes(ctx),
+			},
+		},
+		"cost_type": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = MarketplaceChargesType{}
+
+type MarketplaceChargesType struct {
+	basetypes.ObjectType
+}
+
+func (t MarketplaceChargesType) Equal(o attr.Type) bool {
+	other, ok := o.(MarketplaceChargesType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t MarketplaceChargesType) String() string {
+	return "MarketplaceChargesType"
+}
+
+func (t MarketplaceChargesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewMarketplaceChargesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMarketplaceChargesValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	costAttribute, ok := attributes["cost"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cost is missing from object`)
+
+		return nil, diags
+	}
+
+	costValuable, ok := costAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cost expected to be basetypes.ObjectValuable, was: %T`, costAttribute))
+
+		return nil, diags
+	}
+
+	costObjVal, costObjValDiags := costValuable.ToObjectValue(ctx)
+	diags.Append(costObjValDiags...)
+
+	costTypable, ok := t.AttrTypes["cost"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cost expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["cost"]))
+
+		return nil, diags
+	}
+
+	costConverted, costConvertedDiags := costTypable.ValueFromObject(ctx, costObjVal)
+	diags.Append(costConvertedDiags...)
+
+	costVal, ok := costConverted.(CostValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cost expected to be CostValue, was: %T`, costConverted))
+	}
+
+	costTypeAttribute, ok := attributes["cost_type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cost_type is missing from object`)
+
+		return nil, diags
+	}
+
+	costTypeVal, ok := costTypeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cost_type expected to be basetypes.StringValue, was: %T`, costTypeAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return MarketplaceChargesValue{
+		Cost:     costVal,
+		CostType: costTypeVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewMarketplaceChargesValueNull() MarketplaceChargesValue {
+	return MarketplaceChargesValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewMarketplaceChargesValueUnknown() MarketplaceChargesValue {
+	return MarketplaceChargesValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewMarketplaceChargesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (MarketplaceChargesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing MarketplaceChargesValue Attribute Value",
+				"While creating a MarketplaceChargesValue value, a missing attribute value was detected. "+
+					"A MarketplaceChargesValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("MarketplaceChargesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid MarketplaceChargesValue Attribute Type",
+				"While creating a MarketplaceChargesValue value, an invalid attribute value was detected. "+
+					"A MarketplaceChargesValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("MarketplaceChargesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("MarketplaceChargesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra MarketplaceChargesValue Attribute Value",
+				"While creating a MarketplaceChargesValue value, an extra attribute value was detected. "+
+					"A MarketplaceChargesValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra MarketplaceChargesValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewMarketplaceChargesValueUnknown(), diags
+	}
+
+	costAttribute, ok := attributes["cost"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cost is missing from object`)
+
+		return NewMarketplaceChargesValueUnknown(), diags
+	}
+
+	costVal, ok := costAttribute.(CostValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cost expected to be CostValue, was: %T`, costAttribute))
+	}
+
+	costTypeAttribute, ok := attributes["cost_type"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cost_type is missing from object`)
+
+		return NewMarketplaceChargesValueUnknown(), diags
+	}
+
+	costTypeVal, ok := costTypeAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cost_type expected to be basetypes.StringValue, was: %T`, costTypeAttribute))
+	}
+
+	if diags.HasError() {
+		return NewMarketplaceChargesValueUnknown(), diags
+	}
+
+	return MarketplaceChargesValue{
+		Cost:     costVal,
+		CostType: costTypeVal,
+		state:    attr.ValueStateKnown,
+	}, diags
+}
+
+func NewMarketplaceChargesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) MarketplaceChargesValue {
+	object, diags := NewMarketplaceChargesValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewMarketplaceChargesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t MarketplaceChargesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewMarketplaceChargesValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewMarketplaceChargesValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewMarketplaceChargesValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewMarketplaceChargesValueMust(MarketplaceChargesValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t MarketplaceChargesType) ValueType(ctx context.Context) attr.Value {
+	return MarketplaceChargesValue{}
+}
+
+var _ basetypes.ObjectValuable = MarketplaceChargesValue{}
+
+type MarketplaceChargesValue struct {
+	Cost     CostValue             `tfsdk:"cost"`
+	CostType basetypes.StringValue `tfsdk:"cost_type"`
+	state    attr.ValueState
+}
+
+func (v MarketplaceChargesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["cost"] = CostType{
+		basetypes.ObjectType{
+			AttrTypes: CostValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["cost_type"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Cost.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cost"] = val
+
+		val, err = v.CostType.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cost_type"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v MarketplaceChargesValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v MarketplaceChargesValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v MarketplaceChargesValue) String() string {
+	return "MarketplaceChargesValue"
+}
+
+func (v MarketplaceChargesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var cost attr.Value
+
+	{
+		cost = v.Cost
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"cost": CostType{
+			basetypes.ObjectType{
+				AttrTypes: CostValue{}.AttributeTypes(ctx),
+			},
+		},
+		"cost_type": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"cost":      cost,
+			"cost_type": v.CostType,
+		})
+
+	return objVal, diags
+}
+
+func (v MarketplaceChargesValue) Equal(o attr.Value) bool {
+	other, ok := o.(MarketplaceChargesValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Cost.Equal(other.Cost) {
+		return false
+	}
+
+	if !v.CostType.Equal(other.CostType) {
+		return false
+	}
+
+	return true
+}
+
+func (v MarketplaceChargesValue) Type(ctx context.Context) attr.Type {
+	return MarketplaceChargesType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v MarketplaceChargesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
 		"cost": CostType{
 			basetypes.ObjectType{
@@ -11236,6 +11845,24 @@ func (t AwsWithoutDoitType) ValueFromObject(ctx context.Context, in basetypes.Ob
 			fmt.Sprintf(`discounts expected to be basetypes.ListValue, was: %T`, discountsAttribute))
 	}
 
+	marketplaceChargesAttribute, ok := attributes["marketplace_charges"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_charges is missing from object`)
+
+		return nil, diags
+	}
+
+	marketplaceChargesVal, ok := marketplaceChargesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_charges expected to be basetypes.ListValue, was: %T`, marketplaceChargesAttribute))
+	}
+
 	otherChargesAttribute, ok := attributes["other_charges"]
 
 	if !ok {
@@ -11419,16 +12046,17 @@ func (t AwsWithoutDoitType) ValueFromObject(ctx context.Context, in basetypes.Ob
 	}
 
 	return AwsWithoutDoitValue{
-		Credits:        creditsVal,
-		Discounts:      discountsVal,
-		OtherCharges:   otherChargesVal,
-		Refunds:        refundsVal,
-		Savings:        savingsVal,
-		ServiceCharges: serviceChargesVal,
-		SupportCharges: supportChargesVal,
-		Tax:            taxVal,
-		Total:          totalVal,
-		state:          attr.ValueStateKnown,
+		Credits:            creditsVal,
+		Discounts:          discountsVal,
+		MarketplaceCharges: marketplaceChargesVal,
+		OtherCharges:       otherChargesVal,
+		Refunds:            refundsVal,
+		Savings:            savingsVal,
+		ServiceCharges:     serviceChargesVal,
+		SupportCharges:     supportChargesVal,
+		Tax:                taxVal,
+		Total:              totalVal,
+		state:              attr.ValueStateKnown,
 	}, diags
 }
 
@@ -11531,6 +12159,24 @@ func NewAwsWithoutDoitValue(attributeTypes map[string]attr.Type, attributes map[
 			fmt.Sprintf(`discounts expected to be basetypes.ListValue, was: %T`, discountsAttribute))
 	}
 
+	marketplaceChargesAttribute, ok := attributes["marketplace_charges"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_charges is missing from object`)
+
+		return NewAwsWithoutDoitValueUnknown(), diags
+	}
+
+	marketplaceChargesVal, ok := marketplaceChargesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_charges expected to be basetypes.ListValue, was: %T`, marketplaceChargesAttribute))
+	}
+
 	otherChargesAttribute, ok := attributes["other_charges"]
 
 	if !ok {
@@ -11662,16 +12308,17 @@ func NewAwsWithoutDoitValue(attributeTypes map[string]attr.Type, attributes map[
 	}
 
 	return AwsWithoutDoitValue{
-		Credits:        creditsVal,
-		Discounts:      discountsVal,
-		OtherCharges:   otherChargesVal,
-		Refunds:        refundsVal,
-		Savings:        savingsVal,
-		ServiceCharges: serviceChargesVal,
-		SupportCharges: supportChargesVal,
-		Tax:            taxVal,
-		Total:          totalVal,
-		state:          attr.ValueStateKnown,
+		Credits:            creditsVal,
+		Discounts:          discountsVal,
+		MarketplaceCharges: marketplaceChargesVal,
+		OtherCharges:       otherChargesVal,
+		Refunds:            refundsVal,
+		Savings:            savingsVal,
+		ServiceCharges:     serviceChargesVal,
+		SupportCharges:     supportChargesVal,
+		Tax:                taxVal,
+		Total:              totalVal,
+		state:              attr.ValueStateKnown,
 	}, diags
 }
 
@@ -11743,20 +12390,21 @@ func (t AwsWithoutDoitType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = AwsWithoutDoitValue{}
 
 type AwsWithoutDoitValue struct {
-	Credits        basetypes.ListValue `tfsdk:"credits"`
-	Discounts      basetypes.ListValue `tfsdk:"discounts"`
-	OtherCharges   basetypes.ListValue `tfsdk:"other_charges"`
-	Refunds        basetypes.ListValue `tfsdk:"refunds"`
-	Savings        basetypes.ListValue `tfsdk:"savings"`
-	ServiceCharges basetypes.ListValue `tfsdk:"service_charges"`
-	SupportCharges SupportChargesValue `tfsdk:"support_charges"`
-	Tax            basetypes.ListValue `tfsdk:"tax"`
-	Total          TotalValue          `tfsdk:"total"`
-	state          attr.ValueState
+	Credits            basetypes.ListValue `tfsdk:"credits"`
+	Discounts          basetypes.ListValue `tfsdk:"discounts"`
+	MarketplaceCharges basetypes.ListValue `tfsdk:"marketplace_charges"`
+	OtherCharges       basetypes.ListValue `tfsdk:"other_charges"`
+	Refunds            basetypes.ListValue `tfsdk:"refunds"`
+	Savings            basetypes.ListValue `tfsdk:"savings"`
+	ServiceCharges     basetypes.ListValue `tfsdk:"service_charges"`
+	SupportCharges     SupportChargesValue `tfsdk:"support_charges"`
+	Tax                basetypes.ListValue `tfsdk:"tax"`
+	Total              TotalValue          `tfsdk:"total"`
+	state              attr.ValueState
 }
 
 func (v AwsWithoutDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 9)
+	attrTypes := make(map[string]tftypes.Type, 10)
 
 	var val tftypes.Value
 	var err error
@@ -11766,6 +12414,9 @@ func (v AwsWithoutDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Valu
 	}.TerraformType(ctx)
 	attrTypes["discounts"] = basetypes.ListType{
 		ElemType: DiscountsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["marketplace_charges"] = basetypes.ListType{
+		ElemType: MarketplaceChargesValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["other_charges"] = basetypes.ListType{
 		ElemType: OtherChargesValue{}.Type(ctx),
@@ -11797,7 +12448,7 @@ func (v AwsWithoutDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Valu
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 9)
+		vals := make(map[string]tftypes.Value, 10)
 
 		val, err = v.Credits.ToTerraformValue(ctx)
 
@@ -11814,6 +12465,14 @@ func (v AwsWithoutDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Valu
 		}
 
 		vals["discounts"] = val
+
+		val, err = v.MarketplaceCharges.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["marketplace_charges"] = val
 
 		val, err = v.OtherCharges.ToTerraformValue(ctx)
 
@@ -11912,6 +12571,12 @@ func (v AwsWithoutDoitValue) ToObjectValue(ctx context.Context) (basetypes.Objec
 		discounts = v.Discounts
 	}
 
+	var marketplaceCharges attr.Value
+
+	{
+		marketplaceCharges = v.MarketplaceCharges
+	}
+
 	var otherCharges attr.Value
 
 	{
@@ -11961,6 +12626,9 @@ func (v AwsWithoutDoitValue) ToObjectValue(ctx context.Context) (basetypes.Objec
 		"discounts": basetypes.ListType{
 			ElemType: DiscountsValue{}.Type(ctx),
 		},
+		"marketplace_charges": basetypes.ListType{
+			ElemType: MarketplaceChargesValue{}.Type(ctx),
+		},
 		"other_charges": basetypes.ListType{
 			ElemType: OtherChargesValue{}.Type(ctx),
 		},
@@ -11999,15 +12667,16 @@ func (v AwsWithoutDoitValue) ToObjectValue(ctx context.Context) (basetypes.Objec
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"credits":         credits,
-			"discounts":       discounts,
-			"other_charges":   otherCharges,
-			"refunds":         refunds,
-			"savings":         savings,
-			"service_charges": serviceCharges,
-			"support_charges": supportCharges,
-			"tax":             tax,
-			"total":           total,
+			"credits":             credits,
+			"discounts":           discounts,
+			"marketplace_charges": marketplaceCharges,
+			"other_charges":       otherCharges,
+			"refunds":             refunds,
+			"savings":             savings,
+			"service_charges":     serviceCharges,
+			"support_charges":     supportCharges,
+			"tax":                 tax,
+			"total":               total,
 		})
 
 	return objVal, diags
@@ -12033,6 +12702,10 @@ func (v AwsWithoutDoitValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Discounts.Equal(other.Discounts) {
+		return false
+	}
+
+	if !v.MarketplaceCharges.Equal(other.MarketplaceCharges) {
 		return false
 	}
 
@@ -12082,6 +12755,9 @@ func (v AwsWithoutDoitValue) AttributeTypes(ctx context.Context) map[string]attr
 		},
 		"discounts": basetypes.ListType{
 			ElemType: DiscountsValue{}.Type(ctx),
+		},
+		"marketplace_charges": basetypes.ListType{
+			ElemType: MarketplaceChargesValue{}.Type(ctx),
 		},
 		"other_charges": basetypes.ListType{
 			ElemType: OtherChargesValue{}.Type(ctx),
@@ -12178,6 +12854,24 @@ func (t SummaryDoitType) ValueFromObject(ctx context.Context, in basetypes.Objec
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`discounts expected to be basetypes.ListValue, was: %T`, discountsAttribute))
+	}
+
+	marketplaceChargesAttribute, ok := attributes["marketplace_charges"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_charges is missing from object`)
+
+		return nil, diags
+	}
+
+	marketplaceChargesVal, ok := marketplaceChargesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_charges expected to be basetypes.ListValue, was: %T`, marketplaceChargesAttribute))
 	}
 
 	otherChargesAttribute, ok := attributes["other_charges"]
@@ -12363,16 +13057,17 @@ func (t SummaryDoitType) ValueFromObject(ctx context.Context, in basetypes.Objec
 	}
 
 	return SummaryDoitValue{
-		Credits:        creditsVal,
-		Discounts:      discountsVal,
-		OtherCharges:   otherChargesVal,
-		Refunds:        refundsVal,
-		Savings:        savingsVal,
-		ServiceCharges: serviceChargesVal,
-		SupportCharges: supportChargesVal,
-		Tax:            taxVal,
-		Total:          totalVal,
-		state:          attr.ValueStateKnown,
+		Credits:            creditsVal,
+		Discounts:          discountsVal,
+		MarketplaceCharges: marketplaceChargesVal,
+		OtherCharges:       otherChargesVal,
+		Refunds:            refundsVal,
+		Savings:            savingsVal,
+		ServiceCharges:     serviceChargesVal,
+		SupportCharges:     supportChargesVal,
+		Tax:                taxVal,
+		Total:              totalVal,
+		state:              attr.ValueStateKnown,
 	}, diags
 }
 
@@ -12473,6 +13168,24 @@ func NewSummaryDoitValue(attributeTypes map[string]attr.Type, attributes map[str
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`discounts expected to be basetypes.ListValue, was: %T`, discountsAttribute))
+	}
+
+	marketplaceChargesAttribute, ok := attributes["marketplace_charges"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`marketplace_charges is missing from object`)
+
+		return NewSummaryDoitValueUnknown(), diags
+	}
+
+	marketplaceChargesVal, ok := marketplaceChargesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`marketplace_charges expected to be basetypes.ListValue, was: %T`, marketplaceChargesAttribute))
 	}
 
 	otherChargesAttribute, ok := attributes["other_charges"]
@@ -12606,16 +13319,17 @@ func NewSummaryDoitValue(attributeTypes map[string]attr.Type, attributes map[str
 	}
 
 	return SummaryDoitValue{
-		Credits:        creditsVal,
-		Discounts:      discountsVal,
-		OtherCharges:   otherChargesVal,
-		Refunds:        refundsVal,
-		Savings:        savingsVal,
-		ServiceCharges: serviceChargesVal,
-		SupportCharges: supportChargesVal,
-		Tax:            taxVal,
-		Total:          totalVal,
-		state:          attr.ValueStateKnown,
+		Credits:            creditsVal,
+		Discounts:          discountsVal,
+		MarketplaceCharges: marketplaceChargesVal,
+		OtherCharges:       otherChargesVal,
+		Refunds:            refundsVal,
+		Savings:            savingsVal,
+		ServiceCharges:     serviceChargesVal,
+		SupportCharges:     supportChargesVal,
+		Tax:                taxVal,
+		Total:              totalVal,
+		state:              attr.ValueStateKnown,
 	}, diags
 }
 
@@ -12687,20 +13401,21 @@ func (t SummaryDoitType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = SummaryDoitValue{}
 
 type SummaryDoitValue struct {
-	Credits        basetypes.ListValue `tfsdk:"credits"`
-	Discounts      basetypes.ListValue `tfsdk:"discounts"`
-	OtherCharges   basetypes.ListValue `tfsdk:"other_charges"`
-	Refunds        basetypes.ListValue `tfsdk:"refunds"`
-	Savings        basetypes.ListValue `tfsdk:"savings"`
-	ServiceCharges basetypes.ListValue `tfsdk:"service_charges"`
-	SupportCharges SupportChargesValue `tfsdk:"support_charges"`
-	Tax            basetypes.ListValue `tfsdk:"tax"`
-	Total          TotalValue          `tfsdk:"total"`
-	state          attr.ValueState
+	Credits            basetypes.ListValue `tfsdk:"credits"`
+	Discounts          basetypes.ListValue `tfsdk:"discounts"`
+	MarketplaceCharges basetypes.ListValue `tfsdk:"marketplace_charges"`
+	OtherCharges       basetypes.ListValue `tfsdk:"other_charges"`
+	Refunds            basetypes.ListValue `tfsdk:"refunds"`
+	Savings            basetypes.ListValue `tfsdk:"savings"`
+	ServiceCharges     basetypes.ListValue `tfsdk:"service_charges"`
+	SupportCharges     SupportChargesValue `tfsdk:"support_charges"`
+	Tax                basetypes.ListValue `tfsdk:"tax"`
+	Total              TotalValue          `tfsdk:"total"`
+	state              attr.ValueState
 }
 
 func (v SummaryDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 9)
+	attrTypes := make(map[string]tftypes.Type, 10)
 
 	var val tftypes.Value
 	var err error
@@ -12710,6 +13425,9 @@ func (v SummaryDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 	}.TerraformType(ctx)
 	attrTypes["discounts"] = basetypes.ListType{
 		ElemType: DiscountsValue{}.Type(ctx),
+	}.TerraformType(ctx)
+	attrTypes["marketplace_charges"] = basetypes.ListType{
+		ElemType: MarketplaceChargesValue{}.Type(ctx),
 	}.TerraformType(ctx)
 	attrTypes["other_charges"] = basetypes.ListType{
 		ElemType: OtherChargesValue{}.Type(ctx),
@@ -12741,7 +13459,7 @@ func (v SummaryDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 9)
+		vals := make(map[string]tftypes.Value, 10)
 
 		val, err = v.Credits.ToTerraformValue(ctx)
 
@@ -12758,6 +13476,14 @@ func (v SummaryDoitValue) ToTerraformValue(ctx context.Context) (tftypes.Value, 
 		}
 
 		vals["discounts"] = val
+
+		val, err = v.MarketplaceCharges.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["marketplace_charges"] = val
 
 		val, err = v.OtherCharges.ToTerraformValue(ctx)
 
@@ -12856,6 +13582,12 @@ func (v SummaryDoitValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 		discounts = v.Discounts
 	}
 
+	var marketplaceCharges attr.Value
+
+	{
+		marketplaceCharges = v.MarketplaceCharges
+	}
+
 	var otherCharges attr.Value
 
 	{
@@ -12905,6 +13637,9 @@ func (v SummaryDoitValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 		"discounts": basetypes.ListType{
 			ElemType: DiscountsValue{}.Type(ctx),
 		},
+		"marketplace_charges": basetypes.ListType{
+			ElemType: MarketplaceChargesValue{}.Type(ctx),
+		},
 		"other_charges": basetypes.ListType{
 			ElemType: OtherChargesValue{}.Type(ctx),
 		},
@@ -12943,15 +13678,16 @@ func (v SummaryDoitValue) ToObjectValue(ctx context.Context) (basetypes.ObjectVa
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"credits":         credits,
-			"discounts":       discounts,
-			"other_charges":   otherCharges,
-			"refunds":         refunds,
-			"savings":         savings,
-			"service_charges": serviceCharges,
-			"support_charges": supportCharges,
-			"tax":             tax,
-			"total":           total,
+			"credits":             credits,
+			"discounts":           discounts,
+			"marketplace_charges": marketplaceCharges,
+			"other_charges":       otherCharges,
+			"refunds":             refunds,
+			"savings":             savings,
+			"service_charges":     serviceCharges,
+			"support_charges":     supportCharges,
+			"tax":                 tax,
+			"total":               total,
 		})
 
 	return objVal, diags
@@ -12977,6 +13713,10 @@ func (v SummaryDoitValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Discounts.Equal(other.Discounts) {
+		return false
+	}
+
+	if !v.MarketplaceCharges.Equal(other.MarketplaceCharges) {
 		return false
 	}
 
@@ -13026,6 +13766,9 @@ func (v SummaryDoitValue) AttributeTypes(ctx context.Context) map[string]attr.Ty
 		},
 		"discounts": basetypes.ListType{
 			ElemType: DiscountsValue{}.Type(ctx),
+		},
+		"marketplace_charges": basetypes.ListType{
+			ElemType: MarketplaceChargesValue{}.Type(ctx),
 		},
 		"other_charges": basetypes.ListType{
 			ElemType: OtherChargesValue{}.Type(ctx),

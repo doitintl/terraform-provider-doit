@@ -34,7 +34,43 @@ func TestAccPs4cGcpResourceCudsDataSource_Basic(t *testing.T) {
 	})
 }
 
+func TestAccPs4cGcpResourceCudsDataSource_PendingStatus(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPs4cGcpResourceCudsDataSourceConfigWithStatus("pending"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_ps4c_gcp_resource_cuds.test", "status", "pending"),
+					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_resource_cuds.test", "items.#"),
+					resource.TestCheckResourceAttrSet("data.doit_ps4c_gcp_resource_cuds.test", "row_count"),
+				),
+			},
+			{
+				Config: testAccPs4cGcpResourceCudsDataSourceConfigWithStatus("pending"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 func testAccPs4cGcpResourceCudsDataSourceConfig() string {
+	return testAccPs4cGcpResourceCudsDataSourceConfigWithStatus("")
+}
+
+func testAccPs4cGcpResourceCudsDataSourceConfigWithStatus(status string) string {
+	statusConfig := ""
+	if status != "" {
+		statusConfig = `
+  status = "` + status + `"`
+	}
+
 	return `
 data "doit_ps4c_gcp_billing_accounts" "list" {}
 
@@ -45,6 +81,7 @@ locals {
 
 data "doit_ps4c_gcp_resource_cuds" "test" {
   billing_account_id = local.first_billing_account_id
+` + statusConfig + `
 
   lifecycle {
     precondition {

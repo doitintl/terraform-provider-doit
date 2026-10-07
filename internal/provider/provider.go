@@ -277,6 +277,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewDimensionDataSource,
 		NewDimensionsDataSource,
 		NewFolderDataSource,
+		NewRoleDataSource,
 		NewRolesDataSource,
 		NewCurrentUserDataSource,
 		NewCustomerDataSource,
@@ -293,6 +294,8 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewCloudconnectSupportedFeaturesDataSource,
 		NewPs4cAwsOrganizationDataSource,
 		NewPs4cGcpBillingAccountDataSource,
+		NewPs4cGcpRecommendationDataSource,
+		NewPs4cCommitmentPolicyDataSource,
 		// List data sources
 		NewBudgetsDataSource,
 		NewAllocationsDataSource,
@@ -331,9 +334,19 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewPs4cGcpBillingAccountsDataSource,
 		NewPs4cGcpSettingsDataSource,
 		NewPs4cGcpResourceCudsDataSource,
+		NewPs4cGcpPlannedPurchasesDataSource,
+		NewPs4cGcpSpendCudsDataSource,
+		NewPs4cGcpRecommendationsDataSource,
+		NewPs4cCommitmentPoliciesDataSource,
 		NewServiceQuotasDataSource,
 		NewBudgetSuggestionsDataSource,
 		NewRbacCountriesDataSource,
+		NewWidgetDataSource,
+		NewWidgetsDataSource,
+		NewServiceAccountDataSource,
+		NewServiceAccountsDataSource,
+		NewServiceAccountTokenDataSource,
+		NewServiceAccountTokensDataSource,
 	}
 }
 
@@ -358,5 +371,8 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewActiveThemeResource,
 		NewSupportRequestTagsResource,
 		NewCustomerResource,
+		NewServiceAccountResource,
+		NewServiceAccountTokenResource,
+		NewRoleResource,
 	}
 }

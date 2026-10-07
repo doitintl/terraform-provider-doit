@@ -60,25 +60,18 @@ Read-Only:
 - `cud_export_healthy` (Boolean) `true` if the BigQuery CUD export is healthy and up to date.
 - `currency` (String) ISO 4217 currency code for this billing account.
 - `display_name` (String) Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
-- `onboarding_status` (Attributes) PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available. (see [below for nested schema](#nestedatt--items--onboarding_status))
-- `savings_totals` (Attributes) Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date. (see [below for nested schema](#nestedatt--items--savings_totals))
-- `stats30d` (Attributes) Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line. (see [below for nested schema](#nestedatt--items--stats30d))
+- `onboarding_status` (Attributes List) PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded. (see [below for nested schema](#nestedatt--items--onboarding_status))
+- `savings_totals` (Attributes List) Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date. (see [below for nested schema](#nestedatt--items--savings_totals))
+- `stats30d` (Attributes List) Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats. (see [below for nested schema](#nestedatt--items--stats30d))
 
 <a id="nestedatt--items--onboarding_status"></a>
 ### Nested Schema for `items.onboarding_status`
 
 Read-Only:
 
-- `compute` (Attributes) (see [below for nested schema](#nestedatt--items--onboarding_status--compute))
-
-<a id="nestedatt--items--onboarding_status--compute"></a>
-### Nested Schema for `items.onboarding_status.compute`
-
-Read-Only:
-
 - `onboarding_started_at` (String) When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
+- `service` (String) Product line this onboarding status belongs to.
 - `status` (String) Current onboarding lifecycle stage for this product line.
-
 
 
 <a id="nestedatt--items--savings_totals"></a>
@@ -86,18 +79,12 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes) Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated. (see [below for nested schema](#nestedatt--items--savings_totals--compute))
+- `lifetime` (Attributes) Lifetime realized savings since onboarding. (see [below for nested schema](#nestedatt--items--savings_totals--lifetime))
+- `service` (String) Product line these savings totals belong to.
+- `ytd` (Attributes) Year-to-date realized savings. (see [below for nested schema](#nestedatt--items--savings_totals--ytd))
 
-<a id="nestedatt--items--savings_totals--compute"></a>
-### Nested Schema for `items.savings_totals.compute`
-
-Read-Only:
-
-- `lifetime` (Attributes) Lifetime realized savings since onboarding. (see [below for nested schema](#nestedatt--items--savings_totals--compute--lifetime))
-- `ytd` (Attributes) Year-to-date realized savings. (see [below for nested schema](#nestedatt--items--savings_totals--compute--ytd))
-
-<a id="nestedatt--items--savings_totals--compute--lifetime"></a>
-### Nested Schema for `items.savings_totals.compute.lifetime`
+<a id="nestedatt--items--savings_totals--lifetime"></a>
+### Nested Schema for `items.savings_totals.lifetime`
 
 Read-Only:
 
@@ -105,14 +92,13 @@ Read-Only:
 - `currency` (String) ISO 4217 currency code.
 
 
-<a id="nestedatt--items--savings_totals--compute--ytd"></a>
-### Nested Schema for `items.savings_totals.compute.ytd`
+<a id="nestedatt--items--savings_totals--ytd"></a>
+### Nested Schema for `items.savings_totals.ytd`
 
 Read-Only:
 
 - `amount` (String) Decimal monetary amount at ISO 4217 minor-unit precision (string).
 - `currency` (String) ISO 4217 currency code.
-
 
 
 
@@ -121,18 +107,12 @@ Read-Only:
 
 Read-Only:
 
-- `compute` (Attributes) Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD. (see [below for nested schema](#nestedatt--items--stats30d--compute))
-
-<a id="nestedatt--items--stats30d--compute"></a>
-### Nested Schema for `items.stats30d.compute`
-
-Read-Only:
-
 - `esr` (Number) Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
-- `savings` (Attributes) Total savings realized over the last 30 days from active commitments (USD). (see [below for nested schema](#nestedatt--items--stats30d--compute--savings))
+- `savings` (Attributes) Total savings realized over the last 30 days from active commitments (USD). (see [below for nested schema](#nestedatt--items--stats30d--savings))
+- `service` (String) Product line these metrics belong to.
 
-<a id="nestedatt--items--stats30d--compute--savings"></a>
-### Nested Schema for `items.stats30d.compute.savings`
+<a id="nestedatt--items--stats30d--savings"></a>
+### Nested Schema for `items.stats30d.savings`
 
 Read-Only:
 

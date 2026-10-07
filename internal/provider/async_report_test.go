@@ -50,12 +50,13 @@ type asyncTestServer struct {
 	pollNotFound  bool          // poll returns 404
 
 	// observations
-	submitKeys  []string
-	cancelKeys  []string
-	pollCount   int
-	resultCount int
-	pollDelays  []time.Duration
-	lastPollAt  time.Time
+	submitKeys    []string
+	cancelKeys    []string
+	pollCount     int
+	resultCount   int
+	resultQueries []string
+	pollDelays    []time.Duration
+	lastPollAt    time.Time
 }
 
 func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
@@ -169,11 +170,12 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 		_ = json.NewEncoder(w).Encode(body)
 	})
 
-	mux.HandleFunc("GET /analytics/v1/reports/operations/{operationId}/results", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("GET /analytics/v1/reports/operations/{operationId}/results", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
 		s.resultCount++
+		s.resultQueries = append(s.resultQueries, r.URL.RawQuery)
 		status := s.resultsStatus[min(s.resultCount-1, len(s.resultsStatus)-1)]
 
 		w.Header().Set("Content-Type", "application/json")
@@ -264,7 +266,7 @@ func TestAwaitAsyncReport_SucceedsAfterPolling(t *testing.T) {
 		client := newAsyncTestClient(t, srv.Server)
 
 		start := time.Now()
-		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil)
 		elapsed := time.Since(start)
 
 		if diags.HasError() {
@@ -281,6 +283,73 @@ func TestAwaitAsyncReport_SucceedsAfterPolling(t *testing.T) {
 			t.Errorf("virtual elapsed = %v, want %v", elapsed, want)
 		}
 	})
+}
+
+func TestAwaitAsyncReport_FileOutput(t *testing.T) {
+	pdf := models.GetAsyncOperationResultsParamsFileOutputPdf
+	png := models.GetAsyncOperationResultsParamsFileOutputPng
+	for _, tc := range []struct {
+		name      string
+		format    *models.GetAsyncOperationResultsParamsFileOutput
+		body      string
+		wantQuery string
+		wantURL   string
+	}{
+		{
+			name: "omitted",
+			body: `{"result":{"rows":[],"cacheHit":false}}`,
+		},
+		{
+			name:      "pdf",
+			format:    &pdf,
+			body:      `{"result":{"rows":[],"cacheHit":false},"fileOutput":"https://storage.example/op.pdf?sig=abc"}`,
+			wantQuery: "fileOutput=pdf",
+			wantURL:   "https://storage.example/op.pdf?sig=abc",
+		},
+		{
+			name:      "png",
+			format:    &png,
+			body:      `{"result":{"rows":[],"cacheHit":false},"fileOutput":"https://storage.example/op.png?sig=def"}`,
+			wantQuery: "fileOutput=png",
+			wantURL:   "https://storage.example/op.png?sig=def",
+		},
+		{
+			name:      "render failed but result remains",
+			format:    &pdf,
+			body:      `{"result":{"rows":[],"cacheHit":false}}`,
+			wantQuery: "fileOutput=pdf",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				srv := newAsyncTestServer(t, &asyncTestServer{
+					pollStatuses: []string{"succeeded"},
+					resultsBody:  tc.body,
+				})
+				client := newAsyncTestClient(t, srv.Server)
+				result, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", tc.format)
+				if diags.HasError() {
+					t.Fatalf("unexpected diagnostics: %v", diags.Errors())
+				}
+				if result.Result == nil {
+					t.Fatal("expected result even without file output")
+				}
+				if result.FileOutput == nil {
+					if tc.wantURL != "" {
+						t.Errorf("file output is nil, want %q", tc.wantURL)
+					}
+				} else if *result.FileOutput != tc.wantURL {
+					t.Errorf("file output = %q, want %q", *result.FileOutput, tc.wantURL)
+				}
+				srv.mu.Lock()
+				queries := append([]string(nil), srv.resultQueries...)
+				srv.mu.Unlock()
+				if len(queries) != 1 || queries[0] != tc.wantQuery {
+					t.Errorf("result queries = %v, want [%q]", queries, tc.wantQuery)
+				}
+			})
+		})
+	}
 }
 
 // TestAwaitAsyncReport_DetailsValueAliases verifies that when the results
@@ -301,7 +370,7 @@ func TestAwaitAsyncReport_DetailsValueAliases(t *testing.T) {
 		})
 		client := newAsyncTestClient(t, srv.Server)
 
-		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil)
 		if diags.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", diags.Errors())
 		}
@@ -359,7 +428,7 @@ func TestAwaitAsyncReport_OmittedDetails(t *testing.T) {
 		})
 		client := newAsyncTestClient(t, srv.Server)
 
-		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil)
 		if diags.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", diags.Errors())
 		}
@@ -406,7 +475,7 @@ func TestAwaitAsyncReport_HonorsRetryAfter(t *testing.T) {
 				client := newAsyncTestClient(t, srv.Server)
 
 				start := time.Now()
-				if _, diags := awaitAsyncReport(t.Context(), client, "query", "op-1"); diags.HasError() {
+				if _, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil); diags.HasError() {
 					t.Fatalf("unexpected diagnostics: %v", diags.Errors())
 				}
 
@@ -441,7 +510,7 @@ func TestAwaitAsyncReport_RequestTimeoutDoesNotBoundTheRun(t *testing.T) {
 		client := newAsyncTestClientWithRequestTimeout(t, srv.Server, requestTimeout)
 
 		start := time.Now()
-		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil)
 		elapsed := time.Since(start)
 
 		if diags.HasError() {
@@ -476,7 +545,7 @@ func TestAwaitAsyncReport_RequestTimeoutStillBoundsOneRequest(t *testing.T) {
 		ctx, stop := context.WithTimeout(t.Context(), 30*time.Second)
 		defer stop()
 
-		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1", nil)
 		if !diags.HasError() {
 			t.Fatal("expected an error when the request never completes")
 		}
@@ -505,7 +574,7 @@ func TestAwaitAsyncReport_TimeoutCancelsOperation(t *testing.T) {
 		ctx, stop := context.WithTimeout(t.Context(), 30*time.Second)
 		defer stop()
 
-		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1", nil)
 
 		if !diags.HasError() {
 			t.Fatal("expected a timeout error")
@@ -548,7 +617,7 @@ func TestAwaitAsyncReport_ContextCancellationCancelsOperation(t *testing.T) {
 			cancel()
 		}()
 
-		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1", nil)
 		if !diags.HasError() {
 			t.Fatal("expected an error after cancellation")
 		}
@@ -589,7 +658,7 @@ func TestAwaitAsyncReport_TimeoutDuringResultsDoesNotCancel(t *testing.T) {
 		ctx, stop := context.WithTimeout(t.Context(), 10*time.Second)
 		defer stop()
 
-		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1", nil)
 		if !diags.HasError() {
 			t.Fatal("expected an error")
 		}
@@ -620,7 +689,7 @@ func TestAwaitAsyncReport_TimeoutRaceWithCompletion(t *testing.T) {
 		ctx, stop := context.WithTimeout(t.Context(), 20*time.Second)
 		defer stop()
 
-		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1", nil)
 		if !diags.HasError() {
 			t.Fatal("expected a timeout error")
 		}
@@ -650,7 +719,7 @@ func TestAwaitAsyncReport_CancelFailureDoesNotMaskTimeout(t *testing.T) {
 		ctx, stop := context.WithTimeout(t.Context(), 20*time.Second)
 		defer stop()
 
-		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1", nil)
 
 		if !diags.HasError() {
 			t.Fatal("expected the timeout to still be reported as an error")
@@ -690,7 +759,7 @@ func TestAwaitAsyncReport_OperationFailed(t *testing.T) {
 		})
 		client := newAsyncTestClient(t, srv.Server)
 
-		_, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		_, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil)
 		if !diags.HasError() {
 			t.Fatal("expected an error")
 		}
@@ -705,11 +774,13 @@ func TestAwaitAsyncReport_OperationFailed(t *testing.T) {
 }
 
 func TestAwaitAsyncReport_TerminalStatesAndErrors(t *testing.T) {
+	pdf := models.GetAsyncOperationResultsParamsFileOutputPdf
 	// Pointers, not values: asyncTestServer carries a mutex and must not be copied.
 	for _, tc := range []struct {
-		name    string
-		server  *asyncTestServer
-		wantMsg string
+		name       string
+		server     *asyncTestServer
+		wantMsg    string
+		fileOutput *models.GetAsyncOperationResultsParamsFileOutput
 	}{
 		{
 			name:    "externally canceled",
@@ -730,7 +801,8 @@ func TestAwaitAsyncReport_TerminalStatesAndErrors(t *testing.T) {
 			// 422 stays a transport-level error from DCIRetryClient (unlike 425,
 			// which is passed through so the poll loop can retry it), but the
 			// status and body still reach the user.
-			wantMsg: "422",
+			wantMsg:    "422",
+			fileOutput: &pdf,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -738,7 +810,7 @@ func TestAwaitAsyncReport_TerminalStatesAndErrors(t *testing.T) {
 				srv := newAsyncTestServer(t, tc.server)
 				client := newAsyncTestClient(t, srv.Server)
 
-				_, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+				_, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", tc.fileOutput)
 				if !diags.HasError() {
 					t.Fatal("expected an error")
 				}
@@ -771,7 +843,7 @@ func TestAwaitAsyncReport_UnrecognizedStatus(t *testing.T) {
 		defer stop()
 
 		start := time.Now()
-		_, diags := awaitAsyncReport(ctx, client, "query", "op-1")
+		_, diags := awaitAsyncReport(ctx, client, "query", "op-1", nil)
 		elapsed := time.Since(start)
 
 		if !diags.HasError() {
@@ -807,7 +879,7 @@ func TestAwaitAsyncReport_Results425ThenSucceeds(t *testing.T) {
 		client := newAsyncTestClient(t, srv.Server)
 
 		start := time.Now()
-		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1")
+		results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", nil)
 		if diags.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", diags.Errors())
 		}

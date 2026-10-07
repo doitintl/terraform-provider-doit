@@ -44,17 +44,19 @@ type reportResultDataSource struct {
 // reportResultDataSourceModel is the Terraform state model.
 type reportResultDataSourceModel struct {
 	// Inputs
-	Id        types.String `tfsdk:"id"`
-	TimeRange types.String `tfsdk:"time_range"`
-	StartDate types.String `tfsdk:"start_date"`
-	EndDate   types.String `tfsdk:"end_date"`
+	Id         types.String `tfsdk:"id"`
+	TimeRange  types.String `tfsdk:"time_range"`
+	StartDate  types.String `tfsdk:"start_date"`
+	EndDate    types.String `tfsdk:"end_date"`
+	FileOutput types.String `tfsdk:"file_output"`
 
 	// Outputs
-	ResultJSON types.String   `tfsdk:"result_json"`
-	ReportName types.String   `tfsdk:"report_name"`
-	CacheHit   types.Bool     `tfsdk:"cache_hit"`
-	RowCount   types.Int64    `tfsdk:"row_count"`
-	Timeouts   timeouts.Value `tfsdk:"timeouts"`
+	ResultJSON    types.String   `tfsdk:"result_json"`
+	ReportName    types.String   `tfsdk:"report_name"`
+	CacheHit      types.Bool     `tfsdk:"cache_hit"`
+	RowCount      types.Int64    `tfsdk:"row_count"`
+	FileOutputURL types.String   `tfsdk:"file_output_url"`
+	Timeouts      timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (d *reportResultDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -68,7 +70,8 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			" result_json. Use Terraform's jsondecode() to parse the results." +
 			"\n\nNote: Report results are dynamic — they change over time as new" +
 			" billing data is ingested. Every terraform plan will re-execute the" +
-			" report." +
+			" report. Set file_output to pdf or png to receive a signed file_output_url." +
+			" The URL lasts up to 7 days. A failed render leaves the result available and the URL null." +
 			"\n\nThe result_json field contains the full result object, including the" +
 			" schema (column definitions: name, type, and optional unit, currency, aggregation, and id)," +
 			" rows (data), forecastRows (forecast data), secondaryRows (secondary time range data)," +
@@ -78,7 +81,8 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			" `result_json`. Use Terraform's `jsondecode()` to parse the results." +
 			"\n\n~> **Note:** Report results are dynamic — they change over time as new" +
 			" billing data is ingested. Every `terraform plan` will re-execute the" +
-			" report." +
+			" report. Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`." +
+			"\n\nThe signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately." +
 			"\n\nThe `result_json` field contains the full result object including:" +
 			"\n\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
 			"\n- `rows`: Data rows (each row is an array of cell values: string, number, or null)" +
@@ -132,6 +136,12 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 					dateValidator{},
 				},
 			},
+			"file_output": schema.StringAttribute{
+				Description:         "Optional file format to render from the report result: pdf or png.",
+				MarkdownDescription: "Optional file format to render from the report result: `pdf` or `png`.",
+				Optional:            true,
+				Validators:          []validator.String{stringvalidator.OneOf("pdf", "png")},
+			},
 
 			// --- Outputs ---
 			"result_json": schema.StringAttribute{
@@ -162,6 +172,12 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 				Description:         "The number of data rows in the result.",
 				MarkdownDescription: "The number of data rows in the result.",
 				Computed:            true,
+			},
+			"file_output_url": schema.StringAttribute{
+				Description:         "Signed download URL for the requested file. Null if no file was requested or rendering failed. Valid for up to 7 days.",
+				MarkdownDescription: "Signed download URL for the requested file. Null if no file was requested or rendering failed. Valid for up to 7 days.",
+				Computed:            true,
+				Sensitive:           true,
 			},
 			"timeouts": timeouts.Attributes(ctx),
 		},
@@ -238,11 +254,12 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	// If ID or any query parameter is unknown, return early
 	// with all computed attributes set to unknown.
-	if data.Id.IsUnknown() || data.TimeRange.IsUnknown() || data.StartDate.IsUnknown() || data.EndDate.IsUnknown() {
+	if data.Id.IsUnknown() || data.TimeRange.IsUnknown() || data.StartDate.IsUnknown() || data.EndDate.IsUnknown() || data.FileOutput.IsUnknown() {
 		data.ResultJSON = types.StringUnknown()
 		data.ReportName = types.StringUnknown()
 		data.CacheHit = types.BoolUnknown()
 		data.RowCount = types.Int64Unknown()
+		data.FileOutputURL = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -279,7 +296,7 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	report, awaitDiags := awaitAsyncReport(ctx, d.client, "report results", operationID)
+	report, awaitDiags := awaitAsyncReport(ctx, d.client, "report results", operationID, fileOutputFormat(data.FileOutput))
 	resp.Diagnostics.Append(awaitDiags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -288,6 +305,7 @@ func (d *reportResultDataSource) Read(ctx context.Context, req datasource.ReadRe
 	// Map metadata to typed attributes. The results endpoint returns the report
 	// metadata alongside the result for a run started against a saved report.
 	data.ReportName = types.StringPointerValue(report.ReportName)
+	data.FileOutputURL = types.StringPointerValue(report.FileOutput)
 
 	// Map result to JSON string
 	if report.Result != nil {

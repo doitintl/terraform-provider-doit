@@ -1413,6 +1413,195 @@ func TestAlertResourceRead_NotFound(t *testing.T) {
 	}
 }
 
+// newRoleTestState builds a role state with the given ID and all other
+// attributes null.
+func newRoleTestState(t *testing.T, r *roleResource, id string) tfsdk.State {
+	t.Helper()
+	ctx := t.Context()
+
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+	}
+
+	stateValues := map[string]tftypes.Value{
+		"id": tftypes.NewValue(tftypes.String, id),
+	}
+	for attrName, attr := range schemaResp.Schema.Attributes {
+		if attrName == "id" {
+			continue
+		}
+		stateValues[attrName] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+	}
+
+	return tfsdk.State{
+		Schema: schemaResp.Schema,
+		Raw: tftypes.NewValue(
+			tftypes.Object{AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes)},
+			stateValues,
+		),
+	}
+}
+
+// TestRoleResourceDelete_NotFound tests that deleting a role that returns 404
+// is treated as a successful delete, and that a 409 (role still assigned to
+// users or groups) surfaces the API error body.
+func TestRoleResourceDelete_NotFound(t *testing.T) {
+	tests := []struct {
+		name         string
+		statusCode   int
+		responseBody string
+		expectError  bool
+	}{
+		{
+			name:         "200 OK - successful delete",
+			statusCode:   http.StatusOK,
+			responseBody: "",
+			expectError:  false,
+		},
+		{
+			name:         "204 No Content - successful delete",
+			statusCode:   http.StatusNoContent,
+			responseBody: "",
+			expectError:  false,
+		},
+		{
+			name:         "404 Not Found - resource already deleted",
+			statusCode:   http.StatusNotFound,
+			responseBody: `{"error": "role not found"}`,
+			expectError:  false,
+		},
+		{
+			name:         "409 Conflict - role still assigned",
+			statusCode:   http.StatusConflict,
+			responseBody: `{"error": "role is assigned to 2 users and 1 group"}`,
+			expectError:  true,
+		},
+		{
+			name:         "500 Internal Server Error - should fail",
+			statusCode:   http.StatusInternalServerError,
+			responseBody: `{"error": "Internal server error"}`,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodDelete || r.URL.Path != "/iam/v1/roles/test-role-id" {
+					t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
+				}
+				if tt.responseBody != "" {
+					w.Header().Set("Content-Type", "application/json")
+				}
+				w.WriteHeader(tt.statusCode)
+				if tt.responseBody != "" {
+					_, _ = w.Write([]byte(tt.responseBody))
+				}
+			}))
+
+			r := &roleResource{client: newTestAPIClient(t, server)}
+
+			deleteResp := &resource.DeleteResponse{}
+			r.Delete(t.Context(), resource.DeleteRequest{State: newRoleTestState(t, r, "test-role-id")}, deleteResp)
+
+			hasError := deleteResp.Diagnostics.HasError()
+			if hasError != tt.expectError {
+				t.Fatalf("Delete() hasError = %v, expectError %v; diagnostics: %v",
+					hasError, tt.expectError, deleteResp.Diagnostics)
+			}
+			if tt.expectError {
+				detail := deleteResp.Diagnostics.Errors()[0].Detail()
+				if !strings.Contains(detail, tt.responseBody) {
+					t.Errorf("Delete() error detail = %q, want it to contain the API body %q", detail, tt.responseBody)
+				}
+			}
+		})
+	}
+}
+
+// TestRoleResourceRead_NotFound tests that reading a role that returns 404
+// removes the resource from state, that other errors are surfaced, and that a
+// preset role is rejected rather than written to state.
+func TestRoleResourceRead_NotFound(t *testing.T) {
+	tests := []struct {
+		name          string
+		statusCode    int
+		responseBody  string
+		expectRemoved bool
+		expectError   string
+	}{
+		{
+			name:          "404 Not Found - resource externally deleted",
+			statusCode:    http.StatusNotFound,
+			responseBody:  `{"error": "role not found"}`,
+			expectRemoved: true,
+		},
+		{
+			name:         "500 Internal Server Error - should fail",
+			statusCode:   http.StatusInternalServerError,
+			responseBody: `{"error": "Internal server error"}`,
+			expectError:  "Error Reading Role",
+		},
+		{
+			name:         "200 OK - preset role is rejected",
+			statusCode:   http.StatusOK,
+			responseBody: `{"id": "test-role-id", "name": "View Only", "description": "", "permissions": ["p1"], "type": "preset", "customer": "", "childTenantEligible": false}`,
+			expectError:  "Preset Role Cannot Be Managed",
+		},
+		{
+			name:         "200 OK - custom role is kept",
+			statusCode:   http.StatusOK,
+			responseBody: `{"id": "test-role-id", "name": "FinOps Analyst", "description": "", "permissions": [], "type": "custom", "customer": "cust-1", "childTenantEligible": false}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.statusCode)
+				_, _ = w.Write([]byte(tt.responseBody))
+			}))
+
+			r := &roleResource{client: newTestAPIClient(t, server)}
+			ctx := t.Context()
+
+			state := newRoleTestState(t, r, "test-role-id")
+			readResp := &resource.ReadResponse{State: state}
+			r.Read(ctx, resource.ReadRequest{State: state}, readResp)
+
+			if tt.expectError != "" {
+				if !readResp.Diagnostics.HasError() || readResp.Diagnostics.Errors()[0].Summary() != tt.expectError {
+					t.Fatalf("Read() diagnostics = %v, want error %q", readResp.Diagnostics, tt.expectError)
+				}
+				return
+			}
+			if readResp.Diagnostics.HasError() {
+				t.Fatalf("Read() unexpected diagnostics: %v", readResp.Diagnostics)
+			}
+
+			if tt.expectRemoved {
+				if !readResp.State.Raw.IsNull() {
+					t.Errorf("Expected resource to be removed from state, got %v", readResp.State.Raw)
+				}
+				return
+			}
+
+			var result roleResourceModel
+			readResp.Diagnostics.Append(readResp.State.Get(ctx, &result)...)
+			if readResp.Diagnostics.HasError() {
+				t.Fatalf("State.Get() diagnostics: %v", readResp.Diagnostics)
+			}
+			if result.Id.ValueString() != "test-role-id" || result.Name.ValueString() != "FinOps Analyst" || result.Type.ValueString() != "custom" {
+				t.Errorf("Read() state = id %q, name %q, type %q; want test-role-id, FinOps Analyst, custom",
+					result.Id.ValueString(), result.Name.ValueString(), result.Type.ValueString())
+			}
+		})
+	}
+}
+
 // =============================================================================
 // DATA SOURCE UNIT TESTS
 // =============================================================================

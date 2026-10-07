@@ -113,20 +113,20 @@ data "doit_allocation" "test" {
 func testAccAllocationDataSourceGroupConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_allocation" "test" {
-    name        = %q
+    name        = %[1]q
     description = "test allocation group for data source"
     unallocated_costs = "Other"
     rules = [
         {
             action  = "create"
-            name    = "Group 1"
+            name    = "%[1]s-rule"
             formula = "A"
             components = [
              {
                 key    = "project_id"
                 mode   = "is"
                 type   = "fixed"
-                values = ["%s"]
+                values = ["%[2]s"]
               }
             ]
         }
@@ -210,4 +210,204 @@ data "doit_allocation" "test" {
     id = doit_allocation.test.id
 }
 `, name, name, testProject())
+}
+
+func TestAccAllocationDataSource_ValidityPeriods(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-alloc-ds-vp")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationDataSourceValidityPeriodsConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(rName)),
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("rule").AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.Null(),
+								"end_date":   knownvalue.StringExact("2025-06-30"),
+							}),
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-07-01"),
+								"end_date":   knownvalue.Null(),
+							}),
+						})),
+				},
+			},
+			{
+				Config: testAccAllocationDataSourceValidityPeriodsConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationDataSourceValidityPeriodsConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "test" {
+  name        = %q
+  description = "test allocation with validity periods for data source"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "country"
+        mode   = "is"
+        type   = "fixed"
+        values = ["JP"]
+      }
+    ]
+    validity_periods = [
+      {
+        end_date = "2025-06-30"
+      },
+      {
+        start_date = "2025-07-01"
+      }
+    ]
+  }
+}
+
+data "doit_allocation" "test" {
+  id = doit_allocation.test.id
+}
+`, name)
+}
+
+func TestAccAllocationDataSource_Group_ValueExtraction(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-alloc-ds-ve")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAllocationDataSourceGroupValueExtractionConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("name"),
+						knownvalue.StringExact(rName)),
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("validity_periods"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"start_date": knownvalue.StringExact("2025-01-01"),
+								"end_date":   knownvalue.StringExact("2025-12-31"),
+							}),
+						})),
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("on_missing"),
+						knownvalue.StringExact("useFallback")),
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("fallback"),
+						knownvalue.StringExact("DefaultEnv")),
+					statecheck.ExpectKnownValue(
+						"data.doit_allocation.test",
+						tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("value_extraction").AtMapKey("sources"),
+						knownvalue.ListExact([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type": knownvalue.StringExact("tag"),
+								"key":  knownvalue.StringExact("Environment"),
+								"providers": knownvalue.ListExact([]knownvalue.Check{
+									knownvalue.StringExact("amazon-web-services"),
+								}),
+							}),
+						})),
+				},
+			},
+			{
+				Config: testAccAllocationDataSourceGroupValueExtractionConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAllocationDataSourceGroupValueExtractionConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "test" {
+  name              = %[1]q
+  description       = "test allocation group with value extraction for data source"
+  unallocated_costs = "Other"
+  rules = [
+    {
+      action  = "create"
+      name    = "%[1]s-rule"
+      formula = "A"
+      components = [
+        {
+          key    = "country"
+          mode   = "is"
+          type   = "fixed"
+          values = ["JP"]
+        }
+      ]
+      validity_periods = [
+        {
+          start_date = "2025-01-01"
+          end_date   = "2025-12-31"
+        }
+      ]
+      value_extraction = {
+        on_missing = "useFallback"
+        fallback   = "DefaultEnv"
+        sources = [
+          {
+            type      = "tag"
+            key       = "Environment"
+            providers = ["amazon-web-services"]
+          }
+        ]
+      }
+    }
+  ]
+}
+
+data "doit_allocation" "test" {
+  id = doit_allocation.test.id
+}
+`, name)
+}
+
+func TestAllocationDataSourceGroupConfigs_UniqueChildNames(t *testing.T) {
+	childName := regexp.MustCompile(`(?s)action\s*=\s*"create"\s+name\s*=\s*"([^"]+)"`)
+	for _, tc := range []struct {
+		name   string
+		config func(string) string
+	}{
+		{"group", testAccAllocationDataSourceGroupConfig},
+		{"group with value extraction", testAccAllocationDataSourceGroupValueExtractionConfig},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			first := childName.FindStringSubmatch(tc.config("parent-one"))
+			second := childName.FindStringSubmatch(tc.config("parent-two"))
+			if len(first) != 2 || len(second) != 2 {
+				t.Fatal("could not find inline allocation names in generated configs")
+			}
+			if first[1] == second[1] {
+				t.Errorf("different parent allocations use the same inline child name %q", first[1])
+			}
+		})
+	}
 }

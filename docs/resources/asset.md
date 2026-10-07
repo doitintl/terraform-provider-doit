@@ -53,7 +53,7 @@ resource "doit_asset" "licenses" {
 
 ### Required
 
-- `id` (String) The unique id of an asset.
+- `id` (String) The unique identifier of the asset.
 
 ### Optional
 

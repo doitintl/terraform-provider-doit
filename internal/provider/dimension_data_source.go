@@ -49,7 +49,10 @@ func (d *dimensionDataSource) Configure(_ context.Context, req datasource.Config
 
 func (d *dimensionDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_dimension.DimensionDataSourceSchema(ctx)
-
+	// No dimensions-type deprecation warning on type: the dimensions API only
+	// resolves "attribution" and returns "Dimension not found" for the
+	// replacements ("allocation_rule"/"allocation"), so the warning would
+	// recommend a value that breaks the lookup.
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

@@ -24,7 +24,7 @@ func AssetResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The time when the asset was created, in milliseconds since the epoch.",
 			},
 			"id": schema.StringAttribute{
-				Computed:            true,
+				Required:            true,
 				Description:         "The unique identifier of the asset.",
 				MarkdownDescription: "The unique identifier of the asset.",
 			},

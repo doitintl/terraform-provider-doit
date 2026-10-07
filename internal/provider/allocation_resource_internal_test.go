@@ -1,6 +1,11 @@
 package provider
 
 import (
+	"fmt"
+	"maps"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -63,9 +68,17 @@ func modifyPlanTestTimeouts(t *testing.T, sch schema.Schema) timeouts.Value {
 func modifyPlanTestRule(t *testing.T, attrs map[string]attr.Value) resource_allocation.RulesValue {
 	t.Helper()
 	ctx := t.Context()
+	mergedAttrs := make(map[string]attr.Value, len(attrs)+2)
+	maps.Copy(mergedAttrs, attrs)
+	if _, ok := mergedAttrs["validity_periods"]; !ok {
+		mergedAttrs["validity_periods"] = types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx))
+	}
+	if _, ok := mergedAttrs["value_extraction"]; !ok {
+		mergedAttrs["value_extraction"] = resource_allocation.NewValueExtractionValueNull()
+	}
 	return resource_allocation.NewRulesValueMust(
 		resource_allocation.RulesValue{}.AttributeTypes(ctx),
-		attrs,
+		mergedAttrs,
 	)
 }
 
@@ -650,5 +663,222 @@ func TestAllocationResource_ModifyPlan_ExplicitIdReservesCandidate(t *testing.T)
 	// Rule B should NOT get "shared-id" — the candidate is reserved by rule A.
 	if result.rules[1].Id.ValueString() == "shared-id" {
 		t.Errorf("rule B: incorrectly claimed candidate already reserved by rule A's explicit id")
+	}
+}
+
+func TestAllocationCreate_NilIDReturnsError(t *testing.T) {
+	ctx := t.Context()
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"name":"test-alloc"}`)) // Note: id is omitted / nil
+	}))
+
+	r := &allocationResource{client: newTestAPIClient(t, server)}
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+	rule := modifyPlanTestRule(t, map[string]attr.Value{
+		"action":      types.StringValue("create"),
+		"name":        types.StringValue("rule-1"),
+		"description": types.StringNull(),
+		"formula":     types.StringValue("A"),
+		"components":  modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"})),
+		"id":          types.StringNull(),
+	})
+	planModel := modifyPlanTestModel(t, []attr.Value{rule}, tv)
+	planRaw := allocationRawForTest(t, sch, planModel)
+	plan := tfsdk.Plan{Schema: sch, Raw: planRaw.Raw}
+
+	resp := &resource.CreateResponse{State: tfsdk.State{Schema: sch}}
+	r.Create(ctx, resource.CreateRequest{Plan: plan}, resp)
+
+	if !resp.Diagnostics.HasError() {
+		t.Fatalf("expected error diagnostic for response missing ID, got none")
+	}
+	var found bool
+	for _, err := range resp.Diagnostics.Errors() {
+		if strings.Contains(err.Detail(), "response missing ID") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected diagnostic mentioning 'response missing ID', got: %v", resp.Diagnostics)
+	}
+}
+
+func TestAllocationCreate_ChildGetFailurePreservesRecoverableState(t *testing.T) {
+	ctx := t.Context()
+
+	childID := "child-rule-1"
+	groupID := "group-123"
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPost {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, `{
+				"id": "%s",
+				"name": "group-alloc",
+				"allocationType": "group",
+				"createTime": 1000,
+				"updateTime": 2000,
+				"rules": [
+					{
+						"id": "%s",
+						"name": "rule-1",
+						"action": "create"
+					}
+				]
+			}`, groupID, childID)
+			return
+		}
+		if r.Method == http.MethodGet && strings.Contains(r.URL.Path, childID) {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"error": "internal error reading child detail"}`))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+
+	r := &allocationResource{client: newTestAPIClient(t, server)}
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+	rule := modifyPlanTestRule(t, map[string]attr.Value{
+		"action":      types.StringValue("create"),
+		"name":        types.StringValue("rule-1"),
+		"description": types.StringNull(),
+		"formula":     types.StringValue("A"),
+		"components":  modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"})),
+		"id":          types.StringUnknown(),
+	})
+	planModel := modifyPlanTestModel(t, []attr.Value{rule}, tv)
+	planModel.Id = types.StringUnknown()
+	planModel.CreateTime = types.Int64Unknown()
+	planModel.UpdateTime = types.Int64Unknown()
+	planModel.Type = types.StringUnknown()
+	planModel.AllocationType = types.StringUnknown()
+
+	planRaw := allocationRawForTest(t, sch, planModel)
+	plan := tfsdk.Plan{Schema: sch, Raw: planRaw.Raw}
+
+	resp := &resource.CreateResponse{State: tfsdk.State{Schema: sch}}
+	r.Create(ctx, resource.CreateRequest{Plan: plan}, resp)
+
+	if !resp.Diagnostics.HasError() {
+		t.Fatalf("expected error diagnostic due to child GET 500, got none")
+	}
+
+	if resp.State.Raw.IsNull() {
+		t.Fatalf("expected recoverable state to be preserved in resp.State, but State is null")
+	}
+
+	var stateModel allocationResourceModel
+	diags := resp.State.Get(ctx, &stateModel)
+	if diags.HasError() {
+		t.Fatalf("failed to decode preserved state: %v", diags)
+	}
+
+	if stateModel.Id.ValueString() != groupID {
+		t.Errorf("expected preserved state Id %q, got %q", groupID, stateModel.Id.ValueString())
+	}
+
+	var rules []resource_allocation.RulesValue
+	diags = stateModel.Rules.ElementsAs(ctx, &rules, false)
+	if diags.HasError() {
+		t.Fatalf("failed to decode rules from state: %v", diags)
+	}
+	if len(rules) != 1 {
+		t.Fatalf("expected 1 rule in preserved state, got %d", len(rules))
+	}
+	if rules[0].Id.ValueString() != childID {
+		t.Errorf("expected preserved rule Id %q, got %q", childID, rules[0].Id.ValueString())
+	}
+	if rules[0].Formula.ValueString() != "A" {
+		t.Errorf("expected preserved rule Formula %q, got %q", "A", rules[0].Formula.ValueString())
+	}
+}
+
+func TestAllocationUpdate_ChildGetFailurePreservesRecoverableState(t *testing.T) {
+	ctx := t.Context()
+
+	childID := "child-rule-1"
+	groupID := "group-123"
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPatch {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, `{
+				"id": "%s",
+				"name": "group-alloc",
+				"allocationType": "group",
+				"createTime": 1000,
+				"updateTime": 2000,
+				"rules": [
+					{
+						"id": "%s",
+						"name": "rule-1",
+						"action": "update"
+					}
+				]
+			}`, groupID, childID)
+			return
+		}
+		if r.Method == http.MethodGet && strings.Contains(r.URL.Path, childID) {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"error": "internal error reading child detail"}`))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+
+	r := &allocationResource{client: newTestAPIClient(t, server)}
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+	rule := modifyPlanTestRule(t, map[string]attr.Value{
+		"action":      types.StringValue("update"),
+		"name":        types.StringValue("rule-1"),
+		"description": types.StringNull(),
+		"formula":     types.StringValue("A"),
+		"components":  modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"})),
+		"id":          types.StringValue(childID),
+	})
+	model := modifyPlanTestModel(t, []attr.Value{rule}, tv)
+	stateRaw := allocationRawForTest(t, sch, model)
+	planRaw := allocationRawForTest(t, sch, model)
+	plan := tfsdk.Plan{Schema: sch, Raw: planRaw.Raw}
+
+	resp := &resource.UpdateResponse{State: stateRaw}
+	r.Update(ctx, resource.UpdateRequest{State: stateRaw, Plan: plan}, resp)
+
+	if !resp.Diagnostics.HasError() {
+		t.Fatalf("expected error diagnostic due to child GET 500, got none")
+	}
+
+	if resp.State.Raw.IsNull() {
+		t.Fatalf("expected recoverable state to be preserved in resp.State, but State is null")
+	}
+
+	var stateModel allocationResourceModel
+	diags := resp.State.Get(ctx, &stateModel)
+	if diags.HasError() {
+		t.Fatalf("failed to decode preserved state: %v", diags)
+	}
+
+	if stateModel.Id.ValueString() != groupID {
+		t.Errorf("expected preserved state Id %q, got %q", groupID, stateModel.Id.ValueString())
+	}
+
+	var rules []resource_allocation.RulesValue
+	diags = stateModel.Rules.ElementsAs(ctx, &rules, false)
+	if diags.HasError() {
+		t.Fatalf("failed to decode rules from state: %v", diags)
+	}
+	if len(rules) != 1 {
+		t.Fatalf("expected 1 rule in preserved state, got %d", len(rules))
+	}
+	if rules[0].Id.ValueString() != childID {
+		t.Errorf("expected preserved rule Id %q, got %q", childID, rules[0].Id.ValueString())
 	}
 }

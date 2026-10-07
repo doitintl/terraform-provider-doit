@@ -87,169 +87,139 @@ func buildGcpAccountObjectList[V attr.Value](elemType attr.Type, attrTypes map[s
 
 // --- onboarding_status ---
 
-func mapGcpAccountOnboardingStatus(ctx context.Context, status *models.GcpOnboardingStatus) (datasource_ps4c_gcp_billing_account.OnboardingStatusValue, diag.Diagnostics) {
-	if status == nil {
-		return datasource_ps4c_gcp_billing_account.NewOnboardingStatusValueNull(), nil
+func mapGcpAccountOnboardingStatus(ctx context.Context, status *[]models.GcpOnboardingStatusByService) (types.List, diag.Diagnostics) {
+	var entries []models.GcpOnboardingStatusByService
+	if status != nil {
+		entries = *status
 	}
 
-	var diags diag.Diagnostics
-	computeVal, d := mapGcpAccountOnboardingStatusCompute(ctx, status.Compute)
-	diags.Append(d...)
+	elemType := datasource_ps4c_gcp_billing_account.OnboardingStatusValue{}.Type(ctx)
+	attrTypes := datasource_ps4c_gcp_billing_account.OnboardingStatusValue{}.AttributeTypes(ctx)
 
-	val, d := datasource_ps4c_gcp_billing_account.NewOnboardingStatusValue(
-		datasource_ps4c_gcp_billing_account.OnboardingStatusValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"compute": computeVal},
-	)
-	diags.Append(d...)
-	return val, diags
-}
+	return buildGcpAccountObjectList(elemType, attrTypes, len(entries),
+		func(i int) (map[string]attr.Value, diag.Diagnostics) {
+			startedAt := types.StringNull()
+			if t := nullableToPointer(entries[i].OnboardingStartedAt); t != nil {
+				startedAt = types.StringValue(t.UTC().Format(time.RFC3339))
+			}
 
-func mapGcpAccountOnboardingStatusCompute(ctx context.Context, entry *models.GcpOnboardingStatusEntry) (datasource_ps4c_gcp_billing_account.OnboardingStatusComputeValue, diag.Diagnostics) {
-	if entry == nil {
-		return datasource_ps4c_gcp_billing_account.NewOnboardingStatusComputeValueNull(), nil
-	}
-
-	var startedAt types.String
-	if t := nullableToPointer(entry.OnboardingStartedAt); t != nil {
-		startedAt = types.StringValue(t.UTC().Format(time.RFC3339))
-	} else {
-		startedAt = types.StringNull()
-	}
-
-	return datasource_ps4c_gcp_billing_account.NewOnboardingStatusComputeValue(
-		datasource_ps4c_gcp_billing_account.OnboardingStatusComputeValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"onboarding_started_at": startedAt,
-			"status":                types.StringValue(string(entry.Status)),
+			return map[string]attr.Value{
+				"onboarding_started_at": startedAt,
+				"service":               types.StringValue(string(entries[i].Service)),
+				"status":                types.StringValue(string(entries[i].Status)),
+			}, nil
 		},
+		datasource_ps4c_gcp_billing_account.NewOnboardingStatusValue,
 	)
 }
 
 // --- stats30d ---
 
-func mapGcpAccountStats30d(ctx context.Context, s *models.GcpBillingAccountStats30d) (datasource_ps4c_gcp_billing_account.Stats30dValue, diag.Diagnostics) {
-	if s == nil {
-		return datasource_ps4c_gcp_billing_account.NewStats30dValueNull(), nil
+func mapGcpAccountStats30d(ctx context.Context, stats *[]models.GcpStats30dByService) (types.List, diag.Diagnostics) {
+	var entries []models.GcpStats30dByService
+	if stats != nil {
+		entries = *stats
 	}
 
-	var diags diag.Diagnostics
-	computeVal, d := mapGcpAccountStats30dCompute(ctx, s.Compute)
-	diags.Append(d...)
+	elemType := datasource_ps4c_gcp_billing_account.Stats30dValue{}.Type(ctx)
+	attrTypes := datasource_ps4c_gcp_billing_account.Stats30dValue{}.AttributeTypes(ctx)
 
-	val, d := datasource_ps4c_gcp_billing_account.NewStats30dValue(
-		datasource_ps4c_gcp_billing_account.Stats30dValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"compute": computeVal},
+	return buildGcpAccountObjectList(elemType, attrTypes, len(entries),
+		func(i int) (map[string]attr.Value, diag.Diagnostics) {
+			var diags diag.Diagnostics
+			entry := entries[i]
+
+			savings, d := buildGcpAccountMoneyValue(entry.Savings,
+				datasource_ps4c_gcp_billing_account.SavingsValue{}.AttributeTypes(ctx),
+				datasource_ps4c_gcp_billing_account.NewSavingsValue,
+				datasource_ps4c_gcp_billing_account.NewSavingsValueNull,
+			)
+			diags.Append(d...)
+
+			return map[string]attr.Value{
+				"esr":     types.Float64PointerValue(nullableToPointer(entry.Esr)),
+				"savings": savings,
+				"service": types.StringValue(string(entry.Service)),
+			}, diags
+		},
+		datasource_ps4c_gcp_billing_account.NewStats30dValue,
 	)
-	diags.Append(d...)
-	return val, diags
-}
-
-func mapGcpAccountStats30dCompute(ctx context.Context, s *models.Stats30dSummary) (datasource_ps4c_gcp_billing_account.Stats30dComputeValue, diag.Diagnostics) {
-	if s == nil {
-		return datasource_ps4c_gcp_billing_account.NewStats30dComputeValueNull(), nil
-	}
-
-	var diags diag.Diagnostics
-
-	esr := types.Float64Null()
-	if e := nullableToPointer(s.Esr); e != nil {
-		esr = types.Float64Value(*e)
-	}
-
-	savings, d := buildGcpAccountMoneyValue(s.Savings,
-		datasource_ps4c_gcp_billing_account.SavingsValue{}.AttributeTypes(ctx),
-		datasource_ps4c_gcp_billing_account.NewSavingsValue,
-		datasource_ps4c_gcp_billing_account.NewSavingsValueNull,
-	)
-	diags.Append(d...)
-
-	val, d := datasource_ps4c_gcp_billing_account.NewStats30dComputeValue(
-		datasource_ps4c_gcp_billing_account.Stats30dComputeValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"esr": esr, "savings": savings},
-	)
-	diags.Append(d...)
-	return val, diags
 }
 
 // --- savings_totals ---
 
-func mapGcpAccountSavingsTotals(ctx context.Context, totals *models.GcpBillingAccountSavingsTotals) (datasource_ps4c_gcp_billing_account.SavingsTotalsValue, diag.Diagnostics) {
-	if totals == nil {
-		return datasource_ps4c_gcp_billing_account.NewSavingsTotalsValueNull(), nil
+func mapGcpAccountSavingsTotals(ctx context.Context, totals *[]models.GcpSavingsTotalsByService) (types.List, diag.Diagnostics) {
+	var entries []models.GcpSavingsTotalsByService
+	if totals != nil {
+		entries = *totals
 	}
 
-	var diags diag.Diagnostics
-	computeVal, d := mapGcpAccountSavingsTotalsCompute(ctx, totals.Compute)
-	diags.Append(d...)
+	elemType := datasource_ps4c_gcp_billing_account.SavingsTotalsValue{}.Type(ctx)
+	attrTypes := datasource_ps4c_gcp_billing_account.SavingsTotalsValue{}.AttributeTypes(ctx)
 
-	val, d := datasource_ps4c_gcp_billing_account.NewSavingsTotalsValue(
-		datasource_ps4c_gcp_billing_account.SavingsTotalsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"compute": computeVal},
+	return buildGcpAccountObjectList(elemType, attrTypes, len(entries),
+		func(i int) (map[string]attr.Value, diag.Diagnostics) {
+			var diags diag.Diagnostics
+			entry := entries[i]
+
+			lifetime, d := buildGcpAccountMoneyValue(&entry.Lifetime,
+				datasource_ps4c_gcp_billing_account.LifetimeValue{}.AttributeTypes(ctx),
+				datasource_ps4c_gcp_billing_account.NewLifetimeValue,
+				datasource_ps4c_gcp_billing_account.NewLifetimeValueNull,
+			)
+			diags.Append(d...)
+
+			ytd, d := buildGcpAccountMoneyValue(&entry.Ytd,
+				datasource_ps4c_gcp_billing_account.YtdValue{}.AttributeTypes(ctx),
+				datasource_ps4c_gcp_billing_account.NewYtdValue,
+				datasource_ps4c_gcp_billing_account.NewYtdValueNull,
+			)
+			diags.Append(d...)
+
+			return map[string]attr.Value{
+				"lifetime": lifetime,
+				"service":  types.StringValue(string(entry.Service)),
+				"ytd":      ytd,
+			}, diags
+		},
+		datasource_ps4c_gcp_billing_account.NewSavingsTotalsValue,
 	)
-	diags.Append(d...)
-	return val, diags
-}
-
-func mapGcpAccountSavingsTotalsCompute(ctx context.Context, s *models.GcpSavingsTotals) (datasource_ps4c_gcp_billing_account.SavingsTotalsComputeValue, diag.Diagnostics) {
-	if s == nil {
-		return datasource_ps4c_gcp_billing_account.NewSavingsTotalsComputeValueNull(), nil
-	}
-
-	var diags diag.Diagnostics
-
-	lifetime, d := buildGcpAccountMoneyValue(&s.Lifetime,
-		datasource_ps4c_gcp_billing_account.LifetimeValue{}.AttributeTypes(ctx),
-		datasource_ps4c_gcp_billing_account.NewLifetimeValue,
-		datasource_ps4c_gcp_billing_account.NewLifetimeValueNull,
-	)
-	diags.Append(d...)
-
-	ytd, d := buildGcpAccountMoneyValue(&s.Ytd,
-		datasource_ps4c_gcp_billing_account.YtdValue{}.AttributeTypes(ctx),
-		datasource_ps4c_gcp_billing_account.NewYtdValue,
-		datasource_ps4c_gcp_billing_account.NewYtdValueNull,
-	)
-	diags.Append(d...)
-
-	val, d := datasource_ps4c_gcp_billing_account.NewSavingsTotalsComputeValue(
-		datasource_ps4c_gcp_billing_account.SavingsTotalsComputeValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"lifetime": lifetime, "ytd": ytd},
-	)
-	diags.Append(d...)
-	return val, diags
 }
 
 // --- monthly_stats ---
 
-func mapGcpAccountMonthlyStats(ctx context.Context, stats *models.GcpBillingAccountDetailAllOf1MonthlyStats) (datasource_ps4c_gcp_billing_account.MonthlyStatsValue, diag.Diagnostics) {
-	if stats == nil {
-		return datasource_ps4c_gcp_billing_account.NewMonthlyStatsValueNull(), nil
+func mapGcpAccountMonthlyStats(ctx context.Context, stats *[]models.GcpMonthlyStatsByService) (types.List, diag.Diagnostics) {
+	var entries []models.GcpMonthlyStatsByService
+	if stats != nil {
+		entries = *stats
 	}
 
-	var diags diag.Diagnostics
+	elemType := datasource_ps4c_gcp_billing_account.MonthlyStatsValue{}.Type(ctx)
+	attrTypes := datasource_ps4c_gcp_billing_account.MonthlyStatsValue{}.AttributeTypes(ctx)
 
-	var computeEntries []models.GcpMonthlyStatsEntry
-	if stats.Compute != nil {
-		computeEntries = *stats.Compute
-	}
-
-	elemType := datasource_ps4c_gcp_billing_account.MonthlyStatsComputeValue{}.Type(ctx)
-	attrTypes := datasource_ps4c_gcp_billing_account.MonthlyStatsComputeValue{}.AttributeTypes(ctx)
-
-	computeList, d := buildGcpAccountObjectList(elemType, attrTypes, len(computeEntries),
+	return buildGcpAccountObjectList(elemType, attrTypes, len(entries),
 		func(i int) (map[string]attr.Value, diag.Diagnostics) {
-			return gcpAccountMonthlyStatsEntryAttrs(ctx, computeEntries[i])
-		},
-		datasource_ps4c_gcp_billing_account.NewMonthlyStatsComputeValue,
-	)
-	diags.Append(d...)
+			var diags diag.Diagnostics
+			entry := entries[i]
 
-	val, d := datasource_ps4c_gcp_billing_account.NewMonthlyStatsValue(
-		datasource_ps4c_gcp_billing_account.MonthlyStatsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"compute": computeList},
+			months, d := buildGcpAccountObjectList(
+				datasource_ps4c_gcp_billing_account.MonthsValue{}.Type(ctx),
+				datasource_ps4c_gcp_billing_account.MonthsValue{}.AttributeTypes(ctx),
+				len(entry.Months),
+				func(j int) (map[string]attr.Value, diag.Diagnostics) {
+					return gcpAccountMonthlyStatsEntryAttrs(ctx, entry.Months[j])
+				},
+				datasource_ps4c_gcp_billing_account.NewMonthsValue,
+			)
+			diags.Append(d...)
+
+			return map[string]attr.Value{
+				"months":  months,
+				"service": types.StringValue(string(entry.Service)),
+			}, diags
+		},
+		datasource_ps4c_gcp_billing_account.NewMonthlyStatsValue,
 	)
-	diags.Append(d...)
-	return val, diags
 }
 
 func gcpAccountMonthlyStatsEntryAttrs(ctx context.Context, e models.GcpMonthlyStatsEntry) (map[string]attr.Value, diag.Diagnostics) {
@@ -279,35 +249,38 @@ func gcpAccountMonthlyStatsEntryAttrs(ctx context.Context, e models.GcpMonthlySt
 
 // --- daily_coverage ---
 
-func mapGcpAccountDailyCoverage(ctx context.Context, cov *models.GcpBillingAccountDetailAllOf1DailyCoverage) (datasource_ps4c_gcp_billing_account.DailyCoverageValue, diag.Diagnostics) {
-	if cov == nil {
-		return datasource_ps4c_gcp_billing_account.NewDailyCoverageValueNull(), nil
+func mapGcpAccountDailyCoverage(ctx context.Context, coverage *[]models.GcpDailyCoverageByService) (types.List, diag.Diagnostics) {
+	var entries []models.GcpDailyCoverageByService
+	if coverage != nil {
+		entries = *coverage
 	}
 
-	var diags diag.Diagnostics
+	elemType := datasource_ps4c_gcp_billing_account.DailyCoverageValue{}.Type(ctx)
+	attrTypes := datasource_ps4c_gcp_billing_account.DailyCoverageValue{}.AttributeTypes(ctx)
 
-	var computeEntries []models.GcpDailyCoverageEntry
-	if cov.Compute != nil {
-		computeEntries = *cov.Compute
-	}
-
-	elemType := datasource_ps4c_gcp_billing_account.ComputeValue{}.Type(ctx)
-	attrTypes := datasource_ps4c_gcp_billing_account.ComputeValue{}.AttributeTypes(ctx)
-
-	computeList, d := buildGcpAccountObjectList(elemType, attrTypes, len(computeEntries),
+	return buildGcpAccountObjectList(elemType, attrTypes, len(entries),
 		func(i int) (map[string]attr.Value, diag.Diagnostics) {
-			return gcpAccountDailyCoverageEntryAttrs(ctx, computeEntries[i])
-		},
-		datasource_ps4c_gcp_billing_account.NewComputeValue,
-	)
-	diags.Append(d...)
+			var diags diag.Diagnostics
+			entry := entries[i]
 
-	val, d := datasource_ps4c_gcp_billing_account.NewDailyCoverageValue(
-		datasource_ps4c_gcp_billing_account.DailyCoverageValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"compute": computeList},
+			days, d := buildGcpAccountObjectList(
+				datasource_ps4c_gcp_billing_account.DaysValue{}.Type(ctx),
+				datasource_ps4c_gcp_billing_account.DaysValue{}.AttributeTypes(ctx),
+				len(entry.Days),
+				func(j int) (map[string]attr.Value, diag.Diagnostics) {
+					return gcpAccountDailyCoverageEntryAttrs(ctx, entry.Days[j])
+				},
+				datasource_ps4c_gcp_billing_account.NewDaysValue,
+			)
+			diags.Append(d...)
+
+			return map[string]attr.Value{
+				"days":    days,
+				"service": types.StringValue(string(entry.Service)),
+			}, diags
+		},
+		datasource_ps4c_gcp_billing_account.NewDailyCoverageValue,
 	)
-	diags.Append(d...)
-	return val, diags
 }
 
 func gcpAccountDailyCoverageEntryAttrs(ctx context.Context, e models.GcpDailyCoverageEntry) (map[string]attr.Value, diag.Diagnostics) {

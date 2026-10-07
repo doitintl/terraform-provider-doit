@@ -65,6 +65,10 @@ data_sources:
     read:
       path: /analytics/v1/dimensions
       method: GET
+  role:
+    read:
+      path: /iam/v1/roles/{id}
+      method: GET
   roles:
     read:
       path: /iam/v1/roles
@@ -299,4 +303,51 @@ data_sources:
   alert_slack_channels:
     read:
       path: /analytics/v1/alerts/slack-channels
+  ps4c_gcp_spend_cuds:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based
+      method: GET
+  ps4c_commitment_policy:
+    read:
+      path: /ps4commitments/v1/general/policies/{policyId}
+      method: GET
+  ps4c_commitment_policies:
+    read:
+      path: /ps4commitments/v1/general/policies
+      method: GET
+  ps4c_gcp_planned_purchases:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases
+      method: GET
+  ps4c_gcp_recommendation:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service}
+      method: GET
+  ps4c_gcp_recommendations:
+    read:
+      path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations
+      method: GET
+  widget:
+    read:
+      path: /analytics/v1/widgets/{widgetId}
+      method: GET
+  widgets:
+    read:
+      path: /analytics/v1/widgets
+      method: GET
+  service_account:
+    read:
+      path: /iam/v1/service-accounts/{id}
+      method: GET
+  service_accounts:
+    read:
+      path: /iam/v1/service-accounts
+      method: GET
+  service_account_token:
+    read:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: GET
+  service_account_tokens:
+    read:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens
       method: GET

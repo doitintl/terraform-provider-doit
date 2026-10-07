@@ -3,8 +3,8 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
@@ -41,9 +41,6 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	// normalization can compare against user-configured values in the existing state.
 	resolved := *plan
 	diags.Append(mapAllocationToModel(ctx, r.client, apiResp, &resolved)...)
-	if diags.HasError() {
-		return diags
-	}
 
 	// Phase 2: Overlay known plan values on top of resolved state.
 
@@ -73,10 +70,7 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	if plan.Rule.IsUnknown() {
 		plan.Rule = resolved.Rule
 	} else if !plan.Rule.IsNull() {
-		// Components is the only Optional+Computed subfield; formula is Required.
-		if plan.Rule.Components.IsUnknown() {
-			plan.Rule.Components = resolved.Rule.Components
-		}
+		diags.Append(overlayAllocationSingleRule(ctx, &resolved.Rule, &plan.Rule)...)
 	}
 
 	// ── Rules (list): resolve whole list when Unknown, overlay elements when Known ──
@@ -93,7 +87,27 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 // Each helper resolves Unknown subfields from the resolved element.
 // Known values are never touched — the user's plan is the source of truth.
 
-func overlayAllocationRule(_ context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
+func overlayAllocationSingleRule(ctx context.Context, resolved, plan *resource_allocation.RuleValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.Components.IsUnknown() {
+		plan.Components = resolved.Components
+	}
+	if plan.ValidityPeriods.IsUnknown() {
+		plan.ValidityPeriods = resolved.ValidityPeriods
+	} else if !plan.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsUnknown() {
+		diags.Append(overlayListElements(ctx, &resolved.ValidityPeriods, &plan.ValidityPeriods, overlayAllocationValidityPeriod)...)
+	}
+	return diags
+}
+
+func overlayAllocationRule(ctx context.Context, resolved, plan *resource_allocation.RulesValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
 	if plan.Description.IsUnknown() {
 		plan.Description = resolved.Description
 	}
@@ -109,7 +123,58 @@ func overlayAllocationRule(_ context.Context, resolved, plan *resource_allocatio
 	if plan.Components.IsUnknown() {
 		plan.Components = resolved.Components
 	}
-	return nil
+	if plan.ValidityPeriods.IsUnknown() {
+		plan.ValidityPeriods = resolved.ValidityPeriods
+	} else if !plan.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsNull() && !resolved.ValidityPeriods.IsUnknown() {
+		diags.Append(overlayListElements(ctx, &resolved.ValidityPeriods, &plan.ValidityPeriods, overlayAllocationValidityPeriod)...)
+	}
+	if plan.ValueExtraction.IsUnknown() {
+		plan.ValueExtraction = resolved.ValueExtraction
+	} else if !plan.ValueExtraction.IsNull() && !resolved.ValueExtraction.IsNull() && !resolved.ValueExtraction.IsUnknown() {
+		diags.Append(overlayAllocationValueExtraction(ctx, &resolved.ValueExtraction, &plan.ValueExtraction)...)
+	}
+	return diags
+}
+
+func overlayAllocationValidityPeriod(_ context.Context, resolved, plan *resource_allocation.ValidityPeriodsValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.EndDate.IsUnknown() {
+		plan.EndDate = resolved.EndDate
+	}
+	if plan.StartDate.IsUnknown() {
+		plan.StartDate = resolved.StartDate
+	}
+	return diags
+}
+
+func overlayAllocationValueExtraction(ctx context.Context, resolved, plan *resource_allocation.ValueExtractionValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.Fallback.IsUnknown() {
+		plan.Fallback = resolved.Fallback
+	}
+	if plan.Sources.IsUnknown() {
+		plan.Sources = resolved.Sources
+	} else if !plan.Sources.IsNull() && !resolved.Sources.IsNull() && !resolved.Sources.IsUnknown() {
+		diags.Append(overlayListElements(ctx, &resolved.Sources, &plan.Sources, overlayAllocationSource)...)
+	}
+	return diags
+}
+
+func overlayAllocationSource(_ context.Context, resolved, plan *resource_allocation.SourcesValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if resolved.IsNull() || resolved.IsUnknown() {
+		return diags
+	}
+	if plan.Providers.IsUnknown() {
+		plan.Providers = resolved.Providers
+	}
+	return diags
 }
 
 func (plan *allocationResourceModel) toCreateRequest(ctx context.Context) (req models.CreateAllocationRequest, diags diag.Diagnostics) {
@@ -169,6 +234,180 @@ func convertComponentsToModels(ctx context.Context, components []resource_alloca
 	return
 }
 
+func convertValidityPeriodsToModels(ctx context.Context, list basetypes.ListValue) (nullable.Nullable[[]models.AllocationRulePeriod], diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if list.IsNull() || list.IsUnknown() {
+		return nullable.Nullable[[]models.AllocationRulePeriod]{}, diags
+	}
+	var values []resource_allocation.ValidityPeriodsValue
+	diags.Append(list.ElementsAs(ctx, &values, false)...)
+	if diags.HasError() {
+		return nullable.Nullable[[]models.AllocationRulePeriod]{}, diags
+	}
+	if len(values) == 0 {
+		return valueToNullable([]models.AllocationRulePeriod{}), diags
+	}
+	periods := make([]models.AllocationRulePeriod, 0, len(values))
+	for _, v := range values {
+		if v.IsNull() || v.IsUnknown() {
+			continue
+		}
+		var p models.AllocationRulePeriod
+		if !v.StartDate.IsNull() && !v.StartDate.IsUnknown() {
+			p.StartDate = valueToNullable(v.StartDate.ValueString())
+		}
+		if !v.EndDate.IsNull() && !v.EndDate.IsUnknown() {
+			p.EndDate = valueToNullable(v.EndDate.ValueString())
+		}
+		periods = append(periods, p)
+	}
+	return valueToNullable(periods), diags
+}
+
+func toValidityPeriodsListValue(ctx context.Context, nullablePeriods nullable.Nullable[[]models.AllocationRulePeriod]) (basetypes.ListValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	periods := nullableToPointer(nullablePeriods)
+	if periods == nil || len(*periods) == 0 {
+		return types.ListValueFrom(ctx, resource_allocation.ValidityPeriodsValue{}.Type(ctx), []resource_allocation.ValidityPeriodsValue{})
+	}
+	vals := make([]attr.Value, len(*periods))
+	for i, p := range *periods {
+		m := map[string]attr.Value{
+			"start_date": types.StringPointerValue(nullableToPointer(p.StartDate)),
+			"end_date":   types.StringPointerValue(nullableToPointer(p.EndDate)),
+		}
+		vpVal, d := resource_allocation.NewValidityPeriodsValue(resource_allocation.ValidityPeriodsValue{}.AttributeTypes(ctx), m)
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ListNull(resource_allocation.ValidityPeriodsValue{}.Type(ctx)), diags
+		}
+		vals[i] = vpVal
+	}
+	res, d := types.ListValue(resource_allocation.ValidityPeriodsValue{}.Type(ctx), vals)
+	diags.Append(d...)
+	return res, diags
+}
+
+func convertValueExtractionToModel(ctx context.Context, ve resource_allocation.ValueExtractionValue) (nullable.Nullable[models.AllocationValueExtraction], diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if ve.IsNull() || ve.IsUnknown() {
+		return nullable.Nullable[models.AllocationValueExtraction]{}, diags
+	}
+
+	var sources []resource_allocation.SourcesValue
+	diags.Append(ve.Sources.ElementsAs(ctx, &sources, false)...)
+	if diags.HasError() {
+		return nullable.Nullable[models.AllocationValueExtraction]{}, diags
+	}
+
+	modelSources := make([]models.AllocationValueExtractionSource, 0, len(sources))
+	for i, s := range sources {
+		if s.IsNull() {
+			diags.AddError(
+				"Invalid extraction source",
+				fmt.Sprintf("sources[%d]: null element is not permitted", i),
+			)
+			continue
+		}
+		if s.IsUnknown() {
+			continue
+		}
+		src := models.AllocationValueExtractionSource{
+			Key:  s.Key.ValueString(),
+			Type: models.AllocationValueExtractionSourceType(s.SourcesType.ValueString()),
+		}
+		if !s.Providers.IsNull() && !s.Providers.IsUnknown() {
+			var provs []string
+			d := s.Providers.ElementsAs(ctx, &provs, false)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nullable.Nullable[models.AllocationValueExtraction]{}, diags
+			}
+			src.Providers = valueToNullable(provs)
+		}
+		modelSources = append(modelSources, src)
+	}
+
+	onMissingStr := string(models.AllocationValueExtractionOnMissingUseFallback)
+	if !ve.OnMissing.IsNull() && !ve.OnMissing.IsUnknown() && ve.OnMissing.ValueString() != "" {
+		onMissingStr = ve.OnMissing.ValueString()
+	}
+	modelVE := models.AllocationValueExtraction{
+		OnMissing: new(models.AllocationValueExtractionOnMissing(onMissingStr)),
+		Sources:   modelSources,
+	}
+
+	// Omit Fallback when on_missing is "nextRule", per API requirements:
+	// "Fallback is not allowed with onMissing 'nextRule'".
+	if onMissingStr != string(models.AllocationValueExtractionOnMissingNextRule) {
+		if !ve.Fallback.IsNull() && !ve.Fallback.IsUnknown() {
+			modelVE.Fallback = valueToNullable(ve.Fallback.ValueString())
+		}
+	}
+
+	return valueToNullable(modelVE), diags
+}
+
+func toValueExtractionValue(ctx context.Context, nullableVE nullable.Nullable[models.AllocationValueExtraction]) (resource_allocation.ValueExtractionValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	ve := nullableToPointer(nullableVE)
+	if ve == nil {
+		return resource_allocation.NewValueExtractionValueNull(), diags
+	}
+
+	sourceVals := make([]attr.Value, len(ve.Sources))
+	for i, s := range ve.Sources {
+		var provList basetypes.ListValue
+		if provs := nullableToPointer(s.Providers); provs != nil {
+			pVals := make([]attr.Value, len(*provs))
+			for j, p := range *provs {
+				pVals[j] = types.StringValue(p)
+			}
+			var d diag.Diagnostics
+			provList, d = types.ListValue(types.StringType, pVals)
+			diags.Append(d...)
+			if diags.HasError() {
+				return resource_allocation.NewValueExtractionValueNull(), diags
+			}
+		} else {
+			provList = types.ListNull(types.StringType)
+		}
+
+		mSource := map[string]attr.Value{
+			"key":       types.StringValue(s.Key),
+			"type":      types.StringValue(string(s.Type)),
+			"providers": provList,
+		}
+		sVal, d := resource_allocation.NewSourcesValue(resource_allocation.SourcesValue{}.AttributeTypes(ctx), mSource)
+		diags.Append(d...)
+		if diags.HasError() {
+			return resource_allocation.NewValueExtractionValueNull(), diags
+		}
+		sourceVals[i] = sVal
+	}
+
+	sourcesList, d := types.ListValue(resource_allocation.SourcesValue{}.Type(ctx), sourceVals)
+	diags.Append(d...)
+	if diags.HasError() {
+		return resource_allocation.NewValueExtractionValueNull(), diags
+	}
+
+	onMissingVal := types.StringValue("useFallback")
+	if ve.OnMissing != nil {
+		onMissingVal = types.StringValue(string(*ve.OnMissing))
+	}
+
+	fallbackVal := types.StringPointerValue(nullableToPointer(ve.Fallback))
+
+	mVE := map[string]attr.Value{
+		"fallback":   fallbackVal,
+		"on_missing": onMissingVal,
+		"sources":    sourcesList,
+	}
+
+	return resource_allocation.NewValueExtractionValue(resource_allocation.ValueExtractionValue{}.AttributeTypes(ctx), mVE)
+}
+
 // Helper to fill common fields into UpdateAllocationRequest model (which uses pointers).
 func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, req *models.UpdateAllocationRequest) (diags diag.Diagnostics) {
 	req.Description = pointerToNullable(plan.Description.ValueStringPointer())
@@ -207,6 +446,16 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 			if diags.HasError() {
 				return diags
 			}
+		}
+		if !plan.Rule.ValidityPeriods.IsNull() && !plan.Rule.ValidityPeriods.IsUnknown() {
+			var vpDiags diag.Diagnostics
+			rule.ValidityPeriods, vpDiags = convertValidityPeriodsToModels(ctx, plan.Rule.ValidityPeriods)
+			diags.Append(vpDiags...)
+			if diags.HasError() {
+				return diags
+			}
+		} else if plan.Rule.ValidityPeriods.IsNull() {
+			rule.ValidityPeriods.SetNull()
 		}
 		req.Rule.Set(rule)
 	}
@@ -259,6 +508,26 @@ func (plan *allocationResourceModel) fillAllocationCommon(ctx context.Context, r
 						return diags
 					}
 					rule.Components = &createComponents
+				}
+				if !planRules[i].ValidityPeriods.IsNull() && !planRules[i].ValidityPeriods.IsUnknown() {
+					var vpDiags diag.Diagnostics
+					rule.ValidityPeriods, vpDiags = convertValidityPeriodsToModels(ctx, planRules[i].ValidityPeriods)
+					diags.Append(vpDiags...)
+					if diags.HasError() {
+						return diags
+					}
+				} else if planRules[i].ValidityPeriods.IsNull() && planRules[i].Action.ValueString() != "select" {
+					rule.ValidityPeriods.SetNull()
+				}
+				if !planRules[i].ValueExtraction.IsNull() && !planRules[i].ValueExtraction.IsUnknown() {
+					var veDiags diag.Diagnostics
+					rule.ValueExtraction, veDiags = convertValueExtractionToModel(ctx, planRules[i].ValueExtraction)
+					diags.Append(veDiags...)
+					if diags.HasError() {
+						return diags
+					}
+				} else if planRules[i].ValueExtraction.IsNull() && planRules[i].Action.ValueString() != "select" {
+					rule.ValueExtraction.SetNull()
 				}
 				rules[i].Set(rule)
 			}
@@ -341,6 +610,12 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		m := map[string]attr.Value{
 			"formula": types.StringValue(rule.Formula),
 		}
+		var vpDiags diag.Diagnostics
+		m["validity_periods"], vpDiags = toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
+		diags.Append(vpDiags...)
+		if vpDiags.HasError() {
+			return
+		}
 		if rule.Components != nil {
 			// Preserve existing component values from state for alias-type normalization.
 			// - includeNull, inverse, caseInsensitive: use API value (reliably echoed),
@@ -357,14 +632,14 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 			var d diag.Diagnostics
 			m["components"], d = toAllocationRuleComponentsListValue(ctx, rule.Components, existingComponents)
 			diags.Append(d...)
-			if diags.HasError() {
+			if d.HasError() {
 				return
 			}
 		}
 		var d diag.Diagnostics
 		state.Rule, d = resource_allocation.NewRuleValue(resource_allocation.RuleValue{}.AttributeTypes(ctx), m)
 		diags.Append(d...)
-		if diags.HasError() {
+		if d.HasError() {
 			return
 		}
 	} else {
@@ -372,20 +647,17 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 	}
 
 	if resp.Rules != nil && len(*resp.Rules) > 0 {
-		// Parse state rules once for reuse (actions, component types, include_null)
+		// Parse state rules once for action and metadata recovery.
 		var stateRules []resource_allocation.RulesValue
-		existingActionsByID := make(map[string]string)
-		existingActionsByIndex := make([]string, 0)
+		stateRuleIndexByID := make(map[string]int)
 
 		if !state.Rules.IsNull() && !state.Rules.IsUnknown() {
 			// We try to extract existing rules to preserve the "action" field which is not returned by the API.
 			// If this fails, we proceed without existing actions.
 			if d := state.Rules.ElementsAs(ctx, &stateRules, false); !d.HasError() {
-				for _, rule := range stateRules {
-					action := rule.Action.ValueString()
-					existingActionsByIndex = append(existingActionsByIndex, action)
-					if !rule.Id.IsNull() && !rule.Id.IsUnknown() {
-						existingActionsByID[rule.Id.ValueString()] = action
+				for i, rule := range stateRules {
+					if !rule.Id.IsNull() && !rule.Id.IsUnknown() && rule.Id.ValueString() != "" {
+						stateRuleIndexByID[rule.Id.ValueString()] = i
 					}
 				}
 			}
@@ -400,15 +672,23 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				continue
 			}
 			rule := *rulePtr
-			// Determine Action
-			var action string
+			// A known ID identifies the prior rule even if the API reorders members.
+			// Position is safe only while the prior rule has no assigned ID.
+			var priorRule *resource_allocation.RulesValue
 			if rule.Id != nil {
-				if a, ok := existingActionsByID[*rule.Id]; ok {
-					action = a
+				if i, ok := stateRuleIndexByID[*rule.Id]; ok {
+					priorRule = &stateRules[i]
 				}
 			}
-			if action == "" && ruleIndex < len(existingActionsByIndex) {
-				action = existingActionsByIndex[ruleIndex]
+			if priorRule == nil && ruleIndex < len(stateRules) {
+				candidate := &stateRules[ruleIndex]
+				if candidate.Id.IsNull() || candidate.Id.IsUnknown() || candidate.Id.ValueString() == "" {
+					priorRule = candidate
+				}
+			}
+			var action string
+			if priorRule != nil {
+				action = priorRule.Action.ValueString()
 			}
 			if action == "" {
 				// Default to "select" if we can't determine the action (e.g. import)
@@ -426,37 +706,118 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				components = *rule.Components
 			}
 
-			if (formula == "" || components == nil) && rule.Id != nil && action != "select" {
-				// Fetch full allocation to get formula and components
+			detailFailed := false
+			detailSucceeded := false
+			if (formula == "" || components == nil || !rule.ValidityPeriods.IsSpecified() || !rule.ValueExtraction.IsSpecified() || rule.Name == nil || rule.Description == nil) && rule.Id != nil && action != "select" && client != nil {
+				// Fetch full allocation to get formula, components, validity periods, and value extraction
 				respHTTPFullAlloc, err := client.GetAllocationWithResponse(ctx, *rule.Id)
-				if err == nil && respHTTPFullAlloc.JSON200 != nil {
+				if err != nil {
+					detailFailed = true
+					diags.AddError(
+						"Error Reading Allocation Rule Details",
+						"Could not read child allocation ID "+*rule.Id+": "+err.Error(),
+					)
+				} else if respHTTPFullAlloc.StatusCode() != 200 || respHTTPFullAlloc.JSON200 == nil {
+					detailFailed = true
+					diags.AddError(
+						"Error Reading Allocation Rule Details",
+						fmt.Sprintf("Could not read child allocation ID %s, status: %d, body: %s", *rule.Id, respHTTPFullAlloc.StatusCode(), string(respHTTPFullAlloc.Body)),
+					)
+				} else {
 					fullAlloc := respHTTPFullAlloc.JSON200
+					if rule.Name == nil {
+						rule.Name = fullAlloc.Name
+					}
+					if rule.Description == nil {
+						rule.Description = fullAlloc.Description
+					}
 					if rulePtr := nullableToPointer(fullAlloc.Rule); rulePtr != nil {
-						formula = rulePtr.Formula
-						if rulePtr.Components != nil {
+						if formula == "" {
+							formula = rulePtr.Formula
+						}
+						if components == nil && rulePtr.Components != nil {
 							components = rulePtr.Components
 						}
+						if !rule.ValidityPeriods.IsSpecified() && rulePtr.ValidityPeriods.IsSpecified() {
+							rule.ValidityPeriods = rulePtr.ValidityPeriods
+						}
 					}
-				} else {
-					log.Printf("[WARN] Failed to fetch allocation details for rule %s: %v", *rule.Id, err)
+					var allocDetail struct {
+						Rule struct {
+							ValueExtraction nullable.Nullable[models.AllocationValueExtraction] `json:"valueExtraction"`
+						} `json:"rule"`
+					}
+					if uerr := json.Unmarshal(respHTTPFullAlloc.Body, &allocDetail); uerr != nil {
+						detailFailed = true
+						diags.AddError(
+							"Error Reading Allocation Rule Details",
+							fmt.Sprintf("Could not parse child allocation value extraction for ID %s: %s", *rule.Id, uerr.Error()),
+						)
+					} else if !rule.ValueExtraction.IsSpecified() && allocDetail.Rule.ValueExtraction.IsSpecified() {
+						rule.ValueExtraction = allocDetail.Rule.ValueExtraction
+					}
+					if !detailFailed {
+						detailSucceeded = true
+					}
 				}
 			}
 
+			// Recover prior values only after a failed detail read. A successful read
+			// with omitted metadata means the field was cleared outside Terraform.
+			if detailFailed && formula == "" && priorRule != nil && !priorRule.Formula.IsNull() && !priorRule.Formula.IsUnknown() {
+				formula = priorRule.Formula.ValueString()
+			}
+
+			var validityPeriodsList basetypes.ListValue
+			if detailFailed && !rule.ValidityPeriods.IsSpecified() && priorRule != nil && !priorRule.ValidityPeriods.IsNull() && !priorRule.ValidityPeriods.IsUnknown() {
+				validityPeriodsList = priorRule.ValidityPeriods
+			} else {
+				var vpDiags diag.Diagnostics
+				validityPeriodsList, vpDiags = toValidityPeriodsListValue(ctx, rule.ValidityPeriods)
+				diags.Append(vpDiags...)
+				if vpDiags.HasError() {
+					return
+				}
+			}
+
+			var valueExtractionVal resource_allocation.ValueExtractionValue
+			if detailFailed && !rule.ValueExtraction.IsSpecified() && priorRule != nil && !priorRule.ValueExtraction.IsNull() && !priorRule.ValueExtraction.IsUnknown() {
+				valueExtractionVal = priorRule.ValueExtraction
+			} else {
+				var veDiags diag.Diagnostics
+				valueExtractionVal, veDiags = toValueExtractionValue(ctx, rule.ValueExtraction)
+				diags.Append(veDiags...)
+				if veDiags.HasError() {
+					return
+				}
+			}
+
+			descVal := types.StringPointerValue(rule.Description)
+			if !detailSucceeded && rule.Description == nil && priorRule != nil && !priorRule.Description.IsNull() && !priorRule.Description.IsUnknown() {
+				descVal = priorRule.Description
+			}
+
+			nameVal := types.StringPointerValue(rule.Name)
+			if !detailSucceeded && rule.Name == nil && priorRule != nil && !priorRule.Name.IsNull() && !priorRule.Name.IsUnknown() {
+				nameVal = priorRule.Name
+			}
+
 			m := map[string]attr.Value{
-				"action":      types.StringValue(action),
-				"description": types.StringPointerValue(rule.Description),
-				"formula":     types.StringValue(formula),
-				"id":          types.StringPointerValue(rule.Id),
-				"name":        types.StringPointerValue(rule.Name),
+				"action":           types.StringValue(action),
+				"description":      descVal,
+				"formula":          types.StringValue(formula),
+				"id":               types.StringPointerValue(rule.Id),
+				"name":             nameVal,
+				"validity_periods": validityPeriodsList,
+				"value_extraction": valueExtractionVal,
 			}
 			if len(components) > 0 {
 				// Get existing component values from state for alias normalization and state preservation.
-				// We reuse stateRules (parsed once before the loop) instead of re-parsing state.Rules on each iteration.
+				// Preserve aliases only from the matching prior rule.
 				var existingComponents []resource_allocation.ComponentsValue
-				if ruleIndex < len(stateRules) {
-					sr := stateRules[ruleIndex]
-					if !sr.Components.IsNull() && !sr.Components.IsUnknown() {
-						if d := sr.Components.ElementsAs(ctx, &existingComponents, false); d.HasError() {
+				if priorRule != nil {
+					if !priorRule.Components.IsNull() && !priorRule.Components.IsUnknown() {
+						if d := priorRule.Components.ElementsAs(ctx, &existingComponents, false); d.HasError() {
 							diags.Append(d...)
 							return
 						}
@@ -465,17 +826,22 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 				var d diag.Diagnostics
 				m["components"], d = toAllocationRuleComponentsListValue(ctx, components, existingComponents)
 				diags.Append(d...)
-				if diags.HasError() {
+				if d.HasError() {
 					return
 				}
+			} else if detailFailed && priorRule != nil && !priorRule.Components.IsNull() && !priorRule.Components.IsUnknown() {
+				m["components"] = priorRule.Components
 			} else {
 				var d diag.Diagnostics
 				m["components"], d = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
 				diags.Append(d...)
+				if d.HasError() {
+					return
+				}
 			}
 			ruleVal, d := resource_allocation.NewRulesValue(resource_allocation.RulesValue{}.AttributeTypes(ctx), m)
 			diags.Append(d...)
-			if diags.HasError() {
+			if d.HasError() {
 				return
 			}
 			rules = append(rules, ruleVal)
@@ -484,7 +850,7 @@ func mapAllocationToModel(ctx context.Context, client *models.ClientWithResponse
 		var d diag.Diagnostics
 		state.Rules, d = types.ListValueFrom(ctx, resource_allocation.RulesValue{}.Type(ctx), rules)
 		diags.Append(d...)
-		if diags.HasError() {
+		if d.HasError() {
 			return
 		}
 	} else if nullableToPointer(resp.Rule) != nil {
@@ -509,12 +875,21 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		res, diags = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
 		return
 	}
+	priorIndices, matchDiags := matchAllocationComponents(ctx, components, existingComponents)
+	diags.Append(matchDiags...)
+	if diags.HasError() {
+		return
+	}
 	stateComponents := make([]attr.Value, len(components))
 	for i, component := range components {
+		var prior *resource_allocation.ComponentsValue
+		if priorIndices[i] >= 0 {
+			prior = &existingComponents[priorIndices[i]]
+		}
 		// Normalize alias types to preserve user's configured value
 		compType := string(component.Type)
-		if i < len(existingComponents) {
-			compType = normalizeDimensionsType(compType, existingComponents[i].ComponentsType.ValueString())
+		if prior != nil {
+			compType = normalizeDimensionsType(compType, prior.ComponentsType.ValueString())
 		}
 
 		// Field echo behavior (verified via API probe): includeNull, inverse and
@@ -525,22 +900,22 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		caseInsensitiveVal := types.BoolValue(false)
 		if component.CaseInsensitive != nil {
 			caseInsensitiveVal = types.BoolValue(*component.CaseInsensitive)
-		} else if i < len(existingComponents) {
-			caseInsensitiveVal = types.BoolValue(existingComponents[i].CaseInsensitive.ValueBool())
+		} else if prior != nil {
+			caseInsensitiveVal = types.BoolValue(prior.CaseInsensitive.ValueBool())
 		}
 
 		includeNullVal := types.BoolValue(false)
 		if component.IncludeNull != nil {
 			includeNullVal = types.BoolValue(*component.IncludeNull)
-		} else if i < len(existingComponents) {
-			includeNullVal = types.BoolValue(existingComponents[i].IncludeNull.ValueBool())
+		} else if prior != nil {
+			includeNullVal = types.BoolValue(prior.IncludeNull.ValueBool())
 		}
 
 		inverseVal := types.BoolValue(false)
 		if component.Inverse != nil {
 			inverseVal = types.BoolValue(*component.Inverse)
-		} else if i < len(existingComponents) {
-			inverseVal = types.BoolValue(existingComponents[i].Inverse.ValueBool())
+		} else if prior != nil {
+			inverseVal = types.BoolValue(prior.Inverse.ValueBool())
 		}
 
 		m := map[string]attr.Value{
@@ -555,16 +930,28 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		// that the API strips during normalization. This is needed for the Read path
 		// to prevent perpetual plan drift when the user's config contains sentinels.
 		// The Create/Update path uses plan-first state and doesn't need this.
-		apiIncludeNull := component.IncludeNull != nil && *component.IncludeNull
+		apiIncludeNull := includeNullVal.ValueBool()
 		apiValues := component.Values
-		if i < len(existingComponents) {
+		if prior != nil {
 			var stateVals []string
-			stateValsDiags := existingComponents[i].Values.ElementsAs(ctx, &stateVals, false)
+			stateValsDiags := prior.Values.ElementsAs(ctx, &stateVals, false)
 			diags.Append(stateValsDiags...)
 			if diags.HasError() {
 				return
 			}
-			apiValues = mergeSentinelValues(apiValues, stateVals, apiIncludeNull)
+			// The shared merge helper preserves the entire prior list when the API
+			// returns empty. Here a successful read must expose external clears.
+			apiSet := make(map[string]struct{}, len(apiValues))
+			for _, value := range apiValues {
+				apiSet[value] = struct{}{}
+			}
+			eligiblePrior := make([]string, 0, len(stateVals))
+			for _, value := range stateVals {
+				if _, present := apiSet[value]; present || isNAFallback(value) {
+					eligiblePrior = append(eligiblePrior, value)
+				}
+			}
+			apiValues = mergeSentinelValues(apiValues, eligiblePrior, apiIncludeNull)
 		}
 		values := make([]attr.Value, len(apiValues))
 		for j := range apiValues {
@@ -585,5 +972,193 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 	var d diag.Diagnostics
 	res, d = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
 	diags.Append(d...)
+	return
+}
+
+// matchAllocationComponents finds prior values only when the response identifies
+// them unambiguously. Match the entire list before using a loose identity match:
+// a newly inserted duplicate may precede the component whose sentinel or type
+// alias must be preserved.
+func matchAllocationComponents(ctx context.Context, components []models.AllocationComponent, prior []resource_allocation.ComponentsValue) (matches []int, diags diag.Diagnostics) {
+	matches = make([]int, len(components))
+	for i := range matches {
+		matches[i] = -1
+	}
+	used := make([]bool, len(prior))
+	priorValues := make([][]string, len(prior))
+	for j := range prior {
+		if prior[j].Values.IsNull() || prior[j].Values.IsUnknown() {
+			continue
+		}
+		diags.Append(prior[j].Values.ElementsAs(ctx, &priorValues[j], false)...)
+		if diags.HasError() {
+			return
+		}
+	}
+	identityMatches := func(i, j int) bool {
+		return prior[j].Key.ValueString() == components[i].Key &&
+			prior[j].Mode.ValueString() == string(components[i].Mode) &&
+			normalizeDimensionsType(string(components[i].Type), prior[j].ComponentsType.ValueString()) == prior[j].ComponentsType.ValueString()
+	}
+	valuesMatch := func(i, j int) bool {
+		apiValues := components[i].Values
+		stateValues := priorValues[j]
+		counts := make(map[string]int, len(apiValues))
+		for _, value := range apiValues {
+			counts[value]++
+		}
+		for _, value := range stateValues {
+			if !isNAFallback(value) {
+				counts[value]--
+			}
+		}
+		for _, count := range counts {
+			if count != 0 {
+				return false
+			}
+		}
+		return true
+	}
+	flagsMatch := func(i, j int) bool {
+		api := components[i]
+		state := prior[j]
+		return (api.CaseInsensitive == nil || *api.CaseInsensitive == state.CaseInsensitive.ValueBool()) &&
+			(api.IncludeNull == nil || *api.IncludeNull == state.IncludeNull.ValueBool()) &&
+			(api.Inverse == nil || *api.Inverse == state.Inverse.ValueBool())
+	}
+	equivalentPrior := func(a, b int) bool {
+		if prior[a].Equal(prior[b]) {
+			return true
+		}
+		left, right := prior[a], prior[b]
+		if left.Values.IsNull() || left.Values.IsUnknown() || right.Values.IsNull() || right.Values.IsUnknown() ||
+			!left.Key.Equal(right.Key) || !left.Mode.Equal(right.Mode) || !left.ComponentsType.Equal(right.ComponentsType) ||
+			!left.CaseInsensitive.Equal(right.CaseInsensitive) || !left.IncludeNull.Equal(right.IncludeNull) || !left.Inverse.Equal(right.Inverse) {
+			return false
+		}
+		counts := make(map[string]int, len(priorValues[a]))
+		normalizedLength := 0
+		for _, value := range priorValues[a] {
+			if left.IncludeNull.ValueBool() && isNAFallback(value) {
+				continue
+			}
+			counts[value]++
+			normalizedLength++
+		}
+		for _, value := range priorValues[b] {
+			if right.IncludeNull.ValueBool() && isNAFallback(value) {
+				continue
+			}
+			counts[value]--
+			normalizedLength--
+		}
+		if normalizedLength != 0 {
+			return false
+		}
+		for _, count := range counts {
+			if count != 0 {
+				return false
+			}
+		}
+		return true
+	}
+	criteria := []func(int, int) bool{
+		func(i, j int) bool { return identityMatches(i, j) && valuesMatch(i, j) && flagsMatch(i, j) },
+		func(i, j int) bool { return identityMatches(i, j) && valuesMatch(i, j) },
+		func(i, j int) bool { return identityMatches(i, j) && flagsMatch(i, j) },
+		identityMatches,
+	}
+	for _, criterion := range criteria {
+		// Resolve one-to-one pairs first. A pass can expose another unique pair.
+		for {
+			progress := false
+			for i := range components {
+				if matches[i] >= 0 {
+					continue
+				}
+				candidate := -1
+				for j := range prior {
+					if used[j] || !criterion(i, j) {
+						continue
+					}
+					if candidate >= 0 {
+						candidate = -1
+						break
+					}
+					candidate = j
+				}
+				if candidate < 0 {
+					continue
+				}
+				otherResponses := 0
+				for k := range components {
+					if matches[k] < 0 && criterion(k, candidate) {
+						otherResponses++
+					}
+				}
+				if otherResponses == 1 {
+					matches[i], used[candidate], progress = candidate, true, true
+				}
+			}
+			if !progress {
+				break
+			}
+		}
+		// Responses with the same candidates cannot reveal value order. Pair
+		// equal-sized groups in order when prior components differ only by
+		// value order or stripped sentinels. Exactly equal prior components
+		// can also supply metadata for fewer surviving responses.
+		for i := range components {
+			if matches[i] >= 0 {
+				continue
+			}
+			var candidates []int
+			for j := range prior {
+				if !used[j] && criterion(i, j) {
+					candidates = append(candidates, j)
+				}
+			}
+			if len(candidates) < 2 {
+				continue
+			}
+			interchangeable := true
+			identical := true
+			for _, j := range candidates[1:] {
+				if !prior[candidates[0]].Equal(prior[j]) {
+					identical = false
+				}
+				if !equivalentPrior(candidates[0], j) {
+					interchangeable = false
+					break
+				}
+			}
+			if !interchangeable {
+				continue
+			}
+			var responses []int
+			for k := range components {
+				if matches[k] >= 0 {
+					continue
+				}
+				sameCandidates := true
+				for j := range prior {
+					if used[j] || criterion(k, j) == criterion(i, j) {
+						continue
+					}
+					sameCandidates = false
+					break
+				}
+				if sameCandidates {
+					responses = append(responses, k)
+				}
+			}
+			if len(responses) == len(candidates) || (len(responses) < len(candidates) && identical) {
+				for k, responseIndex := range responses {
+					matches[responseIndex] = candidates[k]
+					used[candidates[k]] = true
+				}
+			}
+		}
+	}
 	return
 }

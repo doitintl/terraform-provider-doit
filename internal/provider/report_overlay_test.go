@@ -254,3 +254,112 @@ func TestOverlayListElements_NullResolvedElement(t *testing.T) {
 		t.Errorf("Id should remain 'sku_description', got %q", result[0].Id.ValueString())
 	}
 }
+
+// TestOverlayListElements_NilNullOrUnknownLists verifies that overlayListElements
+// safely returns without diagnostics or panics when either resolved or plan is
+// nil, null, or unknown. Without early guards, calling ElementsAs on null/unknown
+// lists produces conversion errors, and nil pointers cause panics.
+func TestOverlayListElements_NilNullOrUnknownLists(t *testing.T) {
+	ctx := t.Context()
+
+	validFilter := resource_report.NewFiltersValueMust(
+		resource_report.FiltersValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"id":               types.StringValue("sku_description"),
+			"type":             types.StringValue("fixed"),
+			"mode":             types.StringValue("include"),
+			"case_insensitive": types.BoolValue(false),
+			"include_null":     types.BoolValue(false),
+			"inverse":          types.BoolValue(false),
+			"values":           types.ListValueMust(types.StringType, []attr.Value{types.StringValue("test")}),
+		},
+	)
+	validList, diags := types.ListValueFrom(ctx, validFilter.Type(ctx), []resource_report.FiltersValue{validFilter})
+	if diags.HasError() {
+		t.Fatalf("failed to build valid list: %v", diags)
+	}
+
+	nullList := types.ListNull(validFilter.Type(ctx))
+	unknownList := types.ListUnknown(validFilter.Type(ctx))
+
+	tests := []struct {
+		name     string
+		resolved *types.List
+		plan     *types.List
+	}{
+		{
+			name:     "both nil",
+			resolved: nil,
+			plan:     nil,
+		},
+		{
+			name:     "resolved nil",
+			resolved: nil,
+			plan:     &validList,
+		},
+		{
+			name:     "plan nil",
+			resolved: &validList,
+			plan:     nil,
+		},
+		{
+			name:     "resolved null list",
+			resolved: &nullList,
+			plan:     &validList,
+		},
+		{
+			name:     "plan null list",
+			resolved: &validList,
+			plan:     &nullList,
+		},
+		{
+			name:     "resolved unknown list",
+			resolved: &unknownList,
+			plan:     &validList,
+		},
+		{
+			name:     "plan unknown list",
+			resolved: &validList,
+			plan:     &unknownList,
+		},
+		{
+			name:     "both null list",
+			resolved: &nullList,
+			plan:     &nullList,
+		},
+		{
+			name:     "both unknown list",
+			resolved: &unknownList,
+			plan:     &unknownList,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var planCopy *types.List
+			if tt.plan != nil {
+				cp := *tt.plan
+				planCopy = &cp
+			}
+			called := false
+			overlayDiags := overlayListElements(ctx, tt.resolved, planCopy, func(_ context.Context, _, _ *resource_report.FiltersValue) diag.Diagnostics {
+				called = true
+				return nil
+			})
+			if overlayDiags.HasError() {
+				t.Fatalf("unexpected error diagnostics: %v", overlayDiags)
+			}
+			if called {
+				t.Error("overlayFn should not have been called")
+			}
+			if tt.plan != nil {
+				if tt.plan.IsNull() && !planCopy.IsNull() {
+					t.Errorf("plan was mutated from Null to non-null (%v)", planCopy)
+				}
+				if tt.plan.IsUnknown() && !planCopy.IsUnknown() {
+					t.Errorf("plan was mutated from Unknown to known (%v)", planCopy)
+				}
+			}
+		})
+	}
+}

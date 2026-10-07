@@ -60,6 +60,16 @@ output "anomaly_linked_anomalies" {
   value       = data.doit_anomaly.example.linked_anomalies
 }
 
+output "anomaly_allocations" {
+  description = "Allocations the anomaly belongs to, primary allocation first"
+  value       = data.doit_anomaly.example.allocations
+}
+
+output "anomaly_initial_notifications" {
+  description = "First notification sent on each channel for this anomaly"
+  value       = data.doit_anomaly.example.initial_notifications
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
@@ -103,7 +113,8 @@ output "anomaly_deactivation_reason" {
 - `acknowledged_at` (String) When the anomaly was first acknowledged
 - `acknowledged_by` (String) Email of the user who first acknowledged the anomaly
 - `actual_cost` (Number) Observed (actual) cost of the anomaly.
-- `attribution` (String) Attribution ID
+- `allocations` (Attributes List) Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list. (see [below for nested schema](#nestedatt--allocations))
+- `attribution` (String, Deprecated) Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
 - `billing_account` (String) Billing account ID
 - `cost_of_anomaly` (Number) The difference between the actual cost and the maximum cost in the normal range.
 - `deactivation_reason` (String) Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
@@ -111,6 +122,7 @@ output "anomaly_deactivation_reason" {
 - `entity_label` (String) Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
 - `entity_name` (String) Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
+- `initial_notifications` (Attributes List) The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified. (see [below for nested schema](#nestedatt--initial_notifications))
 - `linked_anomalies` (List of String) IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 - `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--notifications))
@@ -131,6 +143,24 @@ output "anomaly_deactivation_reason" {
 Optional:
 
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
+
+
+<a id="nestedatt--allocations"></a>
+### Nested Schema for `allocations`
+
+Read-Only:
+
+- `id` (String) Allocation ID. Use it with the Allocations API to read the allocation.
+- `name` (String) Allocation name.
+
+
+<a id="nestedatt--initial_notifications"></a>
+### Nested Schema for `initial_notifications`
+
+Read-Only:
+
+- `channel` (String) Dispatch channel.
+- `timestamp` (String) Dispatch timestamp in RFC3339 UTC.
 
 
 <a id="nestedatt--notifications"></a>

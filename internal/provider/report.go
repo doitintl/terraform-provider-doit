@@ -350,6 +350,9 @@ func isNullOverlayElement[T any](v T) bool {
 // returned to the caller.
 func overlayListElements[T any](ctx context.Context, resolved, plan *types.List, overlayFn func(context.Context, *T, *T) diag.Diagnostics) diag.Diagnostics {
 	var diags diag.Diagnostics
+	if resolved == nil || resolved.IsNull() || resolved.IsUnknown() || plan == nil || plan.IsNull() || plan.IsUnknown() {
+		return diags
+	}
 	var planElems []T
 	var resolvedElems []T
 

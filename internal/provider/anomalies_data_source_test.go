@@ -29,6 +29,8 @@ func TestAccAnomaliesDataSource_MaxResultsOnly(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "anomalies.#", "1"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "page_token"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.notifications.#"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.initial_notifications.#"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "anomalies.0.allocations.#"),
 					resource.TestMatchResourceAttr("data.doit_anomalies.limited", "anomalies.0.monitor_level", regexp.MustCompile(`^(service|sku)$`)),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.limited", "total_count"),
 					resource.TestCheckResourceAttr("data.doit_anomalies.limited", "total_count_exact", "true"),
@@ -158,6 +160,7 @@ func TestAccAnomaliesDataSource_AutoPagination(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.count_by_severity.warning"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.count_by_severity.information"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomaly_summary.total_cost_of_anomaly"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomalies.0.initial_notifications.#"),
 					resource.TestCheckResourceAttrSet("data.doit_anomalies.test", "anomalies.0.linked_anomalies.#"),
 				),
 			},
@@ -827,6 +830,86 @@ data "doit_anomalies" "linked_test" {
 
 output "anomaly_linked_anomalies" {
   value = [for a in data.doit_anomalies.linked_test.anomalies : a.linked_anomalies]
+}
+`
+}
+
+// TestAccAnomaliesDataSource_Allocations verifies that the allocations
+// attribute is accessible on anomalies list items and produces an empty plan on drift check.
+func TestAccAnomaliesDataSource_Allocations(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceAllocationsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.alloc_test", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.alloc_test", "anomalies.0.allocations.#"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceAllocationsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceAllocationsConfig() string {
+	return `
+data "doit_anomalies" "alloc_test" {
+  max_results = 1
+}
+
+output "anomaly_allocations" {
+  value = [for a in data.doit_anomalies.alloc_test.anomalies : a.allocations]
+}
+`
+}
+
+// TestAccAnomaliesDataSource_InitialNotifications verifies that the initial_notifications
+// attribute is accessible on anomalies list items and produces an empty plan on drift check.
+func TestAccAnomaliesDataSource_InitialNotifications(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAnomaliesDataSourceInitialNotificationsConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.init_notif_test", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_anomalies.init_notif_test", "anomalies.0.initial_notifications.#"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAnomaliesDataSourceInitialNotificationsConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomaliesDataSourceInitialNotificationsConfig() string {
+	return `
+data "doit_anomalies" "init_notif_test" {
+  max_results = 1
+}
+
+output "anomaly_initial_notifications" {
+  value = [for a in data.doit_anomalies.init_notif_test.anomalies : a.initial_notifications]
 }
 `
 }

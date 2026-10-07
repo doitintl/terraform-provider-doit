@@ -79,6 +79,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.AcknowledgedAt = types.StringUnknown()
 		data.AcknowledgedBy = types.StringUnknown()
 		data.ActualCost = types.Float64Unknown()
+		data.Allocations = types.ListUnknown(datasource_anomaly.AllocationsValue{}.Type(ctx))
 		data.Attribution = types.StringUnknown()
 		data.BillingAccount = types.StringUnknown()
 		data.CostOfAnomaly = types.Float64Unknown()
@@ -87,6 +88,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.EntityLabel = types.StringUnknown()
 		data.EntityName = types.StringUnknown()
 		data.ExpectedMaxCost = types.Float64Unknown()
+		data.InitialNotifications = types.ListUnknown(datasource_anomaly.InitialNotificationsValue{}.Type(ctx))
 		data.LinkedAnomalies = types.ListUnknown(types.StringType)
 		data.MonitorLevel = types.StringUnknown()
 		data.Notifications = types.ListUnknown(datasource_anomaly.NotificationsValue{}.Type(ctx))
@@ -226,8 +228,14 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.Top3skus = emptyList
 	}
 
+	// Map allocations
+	data.Allocations = mapAnomalyAllocationsForAnomaly(ctx, anomaly.Allocations, &resp.Diagnostics)
+
 	// Map notifications
 	data.Notifications = mapAnomalyNotificationsForAnomaly(ctx, anomaly.Notifications, &resp.Diagnostics)
+
+	// Map initial_notifications
+	data.InitialNotifications = mapAnomalyInitialNotificationsForAnomaly(ctx, anomaly.InitialNotifications, &resp.Diagnostics)
 
 	// Map linked_anomalies
 	if anomaly.LinkedAnomalies != nil && len(*anomaly.LinkedAnomalies) > 0 {
@@ -294,6 +302,62 @@ func mapAnomalyNotificationsForAnomaly(ctx context.Context, notifications []mode
 	}
 
 	list, diags := types.ListValueFrom(ctx, datasource_anomaly.NotificationsValue{}.Type(ctx), vals)
+	diagnostics.Append(diags...)
+	return list
+}
+
+// mapAnomalyInitialNotificationsForAnomaly maps API NotificationEvent slice to Terraform list
+// for the singular anomaly data source.
+func mapAnomalyInitialNotificationsForAnomaly(ctx context.Context, initialNotifications []models.NotificationEvent, diagnostics *diag.Diagnostics) types.List {
+	elemType := datasource_anomaly.InitialNotificationsValue{}.Type(ctx)
+	if len(initialNotifications) == 0 {
+		emptyInitialNotifications, d := types.ListValueFrom(ctx, elemType, []datasource_anomaly.InitialNotificationsValue{})
+		diagnostics.Append(d...)
+		return emptyInitialNotifications
+	}
+
+	vals := make([]datasource_anomaly.InitialNotificationsValue, 0, len(initialNotifications))
+	for _, n := range initialNotifications {
+		notificationVal, diags := datasource_anomaly.NewInitialNotificationsValue(
+			datasource_anomaly.InitialNotificationsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"channel":   types.StringValue(string(n.Channel)),
+				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339)),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, notificationVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, elemType, vals)
+	diagnostics.Append(diags...)
+	return list
+}
+
+// mapAnomalyAllocationsForAnomaly maps API GetAnomaly200ResponseAllocationsItem slice to Terraform list
+// for the singular anomaly data source.
+func mapAnomalyAllocationsForAnomaly(ctx context.Context, allocations []models.GetAnomaly200ResponseAllocationsItem, diagnostics *diag.Diagnostics) types.List {
+	elemType := datasource_anomaly.AllocationsValue{}.Type(ctx)
+	if len(allocations) == 0 {
+		emptyAllocations, d := types.ListValueFrom(ctx, elemType, []datasource_anomaly.AllocationsValue{})
+		diagnostics.Append(d...)
+		return emptyAllocations
+	}
+
+	vals := make([]datasource_anomaly.AllocationsValue, 0, len(allocations))
+	for _, a := range allocations {
+		allocVal, diags := datasource_anomaly.NewAllocationsValue(
+			datasource_anomaly.AllocationsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"id":   types.StringValue(a.Id),
+				"name": types.StringValue(a.Name),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, allocVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, elemType, vals)
 	diagnostics.Append(diags...)
 	return list
 }

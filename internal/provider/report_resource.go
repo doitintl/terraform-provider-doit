@@ -43,6 +43,7 @@ func (r *reportResource) Metadata(_ context.Context, req resource.MetadataReques
 
 func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_report.ReportResourceSchema(ctx)
+	appendDimensionsTypeDeprecationValidators(s.Attributes, reportDimensionsTypeAttributePaths...)
 
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.

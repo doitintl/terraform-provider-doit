@@ -2,7 +2,7 @@
   description = "terraform-provider-doit local dev environment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/d6524aaca2ff07876657ae2b323f24be4874944b"; # includes Go 1.27.1
+    nixpkgs.url = "github:NixOS/nixpkgs/b6c8664de9b6cc07fe5666a29f91884ba81197c4"; # includes Go 1.27.1
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -18,8 +18,8 @@
 
         buildInputs = with pkgs; [
           go
-          golangci-lint  # Go linter v2.13.2
-          terraform      # v1.16.0
+          golangci-lint  # Go linter v2.14.0
+          terraform      # v1.16.4
         ];
 
       in

@@ -256,6 +256,9 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			// Map Notifications nested list
 			notificationsList := mapAnomalyNotifications(ctx, anomaly.Notifications, &resp.Diagnostics)
 
+			// Map InitialNotifications nested list
+			initialNotificationsList := mapAnomalyInitialNotifications(ctx, anomaly.InitialNotifications, &resp.Diagnostics)
+
 			// Map LinkedAnomalies list
 			var linkedAnomaliesList types.List
 			if len(anomaly.LinkedAnomalies) > 0 {
@@ -268,6 +271,9 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 				resp.Diagnostics.Append(d...)
 			}
 
+			// Map allocations nested list
+			allocationsList := mapAnomalyAllocations(ctx, anomaly.Allocations, &resp.Diagnostics)
+
 			anomalyVal, diags := datasource_anomalies.NewAnomaliesValue(
 				datasource_anomalies.AnomaliesValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
@@ -276,6 +282,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 					"acknowledged_at":       acknowledgedAtVal,
 					"acknowledged_by":       types.StringPointerValue(nullableToPointer(anomaly.AcknowledgedBy)),
 					"actual_cost":           types.Float64PointerValue(nullableToPointer(anomaly.ActualCost)),
+					"allocations":           allocationsList,
 					"attribution":           types.StringValue(anomaly.Attribution),
 					"billing_account":       types.StringValue(anomaly.BillingAccount),
 					"cost_of_anomaly":       types.Float64Value(anomaly.CostOfAnomaly),
@@ -284,6 +291,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 					"entity_label":          types.StringPointerValue(anomaly.EntityLabel),
 					"entity_name":           types.StringPointerValue(anomaly.EntityName),
 					"expected_max_cost":     types.Float64PointerValue(nullableToPointer(anomaly.ExpectedMaxCost)),
+					"initial_notifications": initialNotificationsList,
 					"linked_anomalies":      linkedAnomaliesList,
 					"monitor_level":         types.StringValue(string(anomaly.MonitorLevel)),
 					"notifications":         notificationsList,
@@ -426,6 +434,33 @@ func mapAnomalyNotifications(ctx context.Context, notifications []models.Notific
 	return list
 }
 
+// mapAnomalyInitialNotifications maps API NotificationEvent slice to Terraform list.
+func mapAnomalyInitialNotifications(ctx context.Context, initialNotifications []models.NotificationEvent, diagnostics *diag.Diagnostics) types.List {
+	elemType := datasource_anomalies.InitialNotificationsValue{}.Type(ctx)
+	if len(initialNotifications) == 0 {
+		emptyInitialNotifications, d := types.ListValueFrom(ctx, elemType, []datasource_anomalies.InitialNotificationsValue{})
+		diagnostics.Append(d...)
+		return emptyInitialNotifications
+	}
+
+	vals := make([]datasource_anomalies.InitialNotificationsValue, 0, len(initialNotifications))
+	for _, n := range initialNotifications {
+		notificationVal, diags := datasource_anomalies.NewInitialNotificationsValue(
+			datasource_anomalies.InitialNotificationsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"channel":   types.StringValue(string(n.Channel)),
+				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339)),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, notificationVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, elemType, vals)
+	diagnostics.Append(diags...)
+	return list
+}
+
 // mapAnomalySummary maps API AnomaliesResponseAnomalySummary to Terraform AnomalySummaryValue.
 func mapAnomalySummary(ctx context.Context, summary models.AnomaliesResponseAnomalySummary, diagnostics *diag.Diagnostics) datasource_anomalies.AnomalySummaryValue {
 	countBySeverityVal, diags := datasource_anomalies.NewCountBySeverityValue(
@@ -448,4 +483,32 @@ func mapAnomalySummary(ctx context.Context, summary models.AnomaliesResponseAnom
 	diagnostics.Append(diags...)
 
 	return summaryVal
+}
+
+// mapAnomalyAllocations maps API AnomalyItemAllocationsItem slice to Terraform list
+// for the anomalies data source.
+func mapAnomalyAllocations(ctx context.Context, allocations []models.AnomalyItemAllocationsItem, diagnostics *diag.Diagnostics) types.List {
+	elemType := datasource_anomalies.AllocationsValue{}.Type(ctx)
+	if len(allocations) == 0 {
+		emptyAllocations, d := types.ListValueFrom(ctx, elemType, []datasource_anomalies.AllocationsValue{})
+		diagnostics.Append(d...)
+		return emptyAllocations
+	}
+
+	vals := make([]datasource_anomalies.AllocationsValue, 0, len(allocations))
+	for _, a := range allocations {
+		allocVal, diags := datasource_anomalies.NewAllocationsValue(
+			datasource_anomalies.AllocationsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"id":   types.StringValue(a.Id),
+				"name": types.StringValue(a.Name),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, allocVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, elemType, vals)
+	diagnostics.Append(diags...)
+	return list
 }

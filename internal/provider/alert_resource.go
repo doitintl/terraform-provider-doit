@@ -67,6 +67,10 @@ func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStat
 
 func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_alert.AlertResourceSchema(ctx)
+	// No dimensions-type deprecation warning on config.scopes[*].type: the
+	// alerts API only accepts "attribution"/"attribution_group" and rejects the
+	// replacements ("allocation_rule"/"allocation") with a 400, so the warning
+	// would recommend a value that breaks the alert (#384).
 
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.

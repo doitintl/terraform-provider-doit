@@ -41,8 +41,7 @@ func CustomerResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.",
 			},
 			"customer_id": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.",
 				MarkdownDescription: "Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.",
 			},

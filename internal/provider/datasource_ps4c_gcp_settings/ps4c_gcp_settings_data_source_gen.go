@@ -31,6 +31,11 @@ func Ps4cGcpSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 						"services": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
+									"region": schema.StringAttribute{
+										Computed:            true,
+										Description:         "Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.",
+										MarkdownDescription: "Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.",
+									},
 									"service": schema.StringAttribute{
 										Computed:            true,
 										Description:         "Product line these settings apply to.",
@@ -55,8 +60,8 @@ func Ps4cGcpSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											"policy": schema.StringAttribute{
 												Computed:            true,
-												Description:         "Coverage target policy for recommendations and purchases.",
-												MarkdownDescription: "Coverage target policy for recommendations and purchases.",
+												Description:         "Coverage target policy for recommendations and purchases (built-in or customer-defined).",
+												MarkdownDescription: "Coverage target policy for recommendations and purchases (built-in or customer-defined).",
 											},
 											"purchase_mode": schema.StringAttribute{
 												Computed:            true,
@@ -75,8 +80,8 @@ func Ps4cGcpSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 										},
 										Computed:            true,
-										Description:         "Commitment settings for this product line.",
-										MarkdownDescription: "Commitment settings for this product line.",
+										Description:         "Commitment settings for this product line and region.",
+										MarkdownDescription: "Commitment settings for this product line and region.",
 									},
 								},
 								CustomType: ServicesType{
@@ -86,8 +91,8 @@ func Ps4cGcpSettingsDataSourceSchema(ctx context.Context) schema.Schema {
 								},
 							},
 							Computed:            true,
-							Description:         "Settings for each product line activated on this billing account.",
-							MarkdownDescription: "Settings for each product line activated on this billing account.",
+							Description:         "Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically.",
+							MarkdownDescription: "Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically.",
 						},
 					},
 					CustomType: ItemsType{
@@ -563,6 +568,24 @@ func (t ServicesType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 
 	attributes := in.Attributes()
 
+	regionAttribute, ok := attributes["region"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`region is missing from object`)
+
+		return nil, diags
+	}
+
+	regionVal, ok := regionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`region expected to be basetypes.StringValue, was: %T`, regionAttribute))
+	}
+
 	serviceAttribute, ok := attributes["service"]
 
 	if !ok {
@@ -630,6 +653,7 @@ func (t ServicesType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 	}
 
 	return ServicesValue{
+		Region:   regionVal,
 		Service:  serviceVal,
 		Settings: settingsVal,
 		state:    attr.ValueStateKnown,
@@ -699,6 +723,24 @@ func NewServicesValue(attributeTypes map[string]attr.Type, attributes map[string
 		return NewServicesValueUnknown(), diags
 	}
 
+	regionAttribute, ok := attributes["region"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`region is missing from object`)
+
+		return NewServicesValueUnknown(), diags
+	}
+
+	regionVal, ok := regionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`region expected to be basetypes.StringValue, was: %T`, regionAttribute))
+	}
+
 	serviceAttribute, ok := attributes["service"]
 
 	if !ok {
@@ -740,6 +782,7 @@ func NewServicesValue(attributeTypes map[string]attr.Type, attributes map[string
 	}
 
 	return ServicesValue{
+		Region:   regionVal,
 		Service:  serviceVal,
 		Settings: settingsVal,
 		state:    attr.ValueStateKnown,
@@ -814,17 +857,19 @@ func (t ServicesType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ServicesValue{}
 
 type ServicesValue struct {
+	Region   basetypes.StringValue `tfsdk:"region"`
 	Service  basetypes.StringValue `tfsdk:"service"`
 	Settings SettingsValue         `tfsdk:"settings"`
 	state    attr.ValueState
 }
 
 func (v ServicesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 2)
+	attrTypes := make(map[string]tftypes.Type, 3)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["region"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["service"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["settings"] = SettingsType{
 		basetypes.ObjectType{
@@ -836,7 +881,15 @@ func (v ServicesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 2)
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Region.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["region"] = val
 
 		val, err = v.Service.ToTerraformValue(ctx)
 
@@ -890,6 +943,7 @@ func (v ServicesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 	}
 
 	attributeTypes := map[string]attr.Type{
+		"region":  basetypes.StringType{},
 		"service": basetypes.StringType{},
 		"settings": SettingsType{
 			basetypes.ObjectType{
@@ -909,6 +963,7 @@ func (v ServicesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"region":   v.Region,
 			"service":  v.Service,
 			"settings": settings,
 		})
@@ -929,6 +984,10 @@ func (v ServicesValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.Region.Equal(other.Region) {
+		return false
 	}
 
 	if !v.Service.Equal(other.Service) {
@@ -952,6 +1011,7 @@ func (v ServicesValue) Type(ctx context.Context) attr.Type {
 
 func (v ServicesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"region":  basetypes.StringType{},
 		"service": basetypes.StringType{},
 		"settings": SettingsType{
 			basetypes.ObjectType{

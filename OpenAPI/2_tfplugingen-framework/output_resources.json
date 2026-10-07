@@ -589,6 +589,31 @@
 										"computed_optional_required": "required",
 										"description": "Formula for combining components (A is the first component, B is the second one, etc.)."
 									}
+								},
+								{
+									"name": "validity_periods",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "end_date",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound."
+													}
+												},
+												{
+													"name": "start_date",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound."
+													}
+												}
+											]
+										},
+										"description": "Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies."
+									}
 								}
 							],
 							"description": "Single allocation rule. Components can reference other existing allocation rules by using the \"allocation_rule\" dimension type."
@@ -742,6 +767,128 @@
 											"computed_optional_required": "computed_optional",
 											"description": "Name of the allocation rule."
 										}
+									},
+									{
+										"name": "validity_periods",
+										"list_nested": {
+											"computed_optional_required": "computed_optional",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "end_date",
+														"string": {
+															"computed_optional_required": "computed_optional",
+															"description": "End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound."
+														}
+													},
+													{
+														"name": "start_date",
+														"string": {
+															"computed_optional_required": "computed_optional",
+															"description": "Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound."
+														}
+													}
+												]
+											},
+											"description": "Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies."
+										}
+									},
+									{
+										"name": "value_extraction",
+										"single_nested": {
+											"computed_optional_required": "computed_optional",
+											"attributes": [
+												{
+													"name": "fallback",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Literal emitted when every source is missing. Required with onMissing \"useFallback\" (the default); not allowed with onMissing \"nextRule\"."
+													}
+												},
+												{
+													"name": "on_missing",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"default": {
+															"static": "useFallback"
+														},
+														"description": "What happens when every source is missing or empty on a matching row. \"useFallback\" (default) emits the fallback value, which is required in that mode; \"nextRule\" lets the row fall through to the next rule in the group.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"useFallback\",\n\"nextRule\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "sources",
+													"list_nested": {
+														"computed_optional_required": "required",
+														"nested_object": {
+															"attributes": [
+																{
+																	"name": "key",
+																	"string": {
+																		"computed_optional_required": "required",
+																		"description": "The label/tag key, or the fixed dimension ID, whose value is extracted."
+																	}
+																},
+																{
+																	"name": "providers",
+																	"list": {
+																		"computed_optional_required": "computed_optional",
+																		"element_type": {
+																			"string": {}
+																		},
+																		"description": "Optional cloud providers this source applies to."
+																	}
+																},
+																{
+																	"name": "type",
+																	"string": {
+																		"computed_optional_required": "required",
+																		"description": "The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; \"fixed\" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.",
+																		"validators": [
+																			{
+																				"custom": {
+																					"imports": [
+																						{
+																							"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																						}
+																					],
+																					"schema_definition": "stringvalidator.OneOf(\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"gke_label\",\n\"fixed\",\n)"
+																				}
+																			}
+																		]
+																	}
+																}
+															]
+														},
+														"description": "Ordered extraction sources; the first non-empty value wins.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+																		}
+																	],
+																	"schema_definition": "listvalidator.SizeBetween(1, 5)"
+																}
+															}
+														]
+													}
+												}
+											],
+											"description": "Makes the rule emit a value extracted from the first non-empty source instead of the rule name."
+										}
 									}
 								]
 							}
@@ -872,7 +1019,7 @@
 					{
 						"name": "id",
 						"string": {
-							"computed_optional_required": "computed",
+							"computed_optional_required": "required",
 							"description": "The unique identifier of the asset."
 						}
 					},
@@ -1804,7 +1951,7 @@
 					{
 						"name": "customer_id",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`."
 						}
 					}
@@ -2119,7 +2266,7 @@
 					{
 						"name": "id",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Label ID"
 						}
 					}
@@ -2700,7 +2847,7 @@
 																}
 															}
 														],
-														"description": "To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom)."
+														"description": "To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom)."
 													}
 												},
 												{
@@ -2854,7 +3001,7 @@
 												"name": "operator",
 												"string": {
 													"computed_optional_required": "required",
-													"description": "Comparison operator for period-over-period deltas.",
+													"description": "Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`\n(Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`\n(Between), `nb` (Not Between).",
 													"validators": [
 														{
 															"custom": {
@@ -2863,7 +3010,7 @@
 																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																	}
 																],
-																"schema_definition": "stringvalidator.OneOf(\n\"\u003e\",\n\"\u003e=\",\n\"\u003c\",\n\"\u003c=\",\n\"between\",\n\"not_between\",\n)"
+																"schema_definition": "stringvalidator.OneOf(\n\"gt\",\n\"gte\",\n\"lt\",\n\"lte\",\n\"b\",\n\"nb\",\n)"
 															}
 														}
 													]
@@ -2876,11 +3023,11 @@
 													"element_type": {
 														"float64": {}
 													},
-													"description": "Threshold value(s). Unary operators use one entry; `between` and `not_between`\nrequire two ordered entries."
+													"description": "Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range\noperators (`b`, `nb`) require two ordered entries."
 												}
 											}
 										],
-										"description": "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three."
+										"description": "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and rank `group` limits — not all three."
 									}
 								},
 								{
@@ -2949,7 +3096,7 @@
 												"name": "operator",
 												"string": {
 													"computed_optional_required": "required",
-													"description": "Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).\n`limitByChange.operator` uses SQL-style symbols (`\u003e`, `\u003e=`, …) instead.",
+													"description": "Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less\nThan), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),\n`nb` (Not Between), `e` (Equals), `ne` (Not Equals).",
 													"validators": [
 														{
 															"custom": {
@@ -3414,6 +3561,289 @@
 			}
 		},
 		{
+			"name": "role",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The description of the role."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "permissions",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Permission IDs to assign to the role, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. Omission or an empty array creates a role without permissions.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.UniqueValues()"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "child_tenant_eligible",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the owning tenant made this role available as a child tenant role."
+						}
+					},
+					{
+						"name": "customer",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The customer ID if this is a custom role. An empty string for a preset role."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The unique ID of the role."
+						}
+					},
+					{
+						"name": "type",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The type of the role (preset or custom)."
+						}
+					}
+				],
+				"description": "Manage user permissions and access levels in your organization.",
+				"markdown_description": "Manage user permissions and access levels in your organization."
+			}
+		},
+		{
+			"name": "service_account",
+			"schema": {
+				"attributes": [
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Free-text description."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Name, unique among the customer's service accounts. Leading or trailing whitespace returns `400`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 100)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "permissions",
+						"list": {
+							"computed_optional_required": "computed_optional",
+							"element_type": {
+								"string": {}
+							},
+							"description": "Platform permission names in camelCase, for example `cloudAnalyticsReadOnly`. An unknown name returns `422`."
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the service account was created."
+						}
+					},
+					{
+						"name": "created_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Display name of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+						}
+					},
+					{
+						"name": "created_by_email",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+						}
+					},
+					{
+						"name": "created_by_user_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the user who created the service account. `null` when unknown or when the service account was created with a service account token."
+						}
+					},
+					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the customer that owns the service account."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Current version of the service account. Send it in `If-Match` to update or delete."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Service account ID. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the service account was last changed."
+						}
+					}
+				],
+				"description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.",
+				"markdown_description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions."
+			}
+		},
+		{
+			"name": "service_account_token",
+			"schema": {
+				"attributes": [
+					{
+						"name": "expires_time",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "When the token should stop authenticating. Omit to let the server set the default expiry."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Name, unique among the service account's tokens. Leading or trailing whitespace returns `400`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 100)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "state",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "`active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"active\",\n\"disabled\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "access_token",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "The token credential, and the secret that authenticates as this service account. Returned only by this operation and never retrievable again, so store it somewhere safe on receipt; an empty string on a dry-run create. Treat it like a password.",
+							"sensitive": true
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the token was created. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "customer_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "ID of the customer whose service account the token belongs to."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "API token ID. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "last_used_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the token last authenticated a request. `null` until it is first used."
+						}
+					},
+					{
+						"name": "service_account_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "ID of the service account that owns the token."
+						}
+					}
+				],
+				"description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.",
+				"markdown_description": "Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions."
+			}
+		},
+		{
 			"name": "sharing",
 			"schema": {
 				"attributes": [
@@ -3510,7 +3940,7 @@
 					{
 						"name": "resource_type",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Resource type.",
 							"validators": [
 								{
@@ -3529,7 +3959,7 @@
 					{
 						"name": "resource_id",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids)."
 						}
 					}
@@ -3577,7 +4007,7 @@
 					{
 						"name": "ticket_id",
 						"int64": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "The unique identifier of the support request."
 						}
 					}
@@ -3642,6 +4072,89 @@
 						"string": {
 							"computed_optional_required": "computed_optional",
 							"description": "The ID of the role to assign to the user."
+						}
+					},
+					{
+						"name": "job_function",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"deprecation_message": "This attribute is deprecated.",
+							"description": "Deprecated: use 'jobTitle' instead. If both are provided, 'jobTitle' takes precedence.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"Data Engineer / Data Analysts\",\n\"Executive Team\",\n\"Finance / Accounting\",\n\"Founder\",\n\"Legal / Purchasing\",\n\"Management\",\n\"Sales / Marketing\",\n\"Software / Ops Engineer\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "language",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The user's preferred language.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"en\",\n\"ja\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "phone",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The user's country code (e.g., +44).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^\\\\+[0-9]+$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "phone_extension",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "The user's phone extension (8-15 digits).",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[0-9]{8,15}$\"), \"\")"
+									}
+								}
+							]
 						}
 					},
 					{

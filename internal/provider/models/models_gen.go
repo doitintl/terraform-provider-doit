@@ -307,6 +307,54 @@ func (e AllocationListItemAllocationType) Valid() bool {
 	}
 }
 
+// Defines values for AllocationValueExtractionOnMissing.
+const (
+	AllocationValueExtractionOnMissingNextRule    AllocationValueExtractionOnMissing = "nextRule"
+	AllocationValueExtractionOnMissingUseFallback AllocationValueExtractionOnMissing = "useFallback"
+)
+
+// Valid indicates whether the value is a known member of the AllocationValueExtractionOnMissing enum.
+func (e AllocationValueExtractionOnMissing) Valid() bool {
+	switch e {
+	case AllocationValueExtractionOnMissingNextRule:
+		return true
+	case AllocationValueExtractionOnMissingUseFallback:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AllocationValueExtractionSourceType.
+const (
+	AllocationValueExtractionSourceTypeFixed        AllocationValueExtractionSourceType = "fixed"
+	AllocationValueExtractionSourceTypeGkeLabel     AllocationValueExtractionSourceType = "gke_label"
+	AllocationValueExtractionSourceTypeLabel        AllocationValueExtractionSourceType = "label"
+	AllocationValueExtractionSourceTypeProjectLabel AllocationValueExtractionSourceType = "project_label"
+	AllocationValueExtractionSourceTypeSystemLabel  AllocationValueExtractionSourceType = "system_label"
+	AllocationValueExtractionSourceTypeTag          AllocationValueExtractionSourceType = "tag"
+)
+
+// Valid indicates whether the value is a known member of the AllocationValueExtractionSourceType enum.
+func (e AllocationValueExtractionSourceType) Valid() bool {
+	switch e {
+	case AllocationValueExtractionSourceTypeFixed:
+		return true
+	case AllocationValueExtractionSourceTypeGkeLabel:
+		return true
+	case AllocationValueExtractionSourceTypeLabel:
+		return true
+	case AllocationValueExtractionSourceTypeProjectLabel:
+		return true
+	case AllocationValueExtractionSourceTypeSystemLabel:
+		return true
+	case AllocationValueExtractionSourceTypeTag:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AnomalyItemDeactivationReason.
 const (
 	AnomalyItemDeactivationReasonExpired  AnomalyItemDeactivationReason = "expired"
@@ -1336,6 +1384,45 @@ func (e CommitmentExternalListItemCloudProvider) Valid() bool {
 	}
 }
 
+// Defines values for CommitmentPolicyAssignmentCloud.
+const (
+	CommitmentPolicyAssignmentCloudAws CommitmentPolicyAssignmentCloud = "aws"
+	CommitmentPolicyAssignmentCloudGcp CommitmentPolicyAssignmentCloud = "gcp"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentPolicyAssignmentCloud enum.
+func (e CommitmentPolicyAssignmentCloud) Valid() bool {
+	switch e {
+	case CommitmentPolicyAssignmentCloudAws:
+		return true
+	case CommitmentPolicyAssignmentCloudGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitmentPolicyAssignmentService.
+const (
+	CommitmentPolicyAssignmentServiceCloudSql CommitmentPolicyAssignmentService = "cloud_sql"
+	CommitmentPolicyAssignmentServiceCompute  CommitmentPolicyAssignmentService = "compute"
+	CommitmentPolicyAssignmentServiceDatabase CommitmentPolicyAssignmentService = "database"
+)
+
+// Valid indicates whether the value is a known member of the CommitmentPolicyAssignmentService enum.
+func (e CommitmentPolicyAssignmentService) Valid() bool {
+	switch e {
+	case CommitmentPolicyAssignmentServiceCloudSql:
+		return true
+	case CommitmentPolicyAssignmentServiceCompute:
+		return true
+	case CommitmentPolicyAssignmentServiceDatabase:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CommitmentTerm.
 const (
 	CommitmentTermOneYear   CommitmentTerm = "one_year"
@@ -1483,6 +1570,24 @@ func (e CreateLabelRequestColor) Valid() bool {
 	case CreateLabelRequestColorSoftYellow:
 		return true
 	case CreateLabelRequestColorTeal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateServiceAccountTokenResponseState.
+const (
+	CreateServiceAccountTokenResponseStateActive   CreateServiceAccountTokenResponseState = "active"
+	CreateServiceAccountTokenResponseStateDisabled CreateServiceAccountTokenResponseState = "disabled"
+)
+
+// Valid indicates whether the value is a known member of the CreateServiceAccountTokenResponseState enum.
+func (e CreateServiceAccountTokenResponseState) Valid() bool {
+	switch e {
+	case CreateServiceAccountTokenResponseStateActive:
+		return true
+	case CreateServiceAccountTokenResponseStateDisabled:
 		return true
 	default:
 		return false
@@ -2145,28 +2250,28 @@ func (e ExternalLimitByChangeChangeType) Valid() bool {
 
 // Defines values for ExternalLimitByChangeOperator.
 const (
-	ExternalLimitByChangeOperatorBetween          ExternalLimitByChangeOperator = "between"
-	ExternalLimitByChangeOperatorGreaterThan      ExternalLimitByChangeOperator = ">"
-	ExternalLimitByChangeOperatorGreaterThanEqual ExternalLimitByChangeOperator = ">="
-	ExternalLimitByChangeOperatorLessThan         ExternalLimitByChangeOperator = "<"
-	ExternalLimitByChangeOperatorLessThanEqual    ExternalLimitByChangeOperator = "<="
-	ExternalLimitByChangeOperatorNotBetween       ExternalLimitByChangeOperator = "not_between"
+	ExternalLimitByChangeOperatorB   ExternalLimitByChangeOperator = "b"
+	ExternalLimitByChangeOperatorGt  ExternalLimitByChangeOperator = "gt"
+	ExternalLimitByChangeOperatorGte ExternalLimitByChangeOperator = "gte"
+	ExternalLimitByChangeOperatorLt  ExternalLimitByChangeOperator = "lt"
+	ExternalLimitByChangeOperatorLte ExternalLimitByChangeOperator = "lte"
+	ExternalLimitByChangeOperatorNb  ExternalLimitByChangeOperator = "nb"
 )
 
 // Valid indicates whether the value is a known member of the ExternalLimitByChangeOperator enum.
 func (e ExternalLimitByChangeOperator) Valid() bool {
 	switch e {
-	case ExternalLimitByChangeOperatorBetween:
+	case ExternalLimitByChangeOperatorB:
 		return true
-	case ExternalLimitByChangeOperatorGreaterThan:
+	case ExternalLimitByChangeOperatorGt:
 		return true
-	case ExternalLimitByChangeOperatorGreaterThanEqual:
+	case ExternalLimitByChangeOperatorGte:
 		return true
-	case ExternalLimitByChangeOperatorLessThan:
+	case ExternalLimitByChangeOperatorLt:
 		return true
-	case ExternalLimitByChangeOperatorLessThanEqual:
+	case ExternalLimitByChangeOperatorLte:
 		return true
-	case ExternalLimitByChangeOperatorNotBetween:
+	case ExternalLimitByChangeOperatorNb:
 		return true
 	default:
 		return false
@@ -2442,12 +2547,15 @@ func (e ExternalSplitTargetType) Valid() bool {
 
 // Defines values for GcpBillingAccountServiceSettingsService.
 const (
-	GcpBillingAccountServiceSettingsServiceCompute GcpBillingAccountServiceSettingsService = "compute"
+	GcpBillingAccountServiceSettingsServiceCloudSql GcpBillingAccountServiceSettingsService = "cloud_sql"
+	GcpBillingAccountServiceSettingsServiceCompute  GcpBillingAccountServiceSettingsService = "compute"
 )
 
 // Valid indicates whether the value is a known member of the GcpBillingAccountServiceSettingsService enum.
 func (e GcpBillingAccountServiceSettingsService) Valid() bool {
 	switch e {
+	case GcpBillingAccountServiceSettingsServiceCloudSql:
+		return true
 	case GcpBillingAccountServiceSettingsServiceCompute:
 		return true
 	default:
@@ -2473,24 +2581,189 @@ func (e GcpBillingAccountSettingsPurchaseMode) Valid() bool {
 	}
 }
 
-// Defines values for GcpOnboardingStatusEntryStatus.
+// Defines values for GcpDailyCoverageByServiceService.
 const (
-	GcpOnboardingStatusEntryStatusDone       GcpOnboardingStatusEntryStatus = "done"
-	GcpOnboardingStatusEntryStatusError      GcpOnboardingStatusEntryStatus = "error"
-	GcpOnboardingStatusEntryStatusNotStarted GcpOnboardingStatusEntryStatus = "not_started"
-	GcpOnboardingStatusEntryStatusOnboarding GcpOnboardingStatusEntryStatus = "onboarding"
+	GcpDailyCoverageByServiceServiceCloudSql GcpDailyCoverageByServiceService = "cloud_sql"
+	GcpDailyCoverageByServiceServiceCompute  GcpDailyCoverageByServiceService = "compute"
 )
 
-// Valid indicates whether the value is a known member of the GcpOnboardingStatusEntryStatus enum.
-func (e GcpOnboardingStatusEntryStatus) Valid() bool {
+// Valid indicates whether the value is a known member of the GcpDailyCoverageByServiceService enum.
+func (e GcpDailyCoverageByServiceService) Valid() bool {
 	switch e {
-	case GcpOnboardingStatusEntryStatusDone:
+	case GcpDailyCoverageByServiceServiceCloudSql:
 		return true
-	case GcpOnboardingStatusEntryStatusError:
+	case GcpDailyCoverageByServiceServiceCompute:
 		return true
-	case GcpOnboardingStatusEntryStatusNotStarted:
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpMonthlyStatsByServiceService.
+const (
+	GcpMonthlyStatsByServiceServiceCloudSql GcpMonthlyStatsByServiceService = "cloud_sql"
+	GcpMonthlyStatsByServiceServiceCompute  GcpMonthlyStatsByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpMonthlyStatsByServiceService enum.
+func (e GcpMonthlyStatsByServiceService) Valid() bool {
+	switch e {
+	case GcpMonthlyStatsByServiceServiceCloudSql:
 		return true
-	case GcpOnboardingStatusEntryStatusOnboarding:
+	case GcpMonthlyStatsByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpOnboardingStatusByServiceService.
+const (
+	GcpOnboardingStatusByServiceServiceCloudSql GcpOnboardingStatusByServiceService = "cloud_sql"
+	GcpOnboardingStatusByServiceServiceCompute  GcpOnboardingStatusByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpOnboardingStatusByServiceService enum.
+func (e GcpOnboardingStatusByServiceService) Valid() bool {
+	switch e {
+	case GcpOnboardingStatusByServiceServiceCloudSql:
+		return true
+	case GcpOnboardingStatusByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpOnboardingStatusByServiceStatus.
+const (
+	GcpOnboardingStatusByServiceStatusDone       GcpOnboardingStatusByServiceStatus = "done"
+	GcpOnboardingStatusByServiceStatusError      GcpOnboardingStatusByServiceStatus = "error"
+	GcpOnboardingStatusByServiceStatusNotStarted GcpOnboardingStatusByServiceStatus = "not_started"
+	GcpOnboardingStatusByServiceStatusOnboarding GcpOnboardingStatusByServiceStatus = "onboarding"
+)
+
+// Valid indicates whether the value is a known member of the GcpOnboardingStatusByServiceStatus enum.
+func (e GcpOnboardingStatusByServiceStatus) Valid() bool {
+	switch e {
+	case GcpOnboardingStatusByServiceStatusDone:
+		return true
+	case GcpOnboardingStatusByServiceStatusError:
+		return true
+	case GcpOnboardingStatusByServiceStatusNotStarted:
+		return true
+	case GcpOnboardingStatusByServiceStatusOnboarding:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpPlannedPurchasePurchaseApprovalStatus.
+const (
+	GcpPlannedPurchasePurchaseApprovalStatusApproved        GcpPlannedPurchasePurchaseApprovalStatus = "approved"
+	GcpPlannedPurchasePurchaseApprovalStatusPaused          GcpPlannedPurchasePurchaseApprovalStatus = "paused"
+	GcpPlannedPurchasePurchaseApprovalStatusPendingApproval GcpPlannedPurchasePurchaseApprovalStatus = "pending_approval"
+)
+
+// Valid indicates whether the value is a known member of the GcpPlannedPurchasePurchaseApprovalStatus enum.
+func (e GcpPlannedPurchasePurchaseApprovalStatus) Valid() bool {
+	switch e {
+	case GcpPlannedPurchasePurchaseApprovalStatusApproved:
+		return true
+	case GcpPlannedPurchasePurchaseApprovalStatusPaused:
+		return true
+	case GcpPlannedPurchasePurchaseApprovalStatusPendingApproval:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpPlannedPurchaseStatus.
+const (
+	GcpPlannedPurchaseStatusExpired GcpPlannedPurchaseStatus = "expired"
+	GcpPlannedPurchaseStatusValid   GcpPlannedPurchaseStatus = "valid"
+)
+
+// Valid indicates whether the value is a known member of the GcpPlannedPurchaseStatus enum.
+func (e GcpPlannedPurchaseStatus) Valid() bool {
+	switch e {
+	case GcpPlannedPurchaseStatusExpired:
+		return true
+	case GcpPlannedPurchaseStatusValid:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpPlannedPurchaseByServiceService.
+const (
+	GcpPlannedPurchaseByServiceServiceCloudSql GcpPlannedPurchaseByServiceService = "cloud_sql"
+	GcpPlannedPurchaseByServiceServiceCompute  GcpPlannedPurchaseByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpPlannedPurchaseByServiceService enum.
+func (e GcpPlannedPurchaseByServiceService) Valid() bool {
+	switch e {
+	case GcpPlannedPurchaseByServiceServiceCloudSql:
+		return true
+	case GcpPlannedPurchaseByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpRecommendationService.
+const (
+	GcpRecommendationServiceCloudSql GcpRecommendationService = "cloud_sql"
+	GcpRecommendationServiceCompute  GcpRecommendationService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpRecommendationService enum.
+func (e GcpRecommendationService) Valid() bool {
+	switch e {
+	case GcpRecommendationServiceCloudSql:
+		return true
+	case GcpRecommendationServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpSavingsTotalsByServiceService.
+const (
+	GcpSavingsTotalsByServiceServiceCloudSql GcpSavingsTotalsByServiceService = "cloud_sql"
+	GcpSavingsTotalsByServiceServiceCompute  GcpSavingsTotalsByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpSavingsTotalsByServiceService enum.
+func (e GcpSavingsTotalsByServiceService) Valid() bool {
+	switch e {
+	case GcpSavingsTotalsByServiceServiceCloudSql:
+		return true
+	case GcpSavingsTotalsByServiceServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpStats30dByServiceService.
+const (
+	GcpStats30dByServiceServiceCloudSql GcpStats30dByServiceService = "cloud_sql"
+	GcpStats30dByServiceServiceCompute  GcpStats30dByServiceService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpStats30dByServiceService enum.
+func (e GcpStats30dByServiceService) Valid() bool {
+	switch e {
+	case GcpStats30dByServiceServiceCloudSql:
+		return true
+	case GcpStats30dByServiceServiceCompute:
 		return true
 	default:
 		return false
@@ -2938,27 +3211,6 @@ func (e NotificationEventChannel) Valid() bool {
 	}
 }
 
-// Defines values for Policy.
-const (
-	PolicyBalanced     Policy = "balanced"
-	PolicyConservative Policy = "conservative"
-	PolicyMaxSavings   Policy = "max_savings"
-)
-
-// Valid indicates whether the value is a known member of the Policy enum.
-func (e Policy) Valid() bool {
-	switch e {
-	case PolicyBalanced:
-		return true
-	case PolicyConservative:
-		return true
-	case PolicyMaxSavings:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ReportType.
 const (
 	ReportTypeCustom ReportType = "custom"
@@ -3010,6 +3262,24 @@ func (e ResourcePermissionsResponsePublic) Valid() bool {
 	case ResourcePermissionsResponsePublicEditor:
 		return true
 	case ResourcePermissionsResponsePublicViewer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RoleType.
+const (
+	RoleTypeCustom RoleType = "custom"
+	RoleTypePreset RoleType = "preset"
+)
+
+// Valid indicates whether the value is a known member of the RoleType enum.
+func (e RoleType) Valid() bool {
+	switch e {
+	case RoleTypeCustom:
+		return true
+	case RoleTypePreset:
 		return true
 	default:
 		return false
@@ -3085,6 +3355,24 @@ func (e SchemaFieldUnit) Valid() bool {
 	case SchemaFieldUnitNumber:
 		return true
 	case SchemaFieldUnitPercent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ServiceAccountTokenState.
+const (
+	ServiceAccountTokenStateActive   ServiceAccountTokenState = "active"
+	ServiceAccountTokenStateDisabled ServiceAccountTokenState = "disabled"
+)
+
+// Valid indicates whether the value is a known member of the ServiceAccountTokenState enum.
+func (e ServiceAccountTokenState) Valid() bool {
+	switch e {
+	case ServiceAccountTokenStateActive:
+		return true
+	case ServiceAccountTokenStateDisabled:
 		return true
 	default:
 		return false
@@ -3427,6 +3715,24 @@ func (e UpdateResourcePermissionRequestBodyPublic) Valid() bool {
 	}
 }
 
+// Defines values for UpdateServiceAccountTokenRequestState.
+const (
+	UpdateServiceAccountTokenRequestStateActive   UpdateServiceAccountTokenRequestState = "active"
+	UpdateServiceAccountTokenRequestStateDisabled UpdateServiceAccountTokenRequestState = "disabled"
+)
+
+// Valid indicates whether the value is a known member of the UpdateServiceAccountTokenRequestState enum.
+func (e UpdateServiceAccountTokenRequestState) Valid() bool {
+	switch e {
+	case UpdateServiceAccountTokenRequestStateActive:
+		return true
+	case UpdateServiceAccountTokenRequestStateDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UpdateUserRequestJobFunction.
 const (
 	UpdateUserRequestJobFunctionDataEngineerDataAnalysts UpdateUserRequestJobFunction = "Data Engineer / Data Analysts"
@@ -3637,6 +3943,99 @@ func (e UserListItemStatus) Valid() bool {
 	case UserListItemStatusActive:
 		return true
 	case UserListItemStatusInvited:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WidgetType.
+const (
+	WidgetTypeCustom WidgetType = "custom"
+	WidgetTypePreset WidgetType = "preset"
+)
+
+// Valid indicates whether the value is a known member of the WidgetType enum.
+func (e WidgetType) Valid() bool {
+	switch e {
+	case WidgetTypeCustom:
+		return true
+	case WidgetTypePreset:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WidgetItemType.
+const (
+	WidgetItemTypeCustom WidgetItemType = "custom"
+	WidgetItemTypePreset WidgetItemType = "preset"
+)
+
+// Valid indicates whether the value is a known member of the WidgetItemType enum.
+func (e WidgetItemType) Valid() bool {
+	switch e {
+	case WidgetItemTypeCustom:
+		return true
+	case WidgetItemTypePreset:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WidgetKind.
+const (
+	WidgetKindMonetaryMetric WidgetKind = "monetary_metric"
+)
+
+// Valid indicates whether the value is a known member of the WidgetKind enum.
+func (e WidgetKind) Valid() bool {
+	switch e {
+	case WidgetKindMonetaryMetric:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EligibleSpendGranularity.
+const (
+	EligibleSpendGranularityDay   EligibleSpendGranularity = "day"
+	EligibleSpendGranularityHour  EligibleSpendGranularity = "hour"
+	EligibleSpendGranularityMonth EligibleSpendGranularity = "month"
+	EligibleSpendGranularityWeek  EligibleSpendGranularity = "week"
+)
+
+// Valid indicates whether the value is a known member of the EligibleSpendGranularity enum.
+func (e EligibleSpendGranularity) Valid() bool {
+	switch e {
+	case EligibleSpendGranularityDay:
+		return true
+	case EligibleSpendGranularityHour:
+		return true
+	case EligibleSpendGranularityMonth:
+		return true
+	case EligibleSpendGranularityWeek:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GcpService.
+const (
+	GcpServiceCloudSql GcpService = "cloud_sql"
+	GcpServiceCompute  GcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GcpService enum.
+func (e GcpService) Valid() bool {
+	switch e {
+	case GcpServiceCloudSql:
+		return true
+	case GcpServiceCompute:
 		return true
 	default:
 		return false
@@ -3958,6 +4357,24 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 	}
 }
 
+// Defines values for GetAsyncOperationResultsParamsFileOutput.
+const (
+	GetAsyncOperationResultsParamsFileOutputPdf GetAsyncOperationResultsParamsFileOutput = "pdf"
+	GetAsyncOperationResultsParamsFileOutputPng GetAsyncOperationResultsParamsFileOutput = "png"
+)
+
+// Valid indicates whether the value is a known member of the GetAsyncOperationResultsParamsFileOutput enum.
+func (e GetAsyncOperationResultsParamsFileOutput) Valid() bool {
+	switch e {
+	case GetAsyncOperationResultsParamsFileOutputPdf:
+		return true
+	case GetAsyncOperationResultsParamsFileOutputPng:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListAnomaliesParamsSortBy.
 const (
 	ListAnomaliesParamsSortByCostOfAnomaly ListAnomaliesParamsSortBy = "costOfAnomaly"
@@ -4156,6 +4573,84 @@ func (e ListServiceQuotasParamsCloudProvider) Valid() bool {
 	}
 }
 
+// Defines values for ListGcpPlannedPurchasesParamsGcpService.
+const (
+	ListGcpPlannedPurchasesParamsGcpServiceCloudSql ListGcpPlannedPurchasesParamsGcpService = "cloud_sql"
+	ListGcpPlannedPurchasesParamsGcpServiceCompute  ListGcpPlannedPurchasesParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpPlannedPurchasesParamsGcpService enum.
+func (e ListGcpPlannedPurchasesParamsGcpService) Valid() bool {
+	switch e {
+	case ListGcpPlannedPurchasesParamsGcpServiceCloudSql:
+		return true
+	case ListGcpPlannedPurchasesParamsGcpServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpRecommendationsParamsGcpService.
+const (
+	ListGcpRecommendationsParamsGcpServiceCloudSql ListGcpRecommendationsParamsGcpService = "cloud_sql"
+	ListGcpRecommendationsParamsGcpServiceCompute  ListGcpRecommendationsParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpRecommendationsParamsGcpService enum.
+func (e ListGcpRecommendationsParamsGcpService) Valid() bool {
+	switch e {
+	case ListGcpRecommendationsParamsGcpServiceCloudSql:
+		return true
+	case ListGcpRecommendationsParamsGcpServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetGcpRecommendationParamsGranularity.
+const (
+	GetGcpRecommendationParamsGranularityDay   GetGcpRecommendationParamsGranularity = "day"
+	GetGcpRecommendationParamsGranularityHour  GetGcpRecommendationParamsGranularity = "hour"
+	GetGcpRecommendationParamsGranularityMonth GetGcpRecommendationParamsGranularity = "month"
+	GetGcpRecommendationParamsGranularityWeek  GetGcpRecommendationParamsGranularity = "week"
+)
+
+// Valid indicates whether the value is a known member of the GetGcpRecommendationParamsGranularity enum.
+func (e GetGcpRecommendationParamsGranularity) Valid() bool {
+	switch e {
+	case GetGcpRecommendationParamsGranularityDay:
+		return true
+	case GetGcpRecommendationParamsGranularityHour:
+		return true
+	case GetGcpRecommendationParamsGranularityMonth:
+		return true
+	case GetGcpRecommendationParamsGranularityWeek:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetGcpRecommendationParamsGcpService.
+const (
+	GetGcpRecommendationParamsGcpServiceCloudSql GetGcpRecommendationParamsGcpService = "cloud_sql"
+	GetGcpRecommendationParamsGcpServiceCompute  GetGcpRecommendationParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the GetGcpRecommendationParamsGcpService enum.
+func (e GetGcpRecommendationParamsGcpService) Valid() bool {
+	switch e {
+	case GetGcpRecommendationParamsGcpServiceCloudSql:
+		return true
+	case GetGcpRecommendationParamsGcpServiceCompute:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListGcpResourceCudsParamsStatus.
 const (
 	ListGcpResourceCudsParamsStatusActive       ListGcpResourceCudsParamsStatus = "active"
@@ -4163,6 +4658,7 @@ const (
 	ListGcpResourceCudsParamsStatusCreating     ListGcpResourceCudsParamsStatus = "creating"
 	ListGcpResourceCudsParamsStatusExpired      ListGcpResourceCudsParamsStatus = "expired"
 	ListGcpResourceCudsParamsStatusNotYetActive ListGcpResourceCudsParamsStatus = "not_yet_active"
+	ListGcpResourceCudsParamsStatusPending      ListGcpResourceCudsParamsStatus = "pending"
 )
 
 // Valid indicates whether the value is a known member of the ListGcpResourceCudsParamsStatus enum.
@@ -4177,6 +4673,56 @@ func (e ListGcpResourceCudsParamsStatus) Valid() bool {
 	case ListGcpResourceCudsParamsStatusExpired:
 		return true
 	case ListGcpResourceCudsParamsStatusNotYetActive:
+		return true
+	case ListGcpResourceCudsParamsStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpSpendCudsParamsStatus.
+const (
+	ListGcpSpendCudsParamsStatusActive       ListGcpSpendCudsParamsStatus = "active"
+	ListGcpSpendCudsParamsStatusCancelled    ListGcpSpendCudsParamsStatus = "cancelled"
+	ListGcpSpendCudsParamsStatusCreating     ListGcpSpendCudsParamsStatus = "creating"
+	ListGcpSpendCudsParamsStatusExpired      ListGcpSpendCudsParamsStatus = "expired"
+	ListGcpSpendCudsParamsStatusNotYetActive ListGcpSpendCudsParamsStatus = "not_yet_active"
+	ListGcpSpendCudsParamsStatusPending      ListGcpSpendCudsParamsStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpSpendCudsParamsStatus enum.
+func (e ListGcpSpendCudsParamsStatus) Valid() bool {
+	switch e {
+	case ListGcpSpendCudsParamsStatusActive:
+		return true
+	case ListGcpSpendCudsParamsStatusCancelled:
+		return true
+	case ListGcpSpendCudsParamsStatusCreating:
+		return true
+	case ListGcpSpendCudsParamsStatusExpired:
+		return true
+	case ListGcpSpendCudsParamsStatusNotYetActive:
+		return true
+	case ListGcpSpendCudsParamsStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListGcpSpendCudsParamsGcpService.
+const (
+	ListGcpSpendCudsParamsGcpServiceCloudSql ListGcpSpendCudsParamsGcpService = "cloud_sql"
+	ListGcpSpendCudsParamsGcpServiceCompute  ListGcpSpendCudsParamsGcpService = "compute"
+)
+
+// Valid indicates whether the value is a known member of the ListGcpSpendCudsParamsGcpService enum.
+func (e ListGcpSpendCudsParamsGcpService) Valid() bool {
+	switch e {
+	case ListGcpSpendCudsParamsGcpServiceCloudSql:
+		return true
+	case ListGcpSpendCudsParamsGcpServiceCompute:
 		return true
 	default:
 		return false
@@ -4633,7 +5179,53 @@ type AllocationRule struct {
 	//
 	// Example: A AND B
 	Formula string `json:"formula"`
+
+	// ValidityPeriods Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+	ValidityPeriods nullable.Nullable[[]AllocationRulePeriod] `json:"validityPeriods,omitempty"`
 }
+
+// AllocationRulePeriod A date range when a rule applies. startDate and endDate are both inclusive, so a handover between two rules needs a one-day gap: the first rule's endDate the day before, the second rule's startDate the handover day. Only the first period in the list may omit startDate, and only the last may omit endDate.
+type AllocationRulePeriod struct {
+	// EndDate End date (YYYY-MM-DD, UTC), inclusive. Absent means no upper bound.
+	//
+	// Example: 2026-06-15
+	EndDate nullable.Nullable[string] `json:"endDate,omitempty"`
+
+	// StartDate Start date (YYYY-MM-DD, UTC), inclusive. Absent means no lower bound.
+	//
+	// Example: 2026-03-15
+	StartDate nullable.Nullable[string] `json:"startDate,omitempty"`
+}
+
+// AllocationValueExtraction Makes the rule emit a value extracted from the first non-empty source instead of the rule name.
+type AllocationValueExtraction struct {
+	// Fallback Literal emitted when every source is missing. Required with onMissing "useFallback" (the default); not allowed with onMissing "nextRule".
+	Fallback nullable.Nullable[string] `json:"fallback,omitempty"`
+
+	// OnMissing What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+	OnMissing *AllocationValueExtractionOnMissing `json:"onMissing,omitempty"`
+
+	// Sources Ordered extraction sources; the first non-empty value wins.
+	Sources []AllocationValueExtractionSource `json:"sources"`
+}
+
+// AllocationValueExtractionOnMissing What happens when every source is missing or empty on a matching row. "useFallback" (default) emits the fallback value, which is required in that mode; "nextRule" lets the row fall through to the next rule in the group.
+type AllocationValueExtractionOnMissing string
+
+// AllocationValueExtractionSource defines model for AllocationValueExtractionSource.
+type AllocationValueExtractionSource struct {
+	// Key The label/tag key, or the fixed dimension ID, whose value is extracted.
+	Key string `json:"key"`
+
+	// Providers Optional cloud providers this source applies to.
+	Providers nullable.Nullable[[]string] `json:"providers,omitempty"`
+
+	// Type The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+	Type AllocationValueExtractionSourceType `json:"type"`
+}
+
+// AllocationValueExtractionSourceType The dimension type to read the value from. Label-map types (label, tag, project_label, system_label, gke_label) extract the value of the given key; "fixed" extracts a raw table dimension (for example project_id, service_description, region). Derived dimensions such as credits are not extractable.
+type AllocationValueExtractionSourceType string
 
 // AnnotationListItem Summary information about an annotation.
 type AnnotationListItem struct {
@@ -4713,7 +5305,11 @@ type AnomalyItem struct {
 	// ActualCost Observed (actual) cost of the anomaly.
 	ActualCost nullable.Nullable[float64] `json:"actualCost,omitempty"`
 
-	// Attribution Attribution ID.
+	// Allocations Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+	Allocations []AnomalyItemAllocationsItem `json:"allocations"`
+
+	// Attribution Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Attribution string `json:"attribution"`
 
 	// BillingAccount Billing account ID.
@@ -4737,6 +5333,9 @@ type AnomalyItem struct {
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
 	Id              *string                    `json:"id,omitempty"`
+
+	// InitialNotifications The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+	InitialNotifications []NotificationEvent `json:"initialNotifications"`
 
 	// LinkedAnomalies IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 	LinkedAnomalies LinkedAnomalies `json:"linkedAnomalies"`
@@ -4784,6 +5383,15 @@ type AnomalyItemMonitorLevel string
 
 // AnomalyItemStatus defines model for AnomalyItem.Status.
 type AnomalyItemStatus string
+
+// AnomalyItemAllocationsItem defines model for AnomalyItemAllocationsItem.
+type AnomalyItemAllocationsItem struct {
+	// Id Allocation ID. Use it with the Allocations API to read the allocation.
+	Id string `json:"id"`
+
+	// Name Allocation name.
+	Name string `json:"name"`
+}
 
 // AnomalyResource Resource-specific contribution to an anomaly.
 type AnomalyResource struct {
@@ -4947,7 +5555,7 @@ type AsyncOperationResponseStatus string
 type AsyncRunInlineRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
@@ -5252,14 +5860,15 @@ type BillingExplainerProviderCosts struct {
 
 // BillingExplainerServiceSummary defines model for BillingExplainerServiceSummary.
 type BillingExplainerServiceSummary struct {
-	Credits        BillingExplainerCostLineItems  `json:"credits"`
-	Discounts      BillingExplainerCostLineItems  `json:"discounts"`
-	OtherCharges   BillingExplainerCostLineItems  `json:"otherCharges"`
-	Refunds        BillingExplainerCostLineItems  `json:"refunds"`
-	Savings        BillingExplainerCostLineItems  `json:"savings"`
-	ServiceCharges BillingExplainerCostLineItems  `json:"serviceCharges"`
-	SupportCharges BillingExplainerSupportCharges `json:"supportCharges"`
-	Tax            BillingExplainerCostLineItems  `json:"tax"`
+	Credits            BillingExplainerCostLineItems  `json:"credits"`
+	Discounts          BillingExplainerCostLineItems  `json:"discounts"`
+	MarketplaceCharges BillingExplainerCostLineItems  `json:"marketplaceCharges"`
+	OtherCharges       BillingExplainerCostLineItems  `json:"otherCharges"`
+	Refunds            BillingExplainerCostLineItems  `json:"refunds"`
+	Savings            BillingExplainerCostLineItems  `json:"savings"`
+	ServiceCharges     BillingExplainerCostLineItems  `json:"serviceCharges"`
+	SupportCharges     BillingExplainerSupportCharges `json:"supportCharges"`
+	Tax                BillingExplainerCostLineItems  `json:"tax"`
 
 	// Total Monetary value represented as a decimal string and an ISO 4217 currency code.
 	//
@@ -6642,6 +7251,136 @@ type CommitmentPeriod struct {
 	StartDate *time.Time `json:"startDate,omitempty"`
 }
 
+// CommitmentPolicy A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
+// `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
+// inventory coverage fields.
+type CommitmentPolicy struct {
+	// BootstrapPercent Share of the target commitment purchased in the first (immediate) step, as a percentage.
+	//
+	// Example: 35
+	BootstrapPercent float64 `json:"bootstrapPercent"`
+
+	// Id Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
+	Id CommitmentPolicyId `json:"id"`
+
+	// IsBuiltIn `true` for the three immutable built-in policies, `false` for tenant-defined policies.
+	IsBuiltIn bool `json:"isBuiltIn"`
+
+	// LadderIntervalDays Days between consecutive laddering steps.
+	//
+	// Example: 7
+	LadderIntervalDays int `json:"ladderIntervalDays"`
+
+	// LadderStepPercent Size of each incremental laddering step, as a percentage of the target commitment.
+	//
+	// Example: 10
+	LadderStepPercent float64 `json:"ladderStepPercent"`
+
+	// LookbackDays Days of historical usage analyzed to build the recommendation baseline.
+	//
+	// Example: 60
+	LookbackDays int `json:"lookbackDays"`
+
+	// Name Display name. Built-in names are fixed; custom names are chosen by the tenant.
+	//
+	// Example: Balanced
+	Name string `json:"name"`
+
+	// TargetCoverage Share of the optimal commitment the engine aims to purchase, as a percentage.
+	//
+	// Example: 80
+	TargetCoverage float64 `json:"targetCoverage"`
+}
+
+// CommitmentPolicyAssignment One account × product-line scope a policy is explicitly assigned to, on either cloud.
+type CommitmentPolicyAssignment struct {
+	// AccountId AWS management account id or GCP billing account id, matching `managementAccountId` / `billingAccountId` elsewhere in this API.
+	//
+	// Example: 123456789012
+	AccountId string `json:"accountId"`
+
+	// Cloud Cloud the scope belongs to.
+	Cloud CommitmentPolicyAssignmentCloud `json:"cloud"`
+
+	// Region Region scope in `lower_snake_case` wire form (for example `us_east1`) for product lines assigned per region (GCP `cloud_sql`). `null` for every scope assigned per account (all AWS scopes, GCP `compute`); the settings endpoints report the same scope as `global`.
+	//
+	// Example: us_east1
+	Region nullable.Nullable[string] `json:"region"`
+
+	// Service Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only.
+	Service CommitmentPolicyAssignmentService `json:"service"`
+}
+
+// CommitmentPolicyAssignmentCloud Cloud the scope belongs to.
+type CommitmentPolicyAssignmentCloud string
+
+// CommitmentPolicyAssignmentService Product line the policy applies to. `compute` and `database` are AWS Savings Plan lines (GCP also has `compute`); `cloud_sql` is GCP only.
+type CommitmentPolicyAssignmentService string
+
+// CommitmentPolicyDetail A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
+// `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
+// inventory coverage fields.
+type CommitmentPolicyDetail struct {
+	// Assignments Scopes explicitly assigned to this policy across AWS and GCP, sorted by `cloud`, `accountId`, `service`, `region`. Empty when the policy is not assigned anywhere.
+	Assignments []CommitmentPolicyAssignment `json:"assignments"`
+
+	// BootstrapPercent Share of the target commitment purchased in the first (immediate) step, as a percentage.
+	//
+	// Example: 35
+	BootstrapPercent float64 `json:"bootstrapPercent"`
+
+	// CreatedTime When the policy was created, RFC 3339 UTC. `null` if unknown.
+	//
+	// Example: 2026-08-20T09:12:31Z
+	CreatedTime nullable.Nullable[time.Time] `json:"createdTime"`
+
+	// Id Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
+	Id CommitmentPolicyId `json:"id"`
+
+	// IsBuiltIn `true` for the three immutable built-in policies, `false` for tenant-defined policies.
+	IsBuiltIn bool `json:"isBuiltIn"`
+
+	// LadderIntervalDays Days between consecutive laddering steps.
+	//
+	// Example: 7
+	LadderIntervalDays int `json:"ladderIntervalDays"`
+
+	// LadderStepPercent Size of each incremental laddering step, as a percentage of the target commitment.
+	//
+	// Example: 10
+	LadderStepPercent float64 `json:"ladderStepPercent"`
+
+	// LookbackDays Days of historical usage analyzed to build the recommendation baseline.
+	//
+	// Example: 60
+	LookbackDays int `json:"lookbackDays"`
+
+	// Name Display name. Built-in names are fixed; custom names are chosen by the tenant.
+	//
+	// Example: Balanced
+	Name string `json:"name"`
+
+	// TargetCoverage Share of the optimal commitment the engine aims to purchase, as a percentage.
+	//
+	// Example: 80
+	TargetCoverage float64 `json:"targetCoverage"`
+
+	// UpdatedTime When the policy was last written, RFC 3339 UTC. For custom policies this is the last edit; for built-in policies it also advances when DoiT re-publishes the catalog, even if the parameters did not change. `null` if unknown.
+	//
+	// Example: 2026-08-20T09:12:31Z
+	UpdatedTime nullable.Nullable[time.Time] `json:"updatedTime"`
+}
+
+// CommitmentPolicyId ID of a commitment policy: either one of the built-in policies — `conservative` (lower
+// coverage target, ~65%), `balanced` (moderate, ~80%), `max_savings` (aggressive, ~90%) — or the
+// ID of a policy the customer defined in the DoiT Console. One catalog is shared by AWS and GCP,
+// and the same policy may be assigned to any AWS organization or GCP billing account product
+// line. Custom policies make this an open list, so it is not an enum; treat the value as an
+// opaque identifier and use the commitment-policies endpoint to resolve it.
+//
+// Example: balanced
+type CommitmentPolicyId = string
+
 // CommitmentTerm Preferred or actual commitment term length for Savings Plans and related settings.
 type CommitmentTerm string
 
@@ -6821,7 +7560,7 @@ type CreateLabelRequestColor string
 type CreateReportRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -6842,6 +7581,100 @@ type CreateReportRequestBody struct {
 	// Example: A test report by API
 	Name *string `json:"name,omitempty"`
 }
+
+// CreateRoleRequest Request body to create a custom role.
+type CreateRoleRequest struct {
+	// Description The description of the role.
+	Description *string `json:"description,omitempty"`
+
+	// Name The name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles.
+	Name string `json:"name"`
+
+	// Permissions Permission IDs to assign to the role, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. Omission or an empty array creates a role without permissions.
+	Permissions *[]string `json:"permissions,omitempty"`
+}
+
+// CreateServiceAccountRequest Fields of a new service account.
+type CreateServiceAccountRequest struct {
+	// Description Free-text description.
+	//
+	// Example: Manages DoiT resources from CI
+	Description *string `json:"description,omitempty"`
+
+	// Name Name, unique among the customer's service accounts. Leading or trailing whitespace returns `400`.
+	//
+	// Example: terraform-ci
+	Name string `json:"name"`
+
+	// Permissions Platform permission names in camelCase, for example `cloudAnalyticsReadOnly`. An unknown name returns `422`.
+	Permissions *[]string `json:"permissions,omitempty"`
+}
+
+// CreateServiceAccountTokenRequest Fields of a new API token.
+type CreateServiceAccountTokenRequest struct {
+	// ExpiresTime When the token should stop authenticating. Omit to let the server set the default expiry.
+	//
+	// Example: 2027-09-01T08:00:00Z
+	ExpiresTime *time.Time `json:"expiresTime,omitempty"`
+
+	// Name Name, unique among the service account's tokens. Leading or trailing whitespace returns `400`.
+	//
+	// Example: ci-pipeline-prod
+	Name string `json:"name"`
+}
+
+// CreateServiceAccountTokenResponse A newly created API token, together with the credential that authenticates as it.
+type CreateServiceAccountTokenResponse struct {
+	// AccessToken The token credential, and the secret that authenticates as this service account. Returned only by this operation and never retrievable again, so store it somewhere safe on receipt; an empty string on a dry-run create. Treat it like a password.
+	//
+	// Example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+	AccessToken *string `json:"accessToken,omitempty"`
+
+	// CreateTime When the token was created. `null` only on a dry-run create.
+	//
+	// Example: 2026-09-01T08:00:00Z
+	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
+
+	// CustomerId ID of the customer whose service account the token belongs to.
+	//
+	// Example: Kp2mN8qL4vR0sT1wX3yZ
+	CustomerId *string `json:"customerId,omitempty"`
+
+	// ExpiresTime When the token stops authenticating. `null` when it does not expire.
+	//
+	// Example: 2027-09-01T08:00:00Z
+	ExpiresTime nullable.Nullable[time.Time] `json:"expiresTime"`
+
+	// Id API token ID. `null` only on a dry-run create.
+	//
+	// Example: Mr0sN7pQ4tU2vW5xY8zC
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// LastUsedTime When the token last authenticated a request. `null` until it is first used.
+	//
+	// Example: 2026-09-20T14:31:00Z
+	LastUsedTime nullable.Nullable[time.Time] `json:"lastUsedTime,omitempty"`
+
+	// Name Name, unique among the service account's tokens.
+	//
+	// Example: ci-pipeline-prod
+	Name string `json:"name"`
+
+	// ServiceAccountId ID of the service account that owns the token.
+	//
+	// Example: Lq3nO9rM5wS2tU0xY4zA
+	ServiceAccountId *string `json:"serviceAccountId,omitempty"`
+
+	// State The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+	//
+	// Example: active
+	State CreateServiceAccountTokenResponseState `json:"state"`
+}
+
+// CreateServiceAccountTokenResponseState The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+//
+// Example: active
+type CreateServiceAccountTokenResponseState string
 
 // Currency Currency code for monetary values.
 type Currency string
@@ -6933,6 +7766,12 @@ type CustomerUpdate struct {
 type DeleteDatahubDataset200Response struct {
 	// Message Example: Dataset deleted successfully
 	Message *string `json:"message,omitempty"`
+}
+
+// DeleteDatahubDataset202Response defines model for DeleteDatahubDataset202Response.
+type DeleteDatahubDataset202Response struct {
+	// Message Example: Deletion accepted for processing
+	Message string `json:"message"`
 }
 
 // DeleteUserResponse Response confirming user deletion.
@@ -7062,6 +7901,24 @@ type DimensionsExternalAPIListResponse struct {
 // DimensionsTypes Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 type DimensionsTypes string
 
+// EligibleSpendDataPoint One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.
+type EligibleSpendDataPoint struct {
+	// MaxUsage Maximum eligible usage ($/h) observed in the bucket (day/week/month views).
+	MaxUsage *float64 `json:"maxUsage,omitempty"`
+
+	// MedianUsage Median eligible usage ($/h) observed in the bucket (day/week/month views).
+	MedianUsage *float64 `json:"medianUsage,omitempty"`
+
+	// MinUsage Minimum eligible usage ($/h) observed in the bucket (day/week/month views).
+	MinUsage *float64 `json:"minUsage,omitempty"`
+
+	// TotalUsage Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities.
+	TotalUsage *float64 `json:"totalUsage,omitempty"`
+
+	// UsageTime Start of the time bucket for this data point (UTC).
+	UsageTime nullable.Nullable[time.Time] `json:"usageTime,omitempty"`
+}
+
 // Error Standard error response structure.
 type Error struct {
 	// Error Detailed error message.
@@ -7099,7 +7956,7 @@ type ExternalBudgetAlert struct {
 
 // ExternalConfig Report configuration.
 //
-// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 type ExternalConfig struct {
 	// AdvancedAnalysis Advanced analysis options. Each can be set independently.
 	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
@@ -7154,9 +8011,9 @@ type ExternalConfig struct {
 	LimitAggregation *ExternalConfigLimitAggregation `json:"limitAggregation,omitempty"`
 
 	// LimitByChange Limit by change filter. A report may configure at most two of
-	// `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+	// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
 	//
-	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]}
+	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
 
 	// MetricFilter Metric filter to limit report rows by metric value.
@@ -7287,8 +8144,9 @@ type ExternalConfigMetricFilter struct {
 	// echo the effective value (`single_value` or `series_total`).
 	Operand *ExternalConfigMetricFilterOperand `json:"operand,omitempty"`
 
-	// Operator Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-	// `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+	// Operator Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+	// Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+	// `nb` (Not Between), `e` (Equals), `ne` (Not Equals).
 	Operator ExternalConfigMetricFilterOperator `json:"operator"`
 	Values   []float64                          `json:"values"`
 }
@@ -7299,8 +8157,9 @@ type ExternalConfigMetricFilter struct {
 // echo the effective value (`single_value` or `series_total`).
 type ExternalConfigMetricFilterOperand string
 
-// ExternalConfigMetricFilterOperator Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-// `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.
+// ExternalConfigMetricFilterOperator Comparison operator for filtering metric values: `gt` (Greater Than), `lt` (Less
+// Than), `lte` (Less Than or Equals), `gte` (Greater Than or Equals), `b` (Between),
+// `nb` (Not Between), `e` (Equals), `ne` (Not Equals).
 type ExternalConfigMetricFilterOperator string
 
 // ExternalDisplaySettings Display settings for the report.
@@ -7381,9 +8240,9 @@ type ExternalForecastSettings struct {
 type ExternalForecastSettingsMode string
 
 // ExternalLimitByChange Limit by change filter. A report may configure at most two of
-// `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.
+// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
 //
-// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]}
+// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 type ExternalLimitByChange struct {
 	ChangeType ExternalLimitByChangeChangeType `json:"changeType"`
 
@@ -7395,18 +8254,22 @@ type ExternalLimitByChange struct {
 	// Example: {"type":"basic","value":"cost"}
 	Metric ExternalMetric `json:"metric"`
 
-	// Operator Comparison operator for period-over-period deltas.
+	// Operator Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+	// (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+	// (Between), `nb` (Not Between).
 	Operator ExternalLimitByChangeOperator `json:"operator"`
 
-	// Values Threshold value(s). Unary operators use one entry; `between` and `not_between`
-	// require two ordered entries.
+	// Values Threshold value(s). Unary operators (`gt`, `gte`, `lt`, `lte`) use one entry; the range
+	// operators (`b`, `nb`) require two ordered entries.
 	Values []float64 `json:"values"`
 }
 
 // ExternalLimitByChangeChangeType defines model for ExternalLimitByChange.ChangeType.
 type ExternalLimitByChangeChangeType string
 
-// ExternalLimitByChangeOperator Comparison operator for period-over-period deltas.
+// ExternalLimitByChangeOperator Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
+// (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
+// (Between), `nb` (Not Between).
 type ExternalLimitByChangeOperator string
 
 // ExternalMetric Metric selector used in reports and filters.
@@ -7447,7 +8310,7 @@ type ExternalRenderer string
 type ExternalReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -7532,7 +8395,7 @@ type ExternalSplitTargetType string
 type ExternalUpdateReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"\u003e=","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description
@@ -7607,14 +8470,16 @@ type GcpBillingAccount struct {
 	Currency nullable.Nullable[string] `json:"currency,omitempty"`
 
 	// DisplayName Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
-	DisplayName      nullable.Nullable[string] `json:"displayName,omitempty"`
-	OnboardingStatus *GcpOnboardingStatus      `json:"onboardingStatus,omitempty"`
+	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
 
-	// SavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-	SavingsTotals *GcpBillingAccountSavingsTotals `json:"savingsTotals,omitempty"`
+	// OnboardingStatus PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+	OnboardingStatus *[]GcpOnboardingStatusByService `json:"onboardingStatus,omitempty"`
 
-	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-	Stats30d *GcpBillingAccountStats30d `json:"stats30d,omitempty"`
+	// SavingsTotals Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+	SavingsTotals *[]GcpSavingsTotalsByService `json:"savingsTotals,omitempty"`
+
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+	Stats30d *[]GcpStats30dByService `json:"stats30d,omitempty"`
 }
 
 // GcpBillingAccountDetail defines model for GcpBillingAccountDetail.
@@ -7635,45 +8500,34 @@ type GcpBillingAccountDetail struct {
 	// Example: USD
 	Currency nullable.Nullable[string] `json:"currency,omitempty"`
 
-	// DailyCoverage Trailing 30 days of CUD coverage, grouped by product line.
-	DailyCoverage *GcpBillingAccountDetailAllOf1DailyCoverage `json:"dailyCoverage,omitempty"`
+	// DailyCoverage Trailing 30 days of CUD coverage per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has coverage data.
+	DailyCoverage *[]GcpDailyCoverageByService `json:"dailyCoverage,omitempty"`
 
 	// DisplayName Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
 	DisplayName nullable.Nullable[string] `json:"displayName,omitempty"`
 
-	// MonthlyStats Trailing 6 calendar months of billing account stats, grouped by product line.
-	MonthlyStats     *GcpBillingAccountDetailAllOf1MonthlyStats `json:"monthlyStats,omitempty"`
-	OnboardingStatus *GcpOnboardingStatus                       `json:"onboardingStatus,omitempty"`
+	// MonthlyStats Trailing 6 calendar months of billing account stats per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+	MonthlyStats *[]GcpMonthlyStatsByService `json:"monthlyStats,omitempty"`
 
-	// SavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-	SavingsTotals *GcpBillingAccountSavingsTotals `json:"savingsTotals,omitempty"`
+	// OnboardingStatus PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+	OnboardingStatus *[]GcpOnboardingStatusByService `json:"onboardingStatus,omitempty"`
 
-	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-	Stats30d *GcpBillingAccountStats30d `json:"stats30d,omitempty"`
-}
+	// SavingsTotals Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+	SavingsTotals *[]GcpSavingsTotalsByService `json:"savingsTotals,omitempty"`
 
-// GcpBillingAccountDetailAllOf1DailyCoverage Trailing 30 days of CUD coverage, grouped by product line.
-type GcpBillingAccountDetailAllOf1DailyCoverage struct {
-	Compute *[]GcpDailyCoverageEntry `json:"compute,omitempty"`
-}
-
-// GcpBillingAccountDetailAllOf1MonthlyStats Trailing 6 calendar months of billing account stats, grouped by product line.
-type GcpBillingAccountDetailAllOf1MonthlyStats struct {
-	Compute *[]GcpMonthlyStatsEntry `json:"compute,omitempty"`
-}
-
-// GcpBillingAccountSavingsTotals Year-to-date and lifetime savings per product line. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
-type GcpBillingAccountSavingsTotals struct {
-	// Compute Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
-	Compute *GcpSavingsTotals `json:"compute,omitempty"`
+	// Stats30d Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+	Stats30d *[]GcpStats30dByService `json:"stats30d,omitempty"`
 }
 
 // GcpBillingAccountServiceSettings defines model for GcpBillingAccountServiceSettings.
 type GcpBillingAccountServiceSettings struct {
+	// Region Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
+	Region GcpRegion `json:"region"`
+
 	// Service Product line these settings apply to.
 	Service GcpBillingAccountServiceSettingsService `json:"service"`
 
-	// Settings Commitment settings for this product line.
+	// Settings Commitment settings for this product line and region.
 	Settings GcpBillingAccountSettings `json:"settings"`
 }
 
@@ -7691,8 +8545,8 @@ type GcpBillingAccountSettings struct {
 	// MinimumCommitment Minimum hourly commitment amount (USD) per purchase step.
 	MinimumCommitment float64 `json:"minimumCommitment"`
 
-	// Policy Coverage target policy for recommendations and purchases.
-	Policy Policy `json:"policy"`
+	// Policy Coverage target policy for recommendations and purchases (built-in or customer-defined).
+	Policy CommitmentPolicyId `json:"policy"`
 
 	// PurchaseMode Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
 	PurchaseMode GcpBillingAccountSettingsPurchaseMode `json:"purchaseMode"`
@@ -7711,17 +8565,23 @@ type GcpBillingAccountSettingsItem struct {
 	// Example: 01D4A2-4E3F1B-9C72A0
 	BillingAccountId string `json:"billingAccountId"`
 
-	// Services Settings for each product line activated on this billing account.
+	// Services Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically.
 	Services []GcpBillingAccountServiceSettings `json:"services"`
 }
 
-// GcpBillingAccountStats30d Trailing 30-day aggregate metrics (`esr`, `savings`), broken down by product line.
-type GcpBillingAccountStats30d struct {
-	// Compute Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
-	Compute *Stats30dSummary `json:"compute,omitempty"`
+// GcpDailyCoverageByService Trailing 30 days of CUD coverage for one product line. `compute` entries carry every cost property except `cloudSql`; `cloud_sql` entries carry only `cloudSql` and `onDemand`, so each coverage sub-type appears exactly once across the array.
+type GcpDailyCoverageByService struct {
+	// Days Daily coverage rows, sorted ascending by `date`.
+	Days []GcpDailyCoverageEntry `json:"days"`
+
+	// Service Product line this coverage series belongs to.
+	Service GcpDailyCoverageByServiceService `json:"service"`
 }
 
-// GcpDailyCoverageEntry One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Omitted cost properties mean that coverage sub-type had no spend for the day.
+// GcpDailyCoverageByServiceService Product line this coverage series belongs to.
+type GcpDailyCoverageByServiceService string
+
+// GcpDailyCoverageEntry One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Which cost properties are present depends on the product line of the enclosing entry — `compute` rows carry every property except `cloudSql`; `cloud_sql` rows carry only `cloudSql` and `onDemand`. A property that belongs to the product line is present even when the amount is `0.00`.
 type GcpDailyCoverageEntry struct {
 	// AlloyDb Spend covered by AlloyDB CUDs for the day.
 	AlloyDb *Money `json:"alloyDb,omitempty"`
@@ -7766,6 +8626,18 @@ type GcpDailyCoverageEntry struct {
 	ResourceBased *Money `json:"resourceBased,omitempty"`
 }
 
+// GcpMonthlyStatsByService Trailing 6 calendar months of billing account stats for one product line.
+type GcpMonthlyStatsByService struct {
+	// Months Monthly aggregates, sorted ascending by `month`.
+	Months []GcpMonthlyStatsEntry `json:"months"`
+
+	// Service Product line these monthly stats belong to.
+	Service GcpMonthlyStatsByServiceService `json:"service"`
+}
+
+// GcpMonthlyStatsByServiceService Product line these monthly stats belong to.
+type GcpMonthlyStatsByServiceService string
+
 // GcpMonthlyStatsEntry One calendar-month aggregate for the billing account. Money fields are wrapped objects (`{amount, currency}`).
 type GcpMonthlyStatsEntry struct {
 	// CostWithSavings Actual cost after commitments for the month.
@@ -7783,22 +8655,171 @@ type GcpMonthlyStatsEntry struct {
 	OnDemandCost Money `json:"onDemandCost"`
 }
 
-// GcpOnboardingStatus PerfectScale for Commitments onboarding status for each commitment type on the GCP billing account (`compute`). A commitment type is omitted when it is not onboarded. When `done`, inventory and recommendations for that commitment type are available.
-type GcpOnboardingStatus struct {
-	Compute *GcpOnboardingStatusEntry `json:"compute,omitempty"`
-}
-
-// GcpOnboardingStatusEntry defines model for GcpOnboardingStatusEntry.
-type GcpOnboardingStatusEntry struct {
+// GcpOnboardingStatusByService Onboarding status entry for one product line. When `done`, inventory and recommendations for that commitment type are available.
+type GcpOnboardingStatusByService struct {
 	// OnboardingStartedAt When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
 	OnboardingStartedAt nullable.Nullable[time.Time] `json:"onboardingStartedAt,omitempty"`
 
+	// Service Product line this onboarding status belongs to.
+	Service GcpOnboardingStatusByServiceService `json:"service"`
+
 	// Status Current onboarding lifecycle stage for this product line.
-	Status GcpOnboardingStatusEntryStatus `json:"status"`
+	Status GcpOnboardingStatusByServiceStatus `json:"status"`
 }
 
-// GcpOnboardingStatusEntryStatus Current onboarding lifecycle stage for this product line.
-type GcpOnboardingStatusEntryStatus string
+// GcpOnboardingStatusByServiceService Product line this onboarding status belongs to.
+type GcpOnboardingStatusByServiceService string
+
+// GcpOnboardingStatusByServiceStatus Current onboarding lifecycle stage for this product line.
+type GcpOnboardingStatusByServiceStatus string
+
+// GcpPlannedPurchase Laddering projection for one product-line and region scope.
+type GcpPlannedPurchase struct {
+	// EstimatedSavings Total estimated savings from the underlying recommendation. Currency is `USD` in v1.
+	EstimatedSavings *Money `json:"estimatedSavings,omitempty"`
+
+	// FinalCommitment Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1.
+	FinalCommitment *Money `json:"finalCommitment,omitempty"`
+
+	// PauseNote Customer-visible pause reason, when purchases are paused.
+	PauseNote nullable.Nullable[string] `json:"pauseNote,omitempty"`
+
+	// PlanningCycleEndDate Last day of the planning cycle for this projection. Null when not set.
+	PlanningCycleEndDate nullable.Nullable[openapi_types.Date] `json:"planningCycleEndDate,omitempty"`
+
+	// PlanningCycleStartDate First day of the planning cycle for this projection. Null when not set.
+	PlanningCycleStartDate nullable.Nullable[openapi_types.Date] `json:"planningCycleStartDate,omitempty"`
+
+	// Profile Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking.
+	Profile *CommitmentPolicyId `json:"profile,omitempty"`
+
+	// PurchaseApprovalStatus Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
+	PurchaseApprovalStatus *GcpPlannedPurchasePurchaseApprovalStatus `json:"purchaseApprovalStatus,omitempty"`
+
+	// Region Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
+	Region GcpRegion `json:"region"`
+
+	// RequiresApproval `true` when the projection as a whole requires customer approval before the planner
+	// stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
+	// and/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level
+	// `steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling.
+	RequiresApproval *bool `json:"requiresApproval,omitempty"`
+
+	// Status Projection lifecycle state. When the stored document has no `status`, the server returns `valid`.
+	Status GcpPlannedPurchaseStatus `json:"status"`
+
+	// Steps Weekly ladder steps from the projection output. Omitted when the stored document has
+	// no `output` section.
+	Steps *[]GcpPurchasePlanStep `json:"steps,omitempty"`
+
+	// Term Commitment term used for projected purchases.
+	Term *CommitmentTerm `json:"term,omitempty"`
+
+	// WeeksToTarget Number of ladder steps remaining to reach the target commitment.
+	WeeksToTarget nullable.Nullable[int] `json:"weeksToTarget,omitempty"`
+
+	// WowViolation `true` when week-over-week eligible spend dropped beyond the allowed threshold.
+	WowViolation *bool `json:"wowViolation,omitempty"`
+}
+
+// GcpPlannedPurchasePurchaseApprovalStatus Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
+type GcpPlannedPurchasePurchaseApprovalStatus string
+
+// GcpPlannedPurchaseStatus Projection lifecycle state. When the stored document has no `status`, the server returns `valid`.
+type GcpPlannedPurchaseStatus string
+
+// GcpPlannedPurchaseByService Planned purchase projections for one PS4C product line.
+type GcpPlannedPurchaseByService struct {
+	// BillingAccountId GCP Billing Account ID.
+	BillingAccountId string `json:"billingAccountId"`
+
+	// Regions Per-region projection entries for this service, sorted with `global` first, then
+	// remaining regions alphabetically.
+	Regions []GcpPlannedPurchase `json:"regions"`
+
+	// Service Commitment type this projection group belongs to.
+	Service GcpPlannedPurchaseByServiceService `json:"service"`
+}
+
+// GcpPlannedPurchaseByServiceService Commitment type this projection group belongs to.
+type GcpPlannedPurchaseByServiceService string
+
+// GcpPurchasePlanStep A single weekly ladder step within a projection.
+type GcpPurchasePlanStep struct {
+	// CumulativeCommitment Total hourly commitment after this step executes.
+	CumulativeCommitment Money `json:"cumulativeCommitment"`
+
+	// EstimatedSavings This step's proportional share of the projection-level `estimatedSavings`
+	// (allocated by purchase amount). Zero when the recommendation total is unavailable.
+	EstimatedSavings Money `json:"estimatedSavings"`
+
+	// IsBootstrap `true` if this is the initial bootstrap purchase.
+	IsBootstrap bool `json:"isBootstrap"`
+
+	// IsFinal `true` if this step reaches the target commitment.
+	IsFinal bool `json:"isFinal"`
+
+	// Order Step sequence number (1-based) within the ladder.
+	Order int `json:"order"`
+
+	// PurchaseAmount Hourly commitment to purchase on this step.
+	PurchaseAmount Money `json:"purchaseAmount"`
+
+	// RequiresApproval `true` when this step's `cumulativeCommitment` exceeds the customer-approved
+	// commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
+	// ladder even when the projection-level `purchaseApprovalStatus` is `approved`.
+	RequiresApproval bool `json:"requiresApproval"`
+
+	// ScheduledDate Calendar date (UTC) when this purchase step is scheduled to execute, with format YYYY-MM-DD.
+	ScheduledDate openapi_types.Date `json:"scheduledDate"`
+}
+
+// GcpRecommendation A CUD purchase recommendation for a (service, region) scope.
+type GcpRecommendation struct {
+	// CurrentCommitment Active hourly commitment ($/h) currently applied to this billing account and product line, including commitments already purchased.
+	CurrentCommitment *float64 `json:"currentCommitment,omitempty"`
+
+	// EstimatedAverageCoverage Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields.
+	EstimatedAverageCoverage *float64 `json:"estimatedAverageCoverage,omitempty"`
+
+	// Policy Coverage target policy configured for this product line and region scope (built-in or customer-defined).
+	Policy *CommitmentPolicyId `json:"policy,omitempty"`
+
+	// PotentialAdditionalSavings Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`.
+	PotentialAdditionalSavings *float64 `json:"potentialAdditionalSavings,omitempty"`
+
+	// RecommendedCommitment Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk.
+	RecommendedCommitment *float64 `json:"recommendedCommitment,omitempty"`
+
+	// Region Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
+	Region *GcpRegion `json:"region,omitempty"`
+
+	// Service PS4C product line (`gcp_service`) this recommendation belongs to.
+	Service *GcpRecommendationService `json:"service,omitempty"`
+}
+
+// GcpRecommendationService PS4C product line (`gcp_service`) this recommendation belongs to.
+type GcpRecommendationService string
+
+// GcpRecommendationWithEligibleSpend A single GCP recommendation paired with its eligible-spend usage series.
+type GcpRecommendationWithEligibleSpend struct {
+	// EligibleUsage Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window.
+	EligibleUsage *[]EligibleSpendDataPoint `json:"eligibleUsage,omitempty"`
+
+	// EstimatedEquivalentRecommendedCommitment Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the trailing window multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
+	EstimatedEquivalentRecommendedCommitment *float64 `json:"estimatedEquivalentRecommendedCommitment,omitempty"`
+
+	// Recommendation Recommended commitment metrics for the requested (service, region) scope.
+	Recommendation *GcpRecommendation `json:"recommendation,omitempty"`
+}
+
+// GcpRegion GCP region scope in the DCI `lower_snake_case` wire form (for example `us_east1`), or the
+// literal `global` for cross-region scopes. This is not the raw provider spelling (`us-east1`);
+// the same pattern applies to the `region` query parameter. Regions are discovery-driven, so the
+// list is open rather than an enum.
+//
+// Example: us_east1
+type GcpRegion = string
 
 // GcpResourceCud GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
 // document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").
@@ -7902,14 +8923,117 @@ type GcpResourceCudReservedResourcesItem struct {
 	ResourceKind string `json:"resourceKind"`
 }
 
-// GcpSavingsTotals Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
-type GcpSavingsTotals struct {
+// GcpSavingsTotalsByService Year-to-date and lifetime realized savings for one product line.
+type GcpSavingsTotalsByService struct {
 	// Lifetime Lifetime realized savings since onboarding.
 	Lifetime Money `json:"lifetime"`
+
+	// Service Product line these savings totals belong to.
+	Service GcpSavingsTotalsByServiceService `json:"service"`
 
 	// Ytd Year-to-date realized savings.
 	Ytd Money `json:"ytd"`
 }
+
+// GcpSavingsTotalsByServiceService Product line these savings totals belong to.
+type GcpSavingsTotalsByServiceService string
+
+// GcpSpendCud GCP spend-based Committed Use Discount. Mirrors the stored provider document verbatim
+// (raw values, e.g. `state` "Active", `term` "P1Y", `commitmentAmount` as a plain double).
+type GcpSpendCud struct {
+	// CommitmentAmount Hourly commitment amount.
+	//
+	// Example: 0.01
+	CommitmentAmount *float64 `json:"commitmentAmount,omitempty"`
+
+	// CommitmentUnit Unit for `commitmentAmount`.
+	//
+	// Example: $/hr
+	CommitmentUnit *string `json:"commitmentUnit,omitempty"`
+
+	// ConsumptionModelId Provider-assigned ID of the pricing model this CUD's discount is applied through.
+	//
+	// Example: D97B-0795-975B
+	ConsumptionModelId *string `json:"consumptionModelId,omitempty"`
+
+	// CudId CUD ID (provider-assigned).
+	CudId string `json:"cudId"`
+
+	// CudProductId Provider-assigned ID of the product family (`cudProductName`) this CUD applies to.
+	CudProductId *string `json:"cudProductId,omitempty"`
+
+	// CudProductName Product family name (e.g. `Compute Flexible`, `Cloud Run`, `BigQuery`).
+	//
+	// Example: Compute Flexible
+	CudProductName string `json:"cudProductName"`
+
+	// CudProductType Raw provider CUD type label.
+	//
+	// Example: Spend-Based
+	CudProductType *string `json:"cudProductType,omitempty"`
+
+	// EndTime When the CUD term ends. Null when unknown.
+	EndTime nullable.Nullable[time.Time] `json:"endTime,omitempty"`
+
+	// EntitlementScope Provider resource path this CUD's discount is scoped to (typically the billing account).
+	//
+	// Example: billingAccounts/00BECC-389F90-CDF2E8
+	EntitlementScope *string `json:"entitlementScope,omitempty"`
+
+	// ExportDate Timestamp of the BigQuery CUD export row this item was read from.
+	ExportDate *time.Time `json:"exportDate,omitempty"`
+
+	// LastMonthSavings Realized savings in the last full calendar month.
+	LastMonthSavings *float64 `json:"lastMonthSavings,omitempty"`
+
+	// LastMonthUtilization Utilization in the last full calendar month, as a fraction from 0 to 1.
+	LastMonthUtilization *float64 `json:"lastMonthUtilization,omitempty"`
+
+	// Name Provider commitment display name.
+	//
+	// Example: my-commitment1
+	Name *string `json:"name,omitempty"`
+
+	// Region Region in raw provider form (`us-central1`), or `global` for cross-region spend CUDs. Not the `lower_snake_case` wire form used by the `region` query parameter.
+	//
+	// Example: global
+	Region *string `json:"region,omitempty"`
+
+	// StartTime When the CUD term started. Null when unknown.
+	StartTime nullable.Nullable[time.Time] `json:"startTime,omitempty"`
+
+	// State Raw provider commitment state.
+	//
+	// Example: Active
+	State string `json:"state"`
+
+	// SubType Normalized coverage sub-type token (`UPPER_SNAKE`) identifying the product family within the product line.
+	//
+	// Example: COMPUTE_FLEXIBLE
+	SubType *string `json:"subType,omitempty"`
+
+	// Term Raw provider commitment term (ISO-8601 duration).
+	//
+	// Example: P1Y
+	Term *string `json:"term,omitempty"`
+}
+
+// GcpStats30dByService Trailing 30-day aggregate metrics for one product line.
+type GcpStats30dByService struct {
+	// Esr Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
+	//
+	// Example: 0.187
+	Esr nullable.Nullable[float64] `json:"esr,omitempty"`
+
+	// Savings Total savings realized over the last 30 days from active commitments (USD).
+	Savings *Money `json:"savings,omitempty"`
+
+	// Service Product line these metrics belong to.
+	Service GcpStats30dByServiceService `json:"service"`
+}
+
+// GcpStats30dByServiceService Product line these metrics belong to.
+type GcpStats30dByServiceService string
 
 // GeographicAccessCountriesResponse defines model for GeographicAccessCountriesResponse.
 type GeographicAccessCountriesResponse struct {
@@ -7943,7 +9067,11 @@ type GetAnomaly200Response struct {
 	// ActualCost Observed (actual) cost of the anomaly.
 	ActualCost nullable.Nullable[float64] `json:"actualCost,omitempty"`
 
-	// Attribution Attribution ID
+	// Allocations Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+	Allocations []GetAnomaly200ResponseAllocationsItem `json:"allocations"`
+
+	// Attribution Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Attribution string `json:"attribution"`
 
 	// BillingAccount Billing account ID
@@ -7966,6 +9094,9 @@ type GetAnomaly200Response struct {
 
 	// ExpectedMaxCost Maximum cost within the expected normal range.
 	ExpectedMaxCost nullable.Nullable[float64] `json:"expectedMaxCost,omitempty"`
+
+	// InitialNotifications The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+	InitialNotifications []NotificationEvent `json:"initialNotifications"`
 
 	// LinkedAnomalies IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 	LinkedAnomalies *LinkedAnomalies `json:"linkedAnomalies,omitempty"`
@@ -8013,6 +9144,15 @@ type GetAnomaly200ResponseMonitorLevel string
 
 // GetAnomaly200ResponseStatus defines model for GetAnomaly200Response.Status.
 type GetAnomaly200ResponseStatus string
+
+// GetAnomaly200ResponseAllocationsItem defines model for GetAnomaly200ResponseAllocationsItem.
+type GetAnomaly200ResponseAllocationsItem struct {
+	// Id Allocation ID. Use it with the Allocations API to read the allocation.
+	Id string `json:"id"`
+
+	// Name Allocation name.
+	Name string `json:"name"`
+}
 
 // GetAnomalyExplanation200Response defines model for GetAnomalyExplanation200Response.
 type GetAnomalyExplanation200Response struct {
@@ -8078,6 +9218,11 @@ type GetAnomalyExplanation200ResponseFacts struct {
 type GetAsyncOperationResults200Response struct {
 	// CreateTime The creation time of the report, in milliseconds since the epoch. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
 	CreateTime *int64 `json:"createTime,omitempty"`
+
+	// FileOutput Signed URL the rendered file can be downloaded from. Present only when the fileOutput parameter was supplied and the file was rendered. Never a variant of the response — the result property above is returned either way, so a render that fails leaves result intact and omits fileOutput rather than failing the call. The URL is valid for 7 days; request the endpoint again for a fresh one.
+	//
+	// Example: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
+	FileOutput *string `json:"fileOutput,omitempty"`
 
 	// Id The report's id. Present only when the operation was started against a saved report (run by id); omitted for ad hoc runs against an inline config.
 	Id *string `json:"id,omitempty"`
@@ -8249,7 +9394,7 @@ type Group struct {
 	// Example: service_description
 	Id *string `json:"id,omitempty"`
 
-	// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+	// Limit To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 	//
 	// Example: {"metric":{"type":"basic","value":"cost"},"sort":"desc","value":3}
 	Limit *Limit `json:"limit,omitempty"`
@@ -8279,6 +9424,12 @@ type GroupAllocationRule struct {
 
 	// Name Name of the allocation rule.
 	Name *string `json:"name,omitempty"`
+
+	// ValidityPeriods Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
+	ValidityPeriods nullable.Nullable[[]AllocationRulePeriod] `json:"validityPeriods,omitempty"`
+
+	// ValueExtraction Makes the rule emit a value extracted from the first non-empty source instead of the rule name.
+	ValueExtraction nullable.Nullable[AllocationValueExtraction] `json:"valueExtraction,omitempty"`
 }
 
 // GroupAllocationRuleAction Action to perform with this rule.
@@ -8480,7 +9631,7 @@ type LabelListItemColor string
 // LabelListItemType The type of the label (custom or preset).
 type LabelListItemType string
 
-// Limit To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+// Limit To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
 //
 // Example: {"metric":{"type":"basic","value":"cost"},"sort":"desc","value":3}
 type Limit struct {
@@ -8560,6 +9711,17 @@ type ListBudgets200Response struct {
 
 	// RowCount Budgets rows count
 	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
+// ListCommitmentPolicies200Response defines model for ListCommitmentPolicies200Response.
+type ListCommitmentPolicies200Response struct {
+	Items []CommitmentPolicy `json:"items"`
+
+	// PageToken Opaque cursor for the next page. `null` when this is the last page.
+	PageToken nullable.Nullable[string] `json:"pageToken"`
+
+	// RowCount Total number of policies available to the tenant across all pages.
+	RowCount int64 `json:"rowCount"`
 }
 
 // ListCustomThemes200Response defines model for ListCustomThemes200Response.
@@ -8643,9 +9805,38 @@ type ListGcpBillingAccountsSettings200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// ListGcpPlannedPurchases200Response defines model for ListGcpPlannedPurchases200Response.
+type ListGcpPlannedPurchases200Response struct {
+	Items     []GcpPlannedPurchaseByService `json:"items"`
+	PageToken nullable.Nullable[string]     `json:"pageToken,omitempty"`
+
+	// RowCount Number of service groups in `items` for this response.
+	RowCount int64 `json:"rowCount"`
+}
+
+// ListGcpRecommendations200Response defines model for ListGcpRecommendations200Response.
+type ListGcpRecommendations200Response struct {
+	Items []GcpRecommendation `json:"items"`
+
+	// PageToken Reserved for pagination. Currently always `null`.
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Number of recommendations returned in `items`.
+	RowCount *int64 `json:"rowCount,omitempty"`
+}
+
 // ListGcpResourceCuds200Response defines model for ListGcpResourceCuds200Response.
 type ListGcpResourceCuds200Response struct {
 	Items     []GcpResourceCud          `json:"items"`
+	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
+
+	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+	RowCount nullable.Nullable[int64] `json:"rowCount,omitempty"`
+}
+
+// ListGcpSpendCuds200Response defines model for ListGcpSpendCuds200Response.
+type ListGcpSpendCuds200Response struct {
+	Items     []GcpSpendCud             `json:"items"`
 	PageToken nullable.Nullable[string] `json:"pageToken,omitempty"`
 
 	// RowCount Best-effort count for the filtered result set. May be null or omitted for expensive counts.
@@ -8707,6 +9898,9 @@ type ListProducts200Response struct {
 // ListRoles200Response defines model for ListRoles200Response.
 type ListRoles200Response struct {
 	Roles *[]Role `json:"roles,omitempty"`
+
+	// RowCount Number of roles returned.
+	RowCount *int `json:"rowCount,omitempty"`
 }
 
 // ListUsersResponseBody Response body for the list users endpoint.
@@ -8774,9 +9968,6 @@ type PlatformAPI struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *string `json:"id,omitempty"`
 }
-
-// Policy Coverage target policy that balances savings against underutilization risk. Used by recommendations and planned-purchase projections.
-type Policy string
 
 // ProblemDetails RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type ProblemDetails struct {
@@ -8924,21 +10115,30 @@ type RiskAggregations struct {
 
 // Role Definition and permissions assigned to a role.
 type Role struct {
-	// Customer The customer ID if this is a custom role.
-	Customer *string `json:"customer,omitempty"`
+	// ChildTenantEligible Whether the owning tenant made this role available as a child tenant role.
+	ChildTenantEligible bool `json:"childTenantEligible"`
+
+	// Customer The customer ID if this is a custom role. An empty string for a preset role.
+	Customer string `json:"customer"`
+
+	// Description The description of the role. An empty string when no description is set.
+	Description string `json:"description"`
 
 	// Id The unique ID of the role.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id"`
 
 	// Name The name of the role.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 
-	// Permissions List of permission IDs assigned to the role.
-	Permissions *[]string `json:"permissions,omitempty"`
+	// Permissions Permission IDs in stored order. An empty array when no permissions are assigned.
+	Permissions []string `json:"permissions"`
 
 	// Type The type of the role (preset or custom).
-	Type *string `json:"type,omitempty"`
+	Type RoleType `json:"type"`
 }
+
+// RoleType The type of the role (preset or custom).
+type RoleType string
 
 // SchemaField Schema of a report result column.
 type SchemaField struct {
@@ -8982,6 +10182,107 @@ type Seats struct {
 
 	// NumberOfSeats The number of committed seats. Applies to annual commitment plans.
 	NumberOfSeats *int64 `json:"numberOfSeats,omitempty"`
+}
+
+// ServiceAccount A non-human identity owned by a customer. Its API tokens authenticate with exactly the permissions listed here.
+type ServiceAccount struct {
+	// CreateTime When the service account was created.
+	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
+
+	// CreatedBy Display name of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+	CreatedBy nullable.Nullable[string] `json:"createdBy,omitempty"`
+
+	// CreatedByEmail Email of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+	CreatedByEmail nullable.Nullable[string] `json:"createdByEmail,omitempty"`
+
+	// CreatedByUserId ID of the user who created the service account. `null` when unknown or when the service account was created with a service account token.
+	CreatedByUserId nullable.Nullable[string] `json:"createdByUserId,omitempty"`
+
+	// CustomerId ID of the customer that owns the service account.
+	//
+	// Example: Kp2mN8qL4vR0sT1wX3yZ
+	CustomerId *string `json:"customerId,omitempty"`
+
+	// Description Free-text description.
+	Description string `json:"description"`
+
+	// Etag Current version of the service account. Send it in `If-Match` to update or delete.
+	Etag nullable.Nullable[string] `json:"etag,omitempty"`
+
+	// Id Service account ID. `null` only on a dry-run create.
+	//
+	// Example: Lq3nO9rM5wS2tU0xY4zA
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// Name Name, unique among the customer's service accounts.
+	Name string `json:"name"`
+
+	// Permissions Platform permission names in camelCase, as shown in the DoiT console role editor.
+	Permissions []string `json:"permissions"`
+
+	// UpdateTime When the service account was last changed.
+	UpdateTime nullable.Nullable[time.Time] `json:"updateTime,omitempty"`
+}
+
+// ServiceAccountToken An API token of a service account. It authenticates with the service account's permissions, and carries no secret material after the create response.
+type ServiceAccountToken struct {
+	// CreateTime When the token was created. `null` only on a dry-run create.
+	//
+	// Example: 2026-09-01T08:00:00Z
+	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
+
+	// CustomerId ID of the customer whose service account the token belongs to.
+	//
+	// Example: Kp2mN8qL4vR0sT1wX3yZ
+	CustomerId *string `json:"customerId,omitempty"`
+
+	// ExpiresTime When the token stops authenticating. `null` when it does not expire.
+	//
+	// Example: 2027-09-01T08:00:00Z
+	ExpiresTime nullable.Nullable[time.Time] `json:"expiresTime"`
+
+	// Id API token ID. `null` only on a dry-run create.
+	//
+	// Example: Mr0sN7pQ4tU2vW5xY8zC
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// LastUsedTime When the token last authenticated a request. `null` until it is first used.
+	//
+	// Example: 2026-09-20T14:31:00Z
+	LastUsedTime nullable.Nullable[time.Time] `json:"lastUsedTime,omitempty"`
+
+	// Name Name, unique among the service account's tokens.
+	//
+	// Example: ci-pipeline-prod
+	Name string `json:"name"`
+
+	// ServiceAccountId ID of the service account that owns the token.
+	//
+	// Example: Lq3nO9rM5wS2tU0xY4zA
+	ServiceAccountId *string `json:"serviceAccountId,omitempty"`
+
+	// State The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+	//
+	// Example: active
+	State ServiceAccountTokenState `json:"state"`
+}
+
+// ServiceAccountTokenState The token's stored state: `active` while it is enabled, `disabled` once it has been turned off. This is not a liveness signal — a token whose `expiresTime` has passed stops authenticating but keeps the state it was stored with, so `active` here does not by itself mean the token still works; compare `expiresTime`. Only these two values can be set.
+//
+// Example: active
+type ServiceAccountTokenState string
+
+// ServiceAccountTokensResponse API tokens of a service account, at most 10.
+type ServiceAccountTokensResponse struct {
+	// Items The service account's non-deleted API tokens.
+	//
+	// Example: [{"createTime":"2026-09-01T08:00:00Z","customerId":"Kp2mN8qL4vR0sT1wX3yZ","expiresTime":"2027-09-01T08:00:00Z","id":"Mr0sN7pQ4tU2vW5xY8zC","lastUsedTime":"2026-09-20T14:31:00Z","name":"ci-pipeline-prod","serviceAccountId":"Lq3nO9rM5wS2tU0xY4zA","state":"active"}]
+	Items []ServiceAccountToken `json:"items"`
+}
+
+// ServiceAccountsResponse Service accounts owned by the authenticated customer.
+type ServiceAccountsResponse struct {
+	Items []ServiceAccount `json:"items"`
 }
 
 // ServiceQuota defines model for ServiceQuota.
@@ -9558,6 +10859,47 @@ type UpdateResourcePermissionRequestBody struct {
 // UpdateResourcePermissionRequestBodyPublic The type of permissions granted to all users in the organization for this resource.
 type UpdateResourcePermissionRequestBodyPublic string
 
+// UpdateRoleRequest Fields allowed when updating a custom role. At least one field is required.
+type UpdateRoleRequest struct {
+	// Description The new description of the role. An empty string clears it; omission leaves it unchanged.
+	Description *string `json:"description,omitempty"`
+
+	// Name The new name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles. Omission leaves the name unchanged.
+	Name *string `json:"name,omitempty"`
+
+	// Permissions Permission IDs that replace the role's current permissions, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. An empty array clears all permissions; omission leaves them unchanged.
+	Permissions *[]string `json:"permissions,omitempty"`
+}
+
+// UpdateServiceAccountRequest Fields to change on a service account, as a JSON Merge Patch document.
+type UpdateServiceAccountRequest struct {
+	// Description New free-text description. `null` leaves it unchanged; an explicit empty string clears it.
+	//
+	// Example: Manages DoiT resources from CI
+	Description nullable.Nullable[string] `json:"description,omitempty"`
+
+	// Name New name, unique among the customer's service accounts. Leading or trailing whitespace returns `400`.
+	//
+	// Example: terraform-ci
+	Name *string `json:"name,omitempty"`
+
+	// Permissions Replaces the whole permission list. An unknown name returns `422`.
+	Permissions nullable.Nullable[[]string] `json:"permissions,omitempty"`
+}
+
+// UpdateServiceAccountTokenRequest The state to move an API token to.
+type UpdateServiceAccountTokenRequest struct {
+	// State `active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`.
+	//
+	// Example: disabled
+	State UpdateServiceAccountTokenRequestState `json:"state"`
+}
+
+// UpdateServiceAccountTokenRequestState `active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`.
+//
+// Example: disabled
+type UpdateServiceAccountTokenRequestState string
+
 // UpdateUserRequest Fields allowed when updating an existing user.
 type UpdateUserRequest struct {
 	// FirstName The user's first name.
@@ -9719,6 +11061,122 @@ type Value1 = float32
 // Value2 defines model for Value.2.
 type Value2 = int
 
+// Widget Widget metadata and its latest precomputed cached result.
+type Widget struct {
+	// Alias Stable customer-facing widget identifier.
+	//
+	// Example: current-month-cloud-spend
+	Alias string `json:"alias"`
+
+	// GenerateTime Time when the cached result was generated by the background computation.
+	//
+	// Example: 2026-09-24T11:48:10.319Z
+	GenerateTime time.Time `json:"generateTime"`
+
+	// Id Customer- and tier-specific widget id. This value can vary between customers.
+	//
+	// Example: widget-example-spend-01
+	Id string `json:"id"`
+
+	// Kind Determines which property is populated in the widget's `result`.
+	Kind WidgetKind `json:"kind"`
+
+	// Result Computed widget result. The populated property corresponds to `kind`.
+	Result WidgetResult `json:"result"`
+
+	// Type Whether the widget is supplied by DoiT or defined by a customer.
+	Type WidgetType `json:"type"`
+}
+
+// WidgetType Whether the widget is supplied by DoiT or defined by a customer.
+type WidgetType string
+
+// WidgetItem Catalogue entry for one widget, without its computed result.
+type WidgetItem struct {
+	// Alias Stable customer-facing widget identifier. This value is also accepted by getWidget.
+	//
+	// Example: current-month-cloud-spend
+	Alias string `json:"alias"`
+
+	// Description What the widget value represents.
+	//
+	// Example: Total cloud spend accumulated during the current calendar month.
+	Description string `json:"description"`
+
+	// Id Customer- and tier-specific widget id. This value is accepted by getWidget and can vary between customers.
+	//
+	// Example: widget-example-spend-01
+	Id string `json:"id"`
+
+	// Kind Determines which property is populated in the widget's `result`.
+	Kind WidgetKind `json:"kind"`
+
+	// Name Human-readable widget name.
+	//
+	// Example: Current Month Cloud Spend
+	Name string `json:"name"`
+
+	// Type Whether the widget is supplied by DoiT or defined by a customer.
+	Type WidgetItemType `json:"type"`
+}
+
+// WidgetItemType Whether the widget is supplied by DoiT or defined by a customer.
+type WidgetItemType string
+
+// WidgetKind Determines which property is populated in the widget's `result`.
+type WidgetKind string
+
+// WidgetList Complete catalogue of widgets supported for the selected customer.
+type WidgetList struct {
+	// Items Supported widgets. Use an item's stable `alias` or customer-specific `id` with getWidget.
+	Items []WidgetItem `json:"items"`
+
+	// RowCount Number of entries in `items`.
+	//
+	// Example: 2
+	RowCount int64 `json:"rowCount"`
+}
+
+// WidgetMonetaryMetric A monetary value over a period and its comparison with the equivalent prior period.
+// `monthToMonthGrowthPercentage` and `monthToMonthGrowthAmount` are both `null` when no
+// comparable prior-period value exists, such as when prior-period spend is zero.
+type WidgetMonetaryMetric struct {
+	// MonthToMonthGrowthAmount Absolute monetary change from the comparable prior period, or `null` when no comparison is available.
+	MonthToMonthGrowthAmount nullable.Nullable[Money] `json:"monthToMonthGrowthAmount"`
+
+	// MonthToMonthGrowthPercentage Percentage change from the comparable prior period, or `null` when no comparison is available.
+	//
+	// Example: 12.34
+	MonthToMonthGrowthPercentage nullable.Nullable[float64] `json:"monthToMonthGrowthPercentage"`
+
+	// Period UTC date-time range covered by the widget result. `endTime` is exclusive.
+	Period WidgetPeriod `json:"period"`
+
+	// Value Current-period monetary value. `amount` is a decimal string and `currency` is an ISO 4217 code.
+	Value Money `json:"value"`
+}
+
+// WidgetPeriod UTC date-time range covered by the widget result. `endTime` is exclusive.
+type WidgetPeriod struct {
+	// EndTime Exclusive end of the period.
+	//
+	// Example: 2026-10-01T00:00:00Z
+	EndTime time.Time `json:"endTime"`
+
+	// StartTime Inclusive start of the period.
+	//
+	// Example: 2026-09-01T00:00:00Z
+	StartTime time.Time `json:"startTime"`
+}
+
+// WidgetResult Computed widget result. The populated property corresponds to `kind`.
+type WidgetResult struct {
+	// MonetaryMetric A monetary value over a period and its comparison with the equivalent prior period.
+	// `monthToMonthGrowthPercentage` and `monthToMonthGrowthAmount` are both `null` when no
+	// comparable prior-period value exists, such as when prior-period spend is zero.
+	MonetaryMetric WidgetMonetaryMetric `json:"monetaryMetric"`
+}
+
 // BillingAccountId Example: 01D4A2-4E3F1B-9C72A0
 type BillingAccountId = string
 
@@ -9727,6 +11185,21 @@ type BillingExplainerInvoiceMonth = string
 
 // CustomerId defines model for customerId.
 type CustomerId = string
+
+// DryRun defines model for dryRun.
+type DryRun = bool
+
+// EligibleSpendGranularity defines model for eligibleSpendGranularity.
+type EligibleSpendGranularity string
+
+// GcpService defines model for gcp_service.
+type GcpService string
+
+// IdempotencyKeyRequired defines model for idempotencyKeyRequired.
+type IdempotencyKeyRequired = string
+
+// IfMatchRequired defines model for ifMatchRequired.
+type IfMatchRequired = string
 
 // ManagementAccountId Example: 123456789012
 type ManagementAccountId = string
@@ -9739,6 +11212,9 @@ type NameContains = string
 
 // PageToken defines model for pageToken.
 type PageToken = string
+
+// PolicyId Example: balanced
+type PolicyId = string
 
 // Ps4cMaxResults defines model for ps4cMaxResults.
 type Ps4cMaxResults = int
@@ -9754,6 +11230,15 @@ type ResourceId = string
 
 // ResourceType defines model for resourceType.
 type ResourceType string
+
+// ServiceAccountId defines model for serviceAccountId.
+type ServiceAccountId = string
+
+// ServiceAccountTokenId defines model for serviceAccountTokenId.
+type ServiceAccountTokenId = string
+
+// ServiceAccountTokenParentId defines model for serviceAccountTokenParentId.
+type ServiceAccountTokenParentId = string
 
 // SortOrder defines model for sortOrder.
 type SortOrder string
@@ -9797,6 +11282,9 @@ type N503 = Error
 // BadRequest RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type BadRequest = ProblemDetails
 
+// Conflict RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type Conflict = ProblemDetails
+
 // Forbidden RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type Forbidden = ProblemDetails
 
@@ -9806,11 +11294,23 @@ type InternalServerError = ProblemDetails
 // NotFound RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type NotFound = ProblemDetails
 
+// PreconditionFailed RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type PreconditionFailed = ProblemDetails
+
+// PreconditionRequired RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type PreconditionRequired = ProblemDetails
+
 // ServiceUnavailable RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type ServiceUnavailable = ProblemDetails
 
 // Unauthorized RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type Unauthorized = ProblemDetails
+
+// UnprocessableEntity RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type UnprocessableEntity = ProblemDetails
+
+// UnsupportedMediaType RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type UnsupportedMediaType = ProblemDetails
 
 // ListAlertsParams defines parameters for ListAlerts.
 type ListAlertsParams struct {
@@ -10063,6 +11563,15 @@ type CancelAsyncOperationParams struct {
 	IdempotencyKey string `json:"Idempotency-Key"`
 }
 
+// GetAsyncOperationResultsParams defines parameters for GetAsyncOperationResults.
+type GetAsyncOperationResultsParams struct {
+	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file.
+	FileOutput *GetAsyncOperationResultsParamsFileOutput `form:"fileOutput,omitempty" json:"fileOutput,omitempty"`
+}
+
+// GetAsyncOperationResultsParamsFileOutput defines parameters for GetAsyncOperationResults.
+type GetAsyncOperationResultsParamsFileOutput string
+
 // AsyncRunReportByIdParams defines parameters for AsyncRunReportById.
 type AsyncRunReportByIdParams struct {
 	// DryRun If true, validates the request and returns 200 without creating an operation or submitting a job.
@@ -10079,6 +11588,26 @@ type AsyncRunReportByIdParams struct {
 
 	// IdempotencyKey Unique key for this submission. Required on every request.
 	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// ListWidgetsParams defines parameters for ListWidgets.
+type ListWidgetsParams struct {
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetWidgetParams defines parameters for GetWidget.
+type GetWidgetParams struct {
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
 // ListAnomaliesParams defines parameters for ListAnomalies.
@@ -10137,7 +11666,7 @@ type GetBillingExplainerPerPayerParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10347,6 +11876,72 @@ type ListServiceQuotasParams struct {
 // ListServiceQuotasParamsCloudProvider defines parameters for ListServiceQuotas.
 type ListServiceQuotasParamsCloudProvider string
 
+// CreateRoleParams defines parameters for CreateRole.
+type CreateRoleParams struct {
+	// IdempotencyKey Caller-chosen key (1-255 characters) that makes retries safe; the same key with the same body returns the original response.
+	IdempotencyKey string `json:"Idempotency-Key"`
+}
+
+// CreateServiceAccountParams defines parameters for CreateServiceAccount.
+type CreateServiceAccountParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteServiceAccountParams defines parameters for DeleteServiceAccount.
+type DeleteServiceAccountParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// UpdateServiceAccountParams defines parameters for UpdateServiceAccount.
+type UpdateServiceAccountParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// CreateServiceAccountTokenParams defines parameters for CreateServiceAccountToken.
+type CreateServiceAccountTokenParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteServiceAccountTokenParams defines parameters for DeleteServiceAccountToken.
+type DeleteServiceAccountTokenParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// UpdateServiceAccountTokenParams defines parameters for UpdateServiceAccountToken.
+type UpdateServiceAccountTokenParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
 	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
@@ -10365,7 +11960,7 @@ type ListAwsOrganizationsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10375,7 +11970,7 @@ type GetAwsOrganizationParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10391,7 +11986,7 @@ type ListGcpBillingAccountsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10401,9 +11996,102 @@ type GetGcpBillingAccountParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
+
+// ListGcpPlannedPurchasesParams defines parameters for ListGcpPlannedPurchases.
+type ListGcpPlannedPurchasesParams struct {
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
+	GcpService *ListGcpPlannedPurchasesParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
+
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpPlannedPurchasesParamsGcpService defines parameters for ListGcpPlannedPurchases.
+type ListGcpPlannedPurchasesParamsGcpService string
+
+// ListGcpRecommendationsParams defines parameters for ListGcpRecommendations.
+type ListGcpRecommendationsParams struct {
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
+	GcpService *ListGcpRecommendationsParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
+
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpRecommendationsParamsGcpService defines parameters for ListGcpRecommendations.
+type ListGcpRecommendationsParamsGcpService string
+
+// GetGcpRecommendationParams defines parameters for GetGcpRecommendation.
+type GetGcpRecommendationParams struct {
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// Granularity Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals.
+	Granularity *GetGcpRecommendationParamsGranularity `form:"granularity,omitempty" json:"granularity,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetGcpRecommendationParamsGranularity defines parameters for GetGcpRecommendation.
+type GetGcpRecommendationParamsGranularity string
+
+// GetGcpRecommendationParamsGcpService defines parameters for GetGcpRecommendation.
+type GetGcpRecommendationParamsGcpService string
 
 // ListGcpResourceCudsParams defines parameters for ListGcpResourceCuds.
 type ListGcpResourceCudsParams struct {
@@ -10420,12 +12108,52 @@ type ListGcpResourceCudsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
 // ListGcpResourceCudsParamsStatus defines parameters for ListGcpResourceCuds.
 type ListGcpResourceCudsParamsStatus string
+
+// ListGcpSpendCudsParams defines parameters for ListGcpSpendCuds.
+type ListGcpSpendCudsParams struct {
+	// Status Filter by CUD state. Omit to include all states.
+	Status *ListGcpSpendCudsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// GcpService Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
+	GcpService *ListGcpSpendCudsParamsGcpService `form:"gcp_service,omitempty" json:"gcp_service,omitempty"`
+
+	// Region Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+	// literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. When both are omitted, all available
+	// regions for all available product lines are returned.
+	//
+	// The value is format-validated, not checked against a closed region list: `compute` accepts
+	// only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+	// is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+	// A well-formed, service-compatible region with no data returns `200` with an empty result.
+	// Matching is case-insensitive; the value is lowercased before validation.
+	Region *GcpRegion `form:"region,omitempty" json:"region,omitempty"`
+
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListGcpSpendCudsParamsStatus defines parameters for ListGcpSpendCuds.
+type ListGcpSpendCudsParamsStatus string
+
+// ListGcpSpendCudsParamsGcpService defines parameters for ListGcpSpendCuds.
+type ListGcpSpendCudsParamsGcpService string
 
 // ListGcpBillingAccountsSettingsParams defines parameters for ListGcpBillingAccountsSettings.
 type ListGcpBillingAccountsSettingsParams struct {
@@ -10439,7 +12167,33 @@ type ListGcpBillingAccountsSettingsParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// ListCommitmentPoliciesParams defines parameters for ListCommitmentPolicies.
+type ListCommitmentPoliciesParams struct {
+	// PageToken Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+	PageToken *Ps4cPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// MaxResults Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+	MaxResults *Ps4cMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
+}
+
+// GetCommitmentPolicyParams defines parameters for GetCommitmentPolicy.
+type GetCommitmentPolicyParams struct {
+	// XTenantId Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+	//
+	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+	//
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10449,7 +12203,7 @@ type ListGeographicAccessCountriesParams struct {
 	//
 	// **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
 	//
-	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. Omitting it returns `400` with code `tenant_id_required`. If the value conflicts with the tenants your credential may access, the request returns `400` with code `tenant_id_mismatch`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
+	// **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint's normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.
 	XTenantId *TenantId `json:"X-Tenant-Id,omitempty"`
 }
 
@@ -10574,6 +12328,24 @@ type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
 
 // UpdateDatahubDatasetJSONRequestBody defines body for UpdateDatahubDataset for application/json ContentType.
 type UpdateDatahubDatasetJSONRequestBody = UpdateDatahubDatasetRequestBody
+
+// CreateRoleJSONRequestBody defines body for CreateRole for application/json ContentType.
+type CreateRoleJSONRequestBody = CreateRoleRequest
+
+// UpdateRoleJSONRequestBody defines body for UpdateRole for application/json ContentType.
+type UpdateRoleJSONRequestBody = UpdateRoleRequest
+
+// CreateServiceAccountJSONRequestBody defines body for CreateServiceAccount for application/json ContentType.
+type CreateServiceAccountJSONRequestBody = CreateServiceAccountRequest
+
+// UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody defines body for UpdateServiceAccount for application/merge-patch+json ContentType.
+type UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody = UpdateServiceAccountRequest
+
+// CreateServiceAccountTokenJSONRequestBody defines body for CreateServiceAccountToken for application/json ContentType.
+type CreateServiceAccountTokenJSONRequestBody = CreateServiceAccountTokenRequest
+
+// UpdateServiceAccountTokenJSONRequestBody defines body for UpdateServiceAccountToken for application/json ContentType.
+type UpdateServiceAccountTokenJSONRequestBody = UpdateServiceAccountTokenRequest
 
 // InviteUserJSONRequestBody defines body for InviteUser for application/json ContentType.
 type InviteUserJSONRequestBody = InviteUserRequest
@@ -11560,7 +13332,7 @@ type ClientInterface interface {
 	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 	//
 	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-	GetAsyncOperationResults(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteReport Delete a report
 	//
@@ -11692,6 +13464,49 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /analytics/v1/settings/themes/{id} (the `UpdateCustomTheme` operationId).
 	UpdateCustomTheme(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListWidgets List widgets
+	//
+	// Returns the complete catalogue of preset widgets supported by the Analytics Widgets API.
+	// Each entry contains a customer-specific `id` and a stable customer-facing `alias`; either
+	// value can be passed to the get-widget operation. An `id` can vary by customer or service
+	// tier, while an `alias` remains stable.
+	//
+	// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+	// resolves to one customer. When the credential can act on multiple customers, send
+	// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+	// selected customer is not authorized or entitled to use this API.
+	//
+	// Corresponds with GET /analytics/v1/widgets (the `ListWidgets` operationId).
+	ListWidgets(ctx context.Context, params *ListWidgetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWidget Get a widget
+	//
+	// Returns the latest precomputed cached result for one widget. This read does not refresh or
+	// recompute the widget synchronously.
+	//
+	// Use either the customer-specific `id` returned by the list-widgets operation or one of these
+	// stable aliases:
+	//
+	// - `current-month-cloud-spend` — total cloud spend accumulated during the current calendar month.
+	// - `current-month-cloud-forecast` — forecast of total cloud spend for the current calendar month.
+	//
+	// The two concrete alias requests are:
+	//
+	// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-spend`
+	// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-forecast`
+	//
+	// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+	// resolves to one customer. When the credential can act on multiple customers, send
+	// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+	// selected customer is not authorized or entitled to use this API.
+	//
+	// The result's `period.endTime` is exclusive. Monetary `amount` values are decimal strings and
+	// `currency` values are ISO 4217 currency codes. `monthToMonthGrowthPercentage` and
+	// `monthToMonthGrowthAmount` are both `null` when no comparable prior-period value exists.
+	//
+	// Corresponds with GET /analytics/v1/widgets/{widgetId} (the `GetWidget` operationId).
+	GetWidget(ctx context.Context, widgetId string, params *GetWidgetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListAnomalies List anomalies
 	//
@@ -12157,6 +13972,208 @@ type ClientInterface interface {
 	// Corresponds with GET /iam/v1/roles (the `ListRoles` operationId).
 	ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateRoleWithBody Create role
+	//
+	// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+	CreateRoleWithBody(ctx context.Context, params *CreateRoleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateRole Create role
+	//
+	// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+	CreateRole(ctx context.Context, params *CreateRoleParams, body CreateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteRole Delete role
+	//
+	// Deletes a custom role. Preset roles cannot be deleted, and a role still assigned to users or groups must be unassigned first. A service account of a parent tenant can delete a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Corresponds with DELETE /iam/v1/roles/{id} (the `DeleteRole` operationId).
+	DeleteRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRole Get role
+	//
+	// Returns a single role by ID. Preset roles are visible to every customer; a custom role is returned only to the customer that owns it. A service account of a parent tenant can read a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Corresponds with GET /iam/v1/roles/{id} (the `GetRole` operationId).
+	GetRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateRoleWithBody Update role
+	//
+	// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+	UpdateRoleWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateRole Update role
+	//
+	// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+	UpdateRole(ctx context.Context, id string, body UpdateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListServiceAccounts List service accounts
+	//
+	// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+	//
+	// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+	ListServiceAccounts(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateServiceAccountWithBody Create a service account
+	//
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+	CreateServiceAccountWithBody(ctx context.Context, params *CreateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateServiceAccount Create a service account
+	//
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+	CreateServiceAccount(ctx context.Context, params *CreateServiceAccountParams, body CreateServiceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteServiceAccount Delete a service account
+	//
+	// Permanently deletes a service account and all of its API tokens, which stop authenticating immediately. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+	//
+	// Corresponds with DELETE /iam/v1/service-accounts/{id} (the `DeleteServiceAccount` operationId).
+	DeleteServiceAccount(ctx context.Context, id ServiceAccountId, params *DeleteServiceAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetServiceAccount Get a service account
+	//
+	// Returns a service account owned by the authenticated customer; an ID that belongs to another customer returns `404`. The `ETag` response header carries the value to send in `If-Match` on update and delete. Requires the `serviceAccountViewer` permission.
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{id} (the `GetServiceAccount` operationId).
+	GetServiceAccount(ctx context.Context, id ServiceAccountId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateServiceAccountWithBody Update a service account
+	//
+	// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+	UpdateServiceAccountWithBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateServiceAccountWithApplicationMergePatchPlusJSONBody Update a service account
+	//
+	// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+	//
+	// Takes a body of the `application/merge-patch+json` content type.
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+	UpdateServiceAccountWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListServiceAccountTokens List API tokens for a service account
+	//
+	// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+	ListServiceAccountTokens(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateServiceAccountTokenWithBody Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateServiceAccountToken Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteServiceAccountToken Delete an API token
+	//
+	// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+	//
+	// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+	DeleteServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetServiceAccountToken Get an API token
+	//
+	// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+	GetServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateServiceAccountTokenWithBody Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateServiceAccountToken Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListUsers List users
 	//
 	// Returns a list of users in the organization, including both active users and invited users.
@@ -12245,7 +14262,7 @@ type ClientInterface interface {
 	//
 	// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 	//
-	// Fields that drive the Overview tab in the DoiT console:
+	// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 	// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 	// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -12254,6 +14271,80 @@ type ClientInterface interface {
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 	GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListGcpPlannedPurchases List GCP planned purchases
+	//
+	// Returns the laddering projections for the billing account, grouped by PS4C product line
+	// (`service`) and region. Each service group lists one entry per available
+	// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+	// `cloud_sql` scopes are per-region).
+	//
+	// With no filters, returns all existing projection documents in stable order: service groups
+	// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+	// first, then remaining regions alphabetically. Services with no projection documents are omitted
+	// (not returned as empty groups). When a filter matches no documents, the response is an
+	// empty `items` array (not `404`). Partial projection documents return only the fields
+	// available in storage.
+	//
+	// **`gcp_service` and `region` filters**: omit both to return all available services and
+	// their regions; supply `gcp_service` alone to return all regions for that service; supply
+	// both to return a single service/region scope. `region` requires `gcp_service` — a request
+	// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+	// `gcp_service` or `region` values return `400` with code `validation_failed`.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+	// `items` array when no projection documents exist — use
+	// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+	//
+	// **Pagination**: results are paginated by **service group** (a whole group is never split
+	// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+	// page size (default 50, max 500). When more groups remain, the response includes a
+	// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+	// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+	// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+	// expired token returns `400` with code `pagination_token_expired`.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+	ListGcpPlannedPurchases(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListGcpRecommendations List GCP recommendations
+	//
+	// Returns commitment purchase recommendations for the billing account, filtered to the
+	// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+	//
+	// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+	// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+	// alone to return all regions for that service; supply both to return a single
+	// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+	// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+	// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+	// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+	// region with no data returns `200` with an empty `items` array.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account with no matching recommendation documents returns `200` with an empty
+	// `items` array.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+	ListGcpRecommendations(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetGcpRecommendation Get a GCP recommendation
+	//
+	// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+	// billing account, including analysis metrics and time-bucketed eligible spend. Use
+	// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+	//
+	// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+	// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+	// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+	// A well-formed region the billing account has never had eligible spend in returns `404`
+	// with code `not_found` — the scope does not exist, same as an unknown billing account.
+	// When the scope exists but no stored recommendation matches, the response is `200` with
+	// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+	GetGcpRecommendation(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListGcpResourceCuds List GCP resource-based Committed Use Discounts
 	//
 	// Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
@@ -12261,11 +14352,36 @@ type ClientInterface interface {
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
 	ListGcpResourceCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListGcpSpendCuds List GCP spend-based Committed Use Discounts
+	//
+	// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+	// CUD state (`status`); omit to return CUDs in all states.
+	//
+	// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+	// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+	// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+	// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+	// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+	// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+	// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+	// echoes the raw provider value (`us-central1`).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+	ListGcpSpendCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListGcpBillingAccountsSettings List billing account engine settings
 	//
 	// Returns one item per onboarded GCP Billing Account. Each item includes that billing
 	// account's recommendation and automation engine settings for each product line activated
-	// on it (`compute`).
+	// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+	// for `cloud_sql`.
+	//
+	// Cloud SQL regions come from the billing account's persisted settings: a region is added
+	// when eligible spend is first seen there and is never removed, so its settings entry
+	// remains listed even if spend later drops to zero. Items are sorted by
+	// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+	// `cloud_sql` regions sorted alphabetically.
 	//
 	// Settings are stored independently on each billing account. Existing customer-level
 	// settings are copied lazily when an account is first read or initialized; if no valid
@@ -12276,6 +14392,42 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
 	ListGcpBillingAccountsSettings(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCommitmentPolicies List commitment policies
+	//
+	// Returns every commitment policy available to the tenant: the three built-in policies
+	// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+	//
+	// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+	// same policy may be assigned to AWS and GCP product lines alike.
+	//
+	// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+	// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+	// entered in the DoiT Console. This differs from the coverage and utilization fields on
+	// recommendations and inventory, which are fractions from 0 to 1.
+	//
+	// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+	// Console on the Commitment Policies page.
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+	ListCommitmentPolicies(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCommitmentPolicy Get a commitment policy
+	//
+	// Returns one commitment policy by id, with its creation and last-update times and the list of
+	// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+	//
+	// `assignments` lists explicit assignments only. An account whose settings have not yet been
+	// materialized falls back to `balanced` implicitly and does not appear here, even though the
+	// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+	// tenant and applied to every onboarded organization, so each organization appears once per
+	// product line. The list is not paginated.
+	//
+	// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+	// queried the request fails rather than returning a partial list.
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+	GetCommitmentPolicy(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListGeographicAccessCountries List countries available for geographic access
 	//
@@ -13510,8 +15662,8 @@ func (c *Client) CancelAsyncOperation(ctx context.Context, operationId string, p
 // Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 //
 // Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-func (c *Client) GetAsyncOperationResults(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetAsyncOperationResultsRequest(c.Server, operationId)
+func (c *Client) GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAsyncOperationResultsRequest(c.Server, operationId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -13793,6 +15945,69 @@ func (c *Client) UpdateCustomThemeWithBody(ctx context.Context, id string, conte
 // Corresponds with PATCH /analytics/v1/settings/themes/{id} (the `UpdateCustomTheme` operationId).
 func (c *Client) UpdateCustomTheme(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateCustomThemeRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListWidgets List widgets
+//
+// Returns the complete catalogue of preset widgets supported by the Analytics Widgets API.
+// Each entry contains a customer-specific `id` and a stable customer-facing `alias`; either
+// value can be passed to the get-widget operation. An `id` can vary by customer or service
+// tier, while an `alias` remains stable.
+//
+// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+// resolves to one customer. When the credential can act on multiple customers, send
+// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+// selected customer is not authorized or entitled to use this API.
+//
+// Corresponds with GET /analytics/v1/widgets (the `ListWidgets` operationId).
+func (c *Client) ListWidgets(ctx context.Context, params *ListWidgetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWidgetsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetWidget Get a widget
+//
+// Returns the latest precomputed cached result for one widget. This read does not refresh or
+// recompute the widget synchronously.
+//
+// Use either the customer-specific `id` returned by the list-widgets operation or one of these
+// stable aliases:
+//
+// - `current-month-cloud-spend` — total cloud spend accumulated during the current calendar month.
+// - `current-month-cloud-forecast` — forecast of total cloud spend for the current calendar month.
+//
+// The two concrete alias requests are:
+//
+// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-spend`
+// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-forecast`
+//
+// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+// resolves to one customer. When the credential can act on multiple customers, send
+// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+// selected customer is not authorized or entitled to use this API.
+//
+// The result's `period.endTime` is exclusive. Monetary `amount` values are decimal strings and
+// `currency` values are ISO 4217 currency codes. `monthToMonthGrowthPercentage` and
+// `monthToMonthGrowthAmount` are both `null` when no comparable prior-period value exists.
+//
+// Corresponds with GET /analytics/v1/widgets/{widgetId} (the `GetWidget` operationId).
+func (c *Client) GetWidget(ctx context.Context, widgetId string, params *GetWidgetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWidgetRequest(c.Server, widgetId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -14787,6 +17002,408 @@ func (c *Client) ListRoles(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
+// CreateRoleWithBody Create role
+//
+// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+func (c *Client) CreateRoleWithBody(ctx context.Context, params *CreateRoleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateRoleRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateRole Create role
+//
+// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+func (c *Client) CreateRole(ctx context.Context, params *CreateRoleParams, body CreateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateRoleRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteRole Delete role
+//
+// Deletes a custom role. Preset roles cannot be deleted, and a role still assigned to users or groups must be unassigned first. A service account of a parent tenant can delete a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Corresponds with DELETE /iam/v1/roles/{id} (the `DeleteRole` operationId).
+func (c *Client) DeleteRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteRoleRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetRole Get role
+//
+// Returns a single role by ID. Preset roles are visible to every customer; a custom role is returned only to the customer that owns it. A service account of a parent tenant can read a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Corresponds with GET /iam/v1/roles/{id} (the `GetRole` operationId).
+func (c *Client) GetRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRoleRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateRoleWithBody Update role
+//
+// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+func (c *Client) UpdateRoleWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateRoleRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateRole Update role
+//
+// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+func (c *Client) UpdateRole(ctx context.Context, id string, body UpdateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateRoleRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListServiceAccounts List service accounts
+//
+// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+//
+// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+func (c *Client) ListServiceAccounts(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListServiceAccountsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateServiceAccountWithBody Create a service account
+//
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+func (c *Client) CreateServiceAccountWithBody(ctx context.Context, params *CreateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateServiceAccountRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateServiceAccount Create a service account
+//
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+func (c *Client) CreateServiceAccount(ctx context.Context, params *CreateServiceAccountParams, body CreateServiceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateServiceAccountRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteServiceAccount Delete a service account
+//
+// Permanently deletes a service account and all of its API tokens, which stop authenticating immediately. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+//
+// Corresponds with DELETE /iam/v1/service-accounts/{id} (the `DeleteServiceAccount` operationId).
+func (c *Client) DeleteServiceAccount(ctx context.Context, id ServiceAccountId, params *DeleteServiceAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteServiceAccountRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetServiceAccount Get a service account
+//
+// Returns a service account owned by the authenticated customer; an ID that belongs to another customer returns `404`. The `ETag` response header carries the value to send in `If-Match` on update and delete. Requires the `serviceAccountViewer` permission.
+//
+// Corresponds with GET /iam/v1/service-accounts/{id} (the `GetServiceAccount` operationId).
+func (c *Client) GetServiceAccount(ctx context.Context, id ServiceAccountId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetServiceAccountRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateServiceAccountWithBody Update a service account
+//
+// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+func (c *Client) UpdateServiceAccountWithBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateServiceAccountRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateServiceAccountWithApplicationMergePatchPlusJSONBody Update a service account
+//
+// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+//
+// Takes a body of the `application/merge-patch+json` content type.
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+func (c *Client) UpdateServiceAccountWithApplicationMergePatchPlusJSONBody(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateServiceAccountRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListServiceAccountTokens List API tokens for a service account
+//
+// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+func (c *Client) ListServiceAccountTokens(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListServiceAccountTokensRequest(c.Server, serviceAccountId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateServiceAccountTokenWithBody Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *Client) CreateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateServiceAccountTokenRequestWithBody(c.Server, serviceAccountId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateServiceAccountToken Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *Client) CreateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateServiceAccountTokenRequest(c.Server, serviceAccountId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteServiceAccountToken Delete an API token
+//
+// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+//
+// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+func (c *Client) DeleteServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteServiceAccountTokenRequest(c.Server, serviceAccountId, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetServiceAccountToken Get an API token
+//
+// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+func (c *Client) GetServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetServiceAccountTokenRequest(c.Server, serviceAccountId, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateServiceAccountTokenWithBody Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *Client) UpdateServiceAccountTokenWithBody(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateServiceAccountTokenRequestWithBody(c.Server, serviceAccountId, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateServiceAccountToken Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *Client) UpdateServiceAccountToken(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateServiceAccountTokenRequest(c.Server, serviceAccountId, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListUsers List users
 //
 // Returns a list of users in the organization, including both active users and invited users.
@@ -14965,7 +17582,7 @@ func (c *Client) ListGcpBillingAccounts(ctx context.Context, params *ListGcpBill
 //
 // Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 //
-// Fields that drive the Overview tab in the DoiT console:
+// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 // - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 // - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 // - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -14974,6 +17591,110 @@ func (c *Client) ListGcpBillingAccounts(ctx context.Context, params *ListGcpBill
 // Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 func (c *Client) GetGcpBillingAccount(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetGcpBillingAccountRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpPlannedPurchases List GCP planned purchases
+//
+// Returns the laddering projections for the billing account, grouped by PS4C product line
+// (`service`) and region. Each service group lists one entry per available
+// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+// `cloud_sql` scopes are per-region).
+//
+// With no filters, returns all existing projection documents in stable order: service groups
+// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+// first, then remaining regions alphabetically. Services with no projection documents are omitted
+// (not returned as empty groups). When a filter matches no documents, the response is an
+// empty `items` array (not `404`). Partial projection documents return only the fields
+// available in storage.
+//
+// **`gcp_service` and `region` filters**: omit both to return all available services and
+// their regions; supply `gcp_service` alone to return all regions for that service; supply
+// both to return a single service/region scope. `region` requires `gcp_service` — a request
+// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+// `gcp_service` or `region` values return `400` with code `validation_failed`.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+// `items` array when no projection documents exist — use
+// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+//
+// **Pagination**: results are paginated by **service group** (a whole group is never split
+// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+// page size (default 50, max 500). When more groups remain, the response includes a
+// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+// expired token returns `400` with code `pagination_token_expired`.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+func (c *Client) ListGcpPlannedPurchases(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpPlannedPurchasesRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListGcpRecommendations List GCP recommendations
+//
+// Returns commitment purchase recommendations for the billing account, filtered to the
+// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+//
+// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+// alone to return all regions for that service; supply both to return a single
+// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+// region with no data returns `200` with an empty `items` array.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account with no matching recommendation documents returns `200` with an empty
+// `items` array.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+func (c *Client) ListGcpRecommendations(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpRecommendationsRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetGcpRecommendation Get a GCP recommendation
+//
+// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+// billing account, including analysis metrics and time-bucketed eligible spend. Use
+// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+//
+// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+// A well-formed region the billing account has never had eligible spend in returns `404`
+// with code `not_found` — the scope does not exist, same as an unknown billing account.
+// When the scope exists but no stored recommendation matches, the response is `200` with
+// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+func (c *Client) GetGcpRecommendation(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGcpRecommendationRequest(c.Server, billingAccountId, gcpService, params)
 	if err != nil {
 		return nil, err
 	}
@@ -15001,11 +17722,46 @@ func (c *Client) ListGcpResourceCuds(ctx context.Context, billingAccountId Billi
 	return c.Client.Do(req)
 }
 
+// ListGcpSpendCuds List GCP spend-based Committed Use Discounts
+//
+// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+// CUD state (`status`); omit to return CUDs in all states.
+//
+// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+// echoes the raw provider value (`us-central1`).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+func (c *Client) ListGcpSpendCuds(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListGcpSpendCudsRequest(c.Server, billingAccountId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListGcpBillingAccountsSettings List billing account engine settings
 //
 // Returns one item per onboarded GCP Billing Account. Each item includes that billing
 // account's recommendation and automation engine settings for each product line activated
-// on it (`compute`).
+// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+// for `cloud_sql`.
+//
+// Cloud SQL regions come from the billing account's persisted settings: a region is added
+// when eligible spend is first seen there and is never removed, so its settings entry
+// remains listed even if spend later drops to zero. Items are sorted by
+// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+// `cloud_sql` regions sorted alphabetically.
 //
 // Settings are stored independently on each billing account. Existing customer-level
 // settings are copied lazily when an account is first read or initialized; if no valid
@@ -15017,6 +17773,62 @@ func (c *Client) ListGcpResourceCuds(ctx context.Context, billingAccountId Billi
 // Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
 func (c *Client) ListGcpBillingAccountsSettings(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListGcpBillingAccountsSettingsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCommitmentPolicies List commitment policies
+//
+// Returns every commitment policy available to the tenant: the three built-in policies
+// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+//
+// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+// same policy may be assigned to AWS and GCP product lines alike.
+//
+// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+// entered in the DoiT Console. This differs from the coverage and utilization fields on
+// recommendations and inventory, which are fractions from 0 to 1.
+//
+// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+// Console on the Commitment Policies page.
+//
+// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+func (c *Client) ListCommitmentPolicies(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCommitmentPoliciesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCommitmentPolicy Get a commitment policy
+//
+// Returns one commitment policy by id, with its creation and last-update times and the list of
+// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+//
+// `assignments` lists explicit assignments only. An account whose settings have not yet been
+// materialized falls back to `balanced` implicitly and does not appear here, even though the
+// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+// tenant and applied to every onboarded organization, so each organization appears once per
+// product line. The list is not paginated.
+//
+// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+// queried the request fails rather than returning a partial list.
+//
+// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+func (c *Client) GetCommitmentPolicy(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCommitmentPolicyRequest(c.Server, policyId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -17707,7 +20519,7 @@ func NewCancelAsyncOperationRequest(server string, operationId string, params *C
 }
 
 // NewGetAsyncOperationResultsRequest constructs an http.Request for the GetAsyncOperationResults method
-func NewGetAsyncOperationResultsRequest(server string, operationId string) (*http.Request, error) {
+func NewGetAsyncOperationResultsRequest(server string, operationId string, params *GetAsyncOperationResultsParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17730,6 +20542,33 @@ func NewGetAsyncOperationResultsRequest(server string, operationId string) (*htt
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.FileOutput != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "fileOutput", *params.FileOutput, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
@@ -18210,6 +21049,97 @@ func NewUpdateCustomThemeRequestWithBody(server string, id string, contentType s
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListWidgetsRequest constructs an http.Request for the ListWidgets method
+func NewListWidgetsRequest(server string, params *ListWidgetsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/widgets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetWidgetRequest constructs an http.Request for the GetWidget method
+func NewGetWidgetRequest(server string, widgetId string, params *GetWidgetParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "widgetId", widgetId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/analytics/v1/widgets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
 
 	return req, nil
 }
@@ -20538,6 +23468,831 @@ func NewListRolesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewCreateRoleRequest calls the generic CreateRole builder with application/json body
+func NewCreateRoleRequest(server string, params *CreateRoleParams, body CreateRoleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateRoleRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateRoleRequestWithBody constructs an http.Request for the CreateRole method, with any body, and a specified content type
+func NewCreateRoleRequestWithBody(server string, params *CreateRoleParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/roles")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteRoleRequest constructs an http.Request for the DeleteRole method
+func NewDeleteRoleRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/roles/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetRoleRequest constructs an http.Request for the GetRole method
+func NewGetRoleRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/roles/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateRoleRequest calls the generic UpdateRole builder with application/json body
+func NewUpdateRoleRequest(server string, id string, body UpdateRoleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateRoleRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateRoleRequestWithBody constructs an http.Request for the UpdateRole method, with any body, and a specified content type
+func NewUpdateRoleRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/roles/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListServiceAccountsRequest constructs an http.Request for the ListServiceAccounts method
+func NewListServiceAccountsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateServiceAccountRequest calls the generic CreateServiceAccount builder with application/json body
+func NewCreateServiceAccountRequest(server string, params *CreateServiceAccountParams, body CreateServiceAccountJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateServiceAccountRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateServiceAccountRequestWithBody constructs an http.Request for the CreateServiceAccount method, with any body, and a specified content type
+func NewCreateServiceAccountRequestWithBody(server string, params *CreateServiceAccountParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteServiceAccountRequest constructs an http.Request for the DeleteServiceAccount method
+func NewDeleteServiceAccountRequest(server string, id ServiceAccountId, params *DeleteServiceAccountParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewGetServiceAccountRequest constructs an http.Request for the GetServiceAccount method
+func NewGetServiceAccountRequest(server string, id ServiceAccountId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateServiceAccountRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateServiceAccount builder with application/merge-patch+json body
+func NewUpdateServiceAccountRequestWithApplicationMergePatchPlusJSONBody(server string, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateServiceAccountRequestWithBody(server, id, params, "application/merge-patch+json", bodyReader)
+}
+
+// NewUpdateServiceAccountRequestWithBody constructs an http.Request for the UpdateServiceAccount method, with any body, and a specified content type
+func NewUpdateServiceAccountRequestWithBody(server string, id ServiceAccountId, params *UpdateServiceAccountParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewListServiceAccountTokensRequest constructs an http.Request for the ListServiceAccountTokens method
+func NewListServiceAccountTokensRequest(server string, serviceAccountId ServiceAccountTokenParentId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateServiceAccountTokenRequest calls the generic CreateServiceAccountToken builder with application/json body
+func NewCreateServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateServiceAccountTokenRequestWithBody(server, serviceAccountId, params, "application/json", bodyReader)
+}
+
+// NewCreateServiceAccountTokenRequestWithBody constructs an http.Request for the CreateServiceAccountToken method, with any body, and a specified content type
+func NewCreateServiceAccountTokenRequestWithBody(server string, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteServiceAccountTokenRequest constructs an http.Request for the DeleteServiceAccountToken method
+func NewDeleteServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetServiceAccountTokenRequest constructs an http.Request for the GetServiceAccountToken method
+func NewGetServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateServiceAccountTokenRequest calls the generic UpdateServiceAccountToken builder with application/json body
+func NewUpdateServiceAccountTokenRequest(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateServiceAccountTokenRequestWithBody(server, serviceAccountId, id, params, "application/json", bodyReader)
+}
+
+// NewUpdateServiceAccountTokenRequestWithBody constructs an http.Request for the UpdateServiceAccountToken method, with any body, and a specified content type
+func NewUpdateServiceAccountTokenRequestWithBody(server string, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "serviceAccountId", serviceAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/service-accounts/%s/api-tokens/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
 // NewListUsersRequest constructs an http.Request for the ListUsers method
 func NewListUsersRequest(server string, params *ListUsersParams) (*http.Request, error) {
 	var err error
@@ -20973,6 +24728,301 @@ func NewGetGcpBillingAccountRequest(server string, billingAccountId BillingAccou
 	return req, nil
 }
 
+// NewListGcpPlannedPurchasesRequest constructs an http.Request for the ListGcpPlannedPurchases method
+func NewListGcpPlannedPurchasesRequest(server string, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/planned-purchases", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.GcpService != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "gcp_service", *params.GcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewListGcpRecommendationsRequest constructs an http.Request for the ListGcpRecommendations method
+func NewListGcpRecommendationsRequest(server string, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/recommendations", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.GcpService != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "gcp_service", *params.GcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetGcpRecommendationRequest constructs an http.Request for the GetGcpRecommendation method
+func NewGetGcpRecommendationRequest(server string, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "gcp_service", gcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/recommendations/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Granularity != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "granularity", *params.Granularity, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewListGcpResourceCudsRequest constructs an http.Request for the ListGcpResourceCuds method
 func NewListGcpResourceCudsRequest(server string, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams) (*http.Request, error) {
 	var err error
@@ -21011,6 +25061,130 @@ func NewListGcpResourceCudsRequest(server string, billingAccountId BillingAccoun
 		if params.Status != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "status", *params.Status, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewListGcpSpendCudsRequest constructs an http.Request for the ListGcpSpendCuds method
+func NewListGcpSpendCudsRequest(server string, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "billingAccountId", billingAccountId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/gcp/billing-accounts/%s/spend-based", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Status != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "status", *params.Status, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.GcpService != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "gcp_service", *params.GcpService, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Region != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "region", *params.Region, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -21129,6 +25303,136 @@ func NewListGcpBillingAccountsSettingsRequest(server string, params *ListGcpBill
 			rawQueryFragments = append(rawQueryFragments, encoded)
 		}
 		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewListCommitmentPoliciesRequest constructs an http.Request for the ListCommitmentPolicies method
+func NewListCommitmentPoliciesRequest(server string, params *ListCommitmentPoliciesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/general/policies")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XTenantId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-Tenant-Id", *params.XTenantId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Tenant-Id", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetCommitmentPolicyRequest constructs an http.Request for the GetCommitmentPolicy method
+func NewGetCommitmentPolicyRequest(server string, policyId PolicyId, params *GetCommitmentPolicyParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "policyId", policyId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/ps4commitments/v1/general/policies/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
@@ -22263,7 +26567,7 @@ type ClientWithResponsesInterface interface {
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-	GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error)
+	GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error)
 
 	// DeleteReportWithResponse Delete a report
 	//
@@ -22409,6 +26713,53 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /analytics/v1/settings/themes/{id} (the `UpdateCustomTheme` operationId).
 	UpdateCustomThemeWithResponse(ctx context.Context, id string, body UpdateCustomThemeJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomThemeResp, error)
+
+	// ListWidgetsWithResponse List widgets
+	//
+	// Returns the complete catalogue of preset widgets supported by the Analytics Widgets API.
+	// Each entry contains a customer-specific `id` and a stable customer-facing `alias`; either
+	// value can be passed to the get-widget operation. An `id` can vary by customer or service
+	// tier, while an `alias` remains stable.
+	//
+	// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+	// resolves to one customer. When the credential can act on multiple customers, send
+	// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+	// selected customer is not authorized or entitled to use this API.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /analytics/v1/widgets (the `ListWidgets` operationId).
+	ListWidgetsWithResponse(ctx context.Context, params *ListWidgetsParams, reqEditors ...RequestEditorFn) (*ListWidgetsResp, error)
+
+	// GetWidgetWithResponse Get a widget
+	//
+	// Returns the latest precomputed cached result for one widget. This read does not refresh or
+	// recompute the widget synchronously.
+	//
+	// Use either the customer-specific `id` returned by the list-widgets operation or one of these
+	// stable aliases:
+	//
+	// - `current-month-cloud-spend` — total cloud spend accumulated during the current calendar month.
+	// - `current-month-cloud-forecast` — forecast of total cloud spend for the current calendar month.
+	//
+	// The two concrete alias requests are:
+	//
+	// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-spend`
+	// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-forecast`
+	//
+	// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+	// resolves to one customer. When the credential can act on multiple customers, send
+	// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+	// selected customer is not authorized or entitled to use this API.
+	//
+	// The result's `period.endTime` is exclusive. Monetary `amount` values are decimal strings and
+	// `currency` values are ISO 4217 currency codes. `monthToMonthGrowthPercentage` and
+	// `monthToMonthGrowthAmount` are both `null` when no comparable prior-period value exists.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /analytics/v1/widgets/{widgetId} (the `GetWidget` operationId).
+	GetWidgetWithResponse(ctx context.Context, widgetId string, params *GetWidgetParams, reqEditors ...RequestEditorFn) (*GetWidgetResp, error)
 
 	// ListAnomaliesWithResponse List anomalies
 	//
@@ -22934,6 +27285,224 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /iam/v1/roles (the `ListRoles` operationId).
 	ListRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListRolesResp, error)
 
+	// CreateRoleWithBodyWithResponse Create role
+	//
+	// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+	CreateRoleWithBodyWithResponse(ctx context.Context, params *CreateRoleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateRoleResp, error)
+
+	// CreateRoleWithResponse Create role
+	//
+	// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+	CreateRoleWithResponse(ctx context.Context, params *CreateRoleParams, body CreateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateRoleResp, error)
+
+	// DeleteRoleWithResponse Delete role
+	//
+	// Deletes a custom role. Preset roles cannot be deleted, and a role still assigned to users or groups must be unassigned first. A service account of a parent tenant can delete a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /iam/v1/roles/{id} (the `DeleteRole` operationId).
+	DeleteRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteRoleResp, error)
+
+	// GetRoleWithResponse Get role
+	//
+	// Returns a single role by ID. Preset roles are visible to every customer; a custom role is returned only to the customer that owns it. A service account of a parent tenant can read a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/roles/{id} (the `GetRole` operationId).
+	GetRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetRoleResp, error)
+
+	// UpdateRoleWithBodyWithResponse Update role
+	//
+	// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+	UpdateRoleWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateRoleResp, error)
+
+	// UpdateRoleWithResponse Update role
+	//
+	// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+	UpdateRoleWithResponse(ctx context.Context, id string, body UpdateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateRoleResp, error)
+
+	// ListServiceAccountsWithResponse List service accounts
+	//
+	// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+	ListServiceAccountsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListServiceAccountsResp, error)
+
+	// CreateServiceAccountWithBodyWithResponse Create a service account
+	//
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+	CreateServiceAccountWithBodyWithResponse(ctx context.Context, params *CreateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateServiceAccountResp, error)
+
+	// CreateServiceAccountWithResponse Create a service account
+	//
+	// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+	CreateServiceAccountWithResponse(ctx context.Context, params *CreateServiceAccountParams, body CreateServiceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateServiceAccountResp, error)
+
+	// DeleteServiceAccountWithResponse Delete a service account
+	//
+	// Permanently deletes a service account and all of its API tokens, which stop authenticating immediately. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /iam/v1/service-accounts/{id} (the `DeleteServiceAccount` operationId).
+	DeleteServiceAccountWithResponse(ctx context.Context, id ServiceAccountId, params *DeleteServiceAccountParams, reqEditors ...RequestEditorFn) (*DeleteServiceAccountResp, error)
+
+	// GetServiceAccountWithResponse Get a service account
+	//
+	// Returns a service account owned by the authenticated customer; an ID that belongs to another customer returns `404`. The `ETag` response header carries the value to send in `If-Match` on update and delete. Requires the `serviceAccountViewer` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{id} (the `GetServiceAccount` operationId).
+	GetServiceAccountWithResponse(ctx context.Context, id ServiceAccountId, reqEditors ...RequestEditorFn) (*GetServiceAccountResp, error)
+
+	// UpdateServiceAccountWithBodyWithResponse Update a service account
+	//
+	// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+	UpdateServiceAccountWithBodyWithResponse(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateServiceAccountResp, error)
+
+	// UpdateServiceAccountWithApplicationMergePatchPlusJSONBodyWithResponse Update a service account
+	//
+	// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+	//
+	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+	UpdateServiceAccountWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountResp, error)
+
+	// ListServiceAccountTokensWithResponse List API tokens for a service account
+	//
+	// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+	ListServiceAccountTokensWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*ListServiceAccountTokensResp, error)
+
+	// CreateServiceAccountTokenWithBodyWithResponse Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error)
+
+	// CreateServiceAccountTokenWithResponse Create an API token for a service account
+	//
+	// Mints an API token for the service account and returns its `accessToken` once. The token
+	// inherits the service account's permissions as they stand at creation; there is no per-token
+	// scoping. Returns `409` when the service account already has a token of the same name, and
+	// `422` at the cap of 10 tokens.
+	//
+	// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+	// It does **not** verify that the service account exists, that the name is unused, or that the
+	// account is under the token cap, so a dry run can succeed where the real create then returns
+	// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+	CreateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error)
+
+	// DeleteServiceAccountTokenWithResponse Delete an API token
+	//
+	// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+	DeleteServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*DeleteServiceAccountTokenResp, error)
+
+	// GetServiceAccountTokenWithResponse Get an API token
+	//
+	// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+	GetServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*GetServiceAccountTokenResp, error)
+
+	// UpdateServiceAccountTokenWithBodyWithResponse Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error)
+
+	// UpdateServiceAccountTokenWithResponse Enable or disable an API token
+	//
+	// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+	// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+	// token already has succeeds and changes nothing.
+	//
+	// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+	// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+	// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+	// the delete operation, and expires on its own.
+	//
+	// With `dryRun=true` nothing is written and the response body is the token as it would look
+	// after the change, so a `422` here means a real request would also be refused. Requires the
+	// `serviceAccountManager` permission.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+	UpdateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error)
+
 	// ListUsersWithResponse List users
 	//
 	// Returns a list of users in the organization, including both active users and invited users.
@@ -23032,7 +27601,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 	//
-	// Fields that drive the Overview tab in the DoiT console:
+	// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 	// - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 	// - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 	// - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -23043,6 +27612,86 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId} (the `GetGcpBillingAccount` operationId).
 	GetGcpBillingAccountWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *GetGcpBillingAccountParams, reqEditors ...RequestEditorFn) (*GetGcpBillingAccountResp, error)
 
+	// ListGcpPlannedPurchasesWithResponse List GCP planned purchases
+	//
+	// Returns the laddering projections for the billing account, grouped by PS4C product line
+	// (`service`) and region. Each service group lists one entry per available
+	// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+	// `cloud_sql` scopes are per-region).
+	//
+	// With no filters, returns all existing projection documents in stable order: service groups
+	// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+	// first, then remaining regions alphabetically. Services with no projection documents are omitted
+	// (not returned as empty groups). When a filter matches no documents, the response is an
+	// empty `items` array (not `404`). Partial projection documents return only the fields
+	// available in storage.
+	//
+	// **`gcp_service` and `region` filters**: omit both to return all available services and
+	// their regions; supply `gcp_service` alone to return all regions for that service; supply
+	// both to return a single service/region scope. `region` requires `gcp_service` — a request
+	// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+	// `gcp_service` or `region` values return `400` with code `validation_failed`.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+	// `items` array when no projection documents exist — use
+	// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+	//
+	// **Pagination**: results are paginated by **service group** (a whole group is never split
+	// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+	// page size (default 50, max 500). When more groups remain, the response includes a
+	// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+	// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+	// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+	// expired token returns `400` with code `pagination_token_expired`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+	ListGcpPlannedPurchasesWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*ListGcpPlannedPurchasesResp, error)
+
+	// ListGcpRecommendationsWithResponse List GCP recommendations
+	//
+	// Returns commitment purchase recommendations for the billing account, filtered to the
+	// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+	//
+	// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+	// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+	// alone to return all regions for that service; supply both to return a single
+	// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+	// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+	// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+	// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+	// region with no data returns `200` with an empty `items` array.
+	//
+	// `404` is returned only when the billing account does not exist or the caller cannot access
+	// it. A billing account with no matching recommendation documents returns `200` with an empty
+	// `items` array.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+	ListGcpRecommendationsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*ListGcpRecommendationsResp, error)
+
+	// GetGcpRecommendationWithResponse Get a GCP recommendation
+	//
+	// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+	// billing account, including analysis metrics and time-bucketed eligible spend. Use
+	// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+	//
+	// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+	// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+	// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+	// A well-formed region the billing account has never had eligible spend in returns `404`
+	// with code `not_found` — the scope does not exist, same as an unknown billing account.
+	// When the scope exists but no stored recommendation matches, the response is `200` with
+	// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+	GetGcpRecommendationWithResponse(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*GetGcpRecommendationResp, error)
+
 	// ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
 	//
 	// Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
@@ -23052,11 +27701,38 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based (the `ListGcpResourceCuds` operationId).
 	ListGcpResourceCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpResourceCudsParams, reqEditors ...RequestEditorFn) (*ListGcpResourceCudsResp, error)
 
+	// ListGcpSpendCudsWithResponse List GCP spend-based Committed Use Discounts
+	//
+	// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+	// CUD state (`status`); omit to return CUDs in all states.
+	//
+	// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+	// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+	// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+	// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+	// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+	// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+	// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+	// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+	// echoes the raw provider value (`us-central1`).
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+	ListGcpSpendCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*ListGcpSpendCudsResp, error)
+
 	// ListGcpBillingAccountsSettingsWithResponse List billing account engine settings
 	//
 	// Returns one item per onboarded GCP Billing Account. Each item includes that billing
 	// account's recommendation and automation engine settings for each product line activated
-	// on it (`compute`).
+	// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+	// for `cloud_sql`.
+	//
+	// Cloud SQL regions come from the billing account's persisted settings: a region is added
+	// when eligible spend is first seen there and is never removed, so its settings entry
+	// remains listed even if spend later drops to zero. Items are sorted by
+	// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+	// `cloud_sql` regions sorted alphabetically.
 	//
 	// Settings are stored independently on each billing account. Existing customer-level
 	// settings are copied lazily when an account is first read or initialized; if no valid
@@ -23069,6 +27745,46 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /ps4commitments/v1/gcp/settings (the `ListGcpBillingAccountsSettings` operationId).
 	ListGcpBillingAccountsSettingsWithResponse(ctx context.Context, params *ListGcpBillingAccountsSettingsParams, reqEditors ...RequestEditorFn) (*ListGcpBillingAccountsSettingsResp, error)
+
+	// ListCommitmentPoliciesWithResponse List commitment policies
+	//
+	// Returns every commitment policy available to the tenant: the three built-in policies
+	// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+	//
+	// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+	// same policy may be assigned to AWS and GCP product lines alike.
+	//
+	// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+	// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+	// entered in the DoiT Console. This differs from the coverage and utilization fields on
+	// recommendations and inventory, which are fractions from 0 to 1.
+	//
+	// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+	// Console on the Commitment Policies page.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+	ListCommitmentPoliciesWithResponse(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*ListCommitmentPoliciesResp, error)
+
+	// GetCommitmentPolicyWithResponse Get a commitment policy
+	//
+	// Returns one commitment policy by id, with its creation and last-update times and the list of
+	// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+	//
+	// `assignments` lists explicit assignments only. An account whose settings have not yet been
+	// materialized falls back to `balanced` implicitly and does not appear here, even though the
+	// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+	// tenant and applied to every onboarded organization, so each organization appears once per
+	// product line. The list is not paginated.
+	//
+	// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+	// queried the request fails rather than returning a partial list.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+	GetCommitmentPolicyWithResponse(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*GetCommitmentPolicyResp, error)
 
 	// ListGeographicAccessCountriesWithResponse List countries available for geographic access
 	//
@@ -27134,6 +31850,210 @@ func (r UpdateCustomThemeResp) ContentType() string {
 	return ""
 }
 
+// ListWidgetsResp401Headers the declared response headers of an HTTP 401 response for ListWidgets
+type ListWidgetsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListWidgetsResp403Headers the declared response headers of an HTTP 403 response for ListWidgets
+type ListWidgetsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListWidgetsResp500Headers the declared response headers of an HTTP 500 response for ListWidgets
+type ListWidgetsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListWidgetsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WidgetList
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListWidgetsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListWidgetsResp403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListWidgetsResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListWidgetsResp) GetJSON200() *WidgetList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListWidgetsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListWidgetsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListWidgetsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListWidgetsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListWidgetsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListWidgetsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListWidgetsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetWidgetResp401Headers the declared response headers of an HTTP 401 response for GetWidget
+type GetWidgetResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetWidgetResp403Headers the declared response headers of an HTTP 403 response for GetWidget
+type GetWidgetResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetWidgetResp404Headers the declared response headers of an HTTP 404 response for GetWidget
+type GetWidgetResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetWidgetResp500Headers the declared response headers of an HTTP 500 response for GetWidget
+type GetWidgetResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetWidgetResp503Headers the declared response headers of an HTTP 503 response for GetWidget
+type GetWidgetResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetWidgetResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Widget
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *ProblemDetails
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *ProblemDetails
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ProblemDetails
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetWidgetResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetWidgetResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetWidgetResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetWidgetResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetWidgetResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetWidgetResp) GetJSON200() *Widget {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetWidgetResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetWidgetResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetWidgetResp) GetApplicationproblemJSON404() *ProblemDetails {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetWidgetResp) GetApplicationproblemJSON500() *ProblemDetails {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetWidgetResp) GetApplicationproblemJSON503() *ProblemDetails {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetWidgetResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWidgetResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWidgetResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetWidgetResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListAnomaliesResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -29770,6 +34690,8 @@ type DeleteDatahubDatasetResp struct {
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *DeleteDatahubDataset200Response
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *DeleteDatahubDataset202Response
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *N400
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -29785,6 +34707,11 @@ type DeleteDatahubDatasetResp struct {
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r DeleteDatahubDatasetResp) GetJSON200() *DeleteDatahubDataset200Response {
 	return r.JSON200
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r DeleteDatahubDatasetResp) GetJSON202() *DeleteDatahubDataset202Response {
+	return r.JSON202
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -30118,6 +35045,1508 @@ func (r ListRolesResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListRolesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *Role
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Error
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *ProblemDetails
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Error
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *ProblemDetails
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *ProblemDetails
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateRoleResp) GetJSON201() *Role {
+	return r.JSON201
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r CreateRoleResp) GetJSON400() *Error {
+	return r.JSON400
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateRoleResp) GetApplicationproblemJSON400() *ProblemDetails {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CreateRoleResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CreateRoleResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r CreateRoleResp) GetJSON409() *Error {
+	return r.JSON409
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateRoleResp) GetApplicationproblemJSON409() *ProblemDetails {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateRoleResp) GetApplicationproblemJSON422() *ProblemDetails {
+	return r.ApplicationproblemJSON422
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r CreateRoleResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateRoleResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Error
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Error
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Error
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// JSON503 the response for an HTTP 503 `application/json` response
+	JSON503 *Error
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r DeleteRoleResp) GetJSON400() *Error {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DeleteRoleResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r DeleteRoleResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r DeleteRoleResp) GetJSON404() *Error {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r DeleteRoleResp) GetJSON409() *Error {
+	return r.JSON409
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r DeleteRoleResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetJSON503 returns the response for an HTTP 503 `application/json` response
+func (r DeleteRoleResp) GetJSON503() *Error {
+	return r.JSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteRoleResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Role
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Error
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetRoleResp) GetJSON200() *Role {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetRoleResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetRoleResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetRoleResp) GetJSON404() *Error {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetRoleResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetRoleResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateRoleResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Role
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *Error
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Error
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *Error
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateRoleResp) GetJSON200() *Role {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r UpdateRoleResp) GetJSON400() *Error {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateRoleResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r UpdateRoleResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r UpdateRoleResp) GetJSON404() *Error {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r UpdateRoleResp) GetJSON409() *Error {
+	return r.JSON409
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r UpdateRoleResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateRoleResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateRoleResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateRoleResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateRoleResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListServiceAccountsResp500Headers the declared response headers of an HTTP 500 response for ListServiceAccounts
+type ListServiceAccountsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListServiceAccountsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountsResponse
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListServiceAccountsResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListServiceAccountsResp) GetJSON200() *ServiceAccountsResponse {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListServiceAccountsResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListServiceAccountsResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListServiceAccountsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListServiceAccountsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListServiceAccountsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListServiceAccountsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListServiceAccountsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateServiceAccountResp200Headers the declared response headers of an HTTP 200 response for CreateServiceAccount
+type CreateServiceAccountResp200Headers struct {
+	XDryRun *string
+}
+
+// CreateServiceAccountResp201Headers the declared response headers of an HTTP 201 response for CreateServiceAccount
+type CreateServiceAccountResp201Headers struct {
+	ETag     *string
+	Location *string
+}
+
+// CreateServiceAccountResp400Headers the declared response headers of an HTTP 400 response for CreateServiceAccount
+type CreateServiceAccountResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountResp409Headers the declared response headers of an HTTP 409 response for CreateServiceAccount
+type CreateServiceAccountResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountResp422Headers the declared response headers of an HTTP 422 response for CreateServiceAccount
+type CreateServiceAccountResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountResp500Headers the declared response headers of an HTTP 500 response for CreateServiceAccount
+type CreateServiceAccountResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type CreateServiceAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccount
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *ServiceAccount
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateServiceAccountResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateServiceAccountResp201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateServiceAccountResp400Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateServiceAccountResp409Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateServiceAccountResp422Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateServiceAccountResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateServiceAccountResp) GetJSON200() *ServiceAccount {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateServiceAccountResp) GetJSON201() *ServiceAccount {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateServiceAccountResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CreateServiceAccountResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CreateServiceAccountResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateServiceAccountResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateServiceAccountResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateServiceAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateServiceAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateServiceAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateServiceAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateServiceAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteServiceAccountResp204Headers the declared response headers of an HTTP 204 response for DeleteServiceAccount
+type DeleteServiceAccountResp204Headers struct {
+	XDryRun *string
+}
+
+// DeleteServiceAccountResp400Headers the declared response headers of an HTTP 400 response for DeleteServiceAccount
+type DeleteServiceAccountResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountResp404Headers the declared response headers of an HTTP 404 response for DeleteServiceAccount
+type DeleteServiceAccountResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountResp412Headers the declared response headers of an HTTP 412 response for DeleteServiceAccount
+type DeleteServiceAccountResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountResp428Headers the declared response headers of an HTTP 428 response for DeleteServiceAccount
+type DeleteServiceAccountResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountResp500Headers the declared response headers of an HTTP 500 response for DeleteServiceAccount
+type DeleteServiceAccountResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type DeleteServiceAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteServiceAccountResp204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteServiceAccountResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteServiceAccountResp404Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *DeleteServiceAccountResp412Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *DeleteServiceAccountResp428Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DeleteServiceAccountResp500Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteServiceAccountResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DeleteServiceAccountResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r DeleteServiceAccountResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteServiceAccountResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r DeleteServiceAccountResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r DeleteServiceAccountResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DeleteServiceAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteServiceAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteServiceAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteServiceAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteServiceAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetServiceAccountResp200Headers the declared response headers of an HTTP 200 response for GetServiceAccount
+type GetServiceAccountResp200Headers struct {
+	ETag *string
+}
+
+// GetServiceAccountResp400Headers the declared response headers of an HTTP 400 response for GetServiceAccount
+type GetServiceAccountResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetServiceAccountResp404Headers the declared response headers of an HTTP 404 response for GetServiceAccount
+type GetServiceAccountResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetServiceAccountResp500Headers the declared response headers of an HTTP 500 response for GetServiceAccount
+type GetServiceAccountResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetServiceAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccount
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetServiceAccountResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetServiceAccountResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetServiceAccountResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetServiceAccountResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetServiceAccountResp) GetJSON200() *ServiceAccount {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetServiceAccountResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetServiceAccountResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetServiceAccountResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetServiceAccountResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetServiceAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetServiceAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetServiceAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetServiceAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetServiceAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateServiceAccountResp200Headers the declared response headers of an HTTP 200 response for UpdateServiceAccount
+type UpdateServiceAccountResp200Headers struct {
+	ETag    *string
+	XDryRun *string
+}
+
+// UpdateServiceAccountResp400Headers the declared response headers of an HTTP 400 response for UpdateServiceAccount
+type UpdateServiceAccountResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountResp404Headers the declared response headers of an HTTP 404 response for UpdateServiceAccount
+type UpdateServiceAccountResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountResp409Headers the declared response headers of an HTTP 409 response for UpdateServiceAccount
+type UpdateServiceAccountResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountResp412Headers the declared response headers of an HTTP 412 response for UpdateServiceAccount
+type UpdateServiceAccountResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountResp415Headers the declared response headers of an HTTP 415 response for UpdateServiceAccount
+type UpdateServiceAccountResp415Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountResp422Headers the declared response headers of an HTTP 422 response for UpdateServiceAccount
+type UpdateServiceAccountResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountResp428Headers the declared response headers of an HTTP 428 response for UpdateServiceAccount
+type UpdateServiceAccountResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountResp500Headers the declared response headers of an HTTP 500 response for UpdateServiceAccount
+type UpdateServiceAccountResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type UpdateServiceAccountResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccount
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON415 the response for an HTTP 415 `application/problem+json` response
+	ApplicationproblemJSON415 *UnsupportedMediaType
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateServiceAccountResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateServiceAccountResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateServiceAccountResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateServiceAccountResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *UpdateServiceAccountResp412Headers
+	// Headers415 the parsed response headers for an HTTP 415 response
+	Headers415 *UpdateServiceAccountResp415Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateServiceAccountResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *UpdateServiceAccountResp428Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateServiceAccountResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateServiceAccountResp) GetJSON200() *ServiceAccount {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateServiceAccountResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r UpdateServiceAccountResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON415 returns the response for an HTTP 415 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON415() *UnsupportedMediaType {
+	return r.ApplicationproblemJSON415
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateServiceAccountResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateServiceAccountResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateServiceAccountResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateServiceAccountResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateServiceAccountResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListServiceAccountTokensResp404Headers the declared response headers of an HTTP 404 response for ListServiceAccountTokens
+type ListServiceAccountTokensResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListServiceAccountTokensResp500Headers the declared response headers of an HTTP 500 response for ListServiceAccountTokens
+type ListServiceAccountTokensResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListServiceAccountTokensResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountTokensResponse
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListServiceAccountTokensResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListServiceAccountTokensResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListServiceAccountTokensResp) GetJSON200() *ServiceAccountTokensResponse {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListServiceAccountTokensResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListServiceAccountTokensResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListServiceAccountTokensResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListServiceAccountTokensResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListServiceAccountTokensResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListServiceAccountTokensResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListServiceAccountTokensResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListServiceAccountTokensResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateServiceAccountTokenResp200Headers the declared response headers of an HTTP 200 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp200Headers struct {
+	XDryRun *string
+}
+
+// CreateServiceAccountTokenResp201Headers the declared response headers of an HTTP 201 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp201Headers struct {
+	Location *string
+}
+
+// CreateServiceAccountTokenResp400Headers the declared response headers of an HTTP 400 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp409Headers the declared response headers of an HTTP 409 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp422Headers the declared response headers of an HTTP 422 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for CreateServiceAccountToken
+type CreateServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type CreateServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CreateServiceAccountTokenResponse
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *CreateServiceAccountTokenResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateServiceAccountTokenResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateServiceAccountTokenResp201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateServiceAccountTokenResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *CreateServiceAccountTokenResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateServiceAccountTokenResp409Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateServiceAccountTokenResp422Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateServiceAccountTokenResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON200() *CreateServiceAccountTokenResponse {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON201() *CreateServiceAccountTokenResponse {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CreateServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateServiceAccountTokenResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteServiceAccountTokenResp204Headers the declared response headers of an HTTP 204 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp204Headers struct {
+	XDryRun *string
+}
+
+// DeleteServiceAccountTokenResp400Headers the declared response headers of an HTTP 400 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for DeleteServiceAccountToken
+type DeleteServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type DeleteServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteServiceAccountTokenResp204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteServiceAccountTokenResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteServiceAccountTokenResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DeleteServiceAccountTokenResp500Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteServiceAccountTokenResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DeleteServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r DeleteServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DeleteServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteServiceAccountTokenResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for GetServiceAccountToken
+type GetServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for GetServiceAccountToken
+type GetServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountToken
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetServiceAccountTokenResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetServiceAccountTokenResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetServiceAccountTokenResp) GetJSON200() *ServiceAccountToken {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetServiceAccountTokenResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateServiceAccountTokenResp200Headers the declared response headers of an HTTP 200 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp200Headers struct {
+	XDryRun *string
+}
+
+// UpdateServiceAccountTokenResp400Headers the declared response headers of an HTTP 400 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountTokenResp404Headers the declared response headers of an HTTP 404 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountTokenResp422Headers the declared response headers of an HTTP 422 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateServiceAccountTokenResp500Headers the declared response headers of an HTTP 500 response for UpdateServiceAccountToken
+type UpdateServiceAccountTokenResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type UpdateServiceAccountTokenResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ServiceAccountToken
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateServiceAccountTokenResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateServiceAccountTokenResp400Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateServiceAccountTokenResp404Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateServiceAccountTokenResp422Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateServiceAccountTokenResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateServiceAccountTokenResp) GetJSON200() *ServiceAccountToken {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateServiceAccountTokenResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r UpdateServiceAccountTokenResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateServiceAccountTokenResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateServiceAccountTokenResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateServiceAccountTokenResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateServiceAccountTokenResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateServiceAccountTokenResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -30934,6 +37363,429 @@ func (r GetGcpBillingAccountResp) ContentType() string {
 	return ""
 }
 
+// ListGcpPlannedPurchasesResp200Headers the declared response headers of an HTTP 200 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp400Headers the declared response headers of an HTTP 400 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp401Headers the declared response headers of an HTTP 401 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpPlannedPurchasesResp403Headers the declared response headers of an HTTP 403 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp404Headers the declared response headers of an HTTP 404 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp500Headers the declared response headers of an HTTP 500 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpPlannedPurchasesResp503Headers the declared response headers of an HTTP 503 response for ListGcpPlannedPurchases
+type ListGcpPlannedPurchasesResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpPlannedPurchasesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpPlannedPurchases200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpPlannedPurchasesResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpPlannedPurchasesResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpPlannedPurchasesResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpPlannedPurchasesResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListGcpPlannedPurchasesResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpPlannedPurchasesResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpPlannedPurchasesResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpPlannedPurchasesResp) GetJSON200() *ListGcpPlannedPurchases200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpPlannedPurchasesResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpPlannedPurchasesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpPlannedPurchasesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpPlannedPurchasesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpPlannedPurchasesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListGcpRecommendationsResp200Headers the declared response headers of an HTTP 200 response for ListGcpRecommendations
+type ListGcpRecommendationsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp400Headers the declared response headers of an HTTP 400 response for ListGcpRecommendations
+type ListGcpRecommendationsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp401Headers the declared response headers of an HTTP 401 response for ListGcpRecommendations
+type ListGcpRecommendationsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpRecommendationsResp403Headers the declared response headers of an HTTP 403 response for ListGcpRecommendations
+type ListGcpRecommendationsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp404Headers the declared response headers of an HTTP 404 response for ListGcpRecommendations
+type ListGcpRecommendationsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp500Headers the declared response headers of an HTTP 500 response for ListGcpRecommendations
+type ListGcpRecommendationsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpRecommendationsResp503Headers the declared response headers of an HTTP 503 response for ListGcpRecommendations
+type ListGcpRecommendationsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpRecommendationsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpRecommendations200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpRecommendationsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpRecommendationsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpRecommendationsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpRecommendationsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListGcpRecommendationsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpRecommendationsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpRecommendationsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpRecommendationsResp) GetJSON200() *ListGcpRecommendations200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpRecommendationsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpRecommendationsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpRecommendationsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpRecommendationsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpRecommendationsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetGcpRecommendationResp200Headers the declared response headers of an HTTP 200 response for GetGcpRecommendation
+type GetGcpRecommendationResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp400Headers the declared response headers of an HTTP 400 response for GetGcpRecommendation
+type GetGcpRecommendationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp401Headers the declared response headers of an HTTP 401 response for GetGcpRecommendation
+type GetGcpRecommendationResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetGcpRecommendationResp403Headers the declared response headers of an HTTP 403 response for GetGcpRecommendation
+type GetGcpRecommendationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp404Headers the declared response headers of an HTTP 404 response for GetGcpRecommendation
+type GetGcpRecommendationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp500Headers the declared response headers of an HTTP 500 response for GetGcpRecommendation
+type GetGcpRecommendationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetGcpRecommendationResp503Headers the declared response headers of an HTTP 503 response for GetGcpRecommendation
+type GetGcpRecommendationResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type GetGcpRecommendationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GcpRecommendationWithEligibleSpend
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetGcpRecommendationResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetGcpRecommendationResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetGcpRecommendationResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetGcpRecommendationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetGcpRecommendationResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetGcpRecommendationResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetGcpRecommendationResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetGcpRecommendationResp) GetJSON200() *GcpRecommendationWithEligibleSpend {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetGcpRecommendationResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetGcpRecommendationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetGcpRecommendationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetGcpRecommendationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetGcpRecommendationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListGcpResourceCudsResp200Headers the declared response headers of an HTTP 200 response for ListGcpResourceCuds
 type ListGcpResourceCudsResp200Headers struct {
 	ContentLanguage *string
@@ -31075,6 +37927,147 @@ func (r ListGcpResourceCudsResp) ContentType() string {
 	return ""
 }
 
+// ListGcpSpendCudsResp200Headers the declared response headers of an HTTP 200 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp400Headers the declared response headers of an HTTP 400 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp401Headers the declared response headers of an HTTP 401 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListGcpSpendCudsResp403Headers the declared response headers of an HTTP 403 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp404Headers the declared response headers of an HTTP 404 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp500Headers the declared response headers of an HTTP 500 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListGcpSpendCudsResp503Headers the declared response headers of an HTTP 503 response for ListGcpSpendCuds
+type ListGcpSpendCudsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListGcpSpendCudsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListGcpSpendCuds200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListGcpSpendCudsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListGcpSpendCudsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListGcpSpendCudsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListGcpSpendCudsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListGcpSpendCudsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListGcpSpendCudsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListGcpSpendCudsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListGcpSpendCudsResp) GetJSON200() *ListGcpSpendCuds200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListGcpSpendCudsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListGcpSpendCudsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListGcpSpendCudsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListGcpSpendCudsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListGcpSpendCudsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListGcpBillingAccountsSettingsResp200Headers the declared response headers of an HTTP 200 response for ListGcpBillingAccountsSettings
 type ListGcpBillingAccountsSettingsResp200Headers struct {
 	ContentLanguage *string
@@ -31195,6 +38188,273 @@ func (r ListGcpBillingAccountsSettingsResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListGcpBillingAccountsSettingsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListCommitmentPoliciesResp200Headers the declared response headers of an HTTP 200 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp400Headers the declared response headers of an HTTP 400 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp401Headers the declared response headers of an HTTP 401 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListCommitmentPoliciesResp403Headers the declared response headers of an HTTP 403 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp500Headers the declared response headers of an HTTP 500 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCommitmentPoliciesResp503Headers the declared response headers of an HTTP 503 response for ListCommitmentPolicies
+type ListCommitmentPoliciesResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListCommitmentPoliciesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListCommitmentPolicies200Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListCommitmentPoliciesResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListCommitmentPoliciesResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListCommitmentPoliciesResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListCommitmentPoliciesResp403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListCommitmentPoliciesResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListCommitmentPoliciesResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCommitmentPoliciesResp) GetJSON200() *ListCommitmentPolicies200Response {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListCommitmentPoliciesResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCommitmentPoliciesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCommitmentPoliciesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCommitmentPoliciesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCommitmentPoliciesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetCommitmentPolicyResp200Headers the declared response headers of an HTTP 200 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp400Headers the declared response headers of an HTTP 400 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp401Headers the declared response headers of an HTTP 401 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetCommitmentPolicyResp403Headers the declared response headers of an HTTP 403 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp404Headers the declared response headers of an HTTP 404 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp500Headers the declared response headers of an HTTP 500 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCommitmentPolicyResp503Headers the declared response headers of an HTTP 503 response for GetCommitmentPolicy
+type GetCommitmentPolicyResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type GetCommitmentPolicyResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CommitmentPolicyDetail
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetCommitmentPolicyResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetCommitmentPolicyResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetCommitmentPolicyResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetCommitmentPolicyResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetCommitmentPolicyResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetCommitmentPolicyResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetCommitmentPolicyResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCommitmentPolicyResp) GetJSON200() *CommitmentPolicyDetail {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetCommitmentPolicyResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCommitmentPolicyResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCommitmentPolicyResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCommitmentPolicyResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCommitmentPolicyResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -32907,8 +40167,8 @@ func (c *ClientWithResponses) CancelAsyncOperationWithResponse(ctx context.Conte
 // Returns a wrapper object for the known response body format(s).
 //
 // Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
-func (c *ClientWithResponses) GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error) {
-	rsp, err := c.GetAsyncOperationResults(ctx, operationId, reqEditors...)
+func (c *ClientWithResponses) GetAsyncOperationResultsWithResponse(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*GetAsyncOperationResultsResp, error) {
+	rsp, err := c.GetAsyncOperationResults(ctx, operationId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -33148,6 +40408,65 @@ func (c *ClientWithResponses) UpdateCustomThemeWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseUpdateCustomThemeResp(rsp)
+}
+
+// ListWidgetsWithResponse List widgets
+//
+// Returns the complete catalogue of preset widgets supported by the Analytics Widgets API.
+// Each entry contains a customer-specific `id` and a stable customer-facing `alias`; either
+// value can be passed to the get-widget operation. An `id` can vary by customer or service
+// tier, while an `alias` remains stable.
+//
+// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+// resolves to one customer. When the credential can act on multiple customers, send
+// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+// selected customer is not authorized or entitled to use this API.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /analytics/v1/widgets (the `ListWidgets` operationId).
+func (c *ClientWithResponses) ListWidgetsWithResponse(ctx context.Context, params *ListWidgetsParams, reqEditors ...RequestEditorFn) (*ListWidgetsResp, error) {
+	rsp, err := c.ListWidgets(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListWidgetsResp(rsp)
+}
+
+// GetWidgetWithResponse Get a widget
+//
+// Returns the latest precomputed cached result for one widget. This read does not refresh or
+// recompute the widget synchronously.
+//
+// Use either the customer-specific `id` returned by the list-widgets operation or one of these
+// stable aliases:
+//
+// - `current-month-cloud-spend` — total cloud spend accumulated during the current calendar month.
+// - `current-month-cloud-forecast` — forecast of total cloud spend for the current calendar month.
+//
+// The two concrete alias requests are:
+//
+// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-spend`
+// - `GET https://api.doit.com/analytics/v1/widgets/current-month-cloud-forecast`
+//
+// Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+// resolves to one customer. When the credential can act on multiple customers, send
+// `X-Tenant-Id: <tenant-id>` to select the customer. A `403` response means the caller or
+// selected customer is not authorized or entitled to use this API.
+//
+// The result's `period.endTime` is exclusive. Monetary `amount` values are decimal strings and
+// `currency` values are ISO 4217 currency codes. `monthToMonthGrowthPercentage` and
+// `monthToMonthGrowthAmount` are both `null` when no comparable prior-period value exists.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /analytics/v1/widgets/{widgetId} (the `GetWidget` operationId).
+func (c *ClientWithResponses) GetWidgetWithResponse(ctx context.Context, widgetId string, params *GetWidgetParams, reqEditors ...RequestEditorFn) (*GetWidgetResp, error) {
+	rsp, err := c.GetWidget(ctx, widgetId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWidgetResp(rsp)
 }
 
 // ListAnomaliesWithResponse List anomalies
@@ -33986,6 +41305,344 @@ func (c *ClientWithResponses) ListRolesWithResponse(ctx context.Context, reqEdit
 	return ParseListRolesResp(rsp)
 }
 
+// CreateRoleWithBodyWithResponse Create role
+//
+// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+func (c *ClientWithResponses) CreateRoleWithBodyWithResponse(ctx context.Context, params *CreateRoleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateRoleResp, error) {
+	rsp, err := c.CreateRoleWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateRoleResp(rsp)
+}
+
+// CreateRoleWithResponse Create role
+//
+// Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/roles (the `CreateRole` operationId).
+func (c *ClientWithResponses) CreateRoleWithResponse(ctx context.Context, params *CreateRoleParams, body CreateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateRoleResp, error) {
+	rsp, err := c.CreateRole(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateRoleResp(rsp)
+}
+
+// DeleteRoleWithResponse Delete role
+//
+// Deletes a custom role. Preset roles cannot be deleted, and a role still assigned to users or groups must be unassigned first. A service account of a parent tenant can delete a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /iam/v1/roles/{id} (the `DeleteRole` operationId).
+func (c *ClientWithResponses) DeleteRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteRoleResp, error) {
+	rsp, err := c.DeleteRole(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteRoleResp(rsp)
+}
+
+// GetRoleWithResponse Get role
+//
+// Returns a single role by ID. Preset roles are visible to every customer; a custom role is returned only to the customer that owns it. A service account of a parent tenant can read a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/roles/{id} (the `GetRole` operationId).
+func (c *ClientWithResponses) GetRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetRoleResp, error) {
+	rsp, err := c.GetRole(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRoleResp(rsp)
+}
+
+// UpdateRoleWithBodyWithResponse Update role
+//
+// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+func (c *ClientWithResponses) UpdateRoleWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateRoleResp, error) {
+	rsp, err := c.UpdateRoleWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateRoleResp(rsp)
+}
+
+// UpdateRoleWithResponse Update role
+//
+// Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/roles/{id} (the `UpdateRole` operationId).
+func (c *ClientWithResponses) UpdateRoleWithResponse(ctx context.Context, id string, body UpdateRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateRoleResp, error) {
+	rsp, err := c.UpdateRole(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateRoleResp(rsp)
+}
+
+// ListServiceAccountsWithResponse List service accounts
+//
+// Returns every service account owned by the authenticated customer in a single unpaginated `items` array, in no guaranteed order. Requires the `serviceAccountViewer` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/service-accounts (the `ListServiceAccounts` operationId).
+func (c *ClientWithResponses) ListServiceAccountsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListServiceAccountsResp, error) {
+	rsp, err := c.ListServiceAccounts(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListServiceAccountsResp(rsp)
+}
+
+// CreateServiceAccountWithBodyWithResponse Create a service account
+//
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+func (c *ClientWithResponses) CreateServiceAccountWithBodyWithResponse(ctx context.Context, params *CreateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateServiceAccountResp, error) {
+	rsp, err := c.CreateServiceAccountWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateServiceAccountResp(rsp)
+}
+
+// CreateServiceAccountWithResponse Create a service account
+//
+// Creates a service account owned by the authenticated customer. It cannot authenticate anything until it has an API token; mint one with the `api-tokens` sub-resource. Returns `409` when another service account of the customer already uses `name`. With `dryRun=true` the request goes through the same checks as a real create (name bounds and uniqueness, permission names, caller scope) and returns the same errors without creating anything. When the caller authenticates with a service account token, `createdBy`, `createdByEmail` and `createdByUserId` are `null`. Requires the `serviceAccountCreator` permission.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/service-accounts (the `CreateServiceAccount` operationId).
+func (c *ClientWithResponses) CreateServiceAccountWithResponse(ctx context.Context, params *CreateServiceAccountParams, body CreateServiceAccountJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateServiceAccountResp, error) {
+	rsp, err := c.CreateServiceAccount(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateServiceAccountResp(rsp)
+}
+
+// DeleteServiceAccountWithResponse Delete a service account
+//
+// Permanently deletes a service account and all of its API tokens, which stop authenticating immediately. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /iam/v1/service-accounts/{id} (the `DeleteServiceAccount` operationId).
+func (c *ClientWithResponses) DeleteServiceAccountWithResponse(ctx context.Context, id ServiceAccountId, params *DeleteServiceAccountParams, reqEditors ...RequestEditorFn) (*DeleteServiceAccountResp, error) {
+	rsp, err := c.DeleteServiceAccount(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteServiceAccountResp(rsp)
+}
+
+// GetServiceAccountWithResponse Get a service account
+//
+// Returns a service account owned by the authenticated customer; an ID that belongs to another customer returns `404`. The `ETag` response header carries the value to send in `If-Match` on update and delete. Requires the `serviceAccountViewer` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/service-accounts/{id} (the `GetServiceAccount` operationId).
+func (c *ClientWithResponses) GetServiceAccountWithResponse(ctx context.Context, id ServiceAccountId, reqEditors ...RequestEditorFn) (*GetServiceAccountResp, error) {
+	rsp, err := c.GetServiceAccount(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetServiceAccountResp(rsp)
+}
+
+// UpdateServiceAccountWithBodyWithResponse Update a service account
+//
+// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+func (c *ClientWithResponses) UpdateServiceAccountWithBodyWithResponse(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateServiceAccountResp, error) {
+	rsp, err := c.UpdateServiceAccountWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateServiceAccountResp(rsp)
+}
+
+// UpdateServiceAccountWithApplicationMergePatchPlusJSONBodyWithResponse Update a service account
+//
+// Partially updates a service account with an `application/merge-patch+json` body (RFC 7396). Omitted or `null` fields stay unchanged; an explicit empty string clears `description`. `permissions` replaces the whole list, and `[]` removes every permission. With `dryRun=true` the request goes through the same checks as a real update (`If-Match`, name bounds and uniqueness, permission names, caller scope) and returns the service account as it would look after the patch, without changing anything. Requires the `serviceAccountManager` permission.
+//
+// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{id} (the `UpdateServiceAccount` operationId).
+func (c *ClientWithResponses) UpdateServiceAccountWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id ServiceAccountId, params *UpdateServiceAccountParams, body UpdateServiceAccountApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountResp, error) {
+	rsp, err := c.UpdateServiceAccountWithApplicationMergePatchPlusJSONBody(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateServiceAccountResp(rsp)
+}
+
+// ListServiceAccountTokensWithResponse List API tokens for a service account
+//
+// Returns the service account's non-deleted API tokens in a single unpaginated `items` array, at most 10. Secret material is never returned here — `accessToken` is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `ListServiceAccountTokens` operationId).
+func (c *ClientWithResponses) ListServiceAccountTokensWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, reqEditors ...RequestEditorFn) (*ListServiceAccountTokensResp, error) {
+	rsp, err := c.ListServiceAccountTokens(ctx, serviceAccountId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListServiceAccountTokensResp(rsp)
+}
+
+// CreateServiceAccountTokenWithBodyWithResponse Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *ClientWithResponses) CreateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error) {
+	rsp, err := c.CreateServiceAccountTokenWithBody(ctx, serviceAccountId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateServiceAccountTokenResp(rsp)
+}
+
+// CreateServiceAccountTokenWithResponse Create an API token for a service account
+//
+// Mints an API token for the service account and returns its `accessToken` once. The token
+// inherits the service account's permissions as they stand at creation; there is no per-token
+// scoping. Returns `409` when the service account already has a token of the same name, and
+// `422` at the cap of 10 tokens.
+//
+// `dryRun=true` checks the name bounds only, then returns a preview without creating anything.
+// It does **not** verify that the service account exists, that the name is unused, or that the
+// account is under the token cap, so a dry run can succeed where the real create then returns
+// `404`, `409` or `422`. Requires the `serviceAccountCreator` permission.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/service-accounts/{serviceAccountId}/api-tokens (the `CreateServiceAccountToken` operationId).
+func (c *ClientWithResponses) CreateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, params *CreateServiceAccountTokenParams, body CreateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateServiceAccountTokenResp, error) {
+	rsp, err := c.CreateServiceAccountToken(ctx, serviceAccountId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateServiceAccountTokenResp(rsp)
+}
+
+// DeleteServiceAccountTokenWithResponse Delete an API token
+//
+// Permanently deletes an API token, which stops authenticating immediately. This cannot be undone. Deleting an ID that no longer exists returns `404`. Requires the `serviceAccountManager` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `DeleteServiceAccountToken` operationId).
+func (c *ClientWithResponses) DeleteServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *DeleteServiceAccountTokenParams, reqEditors ...RequestEditorFn) (*DeleteServiceAccountTokenResp, error) {
+	rsp, err := c.DeleteServiceAccountToken(ctx, serviceAccountId, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteServiceAccountTokenResp(rsp)
+}
+
+// GetServiceAccountTokenWithResponse Get an API token
+//
+// Returns one API token of the service account; an ID that belongs to another customer returns `404`. `accessToken` is not included — it is shown only once, by the create operation. Requires the `serviceAccountViewer` permission.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `GetServiceAccountToken` operationId).
+func (c *ClientWithResponses) GetServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, reqEditors ...RequestEditorFn) (*GetServiceAccountTokenResp, error) {
+	rsp, err := c.GetServiceAccountToken(ctx, serviceAccountId, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetServiceAccountTokenResp(rsp)
+}
+
+// UpdateServiceAccountTokenWithBodyWithResponse Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *ClientWithResponses) UpdateServiceAccountTokenWithBodyWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error) {
+	rsp, err := c.UpdateServiceAccountTokenWithBody(ctx, serviceAccountId, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateServiceAccountTokenResp(rsp)
+}
+
+// UpdateServiceAccountTokenWithResponse Enable or disable an API token
+//
+// Moves the token between `active` and `disabled` by setting `state`. Disabling takes effect
+// immediately: the token stops authenticating until it is re-enabled. Setting the state a
+// token already has succeeds and changes nothing.
+//
+// The two directions are not symmetric. Disabling a token whose expiry has passed succeeds,
+// but re-enabling an expired token returns `422` — expiry is final, and a new token has to be
+// created instead. `deleted` and `expired` are not accepted values: a token is deleted through
+// the delete operation, and expires on its own.
+//
+// With `dryRun=true` nothing is written and the response body is the token as it would look
+// after the change, so a `422` here means a real request would also be refused. Requires the
+// `serviceAccountManager` permission.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id} (the `UpdateServiceAccountToken` operationId).
+func (c *ClientWithResponses) UpdateServiceAccountTokenWithResponse(ctx context.Context, serviceAccountId ServiceAccountTokenParentId, id ServiceAccountTokenId, params *UpdateServiceAccountTokenParams, body UpdateServiceAccountTokenJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateServiceAccountTokenResp, error) {
+	rsp, err := c.UpdateServiceAccountToken(ctx, serviceAccountId, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateServiceAccountTokenResp(rsp)
+}
+
 // ListUsersWithResponse List users
 //
 // Returns a list of users in the organization, including both active users and invited users.
@@ -34138,7 +41795,7 @@ func (c *ClientWithResponses) ListGcpBillingAccountsWithResponse(ctx context.Con
 //
 // Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account's Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
 //
-// Fields that drive the Overview tab in the DoiT console:
+// Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
 // - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
 // - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
 // - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
@@ -34153,6 +41810,104 @@ func (c *ClientWithResponses) GetGcpBillingAccountWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseGetGcpBillingAccountResp(rsp)
+}
+
+// ListGcpPlannedPurchasesWithResponse List GCP planned purchases
+//
+// Returns the laddering projections for the billing account, grouped by PS4C product line
+// (`service`) and region. Each service group lists one entry per available
+// `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+// `cloud_sql` scopes are per-region).
+//
+// With no filters, returns all existing projection documents in stable order: service groups
+// ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+// first, then remaining regions alphabetically. Services with no projection documents are omitted
+// (not returned as empty groups). When a filter matches no documents, the response is an
+// empty `items` array (not `404`). Partial projection documents return only the fields
+// available in storage.
+//
+// **`gcp_service` and `region` filters**: omit both to return all available services and
+// their regions; supply `gcp_service` alone to return all regions for that service; supply
+// both to return a single service/region scope. `region` requires `gcp_service` — a request
+// with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+// `gcp_service` or `region` values return `400` with code `validation_failed`.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+// `items` array when no projection documents exist — use
+// `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+//
+// **Pagination**: results are paginated by **service group** (a whole group is never split
+// across pages). Groups keep the stable service order above. Use `maxResults` to limit
+// page size (default 50, max 500). When more groups remain, the response includes a
+// non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+// (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+// this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+// expired token returns `400` with code `pagination_token_expired`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases (the `ListGcpPlannedPurchases` operationId).
+func (c *ClientWithResponses) ListGcpPlannedPurchasesWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpPlannedPurchasesParams, reqEditors ...RequestEditorFn) (*ListGcpPlannedPurchasesResp, error) {
+	rsp, err := c.ListGcpPlannedPurchases(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpPlannedPurchasesResp(rsp)
+}
+
+// ListGcpRecommendationsWithResponse List GCP recommendations
+//
+// Returns commitment purchase recommendations for the billing account, filtered to the
+// term preferred in each product line's settings (`preferredCommitmentPeriod`).
+//
+// **`gcp_service` and `region` filters**: omit both to return recommendations for all
+// product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+// alone to return all regions for that service; supply both to return a single
+// service/region scope. `region` requires `gcp_service` — a request with `region` but no
+// `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+// or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+// regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+// region with no data returns `200` with an empty `items` array.
+//
+// `404` is returned only when the billing account does not exist or the caller cannot access
+// it. A billing account with no matching recommendation documents returns `200` with an empty
+// `items` array.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations (the `ListGcpRecommendations` operationId).
+func (c *ClientWithResponses) ListGcpRecommendationsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpRecommendationsParams, reqEditors ...RequestEditorFn) (*ListGcpRecommendationsResp, error) {
+	rsp, err := c.ListGcpRecommendations(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpRecommendationsResp(rsp)
+}
+
+// GetGcpRecommendationWithResponse Get a GCP recommendation
+//
+// Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+// billing account, including analysis metrics and time-bucketed eligible spend. Use
+// `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+//
+// **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+// for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+// malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+// A well-formed region the billing account has never had eligible spend in returns `404`
+// with code `not_found` — the scope does not exist, same as an unknown billing account.
+// When the scope exists but no stored recommendation matches, the response is `200` with
+// `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service} (the `GetGcpRecommendation` operationId).
+func (c *ClientWithResponses) GetGcpRecommendationWithResponse(ctx context.Context, billingAccountId BillingAccountId, gcpService GetGcpRecommendationParamsGcpService, params *GetGcpRecommendationParams, reqEditors ...RequestEditorFn) (*GetGcpRecommendationResp, error) {
+	rsp, err := c.GetGcpRecommendation(ctx, billingAccountId, gcpService, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGcpRecommendationResp(rsp)
 }
 
 // ListGcpResourceCudsWithResponse List GCP resource-based Committed Use Discounts
@@ -34170,11 +41925,44 @@ func (c *ClientWithResponses) ListGcpResourceCudsWithResponse(ctx context.Contex
 	return ParseListGcpResourceCudsResp(rsp)
 }
 
+// ListGcpSpendCudsWithResponse List GCP spend-based Committed Use Discounts
+//
+// Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+// CUD state (`status`); omit to return CUDs in all states.
+//
+// **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+// line's coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+// region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+// returns `400` with code `gcp_service_required`. A `region` that is malformed or
+// incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+// returns `400` with code `validation_failed`; a well-formed, compatible region with no
+// matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+// uses the `lower_snake_case` wire form (`us_central1`), while each item's `region` field
+// echoes the raw provider value (`us-central1`).
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based (the `ListGcpSpendCuds` operationId).
+func (c *ClientWithResponses) ListGcpSpendCudsWithResponse(ctx context.Context, billingAccountId BillingAccountId, params *ListGcpSpendCudsParams, reqEditors ...RequestEditorFn) (*ListGcpSpendCudsResp, error) {
+	rsp, err := c.ListGcpSpendCuds(ctx, billingAccountId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListGcpSpendCudsResp(rsp)
+}
+
 // ListGcpBillingAccountsSettingsWithResponse List billing account engine settings
 //
 // Returns one item per onboarded GCP Billing Account. Each item includes that billing
 // account's recommendation and automation engine settings for each product line activated
-// on it (`compute`).
+// on it, per region scope: one `global` entry for `compute`, and one entry per known region
+// for `cloud_sql`.
+//
+// Cloud SQL regions come from the billing account's persisted settings: a region is added
+// when eligible spend is first seen there and is never removed, so its settings entry
+// remains listed even if spend later drops to zero. Items are sorted by
+// `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+// `cloud_sql` regions sorted alphabetically.
 //
 // Settings are stored independently on each billing account. Existing customer-level
 // settings are copied lazily when an account is first read or initialized; if no valid
@@ -34192,6 +41980,58 @@ func (c *ClientWithResponses) ListGcpBillingAccountsSettingsWithResponse(ctx con
 		return nil, err
 	}
 	return ParseListGcpBillingAccountsSettingsResp(rsp)
+}
+
+// ListCommitmentPoliciesWithResponse List commitment policies
+//
+// Returns every commitment policy available to the tenant: the three built-in policies
+// (`conservative`, `balanced`, `max_savings`) followed by the tenant's own custom policies.
+//
+// Commitment policies are cloud-agnostic. A single catalog is shared by AWS and GCP, and the
+// same policy may be assigned to AWS and GCP product lines alike.
+//
+// Built-in policies are listed first, ordered from least to most aggressive target coverage;
+// custom policies follow in creation order. Percentage parameters are expressed as `1`–`100`, as
+// entered in the DoiT Console. This differs from the coverage and utilization fields on
+// recommendations and inventory, which are fractions from 0 to 1.
+//
+// This endpoint is read-only. Custom policies are created, edited and deleted in the DoiT
+// Console on the Commitment Policies page.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/general/policies (the `ListCommitmentPolicies` operationId).
+func (c *ClientWithResponses) ListCommitmentPoliciesWithResponse(ctx context.Context, params *ListCommitmentPoliciesParams, reqEditors ...RequestEditorFn) (*ListCommitmentPoliciesResp, error) {
+	rsp, err := c.ListCommitmentPolicies(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCommitmentPoliciesResp(rsp)
+}
+
+// GetCommitmentPolicyWithResponse Get a commitment policy
+//
+// Returns one commitment policy by id, with its creation and last-update times and the list of
+// account × product-line scopes it is explicitly assigned to across AWS and GCP.
+//
+// `assignments` lists explicit assignments only. An account whose settings have not yet been
+// materialized falls back to `balanced` implicitly and does not appear here, even though the
+// settings endpoints report it as `balanced`. On AWS the assignment is currently recorded per
+// tenant and applied to every onboarded organization, so each organization appears once per
+// product line. The list is not paginated.
+//
+// Resolving assignments reads every onboarded account on both clouds. If either cloud cannot be
+// queried the request fails rather than returning a partial list.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /ps4commitments/v1/general/policies/{policyId} (the `GetCommitmentPolicy` operationId).
+func (c *ClientWithResponses) GetCommitmentPolicyWithResponse(ctx context.Context, policyId PolicyId, params *GetCommitmentPolicyParams, reqEditors ...RequestEditorFn) (*GetCommitmentPolicyResp, error) {
+	rsp, err := c.GetCommitmentPolicy(ctx, policyId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCommitmentPolicyResp(rsp)
 }
 
 // ListGeographicAccessCountriesWithResponse List countries available for geographic access
@@ -37561,6 +45401,270 @@ func ParseUpdateCustomThemeResp(rsp *http.Response) (*UpdateCustomThemeResp, err
 	return response, nil
 }
 
+// ParseListWidgetsResp parses an HTTP response from a ListWidgetsWithResponse call
+func ParseListWidgetsResp(rsp *http.Response) (*ListWidgetsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListWidgetsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WidgetList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers ListWidgetsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListWidgetsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListWidgetsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetWidgetResp parses an HTTP response from a GetWidgetWithResponse call
+func ParseGetWidgetResp(rsp *http.Response) (*GetWidgetResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWidgetResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Widget
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetWidgetResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetWidgetResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetWidgetResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetWidgetResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetWidgetResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListAnomaliesResp parses an HTTP response from a ListAnomaliesWithResponse call
 func ParseListAnomaliesResp(rsp *http.Response) (*ListAnomaliesResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -39874,6 +47978,13 @@ func ParseDeleteDatahubDatasetResp(rsp *http.Response) (*DeleteDatahubDatasetRes
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest DeleteDatahubDataset202Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest N400
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -40132,6 +48243,1709 @@ func ParseListRolesResp(rsp *http.Response) (*ListRolesResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseCreateRoleResp parses an HTTP response from a CreateRoleWithResponse call
+func ParseCreateRoleResp(rsp *http.Response) (*CreateRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Role
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/problem+json" && rsp.StatusCode == 400:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 409:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/problem+json" && rsp.StatusCode == 409:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteRoleResp parses an HTTP response from a DeleteRoleWithResponse call
+func ParseDeleteRoleResp(rsp *http.Response) (*DeleteRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON503 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRoleResp parses an HTTP response from a GetRoleWithResponse call
+func ParseGetRoleResp(rsp *http.Response) (*GetRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Role
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateRoleResp parses an HTTP response from a UpdateRoleWithResponse call
+func ParseUpdateRoleResp(rsp *http.Response) (*UpdateRoleResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateRoleResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Role
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListServiceAccountsResp parses an HTTP response from a ListServiceAccountsWithResponse call
+func ParseListServiceAccountsResp(rsp *http.Response) (*ListServiceAccountsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListServiceAccountsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 500:
+		var headers ListServiceAccountsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateServiceAccountResp parses an HTTP response from a CreateServiceAccountWithResponse call
+func ParseCreateServiceAccountResp(rsp *http.Response) (*CreateServiceAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateServiceAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccount
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ServiceAccount
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateServiceAccountResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateServiceAccountResp201Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateServiceAccountResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateServiceAccountResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateServiceAccountResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateServiceAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteServiceAccountResp parses an HTTP response from a DeleteServiceAccountWithResponse call
+func ParseDeleteServiceAccountResp(rsp *http.Response) (*DeleteServiceAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteServiceAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteServiceAccountResp204Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteServiceAccountResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteServiceAccountResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 412:
+		var headers DeleteServiceAccountResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 428:
+		var headers DeleteServiceAccountResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 500:
+		var headers DeleteServiceAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetServiceAccountResp parses an HTTP response from a GetServiceAccountWithResponse call
+func ParseGetServiceAccountResp(rsp *http.Response) (*GetServiceAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetServiceAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccount
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetServiceAccountResp200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetServiceAccountResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetServiceAccountResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetServiceAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateServiceAccountResp parses an HTTP response from a UpdateServiceAccountWithResponse call
+func ParseUpdateServiceAccountResp(rsp *http.Response) (*UpdateServiceAccountResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateServiceAccountResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccount
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 415:
+		var dest UnsupportedMediaType
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON415 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateServiceAccountResp200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateServiceAccountResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateServiceAccountResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateServiceAccountResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers UpdateServiceAccountResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 415:
+		var headers UpdateServiceAccountResp415Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers415 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateServiceAccountResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers UpdateServiceAccountResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateServiceAccountResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListServiceAccountTokensResp parses an HTTP response from a ListServiceAccountTokensWithResponse call
+func ParseListServiceAccountTokensResp(rsp *http.Response) (*ListServiceAccountTokensResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListServiceAccountTokensResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountTokensResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 404:
+		var headers ListServiceAccountTokensResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListServiceAccountTokensResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateServiceAccountTokenResp parses an HTTP response from a CreateServiceAccountTokenWithResponse call
+func ParseCreateServiceAccountTokenResp(rsp *http.Response) (*CreateServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CreateServiceAccountTokenResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CreateServiceAccountTokenResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateServiceAccountTokenResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateServiceAccountTokenResp201Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "uri"}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateServiceAccountTokenResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers CreateServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateServiceAccountTokenResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateServiceAccountTokenResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateServiceAccountTokenResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteServiceAccountTokenResp parses an HTTP response from a DeleteServiceAccountTokenWithResponse call
+func ParseDeleteServiceAccountTokenResp(rsp *http.Response) (*DeleteServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteServiceAccountTokenResp204Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteServiceAccountTokenResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers DeleteServiceAccountTokenResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetServiceAccountTokenResp parses an HTTP response from a GetServiceAccountTokenWithResponse call
+func ParseGetServiceAccountTokenResp(rsp *http.Response) (*GetServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountToken
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 404:
+		var headers GetServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetServiceAccountTokenResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateServiceAccountTokenResp parses an HTTP response from a UpdateServiceAccountTokenWithResponse call
+func ParseUpdateServiceAccountTokenResp(rsp *http.Response) (*UpdateServiceAccountTokenResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateServiceAccountTokenResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServiceAccountToken
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateServiceAccountTokenResp200Headers
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateServiceAccountTokenResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateServiceAccountTokenResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateServiceAccountTokenResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateServiceAccountTokenResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil
@@ -41121,6 +50935,618 @@ func ParseGetGcpBillingAccountResp(rsp *http.Response) (*GetGcpBillingAccountRes
 	return response, nil
 }
 
+// ParseListGcpPlannedPurchasesResp parses an HTTP response from a ListGcpPlannedPurchasesWithResponse call
+func ParseListGcpPlannedPurchasesResp(rsp *http.Response) (*ListGcpPlannedPurchasesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpPlannedPurchasesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpPlannedPurchases200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpPlannedPurchasesResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpPlannedPurchasesResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpPlannedPurchasesResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpPlannedPurchasesResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListGcpPlannedPurchasesResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpPlannedPurchasesResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpPlannedPurchasesResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListGcpRecommendationsResp parses an HTTP response from a ListGcpRecommendationsWithResponse call
+func ParseListGcpRecommendationsResp(rsp *http.Response) (*ListGcpRecommendationsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpRecommendationsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpRecommendations200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpRecommendationsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpRecommendationsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpRecommendationsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpRecommendationsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListGcpRecommendationsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpRecommendationsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpRecommendationsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetGcpRecommendationResp parses an HTTP response from a GetGcpRecommendationWithResponse call
+func ParseGetGcpRecommendationResp(rsp *http.Response) (*GetGcpRecommendationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetGcpRecommendationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GcpRecommendationWithEligibleSpend
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetGcpRecommendationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetGcpRecommendationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetGcpRecommendationResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetGcpRecommendationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetGcpRecommendationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetGcpRecommendationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetGcpRecommendationResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListGcpResourceCudsResp parses an HTTP response from a ListGcpResourceCudsWithResponse call
 func ParseListGcpResourceCudsResp(rsp *http.Response) (*ListGcpResourceCudsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -41325,6 +51751,210 @@ func ParseListGcpResourceCudsResp(rsp *http.Response) (*ListGcpResourceCudsResp,
 	return response, nil
 }
 
+// ParseListGcpSpendCudsResp parses an HTTP response from a ListGcpSpendCudsWithResponse call
+func ParseListGcpSpendCudsResp(rsp *http.Response) (*ListGcpSpendCudsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListGcpSpendCudsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListGcpSpendCuds200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListGcpSpendCudsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListGcpSpendCudsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListGcpSpendCudsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListGcpSpendCudsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListGcpSpendCudsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListGcpSpendCudsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListGcpSpendCudsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListGcpBillingAccountsSettingsResp parses an HTTP response from a ListGcpBillingAccountsSettingsWithResponse call
 func ParseListGcpBillingAccountsSettingsResp(rsp *http.Response) (*ListGcpBillingAccountsSettingsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -41478,6 +52108,390 @@ func ParseListGcpBillingAccountsSettingsResp(rsp *http.Response) (*ListGcpBillin
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers ListGcpBillingAccountsSettingsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListCommitmentPoliciesResp parses an HTTP response from a ListCommitmentPoliciesWithResponse call
+func ParseListCommitmentPoliciesResp(rsp *http.Response) (*ListCommitmentPoliciesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCommitmentPoliciesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListCommitmentPolicies200Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListCommitmentPoliciesResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListCommitmentPoliciesResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListCommitmentPoliciesResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListCommitmentPoliciesResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListCommitmentPoliciesResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListCommitmentPoliciesResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetCommitmentPolicyResp parses an HTTP response from a GetCommitmentPolicyWithResponse call
+func ParseGetCommitmentPolicyResp(rsp *http.Response) (*GetCommitmentPolicyResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCommitmentPolicyResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CommitmentPolicyDetail
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetCommitmentPolicyResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetCommitmentPolicyResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetCommitmentPolicyResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetCommitmentPolicyResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetCommitmentPolicyResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetCommitmentPolicyResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetCommitmentPolicyResp503Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

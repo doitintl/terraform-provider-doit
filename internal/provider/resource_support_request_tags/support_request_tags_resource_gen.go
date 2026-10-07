@@ -30,8 +30,7 @@ func SupportRequestTagsResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"ticket_id": schema.Int64Attribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "The unique identifier of the support request.",
 				MarkdownDescription: "The unique identifier of the support request.",
 			},

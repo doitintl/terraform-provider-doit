@@ -20,7 +20,8 @@ import (
 func readAnomaliesHelper(t *testing.T, server *httptest.Server, overrides map[string]tftypes.Value) (anomaliesDataSourceModel, tfsdk.State) {
 	t.Helper()
 
-	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(server.Client()))
+	httpClient := server.Client()
+	client, err := models.NewClientWithResponses(server.URL, models.WithHTTPClient(httpClient))
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
@@ -514,5 +515,325 @@ func TestAnomaliesDataSource_LinkedAnomalies(t *testing.T) {
 	}
 	if got := len(third.LinkedAnomalies.Elements()); got != 0 {
 		t.Errorf("expected empty LinkedAnomalies fallback, got %d elements", got)
+	}
+}
+
+func TestAnomaliesDataSource_AllocationsMapping(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{
+			"anomalies": [
+				{
+					"id": "anomaly-multi-alloc",
+					"platform": "google-cloud",
+					"scope": "project-1",
+					"serviceName": "Compute Engine",
+					"costOfAnomaly": 100.0,
+					"startTime": 1704067200000,
+					"severityLevel": "critical",
+					"monitorLevel": "service",
+					"timeFrame": "day",
+					"allocations": [
+						{"id": "alloc-1", "name": "Frontend"},
+						{"id": "alloc-2", "name": "Backend"}
+					]
+				},
+				{
+					"id": "anomaly-single-alloc",
+					"platform": "google-cloud",
+					"scope": "project-2",
+					"serviceName": "Cloud Storage",
+					"costOfAnomaly": 50.0,
+					"startTime": 1704067200000,
+					"severityLevel": "warning",
+					"monitorLevel": "sku",
+					"timeFrame": "day",
+					"allocations": [
+						{"id": "alloc-3", "name": "Analytics"}
+					]
+				},
+				{
+					"id": "anomaly-empty-alloc",
+					"platform": "amazon-web-services",
+					"scope": "123456789012",
+					"serviceName": "AmazonEC2",
+					"costOfAnomaly": 25.0,
+					"startTime": 1704067200000,
+					"severityLevel": "warning",
+					"monitorLevel": "service",
+					"timeFrame": "day",
+					"allocations": []
+				},
+				{
+					"id": "anomaly-omitted-alloc",
+					"platform": "amazon-web-services",
+					"scope": "123456789012",
+					"serviceName": "AmazonS3",
+					"costOfAnomaly": 15.0,
+					"startTime": 1704067200000,
+					"severityLevel": "information",
+					"monitorLevel": "service",
+					"timeFrame": "day"
+				}
+			],
+			"rowCount": 4,
+			"totalCount": 4,
+			"totalCountExact": true,
+			"truncated": false,
+			"anomalySummary": {
+				"countBySeverity": {
+					"critical": 1,
+					"warning": 2,
+					"information": 1
+				},
+				"totalCostOfAnomaly": 190.0
+			}
+		}`)
+	}))
+
+	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
+
+	if got := len(data.Anomalies.Elements()); got != 4 {
+		t.Fatalf("expected 4 anomalies, got %d", got)
+	}
+
+	// First anomaly: multiple allocations
+	first, ok := data.Anomalies.Elements()[0].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[0])
+	}
+	if first.Allocations.IsNull() {
+		t.Error("expected first anomaly Allocations not to be null")
+	}
+	if first.Allocations.IsUnknown() {
+		t.Error("expected first anomaly Allocations not to be unknown")
+	}
+	var firstAllocations []datasource_anomalies.AllocationsValue
+	if d := first.Allocations.ElementsAs(t.Context(), &firstAllocations, false); d.HasError() {
+		t.Fatalf("ElementsAs() returned diagnostics: %v", d)
+	}
+	if len(firstAllocations) != 2 {
+		t.Fatalf("expected 2 allocations, got %d", len(firstAllocations))
+	}
+	if firstAllocations[0].Id.ValueString() != "alloc-1" || firstAllocations[0].Name.ValueString() != "Frontend" {
+		t.Errorf("expected alloc-1/Frontend, got %s/%s", firstAllocations[0].Id.ValueString(), firstAllocations[0].Name.ValueString())
+	}
+	if firstAllocations[1].Id.ValueString() != "alloc-2" || firstAllocations[1].Name.ValueString() != "Backend" {
+		t.Errorf("expected alloc-2/Backend, got %s/%s", firstAllocations[1].Id.ValueString(), firstAllocations[1].Name.ValueString())
+	}
+
+	// Second anomaly: single allocation
+	second, ok := data.Anomalies.Elements()[1].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[1])
+	}
+	if second.Allocations.IsNull() {
+		t.Error("expected second anomaly Allocations not to be null")
+	}
+	if second.Allocations.IsUnknown() {
+		t.Error("expected second anomaly Allocations not to be unknown")
+	}
+	var secondAllocations []datasource_anomalies.AllocationsValue
+	if d := second.Allocations.ElementsAs(t.Context(), &secondAllocations, false); d.HasError() {
+		t.Fatalf("ElementsAs() returned diagnostics: %v", d)
+	}
+	if len(secondAllocations) != 1 {
+		t.Fatalf("expected 1 allocation, got %d", len(secondAllocations))
+	}
+	if secondAllocations[0].Id.ValueString() != "alloc-3" || secondAllocations[0].Name.ValueString() != "Analytics" {
+		t.Errorf("expected alloc-3/Analytics, got %s/%s", secondAllocations[0].Id.ValueString(), secondAllocations[0].Name.ValueString())
+	}
+
+	// Third anomaly: empty allocations
+	third, ok := data.Anomalies.Elements()[2].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[2])
+	}
+	if third.Allocations.IsNull() {
+		t.Error("expected third anomaly Allocations not to be null (computed list convention)")
+	}
+	if third.Allocations.IsUnknown() {
+		t.Error("expected third anomaly Allocations not to be unknown")
+	}
+	if got := len(third.Allocations.Elements()); got != 0 {
+		t.Errorf("expected empty Allocations, got %d elements", got)
+	}
+
+	// Fourth anomaly: omitted allocations
+	fourth, ok := data.Anomalies.Elements()[3].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[3])
+	}
+	if fourth.Allocations.IsNull() {
+		t.Error("expected fourth anomaly Allocations not to be null (computed list convention)")
+	}
+	if fourth.Allocations.IsUnknown() {
+		t.Error("expected fourth anomaly Allocations not to be unknown")
+	}
+	if got := len(fourth.Allocations.Elements()); got != 0 {
+		t.Errorf("expected empty Allocations fallback, got %d elements", got)
+	}
+}
+
+func TestAnomaliesDataSource_InitialNotificationsMapping(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{
+			"anomalies": [
+				{
+					"id": "anom-1",
+					"platform": "google-cloud",
+					"scope": "project-1",
+					"serviceName": "BigQuery",
+					"costOfAnomaly": 100.0,
+					"startTime": 1704067200000,
+					"severityLevel": "critical",
+					"monitorLevel": "service",
+					"timeFrame": "day",
+					"initialNotifications": [
+						{"channel": "email", "timestamp": "2024-01-01T12:00:00Z"},
+						{"channel": "slack", "timestamp": "2024-01-01T12:05:00Z"}
+					]
+				},
+				{
+					"id": "anom-2",
+					"platform": "google-cloud",
+					"scope": "project-2",
+					"serviceName": "CloudStorage",
+					"costOfAnomaly": 50.0,
+					"startTime": 1704067200000,
+					"severityLevel": "warning",
+					"monitorLevel": "service",
+					"timeFrame": "day",
+					"initialNotifications": [
+						{"channel": "msteams", "timestamp": "2024-01-01T12:10:00Z"}
+					]
+				},
+				{
+					"id": "anom-3",
+					"platform": "amazon-web-services",
+					"scope": "123456789012",
+					"serviceName": "AmazonEC2",
+					"costOfAnomaly": 30.0,
+					"startTime": 1704067200000,
+					"severityLevel": "warning",
+					"monitorLevel": "service",
+					"timeFrame": "day",
+					"initialNotifications": []
+				},
+				{
+					"id": "anom-4",
+					"platform": "amazon-web-services",
+					"scope": "123456789012",
+					"serviceName": "AmazonS3",
+					"costOfAnomaly": 10.0,
+					"startTime": 1704067200000,
+					"severityLevel": "information",
+					"monitorLevel": "service",
+					"timeFrame": "day"
+				}
+			],
+			"rowCount": 4,
+			"totalCount": 4,
+			"totalCountExact": true,
+			"truncated": false,
+			"anomalySummary": {
+				"countBySeverity": {
+					"critical": 1,
+					"warning": 2,
+					"information": 1
+				},
+				"totalCostOfAnomaly": 190.0
+			}
+		}`)
+	}))
+
+	data, _ := readAnomaliesHelper(t, server, map[string]tftypes.Value{})
+
+	if got := len(data.Anomalies.Elements()); got != 4 {
+		t.Fatalf("expected 4 anomalies, got %d", got)
+	}
+
+	// First anomaly: multiple initial notifications
+	first, ok := data.Anomalies.Elements()[0].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[0])
+	}
+	if first.InitialNotifications.IsNull() {
+		t.Error("expected first anomaly InitialNotifications not to be null")
+	}
+	if first.InitialNotifications.IsUnknown() {
+		t.Error("expected first anomaly InitialNotifications not to be unknown")
+	}
+	var firstNotifications []datasource_anomalies.InitialNotificationsValue
+	if d := first.InitialNotifications.ElementsAs(t.Context(), &firstNotifications, false); d.HasError() {
+		t.Fatalf("ElementsAs() returned diagnostics: %v", d)
+	}
+	if len(firstNotifications) != 2 {
+		t.Fatalf("expected 2 initial notifications, got %d", len(firstNotifications))
+	}
+	if firstNotifications[0].Channel.ValueString() != "email" || firstNotifications[0].Timestamp.ValueString() != "2024-01-01T12:00:00Z" {
+		t.Errorf("expected email/2024-01-01T12:00:00Z, got %s/%s", firstNotifications[0].Channel.ValueString(), firstNotifications[0].Timestamp.ValueString())
+	}
+	if firstNotifications[1].Channel.ValueString() != "slack" || firstNotifications[1].Timestamp.ValueString() != "2024-01-01T12:05:00Z" {
+		t.Errorf("expected slack/2024-01-01T12:05:00Z, got %s/%s", firstNotifications[1].Channel.ValueString(), firstNotifications[1].Timestamp.ValueString())
+	}
+
+	// Second anomaly: single initial notification
+	second, ok := data.Anomalies.Elements()[1].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[1])
+	}
+	if second.InitialNotifications.IsNull() {
+		t.Error("expected second anomaly InitialNotifications not to be null")
+	}
+	if second.InitialNotifications.IsUnknown() {
+		t.Error("expected second anomaly InitialNotifications not to be unknown")
+	}
+	var secondNotifications []datasource_anomalies.InitialNotificationsValue
+	if d := second.InitialNotifications.ElementsAs(t.Context(), &secondNotifications, false); d.HasError() {
+		t.Fatalf("ElementsAs() returned diagnostics: %v", d)
+	}
+	if len(secondNotifications) != 1 {
+		t.Fatalf("expected 1 initial notification, got %d", len(secondNotifications))
+	}
+	if secondNotifications[0].Channel.ValueString() != "msteams" || secondNotifications[0].Timestamp.ValueString() != "2024-01-01T12:10:00Z" {
+		t.Errorf("expected msteams/2024-01-01T12:10:00Z, got %s/%s", secondNotifications[0].Channel.ValueString(), secondNotifications[0].Timestamp.ValueString())
+	}
+
+	// Third anomaly: empty initial notifications
+	third, ok := data.Anomalies.Elements()[2].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[2])
+	}
+	if third.InitialNotifications.IsNull() {
+		t.Error("expected third anomaly InitialNotifications not to be null (computed list convention)")
+	}
+	if third.InitialNotifications.IsUnknown() {
+		t.Error("expected third anomaly InitialNotifications not to be unknown")
+	}
+	if got := len(third.InitialNotifications.Elements()); got != 0 {
+		t.Errorf("expected empty InitialNotifications, got %d elements", got)
+	}
+
+	// Fourth anomaly: omitted initial notifications
+	fourth, ok := data.Anomalies.Elements()[3].(datasource_anomalies.AnomaliesValue)
+	if !ok {
+		t.Fatalf("expected AnomaliesValue type, got %T", data.Anomalies.Elements()[3])
+	}
+	if fourth.InitialNotifications.IsNull() {
+		t.Error("expected fourth anomaly InitialNotifications not to be null (computed list convention)")
+	}
+	if fourth.InitialNotifications.IsUnknown() {
+		t.Error("expected fourth anomaly InitialNotifications not to be unknown")
+	}
+	if got := len(fourth.InitialNotifications.Elements()); got != 0 {
+		t.Errorf("expected empty InitialNotifications fallback, got %d elements", got)
 	}
 }

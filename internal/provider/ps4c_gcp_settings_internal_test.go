@@ -22,14 +22,27 @@ func TestMapGcpBillingAccountsSettingsToItemsList_FullyPopulated(t *testing.T) {
 			BillingAccountId: "012345-6789AB-CDEF01",
 			Services: []models.GcpBillingAccountServiceSettings{
 				{
+					Region:  "global",
 					Service: models.GcpBillingAccountServiceSettingsServiceCompute,
 					Settings: models.GcpBillingAccountSettings{
 						LastDayOfMonthForPurchase: 25,
 						MaximumCommitment:         500.0,
 						MinimumCommitment:         10.0,
-						Policy:                    models.PolicyBalanced,
+						Policy:                    "balanced",
 						PurchaseMode:              models.GcpBillingAccountSettingsPurchaseModeRequiresApproval,
 						Term:                      models.CommitmentTermOneYear,
+					},
+				},
+				{
+					Region:  "us_east1",
+					Service: models.GcpBillingAccountServiceSettingsServiceCloudSql,
+					Settings: models.GcpBillingAccountSettings{
+						LastDayOfMonthForPurchase: 20,
+						MaximumCommitment:         100.0,
+						MinimumCommitment:         5.0,
+						Policy:                    "custom-policy-id",
+						PurchaseMode:              models.GcpBillingAccountSettingsPurchaseMode("autonomous"),
+						Term:                      models.CommitmentTermThreeYear,
 					},
 				},
 			},
@@ -56,8 +69,8 @@ func TestMapGcpBillingAccountsSettingsToItemsList_FullyPopulated(t *testing.T) {
 	}
 
 	services := item.Services.Elements()
-	if len(services) != 1 {
-		t.Fatalf("services has %d elements, want 1", len(services))
+	if len(services) != 2 {
+		t.Fatalf("services has %d elements, want 2", len(services))
 	}
 
 	svc, ok := services[0].(datasource_ps4c_gcp_settings.ServicesValue)
@@ -67,6 +80,9 @@ func TestMapGcpBillingAccountsSettingsToItemsList_FullyPopulated(t *testing.T) {
 
 	if got := svc.Service.ValueString(); got != "compute" {
 		t.Errorf("service = %q, want %q", got, "compute")
+	}
+	if got := svc.Region.ValueString(); got != "global" {
+		t.Errorf("region = %q, want global", got)
 	}
 
 	settings := svc.Settings
@@ -87,6 +103,17 @@ func TestMapGcpBillingAccountsSettingsToItemsList_FullyPopulated(t *testing.T) {
 	}
 	if got := settings.Term.ValueString(); got != "one_year" {
 		t.Errorf("term = %q, want %q", got, "one_year")
+	}
+
+	cloudSQL := services[1].(datasource_ps4c_gcp_settings.ServicesValue)
+	if got := cloudSQL.Service.ValueString(); got != "cloud_sql" {
+		t.Errorf("services[1].service = %q, want cloud_sql", got)
+	}
+	if got := cloudSQL.Region.ValueString(); got != "us_east1" {
+		t.Errorf("services[1].region = %q, want us_east1", got)
+	}
+	if got := cloudSQL.Settings.Policy.ValueString(); got != "custom-policy-id" {
+		t.Errorf("services[1].settings.policy = %q, want custom-policy-id", got)
 	}
 }
 

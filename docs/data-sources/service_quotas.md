@@ -68,6 +68,26 @@ output "exceeded_quotas" {
     if q.status == "exceeded"
   ]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Quota headroom check during plan
+# ─────────────────────────────────────────────────────────────────────────────
+# A check block warns on every plan and apply when any quota is at or above
+# 80% utilization, without failing the run.
+
+check "service_quota_headroom" {
+  data "doit_service_quotas" "hot" {
+    min_utilization_percent = 80
+  }
+
+  assert {
+    condition = length(data.doit_service_quotas.hot.items) == 0
+    error_message = "Quotas at or above 80%: ${join(", ", [
+      for q in data.doit_service_quotas.hot.items :
+      "${q.cloud_provider}/${q.service}/${q.quota} (${q.utilization_percent}%)"
+    ])}"
+  }
+}
 ```
 
 -> For details on auto and manual pagination, see the [Pagination Guide](../guides/pagination).

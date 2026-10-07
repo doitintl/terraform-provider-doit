@@ -36,7 +36,7 @@ generate:
 
 # Generate provider documentation from templates
 docs:
-	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name doit --rendered-provider-name terraform-provider-doit
 
 # Validate provider documentation is up-to-date and structurally valid
 validate-docs: docs
@@ -45,7 +45,7 @@ validate-docs: docs
 		git status --short -- docs/; \
 		exit 1; \
 	fi
-	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs validate
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs validate --provider-name doit
 
 fmt:
 	gofmt -s -w -e .
@@ -62,12 +62,25 @@ test:
 # invoked via `go run` so no separate install is needed locally.
 GOTESTSUM := go run gotest.tools/gotestsum@v1.13.0
 
+# Helper to load .envrc.local for acceptance tests.
+# In secondary git worktrees, loads .envrc.local from the main repository first,
+# then allows local overrides in the current worktree if .envrc.local exists.
+LOAD_ACC_ENV := \
+	main_git_dir="$$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; \
+	repo_root="$$(git rev-parse --show-toplevel 2>/dev/null)"; \
+	if [ -n "$$main_git_dir" ] && [ "$$main_git_dir" != "$$repo_root/.git" ] && [ -f "$$main_git_dir/../.envrc.local" ]; then \
+		. "$$main_git_dir/../.envrc.local"; \
+	fi; \
+	if [ -f .envrc.local ]; then \
+		. ./.envrc.local; \
+	fi
+
 # Run acceptance tests (loads environment from .envrc.local)
 # --rerun-fails retries each failed test up to N times; --rerun-fails-max-failures
 # is a circuit breaker that skips reruns entirely if the initial run has many
 # failures (i.e. a systemic break rather than flakiness).
 testacc:
-	@test -f .envrc.local && . ./.envrc.local; \
+	@$(LOAD_ACC_ENV); \
 	TF_ACC=1 $(GOTESTSUM) \
 		--format standard-verbose \
 		--rerun-fails=2 \
@@ -80,7 +93,7 @@ testacc:
 # Run a specific acceptance test
 # Usage: make testacc-run TEST=TestAccBudget
 testacc-run:
-	@test -f .envrc.local && . ./.envrc.local; \
+	@$(LOAD_ACC_ENV); \
 	TF_ACC=1 $(GOTESTSUM) \
 		--format standard-verbose \
 		--rerun-fails=2 \

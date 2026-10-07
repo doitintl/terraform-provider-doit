@@ -5,8 +5,8 @@
 #   1. Build the provider binary locally.
 #   2. Add the locally-built doit provider to a filesystem mirror so that
 #      terraform init resolves it locally (no registry contact needed).
-#   3. Scan all examples for third-party providers (non-doit) and pre-download
-#      them into the same filesystem mirror via `terraform providers mirror`.
+#   3. Ask Terraform which providers each example requires, then pre-download
+#      third-party providers into the same mirror via `terraform providers mirror`.
 #   4. Configure Terraform with:
 #        - dev_overrides  → forces the locally-built doit provider for validate
 #        - filesystem_mirror → serves ALL providers for init (doit + third-party)
@@ -89,51 +89,45 @@ echo -e "${GREEN}✓${NC} Provider added to local mirror ($OS_ARCH)"
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 3: Mirror third-party providers
 # ─────────────────────────────────────────────────────────────────────────────
-# Collect all required_providers blocks across examples to find non-doit
-# providers. Also detect implicit providers from resource/data prefixes.
+# Let Terraform parse each example's configuration, including explicit and
+# implicit provider requirements. This handles HCL comments, strings, and
+# compact blocks without maintaining a second HCL parser here.
 echo -e "${YELLOW}Scanning examples for third-party providers...${NC}"
 
 # Create a temporary Terraform config that aggregates all third-party provider
-# requirements. We build this by scanning all example .tf files.
+# requirements reported by Terraform.
 MIRROR_CONFIG_DIR=$(mktemp -d)
 THIRD_PARTY_FOUND=false
 
-# Collect unique provider sources from required_providers blocks (non-doit).
-# Uses awk to only match source= lines inside required_providers { } blocks.
-PROVIDERS=$(find "$EXAMPLES_DIR" -name "*.tf" -print0 | \
-    xargs -0 awk '/required_providers\s*\{/{in_rp=1} in_rp && /source\s*=/{print} /\}/{if(in_rp) in_rp=0}' 2>/dev/null | \
-    grep -v 'doitintl/doit' | \
-    sed 's/.*source\s*=\s*"\([^"]*\)".*/\1/' | \
-    sort -u)
+PROVIDER_LIST_FILE="$MIRROR_CONFIG_DIR/provider-addresses.txt"
+find "$EXAMPLES_DIR" -mindepth 2 -name "*.tf" -print0 | \
+    xargs -0 -I{} dirname {} | sort -u | while IFS= read -r dir; do
+    if ! provider_tree=$(terraform -chdir="$dir" providers 2>&1); then
+        echo -e "${RED}ERROR: Could not inspect providers in ${dir#$EXAMPLES_DIR/}${NC}"
+        echo "$provider_tree" | sed 's/^/  /'
+        exit 1
+    fi
+    printf '%s\n' "$provider_tree" | sed -nE 's/.*provider\[([^]]+)\].*/\1/p'
+done > "$PROVIDER_LIST_FILE"
 
-# Also detect implicit providers from resource/data type prefixes.
-# e.g. time_static → hashicorp/time, null_resource → hashicorp/null
-# Extracts the resource TYPE (first quoted string), then takes the prefix before "_".
-IMPLICIT_PROVIDERS=$(find "$EXAMPLES_DIR" -name "*.tf" -print0 | \
-    xargs -0 grep -hE '^\s*(resource|data)\s+"[a-z0-9]+_[a-z0-9]+' 2>/dev/null | \
-    sed -E 's/^[[:space:]]*(resource|data)[[:space:]]+"([a-z0-9]+)_.*/\2/' | \
-    grep -v '^doit$' | \
-    sort -u)
+PROVIDERS=$(awk '
+    $0 != "registry.terraform.io/doitintl/doit" &&
+    $0 != "registry.terraform.io/hashicorp/doit" {
+        sub(/^registry.terraform.io\//, "")
+        print
+    }
+' "$PROVIDER_LIST_FILE" | sort -u)
 
 # Build a combined provider requirements file for mirroring
 {
     echo 'terraform {'
     echo '  required_providers {'
 
-    # Explicit sources
+    # All third-party providers required by the examples
     for src in $PROVIDERS; do
         name=$(echo "$src" | sed 's|.*/||')
         echo "    $name = { source = \"$src\" }"
         THIRD_PARTY_FOUND=true
-    done
-
-    # Implicit providers (assume hashicorp/ namespace)
-    for prefix in $IMPLICIT_PROVIDERS; do
-        # Only add if not already covered by an explicit source
-        if ! echo "$PROVIDERS" | grep -q "/$prefix$"; then
-            echo "    $prefix = { source = \"hashicorp/$prefix\" }"
-            THIRD_PARTY_FOUND=true
-        fi
     done
 
     echo '  }'

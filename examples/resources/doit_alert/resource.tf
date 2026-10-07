@@ -151,3 +151,44 @@ resource "doit_alert" "all_clouds_cost_alert" {
   }
   recipients = [data.doit_current_user.me.email]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Percentage-change alerts without the noise, posted to Slack
+# ─────────────────────────────────────────────────────────────────────────────
+# A percentage-change alert on a small daily spend fires on every blip
+# ("+400%" on $2). ignore_values_range skips evaluations while the metric value
+# is within the bounds. The bounds use metric units (here USD per day), not
+# percent, and are only valid with condition = "percentage-change".
+
+resource "doit_alert" "team_spike" {
+  for_each = toset(["payments", "search", "platform"])
+
+  name = "Team ${each.key}: daily cost spike"
+  config = {
+    metric        = { type = "basic", value = "cost" }
+    time_interval = "day"
+    condition     = "percentage-change"
+    operator      = "gt"
+    value         = 30 # percent
+    currency      = "USD"
+    ignore_values_range = {
+      lower_bound = 0
+      upper_bound = 50 # USD per day
+    }
+    # Evaluate each service separately, so one service spiking is enough
+    evaluate_for_each = "fixed:service_description"
+    scopes = [{
+      type   = "label"
+      id     = "owner"
+      mode   = "is"
+      values = [each.key]
+    }]
+  }
+  recipients = [data.doit_current_user.me.email]
+  # A shared Slack channel only needs its ID. A channel in a connected
+  # workspace also needs workspace = "<workspace name>" instead of shared.
+  recipients_slack_channels = [{
+    id     = "C0123456789"
+    shared = true
+  }]
+}

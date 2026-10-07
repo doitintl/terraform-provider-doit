@@ -42,6 +42,10 @@ output "notification_audit" {
       channel   = n.channel
       timestamp = n.timestamp
     }]
+    initial_notifications = [for n in a.initial_notifications : {
+      channel   = n.channel
+      timestamp = n.timestamp
+    }]
   }]
 }
 
@@ -74,6 +78,8 @@ output "anomaly_summary" {
     entity_name           = a.entity_name
     provider_display_name = a.provider_display_name
     linked_anomalies      = a.linked_anomalies
+    allocations           = a.allocations
+    initial_notifications = a.initial_notifications
     status                = a.status
     deactivation_reason   = a.deactivation_reason
   }]
@@ -275,6 +281,45 @@ output "acknowledgment_audit" {
     acknowledged_at = a.acknowledged_at
   }]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Anomaly cost per allocation, with an AI explanation for the costliest one
+# ─────────────────────────────────────────────────────────────────────────────
+
+# All anomalies (no max_results, so every page is fetched), sorted so the
+# costliest one comes first
+data "doit_anomalies" "by_cost" {
+  sort_by    = "costOfAnomaly"
+  sort_order = "desc"
+}
+
+locals {
+  # An anomaly can belong to several allocations; count it under each one
+  anomaly_cost_by_allocation = {
+    for name, costs in {
+      for pair in flatten([
+        for a in data.doit_anomalies.by_cost.anomalies : [
+          for al in a.allocations : { name = al.name, cost = a.cost_of_anomaly }
+        ]
+      ]) : pair.name => pair.cost...
+    } : name => { anomalies = length(costs), total_cost = sum(costs) }
+  }
+}
+
+output "anomaly_cost_by_allocation" {
+  value = local.anomaly_cost_by_allocation
+}
+
+data "doit_anomaly_explanation" "costliest" {
+  count = length(data.doit_anomalies.by_cost.anomalies) > 0 ? 1 : 0
+  id    = data.doit_anomalies.by_cost.anomalies[0].id
+}
+
+output "costliest_anomaly_explanation" {
+  description = "AI-generated likely cause of the costliest anomaly"
+  value       = one(data.doit_anomaly_explanation.costliest[*].explanation.text)
+  sensitive   = true
+}
 ```
 
 -> For details on auto and manual pagination, see the [Pagination Guide](../guides/pagination).
@@ -323,7 +368,8 @@ Read-Only:
 - `acknowledged_at` (String) When the anomaly was first acknowledged
 - `acknowledged_by` (String) Email of the user who first acknowledged the anomaly
 - `actual_cost` (Number) Observed (actual) cost of the anomaly.
-- `attribution` (String) Attribution ID.
+- `allocations` (Attributes List) Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list. (see [below for nested schema](#nestedatt--anomalies--allocations))
+- `attribution` (String, Deprecated) Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.
 - `billing_account` (String) Billing account ID.
 - `cost_of_anomaly` (Number) Excess cost over and above the expected normal cost.
 - `deactivation_reason` (String) Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
@@ -332,6 +378,7 @@ Read-Only:
 - `entity_name` (String) Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
 - `id` (String)
+- `initial_notifications` (Attributes List) The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified. (see [below for nested schema](#nestedatt--anomalies--initial_notifications))
 - `linked_anomalies` (List of String) IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 - `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--anomalies--notifications))
@@ -345,6 +392,24 @@ Read-Only:
 - `status` (String)
 - `time_frame` (String) Timeframe: Daily or Hourly
 - `top3skus` (Attributes List) Array of SKU entries contributing to an anomaly. (see [below for nested schema](#nestedatt--anomalies--top3skus))
+
+<a id="nestedatt--anomalies--allocations"></a>
+### Nested Schema for `anomalies.allocations`
+
+Read-Only:
+
+- `id` (String) Allocation ID. Use it with the Allocations API to read the allocation.
+- `name` (String) Allocation name.
+
+
+<a id="nestedatt--anomalies--initial_notifications"></a>
+### Nested Schema for `anomalies.initial_notifications`
+
+Read-Only:
+
+- `channel` (String) Dispatch channel.
+- `timestamp` (String) Dispatch timestamp in RFC3339 UTC.
+
 
 <a id="nestedatt--anomalies--notifications"></a>
 ### Nested Schema for `anomalies.notifications`

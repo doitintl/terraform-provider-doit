@@ -45,6 +45,16 @@ output "anomaly_linked_anomalies" {
   value       = data.doit_anomaly.example.linked_anomalies
 }
 
+output "anomaly_allocations" {
+  description = "Allocations the anomaly belongs to, primary allocation first"
+  value       = data.doit_anomaly.example.allocations
+}
+
+output "anomaly_initial_notifications" {
+  description = "First notification sent on each channel for this anomaly"
+  value       = data.doit_anomaly.example.initial_notifications
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status

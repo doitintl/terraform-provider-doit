@@ -201,3 +201,42 @@ resources:
     update:
       path: /customers/v1/customers/{customerId}
       method: PATCH
+  service_account:
+    create:
+      path: /iam/v1/service-accounts
+      method: POST
+    read:
+      path: /iam/v1/service-accounts/{id}
+      method: GET
+    update:
+      path: /iam/v1/service-accounts/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/service-accounts/{id}
+      method: DELETE
+  service_account_token:
+    create:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens
+      method: POST
+    read:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: GET
+    update:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
+      method: DELETE
+  role:
+    create:
+      path: /iam/v1/roles
+      method: POST
+    read:
+      path: /iam/v1/roles/{id}
+      method: GET
+    update:
+      path: /iam/v1/roles/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/roles/{id}
+      method: DELETE
