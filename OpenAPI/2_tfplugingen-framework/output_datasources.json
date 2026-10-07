@@ -10817,7 +10817,7 @@
 						"name": "sort_by",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "A field by which the results will be sorted.",
+							"description": "A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.",
 							"validators": [
 								{
 									"custom": {
@@ -10826,7 +10826,7 @@
 												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 											}
 										],
-										"schema_definition": "stringvalidator.OneOf(\n\"type\",\n\"label\",\n\"key\",\n\"timestamp\",\n)"
+										"schema_definition": "stringvalidator.OneOf(\n\"id\",\n\"type\",\n\"label\",\n\"key\",\n)"
 									}
 								}
 							]

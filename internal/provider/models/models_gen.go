@@ -4248,20 +4248,20 @@ func (e ListCommitmentsParamsSortOrder) Valid() bool {
 
 // Defines values for ListDimensionsParamsSortBy.
 const (
-	ListDimensionsParamsSortByKey       ListDimensionsParamsSortBy = "key"
-	ListDimensionsParamsSortByLabel     ListDimensionsParamsSortBy = "label"
-	ListDimensionsParamsSortByTimestamp ListDimensionsParamsSortBy = "timestamp"
-	ListDimensionsParamsSortByType      ListDimensionsParamsSortBy = "type"
+	ListDimensionsParamsSortById    ListDimensionsParamsSortBy = "id"
+	ListDimensionsParamsSortByKey   ListDimensionsParamsSortBy = "key"
+	ListDimensionsParamsSortByLabel ListDimensionsParamsSortBy = "label"
+	ListDimensionsParamsSortByType  ListDimensionsParamsSortBy = "type"
 )
 
 // Valid indicates whether the value is a known member of the ListDimensionsParamsSortBy enum.
 func (e ListDimensionsParamsSortBy) Valid() bool {
 	switch e {
+	case ListDimensionsParamsSortById:
+		return true
 	case ListDimensionsParamsSortByKey:
 		return true
 	case ListDimensionsParamsSortByLabel:
-		return true
-	case ListDimensionsParamsSortByTimestamp:
 		return true
 	case ListDimensionsParamsSortByType:
 		return true
@@ -11420,7 +11420,7 @@ type ListDimensionsParams struct {
 	// The fields eligible for filtering are: type, label, key.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// SortBy A field by which the results will be sorted.
+	// SortBy A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.
 	SortBy *ListDimensionsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
 	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
