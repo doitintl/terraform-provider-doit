@@ -2,8 +2,13 @@
 
 ## Unreleased
 
+### BREAKING CHANGES
+
+- **data-source/doit_dimensions**: Remove `timestamp` from `sort_by` allowed values following upstream API change
+
 ### ENHANCEMENTS
 
+- **data-source/doit_dimensions**: Add `id` to `sort_by` allowed values, document `key` as an alias for `id`, and set row count to unknown when inputs are unknown
 - **data-source/doit_anomaly, data-source/doit_anomalies**: Add `initial_notifications` attribute
 
 ### BUG FIXES

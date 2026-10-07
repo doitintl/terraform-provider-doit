@@ -2117,14 +2117,16 @@ paths:
             type: string
         - name: sortBy
           in: query
-          description: A field by which the results will be sorted.
+          description: A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.
           schema:
             type: string
+            default: id
+            description: Sort by `id`, `type`, or `label`. `key` is an alias for `id`.
             enum:
+              - id
               - type
               - label
               - key
-              - timestamp
         - $ref: "#/components/parameters/sortOrder"
       responses:
         "200":
