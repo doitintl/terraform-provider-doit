@@ -1229,6 +1229,12 @@ func TestAllocationComponents_DuplicateIdentityMatching(t *testing.T) {
 			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage"}, includeNull: false}, apiSentinelA},
 			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage"}}, sentinelA}},
 		{"removed duplicate retains surviving alias", []componentSpec{aliasA, aliasB}, []componentSpec{apiAliasB}, []componentSpec{aliasB}},
+		{"removed identical duplicate retains surviving alias", []componentSpec{aliasA, aliasA},
+			[]componentSpec{apiAliasA}, []componentSpec{aliasA}},
+		{"removed identical duplicate retains surviving sentinel", []componentSpec{sentinelA, sentinelA},
+			[]componentSpec{apiSentinelA}, []componentSpec{sentinelA}},
+		{"removed duplicate with different value order stays ambiguous", []componentSpec{sentinelA, reversedSentinelA},
+			[]componentSpec{apiSentinelA}, []componentSpec{apiSentinelA}},
 		{"inserted duplicate retains only the prior alias", []componentSpec{aliasA},
 			[]componentSpec{apiAliasB, apiAliasA}, []componentSpec{apiAliasB, aliasA}},
 		{

@@ -1106,7 +1106,8 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 		}
 		// Responses with the same candidates cannot reveal value order. Pair
 		// equal-sized groups in order when prior components differ only by
-		// value order or stripped sentinels, preserving each configured list.
+		// value order or stripped sentinels. Exactly equal prior components
+		// can also supply metadata for fewer surviving responses.
 		for i := range components {
 			if matches[i] >= 0 {
 				continue
@@ -1121,7 +1122,11 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 				continue
 			}
 			interchangeable := true
+			identical := true
 			for _, j := range candidates[1:] {
+				if !prior[candidates[0]].Equal(prior[j]) {
+					identical = false
+				}
 				if !equivalentPrior(candidates[0], j) {
 					interchangeable = false
 					break
@@ -1147,7 +1152,7 @@ func matchAllocationComponents(ctx context.Context, components []models.Allocati
 					responses = append(responses, k)
 				}
 			}
-			if len(responses) == len(candidates) {
+			if len(responses) == len(candidates) || (len(responses) < len(candidates) && identical) {
 				for k, responseIndex := range responses {
 					matches[responseIndex] = candidates[k]
 					used[candidates[k]] = true
