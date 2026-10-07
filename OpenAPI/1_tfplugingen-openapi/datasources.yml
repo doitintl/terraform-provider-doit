@@ -303,6 +303,7 @@ data_sources:
   alert_slack_channels:
     read:
       path: /analytics/v1/alerts/slack-channels
+      method: GET
   ps4c_gcp_spend_cuds:
     read:
       path: /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based

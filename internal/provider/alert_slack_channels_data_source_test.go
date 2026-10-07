@@ -8,7 +8,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
 
+// TestAccAlertSlackChannelsDataSource_Basic exercises auto-pagination, which
+// walks the whole workspace. Every page makes the API re-enumerate all channels
+// from Slack, so on a large workspace it gets rate limited (503 + Retry-After)
+// and either runs for minutes or exhausts the read timeout.
+// TODO(CMP-52546): Enable once the API caches channel discovery between pages.
+// Auto-pagination is covered by the unit tests; see _MaxResults10 for a
+// single-request acceptance test.
 func TestAccAlertSlackChannelsDataSource_Basic(t *testing.T) {
+	t.Skip("skipped until CMP-52546: uncached Slack channel discovery rate limits full pagination")
+
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
@@ -37,6 +46,48 @@ data "doit_alert_slack_channels" "test" {
 				Config: `
 data "doit_alert_slack_channels" "test" {
   name_contains = "budget"
+}
+`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestAccAlertSlackChannelsDataSource_MaxResults10(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "doit_alert_slack_channels" "page" {
+  max_results = 10
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_alert_slack_channels.page", "items.#", "10"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "row_count"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "page_token"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "workspace_status"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "is_workspace_connected"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "has_shared_channel"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "channels_complete"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "items.0.id"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "items.0.name"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "items.0.type"),
+					resource.TestCheckResourceAttrSet("data.doit_alert_slack_channels.page", "items.0.shared"),
+				),
+			},
+			{
+				Config: `
+data "doit_alert_slack_channels" "page" {
+  max_results = 10
 }
 `,
 				ConfigPlanChecks: resource.ConfigPlanChecks{

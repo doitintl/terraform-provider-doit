@@ -4988,6 +4988,8 @@ type AlertSlackChannelType string
 
 // AlertSlackChannelList defines model for AlertSlackChannelList.
 type AlertSlackChannelList struct {
+	// ChannelsComplete Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
+	ChannelsComplete     bool                `json:"channelsComplete"`
 	HasSharedChannel     bool                `json:"hasSharedChannel"`
 	IsWorkspaceConnected bool                `json:"isWorkspaceConnected"`
 	Items                []AlertSlackChannel `json:"items"`
@@ -28102,6 +28104,11 @@ func (r CreateAlertResp) ContentType() string {
 	return ""
 }
 
+// ListAlertSlackChannelsResp503Headers the declared response headers of an HTTP 503 response for ListAlertSlackChannels
+type ListAlertSlackChannelsResp503Headers struct {
+	RetryAfter *int
+}
+
 type ListAlertSlackChannelsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -28113,6 +28120,8 @@ type ListAlertSlackChannelsResp struct {
 	JSON401 *N401
 	// JSON403 the response for an HTTP 403 `application/json` response
 	JSON403 *N403
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListAlertSlackChannelsResp503Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -42448,6 +42457,19 @@ func ParseListAlertSlackChannelsResp(rsp *http.Response) (*ListAlertSlackChannel
 	case rsp.StatusCode == 503:
 		break // No content-type
 
+	}
+
+	switch {
+	case rsp.StatusCode == 503:
+		var headers ListAlertSlackChannelsResp503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil

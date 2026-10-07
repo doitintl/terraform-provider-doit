@@ -252,7 +252,14 @@ paths:
         "403":
           $ref: "#/components/responses/403"
         "503":
-          description: Slack discovery is temporarily unavailable. Retry later.
+          description: >-
+            Slack discovery is temporarily unavailable — the workspace is still connected, but the channel lookup failed (rate limit, timeout, server error, or network failure) after a server-side retry. This is retryable: when Retry-After is present, wait that many seconds and repeat the request unchanged, including nameContains and pageToken. When absent, use exponential backoff.
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying. Present on rate-limit failures; absent on other transient errors.
+              schema:
+                type: integer
+                example: 30
   "/analytics/v1/alerts/{id}":
     get:
       tags:
@@ -6407,7 +6414,7 @@ components:
           enum: [public, private]
     AlertSlackChannelList:
       type: object
-      required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel]
+      required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel, channelsComplete]
       properties:
         items:
           type: array
@@ -6427,6 +6434,9 @@ components:
           type: boolean
         hasSharedChannel:
           type: boolean
+        channelsComplete:
+          type: boolean
+          description: Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
     AlertSlackChannelRequest:
       type: object
       required: [id]

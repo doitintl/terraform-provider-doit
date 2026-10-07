@@ -2,6 +2,7 @@ package provider
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -130,6 +131,9 @@ func TestAlertSlackChannelsDataSource_UnknownInputGuard(t *testing.T) {
 			if !data.PageToken.IsUnknown() {
 				t.Errorf("expected PageToken to be unknown, got %v", data.PageToken)
 			}
+			if !data.ChannelsComplete.IsUnknown() {
+				t.Errorf("expected ChannelsComplete to be unknown, got %v", data.ChannelsComplete)
+			}
 		})
 	}
 }
@@ -145,6 +149,7 @@ func TestAlertSlackChannelsDataSource_Read_AutoPagination(t *testing.T) {
 			token := "token-page-2"
 			resp := models.AlertSlackChannelList{
 				HasSharedChannel:     true,
+				ChannelsComplete:     true,
 				IsWorkspaceConnected: true,
 				RowCount:             3,
 				WorkspaceStatus:      "ok",
@@ -172,6 +177,7 @@ func TestAlertSlackChannelsDataSource_Read_AutoPagination(t *testing.T) {
 
 		resp := models.AlertSlackChannelList{
 			HasSharedChannel:     true,
+			ChannelsComplete:     true,
 			IsWorkspaceConnected: true,
 			RowCount:             3,
 			WorkspaceStatus:      "ok",
@@ -215,6 +221,12 @@ func TestAlertSlackChannelsDataSource_Read_AutoPagination(t *testing.T) {
 	if !data.HasSharedChannel.ValueBool() {
 		t.Errorf("expected HasSharedChannel to be true")
 	}
+	if !data.ChannelsComplete.ValueBool() {
+		t.Errorf("expected ChannelsComplete to be true")
+	}
+	if len(diags) != 0 {
+		t.Errorf("expected no diagnostics for a complete list, got %v", diags)
+	}
 
 	var items []datasource_alert_slack_channels.ItemsValue
 	diags = data.Items.ElementsAs(t.Context(), &items, false)
@@ -252,6 +264,7 @@ func TestAlertSlackChannelsDataSource_Read_ManualPagination(t *testing.T) {
 		token := "next-page-token"
 		resp := models.AlertSlackChannelList{
 			HasSharedChannel:     true,
+			ChannelsComplete:     true,
 			IsWorkspaceConnected: true,
 			RowCount:             10,
 			WorkspaceStatus:      "ok",
@@ -305,6 +318,7 @@ func TestAlertSlackChannelsDataSource_Read_Empty(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		resp := models.AlertSlackChannelList{
 			HasSharedChannel:     false,
+			ChannelsComplete:     true,
 			IsWorkspaceConnected: false,
 			RowCount:             0,
 			WorkspaceStatus:      "none",
@@ -335,5 +349,80 @@ func TestAlertSlackChannelsDataSource_Read_Empty(t *testing.T) {
 
 	if data.RowCount.ValueInt64() != 0 {
 		t.Errorf("expected RowCount 0, got %d", data.RowCount.ValueInt64())
+	}
+}
+
+// slackChannelsPartialServer serves two pages; the page at partialPage (1-based)
+// reports channelsComplete=false.
+func slackChannelsPartialServer(t *testing.T, partialPage int32) *httptest.Server {
+	t.Helper()
+
+	var reqCount atomic.Int32
+	return httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page := reqCount.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		resp := models.AlertSlackChannelList{
+			IsWorkspaceConnected: true,
+			ChannelsComplete:     page != partialPage,
+			RowCount:             2,
+			WorkspaceStatus:      "ok",
+			Items:                []models.AlertSlackChannel{{Id: fmt.Sprintf("C00%d", page)}},
+		}
+		if page == 1 {
+			resp.PageToken = new("page-2")
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+}
+
+func requireIncompleteWarning(t *testing.T, diags diag.Diagnostics) {
+	t.Helper()
+
+	if diags.HasError() {
+		t.Fatalf("unexpected error diagnostics: %v", diags)
+	}
+	if diags.WarningsCount() != 1 {
+		t.Fatalf("expected exactly 1 warning, got %v", diags)
+	}
+	if got := diags.Warnings()[0].Summary(); got != "Incomplete Slack Channel List" {
+		t.Errorf("unexpected warning summary %q", got)
+	}
+}
+
+func TestAlertSlackChannelsDataSource_Read_IncompleteWarning_Auto(t *testing.T) {
+	t.Parallel()
+
+	// Only the last page is partial: the aggregate must still be incomplete.
+	for _, partialPage := range []int32{1, 2} {
+		t.Run(fmt.Sprintf("page_%d", partialPage), func(t *testing.T) {
+			t.Parallel()
+
+			server := slackChannelsPartialServer(t, partialPage)
+			data, _, diags := readAlertSlackChannelsHelper(t, server, nil)
+
+			requireIncompleteWarning(t, diags)
+			if data.ChannelsComplete.IsNull() || data.ChannelsComplete.ValueBool() {
+				t.Errorf("expected ChannelsComplete=false, got %v", data.ChannelsComplete)
+			}
+			// State is still populated despite the warning.
+			if len(data.Items.Elements()) != 2 {
+				t.Errorf("expected 2 items in state, got %d", len(data.Items.Elements()))
+			}
+		})
+	}
+}
+
+func TestAlertSlackChannelsDataSource_Read_IncompleteWarning_Manual(t *testing.T) {
+	t.Parallel()
+
+	server := slackChannelsPartialServer(t, 1)
+	overrides := map[string]tftypes.Value{
+		"max_results": tftypes.NewValue(tftypes.Number, 1),
+	}
+	data, _, diags := readAlertSlackChannelsHelper(t, server, overrides)
+
+	requireIncompleteWarning(t, diags)
+	if data.ChannelsComplete.IsNull() || data.ChannelsComplete.ValueBool() {
+		t.Errorf("expected ChannelsComplete=false, got %v", data.ChannelsComplete)
 	}
 }

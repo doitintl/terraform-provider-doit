@@ -20,6 +20,11 @@ import (
 func AlertSlackChannelsDataSourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"channels_complete": schema.BoolAttribute{
+				Computed:            true,
+				Description:         "Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.",
+				MarkdownDescription: "Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.",
+			},
 			"has_shared_channel": schema.BoolAttribute{
 				Computed: true,
 			},
@@ -98,6 +103,7 @@ func AlertSlackChannelsDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AlertSlackChannelsModel struct {
+	ChannelsComplete     types.Bool   `tfsdk:"channels_complete"`
 	HasSharedChannel     types.Bool   `tfsdk:"has_shared_channel"`
 	IsWorkspaceConnected types.Bool   `tfsdk:"is_workspace_connected"`
 	Items                types.List   `tfsdk:"items"`

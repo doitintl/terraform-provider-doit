@@ -82,6 +82,7 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 		data.WorkspaceStatus = types.StringUnknown()
 		data.IsWorkspaceConnected = types.BoolUnknown()
 		data.HasSharedChannel = types.BoolUnknown()
+		data.ChannelsComplete = types.BoolUnknown()
 		data.PageToken = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
@@ -100,6 +101,7 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 	var workspaceStatus string
 	var isWorkspaceConnected bool
 	var hasSharedChannel bool
+	channelsComplete := true
 
 	if userControlsPagination {
 		// Manual mode: single API call with user's params
@@ -130,6 +132,7 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 		workspaceStatus = string(result.WorkspaceStatus)
 		isWorkspaceConnected = result.IsWorkspaceConnected
 		hasSharedChannel = result.HasSharedChannel
+		channelsComplete = result.ChannelsComplete
 
 		// Preserve API's page_token for user to fetch next page
 		data.PageToken = types.StringPointerValue(result.PageToken)
@@ -162,6 +165,8 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 			workspaceStatus = string(result.WorkspaceStatus)
 			isWorkspaceConnected = result.IsWorkspaceConnected
 			hasSharedChannel = result.HasSharedChannel
+			// A single partial page makes the whole listing non-authoritative.
+			channelsComplete = channelsComplete && result.ChannelsComplete
 
 			if result.PageToken == nil || *result.PageToken == "" {
 				break
@@ -178,6 +183,15 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 	data.WorkspaceStatus = types.StringValue(workspaceStatus)
 	data.IsWorkspaceConnected = types.BoolValue(isWorkspaceConnected)
 	data.HasSharedChannel = types.BoolValue(hasSharedChannel)
+	data.ChannelsComplete = types.BoolValue(channelsComplete)
+	if !channelsComplete {
+		resp.Diagnostics.AddWarning(
+			"Incomplete Slack Channel List",
+			"The API reported that the Slack channel list is incomplete (channels_complete = false), "+
+				"typically because Slack rate limited or transiently failed the lookup. Channels may be missing "+
+				"from the result; do not treat it as authoritative. Re-run the read later to get a complete list.",
+		)
+	}
 
 	// Map items list
 	if len(allChannels) > 0 {

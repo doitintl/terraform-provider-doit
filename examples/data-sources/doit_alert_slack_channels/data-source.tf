@@ -24,6 +24,11 @@ output "is_workspace_connected" {
   value = data.doit_alert_slack_channels.all.is_workspace_connected
 }
 
+# False when Slack rate limited or transiently failed the lookup; the list may be partial.
+output "channels_complete" {
+  value = data.doit_alert_slack_channels.all.channels_complete
+}
+
 output "channel_names" {
   value = [for c in data.doit_alert_slack_channels.all.items : c.name]
 }

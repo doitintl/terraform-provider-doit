@@ -39,6 +39,11 @@ output "is_workspace_connected" {
   value = data.doit_alert_slack_channels.all.is_workspace_connected
 }
 
+# False when Slack rate limited or transiently failed the lookup; the list may be partial.
+output "channels_complete" {
+  value = data.doit_alert_slack_channels.all.channels_complete
+}
+
 output "channel_names" {
   value = [for c in data.doit_alert_slack_channels.all.items : c.name]
 }
@@ -66,6 +71,7 @@ output "channel_details" {
 
 ### Read-Only
 
+- `channels_complete` (Boolean) Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
 - `has_shared_channel` (Boolean)
 - `is_workspace_connected` (Boolean)
 - `items` (Attributes List) (see [below for nested schema](#nestedatt--items))

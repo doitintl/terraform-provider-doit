@@ -368,6 +368,13 @@
 						}
 					},
 					{
+						"name": "channels_complete",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative."
+						}
+					},
+					{
 						"name": "has_shared_channel",
 						"bool": {
 							"computed_optional_required": "computed"
