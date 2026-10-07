@@ -554,13 +554,13 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"sort_dimensions": schema.StringAttribute{
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.",
-						MarkdownDescription: "This option has no impact when reading reports via API.",
+						Description:         "Orders the columns produced by `dimensions`, both in the console and in a rendered\n`fileOutput` export. It does not reorder the `rows` of a JSON result.\n`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`\ndimensions of a time series means chronologically. The default `desc` orders them by the\nmetric instead, so a monthly report charts its priciest month first rather than in time\norder — set `a_to_z` for a time series you intend to export.\nA report with a forecast is always charted chronologically and ignores this field, and a\ncomparative `displayValues` mode requires `a_to_z`.",
+						MarkdownDescription: "Orders the columns produced by `dimensions`, both in the console and in a rendered\n`fileOutput` export. It does not reorder the `rows` of a JSON result.\n`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`\ndimensions of a time series means chronologically. The default `desc` orders them by the\nmetric instead, so a monthly report charts its priciest month first rather than in time\norder — set `a_to_z` for a time series you intend to export.\nA report with a forecast is always charted chronologically and ignores this field, and a\ncomparative `displayValues` mode requires `a_to_z`.",
 					},
 					"sort_groups": schema.StringAttribute{
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.",
-						MarkdownDescription: "This option has no impact when reading reports via API.",
+						Description:         "Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`\nexport. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does\nnot reorder the `rows` of a JSON result.",
+						MarkdownDescription: "Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`\nexport. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does\nnot reorder the `rows` of a JSON result.",
 					},
 					"splits": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{

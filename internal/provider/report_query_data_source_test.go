@@ -488,6 +488,35 @@ func TestAccReportQueryDataSource_ForecastSettings(t *testing.T) {
 	})
 }
 
+// TestAccReportQueryDataSource_ForecastFileOutput verifies that an ad-hoc query with
+// forecast_settings and file_output returns both a valid signed download URL and forecastRows.
+func TestAccReportQueryDataSource_ForecastFileOutput(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportQueryDataSourceForecastFileOutputConfig(),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("file_output_url"),
+						knownvalue.StringRegexp(regexp.MustCompile(`^https://`))),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
 // TestAccReportQueryDataSource_ForecastConflict verifies that forecast=false plus
 // forecast_settings is accepted by the query: the API enables forecasting from the
 // presence of forecast_settings and still returns forecast rows.
@@ -549,6 +578,43 @@ data "doit_report_query" "test" {
           unit            = "month"
           include_current = false
         }
+        forecast_settings = {
+            future_time_intervals     = 3
+            historical_time_intervals = 12
+            mode                      = "totals"
+        }
+    }
+}
+`
+}
+
+func testAccReportQueryDataSourceForecastFileOutputConfig() string {
+	return `
+data "doit_report_query" "test" {
+    file_output = "png"
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_and_line_chart"
+        time_range = {
+          mode            = "last"
+          amount          = 12
+          unit            = "month"
+          include_current = true
+        }
+        dimensions = [
+          { id = "year", type = "datetime" },
+          { id = "month", type = "datetime" }
+        ]
         forecast_settings = {
             future_time_intervals     = 3
             historical_time_intervals = 12

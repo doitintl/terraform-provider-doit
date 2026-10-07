@@ -5,6 +5,8 @@
 ### ENHANCEMENTS
 
 - **data-source/doit_anomaly, data-source/doit_anomalies**: Add `initial_notifications` attribute
+- **data-source/doit_report_result, data-source/doit_report_query**: Support and document `forecast_settings` in report execution and chart exports with `forecastRows` ([#386](https://github.com/doitintl/terraform-provider-doit/issues/386))
+- **data-source/doit_report, data-source/doit_report_query, resource/doit_report**: Clarify `sort_dimensions` and `sort_groups` descriptions regarding series ordering on the x-axis in chart exports ([#387](https://github.com/doitintl/terraform-provider-doit/issues/387))
 
 ### BUG FIXES
 

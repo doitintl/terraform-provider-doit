@@ -7986,10 +7986,19 @@ type ExternalConfig struct {
 	// Example: {"amount":1,"includeCurrent":false,"unit":"year"}
 	SecondaryTimeRange *TimeSettingsSecondary `json:"secondaryTimeRange,omitempty"`
 
-	// SortDimensions This option has no impact when reading reports via API.
+	// SortDimensions Orders the columns produced by `dimensions`, both in the console and in a rendered
+	// `fileOutput` export. It does not reorder the `rows` of a JSON result.
+	// `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+	// dimensions of a time series means chronologically. The default `desc` orders them by the
+	// metric instead, so a monthly report charts its priciest month first rather than in time
+	// order — set `a_to_z` for a time series you intend to export.
+	// A report with a forecast is always charted chronologically and ignores this field, and a
+	// comparative `displayValues` mode requires `a_to_z`.
 	SortDimensions *ExternalConfigSortDimensions `json:"sortDimensions,omitempty"`
 
-	// SortGroups This option has no impact when reading reports via API.
+	// SortGroups Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+	// export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+	// not reorder the `rows` of a JSON result.
 	SortGroups *ExternalConfigSortGroups `json:"sortGroups,omitempty"`
 
 	// Splits The splits to use in the report.
@@ -8021,10 +8030,19 @@ type ExternalConfigDisplayValues string
 // `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
 type ExternalConfigLimitAggregation string
 
-// ExternalConfigSortDimensions This option has no impact when reading reports via API.
+// ExternalConfigSortDimensions Orders the columns produced by `dimensions`, both in the console and in a rendered
+// `fileOutput` export. It does not reorder the `rows` of a JSON result.
+// `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+// dimensions of a time series means chronologically. The default `desc` orders them by the
+// metric instead, so a monthly report charts its priciest month first rather than in time
+// order — set `a_to_z` for a time series you intend to export.
+// A report with a forecast is always charted chronologically and ignores this field, and a
+// comparative `displayValues` mode requires `a_to_z`.
 type ExternalConfigSortDimensions string
 
-// ExternalConfigSortGroups This option has no impact when reading reports via API.
+// ExternalConfigSortGroups Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+// export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+// not reorder the `rows` of a JSON result.
 type ExternalConfigSortGroups string
 
 // ExternalConfigTimeInterval Time interval for grouping data in the report.

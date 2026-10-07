@@ -552,3 +552,165 @@ output "cost_field_aggregation" {
 }
 `, name)
 }
+
+// TestAccReportResultDataSource_ForecastSettings verifies that reading a report configured
+// with forecast_settings returns forecastRows in result_json.
+func TestAccReportResultDataSource_ForecastSettings(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-rr-forecast")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportResultDataSourceForecastSettingsConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_result.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_result.test",
+						tfjsonpath.New("report_name"),
+						knownvalue.StringExact(rName)),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_result.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+// TestAccReportResultDataSource_ForecastFileOutput verifies that requesting a PDF export
+// for a report configured with forecast_settings succeeds, returning both forecastRows
+// in result_json and a downloadable PDF via file_output_url.
+func TestAccReportResultDataSource_ForecastFileOutput(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-rr-fc-file")
+	filename := t.TempDir() + "/forecast_report.pdf"
+	config := testAccReportResultDataSourceForecastFileOutputConfig(rName, filename)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config:             config,
+			ExpectNonEmptyPlan: true, // A fresh signed URL makes the dependent file plan a replacement.
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+			},
+			Check: func(_ *terraform.State) error {
+				content, err := os.ReadFile(filename)
+				if err != nil {
+					return err
+				}
+				if !bytes.HasPrefix(content, []byte("%PDF-")) {
+					return fmt.Errorf("downloaded file does not have a PDF header")
+				}
+				return nil
+			},
+		}},
+	})
+}
+
+func testAccReportResultDataSourceForecastSettingsConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = %q
+    description = "test report with forecast settings for result data source"
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_and_line_chart"
+        time_range = {
+          mode            = "last"
+          amount          = 12
+          unit            = "month"
+          include_current = true
+        }
+        dimensions = [
+          { id = "year", type = "datetime" },
+          { id = "month", type = "datetime" }
+        ]
+        forecast_settings = {
+            mode                      = "totals"
+            historical_time_intervals = 12
+            future_time_intervals     = 3
+        }
+    }
+}
+
+data "doit_report_result" "test" {
+    id = doit_report.test.id
+}
+`, name)
+}
+
+func testAccReportResultDataSourceForecastFileOutputConfig(name, filename string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = %[1]q
+    description = "test report with forecast settings and file output for result data source"
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_and_line_chart"
+        time_range = {
+          mode            = "last"
+          amount          = 12
+          unit            = "month"
+          include_current = true
+        }
+        dimensions = [
+          { id = "year", type = "datetime" },
+          { id = "month", type = "datetime" }
+        ]
+        forecast_settings = {
+            mode                      = "totals"
+            historical_time_intervals = 12
+            future_time_intervals     = 3
+        }
+    }
+}
+
+data "doit_report_result" "test" {
+    id          = doit_report.test.id
+    file_output = "pdf"
+}
+
+data "http" "report_pdf" {
+    url = data.doit_report_result.test.file_output_url
+}
+
+resource "local_sensitive_file" "report_pdf" {
+    filename       = %[2]q
+    content_base64 = data.http.report_pdf.response_body_base64
+}
+`, name, filename)
+}
