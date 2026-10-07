@@ -569,7 +569,7 @@ func TestAccReportResultDataSource_ForecastSettings(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"data.doit_report_result.test",
 						tfjsonpath.New("result_json"),
-						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 					statecheck.ExpectKnownValue(
 						"data.doit_report_result.test",
 						tfjsonpath.New("report_name"),
@@ -605,7 +605,7 @@ func TestAccReportResultDataSource_ForecastFileOutput(t *testing.T) {
 			ExpectNonEmptyPlan: true, // A fresh signed URL makes the dependent file plan a replacement.
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
-				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 			},
 			Check: func(_ *terraform.State) error {
 				content, err := os.ReadFile(filename)

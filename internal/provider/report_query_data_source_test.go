@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"regexp"
@@ -472,12 +473,12 @@ func TestAccReportQueryDataSource_ForecastSettings(t *testing.T) {
 			{
 				Config: testAccReportQueryDataSourceForecastSettingsConfig(),
 				ConfigStateChecks: []statecheck.StateCheck{
-					// result_json must contain forecastRows, proving forecast_settings is
+					// result_json must contain non-empty forecastRows, proving forecast_settings is
 					// applied rather than silently ignored.
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("result_json"),
-						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("row_count"),
@@ -489,28 +490,47 @@ func TestAccReportQueryDataSource_ForecastSettings(t *testing.T) {
 }
 
 // TestAccReportQueryDataSource_ForecastFileOutput verifies that an ad-hoc query with
-// forecast_settings and file_output returns both a valid signed download URL and forecastRows.
+// forecast_settings and file_output returns both a valid signed download URL and non-empty forecastRows,
+// and that the URL downloads a valid PNG file.
 func TestAccReportQueryDataSource_ForecastFileOutput(t *testing.T) {
+	filename := t.TempDir() + "/forecast_query.png"
+	config := testAccReportQueryDataSourceForecastFileOutputConfig(filename)
+
 	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccReportQueryDataSourceForecastFileOutputConfig(),
+				Config:             config,
+				ExpectNonEmptyPlan: true, // A fresh signed URL makes the dependent file plan a replacement.
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("file_output_url"),
-						knownvalue.StringRegexp(regexp.MustCompile(`^https://`))),
+						knownvalue.NotNull()),
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("result_json"),
-						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("row_count"),
 						knownvalue.NotNull()),
+				},
+				Check: func(_ *terraform.State) error {
+					content, err := os.ReadFile(filename)
+					if err != nil {
+						return err
+					}
+					if !bytes.HasPrefix(content, []byte("\x89PNG\r\n\x1a\n")) {
+						return fmt.Errorf("downloaded file does not have a PNG header")
+					}
+					return nil
 				},
 			},
 		},
@@ -532,7 +552,7 @@ func TestAccReportQueryDataSource_ForecastConflict(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("result_json"),
-						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 				},
 			},
 		},
@@ -588,8 +608,8 @@ data "doit_report_query" "test" {
 `
 }
 
-func testAccReportQueryDataSourceForecastFileOutputConfig() string {
-	return `
+func testAccReportQueryDataSourceForecastFileOutputConfig(filename string) string {
+	return fmt.Sprintf(`
 data "doit_report_query" "test" {
     file_output = "png"
     config = {
@@ -622,7 +642,16 @@ data "doit_report_query" "test" {
         }
     }
 }
-`
+
+data "http" "report_png" {
+    url = data.doit_report_query.test.file_output_url
+}
+
+resource "local_sensitive_file" "report_png" {
+    filename       = %[1]q
+    content_base64 = data.http.report_png.response_body_base64
+}
+`, filename)
 }
 
 func testAccReportQueryDataSourceForecastConflictConfig() string {
