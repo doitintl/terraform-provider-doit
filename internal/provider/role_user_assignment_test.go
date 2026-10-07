@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -13,6 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 )
 
 // These tests cover roles that are held by invited users. Deleting a role that
@@ -28,6 +32,30 @@ const (
 	assignedRoleAddr2 = "doit_role.other"
 	assignedUserAddr  = "doit_user.test"
 )
+
+// testAccAPIContext returns a context for direct API calls from checks and
+// cleanups. It is detached from t.Context() (cancelled before cleanups run) but
+// still bounded, because the retry client has no elapsed-time limit of its own
+// and would otherwise retry a failing call forever.
+func testAccAPIContext(t *testing.T) (context.Context, context.CancelFunc) {
+	t.Helper()
+	return context.WithTimeout(context.WithoutCancel(t.Context()), time.Minute)
+}
+
+// testAccGetTestUser looks up the invited test user by email through the API.
+func testAccGetTestUser(t *testing.T, email string) models.UserListItem {
+	t.Helper()
+	ctx, cancel := testAccAPIContext(t)
+	defer cancel()
+	resp, err := getAPIClient(t).ListUsersWithResponse(ctx, &models.ListUsersParams{Email: new(openapi_types.Email(email))})
+	if err != nil {
+		t.Fatalf("listing users: %v", err)
+	}
+	if resp.JSON200 == nil || resp.JSON200.Users == nil || len(*resp.JSON200.Users) != 1 {
+		t.Fatalf("expected exactly one user for %s, got status %d: %s", email, resp.StatusCode(), string(resp.Body))
+	}
+	return (*resp.JSON200.Users)[0]
+}
 
 // testAccRoleCaptureID records the ID of a role in state so a later check can
 // still query it after the resource has left state.
@@ -48,7 +76,8 @@ func testAccRoleGone(t *testing.T, ids ...*string) resource.TestCheckFunc {
 	t.Helper()
 	return func(*terraform.State) error {
 		client := getAPIClient(t)
-		ctx := context.WithoutCancel(t.Context())
+		ctx, cancel := testAccAPIContext(t)
+		defer cancel()
 		for _, id := range ids {
 			if *id == "" {
 				continue
@@ -69,7 +98,9 @@ func testAccRoleGone(t *testing.T, ids ...*string) resource.TestCheckFunc {
 // unless the API accepts it.
 func deleteTestRole(t *testing.T, id string) {
 	t.Helper()
-	resp, err := getAPIClient(t).DeleteRoleWithResponse(context.WithoutCancel(t.Context()), id)
+	ctx, cancel := testAccAPIContext(t)
+	defer cancel()
+	resp, err := getAPIClient(t).DeleteRoleWithResponse(ctx, id)
 	if err != nil {
 		t.Fatalf("deleting role %s: %v", id, err)
 	}
@@ -247,8 +278,19 @@ func TestAccRole_DeletedWhileAssigned_UserLosesRole(t *testing.T) {
 				Check:  testAccRoleCaptureID(assignedRoleAddr, &roleID),
 			},
 			{
-				PreConfig: func() { deleteTestRole(t, roleID) },
-				Config:    testAccRoleAssignedConfig(rName, email),
+				PreConfig: func() {
+					before := testAccGetTestUser(t, email)
+					deleteTestRole(t, roleID)
+					// The holder must survive, with the role stripped.
+					after := testAccGetTestUser(t, email)
+					if before.Id == nil || after.Id == nil || *before.Id != *after.Id {
+						t.Fatalf("user changed across role deletion: before %v, after %v", before.Id, after.Id)
+					}
+					if after.RoleId != nil && *after.RoleId != "" {
+						t.Fatalf("user still has role %q after the role was deleted", *after.RoleId)
+					}
+				},
+				Config: testAccRoleAssignedConfig(rName, email),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(assignedRoleAddr, plancheck.ResourceActionCreate),
