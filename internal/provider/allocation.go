@@ -875,28 +875,16 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		res, diags = types.ListValueFrom(ctx, resource_allocation.ComponentsValue{}.Type(ctx), []resource_allocation.ComponentsValue{})
 		return
 	}
+	priorIndices, matchDiags := matchAllocationComponents(ctx, components, existingComponents)
+	diags.Append(matchDiags...)
+	if diags.HasError() {
+		return
+	}
 	stateComponents := make([]attr.Value, len(components))
-	usedPrior := make([]bool, len(existingComponents))
 	for i, component := range components {
-		// Match normalization values to the same component, even if the API changes
-		// component order. Ambiguous duplicate identities have no safe prior match.
 		var prior *resource_allocation.ComponentsValue
-		matchIndex := -1
-		for j := range existingComponents {
-			if usedPrior[j] || existingComponents[j].Key.ValueString() != component.Key ||
-				existingComponents[j].Mode.ValueString() != string(component.Mode) ||
-				normalizeDimensionsType(string(component.Type), existingComponents[j].ComponentsType.ValueString()) != existingComponents[j].ComponentsType.ValueString() {
-				continue
-			}
-			if matchIndex != -1 {
-				matchIndex = -1
-				break
-			}
-			matchIndex = j
-		}
-		if matchIndex >= 0 {
-			prior = &existingComponents[matchIndex]
-			usedPrior[matchIndex] = true
+		if priorIndices[i] >= 0 {
+			prior = &existingComponents[priorIndices[i]]
 		}
 		// Normalize alias types to preserve user's configured value
 		compType := string(component.Type)
@@ -942,7 +930,7 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 		// that the API strips during normalization. This is needed for the Read path
 		// to prevent perpetual plan drift when the user's config contains sentinels.
 		// The Create/Update path uses plan-first state and doesn't need this.
-		apiIncludeNull := component.IncludeNull != nil && *component.IncludeNull
+		apiIncludeNull := includeNullVal.ValueBool()
 		apiValues := component.Values
 		if prior != nil {
 			var stateVals []string
@@ -984,5 +972,151 @@ func toAllocationRuleComponentsListValue(ctx context.Context, components []model
 	var d diag.Diagnostics
 	res, d = types.ListValueFrom(ctx, stateComponents[0].Type(ctx), stateComponents)
 	diags.Append(d...)
+	return
+}
+
+// matchAllocationComponents finds prior values only when the response identifies
+// them unambiguously. Match the entire list before using a loose identity match:
+// a newly inserted duplicate may precede the component whose sentinel or type
+// alias must be preserved.
+func matchAllocationComponents(ctx context.Context, components []models.AllocationComponent, prior []resource_allocation.ComponentsValue) (matches []int, diags diag.Diagnostics) {
+	matches = make([]int, len(components))
+	for i := range matches {
+		matches[i] = -1
+	}
+	used := make([]bool, len(prior))
+	priorValues := make([][]string, len(prior))
+	for j := range prior {
+		if prior[j].Values.IsNull() || prior[j].Values.IsUnknown() {
+			continue
+		}
+		diags.Append(prior[j].Values.ElementsAs(ctx, &priorValues[j], false)...)
+		if diags.HasError() {
+			return
+		}
+	}
+	identityMatches := func(i, j int) bool {
+		return prior[j].Key.ValueString() == components[i].Key &&
+			prior[j].Mode.ValueString() == string(components[i].Mode) &&
+			normalizeDimensionsType(string(components[i].Type), prior[j].ComponentsType.ValueString()) == prior[j].ComponentsType.ValueString()
+	}
+	valuesMatch := func(i, j int) bool {
+		apiValues := components[i].Values
+		stateValues := priorValues[j]
+		counts := make(map[string]int, len(apiValues))
+		for _, value := range apiValues {
+			counts[value]++
+		}
+		for _, value := range stateValues {
+			if !isNAFallback(value) {
+				counts[value]--
+			}
+		}
+		for _, count := range counts {
+			if count != 0 {
+				return false
+			}
+		}
+		return true
+	}
+	flagsMatch := func(i, j int) bool {
+		api := components[i]
+		state := prior[j]
+		return (api.CaseInsensitive == nil || *api.CaseInsensitive == state.CaseInsensitive.ValueBool()) &&
+			(api.IncludeNull == nil || *api.IncludeNull == state.IncludeNull.ValueBool()) &&
+			(api.Inverse == nil || *api.Inverse == state.Inverse.ValueBool())
+	}
+	criteria := []func(int, int) bool{
+		func(i, j int) bool { return identityMatches(i, j) && valuesMatch(i, j) && flagsMatch(i, j) },
+		func(i, j int) bool { return identityMatches(i, j) && valuesMatch(i, j) },
+		func(i, j int) bool { return identityMatches(i, j) && flagsMatch(i, j) },
+		identityMatches,
+	}
+	for _, criterion := range criteria {
+		// Resolve one-to-one pairs first. A pass can expose another unique pair.
+		for {
+			progress := false
+			for i := range components {
+				if matches[i] >= 0 {
+					continue
+				}
+				candidate := -1
+				for j := range prior {
+					if used[j] || !criterion(i, j) {
+						continue
+					}
+					if candidate >= 0 {
+						candidate = -1
+						break
+					}
+					candidate = j
+				}
+				if candidate < 0 {
+					continue
+				}
+				otherResponses := 0
+				for k := range components {
+					if matches[k] < 0 && criterion(k, candidate) {
+						otherResponses++
+					}
+				}
+				if otherResponses == 1 {
+					matches[i], used[candidate], progress = candidate, true, true
+				}
+			}
+			if !progress {
+				break
+			}
+		}
+		// Truly identical prior components carry interchangeable normalization
+		// metadata. Pair equal-sized indistinguishable groups in response order.
+		for i := range components {
+			if matches[i] >= 0 {
+				continue
+			}
+			var candidates []int
+			for j := range prior {
+				if !used[j] && criterion(i, j) {
+					candidates = append(candidates, j)
+				}
+			}
+			if len(candidates) < 2 {
+				continue
+			}
+			interchangeable := true
+			for _, j := range candidates[1:] {
+				if !prior[candidates[0]].Equal(prior[j]) {
+					interchangeable = false
+					break
+				}
+			}
+			if !interchangeable {
+				continue
+			}
+			var responses []int
+			for k := range components {
+				if matches[k] >= 0 {
+					continue
+				}
+				sameCandidates := true
+				for j := range prior {
+					if used[j] || criterion(k, j) == criterion(i, j) {
+						continue
+					}
+					sameCandidates = false
+					break
+				}
+				if sameCandidates {
+					responses = append(responses, k)
+				}
+			}
+			if len(responses) == len(candidates) {
+				for k, responseIndex := range responses {
+					matches[responseIndex] = candidates[k]
+					used[candidates[k]] = true
+				}
+			}
+		}
+	}
 	return
 }

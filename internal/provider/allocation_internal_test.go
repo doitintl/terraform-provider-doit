@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -1123,5 +1124,125 @@ func TestAllocationComponents_SuccessfulReadShowsClearedValues(t *testing.T) {
 	}
 	if len(values[0].Values.Elements()) != 0 {
 		t.Errorf("successful read retained externally cleared component values: %v", values[0].Values)
+	}
+}
+
+func TestAllocationComponents_DuplicateIdentityMatching(t *testing.T) {
+	type componentSpec struct {
+		key, componentType string
+		values             []string
+		includeNull        bool
+		inverse            bool
+		omitFlags          bool
+	}
+	aliasA := componentSpec{key: "allocation_rule", componentType: "allocation_rule", values: []string{"id-a"}}
+	aliasB := componentSpec{key: "allocation_rule", componentType: "allocation_rule", values: []string{"id-b"}}
+	apiAliasA := componentSpec{key: "allocation_rule", componentType: "attribution", values: []string{"id-a"}}
+	apiAliasB := componentSpec{key: "allocation_rule", componentType: "attribution", values: []string{"id-b"}}
+	sentinelA := componentSpec{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine"}, includeNull: true}
+	sentinelB := componentSpec{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Cloud Storage"}, includeNull: true}
+	apiSentinelA := componentSpec{key: "service_description", componentType: "fixed", values: []string{"Compute Engine"}, includeNull: true}
+	apiSentinelB := componentSpec{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage"}, includeNull: true}
+
+	for _, tc := range []struct {
+		name     string
+		prior    []componentSpec
+		response []componentSpec
+		want     []componentSpec
+	}{
+		{"aliases in stable order", []componentSpec{aliasA, aliasB}, []componentSpec{apiAliasA, apiAliasB}, []componentSpec{aliasA, aliasB}},
+		{"aliases reordered", []componentSpec{aliasA, aliasB}, []componentSpec{apiAliasB, apiAliasA}, []componentSpec{aliasB, aliasA}},
+		{"sentinels in stable order", []componentSpec{sentinelA, sentinelB}, []componentSpec{apiSentinelA, apiSentinelB}, []componentSpec{sentinelA, sentinelB}},
+		{"sentinels reordered", []componentSpec{sentinelA, sentinelB}, []componentSpec{apiSentinelB, apiSentinelA}, []componentSpec{sentinelB, sentinelA}},
+		{"values reordered within a component", []componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine", "Cloud Storage"}, includeNull: true}, sentinelB},
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage", "Compute Engine"}, includeNull: true}, apiSentinelB},
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]", "Compute Engine", "Cloud Storage"}, includeNull: true}, sentinelB}},
+		{"missing API flags retain the matching component's flags", []componentSpec{sentinelA, sentinelB},
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage"}, omitFlags: true},
+				{key: "service_description", componentType: "fixed", values: []string{"Compute Engine"}, omitFlags: true}},
+			[]componentSpec{sentinelB, sentinelA}},
+		{"external flag change follows the matching values", []componentSpec{sentinelA, sentinelB},
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage"}, includeNull: false}, apiSentinelA},
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"Cloud Storage"}}, sentinelA}},
+		{"removed duplicate retains surviving alias", []componentSpec{aliasA, aliasB}, []componentSpec{apiAliasB}, []componentSpec{aliasB}},
+		{"inserted duplicate retains only the prior alias", []componentSpec{aliasA},
+			[]componentSpec{apiAliasB, apiAliasA}, []componentSpec{apiAliasB, aliasA}},
+		{
+			"flags distinguish stripped values",
+			[]componentSpec{{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]"}, includeNull: true},
+				{key: "service_description", componentType: "fixed", values: []string{"old"}, inverse: true}},
+			[]componentSpec{{key: "service_description", componentType: "fixed", inverse: true},
+				{key: "service_description", componentType: "fixed", includeNull: true}},
+			[]componentSpec{{key: "service_description", componentType: "fixed", inverse: true},
+				{key: "service_description", componentType: "fixed", values: []string{"[Service N/A]"}, includeNull: true}},
+		},
+		{
+			"new duplicate must not inherit prior sentinel",
+			[]componentSpec{sentinelA},
+			[]componentSpec{apiSentinelB, apiSentinelA},
+			[]componentSpec{apiSentinelB, sentinelA},
+		},
+		{
+			"external value change preserves remaining alias",
+			[]componentSpec{aliasA, aliasB},
+			[]componentSpec{{key: "allocation_rule", componentType: "attribution", values: []string{"id-new"}}, apiAliasB},
+			[]componentSpec{{key: "allocation_rule", componentType: "allocation_rule", values: []string{"id-new"}}, aliasB},
+		},
+		{
+			"indistinguishable duplicates have interchangeable metadata",
+			[]componentSpec{aliasA, aliasA},
+			[]componentSpec{apiAliasA, apiAliasA},
+			[]componentSpec{aliasA, aliasA},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := t.Context()
+			prior := make([]resource_allocation.ComponentsValue, len(tc.prior))
+			for i, spec := range tc.prior {
+				values := make([]attr.Value, len(spec.values))
+				for j, value := range spec.values {
+					values[j] = types.StringValue(value)
+				}
+				prior[i] = resource_allocation.NewComponentsValueMust(resource_allocation.ComponentsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+					"key": types.StringValue(spec.key), "mode": types.StringValue("is"), "type": types.StringValue(spec.componentType),
+					"values": types.ListValueMust(types.StringType, values), "include_null": types.BoolValue(spec.includeNull),
+					"inverse": types.BoolValue(spec.inverse), "case_insensitive": types.BoolValue(false),
+				})
+			}
+			response := make([]models.AllocationComponent, len(tc.response))
+			for i, spec := range tc.response {
+				var includeNull, inverse, caseInsensitive *bool
+				if !spec.omitFlags {
+					includeNull, inverse, caseInsensitive = new(spec.includeNull), new(spec.inverse), new(false)
+				}
+				response[i] = models.AllocationComponent{
+					Key: spec.key, Mode: "is", Type: models.AllocationDimensionsTypes(spec.componentType),
+					Values: spec.values, IncludeNull: includeNull, Inverse: inverse, CaseInsensitive: caseInsensitive,
+				}
+			}
+			got, diags := toAllocationRuleComponentsListValue(ctx, response, prior)
+			if diags.HasError() {
+				t.Fatal(diags)
+			}
+			var components []resource_allocation.ComponentsValue
+			if d := got.ElementsAs(ctx, &components, false); d.HasError() {
+				t.Fatal(d)
+			}
+			if len(components) != len(tc.want) {
+				t.Fatalf("got %d components, want %d", len(components), len(tc.want))
+			}
+			for i, want := range tc.want {
+				var values []string
+				if d := components[i].Values.ElementsAs(ctx, &values, false); d.HasError() {
+					t.Fatal(d)
+				}
+				if components[i].Key.ValueString() != want.key || components[i].ComponentsType.ValueString() != want.componentType ||
+					!slices.Equal(values, want.values) || components[i].IncludeNull.ValueBool() != want.includeNull || components[i].Inverse.ValueBool() != want.inverse {
+					t.Errorf("component %d = key %q, type %q, values %v, includeNull %t, inverse %t; want %+v",
+						i, components[i].Key.ValueString(), components[i].ComponentsType.ValueString(), values,
+						components[i].IncludeNull.ValueBool(), components[i].Inverse.ValueBool(), want)
+				}
+			}
+		})
 	}
 }
