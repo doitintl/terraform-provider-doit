@@ -65,6 +65,11 @@ output "anomaly_allocations" {
   value       = data.doit_anomaly.example.allocations
 }
 
+output "anomaly_initial_notifications" {
+  description = "First notification sent on each channel for this anomaly"
+  value       = data.doit_anomaly.example.initial_notifications
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Check acknowledgment status
@@ -117,6 +122,7 @@ output "anomaly_deactivation_reason" {
 - `entity_label` (String) Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
 - `entity_name` (String) Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
 - `expected_max_cost` (Number) Maximum cost within the expected normal range.
+- `initial_notifications` (Attributes List) The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified. (see [below for nested schema](#nestedatt--initial_notifications))
 - `linked_anomalies` (List of String) IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.
 - `monitor_level` (String) Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
 - `notifications` (Attributes List) Chronologically ordered notification dispatch events. (see [below for nested schema](#nestedatt--notifications))
@@ -146,6 +152,15 @@ Read-Only:
 
 - `id` (String) Allocation ID. Use it with the Allocations API to read the allocation.
 - `name` (String) Allocation name.
+
+
+<a id="nestedatt--initial_notifications"></a>
+### Nested Schema for `initial_notifications`
+
+Read-Only:
+
+- `channel` (String) Dispatch channel.
+- `timestamp` (String) Dispatch timestamp in RFC3339 UTC.
 
 
 <a id="nestedatt--notifications"></a>

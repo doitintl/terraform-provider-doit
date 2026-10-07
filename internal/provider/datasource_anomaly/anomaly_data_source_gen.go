@@ -108,6 +108,30 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "A unique identifier of the anomaly.",
 				MarkdownDescription: "A unique identifier of the anomaly.",
 			},
+			"initial_notifications": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"channel": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Dispatch channel.",
+							MarkdownDescription: "Dispatch channel.",
+						},
+						"timestamp": schema.StringAttribute{
+							Computed:            true,
+							Description:         "Dispatch timestamp in RFC3339 UTC.",
+							MarkdownDescription: "Dispatch timestamp in RFC3339 UTC.",
+						},
+					},
+					CustomType: InitialNotificationsType{
+						ObjectType: types.ObjectType{
+							AttrTypes: InitialNotificationsValue{}.AttributeTypes(ctx),
+						},
+					},
+				},
+				Computed:            true,
+				Description:         "The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.",
+				MarkdownDescription: "The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.",
+			},
 			"linked_anomalies": schema.ListAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
@@ -265,33 +289,34 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AnomalyModel struct {
-	Acknowledged        types.Bool    `tfsdk:"acknowledged"`
-	AcknowledgedAt      types.String  `tfsdk:"acknowledged_at"`
-	AcknowledgedBy      types.String  `tfsdk:"acknowledged_by"`
-	ActualCost          types.Float64 `tfsdk:"actual_cost"`
-	Allocations         types.List    `tfsdk:"allocations"`
-	Attribution         types.String  `tfsdk:"attribution"`
-	BillingAccount      types.String  `tfsdk:"billing_account"`
-	CostOfAnomaly       types.Float64 `tfsdk:"cost_of_anomaly"`
-	DeactivationReason  types.String  `tfsdk:"deactivation_reason"`
-	EndTime             types.Int64   `tfsdk:"end_time"`
-	EntityLabel         types.String  `tfsdk:"entity_label"`
-	EntityName          types.String  `tfsdk:"entity_name"`
-	ExpectedMaxCost     types.Float64 `tfsdk:"expected_max_cost"`
-	Id                  types.String  `tfsdk:"id"`
-	LinkedAnomalies     types.List    `tfsdk:"linked_anomalies"`
-	MonitorLevel        types.String  `tfsdk:"monitor_level"`
-	Notifications       types.List    `tfsdk:"notifications"`
-	Platform            types.String  `tfsdk:"platform"`
-	ProviderDisplayName types.String  `tfsdk:"provider_display_name"`
-	ResourceData        types.List    `tfsdk:"resource_data"`
-	Scope               types.String  `tfsdk:"scope"`
-	ServiceName         types.String  `tfsdk:"service_name"`
-	SeverityLevel       types.String  `tfsdk:"severity_level"`
-	StartTime           types.Int64   `tfsdk:"start_time"`
-	Status              types.String  `tfsdk:"status"`
-	TimeFrame           types.String  `tfsdk:"time_frame"`
-	Top3skus            types.List    `tfsdk:"top3skus"`
+	Acknowledged         types.Bool    `tfsdk:"acknowledged"`
+	AcknowledgedAt       types.String  `tfsdk:"acknowledged_at"`
+	AcknowledgedBy       types.String  `tfsdk:"acknowledged_by"`
+	ActualCost           types.Float64 `tfsdk:"actual_cost"`
+	Allocations          types.List    `tfsdk:"allocations"`
+	Attribution          types.String  `tfsdk:"attribution"`
+	BillingAccount       types.String  `tfsdk:"billing_account"`
+	CostOfAnomaly        types.Float64 `tfsdk:"cost_of_anomaly"`
+	DeactivationReason   types.String  `tfsdk:"deactivation_reason"`
+	EndTime              types.Int64   `tfsdk:"end_time"`
+	EntityLabel          types.String  `tfsdk:"entity_label"`
+	EntityName           types.String  `tfsdk:"entity_name"`
+	ExpectedMaxCost      types.Float64 `tfsdk:"expected_max_cost"`
+	Id                   types.String  `tfsdk:"id"`
+	InitialNotifications types.List    `tfsdk:"initial_notifications"`
+	LinkedAnomalies      types.List    `tfsdk:"linked_anomalies"`
+	MonitorLevel         types.String  `tfsdk:"monitor_level"`
+	Notifications        types.List    `tfsdk:"notifications"`
+	Platform             types.String  `tfsdk:"platform"`
+	ProviderDisplayName  types.String  `tfsdk:"provider_display_name"`
+	ResourceData         types.List    `tfsdk:"resource_data"`
+	Scope                types.String  `tfsdk:"scope"`
+	ServiceName          types.String  `tfsdk:"service_name"`
+	SeverityLevel        types.String  `tfsdk:"severity_level"`
+	StartTime            types.Int64   `tfsdk:"start_time"`
+	Status               types.String  `tfsdk:"status"`
+	TimeFrame            types.String  `tfsdk:"time_frame"`
+	Top3skus             types.List    `tfsdk:"top3skus"`
 }
 
 var _ basetypes.ObjectTypable = AllocationsType{}
@@ -678,6 +703,393 @@ func (v AllocationsValue) AttributeTypes(ctx context.Context) map[string]attr.Ty
 	return map[string]attr.Type{
 		"id":   basetypes.StringType{},
 		"name": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = InitialNotificationsType{}
+
+type InitialNotificationsType struct {
+	basetypes.ObjectType
+}
+
+func (t InitialNotificationsType) Equal(o attr.Type) bool {
+	other, ok := o.(InitialNotificationsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t InitialNotificationsType) String() string {
+	return "InitialNotificationsType"
+}
+
+func (t InitialNotificationsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewInitialNotificationsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewInitialNotificationsValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	channelAttribute, ok := attributes["channel"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`channel is missing from object`)
+
+		return nil, diags
+	}
+
+	channelVal, ok := channelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`channel expected to be basetypes.StringValue, was: %T`, channelAttribute))
+	}
+
+	timestampAttribute, ok := attributes["timestamp"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`timestamp is missing from object`)
+
+		return nil, diags
+	}
+
+	timestampVal, ok := timestampAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`timestamp expected to be basetypes.StringValue, was: %T`, timestampAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return InitialNotificationsValue{
+		Channel:   channelVal,
+		Timestamp: timestampVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewInitialNotificationsValueNull() InitialNotificationsValue {
+	return InitialNotificationsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewInitialNotificationsValueUnknown() InitialNotificationsValue {
+	return InitialNotificationsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewInitialNotificationsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (InitialNotificationsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing InitialNotificationsValue Attribute Value",
+				"While creating a InitialNotificationsValue value, a missing attribute value was detected. "+
+					"A InitialNotificationsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("InitialNotificationsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid InitialNotificationsValue Attribute Type",
+				"While creating a InitialNotificationsValue value, an invalid attribute value was detected. "+
+					"A InitialNotificationsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("InitialNotificationsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("InitialNotificationsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra InitialNotificationsValue Attribute Value",
+				"While creating a InitialNotificationsValue value, an extra attribute value was detected. "+
+					"A InitialNotificationsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra InitialNotificationsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewInitialNotificationsValueUnknown(), diags
+	}
+
+	channelAttribute, ok := attributes["channel"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`channel is missing from object`)
+
+		return NewInitialNotificationsValueUnknown(), diags
+	}
+
+	channelVal, ok := channelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`channel expected to be basetypes.StringValue, was: %T`, channelAttribute))
+	}
+
+	timestampAttribute, ok := attributes["timestamp"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`timestamp is missing from object`)
+
+		return NewInitialNotificationsValueUnknown(), diags
+	}
+
+	timestampVal, ok := timestampAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`timestamp expected to be basetypes.StringValue, was: %T`, timestampAttribute))
+	}
+
+	if diags.HasError() {
+		return NewInitialNotificationsValueUnknown(), diags
+	}
+
+	return InitialNotificationsValue{
+		Channel:   channelVal,
+		Timestamp: timestampVal,
+		state:     attr.ValueStateKnown,
+	}, diags
+}
+
+func NewInitialNotificationsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) InitialNotificationsValue {
+	object, diags := NewInitialNotificationsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewInitialNotificationsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t InitialNotificationsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewInitialNotificationsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewInitialNotificationsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewInitialNotificationsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewInitialNotificationsValueMust(InitialNotificationsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t InitialNotificationsType) ValueType(ctx context.Context) attr.Value {
+	return InitialNotificationsValue{}
+}
+
+var _ basetypes.ObjectValuable = InitialNotificationsValue{}
+
+type InitialNotificationsValue struct {
+	Channel   basetypes.StringValue `tfsdk:"channel"`
+	Timestamp basetypes.StringValue `tfsdk:"timestamp"`
+	state     attr.ValueState
+}
+
+func (v InitialNotificationsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["channel"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["timestamp"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Channel.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["channel"] = val
+
+		val, err = v.Timestamp.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["timestamp"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v InitialNotificationsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v InitialNotificationsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v InitialNotificationsValue) String() string {
+	return "InitialNotificationsValue"
+}
+
+func (v InitialNotificationsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"channel":   basetypes.StringType{},
+		"timestamp": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"channel":   v.Channel,
+			"timestamp": v.Timestamp,
+		})
+
+	return objVal, diags
+}
+
+func (v InitialNotificationsValue) Equal(o attr.Value) bool {
+	other, ok := o.(InitialNotificationsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Channel.Equal(other.Channel) {
+		return false
+	}
+
+	if !v.Timestamp.Equal(other.Timestamp) {
+		return false
+	}
+
+	return true
+}
+
+func (v InitialNotificationsValue) Type(ctx context.Context) attr.Type {
+	return InitialNotificationsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v InitialNotificationsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"channel":   basetypes.StringType{},
+		"timestamp": basetypes.StringType{},
 	}
 }
 

@@ -88,6 +88,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.EntityLabel = types.StringUnknown()
 		data.EntityName = types.StringUnknown()
 		data.ExpectedMaxCost = types.Float64Unknown()
+		data.InitialNotifications = types.ListUnknown(datasource_anomaly.InitialNotificationsValue{}.Type(ctx))
 		data.LinkedAnomalies = types.ListUnknown(types.StringType)
 		data.MonitorLevel = types.StringUnknown()
 		data.Notifications = types.ListUnknown(datasource_anomaly.NotificationsValue{}.Type(ctx))
@@ -233,6 +234,9 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	// Map notifications
 	data.Notifications = mapAnomalyNotificationsForAnomaly(ctx, anomaly.Notifications, &resp.Diagnostics)
 
+	// Map initial_notifications
+	data.InitialNotifications = mapAnomalyInitialNotificationsForAnomaly(ctx, anomaly.InitialNotifications, &resp.Diagnostics)
+
 	// Map linked_anomalies
 	if anomaly.LinkedAnomalies != nil && len(*anomaly.LinkedAnomalies) > 0 {
 		linkedAnomaliesList, d := types.ListValueFrom(ctx, types.StringType, *anomaly.LinkedAnomalies)
@@ -298,6 +302,34 @@ func mapAnomalyNotificationsForAnomaly(ctx context.Context, notifications []mode
 	}
 
 	list, diags := types.ListValueFrom(ctx, datasource_anomaly.NotificationsValue{}.Type(ctx), vals)
+	diagnostics.Append(diags...)
+	return list
+}
+
+// mapAnomalyInitialNotificationsForAnomaly maps API NotificationEvent slice to Terraform list
+// for the singular anomaly data source.
+func mapAnomalyInitialNotificationsForAnomaly(ctx context.Context, initialNotifications []models.NotificationEvent, diagnostics *diag.Diagnostics) types.List {
+	elemType := datasource_anomaly.InitialNotificationsValue{}.Type(ctx)
+	if len(initialNotifications) == 0 {
+		emptyInitialNotifications, d := types.ListValueFrom(ctx, elemType, []datasource_anomaly.InitialNotificationsValue{})
+		diagnostics.Append(d...)
+		return emptyInitialNotifications
+	}
+
+	vals := make([]datasource_anomaly.InitialNotificationsValue, 0, len(initialNotifications))
+	for _, n := range initialNotifications {
+		notificationVal, diags := datasource_anomaly.NewInitialNotificationsValue(
+			datasource_anomaly.InitialNotificationsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"channel":   types.StringValue(string(n.Channel)),
+				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339)),
+			},
+		)
+		diagnostics.Append(diags...)
+		vals = append(vals, notificationVal)
+	}
+
+	list, diags := types.ListValueFrom(ctx, elemType, vals)
 	diagnostics.Append(diags...)
 	return list
 }

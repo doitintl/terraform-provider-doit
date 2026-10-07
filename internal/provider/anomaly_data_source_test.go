@@ -32,6 +32,7 @@ func TestAccAnomalyDataSource_Basic(t *testing.T) {
 					// acknowledged is always a bool (true/false), never null
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "acknowledged"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "notifications.#"),
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "initial_notifications.#"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "linked_anomalies.#"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "allocations.#"),
 				),
@@ -446,6 +447,53 @@ data "doit_anomaly" "test" {
 
 output "anomaly_allocations" {
   value = data.doit_anomaly.test.allocations
+}
+`, id)
+}
+
+// TestAccAnomalyDataSource_InitialNotifications verifies that the initial_notifications
+// attribute is accessible on anomaly and produces an empty plan on drift check.
+func TestAccAnomalyDataSource_InitialNotifications(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	config := testAccAnomalyDataSourceInitialNotificationsConfig(anomalyID)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "initial_notifications.#"),
+				),
+			},
+			// Drift verification
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceInitialNotificationsConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "anomaly_initial_notifications" {
+  value = data.doit_anomaly.test.initial_notifications
 }
 `, id)
 }

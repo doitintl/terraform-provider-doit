@@ -6754,6 +6754,7 @@ components:
         - top3SKUs
         - monitorLevel
         - notifications
+        - initialNotifications
         - linkedAnomalies
       type: object
       description: >-
@@ -6865,6 +6866,12 @@ components:
           nullable: true
         notifications:
           $ref: "#/components/schemas/NotificationEventArray"
+        initialNotifications:
+          type: array
+          description: >-
+            The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+          items:
+            $ref: "#/components/schemas/NotificationEvent"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
     AnomalyItemAllocationsItem:
@@ -12032,6 +12039,7 @@ components:
         - top3SKUs
         - monitorLevel
         - notifications
+        - initialNotifications
       type: object
       properties:
         attribution:
@@ -12138,6 +12146,12 @@ components:
           nullable: true
         notifications:
           $ref: "#/components/schemas/NotificationEventArray"
+        initialNotifications:
+          type: array
+          description: >-
+            The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+          items:
+            $ref: "#/components/schemas/NotificationEvent"
         linkedAnomalies:
           $ref: "#/components/schemas/LinkedAnomalies"
     GetAnomaly200ResponseAllocationsItem:

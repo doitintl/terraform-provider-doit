@@ -111,6 +111,9 @@ func TestAnomalyDataSource_UnknownID(t *testing.T) {
 	if !data.Allocations.IsUnknown() {
 		t.Errorf("expected Allocations to be unknown, got %v", data.Allocations)
 	}
+	if !data.InitialNotifications.IsUnknown() {
+		t.Errorf("expected InitialNotifications to be unknown, got %v", data.InitialNotifications)
+	}
 }
 
 func TestAnomalyDataSource_EntityFieldsMapping(t *testing.T) {
@@ -465,6 +468,119 @@ func TestAnomalyDataSource_AllocationsMapping(t *testing.T) {
 				}
 				if gotElements[i].Name.ValueString() != want.name {
 					t.Errorf("Allocations[%d].name = %q, want %q", i, gotElements[i].Name.ValueString(), want.name)
+				}
+			}
+		})
+	}
+}
+
+func TestAnomalyDataSource_InitialNotificationsMapping(t *testing.T) {
+	t.Parallel()
+
+	type expectedNotification struct {
+		channel   string
+		timestamp string
+	}
+
+	testCases := []struct {
+		name                     string
+		responseJSON             string
+		wantInitialNotifications []expectedNotification
+	}{
+		{
+			name: "populated initial notifications (multiple channels)",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"initialNotifications": [
+					{"channel": "email", "timestamp": "2024-01-01T12:00:00Z"},
+					{"channel": "slack", "timestamp": "2024-01-01T12:05:00Z"}
+				]
+			}`,
+			wantInitialNotifications: []expectedNotification{
+				{channel: "email", timestamp: "2024-01-01T12:00:00Z"},
+				{channel: "slack", timestamp: "2024-01-01T12:05:00Z"},
+			},
+		},
+		{
+			name: "empty initial notifications",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"initialNotifications": []
+			}`,
+			wantInitialNotifications: []expectedNotification{},
+		},
+		{
+			name: "omitted initial notifications",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day"
+			}`,
+			wantInitialNotifications: []expectedNotification{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprint(w, tc.responseJSON)
+			}))
+
+			overrides := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
+			}
+
+			data, _, diags := readAnomalyHelper(t, server, overrides)
+			if diags.HasError() {
+				t.Fatalf("Read() returned unexpected diagnostics: %v", diags)
+			}
+
+			if data.InitialNotifications.IsNull() {
+				t.Fatal("expected InitialNotifications not to be null (computed list convention)")
+			}
+			if data.InitialNotifications.IsUnknown() {
+				t.Fatal("expected InitialNotifications not to be unknown")
+			}
+
+			var gotElements []datasource_anomaly.InitialNotificationsValue
+			d := data.InitialNotifications.ElementsAs(t.Context(), &gotElements, false)
+			if d.HasError() {
+				t.Fatalf("ElementsAs() returned diagnostics: %v", d)
+			}
+
+			if len(gotElements) != len(tc.wantInitialNotifications) {
+				t.Fatalf("len(InitialNotifications) = %d, want %d", len(gotElements), len(tc.wantInitialNotifications))
+			}
+
+			for i, want := range tc.wantInitialNotifications {
+				if gotElements[i].Channel.ValueString() != want.channel {
+					t.Errorf("InitialNotifications[%d].channel = %q, want %q", i, gotElements[i].Channel.ValueString(), want.channel)
+				}
+				if gotElements[i].Timestamp.ValueString() != want.timestamp {
+					t.Errorf("InitialNotifications[%d].timestamp = %q, want %q", i, gotElements[i].Timestamp.ValueString(), want.timestamp)
 				}
 			}
 		})
