@@ -115,11 +115,16 @@ resource "doit_budget" "with_collaborators" {
       values = ["google-cloud"]
     }
   ]
-  # Use user emails from the users data source as collaborators
-  collaborators = [for u in data.doit_users.all.users : {
-    email = u.email
-    role  = "viewer"
-  }]
+  # A configured collaborators list needs exactly one owner. Make the current
+  # user the owner and share the budget with all other active users as viewers.
+  # (The API can reject users who have not accepted their invitation yet.)
+  collaborators = concat(
+    [{ email = data.doit_current_user.me.email, role = "owner" }],
+    [for u in data.doit_users.all.users : {
+      email = u.email
+      role  = "viewer"
+    } if lower(u.status) == "active" && u.email != data.doit_current_user.me.email]
+  )
   # Notify all users when thresholds are reached
   recipients = [for u in data.doit_users.all.users : u.email]
 }
@@ -148,6 +153,7 @@ resource "doit_budget" "dynamic_scope" {
     { percentage = 80 },
     { percentage = 100 }
   ]
+  # collaborators is omitted, so the API makes the creator the owner.
   # Scope values discovered dynamically from the API
   scopes = [
     {
