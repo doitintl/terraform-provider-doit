@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -865,18 +867,350 @@ func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
 						knownvalue.ListSizeExact(1)),
 				},
 			},
-			// Test 3: Omitted collaborators - API adds creator as owner
+			// Test 3: Omitted collaborators - the API assigns the creator as owner
 			{
 				Config: testAccBudgetNoCollaborators(n + 1),
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_budget.this",
 						tfjsonpath.New("collaborators"),
-						knownvalue.ListSizeExact(1)), // API adds creator
+						knownvalue.ListSizeExact(1)),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("collaborators").AtSliceIndex(0).AtMapKey("role"),
+						knownvalue.StringExact("owner")),
+				},
+			},
+			// Drift check: the API-assigned owner must not produce a diff.
+			{
+				Config: testAccBudgetNoCollaborators(n + 1),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
 				},
 			},
 		},
 	})
+}
+
+// budgetOwnerEmailPath is the state path of the first collaborator's email.
+var budgetOwnerEmailPath = tfjsonpath.New("collaborators").AtSliceIndex(0).AtMapKey("email")
+
+// TestAccBudget_OmittedCollaborators verifies that omitting collaborators, which
+// makes the API assign the creator as owner, is stable across create, refresh
+// and update: the API-populated owner never produces a diff and is never
+// re-sent or cleared.
+func TestAccBudget_OmittedCollaborators(t *testing.T) {
+	n := acctest.RandInt()
+	sameOwner := statecheck.CompareValue(compare.ValuesSame())
+
+	ownerChecks := []statecheck.StateCheck{
+		statecheck.ExpectKnownValue("doit_budget.this", tfjsonpath.New("collaborators"), knownvalue.ListSizeExact(1)),
+		statecheck.ExpectKnownValue("doit_budget.this", tfjsonpath.New("collaborators").AtSliceIndex(0).AtMapKey("role"), knownvalue.StringExact("owner")),
+		statecheck.ExpectKnownValue("doit_budget.this", budgetOwnerEmailPath, knownvalue.NotNull()),
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Create with collaborators omitted.
+			{
+				Config: testAccBudgetOmittedCollaborators(n, "initial"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_budget.this", plancheck.ResourceActionCreate),
+					},
+				},
+				ConfigStateChecks: append([]statecheck.StateCheck{
+					sameOwner.AddStateValue("doit_budget.this", budgetOwnerEmailPath),
+				}, ownerChecks...),
+			},
+			// Drift check after refresh.
+			{
+				Config: testAccBudgetOmittedCollaborators(n, "initial"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Update an unrelated field; the owner is carried forward unchanged.
+			{
+				Config: testAccBudgetOmittedCollaborators(n, "updated"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_budget.this", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: append([]statecheck.StateCheck{
+					sameOwner.AddStateValue("doit_budget.this", budgetOwnerEmailPath),
+				}, ownerChecks...),
+			},
+			// Drift check after the update.
+			{
+				Config: testAccBudgetOmittedCollaborators(n, "updated"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccBudget_OmittedCollaborators_Import verifies a budget with an
+// API-assigned owner imports cleanly and converges with the omitted config.
+func TestAccBudget_OmittedCollaborators_Import(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetOmittedCollaborators(n, "import"),
+			},
+			{
+				ResourceName:            "doit_budget.this",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"scopes.0.id", "scopes.0.type"},
+			},
+			{
+				Config: testAccBudgetOmittedCollaborators(n, "import"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccBudget_ExplicitToOmittedCollaborators verifies that removing the
+// collaborators attribute after setting it keeps the existing owner (not
+// clearable: no plan change, no update).
+func TestAccBudget_ExplicitToOmittedCollaborators(t *testing.T) {
+	n := acctest.RandInt()
+	sameOwner := statecheck.CompareValue(compare.ValuesSame())
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBudgetCollaboratorsBlock(n, "transition", fmt.Sprintf(`collaborators = [{ email = %q, role = "owner" }]`, testUser())),
+				ConfigStateChecks: []statecheck.StateCheck{
+					sameOwner.AddStateValue("doit_budget.this", budgetOwnerEmailPath),
+					statecheck.ExpectKnownValue("doit_budget.this", budgetOwnerEmailPath, knownvalue.StringExact(testUser())),
+				},
+			},
+			{
+				Config: testAccBudgetOmittedCollaborators(n, "transition"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					sameOwner.AddStateValue("doit_budget.this", budgetOwnerEmailPath),
+				},
+			},
+		},
+	})
+}
+
+// TestAccBudget_CollaboratorsWithoutOwner verifies the provider rejects, at plan
+// time, configured collaborators lists that do not contain exactly one owner,
+// and that a rejected update leaves the budget untouched. These configs are not
+// applied on purpose: the API would accept them (appending the creator as owner,
+// or keeping several owners), which the provider could not reconcile with the
+// configured list. The "exactly one owner" rule is the provider's, not the API's.
+func TestAccBudget_CollaboratorsWithoutOwner(t *testing.T) {
+	n := acctest.RandInt()
+	user := testUser()
+	validOwner := fmt.Sprintf(`collaborators = [{ email = %q, role = "owner" }]`, user)
+	viewerOnly := fmt.Sprintf(`collaborators = [{ email = %q, role = "viewer" }]`, user)
+	viewerAndEditor := fmt.Sprintf(`collaborators = [
+    { email = %q, role = "viewer" },
+    { email = "second-%d@example.com", role = "editor" },
+  ]`, user, n)
+	twoOwners := fmt.Sprintf(`collaborators = [
+    { email = %q, role = "owner" },
+    { email = "second-%d@example.com", role = "owner" },
+  ]`, user, n)
+	noOwner := regexp.MustCompile(`Exactly One Owner Required`)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source:            "hashicorp/time",
+				VersionConstraint: "~> 0.13.1",
+			},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccBudgetCollaboratorsBlock(n, "no-owner", viewerOnly),
+				ExpectError: regexp.MustCompile(`Found 0 owners`),
+			},
+			{
+				Config:      testAccBudgetCollaboratorsBlock(n, "no-owner", viewerAndEditor),
+				ExpectError: regexp.MustCompile(`Found 0 owners`),
+			},
+			{
+				Config:      testAccBudgetCollaboratorsBlock(n, "two-owners", twoOwners),
+				ExpectError: noOwner,
+			},
+			// Valid create, then a rejected update, then the valid config again.
+			{
+				Config: testAccBudgetCollaboratorsBlock(n, "valid", validOwner),
+			},
+			{
+				Config:      testAccBudgetCollaboratorsBlock(n, "valid", viewerOnly),
+				ExpectError: noOwner,
+			},
+			{
+				Config: testAccBudgetCollaboratorsBlock(n, "valid", validOwner),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccBudget_APIAppendsOwnerToEmptyCollaborators pins the API behavior that
+// budgetCollaboratorsOwnerValidator exists for: a request whose collaborators
+// contain no owner is not rejected, the API appends the creator as owner. The
+// provider cannot reconcile that with a configured list, so it rejects such
+// configs at plan time. If this test fails, the API changed and the validator
+// (and its documentation) should be revisited.
+func TestAccBudget_APIAppendsOwnerToEmptyCollaborators(t *testing.T) {
+	skipIfNoAcc(t)
+	testAccPreCheckFunc(t)()
+
+	client := getAPIClient(t)
+	ctx := t.Context()
+
+	body := fmt.Sprintf(`{
+  "name": "test-api-empty-collab-%d",
+  "amount": 100,
+  "currency": "USD",
+  "timeInterval": "month",
+  "type": "recurring",
+  "startPeriod": %d,
+  "scopes": [{"type": "attribution", "id": "attribution", "mode": "is", "values": [%q]}],
+  "collaborators": []
+}`, acctest.RandInt(), legacyBudgetStartPeriod, testAttribution())
+
+	resp, err := client.CreateBudgetWithBodyWithResponse(ctx, "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("creating budget: %v", err)
+	}
+	if resp.StatusCode() != http.StatusCreated {
+		t.Fatalf("creating budget with collaborators = []: status %d: %s", resp.StatusCode(), resp.Body)
+	}
+
+	var created struct {
+		ID            string `json:"id"`
+		Collaborators []struct {
+			Email string `json:"email"`
+			Role  string `json:"role"`
+		} `json:"collaborators"`
+	}
+	if err = json.Unmarshal(resp.Body, &created); err != nil {
+		t.Fatalf("decoding created budget: %v", err)
+	}
+	t.Cleanup(func() {
+		if created.ID == "" {
+			return
+		}
+		// The generated client reports 4xx/5xx as a response, not an error, so
+		// check the status the way the resource's Delete does.
+		del, delErr := client.DeleteBudgetWithResponse(context.WithoutCancel(ctx), created.ID)
+		if delErr != nil {
+			t.Errorf("deleting budget %s: %v", created.ID, delErr)
+			return
+		}
+		if code := del.StatusCode(); code != http.StatusOK && code != http.StatusNoContent && code != http.StatusNotFound {
+			t.Errorf("deleting budget %s: status %d: %s", created.ID, code, del.Body)
+		}
+	})
+
+	// Pin that the *creator* is the appended owner, not just any owner.
+	me, err := client.ValidateWithResponse(ctx)
+	if err != nil {
+		t.Fatalf("reading current user: %v", err)
+	}
+	if me.JSON200 == nil || me.JSON200.Email == nil {
+		t.Fatalf("reading current user: status %d: %s", me.StatusCode(), me.Body)
+	}
+
+	if len(created.Collaborators) != 1 || created.Collaborators[0].Role != "owner" ||
+		!strings.EqualFold(created.Collaborators[0].Email, *me.JSON200.Email) {
+		t.Fatalf("expected the API to append the creator (%s) as the only owner, got %+v", *me.JSON200.Email, created.Collaborators)
+	}
+}
+
+func testAccBudgetOmittedCollaborators(i int, description string) string {
+	return testAccBudgetCollaboratorsBlock(i, description, "")
+}
+
+// testAccBudgetCollaboratorsBlock renders a minimal budget; collaborators is an
+// HCL snippet (empty to omit the attribute).
+func testAccBudgetCollaboratorsBlock(i int, description, collaborators string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_budget" "this" {
+  name          = "test-collab-%d"
+  description   = %q
+  amount        = 100
+  currency      = "USD"
+  time_interval = "month"
+  type          = "recurring"
+  start_period  = local.start_period
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["%s"]
+    }
+  ]
+  %s
+}
+`, budgetStartPeriod(), i, description, testAttribution(), collaborators)
 }
 
 // TestAccBudget_ListAttributes_AlertsAndRecipients tests all three scenarios for alerts and recipients.

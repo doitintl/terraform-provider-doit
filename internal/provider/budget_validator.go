@@ -367,8 +367,17 @@ func (v budgetEndPeriodValidator) ValidateInt64(_ context.Context, req validator
 	}
 }
 
-// budgetCollaboratorsOwnerValidator validates that collaborators list contains exactly one owner.
-// Empty collaborators list is not allowed - the API requires exactly one owner.
+// budgetCollaboratorsOwnerValidator validates that a configured collaborators
+// list contains exactly one owner.
+//
+// This is a provider rule, not an API one: the API accepts several owners. What
+// it does not do is take the list as given. When the request has no owner (an
+// empty list, or only editors/viewers) it appends the creator as an owner, so
+// the stored list differs from the configured one and Terraform would report an
+// inconsistent result or a permanent diff. A list with no owner is therefore
+// rejected here, and omitting the attribute is the way to get the default owner.
+// Exactly one is required (rather than at least one) to keep the configured
+// list and the stored list unambiguous.
 type budgetCollaboratorsOwnerValidator struct{}
 
 func (v budgetCollaboratorsOwnerValidator) Description(_ context.Context) string {
@@ -394,14 +403,17 @@ func (v budgetCollaboratorsOwnerValidator) ValidateResource(ctx context.Context,
 		return
 	}
 
-	// Empty list is not allowed - API requires exactly one owner
+	// An empty list would make the API append the creator as owner, which then
+	// no longer matches the configured []. Omitting the attribute is the supported
+	// way to get that default.
 	if len(collaborators.Elements()) == 0 {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("collaborators"),
 			"Exactly One Owner Required",
 			"The 'collaborators' attribute cannot be empty. "+
-				"When setting collaborators explicitly, exactly one collaborator with role 'owner' is required. "+
-				"If you want to use the default (creator as owner), omit the collaborators attribute entirely.",
+				"When setting collaborators explicitly, exactly one collaborator with role 'owner' is required, "+
+				"because the API adds the creator as owner to any list that has none, which would not match your configuration. "+
+				"If you want the default (creator as owner), omit the collaborators attribute entirely.",
 		)
 		return
 	}
@@ -442,7 +454,8 @@ func (v budgetCollaboratorsOwnerValidator) ValidateResource(ctx context.Context,
 			path.Root("collaborators"),
 			"Exactly One Owner Required",
 			"The 'collaborators' list must contain exactly one collaborator with role 'owner'. "+
-				"Found 0 owners. Add a collaborator with role = \"owner\".",
+				"Found 0 owners. Add a collaborator with role = \"owner\", or omit the collaborators attribute "+
+				"to let the API make the creator the owner.",
 		)
 	} else if ownerCount > 1 {
 		resp.Diagnostics.AddAttributeError(
