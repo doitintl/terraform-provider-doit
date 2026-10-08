@@ -80,7 +80,8 @@ func minimalBudgetAPI(collaborators *[]models.Collaborator) *models.BudgetAPI {
 // TestMapBudgetToModelCollaborators covers how the API's collaborators
 // response is mapped into state, in particular that an API which starts
 // returning an auto-assigned owner (where it used to return nothing) maps to a
-// known list, and that nothing maps to null.
+// known list. An absent (nil) or empty API value is normalized to an empty
+// list rather than null.
 func TestMapBudgetToModelCollaborators(t *testing.T) {
 	ctx := t.Context()
 

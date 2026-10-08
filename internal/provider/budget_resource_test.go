@@ -1148,20 +1148,37 @@ func TestAccBudget_APIAppendsOwnerToEmptyCollaborators(t *testing.T) {
 			Role  string `json:"role"`
 		} `json:"collaborators"`
 	}
-	if err := json.Unmarshal(resp.Body, &created); err != nil {
+	if err = json.Unmarshal(resp.Body, &created); err != nil {
 		t.Fatalf("decoding created budget: %v", err)
 	}
 	t.Cleanup(func() {
 		if created.ID == "" {
 			return
 		}
-		if _, err := client.DeleteBudgetWithResponse(context.WithoutCancel(ctx), created.ID); err != nil {
-			t.Errorf("deleting budget %s: %v", created.ID, err)
+		// The generated client reports 4xx/5xx as a response, not an error, so
+		// check the status the way the resource's Delete does.
+		del, delErr := client.DeleteBudgetWithResponse(context.WithoutCancel(ctx), created.ID)
+		if delErr != nil {
+			t.Errorf("deleting budget %s: %v", created.ID, delErr)
+			return
+		}
+		if code := del.StatusCode(); code != http.StatusOK && code != http.StatusNoContent && code != http.StatusNotFound {
+			t.Errorf("deleting budget %s: status %d: %s", created.ID, code, del.Body)
 		}
 	})
 
-	if len(created.Collaborators) != 1 || created.Collaborators[0].Role != "owner" {
-		t.Fatalf("expected the API to append the creator as the only owner, got %+v", created.Collaborators)
+	// Pin that the *creator* is the appended owner, not just any owner.
+	me, err := client.ValidateWithResponse(ctx)
+	if err != nil {
+		t.Fatalf("reading current user: %v", err)
+	}
+	if me.JSON200 == nil || me.JSON200.Email == nil {
+		t.Fatalf("reading current user: status %d: %s", me.StatusCode(), me.Body)
+	}
+
+	if len(created.Collaborators) != 1 || created.Collaborators[0].Role != "owner" ||
+		!strings.EqualFold(created.Collaborators[0].Email, *me.JSON200.Email) {
+		t.Fatalf("expected the API to append the creator (%s) as the only owner, got %+v", *me.JSON200.Email, created.Collaborators)
 	}
 }
 
