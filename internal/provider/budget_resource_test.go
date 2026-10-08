@@ -26,7 +26,7 @@ func TestAccBudget(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -395,7 +395,7 @@ func TestAccBudget_Import(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -445,7 +445,7 @@ func TestAccBudget_Scopes(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -531,7 +531,7 @@ func TestAccBudget_Attributes_Coverage(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -700,7 +700,7 @@ func TestAccBudget_SlackChannel(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -788,7 +788,7 @@ func TestAccBudget_Disappears(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -843,7 +843,7 @@ func TestAccBudget_ListAttributes_Collaborators(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -887,7 +887,7 @@ func TestAccBudget_ListAttributes_AlertsAndRecipients(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1117,7 +1117,7 @@ func TestAccBudget_ScopesAliasTypes(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1197,7 +1197,7 @@ func TestAccBudget_IncludeNull(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1275,7 +1275,7 @@ func TestAccBudget_CaseInsensitive(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1355,7 +1355,7 @@ func TestAccBudget_ScopeIncludeNull(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1447,7 +1447,7 @@ func TestAccBudget_ScopeWithNAValue(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1534,7 +1534,7 @@ func TestAccBudget_ScopeWithMixedNAValue(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1624,7 +1624,7 @@ func TestAccBudget_IncludeNullOnlyNoValues(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1704,7 +1704,7 @@ func TestAccBudget_DriftDetection_CustomerPattern(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1808,7 +1808,7 @@ func TestAccBudget_OmittedOptionalComputed(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1887,7 +1887,7 @@ func TestAccBudget_DefaultedScalarDrift(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -2003,7 +2003,7 @@ func TestAccBudget_UpdateOmittedField(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -2113,7 +2113,7 @@ func TestAccBudget_UsePrevSpend(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -2186,7 +2186,7 @@ func TestAccBudget_FixedToRecurring(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -2301,7 +2301,7 @@ func TestAccBudget_PublicField(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -2395,7 +2395,7 @@ func TestAccBudget_ClearRecipients(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -2520,7 +2520,7 @@ func TestAccBudget_ClearScopeMode(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
