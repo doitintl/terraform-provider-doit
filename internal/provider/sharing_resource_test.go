@@ -586,7 +586,7 @@ func TestAccSharing_Budget(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
