@@ -15452,6 +15452,15 @@ components:
         type: string
         minLength: 1
         maxLength: 200
+    customerGroupUserGroupId:
+      name: userGroupId
+      in: path
+      required: true
+      description: Stable ID of a user group owned by the authenticated tenant.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
     serviceAccountId:
       name: id
       in: path

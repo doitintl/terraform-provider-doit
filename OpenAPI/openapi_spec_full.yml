@@ -164,6 +164,12 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/SignupProblem"
+        "403":
+          description: New trial invitations are only available in production (code trial_invites_disabled).
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SignupProblem"
         "409":
           description: >-
             Conflict. code is one of email_already_registered, domain_already_registered (both carry signInUrl),
@@ -517,7 +523,18 @@ paths:
         "403":
           $ref: "#/components/responses/403"
         "503":
-          description: Slack discovery is temporarily unavailable. Retry later.
+          description: >-
+            Slack discovery is temporarily unavailable — the workspace is still connected,
+            but the channel lookup failed (rate limit, timeout, server error, or network
+            failure) after a server-side retry. This is retryable: when Retry-After is
+            present, wait that many seconds and repeat the request unchanged, including
+            nameContains and pageToken. When absent, use exponential backoff.
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying. Present on rate-limit failures; absent on other transient errors.
+              schema:
+                type: integer
+                example: 30
   "/analytics/v1/alerts/{id}":
     get:
       tags:
@@ -11201,7 +11218,7 @@ paths:
       tags:
         - Customer Groups
       summary: Delete a customer group
-      description: Deletes a customer group owned by the authenticated tenant. Groups with assigned users cannot be deleted. Requires the UsersManager permission.
+      description: Deletes a customer group owned by the authenticated tenant. Groups with assigned users or user groups cannot be deleted. Requires the UsersManager permission.
       operationId: deleteCustomerGroup
       responses:
         "204":
@@ -11307,6 +11324,107 @@ paths:
       summary: Unassign a user from a customer group
       description: Unassigns a user from a customer group owned by the authenticated tenant. Requires the UsersManager permission.
       operationId: unassignCustomerGroupUser
+      responses:
+        "204":
+          description: Unassigned
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups/{customerGroupId}/user-groups:
+    parameters:
+      - $ref: "#/components/parameters/customerGroupId"
+      - $ref: "#/components/parameters/tenantId"
+    get:
+      tags:
+        - Customer Groups
+      summary: List user groups assigned to a customer group
+      description: Returns the user groups assigned to a customer group owned by the authenticated tenant, sorted by user-group ID. Requires the UsersManager permission.
+      operationId: listCustomerGroupUserGroups
+      responses:
+        "200":
+          description: OK
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerGroupUserGroupsResponse"
+              example:
+                customerGroupId: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                userGroups:
+                  - userGroupId: ug_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups/{customerGroupId}/user-groups/{userGroupId}:
+    parameters:
+      - $ref: "#/components/parameters/customerGroupId"
+      - $ref: "#/components/parameters/customerGroupUserGroupId"
+      - $ref: "#/components/parameters/tenantId"
+    put:
+      tags:
+        - Customer Groups
+      summary: Assign a user group to a customer group
+      description: Assigns a user group owned by the authenticated tenant to a customer group owned by that tenant. Membership changes in the user group apply without reassigning it. Requires the UsersManager permission.
+      operationId: assignCustomerGroupUserGroup
+      responses:
+        "204":
+          description: Assigned
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Customer Groups
+      summary: Unassign a user group from a customer group
+      description: Unassigns a user group from a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: unassignCustomerGroupUserGroup
       responses:
         "204":
           description: Unassigned
@@ -13566,6 +13684,34 @@ components:
           description: Users assigned to the customer group, sorted by user ID.
           items:
             $ref: "#/components/schemas/CustomerGroupUser"
+    CustomerGroupUserGroup:
+      type: object
+      additionalProperties: false
+      required:
+        - userGroupId
+      properties:
+        userGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: User group assigned to the customer group.
+    CustomerGroupUserGroupsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - customerGroupId
+        - userGroups
+      properties:
+        customerGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer group the assignments belong to.
+        userGroups:
+          type: array
+          description: User groups assigned to the customer group, sorted by user-group ID.
+          items:
+            $ref: "#/components/schemas/CustomerGroupUserGroup"
     GeographicAccessScope:
       oneOf:
         - $ref: "#/components/schemas/UnassignedGeographicAccessScope"
@@ -15819,7 +15965,7 @@ components:
               enum: [public, private]
     AlertSlackChannelList:
       type: object
-      required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel]
+      required: [items, rowCount, workspaceStatus, isWorkspaceConnected, hasSharedChannel, channelsComplete]
       properties:
         items:
           type: array
@@ -15839,6 +15985,9 @@ components:
           type: boolean
         hasSharedChannel:
           type: boolean
+        channelsComplete:
+          type: boolean
+          description: Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
     AllocationComponent:
       required:
         - key
@@ -24922,6 +25071,15 @@ components:
       in: path
       required: true
       description: User ID to assign to or unassign from the customer group.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customerGroupUserGroupId:
+      name: userGroupId
+      in: path
+      required: true
+      description: Stable ID of a user group owned by the authenticated tenant.
       schema:
         type: string
         minLength: 1
