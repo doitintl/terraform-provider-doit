@@ -381,6 +381,125 @@ func TestDCIRetryClient_429WithRetryAfter_Honored(t *testing.T) {
 	})
 }
 
+// TestDCIRetryClient_503NoRetryAfter_Retries pins that a bare 503 (no
+// Retry-After) still follows the exponential policy.
+func TestDCIRetryClient_503NoRetryAfter_Retries(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const failures = 2
+
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+			if requestCount.Load() <= failures {
+				w.WriteHeader(http.StatusServiceUnavailable) // deliberately no Retry-After
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer cancel()
+
+		start := time.Now()
+		resp, err := doGet(ctx, t, client, server.URL)
+		elapsed := time.Since(start)
+
+		if err != nil {
+			t.Fatalf("expected success after retries, got error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+		if count := requestCount.Load(); count != failures+1 {
+			t.Errorf("attempts = %d, want %d", count, failures+1)
+		}
+		if want := failures * retryInitialInterval; elapsed != want {
+			t.Errorf("elapsed = %v, want %v", elapsed, want)
+		}
+	})
+}
+
+// TestDCIRetryClient_503WithRetryAfter_Honored verifies a Retry-After on a 503
+// overrides the exponential policy. The injected policy would wait the whole
+// read timeout, so finishing in exactly the header's delay proves the header won.
+func TestDCIRetryClient_503WithRetryAfter_Honored(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const retryAfter = 30 * time.Second
+
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+			if requestCount.Load() == 1 {
+				w.Header().Set("Retry-After", strconv.Itoa(int(retryAfter.Seconds())))
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(DefaultReadTimeout))
+
+		ctx, cancel := context.WithTimeout(t.Context(), 2*DefaultReadTimeout)
+		defer cancel()
+
+		start := time.Now()
+		resp, err := doGet(ctx, t, client, server.URL)
+		elapsed := time.Since(start)
+
+		if err != nil {
+			t.Fatalf("expected success after honoring Retry-After, got error: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusOK)
+		}
+		if count := requestCount.Load(); count != 2 {
+			t.Errorf("attempts = %d, want 2", count)
+		}
+		if want := retryAfter; elapsed != want {
+			t.Errorf("elapsed = %v, want %v — the header, not the injected policy", elapsed, want)
+		}
+	})
+}
+
+// TestDCIRetryClient_503UnusableRetryAfter_FallsBack covers a malformed or
+// non-positive header: the exponential policy must take over.
+func TestDCIRetryClient_503UnusableRetryAfter_FallsBack(t *testing.T) {
+	for _, header := range []string{"soon", "0", "-5"} {
+		t.Run(header, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				var requestCount atomic.Int64
+				server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+					if requestCount.Load() == 1 {
+						w.Header().Set("Retry-After", header)
+						w.WriteHeader(http.StatusServiceUnavailable)
+						return
+					}
+					w.WriteHeader(http.StatusOK)
+				})
+
+				client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryInitialInterval))
+
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+				defer cancel()
+
+				start := time.Now()
+				resp, err := doGet(ctx, t, client, server.URL)
+				elapsed := time.Since(start)
+
+				if err != nil {
+					t.Fatalf("expected success after fallback retry, got error: %v", err)
+				}
+				if resp.StatusCode != http.StatusOK {
+					t.Errorf("StatusCode = %d, want %d", resp.StatusCode, http.StatusOK)
+				}
+				if want := retryInitialInterval; elapsed != want {
+					t.Errorf("elapsed = %v, want %v (policy interval)", elapsed, want)
+				}
+			})
+		})
+	}
+}
+
 // TestDCIRetryClient_429RetryAfterBounds pins the clamping and fallback rules
 // end to end, through the retry loop rather than against parseRetryAfter alone.
 //
