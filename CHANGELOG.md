@@ -1,10 +1,15 @@
 # Changelog
 
-## Unreleased
+## v1.11.0 (2026-10-09)
 
 ### BREAKING CHANGES
 
 - **data-source/doit_dimensions**: Remove `timestamp` from `sort_by` allowed values following upstream API change
+
+### FEATURES
+
+- **resource/doit_allocation, data-source/doit_allocation**: Add time-bound allocations via `validity_periods` on single rules and group rules, with plan-time validation of date format, ordering and overlap ([#391](https://github.com/doitintl/terraform-provider-doit/pull/391))
+- **resource/doit_allocation, data-source/doit_allocation**: Add dynamic value extraction via `value_extraction` on group allocation rules, with plan-time validation of `on_missing` and `fallback` ([#391](https://github.com/doitintl/terraform-provider-doit/pull/391))
 
 ### ENHANCEMENTS
 
@@ -15,8 +20,22 @@
 
 ### BUG FIXES
 
+- **resource/doit_allocation**: Allocations defined inline in a group (rules with `action = "create"` or `"update"`) are now deleted when the group is destroyed or the rule is removed, instead of being left behind as unmanaged allocations; `select` rules are never deleted ([#383](https://github.com/doitintl/terraform-provider-doit/issues/383), [#389](https://github.com/doitintl/terraform-provider-doit/pull/389))
 - **resource/doit_alert**: No longer warn that `config.scopes[*].type = "attribution"` is deprecated in favor of `allocation_rule`; the alerts API rejects `allocation_rule`, so following the warning broke the alert ([#384](https://github.com/doitintl/terraform-provider-doit/issues/384))
 - **data-source/doit_dimension**: No longer warn that `type = "attribution"` is deprecated in favor of `allocation_rule`; the dimensions API returns "Dimension not found" for `allocation_rule`, so following the warning broke the lookup ([#384](https://github.com/doitintl/terraform-provider-doit/issues/384))
+
+### DOCUMENTATION
+
+- Update examples with those from the latest blog post ([#388](https://github.com/doitintl/terraform-provider-doit/pull/388))
+
+### INTERNAL
+
+- Upgraded Go to 1.27.2
+- Upgraded dependencies: `golang.org/x/net` 0.60.0, `github.com/mattn/go-colorable` 0.1.16, `google.golang.org/genproto/googleapis/rpc`
+- Upgraded CI workflow actions: `mikepenz/action-junit-report` v6.6.1
+- Add acceptance tests for roles held by invited users ([#393](https://github.com/doitintl/terraform-provider-doit/pull/393)) and for omitted budget collaborators ([#398](https://github.com/doitintl/terraform-provider-doit/pull/398))
+- Relax the `time` provider version constraint in Go tests to minor releases ([#399](https://github.com/doitintl/terraform-provider-doit/pull/399))
+- Sync OpenAPI spec from upstream, no provider changes ([#400](https://github.com/doitintl/terraform-provider-doit/pull/400))
 
 ## v1.10.0 (2026-10-02)
 
