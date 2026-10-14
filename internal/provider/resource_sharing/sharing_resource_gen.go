@@ -75,8 +75,8 @@ func SharingResourceSchema(ctx context.Context) schema.Schema {
 			"public": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "The type of permissions granted to all users in the organization for this resource.\nPossible values: `editor`, `viewer`",
-				MarkdownDescription: "The type of permissions granted to all users in the organization for this resource.\nPossible values: `editor`, `viewer`",
+				Description:         "The type of permissions granted to all users in the organization for this resource.\n\nAllocations (single and group) always have at least `viewer` public access, so it cannot be cleared:\n- If `public` is omitted, the stored value is kept.\n- An empty string (`\"\"`) is accepted for backward compatibility and is treated as `viewer`.\n- An explicit `null` is rejected with `400 Bad Request`.\n\nFor Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).\nPossible values: `editor`, `viewer`",
+				MarkdownDescription: "The type of permissions granted to all users in the organization for this resource.\n\nAllocations (single and group) always have at least `viewer` public access, so it cannot be cleared:\n- If `public` is omitted, the stored value is kept.\n- An empty string (`\"\"`) is accepted for backward compatibility and is treated as `viewer`.\n- An explicit `null` is rejected with `400 Bad Request`.\n\nFor Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).\nPossible values: `editor`, `viewer`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"editor",
