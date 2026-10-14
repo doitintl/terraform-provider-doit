@@ -7967,8 +7967,17 @@ type ExternalConfig struct {
 	// `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
 	LimitAggregation *ExternalConfigLimitAggregation `json:"limitAggregation,omitempty"`
 
-	// LimitByChange Limit by change filter. A report may configure at most two of
-	// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
+	// LimitByChange Limit by change filter; a report may configure at most two of `metricFilter`,
+	// `limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
+	// a period-over-period delta between adjacent time buckets. With it, each row's
+	// primary-range total is compared with its secondary-range total, so column dimensions
+	// (`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
+	// to those totals, while `group` gives every row its own change. A percentage change
+	// is comparable while both periods hold the same number of buckets; an absolute change
+	// is their plain difference and so scales with the bucket count. A row present in only
+	// one range counts as zero there, so a percentage threshold cannot be met from zero. A
+	// percentage-typed custom metric, or count aggregation, is rejected with
+	// `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
 	//
 	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
@@ -8214,8 +8223,17 @@ type ExternalForecastSettings struct {
 // ExternalForecastSettingsMode Forecast granularity mode.
 type ExternalForecastSettingsMode string
 
-// ExternalLimitByChange Limit by change filter. A report may configure at most two of
-// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
+// ExternalLimitByChange Limit by change filter; a report may configure at most two of `metricFilter`,
+// `limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
+// a period-over-period delta between adjacent time buckets. With it, each row's
+// primary-range total is compared with its secondary-range total, so column dimensions
+// (`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
+// to those totals, while `group` gives every row its own change. A percentage change
+// is comparable while both periods hold the same number of buckets; an absolute change
+// is their plain difference and so scales with the bucket count. A row present in only
+// one range counts as zero there, so a percentage threshold cannot be met from zero. A
+// percentage-typed custom metric, or count aggregation, is rejected with
+// `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
 //
 // Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 type ExternalLimitByChange struct {
@@ -8224,9 +8242,8 @@ type ExternalLimitByChange struct {
 	// IncludeIncompleteData When true, keeps rows whose deltas could not be evaluated.
 	IncludeIncompleteData bool `json:"includeIncompleteData"`
 
-	// Metric Metric selector used in reports and filters.
-	//
-	// Example: {"type":"basic","value":"cost"}
+	// Metric The metric the change is measured on. It must also be listed in the report's
+	// `config.metrics`; otherwise the request is rejected with a 400 and nothing is saved.
 	Metric ExternalMetric `json:"metric"`
 
 	// Operator Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`

@@ -459,8 +459,17 @@ Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_b
 at most two of those three limit types — not all three. When `displayValues` is not
 `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
 Possible values: `none`, `top`, `all`
-- `limit_by_change` (Attributes) Limit by change filter. A report may configure at most two of
-`metricFilter`, `limitByChange`, and rank `group` limits — not all three. (see [below for nested schema](#nestedatt--config--limit_by_change))
+- `limit_by_change` (Attributes) Limit by change filter; a report may configure at most two of `metricFilter`,
+`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
+a period-over-period delta between adjacent time buckets. With it, each row's
+primary-range total is compared with its secondary-range total, so column dimensions
+(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
+to those totals, while `group` gives every row its own change. A percentage change
+is comparable while both periods hold the same number of buckets; an absolute change
+is their plain difference and so scales with the bucket count. A row present in only
+one range counts as zero there, so a percentage threshold cannot be met from zero. A
+percentage-typed custom metric, or count aggregation, is rejected with
+`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`. (see [below for nested schema](#nestedatt--config--limit_by_change))
 - `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
@@ -638,7 +647,8 @@ Required:
 
 - `change_type` (String) Possible values: `percentage`, `absolute`
 - `include_incomplete_data` (Boolean) When true, keeps rows whose deltas could not be evaluated.
-- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--limit_by_change--metric))
+- `metric` (Attributes) The metric the change is measured on. It must also be listed in the report's
+`config.metrics`; otherwise the request is rejected with a 400 and nothing is saved. (see [below for nested schema](#nestedatt--config--limit_by_change--metric))
 - `operator` (String) Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
 (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
 (Between), `nb` (Not Between).

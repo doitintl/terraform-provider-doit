@@ -18592,8 +18592,17 @@ components:
           - 50
     ExternalLimitByChange:
       description: |-
-        Limit by change filter. A report may configure at most two of
-        `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
+        Limit by change filter; a report may configure at most two of `metricFilter`,
+        `limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
+        a period-over-period delta between adjacent time buckets. With it, each row's
+        primary-range total is compared with its secondary-range total, so column dimensions
+        (`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
+        to those totals, while `group` gives every row its own change. A percentage change
+        is comparable while both periods hold the same number of buckets; an absolute change
+        is their plain difference and so scales with the bucket count. A row present in only
+        one range counts as zero there, so a percentage threshold cannot be met from zero. A
+        percentage-typed custom metric, or count aggregation, is rejected with
+        `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
       type: object
       required:
         - metric
@@ -18603,7 +18612,11 @@ components:
         - includeIncompleteData
       properties:
         metric:
-          $ref: "#/components/schemas/ExternalMetric"
+          allOf:
+            - $ref: "#/components/schemas/ExternalMetric"
+          description: |-
+            The metric the change is measured on. It must also be listed in the report's
+            `config.metrics`; otherwise the request is rejected with a 400 and nothing is saved.
         changeType:
           type: string
           enum:

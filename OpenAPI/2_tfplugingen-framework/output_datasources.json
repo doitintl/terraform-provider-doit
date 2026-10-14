@@ -15744,7 +15744,7 @@
 															}
 														}
 													],
-													"description": "Metric selector used in reports and filters."
+													"description": "The metric the change is measured on. It must also be listed in the report's\n`config.metrics`; otherwise the request is rejected with a 400 and nothing is saved."
 												}
 											},
 											{
@@ -15765,7 +15765,7 @@
 												}
 											}
 										],
-										"description": "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and rank `group` limits — not all three."
+										"description": "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`."
 									}
 								},
 								{

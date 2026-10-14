@@ -244,6 +244,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportCustomTimeRangeUnitValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
+		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
+		reportLimitByChangeValidator{},
 	}
 }
 
@@ -317,6 +319,26 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		target = req.Config
 	}
 	validateReportCumulativeComparisonWithLayout(ctx, target, layout, &resp.Diagnostics)
+
+	// Re-run the limit_by_change checks now that unknown values have resolved (ConfigValidators
+	// defer on them).
+	//
+	// count + secondary_time_range: aggregation and secondary_time_range are Optional+Computed and
+	// not clearable in place, so an update that omits them keeps the stored value. The plan marks
+	// them unknown, so fall back to prior state for omitted attributes — unless a replacement is
+	// forced, because a replacement is created from config alone. Removing limit_by_change or count
+	// from config forces a replacement, which also keeps a config that drops limit_by_change
+	// together with its metric from being rejected.
+	//
+	// metric listed in metrics: an omitted metrics list keeps its stored value on update, so it
+	// falls back to prior state the same way (and is deferred on create or replacement, where
+	// the API may default it).
+	var priorState attributeGetter
+	if !req.State.Raw.IsNull() && len(resp.RequiresReplace) == 0 {
+		priorState = req.State
+	}
+	validateReportLimitByChangeCountSecondary(ctx, req.Config, priorState, &resp.Diagnostics)
+	validateReportLimitByChangeMetricListed(ctx, req.Config, priorState, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
