@@ -916,3 +916,105 @@ func TestReportResource_ModifyPlan_LimitByChange_InheritedSecondaryRangeNonCount
 		t.Fatalf("expected no %q error, got %d: %v", lbcCountSummary, got, resp.Diagnostics)
 	}
 }
+
+// lbcMetricsStateMap is a valid prior state with the given metrics and no limit_by_change.
+func lbcMetricsStateMap(ctx context.Context, t *testing.T, metrics ...lbcMetricSpec) map[string]attr.Value {
+	t.Helper()
+	cfg := lbcBaseConfigMap(ctx, t)
+	cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+	cfg["limit_by_change"] = resource_report.NewLimitByChangeValueNull()
+	cfg["metrics"] = lbcMetricsList(ctx, t, metrics...)
+	return cfg
+}
+
+// lbcOmittedMetricsUpdate adds limit_by_change on metric while config omits metrics; the plan
+// marks the omitted list as unknown.
+func lbcOmittedMetricsUpdate(ctx context.Context, t *testing.T, state map[string]attr.Value, metric lbcMetricSpec) *resource.ModifyPlanResponse {
+	t.Helper()
+
+	plan := lbcMetricsStateMap(ctx, t, lbcCost)
+	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, metric))
+	plan["metrics"] = types.ListUnknown(resource_report.MetricsValue{}.Type(ctx))
+
+	cfg := lbcMetricsStateMap(ctx, t, lbcCost)
+	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, metric))
+	cfg["metrics"] = types.ListNull(resource_report.MetricsValue{}.Type(ctx))
+
+	return lbcModifyPlan(ctx, t, state, plan, cfg)
+}
+
+// Omitting metrics on update keeps the stored list, so a limit_by_change metric outside it is rejected.
+func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsUnlisted(t *testing.T) {
+	ctx := t.Context()
+
+	resp := lbcOmittedMetricsUpdate(ctx, t, lbcMetricsStateMap(ctx, t, lbcCost), lbcUsage)
+	if got := lbcCountErrors(resp.Diagnostics, lbcMetricListedError); got != 1 {
+		t.Fatalf("expected one %q error against the stored metrics, got %d: %v", lbcMetricListedError, got, resp.Diagnostics)
+	}
+}
+
+// Omitting metrics on update is valid when the stored list contains the limit_by_change metric.
+func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsListed(t *testing.T) {
+	ctx := t.Context()
+
+	resp := lbcOmittedMetricsUpdate(ctx, t, lbcMetricsStateMap(ctx, t, lbcCost, lbcUsage), lbcUsage)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("expected no errors, got: %v", resp.Diagnostics)
+	}
+}
+
+// A forced replacement is created from config alone, so omitted metrics are not checked
+// against the stored list.
+func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsWithReplaceDeferred(t *testing.T) {
+	ctx := t.Context()
+
+	state := lbcMetricsStateMap(ctx, t, lbcCost)
+	state["aggregation"] = types.StringValue("count")
+	state["count"] = lbcCountValue(ctx, t)
+
+	plan := lbcMetricsStateMap(ctx, t, lbcCost)
+	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
+	plan["metrics"] = types.ListUnknown(resource_report.MetricsValue{}.Type(ctx))
+
+	cfg := lbcMetricsStateMap(ctx, t, lbcCost)
+	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
+	cfg["metrics"] = types.ListNull(resource_report.MetricsValue{}.Type(ctx))
+	cfg["aggregation"] = types.StringNull()
+	cfg["count"] = resource_report.NewCountValueNull()
+
+	resp := lbcModifyPlan(ctx, t, state, plan, cfg)
+	if got := lbcCountErrors(resp.Diagnostics, lbcMetricListedError); got != 0 {
+		t.Fatalf("expected no %q error, got %d: %v", lbcMetricListedError, got, resp.Diagnostics)
+	}
+	if len(resp.RequiresReplace) == 0 {
+		t.Fatalf("expected the removed count block to force replacement")
+	}
+}
+
+// On create there is no stored list; an omitted metrics list is deferred.
+func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsOnCreateDeferred(t *testing.T) {
+	ctx := t.Context()
+
+	cfg := lbcMetricsStateMap(ctx, t, lbcCost)
+	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
+	cfg["metrics"] = types.ListNull(resource_report.MetricsValue{}.Type(ctx))
+
+	resp := lbcModifyPlan(ctx, t, nil, cfg, cfg)
+	if got := lbcCountErrors(resp.Diagnostics, lbcMetricListedError); got != 0 {
+		t.Fatalf("expected no %q error, got %d: %v", lbcMetricListedError, got, resp.Diagnostics)
+	}
+}
+
+// The provider keeps an empty metrics list in state when metrics was never configured, so an
+// empty stored list must not be read as "the report has no metrics".
+func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsEmptyStateDeferred(t *testing.T) {
+	ctx := t.Context()
+
+	state := lbcMetricsStateMap(ctx, t)
+	state["metrics"] = lbcMetricsList(ctx, t)
+
+	resp := lbcOmittedMetricsUpdate(ctx, t, state, lbcUsage)
+	if got := lbcCountErrors(resp.Diagnostics, lbcMetricListedError); got != 0 {
+		t.Fatalf("expected no %q error, got %d: %v", lbcMetricListedError, got, resp.Diagnostics)
+	}
+}

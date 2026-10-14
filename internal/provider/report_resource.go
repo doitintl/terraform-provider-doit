@@ -330,14 +330,15 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	// from config forces a replacement, which also keeps a config that drops limit_by_change
 	// together with its metric from being rejected.
 	//
-	// metric listed in metrics: checked against config only, since an omitted metrics list has
-	// its own semantics and is deferred.
+	// metric listed in metrics: an omitted metrics list keeps its stored value on update, so it
+	// falls back to prior state the same way (and is deferred on create or replacement, where
+	// the API may default it).
 	var priorState attributeGetter
 	if !req.State.Raw.IsNull() && len(resp.RequiresReplace) == 0 {
 		priorState = req.State
 	}
 	validateReportLimitByChangeCountSecondary(ctx, req.Config, priorState, &resp.Diagnostics)
-	validateReportLimitByChangeMetricListed(ctx, req.Config, &resp.Diagnostics)
+	validateReportLimitByChangeMetricListed(ctx, req.Config, priorState, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

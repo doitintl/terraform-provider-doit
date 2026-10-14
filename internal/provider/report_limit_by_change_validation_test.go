@@ -25,6 +25,7 @@ type lbcSpec struct {
 	limitMetric     string
 	limitType       string // defaults to basic
 	omitAggregation bool
+	omitMetrics     bool
 	aggregationExpr string // overrides aggregation with a raw HCL expression
 	limitValueExpr  string // overrides the limit_by_change metric value with a raw HCL expression
 	prelude         string // extra HCL emitted before the resource, e.g. terraform_data
@@ -35,14 +36,17 @@ func lbcMetricHCL(typ, value string) string {
 }
 
 func (s lbcSpec) configBody() string {
-	body := "metrics = ["
-	for i, m := range s.metrics {
-		if i > 0 {
-			body += ", "
+	body := ""
+	if !s.omitMetrics {
+		body = "metrics = ["
+		for i, m := range s.metrics {
+			if i > 0 {
+				body += ", "
+			}
+			body += m
 		}
-		body += m
+		body += "]\n"
 	}
-	body += "]\n"
 
 	if s.omitAggregation {
 		// aggregation left to the API / prior state
@@ -388,6 +392,72 @@ func TestAccReport_LimitByChange_OmittedCountReplaces(t *testing.T) {
 	n := acctest.RandInt()
 	before := lbcSpec{aggregation: "count", count: true, secondary: true, metrics: []string{lbcCostMetric}}
 	after := lbcSpec{omitAggregation: true, limitByChange: true, metrics: []string{lbcCostMetric}, limitMetric: "cost"}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: before.report(n)},
+			{
+				Config: after.report(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.lbc_validation", plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitByChange_OmittedMetricsKeepsStored verifies an update that omits metrics
+// and adds limit_by_change on a metric that the stored metrics list contains is accepted.
+func TestAccReport_LimitByChange_OmittedMetricsKeepsStored(t *testing.T) {
+	n := acctest.RandInt()
+	before := lbcSpec{aggregation: "total", metrics: []string{lbcCostMetric, lbcMetricHCL("basic", "usage")}}
+	after := lbcSpec{aggregation: "total", omitMetrics: true, limitByChange: true, limitMetric: "usage"}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: before.report(n)},
+			{Config: after.report(n)},
+		},
+	})
+}
+
+// TestAccReport_LimitByChange_OmittedMetricsUnlistedMetric verifies an update that omits metrics
+// and adds limit_by_change on a metric that the stored metrics list does not contain is rejected.
+func TestAccReport_LimitByChange_OmittedMetricsUnlistedMetric(t *testing.T) {
+	n := acctest.RandInt()
+	before := lbcSpec{aggregation: "total", metrics: []string{lbcCostMetric}}
+	after := lbcSpec{aggregation: "total", omitMetrics: true, limitByChange: true, limitMetric: "usage"}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: before.report(n)},
+			{
+				Config: after.report(n),
+				// Rejected at plan time against the stored metrics, not by the API during apply.
+				ExpectError: regexp.MustCompile(lbcMetricError),
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitByChange_RemovedWithItsMetric verifies that dropping limit_by_change
+// together with the metric it used replaces the report and is not rejected by the validators,
+// even though the plan still carries the old limit_by_change.
+func TestAccReport_LimitByChange_RemovedWithItsMetric(t *testing.T) {
+	n := acctest.RandInt()
+	before := lbcSpec{aggregation: "total", limitByChange: true, metrics: []string{lbcCostMetric, lbcMetricHCL("basic", "usage")}, limitMetric: "usage"}
+	after := lbcSpec{aggregation: "total", metrics: []string{lbcCostMetric}}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,

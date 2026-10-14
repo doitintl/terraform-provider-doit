@@ -757,7 +757,7 @@ func (v reportLimitByChangeDataSourceValidator) ValidateDataSource(ctx context.C
 // attribute never hides the other's definite error.
 func validateReportLimitByChange(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
 	validateReportLimitByChangeCountSecondary(ctx, getter, nil, diags)
-	validateReportLimitByChangeMetricListed(ctx, getter, diags)
+	validateReportLimitByChangeMetricListed(ctx, getter, nil, diags)
 }
 
 // validateReportLimitByChangeCountSecondary rejects aggregation = "count" when
@@ -830,7 +830,12 @@ func validateReportLimitByChangeCountSecondary(ctx context.Context, getter, prio
 
 // validateReportLimitByChangeMetricListed rejects a limit_by_change.metric that
 // does not match (type and value) any entry of config.metrics.
-func validateReportLimitByChangeMetricListed(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+//
+// priorState, when non-nil, supplies metrics when the config omits it: the API keeps
+// the stored list on update, so that is the list limit_by_change is checked against.
+// Without it (create, or a forced replacement), or when the stored list is empty, an
+// omitted list is deferred, because the API may default it.
+func validateReportLimitByChangeMetricListed(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
 	var limitByChange resource_report.LimitByChangeValue
 	d := getter.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange)
 	diags.Append(d...)
@@ -844,11 +849,27 @@ func validateReportLimitByChangeMetricListed(ctx context.Context, getter attribu
 	if d.HasError() {
 		return
 	}
+	if metrics.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		if metrics.IsNull() || metrics.IsUnknown() {
+			return
+		}
+		// The provider keeps an empty list in state when metrics was never configured
+		// (see useEmptyForUnconfiguredMetricsMirror), so an empty stored list says nothing
+		// about the metrics the API holds.
+		if len(metrics.Elements()) == 0 {
+			return
+		}
+	}
 
 	if limitByChange.IsNull() || limitByChange.IsUnknown() {
 		return
 	}
-	// A null metrics list may be defaulted by the API, so only a configured list is checked.
+	// A null metrics list may be defaulted by the API, so only a configured or stored list is checked.
 	if metrics.IsNull() || metrics.IsUnknown() {
 		return
 	}
