@@ -74,6 +74,13 @@ func lbcKnownMetricsEntry(ctx context.Context, s lbcMetricSpec) resource_report.
 	})
 }
 
+func lbcPartialMetricsEntry(ctx context.Context, metricType, value attr.Value) resource_report.MetricsValue {
+	return resource_report.NewMetricsValueMust(resource_report.MetricsValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"type":  metricType,
+		"value": value,
+	})
+}
+
 func lbcDimensions(ctx context.Context, t *testing.T, dims ...[2]string) types.List {
 	t.Helper()
 	values := make([]resource_report.DimensionsValue, 0, len(dims))
@@ -467,6 +474,43 @@ func TestReportLimitByChangeValidator_Deferral(t *testing.T) {
 			},
 		},
 		{
+			name: "entry with matching type and unknown value may still match",
+			mutate: func(cfg map[string]attr.Value) {
+				metricNotListed(cfg)
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcPartialMetricsEntry(ctx, types.StringValue("basic"), types.StringUnknown()),
+				)
+			},
+		},
+		{
+			name: "entry with unknown type and matching value may still match",
+			mutate: func(cfg map[string]attr.Value) {
+				metricNotListed(cfg)
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcPartialMetricsEntry(ctx, types.StringUnknown(), types.StringValue("usage")),
+				)
+			},
+		},
+		{
+			name: "entry with unknown type and unknown value may still match",
+			mutate: func(cfg map[string]attr.Value) {
+				metricNotListed(cfg)
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcPartialMetricsEntry(ctx, types.StringUnknown(), types.StringUnknown()),
+				)
+			},
+		},
+		{
+			name: "uncertain entry after a definite non-match still defers",
+			mutate: func(cfg map[string]attr.Value) {
+				metricNotListed(cfg)
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcPartialMetricsEntry(ctx, types.StringValue("custom"), types.StringUnknown()),
+					lbcPartialMetricsEntry(ctx, types.StringValue("basic"), types.StringUnknown()),
+				)
+			},
+		},
+		{
 			name: "matching metrics entry next to unknown entry",
 			mutate: func(cfg map[string]attr.Value) {
 				cfg["metrics"] = lbcMetricsListOf(ctx, t,
@@ -582,6 +626,48 @@ func TestReportLimitByChangeValidator_InvalidConfigs(t *testing.T) {
 			name: "metric missing from several known metrics",
 			mutate: func(cfg map[string]attr.Value) {
 				cfg["metrics"] = lbcMetricsList(ctx, t, lbcUsage, lbcSavings, lbcCustomPercent)
+			},
+			want: []lbcWantError{metricError},
+		},
+		{
+			name: "entry with mismatched type and unknown value cannot match",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcPartialMetricsEntry(ctx, types.StringValue("custom"), types.StringUnknown()),
+				)
+			},
+			want: []lbcWantError{metricError},
+		},
+		{
+			name: "entry with unknown type and mismatched value cannot match",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcPartialMetricsEntry(ctx, types.StringUnknown(), types.StringValue("cost")),
+				)
+			},
+			want: []lbcWantError{metricError},
+		},
+		{
+			name: "known mismatching entries next to entries that cannot match",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcKnownMetricsEntry(ctx, lbcCost),
+					lbcPartialMetricsEntry(ctx, types.StringValue("custom"), types.StringUnknown()),
+					lbcPartialMetricsEntry(ctx, types.StringUnknown(), types.StringValue("savings")),
+				)
+			},
+			want: []lbcWantError{metricError},
+		},
+		{
+			name: "entry with null type cannot match",
+			mutate: func(cfg map[string]attr.Value) {
+				cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
+				cfg["metrics"] = lbcMetricsListOf(ctx, t,
+					lbcPartialMetricsEntry(ctx, types.StringNull(), types.StringValue("usage")),
+				)
 			},
 			want: []lbcWantError{metricError},
 		},

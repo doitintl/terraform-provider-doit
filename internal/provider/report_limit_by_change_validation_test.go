@@ -263,6 +263,39 @@ func TestAccReport_LimitByChange_MetricNotListedRejected(t *testing.T) {
 	})
 }
 
+// TestAccReport_LimitByChange_MetricNotListedRejectedDespiteUnknownEntry verifies
+// that a metrics entry whose value is unknown at plan time, but whose known type
+// already differs from the limit_by_change metric, does not hide the error.
+func TestAccReport_LimitByChange_MetricNotListedRejectedDespiteUnknownEntry(t *testing.T) {
+	n := acctest.RandInt()
+	prelude := `
+resource "terraform_data" "metric_id" {
+  input = "some-custom-metric-id"
+}
+`
+	spec := lbcSpec{
+		aggregation:   "total",
+		secondary:     true,
+		limitByChange: true,
+		metrics:       []string{lbcCostMetric, `{ type = "custom", value = terraform_data.metric_id.output }`},
+		limitMetric:   "usage",
+		prelude:       prelude,
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      spec.report(n),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(lbcMetricError),
+			},
+		},
+	})
+}
+
 // TestAccReport_LimitByChange_ValidatorDefersUnknowns verifies that values that
 // are unknown at plan time (here fed by terraform_data outputs) do not trigger
 // the limit_by_change validators.

@@ -856,16 +856,21 @@ func validateReportLimitByChangeMetricListed(ctx context.Context, getter attribu
 			hasUnknown = true
 			continue
 		}
+		// A known component that differs is a definite non-match, whatever the other component resolves to.
+		if knownStringDiffers(entry.MetricsType, metric.MetricType.ValueString()) {
+			continue
+		}
+		if knownStringDiffers(entry.Value, metric.Value.ValueString()) {
+			continue
+		}
 		if entry.MetricsType.IsUnknown() || entry.Value.IsUnknown() {
 			hasUnknown = true
 			continue
 		}
-		if entry.MetricsType.ValueString() == metric.MetricType.ValueString() && entry.Value.ValueString() == metric.Value.ValueString() {
-			return
-		}
+		return
 	}
 
-	// An unresolved entry may still turn out to match.
+	// An entry whose unresolved components could still match defers the error.
 	if hasUnknown {
 		return
 	}
