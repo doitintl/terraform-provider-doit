@@ -81,6 +81,7 @@ provider "doit" {
 | `doit_sharing`                  | Sharing permissions for reports, budgets, alerts, and allocations |
 | `doit_support_request_tags`     | Support request tag management                                    |
 | `doit_user`                     | Invite and manage platform users                                  |
+| `doit_user_notification`        | Personal user notification settings (cost anomalies)              |
 
 ### Data Sources
 

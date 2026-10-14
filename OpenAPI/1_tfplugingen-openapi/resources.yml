@@ -240,3 +240,16 @@ resources:
     delete:
       path: /iam/v1/roles/{id}
       method: DELETE
+  user_notification:
+    create:
+      path: /iam/v1/users/{userId}/notifications
+      method: POST
+    read:
+      path: /iam/v1/users/{userId}/notifications/{notificationId}
+      method: GET
+    update:
+      path: /iam/v1/users/{userId}/notifications/{notificationId}
+      method: PATCH
+    delete:
+      path: /iam/v1/users/{userId}/notifications/{notificationId}
+      method: DELETE

@@ -1,0 +1,9 @@
+user_id = "user_01H..."
+
+allocation_ids = ["alloc_abc"]
+
+# Optional: uncomment to exercise for_each over two users.
+# users = {
+#   a = "user_01H..."
+#   b = "user_01H..."
+# }

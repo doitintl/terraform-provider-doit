@@ -1,0 +1,7 @@
+provider_installation {
+  dev_overrides {
+    "registry.terraform.io/doitintl/doit" = "/Users/piotrbalwierczak/go/bin"
+  }
+
+  direct {}
+}
