@@ -125,15 +125,14 @@ func (r *sharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 		s.Attributes["update_time"] = attr
 	}
 
-	// public: allow clearing by setting null in config (workaround for framework issue #603),
-	// and preserve the prior value when the user doesn't change it (avoids "known after apply" noise).
-	// Order matters: useEmptyForUnknownWhenConfigNull must run first so that removing `public`
-	// from config resolves to null, not to the prior state value.
-	if attr, ok := s.Attributes["public"].(schema.StringAttribute); ok {
-		attr.PlanModifiers = append(attr.PlanModifiers,
-			useNullForUnknownStringWhenConfigNull(),
-			stringplanmodifier.UseStateForUnknown(),
-		)
+	// public: for reports, budgets and alerts, allow clearing by setting null in config
+	// (workaround for framework issue #603). Allocations always have at least "viewer"
+	// public access and cannot be cleared, so an omitted `public` keeps the prior value.
+	// sharingPublicClearable also restores the prior value when the framework marks `public`
+	// unknown only because another attribute changed (avoids "known after apply" noise),
+	// which is why there is no separate UseStateForUnknown here.
+	if attr, ok := s.Attributes["public"].(schema.StringAttribute); ok { //nolint:clearableattr // clearable except for allocations (Category A/B by resource_type), see sharingPublicClearable
+		attr.PlanModifiers = append(attr.PlanModifiers, sharingPublicClearable())
 		s.Attributes["public"] = attr
 	}
 
@@ -150,7 +149,6 @@ func (r *sharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 func (r *sharingResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
 		sharingOwnerValidator{},
-		sharingAllocationPublicValidator{},
 	}
 }
 
@@ -171,7 +169,7 @@ func (r *sharingResource) Create(ctx context.Context, req resource.CreateRequest
 	defer cancel()
 
 	// Build API request from plan
-	apiReq, diags := buildSharingRequest(ctx, &plan, plan.ResourceType.ValueString())
+	apiReq, diags := buildSharingRequest(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -262,7 +260,7 @@ func (r *sharingResource) Update(ctx context.Context, req resource.UpdateRequest
 	defer cancel()
 
 	// Build API request from plan
-	apiReq, diags := buildSharingRequest(ctx, &plan, plan.ResourceType.ValueString())
+	apiReq, diags := buildSharingRequest(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -374,15 +372,16 @@ func (r *sharingResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	// Step 3: PUT with just the owner (strips all editors/viewers) and null public.
-	// Allocations require the public field to be present (API returns 500 if omitted),
-	// so we send an explicit empty string for that resource type.
+	// Step 3: PUT with just the owner (strips all editors/viewers) and no public access.
+	// Other resource types treat an omitted public as null. Allocations always have at
+	// least "viewer" and keep the stored value when public is omitted, so reset it to
+	// "viewer" explicitly; otherwise an "editor" set through Terraform would survive.
 	resetPerms := []models.ResourcePermission{*ownerPerm}
 	resetReq := models.UpdateResourcePermissionJSONRequestBody{
 		Permissions: &resetPerms,
 	}
-	if resType == "allocations" {
-		resetReq.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(""))
+	if resType == sharingAllocationsResourceType {
+		resetReq.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic("viewer"))
 	}
 
 	putResp, err := r.client.UpdateResourcePermissionWithResponse(
@@ -488,8 +487,9 @@ func mapSharingToModel(ctx context.Context, apiResp *models.ResourcePermissionsR
 	state.Permissions = mapPermissionsToList(ctx, apiResp.Permissions, &diags)
 
 	// Map public — normalize empty string to null.
-	// Allocations return public:"" to mean "no public access" while other resource
-	// types return null. We normalize both to null to prevent spurious drift.
+	// Allocations always return at least "viewer"; other resource types return null
+	// for "no public access". An empty string is not expected from the API, but is
+	// normalized to null defensively to prevent spurious drift.
 	if publicVal := nullableToPointer(apiResp.Public); publicVal != nil && string(*publicVal) != "" {
 		state.Public = types.StringValue(string(*publicVal))
 	} else {
@@ -528,7 +528,7 @@ func overlaySharingComputedFields(ctx context.Context, apiResp *models.ResourceP
 }
 
 // buildSharingRequest converts the Terraform model into an API request body.
-func buildSharingRequest(ctx context.Context, plan *sharingResourceModel, resourceType string) (models.UpdateResourcePermissionJSONRequestBody, diag.Diagnostics) {
+func buildSharingRequest(ctx context.Context, plan *sharingResourceModel) (models.UpdateResourcePermissionJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var reqBody models.UpdateResourcePermissionJSONRequestBody
 
@@ -562,12 +562,9 @@ func buildSharingRequest(ctx context.Context, plan *sharingResourceModel, resour
 	// Map public from plan to API type.
 	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
 		reqBody.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(plan.Public.ValueString()))
-	} else if resourceType == "allocations" {
-		// Allocations require the public field to be present in the request body.
-		// The API returns 500 if public is omitted or null. An empty string signals
-		// "no public access" and is the only accepted sentinel for allocations.
-		reqBody.Public = valueToNullable(models.UpdateResourcePermissionRequestBodyPublic(""))
 	}
+	// A null/unknown public is omitted from the request. For allocations the API then
+	// keeps the stored value (always at least "viewer"); an explicit null is rejected.
 
 	return reqBody, diags
 }

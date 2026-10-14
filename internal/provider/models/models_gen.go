@@ -10845,10 +10845,24 @@ type UpdateResourcePermissionRequestBody struct {
 	Permissions *[]ResourcePermission `json:"permissions,omitempty"`
 
 	// Public The type of permissions granted to all users in the organization for this resource.
+	//
+	// Allocations (single and group) always have at least `viewer` public access, so it cannot be cleared:
+	// - If `public` is omitted, the stored value is kept.
+	// - An empty string (`""`) is accepted for backward compatibility and is treated as `viewer`.
+	// - An explicit `null` is rejected with `400 Bad Request`.
+	//
+	// For Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).
 	Public nullable.Nullable[UpdateResourcePermissionRequestBodyPublic] `json:"public,omitempty"`
 }
 
 // UpdateResourcePermissionRequestBodyPublic The type of permissions granted to all users in the organization for this resource.
+//
+// Allocations (single and group) always have at least `viewer` public access, so it cannot be cleared:
+// - If `public` is omitted, the stored value is kept.
+// - An empty string (`""`) is accepted for backward compatibility and is treated as `viewer`.
+// - An explicit `null` is rejected with `400 Bad Request`.
+//
+// For Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).
 type UpdateResourcePermissionRequestBodyPublic string
 
 // UpdateRoleRequest Fields allowed when updating a custom role. At least one field is required.
