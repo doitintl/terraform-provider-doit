@@ -135,8 +135,9 @@ func TestBuildSharingRequest_Public(t *testing.T) {
 		wantSpecified bool
 		wantValue     string
 	}{
-		// An omitted public must stay omitted for every resource type: the API rejects ""
-		// and null for allocations, and keeps the stored value when it is omitted.
+		// An omitted public must stay omitted for every resource type: for allocations the
+		// API rejects an explicit null and keeps the stored value when it is omitted.
+		// ("" is still accepted as a legacy alias for viewer, but the provider no longer sends it.)
 		{name: "null is omitted", public: types.StringNull()},
 		{name: "unknown is omitted", public: types.StringUnknown()},
 		{name: "viewer is sent", public: types.StringValue("viewer"), wantSpecified: true, wantValue: "viewer"},
