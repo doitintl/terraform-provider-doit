@@ -1135,9 +1135,15 @@ func TestAccSharing_ResourceTypeChange(t *testing.T) {
 						knownvalue.StringExact("editor")),
 				},
 			},
-			// Step 2: switch to an allocation with public omitted
+			// Step 2: switch to an allocation with public omitted. resource_type and
+			// resource_id have RequiresReplace, so this is a replacement, not an update.
 			{
 				Config: testAccSharingTypeSwitch(n, "allocations", ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_sharing.this", plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"doit_sharing.this",
