@@ -320,11 +320,24 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	}
 	validateReportCumulativeComparisonWithLayout(ctx, target, layout, &resp.Diagnostics)
 
-	// Re-run the limit_by_change checks against the resolved config: ConfigValidators defer
-	// while values are unknown, and ModifyPlan sees them resolved. The plan is deliberately not
-	// used here — an omitted limit_by_change is inherited from prior state in the plan, which
-	// would reject a config that removes limit_by_change together with its metric.
-	validateReportLimitByChange(ctx, req.Config, &resp.Diagnostics)
+	// Re-run the limit_by_change checks now that unknown values have resolved (ConfigValidators
+	// defer on them).
+	//
+	// count + secondary_time_range: aggregation and secondary_time_range are Optional+Computed and
+	// not clearable in place, so an update that omits them keeps the stored value. The plan marks
+	// them unknown, so fall back to prior state for omitted attributes — unless a replacement is
+	// forced, because a replacement is created from config alone. Removing limit_by_change or count
+	// from config forces a replacement, which also keeps a config that drops limit_by_change
+	// together with its metric from being rejected.
+	//
+	// metric listed in metrics: checked against config only, since an omitted metrics list has
+	// its own semantics and is deferred.
+	var priorState attributeGetter
+	if !req.State.Raw.IsNull() && len(resp.RequiresReplace) == 0 {
+		priorState = req.State
+	}
+	validateReportLimitByChangeCountSecondary(ctx, req.Config, priorState, &resp.Diagnostics)
+	validateReportLimitByChangeMetricListed(ctx, req.Config, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

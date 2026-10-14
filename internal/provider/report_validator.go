@@ -754,15 +754,21 @@ func (v reportLimitByChangeDataSourceValidator) ValidateDataSource(ctx context.C
 // validateReportLimitByChange is shared by the report resource (ConfigValidators
 // and ModifyPlan) and the report_query data source. The two checks are
 // independent: each defers on its own unknown inputs so that one unresolved
-// attribute never suppresses the other's definite error.
+// attribute never hides the other's definite error.
 func validateReportLimitByChange(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
-	validateReportLimitByChangeCountSecondary(ctx, getter, diags)
+	validateReportLimitByChangeCountSecondary(ctx, getter, nil, diags)
 	validateReportLimitByChangeMetricListed(ctx, getter, diags)
 }
 
 // validateReportLimitByChangeCountSecondary rejects aggregation = "count" when
 // both limit_by_change and secondary_time_range are set.
-func validateReportLimitByChangeCountSecondary(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+//
+// priorState, when non-nil, supplies the value of aggregation and
+// secondary_time_range for attributes the config omits. Both are
+// Optional+Computed and the API keeps the stored value when an update omits them,
+// so the stored value is what the update would run with. (The plan cannot be used
+// for this: it marks an omitted nested attribute as unknown.)
+func validateReportLimitByChangeCountSecondary(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
 	var limitByChange resource_report.LimitByChangeValue
 	d := getter.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange)
 	diags.Append(d...)
@@ -776,12 +782,26 @@ func validateReportLimitByChangeCountSecondary(ctx context.Context, getter attri
 	if d.HasError() {
 		return
 	}
+	if secondary.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+	}
 
 	var aggregation types.String
 	d = getter.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
 	diags.Append(d...)
 	if d.HasError() {
 		return
+	}
+	if aggregation.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
 	}
 
 	if limitByChange.IsNull() || limitByChange.IsUnknown() {
@@ -803,7 +823,8 @@ func validateReportLimitByChangeCountSecondary(ctx context.Context, getter attri
 		"`limit_by_change` cannot be combined with `aggregation = \"count\"` when `secondary_time_range` is set: "+
 			"a change between two ranges needs one summable number per range, which count aggregation does not provide "+
 			"(the API rejects this with LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY). "+
-			"Use a different aggregation, or remove `secondary_time_range` or `limit_by_change`.",
+			"Use a different aggregation, or remove `secondary_time_range` or `limit_by_change`. "+
+			"If `secondary_time_range` is not in your configuration, it is kept from the existing report.",
 	)
 }
 

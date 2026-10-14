@@ -24,6 +24,7 @@ type lbcSpec struct {
 	metrics         []string
 	limitMetric     string
 	limitType       string // defaults to basic
+	omitAggregation bool
 	aggregationExpr string // overrides aggregation with a raw HCL expression
 	limitValueExpr  string // overrides the limit_by_change metric value with a raw HCL expression
 	prelude         string // extra HCL emitted before the resource, e.g. terraform_data
@@ -43,7 +44,9 @@ func (s lbcSpec) configBody() string {
 	}
 	body += "]\n"
 
-	if s.aggregationExpr != "" {
+	if s.omitAggregation {
+		// aggregation left to the API / prior state
+	} else if s.aggregationExpr != "" {
 		body += fmt.Sprintf("aggregation = %s\n", s.aggregationExpr)
 	} else {
 		body += fmt.Sprintf("aggregation = %q\n", s.aggregation)
@@ -351,6 +354,54 @@ func TestAccReportQueryDataSource_LimitByChange_Rejected(t *testing.T) {
 			{
 				Config:      notListedSpec.query(),
 				ExpectError: regexp.MustCompile(lbcMetricError),
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitByChange_InheritedSecondaryRange reproduces an update that keeps
+// count aggregation and adds limit_by_change while omitting secondary_time_range: the
+// secondary range is preserved from prior state, so the effective config is the rejected combination.
+func TestAccReport_LimitByChange_InheritedSecondaryRange(t *testing.T) {
+	n := acctest.RandInt()
+	before := lbcSpec{aggregation: "count", count: true, secondary: true, metrics: []string{lbcCostMetric}}
+	after := lbcSpec{aggregation: "count", count: true, limitByChange: true, metrics: []string{lbcCostMetric}, limitMetric: "cost"}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: before.report(n)},
+			{
+				Config: after.report(n),
+				// Rejected at plan time by the validator, not by the API during apply.
+				ExpectError: regexp.MustCompile(lbcCountError),
+			},
+		},
+	})
+}
+
+// TestAccReport_LimitByChange_OmittedCountReplaces verifies that dropping aggregation and the
+// count block while adding limit_by_change replaces the report and is accepted by the API.
+func TestAccReport_LimitByChange_OmittedCountReplaces(t *testing.T) {
+	n := acctest.RandInt()
+	before := lbcSpec{aggregation: "count", count: true, secondary: true, metrics: []string{lbcCostMetric}}
+	after := lbcSpec{omitAggregation: true, limitByChange: true, metrics: []string{lbcCostMetric}, limitMetric: "cost"}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: before.report(n)},
+			{
+				Config: after.report(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.lbc_validation", plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
 			},
 		},
 	})

@@ -802,3 +802,117 @@ func TestReportResource_ModifyPlan_LimitByChange(t *testing.T) {
 		}
 	})
 }
+
+func lbcCountValue(ctx context.Context, t *testing.T) resource_report.CountValue {
+	t.Helper()
+	return resource_report.NewCountValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+}
+
+// lbcCountSecondaryStateMap is a valid prior state: count aggregation with a
+// secondary range and no limit_by_change.
+func lbcCountSecondaryStateMap(ctx context.Context, t *testing.T) map[string]attr.Value {
+	t.Helper()
+	cfg := lbcBaseConfigMap(ctx, t)
+	cfg["aggregation"] = types.StringValue("count")
+	cfg["count"] = lbcCountValue(ctx, t)
+	cfg["limit_by_change"] = resource_report.NewLimitByChangeValueNull()
+	return cfg
+}
+
+// An update that keeps aggregation = "count" and adds limit_by_change while omitting
+// secondary_time_range inherits the secondary range from prior state (it is not
+// clearable in place), so the API-effective config is the rejected combination.
+func TestReportResource_ModifyPlan_LimitByChange_InheritedSecondaryRange(t *testing.T) {
+	ctx := t.Context()
+
+	state := lbcCountSecondaryStateMap(ctx, t)
+
+	// The plan marks the omitted nested attribute as unknown rather than inheriting it.
+	plan := lbcCountSecondaryStateMap(ctx, t)
+	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+	plan["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueUnknown()
+
+	cfg := lbcCountSecondaryStateMap(ctx, t)
+	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+	cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	resp := lbcModifyPlan(ctx, t, state, plan, cfg)
+	if got := lbcCountErrors(resp.Diagnostics, lbcCountSummary); got != 1 {
+		t.Fatalf("expected one %q error for the inherited secondary range, got %d: %v", lbcCountSummary, got, resp.Diagnostics)
+	}
+}
+
+// Omitting aggregation and the count block forces a replacement (count is Category C),
+// and the replacement is created from config alone, so the plan's inherited
+// count/secondary values must not be treated as the effective configuration.
+func TestReportResource_ModifyPlan_LimitByChange_OmittedCountForcesReplace(t *testing.T) {
+	ctx := t.Context()
+
+	state := lbcCountSecondaryStateMap(ctx, t)
+
+	plan := lbcCountSecondaryStateMap(ctx, t)
+	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+	plan["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueUnknown()
+
+	cfg := lbcCountSecondaryStateMap(ctx, t)
+	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+	cfg["aggregation"] = types.StringNull()
+	cfg["count"] = resource_report.NewCountValueNull()
+	cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	resp := lbcModifyPlan(ctx, t, state, plan, cfg)
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("expected no errors, got: %v", resp.Diagnostics)
+	}
+	if len(resp.RequiresReplace) == 0 {
+		t.Fatalf("expected the removed count block to force replacement")
+	}
+}
+
+// Without a secondary range in prior state there is nothing to inherit.
+func TestReportResource_ModifyPlan_LimitByChange_NoInheritedSecondaryRange(t *testing.T) {
+	ctx := t.Context()
+
+	state := lbcCountSecondaryStateMap(ctx, t)
+	state["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	plan := lbcCountSecondaryStateMap(ctx, t)
+	plan["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueUnknown()
+	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+
+	cfg := lbcCountSecondaryStateMap(ctx, t)
+	cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+
+	resp := lbcModifyPlan(ctx, t, state, plan, cfg)
+	if got := lbcCountErrors(resp.Diagnostics, lbcCountSummary); got != 0 {
+		t.Fatalf("expected no %q error, got %d: %v", lbcCountSummary, got, resp.Diagnostics)
+	}
+}
+
+// Switching to a non-count aggregation while a secondary range is kept is valid.
+func TestReportResource_ModifyPlan_LimitByChange_InheritedSecondaryRangeNonCount(t *testing.T) {
+	ctx := t.Context()
+
+	state := lbcCountSecondaryStateMap(ctx, t)
+
+	plan := lbcCountSecondaryStateMap(ctx, t)
+	plan["aggregation"] = types.StringValue("total")
+	plan["count"] = resource_report.NewCountValueNull()
+	plan["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueUnknown()
+	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+
+	cfg := lbcCountSecondaryStateMap(ctx, t)
+	cfg["aggregation"] = types.StringValue("total")
+	cfg["count"] = resource_report.NewCountValueNull()
+	cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+
+	resp := lbcModifyPlan(ctx, t, state, plan, cfg)
+	if got := lbcCountErrors(resp.Diagnostics, lbcCountSummary); got != 0 {
+		t.Fatalf("expected no %q error, got %d: %v", lbcCountSummary, got, resp.Diagnostics)
+	}
+}
