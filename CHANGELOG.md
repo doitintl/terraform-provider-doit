@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### BUG FIXES
+
+- **resource/doit_sharing**: Group allocations can now be shared. Previously the provider sent `public = ""`, which the API rejected for group allocations ([#317](https://github.com/doitintl/terraform-provider-doit/issues/317)). Requires the upstream API change from CMP-51363, which is already deployed
+- **resource/doit_sharing, data-source/doit_sharing**: Allocations always have at least `viewer` public access. `public` can now be set to `viewer` or `editor` on allocations (it was rejected before) and omitting it no longer causes a permanent `viewer -> null` diff on single allocations. Removing `public` from the configuration keeps the current value, because allocation public access cannot be cleared ([#317](https://github.com/doitintl/terraform-provider-doit/issues/317))
+
 ## v1.11.0 (2026-10-09)
 
 ### BREAKING CHANGES

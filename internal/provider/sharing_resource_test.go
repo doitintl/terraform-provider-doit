@@ -328,11 +328,6 @@ func TestAccSharing_OwnerValidator(t *testing.T) {
 				Config:      testAccSharingMultipleOwners(n),
 				ExpectError: regexp.MustCompile(`Multiple Owners`),
 			},
-			// Test: public set on allocations (not allowed)
-			{
-				Config:      testAccSharingAllocationWithPublic(n),
-				ExpectError: regexp.MustCompile(`Public Access Not Supported for Allocations`),
-			},
 		},
 	})
 }
@@ -559,23 +554,6 @@ resource "doit_sharing" "this" {
 `, i)
 }
 
-func testAccSharingAllocationWithPublic(i int) string {
-	return fmt.Sprintf(`
-resource "doit_sharing" "this" {
-  resource_type = "allocations"
-  resource_id   = "fake-id-%d"
-  public        = "viewer"
-
-  permissions = [
-    {
-      user = "owner@example.com"
-      role = "owner"
-    }
-  ]
-}
-`, i)
-}
-
 // --- Tests for other resource types (budgets, alerts, allocations) ---
 
 // TestAccSharing_Budget tests sharing permissions on a budget resource.
@@ -699,6 +677,11 @@ func TestAccSharing_Allocation(t *testing.T) {
 						"doit_sharing.allocation",
 						tfjsonpath.New("permissions"),
 						knownvalue.ListSizeExact(2)),
+					// Allocations always have at least viewer public access.
+					statecheck.ExpectKnownValue(
+						"doit_sharing.allocation",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("viewer")),
 				},
 			},
 			// Drift check
@@ -709,6 +692,169 @@ func TestAccSharing_Allocation(t *testing.T) {
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
+			},
+			// Import: public is read back as viewer and matches the omitted config.
+			{
+				ResourceName: "doit_sharing.allocation",
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["doit_sharing.allocation"]
+					if !ok {
+						return "", fmt.Errorf("resource not found: doit_sharing.allocation")
+					}
+					return fmt.Sprintf("%s/%s", rs.Primary.Attributes["resource_type"], rs.Primary.Attributes["resource_id"]), nil
+				},
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"timeouts"},
+			},
+		},
+	})
+}
+
+// TestAccSharing_AllocationPublic covers public access on allocations: it is optional,
+// defaults to viewer, can be changed, and cannot be cleared (omitting it keeps the
+// current value).
+func TestAccSharing_AllocationPublic(t *testing.T) {
+	n := acctest.RandInt()
+
+	checkPublic := func(want string) []statecheck.StateCheck {
+		return []statecheck.StateCheck{
+			statecheck.ExpectKnownValue(
+				"doit_sharing.allocation",
+				tfjsonpath.New("public"),
+				knownvalue.StringExact(want)),
+		}
+	}
+	emptyPlan := resource.ConfigPlanChecks{
+		PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testUser2() == "" {
+				t.Skip("TEST_USER_2 must be set for this test")
+			}
+			if testProject() == "" {
+				t.Skip("TEST_PROJECT must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: public omitted -> API default viewer
+			{
+				Config:            testAccSharingAllocationPublic(n, ""),
+				ConfigStateChecks: checkPublic("viewer"),
+			},
+			// Step 2: drift check
+			{
+				Config:           testAccSharingAllocationPublic(n, ""),
+				ConfigPlanChecks: emptyPlan,
+			},
+			// Step 3: change to editor
+			{
+				Config: testAccSharingAllocationPublic(n, "editor"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_sharing.allocation", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: checkPublic("editor"),
+			},
+			// Step 4: drift check
+			{
+				Config:           testAccSharingAllocationPublic(n, "editor"),
+				ConfigPlanChecks: emptyPlan,
+			},
+			// Step 5: remove public from config -> not clearable, editor is kept without a diff
+			{
+				Config:            testAccSharingAllocationPublic(n, ""),
+				ConfigPlanChecks:  emptyPlan,
+				ConfigStateChecks: checkPublic("editor"),
+			},
+			// Step 6: set back to viewer explicitly
+			{
+				Config: testAccSharingAllocationPublic(n, "viewer"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_sharing.allocation", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: checkPublic("viewer"),
+			},
+			// Step 7: drift check
+			{
+				Config:           testAccSharingAllocationPublic(n, "viewer"),
+				ConfigPlanChecks: emptyPlan,
+			},
+		},
+	})
+}
+
+// TestAccSharing_AllocationGroup covers sharing on a group allocation, which the API
+// used to reject (issue #317).
+func TestAccSharing_AllocationGroup(t *testing.T) {
+	n := acctest.RandInt()
+
+	emptyPlan := resource.ConfigPlanChecks{
+		PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testUser2() == "" {
+				t.Skip("TEST_USER_2 must be set for this test")
+			}
+			if testProject() == "" {
+				t.Skip("TEST_PROJECT must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: share a group with an extra viewer
+			{
+				Config: testAccSharingAllocationGroup(n, true, ""),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_sharing.group",
+						tfjsonpath.New("resource_type"),
+						knownvalue.StringExact("allocations")),
+					statecheck.ExpectKnownValue(
+						"doit_sharing.group",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListSizeExact(2)),
+					statecheck.ExpectKnownValue(
+						"doit_sharing.group",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("viewer")),
+				},
+			},
+			// Step 2: drift check
+			{
+				Config:           testAccSharingAllocationGroup(n, true, ""),
+				ConfigPlanChecks: emptyPlan,
+			},
+			// Step 3: remove the viewer and make the group editable by everyone
+			{
+				Config: testAccSharingAllocationGroup(n, false, "editor"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_sharing.group",
+						tfjsonpath.New("permissions"),
+						knownvalue.ListSizeExact(1)),
+					statecheck.ExpectKnownValue(
+						"doit_sharing.group",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("editor")),
+				},
+			},
+			// Step 4: drift check
+			{
+				Config:           testAccSharingAllocationGroup(n, false, "editor"),
+				ConfigPlanChecks: emptyPlan,
 			},
 		},
 	})
@@ -855,6 +1001,17 @@ resource "doit_sharing" "alert" {
 }
 
 func testAccSharingAllocation(i int) string {
+	return testAccSharingAllocationPublic(i, "")
+}
+
+// testAccSharingAllocationPublic shares a single allocation with an owner and a viewer.
+// An empty public omits the attribute.
+func testAccSharingAllocationPublic(i int, public string) string {
+	publicLine := ""
+	if public != "" {
+		publicLine = fmt.Sprintf("public        = %q", public)
+	}
+
 	return fmt.Sprintf(`
 resource "doit_allocation" "sharing_target" {
   name        = "sharing-test-alloc-%d"
@@ -875,6 +1032,7 @@ resource "doit_allocation" "sharing_target" {
 resource "doit_sharing" "allocation" {
   resource_type = "allocations"
   resource_id   = doit_allocation.sharing_target.id
+  %s
 
   permissions = [
     {
@@ -887,5 +1045,164 @@ resource "doit_sharing" "allocation" {
     }
   ]
 }
-`, i, testProject(), testUser(), testUser2())
+`, i, testProject(), publicLine, testUser(), testUser2())
+}
+
+// testAccSharingAllocationGroup shares a group allocation (built from a single
+// allocation via a select rule). withViewer adds testUser2 as viewer; an empty
+// public omits the attribute.
+func testAccSharingAllocationGroup(i int, withViewer bool, public string) string {
+	publicLine := ""
+	if public != "" {
+		publicLine = fmt.Sprintf("public        = %q", public)
+	}
+	viewer := ""
+	if withViewer {
+		viewer = fmt.Sprintf(`,
+    {
+      user = "%s"
+      role = "viewer"
+    }`, testUser2())
+	}
+
+	return fmt.Sprintf(`
+resource "doit_allocation" "group_member" {
+  name        = "sharing-test-member-%[1]d"
+  description = "group member for sharing test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "project_id"
+        mode   = "is"
+        type   = "fixed"
+        values = ["%[2]s"]
+      }
+    ]
+  }
+}
+
+resource "doit_allocation" "group" {
+  name              = "sharing-test-group-%[1]d"
+  description       = "group allocation for sharing test"
+  unallocated_costs = "sharing-test-other-%[1]d"
+  rules = [
+    {
+      action = "select"
+      id     = doit_allocation.group_member.id
+    }
+  ]
+}
+
+resource "doit_sharing" "group" {
+  resource_type = "allocations"
+  resource_id   = doit_allocation.group.id
+  %[3]s
+
+  permissions = [
+    {
+      user = "%[4]s"
+      role = "owner"
+    }%[5]s
+  ]
+}
+`, i, testProject(), publicLine, testUser(), viewer)
+}
+
+// TestAccSharing_ResourceTypeChange switches a sharing resource to another resource
+// type while resource_type is still unknown at plan time. The old type's public value
+// ("editor") must not leak into the replacement: allocations default to viewer.
+func TestAccSharing_ResourceTypeChange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testProject() == "" {
+				t.Skip("TEST_PROJECT must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: share a report with public = editor
+			{
+				Config: testAccSharingTypeSwitch(n, "reports", `public = "editor"`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_sharing.this",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("editor")),
+				},
+			},
+			// Step 2: switch to an allocation with public omitted. resource_type and
+			// resource_id have RequiresReplace, so this is a replacement, not an update.
+			{
+				Config: testAccSharingTypeSwitch(n, "allocations", ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_sharing.this", plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_sharing.this",
+						tfjsonpath.New("resource_type"),
+						knownvalue.StringExact("allocations")),
+					statecheck.ExpectKnownValue(
+						"doit_sharing.this",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("viewer")),
+				},
+			},
+			// Step 3: drift check
+			{
+				Config: testAccSharingTypeSwitch(n, "allocations", ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// testAccSharingTypeSwitch shares either a report or an allocation, chosen through a
+// terraform_data value so that resource_type is unknown at plan time when it changes.
+func testAccSharingTypeSwitch(i int, resourceType, publicLine string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_allocation" "target" {
+  name        = "sharing-test-switch-%d"
+  description = "allocation for sharing type switch test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "project_id"
+        mode   = "is"
+        type   = "fixed"
+        values = ["%s"]
+      }
+    ]
+  }
+}
+
+resource "terraform_data" "type" {
+  input = %q
+}
+
+resource "doit_sharing" "this" {
+  resource_type = terraform_data.type.output
+  resource_id   = terraform_data.type.output == "reports" ? doit_report.sharing_target.id : doit_allocation.target.id
+  %s
+
+  permissions = [
+    {
+      user = "%s"
+      role = "owner"
+    }
+  ]
+}
+`, testAccSharingReport(i), i, testProject(), resourceType, publicLine, testUser())
 }
