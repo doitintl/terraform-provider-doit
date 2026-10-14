@@ -703,3 +703,178 @@ func validateReportCumulativeMetrics(metrics types.List, diags *diag.Diagnostics
 		)
 	}
 }
+
+// reportLimitByChangeValidator validates config.limit_by_change against the rest
+// of the report config:
+//   - with secondary_time_range set, aggregation must not be "count" (the API
+//     rejects it with LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY), and
+//   - limit_by_change.metric must also be listed in config.metrics.
+//
+// A percentage-typed custom metric is also rejected with a secondary range, but
+// the unit type lives in the custom metric document rather than the config, so
+// that case is left to the API.
+//
+// A ConfigValidator rather than an attribute validator because attribute
+// validators do not run on attributes inside a SingleNestedAttribute with a
+// CustomType.
+type reportLimitByChangeValidator struct{}
+
+var _ resource.ConfigValidator = reportLimitByChangeValidator{}
+
+func (v reportLimitByChangeValidator) Description(_ context.Context) string {
+	return "Validates that limit_by_change is not combined with count aggregation and a secondary time range, and that its metric is listed in metrics"
+}
+
+func (v reportLimitByChangeValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `limit_by_change` is not combined with `count` aggregation and a secondary time range, and that its metric is listed in `metrics`"
+}
+
+func (v reportLimitByChangeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportLimitByChange(ctx, req.Config, &resp.Diagnostics)
+}
+
+// reportLimitByChangeDataSourceValidator applies the same rules to the
+// report_query data source, whose config reuses the report resource types.
+type reportLimitByChangeDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportLimitByChangeDataSourceValidator{}
+
+func (v reportLimitByChangeDataSourceValidator) Description(ctx context.Context) string {
+	return reportLimitByChangeValidator{}.Description(ctx)
+}
+
+func (v reportLimitByChangeDataSourceValidator) MarkdownDescription(ctx context.Context) string {
+	return reportLimitByChangeValidator{}.MarkdownDescription(ctx)
+}
+
+func (v reportLimitByChangeDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportLimitByChange(ctx, req.Config, &resp.Diagnostics)
+}
+
+// validateReportLimitByChange is shared by the report resource (ConfigValidators
+// and ModifyPlan) and the report_query data source. The two checks are
+// independent: each defers on its own unknown inputs so that one unresolved
+// attribute never suppresses the other's definite error.
+func validateReportLimitByChange(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+	validateReportLimitByChangeCountSecondary(ctx, getter, diags)
+	validateReportLimitByChangeMetricListed(ctx, getter, diags)
+}
+
+// validateReportLimitByChangeCountSecondary rejects aggregation = "count" when
+// both limit_by_change and secondary_time_range are set.
+func validateReportLimitByChangeCountSecondary(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+	var limitByChange resource_report.LimitByChangeValue
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var secondary resource_report.SecondaryTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var aggregation types.String
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	if limitByChange.IsNull() || limitByChange.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if aggregation.IsNull() || aggregation.IsUnknown() {
+		return
+	}
+
+	if aggregation.ValueString() != "count" {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("limit_by_change"),
+		"Invalid Limit By Change Configuration",
+		"`limit_by_change` cannot be combined with `aggregation = \"count\"` when `secondary_time_range` is set: "+
+			"a change between two ranges needs one summable number per range, which count aggregation does not provide "+
+			"(the API rejects this with LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY). "+
+			"Use a different aggregation, or remove `secondary_time_range` or `limit_by_change`.",
+	)
+}
+
+// validateReportLimitByChangeMetricListed rejects a limit_by_change.metric that
+// does not match (type and value) any entry of config.metrics.
+func validateReportLimitByChangeMetricListed(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+	var limitByChange resource_report.LimitByChangeValue
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var metrics types.List
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	if limitByChange.IsNull() || limitByChange.IsUnknown() {
+		return
+	}
+	// A null metrics list may be defaulted by the API, so only a configured list is checked.
+	if metrics.IsNull() || metrics.IsUnknown() {
+		return
+	}
+
+	metric := limitByChange.Metric
+	if metric.IsNull() || metric.IsUnknown() {
+		return
+	}
+	if metric.MetricType.IsNull() || metric.MetricType.IsUnknown() {
+		return
+	}
+	if metric.Value.IsNull() || metric.Value.IsUnknown() {
+		return
+	}
+
+	var configured []resource_report.MetricsValue
+	d = metrics.ElementsAs(ctx, &configured, false)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	hasUnknown := false
+	for _, entry := range configured {
+		if entry.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if entry.MetricsType.IsUnknown() || entry.Value.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if entry.MetricsType.ValueString() == metric.MetricType.ValueString() && entry.Value.ValueString() == metric.Value.ValueString() {
+			return
+		}
+	}
+
+	// An unresolved entry may still turn out to match.
+	if hasUnknown {
+		return
+	}
+
+	diags.AddAttributeError(
+		path.Root("config").AtName("limit_by_change").AtName("metric"),
+		"Invalid Limit By Change Metric",
+		fmt.Sprintf("`limit_by_change.metric` (type %q, value %q) must also be listed in `metrics`; the API rejects the report otherwise. "+
+			"Add it to `metrics` or use one of the configured metrics in `limit_by_change.metric`.",
+			metric.MetricType.ValueString(), metric.Value.ValueString()),
+	)
+}

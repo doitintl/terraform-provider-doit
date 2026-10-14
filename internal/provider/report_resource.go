@@ -244,6 +244,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportCustomTimeRangeUnitValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
+		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
+		reportLimitByChangeValidator{},
 	}
 }
 
@@ -317,6 +319,12 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		target = req.Config
 	}
 	validateReportCumulativeComparisonWithLayout(ctx, target, layout, &resp.Diagnostics)
+
+	// Re-run the limit_by_change checks against the resolved config: ConfigValidators defer
+	// while values are unknown, and ModifyPlan sees them resolved. The plan is deliberately not
+	// used here — an omitted limit_by_change is inherited from prior state in the plan, which
+	// would reject a config that removes limit_by_change together with its metric.
+	validateReportLimitByChange(ctx, req.Config, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

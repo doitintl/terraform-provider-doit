@@ -167,6 +167,8 @@ func (d *reportQueryDataSource) ConfigValidators(_ context.Context) []datasource
 		// cumulative_comparison requires daily datetime dimensions, total aggregation,
 		// one metric, secondary time range, and no comparative or forecast.
 		reportCumulativeComparisonDataSourceValidator{},
+		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
+		reportLimitByChangeDataSourceValidator{},
 	}
 }
 
