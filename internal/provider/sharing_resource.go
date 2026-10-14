@@ -127,16 +127,12 @@ func (r *sharingResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 
 	// public: for reports, budgets and alerts, allow clearing by setting null in config
 	// (workaround for framework issue #603). Allocations always have at least "viewer"
-	// public access and cannot be cleared, so there an omitted `public` keeps the prior value.
-	// In both cases preserve the prior value when the user doesn't change it (avoids
-	// "known after apply" noise).
-	// Order matters: sharingPublicClearable must run first so that removing `public`
-	// from config resolves to null (non-allocations), not to the prior state value.
+	// public access and cannot be cleared, so an omitted `public` keeps the prior value.
+	// sharingPublicClearable also restores the prior value when the framework marks `public`
+	// unknown only because another attribute changed (avoids "known after apply" noise),
+	// which is why there is no separate UseStateForUnknown here.
 	if attr, ok := s.Attributes["public"].(schema.StringAttribute); ok { //nolint:clearableattr // clearable except for allocations (Category A/B by resource_type), see sharingPublicClearable
-		attr.PlanModifiers = append(attr.PlanModifiers,
-			sharingPublicClearable(),
-			stringplanmodifier.UseStateForUnknown(),
-		)
+		attr.PlanModifiers = append(attr.PlanModifiers, sharingPublicClearable())
 		s.Attributes["public"] = attr
 	}
 

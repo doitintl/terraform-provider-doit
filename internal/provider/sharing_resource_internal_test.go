@@ -11,6 +11,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -72,19 +73,20 @@ func TestSharingPublicClearable(t *testing.T) {
 		config       *string // config value of public
 		state        *string // prior state value of public
 		plan         *string // plan value of public before the modifier runs
+		create       bool    // no prior state (resource is being created)
 		want         types.String
 	}{
 		// Allocations: an omitted public keeps the prior value.
 		{name: "allocations omitted keeps viewer", resourceType: new("allocations"), state: new("viewer"), plan: new("viewer"), want: types.StringValue("viewer")},
 		{name: "allocations omitted keeps editor", resourceType: new("allocations"), state: new("editor"), plan: new("editor"), want: types.StringValue("editor")},
-		{name: "allocations create stays unknown", resourceType: new("allocations"), plan: new("?"), want: types.StringUnknown()},
+		{name: "allocations create stays unknown", resourceType: new("allocations"), plan: new("?"), create: true, want: types.StringUnknown()},
 		{name: "allocations explicit value untouched", resourceType: new("allocations"), config: new("editor"), state: new("viewer"), plan: new("editor"), want: types.StringValue("editor")},
 
 		// Other resource types: an omitted public clears the prior value.
 		{name: "reports omitted clears viewer", resourceType: new("reports"), state: new("viewer"), plan: new("viewer"), want: types.StringNull()},
 		{name: "budgets omitted clears editor", resourceType: new("budgets"), state: new("editor"), plan: new("editor"), want: types.StringNull()},
 		{name: "alerts omitted clears viewer", resourceType: new("alerts"), state: new("viewer"), plan: new("viewer"), want: types.StringNull()},
-		{name: "reports create stays unknown", resourceType: new("reports"), plan: new("?"), want: types.StringUnknown()},
+		{name: "reports create stays unknown", resourceType: new("reports"), plan: new("?"), create: true, want: types.StringUnknown()},
 		{name: "reports prior null stays null", resourceType: new("reports"), plan: nil, want: types.StringNull()},
 		{name: "reports explicit value untouched", resourceType: new("reports"), config: new("viewer"), state: new("editor"), plan: new("viewer"), want: types.StringValue("viewer")},
 
@@ -96,6 +98,9 @@ func TestSharingPublicClearable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			schemaResp, planRaw := sharingTestRaw(ctx, t, tt.resourceType, tt.plan)
 			_, stateRaw := sharingTestRaw(ctx, t, tt.resourceType, tt.state)
+			if tt.create {
+				stateRaw = tftypes.NewValue(stateRaw.Type(), nil)
+			}
 			_, configRaw := sharingTestRaw(ctx, t, tt.resourceType, tt.config)
 
 			req := planmodifier.StringRequest{
@@ -263,6 +268,69 @@ func TestMapSharingToModel_Public(t *testing.T) {
 			}
 			if !state.Public.Equal(tt.want) {
 				t.Errorf("Public = %v, want %v", state.Public, tt.want)
+			}
+		})
+	}
+}
+
+// TestSharingPublicPlanModifierChain runs the plan modifiers actually attached to the
+// `public` attribute, in schema order and handing each one the previous one's plan
+// value, as the framework does.
+func TestSharingPublicPlanModifierChain(t *testing.T) {
+	ctx := t.Context()
+
+	tests := []struct {
+		name         string
+		resourceType *string
+		config       *string
+		state        *string
+		plan         *string // plan value entering the chain
+		want         types.String
+	}{
+		// The framework marks computed attributes unknown whenever the resource has any
+		// other change (for example permissions). The chain must restore the prior value
+		// so unchanged public access does not show as "known after apply".
+		{name: "allocations update keeps prior public", resourceType: new("allocations"), state: new("editor"), plan: new("?"), want: types.StringValue("editor")},
+		{name: "reports update keeps prior null", resourceType: new("reports"), state: nil, plan: new("?"), want: types.StringNull()},
+		{name: "reports update clears omitted public", resourceType: new("reports"), state: new("viewer"), plan: new("?"), want: types.StringNull()},
+
+		// resource_type is unknown: the new type is unresolved, so a prior public value
+		// of the old type must not be carried into the plan.
+		{name: "unknown resource_type does not keep stale public", resourceType: new("?"), state: new("editor"), plan: new("?"), want: types.StringUnknown()},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			schemaResp, planRaw := sharingTestRaw(ctx, t, tt.resourceType, tt.plan)
+			_, stateRaw := sharingTestRaw(ctx, t, tt.resourceType, tt.state)
+			_, configRaw := sharingTestRaw(ctx, t, tt.resourceType, tt.config)
+
+			attr, ok := schemaResp.Schema.Attributes["public"].(rschema.StringAttribute)
+			if !ok {
+				t.Fatal("public is not a StringAttribute")
+			}
+
+			req := planmodifier.StringRequest{
+				Path:        path.Root("public"),
+				Plan:        tfsdk.Plan{Schema: schemaResp.Schema, Raw: planRaw},
+				State:       tfsdk.State{Schema: schemaResp.Schema, Raw: stateRaw},
+				Config:      tfsdk.Config{Schema: schemaResp.Schema, Raw: configRaw},
+				ConfigValue: stringFromPtr(tt.config),
+				StateValue:  stringFromPtr(tt.state),
+				PlanValue:   stringFromPtr(tt.plan),
+			}
+
+			for _, m := range attr.PlanModifiers {
+				resp := &planmodifier.StringResponse{PlanValue: req.PlanValue}
+				m.PlanModifyString(ctx, req, resp)
+				if resp.Diagnostics.HasError() {
+					t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+				}
+				req.PlanValue = resp.PlanValue
+			}
+
+			if !req.PlanValue.Equal(tt.want) {
+				t.Errorf("PlanValue = %v, want %v", req.PlanValue, tt.want)
 			}
 		})
 	}

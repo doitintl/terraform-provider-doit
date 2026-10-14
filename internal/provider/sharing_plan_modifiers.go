@@ -12,13 +12,18 @@ import (
 // (single and group) sharing.
 const sharingAllocationsResourceType = "allocations"
 
-// sharingPublicClearable decides whether an omitted `public` clears the value.
+// sharingPublicClearable plans the `public` attribute of doit_sharing.
 //
 //   - Allocations always have at least "viewer" public access and the API
-//     cannot clear it, so an omitted `public` keeps the prior value
-//     (Terraform Core copies it into the plan; nothing to do here).
+//     cannot clear it, so an omitted `public` keeps the prior value.
 //   - Every other resource type stores null as "no public access", so an
 //     omitted `public` clears it, via useNullForUnknownStringWhenConfigNull.
+//   - Otherwise an unknown planned value (the framework marks computed
+//     attributes unknown whenever another attribute changes) is replaced with
+//     the prior state value, like stringplanmodifier.UseStateForUnknown. This is
+//     done here instead of with a separate UseStateForUnknown modifier, which
+//     would run after the unknown resource_type branch below and restore a prior
+//     value belonging to the old resource type.
 //
 // While resource_type is still unknown the type cannot be classified, so the
 // plan value is left unknown and resolved from the API response after apply.
@@ -55,9 +60,12 @@ func (m sharingPublicClearableModifier) PlanModifyString(ctx context.Context, re
 		return
 	}
 
-	if resourceType.ValueString() == sharingAllocationsResourceType {
-		return
+	if resourceType.ValueString() != sharingAllocationsResourceType {
+		m.clearing.PlanModifyString(ctx, req, resp)
 	}
 
-	m.clearing.PlanModifyString(ctx, req, resp)
+	// Same conditions as stringplanmodifier.UseStateForUnknown.
+	if resp.PlanValue.IsUnknown() && !req.State.Raw.IsNull() {
+		resp.PlanValue = req.StateValue
+	}
 }

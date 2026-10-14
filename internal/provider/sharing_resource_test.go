@@ -1108,3 +1108,95 @@ resource "doit_sharing" "group" {
 }
 `, i, testProject(), publicLine, testUser(), viewer)
 }
+
+// TestAccSharing_ResourceTypeChange switches a sharing resource to another resource
+// type while resource_type is still unknown at plan time. The old type's public value
+// ("editor") must not leak into the replacement: allocations default to viewer.
+func TestAccSharing_ResourceTypeChange(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testProject() == "" {
+				t.Skip("TEST_PROJECT must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Step 1: share a report with public = editor
+			{
+				Config: testAccSharingTypeSwitch(n, "reports", `public = "editor"`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_sharing.this",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("editor")),
+				},
+			},
+			// Step 2: switch to an allocation with public omitted
+			{
+				Config: testAccSharingTypeSwitch(n, "allocations", ""),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_sharing.this",
+						tfjsonpath.New("resource_type"),
+						knownvalue.StringExact("allocations")),
+					statecheck.ExpectKnownValue(
+						"doit_sharing.this",
+						tfjsonpath.New("public"),
+						knownvalue.StringExact("viewer")),
+				},
+			},
+			// Step 3: drift check
+			{
+				Config: testAccSharingTypeSwitch(n, "allocations", ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// testAccSharingTypeSwitch shares either a report or an allocation, chosen through a
+// terraform_data value so that resource_type is unknown at plan time when it changes.
+func testAccSharingTypeSwitch(i int, resourceType, publicLine string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "doit_allocation" "target" {
+  name        = "sharing-test-switch-%d"
+  description = "allocation for sharing type switch test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "project_id"
+        mode   = "is"
+        type   = "fixed"
+        values = ["%s"]
+      }
+    ]
+  }
+}
+
+resource "terraform_data" "type" {
+  input = %q
+}
+
+resource "doit_sharing" "this" {
+  resource_type = terraform_data.type.output
+  resource_id   = terraform_data.type.output == "reports" ? doit_report.sharing_target.id : doit_allocation.target.id
+  %s
+
+  permissions = [
+    {
+      user = "%s"
+      role = "owner"
+    }
+  ]
+}
+`, testAccSharingReport(i), i, testProject(), resourceType, publicLine, testUser())
+}
