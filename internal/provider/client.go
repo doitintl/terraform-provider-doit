@@ -44,7 +44,7 @@ import (
 // Only specific transient errors trigger retries:
 //   - 429 (Too Many Requests): Respects Retry-After header (seconds or HTTP-date format)
 //   - 502 (Bad Gateway): Temporary upstream issue
-//   - 503 (Service Unavailable): Temporary server overload
+//   - 503 (Service Unavailable): Temporary server overload; respects Retry-After when present, else exponential backoff
 //   - 504 (Gateway Timeout): Temporary timeout
 //
 // Apart from the 404 and 425 passthroughs described above and below, all other
@@ -204,7 +204,8 @@ func parseRetryAfterBounded(header string, now time.Time, minWait, maxWait time.
 // | 404 | Pass through - NOT an error (for Terraform resource semantics) |
 // | 425 | Pass through - NOT an error (caller owns the retry cadence) |
 // | 429 | Retry with Retry-After or exponential backoff |
-// | 502, 503, 504 | Retry with exponential backoff |
+// | 503 | Retry with Retry-After when usable, else exponential backoff |
+// | 502, 504 | Retry with exponential backoff |
 // | 524 | Permanent error - no retry (Cloudflare edge timeout) |
 // | Other 4xx/5xx | Permanent error - no retry |
 //
@@ -267,7 +268,24 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 			})
 			return nil, fmt.Errorf("rate limit exceeded: %d", resp.StatusCode)
 
-		case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		case http.StatusServiceUnavailable:
+			// Some endpoints (e.g. Slack channel discovery) send Retry-After on a
+			// 503. Honor it when usable; otherwise fall back to exponential backoff.
+			retryAfter := resp.Header.Get("Retry-After")
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				log.Printf("[WARN] Error closing response body: %v", closeErr)
+			}
+			if wait, ok := parseRetryAfter(retryAfter, time.Now()); ok {
+				tflog.Debug(req.Context(), "Service unavailable, honoring Retry-After", map[string]any{
+					"url":         req.URL.String(),
+					"retry_after": retryAfter,
+					"wait":        wait.String(),
+				})
+				return nil, &backoff.RetryAfterError{Duration: wait}
+			}
+			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
+
+		case http.StatusBadGateway, http.StatusGatewayTimeout:
 			// Temporary server errors - retry with backoff
 			if closeErr := resp.Body.Close(); closeErr != nil {
 				log.Printf("[WARN] Error closing response body: %v", closeErr)
