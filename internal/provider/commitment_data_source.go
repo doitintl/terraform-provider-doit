@@ -205,6 +205,13 @@ func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPerio
 
 	periodValues := make([]datasource_commitment.PeriodsValue, 0, len(*periods))
 	for _, p := range *periods {
+		var cashAttainment types.Float64
+		if p.CashAttainment != nil {
+			cashAttainment = types.Float64Value(*p.CashAttainment)
+		} else {
+			cashAttainment = types.Float64Null()
+		}
+
 		var commitmentValue types.Float64
 		if p.CommitmentValue != nil {
 			commitmentValue = types.Float64Value(*p.CommitmentValue)
@@ -254,15 +261,32 @@ func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPerio
 			marketplaceSpend = types.Float64Null()
 		}
 
+		var rolloverFromPrevPeriod types.Float64
+		if p.RolloverFromPrevPeriod != nil {
+			rolloverFromPrevPeriod = types.Float64Value(*p.RolloverFromPrevPeriod)
+		} else {
+			rolloverFromPrevPeriod = types.Float64Null()
+		}
+
+		var shortfallRollover types.Float64
+		if p.ShortfallRollover != nil {
+			shortfallRollover = types.Float64Value(*p.ShortfallRollover)
+		} else {
+			shortfallRollover = types.Float64Null()
+		}
+
 		pv, pvDiags := datasource_commitment.NewPeriodsValue(
 			datasource_commitment.PeriodsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
+				"cash_attainment":              cashAttainment,
 				"commitment_value":             commitmentValue,
 				"end_date":                     endDate,
 				"forecast_value":               forecastValue,
 				"marketplace_limit_amount":     marketplaceLimitAmount,
 				"marketplace_limit_percentage": marketplaceLimitPercentage,
 				"marketplace_spend":            marketplaceSpend,
+				"rollover_from_prev_period":    rolloverFromPrevPeriod,
+				"shortfall_rollover":           shortfallRollover,
 				"start_date":                   startDate,
 			},
 		)

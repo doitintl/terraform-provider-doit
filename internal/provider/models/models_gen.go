@@ -7097,7 +7097,7 @@ type CommitmentExternal struct {
 	// TotalCommitmentValue The total value of the commitment across all periods.
 	TotalCommitmentValue *float64 `json:"totalCommitmentValue,omitempty"`
 
-	// TotalCurrentAttainment The total current spend attainment across all periods.
+	// TotalCurrentAttainment The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
 	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
@@ -7164,7 +7164,7 @@ type CommitmentExternalListItem struct {
 	// TotalCommitmentValue The total value of the commitment across all periods.
 	TotalCommitmentValue *float64 `json:"totalCommitmentValue,omitempty"`
 
-	// TotalCurrentAttainment The total current spend attainment across all periods.
+	// TotalCurrentAttainment The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
 	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
@@ -7182,6 +7182,9 @@ type CommitmentExternalListItemCloudProvider string
 
 // CommitmentPeriod A single period within a commitment.
 type CommitmentPeriod struct {
+	// CashAttainment This period's own attained spend, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments, excluding anything carried in from the previous period. Summed across periods it equals `totalCurrentAttainment`. To measure the period against its `commitmentValue` the way the console does, use `cashAttainment + rolloverFromPrevPeriod + shortfallRollover`; the period's remaining amount is `commitmentValue` minus that. Excess carried out to the next period is not deducted from this period.
+	CashAttainment *float64 `json:"cashAttainment,omitempty"`
+
 	// CommitmentValue The commitment value for this period.
 	CommitmentValue *float64 `json:"commitmentValue,omitempty"`
 
@@ -7201,6 +7204,12 @@ type CommitmentPeriod struct {
 
 	// MarketplaceSpend The marketplace spend within this period.
 	MarketplaceSpend *float64 `json:"marketplaceSpend,omitempty"`
+
+	// RolloverFromPrevPeriod The amount carried into this period from the previous period under the commitment's rollover terms. Positive for excess rollover, negative for shortfall rollover, 0 when nothing was carried (always 0 for the first period). amazon-web-services commitments no longer roll over, so this is 0 for them unless the commitment was last calculated before that change. Not included in `cashAttainment` or `totalCurrentAttainment`.
+	RolloverFromPrevPeriod *float64 `json:"rolloverFromPrevPeriod,omitempty"`
+
+	// ShortfallRollover The part of this period's shortfall carried forward to the next period under the commitment's shortfall rollover terms, where it appears as a negative `rolloverFromPrevPeriod`. 0 when nothing was carried forward, including while the period is still open and for the last period. The console counts this amount as met within this period. Not included in `cashAttainment` or `totalCurrentAttainment`.
+	ShortfallRollover *float64 `json:"shortfallRollover,omitempty"`
 
 	// StartDate The start date of the period.
 	//

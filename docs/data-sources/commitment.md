@@ -61,7 +61,7 @@ output "commitment_total_value" {
 - `periods` (Attributes List) The list of commitment periods. (see [below for nested schema](#nestedatt--periods))
 - `start_date` (String) The start date of the commitment.
 - `total_commitment_value` (Number) The total value of the commitment across all periods.
-- `total_current_attainment` (Number) The total current spend attainment across all periods.
+- `total_current_attainment` (Number) The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
 - `total_forecast_value` (Number) The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
 - `total_marketplace_spend` (Number) The total marketplace spend across all periods.
 - `update_time` (Number) The last update time in milliseconds since epoch.
@@ -79,10 +79,13 @@ Optional:
 
 Read-Only:
 
+- `cash_attainment` (Number) This period's own attained spend, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments, excluding anything carried in from the previous period. Summed across periods it equals `totalCurrentAttainment`. To measure the period against its `commitmentValue` the way the console does, use `cashAttainment + rolloverFromPrevPeriod + shortfallRollover`; the period's remaining amount is `commitmentValue` minus that. Excess carried out to the next period is not deducted from this period.
 - `commitment_value` (Number) The commitment value for this period.
 - `end_date` (String) The end date of the period.
 - `forecast_value` (Number) The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
 - `marketplace_limit_amount` (Number) The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
 - `marketplace_limit_percentage` (Number) The marketplace limit as a percentage (0-100).
 - `marketplace_spend` (Number) The marketplace spend within this period.
+- `rollover_from_prev_period` (Number) The amount carried into this period from the previous period under the commitment's rollover terms. Positive for excess rollover, negative for shortfall rollover, 0 when nothing was carried (always 0 for the first period). amazon-web-services commitments no longer roll over, so this is 0 for them unless the commitment was last calculated before that change. Not included in `cashAttainment` or `totalCurrentAttainment`.
+- `shortfall_rollover` (Number) The part of this period's shortfall carried forward to the next period under the commitment's shortfall rollover terms, where it appears as a negative `rolloverFromPrevPeriod`. 0 when nothing was carried forward, including while the period is still open and for the last period. The console counts this amount as met within this period. Not included in `cashAttainment` or `totalCurrentAttainment`.
 - `start_date` (String) The start date of the period.

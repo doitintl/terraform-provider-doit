@@ -50,8 +50,9 @@ func TestAccCommitmentDataSource_Basic(t *testing.T) {
 }
 
 // TestAccCommitmentDataSource_PeriodAttributes verifies that the new period-level
-// attributes (forecast_value, marketplace_limit_amount, marketplace_spend) are
-// accessible via Terraform outputs and don't cause drift.
+// attributes (cash_attainment, forecast_value, marketplace_limit_amount,
+// marketplace_spend, rollover_from_prev_period, shortfall_rollover) are accessible
+// via Terraform outputs and don't cause drift.
 func TestAccCommitmentDataSource_PeriodAttributes(t *testing.T) {
 	commitmentID := os.Getenv("TEST_COMMITMENT_ID")
 	if commitmentID == "" {
@@ -120,6 +121,10 @@ output "total_marketplace_spend" {
 }
 
 # Exercise new period-level attributes to ensure they are populated without error
+output "first_period_cash_attainment" {
+  value = length(data.doit_commitment.test.periods) > 0 ? data.doit_commitment.test.periods[0].cash_attainment : null
+}
+
 output "first_period_forecast_value" {
   value = length(data.doit_commitment.test.periods) > 0 ? data.doit_commitment.test.periods[0].forecast_value : null
 }
@@ -130,6 +135,14 @@ output "first_period_marketplace_spend" {
 
 output "first_period_marketplace_limit_amount" {
   value = length(data.doit_commitment.test.periods) > 0 ? data.doit_commitment.test.periods[0].marketplace_limit_amount : null
+}
+
+output "first_period_rollover_from_prev_period" {
+  value = length(data.doit_commitment.test.periods) > 0 ? data.doit_commitment.test.periods[0].rollover_from_prev_period : null
+}
+
+output "first_period_shortfall_rollover" {
+  value = length(data.doit_commitment.test.periods) > 0 ? data.doit_commitment.test.periods[0].shortfall_rollover : null
 }
 `
 }
