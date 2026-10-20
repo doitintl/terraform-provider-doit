@@ -4335,6 +4335,7 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 
 // Defines values for GetAsyncOperationResultsParamsFileOutput.
 const (
+	GetAsyncOperationResultsParamsFileOutputCsv GetAsyncOperationResultsParamsFileOutput = "csv"
 	GetAsyncOperationResultsParamsFileOutputPdf GetAsyncOperationResultsParamsFileOutput = "pdf"
 	GetAsyncOperationResultsParamsFileOutputPng GetAsyncOperationResultsParamsFileOutput = "png"
 )
@@ -4342,6 +4343,8 @@ const (
 // Valid indicates whether the value is a known member of the GetAsyncOperationResultsParamsFileOutput enum.
 func (e GetAsyncOperationResultsParamsFileOutput) Valid() bool {
 	switch e {
+	case GetAsyncOperationResultsParamsFileOutputCsv:
+		return true
 	case GetAsyncOperationResultsParamsFileOutputPdf:
 		return true
 	case GetAsyncOperationResultsParamsFileOutputPng:
@@ -11563,7 +11566,7 @@ type CancelAsyncOperationParams struct {
 
 // GetAsyncOperationResultsParams defines parameters for GetAsyncOperationResults.
 type GetAsyncOperationResultsParams struct {
-	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file.
+	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file. `pdf` is the chart and data table as a document, `png` the chart image, and `csv` every row of the result as raw data, one line per row with the report's dimensions and metrics, never truncated.
 	FileOutput *GetAsyncOperationResultsParamsFileOutput `form:"fileOutput,omitempty" json:"fileOutput,omitempty"`
 }
 
