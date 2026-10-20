@@ -111,6 +111,9 @@ func TestAnomalyDataSource_UnknownID(t *testing.T) {
 	if !data.Allocations.IsUnknown() {
 		t.Errorf("expected Allocations to be unknown, got %v", data.Allocations)
 	}
+	if !data.CustomerFeedback.IsUnknown() {
+		t.Errorf("expected CustomerFeedback to be unknown, got %v", data.CustomerFeedback)
+	}
 	if !data.InitialNotifications.IsUnknown() {
 		t.Errorf("expected InitialNotifications to be unknown, got %v", data.InitialNotifications)
 	}
@@ -582,6 +585,181 @@ func TestAnomalyDataSource_InitialNotificationsMapping(t *testing.T) {
 				if gotElements[i].Timestamp.ValueString() != want.timestamp {
 					t.Errorf("InitialNotifications[%d].timestamp = %q, want %q", i, gotElements[i].Timestamp.ValueString(), want.timestamp)
 				}
+			}
+		})
+	}
+}
+
+func TestAnomalyDataSource_CustomerFeedbackMapping(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name             string
+		responseJSON     string
+		wantReviewStatus string
+		wantResolution   *string
+		wantNoteReason   *string
+		wantUpdatedAt    *string
+		wantUpdatedBy    *string
+	}{
+		{
+			name: "NEEDS_REVIEW (unreviewed anomaly)",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"customerFeedback": {
+					"reviewStatus": "NEEDS_REVIEW"
+				}
+			}`,
+			wantReviewStatus: "NEEDS_REVIEW",
+		},
+		{
+			name: "UNDER_REVIEW (in-progress review)",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"customerFeedback": {
+					"reviewStatus": "UNDER_REVIEW",
+					"updatedAt": "2025-02-10T10:15:00Z",
+					"updatedBy": "reviewer@example.com"
+				}
+			}`,
+			wantReviewStatus: "UNDER_REVIEW",
+			wantUpdatedAt:    new("2025-02-10T10:15:00Z"),
+			wantUpdatedBy:    new("reviewer@example.com"),
+		},
+		{
+			name: "RESOLVED without resolutionNote",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"customerFeedback": {
+					"reviewStatus": "RESOLVED",
+					"resolution": "NOT_ANOMALY",
+					"updatedAt": "2025-02-10T12:00:00Z",
+					"updatedBy": "bob@example.com"
+				}
+			}`,
+			wantReviewStatus: "RESOLVED",
+			wantResolution:   new("NOT_ANOMALY"),
+			wantUpdatedAt:    new("2025-02-10T12:00:00Z"),
+			wantUpdatedBy:    new("bob@example.com"),
+		},
+		{
+			name: "RESOLVED with resolutionNote",
+			responseJSON: `{
+				"platform": "google-cloud",
+				"scope": "project-123",
+				"serviceName": "BigQuery",
+				"costOfAnomaly": 42.0,
+				"startTime": 1704067200000,
+				"severityLevel": "warning",
+				"monitorLevel": "service",
+				"timeFrame": "day",
+				"customerFeedback": {
+					"reviewStatus": "RESOLVED",
+					"resolution": "ANOMALY_CONFIRMED",
+					"resolutionNote": {
+						"reason": "EXPECTED_COST_SPIKE"
+					},
+					"updatedAt": "2025-02-10T14:30:00Z",
+					"updatedBy": "alice@example.com"
+				}
+			}`,
+			wantReviewStatus: "RESOLVED",
+			wantResolution:   new("ANOMALY_CONFIRMED"),
+			wantNoteReason:   new("EXPECTED_COST_SPIKE"),
+			wantUpdatedAt:    new("2025-02-10T14:30:00Z"),
+			wantUpdatedBy:    new("alice@example.com"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				_, _ = fmt.Fprint(w, tc.responseJSON)
+			}))
+
+			overrides := map[string]tftypes.Value{
+				"id": tftypes.NewValue(tftypes.String, "test-anomaly-id"),
+			}
+
+			data, _, diags := readAnomalyHelper(t, server, overrides)
+			if diags.HasError() {
+				t.Fatalf("Read() returned unexpected diagnostics: %v", diags)
+			}
+
+			if data.CustomerFeedback.IsNull() {
+				t.Fatal("expected CustomerFeedback not to be null")
+			}
+			if data.CustomerFeedback.IsUnknown() {
+				t.Fatal("expected CustomerFeedback not to be unknown")
+			}
+
+			if got := data.CustomerFeedback.ReviewStatus.ValueString(); got != tc.wantReviewStatus {
+				t.Errorf("CustomerFeedback.ReviewStatus = %q, want %q", got, tc.wantReviewStatus)
+			}
+
+			if tc.wantResolution != nil {
+				if data.CustomerFeedback.Resolution.IsNull() {
+					t.Errorf("expected CustomerFeedback.Resolution to be %q, got null", *tc.wantResolution)
+				} else if got := data.CustomerFeedback.Resolution.ValueString(); got != *tc.wantResolution {
+					t.Errorf("CustomerFeedback.Resolution = %q, want %q", got, *tc.wantResolution)
+				}
+			} else if !data.CustomerFeedback.Resolution.IsNull() {
+				t.Errorf("expected CustomerFeedback.Resolution to be null, got %v", data.CustomerFeedback.Resolution)
+			}
+
+			if tc.wantNoteReason != nil {
+				if data.CustomerFeedback.ResolutionNote.IsNull() {
+					t.Errorf("expected CustomerFeedback.ResolutionNote to be populated, got null")
+				} else if got := data.CustomerFeedback.ResolutionNote.Reason.ValueString(); got != *tc.wantNoteReason {
+					t.Errorf("CustomerFeedback.ResolutionNote.Reason = %q, want %q", got, *tc.wantNoteReason)
+				}
+			} else if !data.CustomerFeedback.ResolutionNote.IsNull() {
+				t.Errorf("expected CustomerFeedback.ResolutionNote to be null, got %v", data.CustomerFeedback.ResolutionNote)
+			}
+
+			if tc.wantUpdatedAt != nil {
+				if data.CustomerFeedback.UpdatedAt.IsNull() {
+					t.Errorf("expected CustomerFeedback.UpdatedAt to be %q, got null", *tc.wantUpdatedAt)
+				} else if got := data.CustomerFeedback.UpdatedAt.ValueString(); got != *tc.wantUpdatedAt {
+					t.Errorf("CustomerFeedback.UpdatedAt = %q, want %q", got, *tc.wantUpdatedAt)
+				}
+			} else if !data.CustomerFeedback.UpdatedAt.IsNull() {
+				t.Errorf("expected CustomerFeedback.UpdatedAt to be null, got %v", data.CustomerFeedback.UpdatedAt)
+			}
+
+			if tc.wantUpdatedBy != nil {
+				if data.CustomerFeedback.UpdatedBy.IsNull() {
+					t.Errorf("expected CustomerFeedback.UpdatedBy to be %q, got null", *tc.wantUpdatedBy)
+				} else if got := data.CustomerFeedback.UpdatedBy.ValueString(); got != *tc.wantUpdatedBy {
+					t.Errorf("CustomerFeedback.UpdatedBy = %q, want %q", got, *tc.wantUpdatedBy)
+				}
+			} else if !data.CustomerFeedback.UpdatedBy.IsNull() {
+				t.Errorf("expected CustomerFeedback.UpdatedBy to be null, got %v", data.CustomerFeedback.UpdatedBy)
 			}
 		})
 	}

@@ -331,6 +331,84 @@ func (e AllocationValueExtractionSourceType) Valid() bool {
 	}
 }
 
+// Defines values for AnomalyCustomerFeedbackResolution.
+const (
+	AnomalyCustomerFeedbackResolutionANOMALYCONFIRMED AnomalyCustomerFeedbackResolution = "ANOMALY_CONFIRMED"
+	AnomalyCustomerFeedbackResolutionNOTANOMALY       AnomalyCustomerFeedbackResolution = "NOT_ANOMALY"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyCustomerFeedbackResolution enum.
+func (e AnomalyCustomerFeedbackResolution) Valid() bool {
+	switch e {
+	case AnomalyCustomerFeedbackResolutionANOMALYCONFIRMED:
+		return true
+	case AnomalyCustomerFeedbackResolutionNOTANOMALY:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnomalyCustomerFeedbackReviewStatus.
+const (
+	AnomalyCustomerFeedbackReviewStatusNEEDSREVIEW AnomalyCustomerFeedbackReviewStatus = "NEEDS_REVIEW"
+	AnomalyCustomerFeedbackReviewStatusRESOLVED    AnomalyCustomerFeedbackReviewStatus = "RESOLVED"
+	AnomalyCustomerFeedbackReviewStatusUNDERREVIEW AnomalyCustomerFeedbackReviewStatus = "UNDER_REVIEW"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyCustomerFeedbackReviewStatus enum.
+func (e AnomalyCustomerFeedbackReviewStatus) Valid() bool {
+	switch e {
+	case AnomalyCustomerFeedbackReviewStatusNEEDSREVIEW:
+		return true
+	case AnomalyCustomerFeedbackReviewStatusRESOLVED:
+		return true
+	case AnomalyCustomerFeedbackReviewStatusUNDERREVIEW:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnomalyCustomerFeedbackResolutionNoteReason.
+const (
+	AnomalyCustomerFeedbackResolutionNoteReasonANOMALOUSOTHER              AnomalyCustomerFeedbackResolutionNoteReason = "ANOMALOUS_OTHER"
+	AnomalyCustomerFeedbackResolutionNoteReasonEXPECTEDCOSTSPIKE           AnomalyCustomerFeedbackResolutionNoteReason = "EXPECTED_COST_SPIKE"
+	AnomalyCustomerFeedbackResolutionNoteReasonFAULTYANOMALYDETECTIONMODEL AnomalyCustomerFeedbackResolutionNoteReason = "FAULTY_ANOMALY_DETECTION_MODEL"
+	AnomalyCustomerFeedbackResolutionNoteReasonINCORRECTDATA               AnomalyCustomerFeedbackResolutionNoteReason = "INCORRECT_DATA"
+	AnomalyCustomerFeedbackResolutionNoteReasonLOWIMPACT                   AnomalyCustomerFeedbackResolutionNoteReason = "LOW_IMPACT"
+	AnomalyCustomerFeedbackResolutionNoteReasonMISCONFIGURATION            AnomalyCustomerFeedbackResolutionNoteReason = "MISCONFIGURATION"
+	AnomalyCustomerFeedbackResolutionNoteReasonNONANOMALOUSOTHER           AnomalyCustomerFeedbackResolutionNoteReason = "NON_ANOMALOUS_OTHER"
+	AnomalyCustomerFeedbackResolutionNoteReasonSECURITYBREACH              AnomalyCustomerFeedbackResolutionNoteReason = "SECURITY_BREACH"
+	AnomalyCustomerFeedbackResolutionNoteReasonUNINTENTIONALPROVISIONING   AnomalyCustomerFeedbackResolutionNoteReason = "UNINTENTIONAL_PROVISIONING"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyCustomerFeedbackResolutionNoteReason enum.
+func (e AnomalyCustomerFeedbackResolutionNoteReason) Valid() bool {
+	switch e {
+	case AnomalyCustomerFeedbackResolutionNoteReasonANOMALOUSOTHER:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonEXPECTEDCOSTSPIKE:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonFAULTYANOMALYDETECTIONMODEL:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonINCORRECTDATA:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonLOWIMPACT:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonMISCONFIGURATION:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonNONANOMALOUSOTHER:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonSECURITYBREACH:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonUNINTENTIONALPROVISIONING:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AnomalyItemDeactivationReason.
 const (
 	AnomalyItemDeactivationReasonExpired  AnomalyItemDeactivationReason = "expired"
@@ -5251,6 +5329,38 @@ type AnomaliesResponseAnomalySummaryCountBySeverity struct {
 	Warning     int64 `json:"warning"`
 }
 
+// AnomalyCustomerFeedback Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.
+type AnomalyCustomerFeedback struct {
+	// Resolution Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.
+	Resolution *AnomalyCustomerFeedbackResolution `json:"resolution,omitempty"`
+
+	// ResolutionNote The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.
+	ResolutionNote *AnomalyCustomerFeedbackResolutionNote `json:"resolutionNote,omitempty"`
+
+	// ReviewStatus The anomaly's review state.
+	ReviewStatus AnomalyCustomerFeedbackReviewStatus `json:"reviewStatus"`
+
+	// UpdatedAt Time of the last review-feedback update. Absent when the anomaly was never reviewed.
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+
+	// UpdatedBy Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
+// AnomalyCustomerFeedbackResolution Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.
+type AnomalyCustomerFeedbackResolution string
+
+// AnomalyCustomerFeedbackReviewStatus The anomaly's review state.
+type AnomalyCustomerFeedbackReviewStatus string
+
+// AnomalyCustomerFeedbackResolutionNote The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.
+type AnomalyCustomerFeedbackResolutionNote struct {
+	Reason AnomalyCustomerFeedbackResolutionNoteReason `json:"reason"`
+}
+
+// AnomalyCustomerFeedbackResolutionNoteReason defines model for AnomalyCustomerFeedbackResolutionNote.Reason.
+type AnomalyCustomerFeedbackResolutionNoteReason string
+
 // AnomalyItem Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
 type AnomalyItem struct {
 	// Acknowledged Has the anomaly been acknowledged
@@ -9075,6 +9185,9 @@ type GetAnomaly200Response struct {
 
 	// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
+
+	// CustomerFeedback Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.
+	CustomerFeedback AnomalyCustomerFeedback `json:"customerFeedback"`
 
 	// DeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
 	DeactivationReason nullable.Nullable[GetAnomaly200ResponseDeactivationReason] `json:"deactivationReason,omitempty"`

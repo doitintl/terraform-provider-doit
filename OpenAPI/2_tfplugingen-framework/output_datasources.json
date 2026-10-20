@@ -2054,6 +2054,58 @@
 						}
 					},
 					{
+						"name": "customer_feedback",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "resolution",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`."
+									}
+								},
+								{
+									"name": "resolution_note",
+									"single_nested": {
+										"computed_optional_required": "computed",
+										"attributes": [
+											{
+												"name": "reason",
+												"string": {
+													"computed_optional_required": "computed"
+												}
+											}
+										],
+										"description": "The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included."
+									}
+								},
+								{
+									"name": "review_status",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The anomaly's review state."
+									}
+								},
+								{
+									"name": "updated_at",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Time of the last review-feedback update. Absent when the anomaly was never reviewed."
+									}
+								},
+								{
+									"name": "updated_by",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed."
+									}
+								}
+							],
+							"description": "Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`."
+						}
+					},
+					{
 						"name": "deactivation_reason",
 						"string": {
 							"computed_optional_required": "computed",

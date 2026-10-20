@@ -78,6 +78,53 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The difference between the actual cost and the maximum cost in the normal range.",
 				MarkdownDescription: "The difference between the actual cost and the maximum cost in the normal range.",
 			},
+			"customer_feedback": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"resolution": schema.StringAttribute{
+						Computed:            true,
+						Description:         "Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.",
+						MarkdownDescription: "Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.",
+					},
+					"resolution_note": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"reason": schema.StringAttribute{
+								Computed: true,
+							},
+						},
+						CustomType: ResolutionNoteType{
+							ObjectType: types.ObjectType{
+								AttrTypes: ResolutionNoteValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.",
+						MarkdownDescription: "The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.",
+					},
+					"review_status": schema.StringAttribute{
+						Computed:            true,
+						Description:         "The anomaly's review state.",
+						MarkdownDescription: "The anomaly's review state.",
+					},
+					"updated_at": schema.StringAttribute{
+						Computed:            true,
+						Description:         "Time of the last review-feedback update. Absent when the anomaly was never reviewed.",
+						MarkdownDescription: "Time of the last review-feedback update. Absent when the anomaly was never reviewed.",
+					},
+					"updated_by": schema.StringAttribute{
+						Computed:            true,
+						Description:         "Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.",
+						MarkdownDescription: "Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.",
+					},
+				},
+				CustomType: CustomerFeedbackType{
+					ObjectType: types.ObjectType{
+						AttrTypes: CustomerFeedbackValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.",
+				MarkdownDescription: "Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.",
+			},
 			"deactivation_reason": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.",
@@ -289,34 +336,35 @@ func AnomalyDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type AnomalyModel struct {
-	Acknowledged         types.Bool    `tfsdk:"acknowledged"`
-	AcknowledgedAt       types.String  `tfsdk:"acknowledged_at"`
-	AcknowledgedBy       types.String  `tfsdk:"acknowledged_by"`
-	ActualCost           types.Float64 `tfsdk:"actual_cost"`
-	Allocations          types.List    `tfsdk:"allocations"`
-	Attribution          types.String  `tfsdk:"attribution"`
-	BillingAccount       types.String  `tfsdk:"billing_account"`
-	CostOfAnomaly        types.Float64 `tfsdk:"cost_of_anomaly"`
-	DeactivationReason   types.String  `tfsdk:"deactivation_reason"`
-	EndTime              types.Int64   `tfsdk:"end_time"`
-	EntityLabel          types.String  `tfsdk:"entity_label"`
-	EntityName           types.String  `tfsdk:"entity_name"`
-	ExpectedMaxCost      types.Float64 `tfsdk:"expected_max_cost"`
-	Id                   types.String  `tfsdk:"id"`
-	InitialNotifications types.List    `tfsdk:"initial_notifications"`
-	LinkedAnomalies      types.List    `tfsdk:"linked_anomalies"`
-	MonitorLevel         types.String  `tfsdk:"monitor_level"`
-	Notifications        types.List    `tfsdk:"notifications"`
-	Platform             types.String  `tfsdk:"platform"`
-	ProviderDisplayName  types.String  `tfsdk:"provider_display_name"`
-	ResourceData         types.List    `tfsdk:"resource_data"`
-	Scope                types.String  `tfsdk:"scope"`
-	ServiceName          types.String  `tfsdk:"service_name"`
-	SeverityLevel        types.String  `tfsdk:"severity_level"`
-	StartTime            types.Int64   `tfsdk:"start_time"`
-	Status               types.String  `tfsdk:"status"`
-	TimeFrame            types.String  `tfsdk:"time_frame"`
-	Top3skus             types.List    `tfsdk:"top3skus"`
+	Acknowledged         types.Bool            `tfsdk:"acknowledged"`
+	AcknowledgedAt       types.String          `tfsdk:"acknowledged_at"`
+	AcknowledgedBy       types.String          `tfsdk:"acknowledged_by"`
+	ActualCost           types.Float64         `tfsdk:"actual_cost"`
+	Allocations          types.List            `tfsdk:"allocations"`
+	Attribution          types.String          `tfsdk:"attribution"`
+	BillingAccount       types.String          `tfsdk:"billing_account"`
+	CostOfAnomaly        types.Float64         `tfsdk:"cost_of_anomaly"`
+	CustomerFeedback     CustomerFeedbackValue `tfsdk:"customer_feedback"`
+	DeactivationReason   types.String          `tfsdk:"deactivation_reason"`
+	EndTime              types.Int64           `tfsdk:"end_time"`
+	EntityLabel          types.String          `tfsdk:"entity_label"`
+	EntityName           types.String          `tfsdk:"entity_name"`
+	ExpectedMaxCost      types.Float64         `tfsdk:"expected_max_cost"`
+	Id                   types.String          `tfsdk:"id"`
+	InitialNotifications types.List            `tfsdk:"initial_notifications"`
+	LinkedAnomalies      types.List            `tfsdk:"linked_anomalies"`
+	MonitorLevel         types.String          `tfsdk:"monitor_level"`
+	Notifications        types.List            `tfsdk:"notifications"`
+	Platform             types.String          `tfsdk:"platform"`
+	ProviderDisplayName  types.String          `tfsdk:"provider_display_name"`
+	ResourceData         types.List            `tfsdk:"resource_data"`
+	Scope                types.String          `tfsdk:"scope"`
+	ServiceName          types.String          `tfsdk:"service_name"`
+	SeverityLevel        types.String          `tfsdk:"severity_level"`
+	StartTime            types.Int64           `tfsdk:"start_time"`
+	Status               types.String          `tfsdk:"status"`
+	TimeFrame            types.String          `tfsdk:"time_frame"`
+	Top3skus             types.List            `tfsdk:"top3skus"`
 }
 
 var _ basetypes.ObjectTypable = AllocationsType{}
@@ -703,6 +751,934 @@ func (v AllocationsValue) AttributeTypes(ctx context.Context) map[string]attr.Ty
 	return map[string]attr.Type{
 		"id":   basetypes.StringType{},
 		"name": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = CustomerFeedbackType{}
+
+type CustomerFeedbackType struct {
+	basetypes.ObjectType
+}
+
+func (t CustomerFeedbackType) Equal(o attr.Type) bool {
+	other, ok := o.(CustomerFeedbackType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CustomerFeedbackType) String() string {
+	return "CustomerFeedbackType"
+}
+
+func (t CustomerFeedbackType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCustomerFeedbackValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	resolutionAttribute, ok := attributes["resolution"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`resolution is missing from object`)
+
+		return nil, diags
+	}
+
+	resolutionVal, ok := resolutionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`resolution expected to be basetypes.StringValue, was: %T`, resolutionAttribute))
+	}
+
+	resolutionNoteAttribute, ok := attributes["resolution_note"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`resolution_note is missing from object`)
+
+		return nil, diags
+	}
+
+	resolutionNoteValuable, ok := resolutionNoteAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`resolution_note expected to be basetypes.ObjectValuable, was: %T`, resolutionNoteAttribute))
+
+		return nil, diags
+	}
+
+	resolutionNoteObjVal, resolutionNoteObjValDiags := resolutionNoteValuable.ToObjectValue(ctx)
+	diags.Append(resolutionNoteObjValDiags...)
+
+	resolutionNoteTypable, ok := t.AttrTypes["resolution_note"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`resolution_note expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["resolution_note"]))
+
+		return nil, diags
+	}
+
+	resolutionNoteConverted, resolutionNoteConvertedDiags := resolutionNoteTypable.ValueFromObject(ctx, resolutionNoteObjVal)
+	diags.Append(resolutionNoteConvertedDiags...)
+
+	resolutionNoteVal, ok := resolutionNoteConverted.(ResolutionNoteValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`resolution_note expected to be ResolutionNoteValue, was: %T`, resolutionNoteConverted))
+	}
+
+	reviewStatusAttribute, ok := attributes["review_status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`review_status is missing from object`)
+
+		return nil, diags
+	}
+
+	reviewStatusVal, ok := reviewStatusAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`review_status expected to be basetypes.StringValue, was: %T`, reviewStatusAttribute))
+	}
+
+	updatedAtAttribute, ok := attributes["updated_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`updated_at is missing from object`)
+
+		return nil, diags
+	}
+
+	updatedAtVal, ok := updatedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`updated_at expected to be basetypes.StringValue, was: %T`, updatedAtAttribute))
+	}
+
+	updatedByAttribute, ok := attributes["updated_by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`updated_by is missing from object`)
+
+		return nil, diags
+	}
+
+	updatedByVal, ok := updatedByAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`updated_by expected to be basetypes.StringValue, was: %T`, updatedByAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CustomerFeedbackValue{
+		Resolution:     resolutionVal,
+		ResolutionNote: resolutionNoteVal,
+		ReviewStatus:   reviewStatusVal,
+		UpdatedAt:      updatedAtVal,
+		UpdatedBy:      updatedByVal,
+		state:          attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCustomerFeedbackValueNull() CustomerFeedbackValue {
+	return CustomerFeedbackValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCustomerFeedbackValueUnknown() CustomerFeedbackValue {
+	return CustomerFeedbackValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCustomerFeedbackValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CustomerFeedbackValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CustomerFeedbackValue Attribute Value",
+				"While creating a CustomerFeedbackValue value, a missing attribute value was detected. "+
+					"A CustomerFeedbackValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CustomerFeedbackValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CustomerFeedbackValue Attribute Type",
+				"While creating a CustomerFeedbackValue value, an invalid attribute value was detected. "+
+					"A CustomerFeedbackValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CustomerFeedbackValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CustomerFeedbackValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CustomerFeedbackValue Attribute Value",
+				"While creating a CustomerFeedbackValue value, an extra attribute value was detected. "+
+					"A CustomerFeedbackValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CustomerFeedbackValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	resolutionAttribute, ok := attributes["resolution"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`resolution is missing from object`)
+
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	resolutionVal, ok := resolutionAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`resolution expected to be basetypes.StringValue, was: %T`, resolutionAttribute))
+	}
+
+	resolutionNoteAttribute, ok := attributes["resolution_note"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`resolution_note is missing from object`)
+
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	resolutionNoteVal, ok := resolutionNoteAttribute.(ResolutionNoteValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`resolution_note expected to be ResolutionNoteValue, was: %T`, resolutionNoteAttribute))
+	}
+
+	reviewStatusAttribute, ok := attributes["review_status"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`review_status is missing from object`)
+
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	reviewStatusVal, ok := reviewStatusAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`review_status expected to be basetypes.StringValue, was: %T`, reviewStatusAttribute))
+	}
+
+	updatedAtAttribute, ok := attributes["updated_at"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`updated_at is missing from object`)
+
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	updatedAtVal, ok := updatedAtAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`updated_at expected to be basetypes.StringValue, was: %T`, updatedAtAttribute))
+	}
+
+	updatedByAttribute, ok := attributes["updated_by"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`updated_by is missing from object`)
+
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	updatedByVal, ok := updatedByAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`updated_by expected to be basetypes.StringValue, was: %T`, updatedByAttribute))
+	}
+
+	if diags.HasError() {
+		return NewCustomerFeedbackValueUnknown(), diags
+	}
+
+	return CustomerFeedbackValue{
+		Resolution:     resolutionVal,
+		ResolutionNote: resolutionNoteVal,
+		ReviewStatus:   reviewStatusVal,
+		UpdatedAt:      updatedAtVal,
+		UpdatedBy:      updatedByVal,
+		state:          attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCustomerFeedbackValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CustomerFeedbackValue {
+	object, diags := NewCustomerFeedbackValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCustomerFeedbackValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CustomerFeedbackType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCustomerFeedbackValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCustomerFeedbackValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCustomerFeedbackValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCustomerFeedbackValueMust(CustomerFeedbackValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CustomerFeedbackType) ValueType(ctx context.Context) attr.Value {
+	return CustomerFeedbackValue{}
+}
+
+var _ basetypes.ObjectValuable = CustomerFeedbackValue{}
+
+type CustomerFeedbackValue struct {
+	Resolution     basetypes.StringValue `tfsdk:"resolution"`
+	ResolutionNote ResolutionNoteValue   `tfsdk:"resolution_note"`
+	ReviewStatus   basetypes.StringValue `tfsdk:"review_status"`
+	UpdatedAt      basetypes.StringValue `tfsdk:"updated_at"`
+	UpdatedBy      basetypes.StringValue `tfsdk:"updated_by"`
+	state          attr.ValueState
+}
+
+func (v CustomerFeedbackValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 5)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["resolution"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["resolution_note"] = ResolutionNoteType{
+		basetypes.ObjectType{
+			AttrTypes: ResolutionNoteValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["review_status"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["updated_at"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["updated_by"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 5)
+
+		val, err = v.Resolution.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["resolution"] = val
+
+		val, err = v.ResolutionNote.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["resolution_note"] = val
+
+		val, err = v.ReviewStatus.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["review_status"] = val
+
+		val, err = v.UpdatedAt.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["updated_at"] = val
+
+		val, err = v.UpdatedBy.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["updated_by"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CustomerFeedbackValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CustomerFeedbackValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CustomerFeedbackValue) String() string {
+	return "CustomerFeedbackValue"
+}
+
+func (v CustomerFeedbackValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var resolutionNote attr.Value
+
+	{
+		resolutionNote = v.ResolutionNote
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"resolution": basetypes.StringType{},
+		"resolution_note": ResolutionNoteType{
+			basetypes.ObjectType{
+				AttrTypes: ResolutionNoteValue{}.AttributeTypes(ctx),
+			},
+		},
+		"review_status": basetypes.StringType{},
+		"updated_at":    basetypes.StringType{},
+		"updated_by":    basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"resolution":      v.Resolution,
+			"resolution_note": resolutionNote,
+			"review_status":   v.ReviewStatus,
+			"updated_at":      v.UpdatedAt,
+			"updated_by":      v.UpdatedBy,
+		})
+
+	return objVal, diags
+}
+
+func (v CustomerFeedbackValue) Equal(o attr.Value) bool {
+	other, ok := o.(CustomerFeedbackValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Resolution.Equal(other.Resolution) {
+		return false
+	}
+
+	if !v.ResolutionNote.Equal(other.ResolutionNote) {
+		return false
+	}
+
+	if !v.ReviewStatus.Equal(other.ReviewStatus) {
+		return false
+	}
+
+	if !v.UpdatedAt.Equal(other.UpdatedAt) {
+		return false
+	}
+
+	if !v.UpdatedBy.Equal(other.UpdatedBy) {
+		return false
+	}
+
+	return true
+}
+
+func (v CustomerFeedbackValue) Type(ctx context.Context) attr.Type {
+	return CustomerFeedbackType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CustomerFeedbackValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"resolution": basetypes.StringType{},
+		"resolution_note": ResolutionNoteType{
+			basetypes.ObjectType{
+				AttrTypes: ResolutionNoteValue{}.AttributeTypes(ctx),
+			},
+		},
+		"review_status": basetypes.StringType{},
+		"updated_at":    basetypes.StringType{},
+		"updated_by":    basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = ResolutionNoteType{}
+
+type ResolutionNoteType struct {
+	basetypes.ObjectType
+}
+
+func (t ResolutionNoteType) Equal(o attr.Type) bool {
+	other, ok := o.(ResolutionNoteType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ResolutionNoteType) String() string {
+	return "ResolutionNoteType"
+}
+
+func (t ResolutionNoteType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewResolutionNoteValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewResolutionNoteValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	reasonAttribute, ok := attributes["reason"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`reason is missing from object`)
+
+		return nil, diags
+	}
+
+	reasonVal, ok := reasonAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`reason expected to be basetypes.StringValue, was: %T`, reasonAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ResolutionNoteValue{
+		Reason: reasonVal,
+		state:  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewResolutionNoteValueNull() ResolutionNoteValue {
+	return ResolutionNoteValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewResolutionNoteValueUnknown() ResolutionNoteValue {
+	return ResolutionNoteValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewResolutionNoteValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ResolutionNoteValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ResolutionNoteValue Attribute Value",
+				"While creating a ResolutionNoteValue value, a missing attribute value was detected. "+
+					"A ResolutionNoteValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ResolutionNoteValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ResolutionNoteValue Attribute Type",
+				"While creating a ResolutionNoteValue value, an invalid attribute value was detected. "+
+					"A ResolutionNoteValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ResolutionNoteValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ResolutionNoteValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ResolutionNoteValue Attribute Value",
+				"While creating a ResolutionNoteValue value, an extra attribute value was detected. "+
+					"A ResolutionNoteValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ResolutionNoteValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewResolutionNoteValueUnknown(), diags
+	}
+
+	reasonAttribute, ok := attributes["reason"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`reason is missing from object`)
+
+		return NewResolutionNoteValueUnknown(), diags
+	}
+
+	reasonVal, ok := reasonAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`reason expected to be basetypes.StringValue, was: %T`, reasonAttribute))
+	}
+
+	if diags.HasError() {
+		return NewResolutionNoteValueUnknown(), diags
+	}
+
+	return ResolutionNoteValue{
+		Reason: reasonVal,
+		state:  attr.ValueStateKnown,
+	}, diags
+}
+
+func NewResolutionNoteValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ResolutionNoteValue {
+	object, diags := NewResolutionNoteValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewResolutionNoteValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ResolutionNoteType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewResolutionNoteValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewResolutionNoteValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewResolutionNoteValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewResolutionNoteValueMust(ResolutionNoteValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ResolutionNoteType) ValueType(ctx context.Context) attr.Value {
+	return ResolutionNoteValue{}
+}
+
+var _ basetypes.ObjectValuable = ResolutionNoteValue{}
+
+type ResolutionNoteValue struct {
+	Reason basetypes.StringValue `tfsdk:"reason"`
+	state  attr.ValueState
+}
+
+func (v ResolutionNoteValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["reason"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.Reason.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["reason"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ResolutionNoteValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ResolutionNoteValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ResolutionNoteValue) String() string {
+	return "ResolutionNoteValue"
+}
+
+func (v ResolutionNoteValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"reason": basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"reason": v.Reason,
+		})
+
+	return objVal, diags
+}
+
+func (v ResolutionNoteValue) Equal(o attr.Value) bool {
+	other, ok := o.(ResolutionNoteValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Reason.Equal(other.Reason) {
+		return false
+	}
+
+	return true
+}
+
+func (v ResolutionNoteValue) Type(ctx context.Context) attr.Type {
+	return ResolutionNoteType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ResolutionNoteValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"reason": basetypes.StringType{},
 	}
 }
 

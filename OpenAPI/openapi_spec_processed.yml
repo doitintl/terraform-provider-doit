@@ -6818,6 +6818,57 @@ components:
         critical:
           type: integer
           format: int64
+    AnomalyCustomerFeedback:
+      type: object
+      description: >-
+        Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.
+      required:
+        - reviewStatus
+      properties:
+        reviewStatus:
+          type: string
+          description: The anomaly's review state.
+          enum:
+            - NEEDS_REVIEW
+            - UNDER_REVIEW
+            - RESOLVED
+        resolution:
+          type: string
+          description: Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.
+          enum:
+            - ANOMALY_CONFIRMED
+            - NOT_ANOMALY
+        resolutionNote:
+          description: >-
+            The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.
+          allOf:
+            - $ref: '#/components/schemas/AnomalyCustomerFeedbackResolutionNote'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Time of the last review-feedback update. Absent when the anomaly was never reviewed.
+        updatedBy:
+          type: string
+          description: Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.
+    AnomalyCustomerFeedbackResolutionNote:
+      type: object
+      description: >-
+        The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          enum:
+            - FAULTY_ANOMALY_DETECTION_MODEL
+            - INCORRECT_DATA
+            - EXPECTED_COST_SPIKE
+            - LOW_IMPACT
+            - NON_ANOMALOUS_OTHER
+            - SECURITY_BREACH
+            - MISCONFIGURATION
+            - UNINTENTIONAL_PROVISIONING
+            - ANOMALOUS_OTHER
     AnomalyItem:
       required:
         - attribution
@@ -12174,6 +12225,7 @@ components:
         - monitorLevel
         - notifications
         - initialNotifications
+        - customerFeedback
       type: object
       properties:
         attribution:
@@ -12278,6 +12330,8 @@ components:
           description: "Email of the user who first acknowledged the anomaly"
           type: string
           nullable: true
+        customerFeedback:
+          $ref: "#/components/schemas/AnomalyCustomerFeedback"
         notifications:
           $ref: "#/components/schemas/NotificationEventArray"
         initialNotifications:
