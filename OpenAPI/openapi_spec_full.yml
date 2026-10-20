@@ -2830,11 +2830,15 @@ paths:
             operation predates file output support and has no stored render
             input; a transient rendering failure instead returns 200 with
             `result` and no `fileOutput`, so retry the request for the file.
+            `pdf` is the chart and data table as a document, `png` the chart
+            image, and `csv` every row of the result as raw data, one line per
+            row with the report's dimensions and metrics, never truncated.
           schema:
             type: string
             enum:
               - pdf
               - png
+              - csv
             example: pdf
       responses:
         "200":

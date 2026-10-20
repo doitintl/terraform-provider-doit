@@ -15,7 +15,7 @@ Fetches the results of an existing Cloud Analytics report.
 
 The report is executed and the results are returned as a JSON string in `result_json`. Use Terraform's `jsondecode()` to parse the results.
 
-~> **Note:** Report results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the report. Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`.
+~> **Note:** Report results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the report. Set `file_output` to `pdf`, `png`, or `csv` to receive a signed `file_output_url`.
 
 The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately.
 
@@ -62,9 +62,17 @@ terraform {
   }
 }
 
-# Fetch the results of an existing report
+# Fetch the results of an existing report and render a CSV export
 data "doit_report_result" "example" {
-  id = "your-report-id"
+  id          = "your-report-id"
+  file_output = "csv"
+
+  lifecycle {
+    postcondition {
+      condition     = self.file_output_url != null
+      error_message = "The report result was available, but CSV rendering failed. Try applying again."
+    }
+  }
 }
 
 # Parse the JSON results
@@ -76,13 +84,14 @@ locals {
   forecast_rows = try(local.result.forecastRows, [])
 }
 
-# Write results to a CSV file
-resource "local_file" "report_csv" {
-  filename = "report.csv"
-  content = join("\n", concat(
-    [join(",", local.columns)],
-    [for row in local.result.rows : join(",", [for cell in row : cell == null ? "" : tostring(cell)])]
-  ))
+# Download the server-rendered CSV from the signed URL
+data "http" "report_csv" {
+  url = data.doit_report_result.example.file_output_url
+}
+
+resource "local_sensitive_file" "report_csv" {
+  filename       = "${path.module}/report.csv"
+  content_base64 = data.http.report_csv.response_body_base64
 }
 
 # Fetch results with a custom date range
@@ -133,7 +142,7 @@ resource "local_sensitive_file" "report_pdf" {
 ### Optional
 
 - `end_date` (String) An optional parameter to override the report time settings. Must be provided together with `start_date`. Format: `yyyy-mm-dd`.
-- `file_output` (String) Optional file format to render from the report result: `pdf` or `png`.
+- `file_output` (String) Optional file format to render from the report result: `pdf`, `png`, or `csv`.
 - `start_date` (String) An optional parameter to override the report time settings. Must be provided together with `end_date`. Format: `yyyy-mm-dd`.
 - `time_range` (String) An optional parameter to override the report time settings. Value should be represented in the ISO 8601 duration format `P[n]Y[n]M[n]D` (e.g., `P7D` for 7 days, `P1M` for 1 month).
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))

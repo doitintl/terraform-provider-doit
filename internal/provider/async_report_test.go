@@ -288,6 +288,7 @@ func TestAwaitAsyncReport_SucceedsAfterPolling(t *testing.T) {
 func TestAwaitAsyncReport_FileOutput(t *testing.T) {
 	pdf := models.GetAsyncOperationResultsParamsFileOutputPdf
 	png := models.GetAsyncOperationResultsParamsFileOutputPng
+	csv := models.GetAsyncOperationResultsParamsFileOutputCsv
 	for _, tc := range []struct {
 		name      string
 		format    *models.GetAsyncOperationResultsParamsFileOutput
@@ -312,6 +313,13 @@ func TestAwaitAsyncReport_FileOutput(t *testing.T) {
 			body:      `{"result":{"rows":[],"cacheHit":false},"fileOutput":"https://storage.example/op.png?sig=def"}`,
 			wantQuery: "fileOutput=png",
 			wantURL:   "https://storage.example/op.png?sig=def",
+		},
+		{
+			name:      "csv",
+			format:    &csv,
+			body:      `{"result":{"rows":[],"cacheHit":false},"fileOutput":"https://storage.example/op.csv?sig=ghi"}`,
+			wantQuery: "fileOutput=csv",
+			wantURL:   "https://storage.example/op.csv?sig=ghi",
 		},
 		{
 			name:      "render failed but result remains",

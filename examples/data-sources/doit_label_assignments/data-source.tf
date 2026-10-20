@@ -1,3 +1,20 @@
+terraform {
+  required_providers {
+    doit = {
+      source  = "doitintl/doit"
+      version = "~> 1.0"
+    }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
+  }
+}
+
 # Look up which objects (reports, budgets, etc.) are assigned to a label
 resource "doit_label" "team_reports" {
   name  = "team-reports"
@@ -22,24 +39,26 @@ output "assigned_report_ids" {
 }
 
 # Export labeled reports to CSV via doit_report_result
-# This iterates over all report assignments and fetches their results.
+# This iterates over all report assignments and renders each result as a CSV file.
 data "doit_report_result" "labeled" {
   for_each = toset([
     for a in data.doit_label_assignments.team_reports.assignments :
     a.object_id if a.object_type == "report"
   ])
 
-  id = each.value
+  id          = each.value
+  file_output = "csv"
 }
 
-resource "local_file" "report_csvs" {
+data "http" "report_csvs" {
   for_each = data.doit_report_result.labeled
 
-  filename = "${each.key}.csv"
-  content = join("\n", concat(
-    [join(",", [for s in jsondecode(each.value.result_json).schema : s.name])],
-    [for row in jsondecode(each.value.result_json).rows :
-      join(",", [for cell in row : cell == null ? "" : tostring(cell)])
-    ]
-  ))
+  url = each.value.file_output_url
+}
+
+resource "local_sensitive_file" "report_csvs" {
+  for_each = data.http.report_csvs
+
+  filename       = "${path.module}/${each.key}.csv"
+  content_base64 = each.value.response_body_base64
 }

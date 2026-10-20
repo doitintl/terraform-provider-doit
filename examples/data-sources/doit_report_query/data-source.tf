@@ -15,8 +15,9 @@ terraform {
   }
 }
 
-# Fetch the last 3 months of cost data grouped by cloud provider
+# Fetch the last 3 months of cost data grouped by cloud provider and render a CSV export
 data "doit_report_query" "cost_by_provider" {
+  file_output = "csv"
   config = {
     metrics = [
       {
@@ -59,13 +60,14 @@ locals {
   columns = [for s in local.query_result.schema : s.name]
 }
 
-# Write results to a CSV file
-resource "local_file" "query_csv" {
-  filename = "cost_by_provider.csv"
-  content = join("\n", concat(
-    [join(",", local.columns)],
-    [for row in local.query_result.rows : join(",", [for cell in row : cell == null ? "" : tostring(cell)])]
-  ))
+# Download the server-rendered CSV from the signed URL
+data "http" "query_csv" {
+  url = data.doit_report_query.cost_by_provider.file_output_url
+}
+
+resource "local_sensitive_file" "query_csv" {
+  filename       = "${path.module}/cost_by_provider.csv"
+  content_base64 = data.http.query_csv.response_body_base64
 }
 
 output "row_count" {
@@ -75,8 +77,8 @@ output "row_count" {
 # ─────────────────────────────────────────────────────────────────────────────
 # Render an ad-hoc query as a PNG chart
 # ─────────────────────────────────────────────────────────────────────────────
-# Set file_output to "png" (or "pdf") to receive a signed download URL for the
-# rendered chart, without saving a report first. The URL is sensitive and
+# Set file_output to "png" (or "pdf" / "csv") to receive a signed download URL
+# for the rendered file, without saving a report first. The URL is sensitive and
 # valid for up to seven days. This example stores the URL and the file contents
 # in Terraform state, so protect that state appropriately.
 

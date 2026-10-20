@@ -15,9 +15,17 @@ terraform {
   }
 }
 
-# Fetch the results of an existing report
+# Fetch the results of an existing report and render a CSV export
 data "doit_report_result" "example" {
-  id = "your-report-id"
+  id          = "your-report-id"
+  file_output = "csv"
+
+  lifecycle {
+    postcondition {
+      condition     = self.file_output_url != null
+      error_message = "The report result was available, but CSV rendering failed. Try applying again."
+    }
+  }
 }
 
 # Parse the JSON results
@@ -29,13 +37,14 @@ locals {
   forecast_rows = try(local.result.forecastRows, [])
 }
 
-# Write results to a CSV file
-resource "local_file" "report_csv" {
-  filename = "report.csv"
-  content = join("\n", concat(
-    [join(",", local.columns)],
-    [for row in local.result.rows : join(",", [for cell in row : cell == null ? "" : tostring(cell)])]
-  ))
+# Download the server-rendered CSV from the signed URL
+data "http" "report_csv" {
+  url = data.doit_report_result.example.file_output_url
+}
+
+resource "local_sensitive_file" "report_csv" {
+  filename       = "${path.module}/report.csv"
+  content_base64 = data.http.report_csv.response_body_base64
 }
 
 # Fetch results with a custom date range

@@ -2,9 +2,11 @@ package provider_test
 
 import (
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -63,9 +65,61 @@ func TestAccReportQueryDataSource_FileOutput(t *testing.T) {
 	})
 }
 
-func TestAccReportQueryDataSource_InvalidFileOutput(t *testing.T) {
+func TestAccReportQueryDataSource_FileOutputCSV(t *testing.T) {
+	filename := t.TempDir() + "/query.csv"
 	config := strings.Replace(testAccReportQueryDataSourceConfig(),
 		"data \"doit_report_query\" \"test\" {", "data \"doit_report_query\" \"test\" {\n    file_output = \"csv\"", 1)
+	config += fmt.Sprintf(`
+data "http" "query_csv" {
+    url = data.doit_report_query.test.file_output_url
+}
+
+resource "local_sensitive_file" "query_csv" {
+    filename       = %q
+    content_base64 = data.http.query_csv.response_body_base64
+}
+`, filename)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config: config,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+			},
+			Check: func(_ *terraform.State) error {
+				content, err := os.ReadFile(filename)
+				if err != nil {
+					return err
+				}
+				records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+				if err != nil {
+					return fmt.Errorf("downloaded file is not valid CSV: %w", err)
+				}
+				if len(records) < 2 {
+					return fmt.Errorf("downloaded CSV has %d rows, want header plus at least one data row", len(records))
+				}
+				for _, wantCol := range []string{"Year", "Month", "Cost"} {
+					if !slices.Contains(records[0], wantCol) {
+						return fmt.Errorf("downloaded CSV header %v does not contain %q", records[0], wantCol)
+					}
+				}
+				return nil
+			},
+		}},
+	})
+}
+
+func TestAccReportQueryDataSource_InvalidFileOutput(t *testing.T) {
+	config := strings.Replace(testAccReportQueryDataSourceConfig(),
+		"data \"doit_report_query\" \"test\" {", "data \"doit_report_query\" \"test\" {\n    file_output = \"xlsx\"", 1)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),

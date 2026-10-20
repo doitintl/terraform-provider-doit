@@ -15,7 +15,7 @@ Runs an ad-hoc Cloud Analytics query without persisting a report.
 
 The query is executed with the provided config and results are returned as a JSON string in `result_json`. Use Terraform's `jsondecode()` to parse.
 
-~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query. Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`.
+~> **Note:** Query results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the query. Set `file_output` to `pdf`, `png`, or `csv` to receive a signed `file_output_url`.
 
 The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately.
 
@@ -62,8 +62,9 @@ terraform {
   }
 }
 
-# Fetch the last 3 months of cost data grouped by cloud provider
+# Fetch the last 3 months of cost data grouped by cloud provider and render a CSV export
 data "doit_report_query" "cost_by_provider" {
+  file_output = "csv"
   config = {
     metrics = [
       {
@@ -106,13 +107,14 @@ locals {
   columns = [for s in local.query_result.schema : s.name]
 }
 
-# Write results to a CSV file
-resource "local_file" "query_csv" {
-  filename = "cost_by_provider.csv"
-  content = join("\n", concat(
-    [join(",", local.columns)],
-    [for row in local.query_result.rows : join(",", [for cell in row : cell == null ? "" : tostring(cell)])]
-  ))
+# Download the server-rendered CSV from the signed URL
+data "http" "query_csv" {
+  url = data.doit_report_query.cost_by_provider.file_output_url
+}
+
+resource "local_sensitive_file" "query_csv" {
+  filename       = "${path.module}/cost_by_provider.csv"
+  content_base64 = data.http.query_csv.response_body_base64
 }
 
 output "row_count" {
@@ -122,8 +124,8 @@ output "row_count" {
 # ─────────────────────────────────────────────────────────────────────────────
 # Render an ad-hoc query as a PNG chart
 # ─────────────────────────────────────────────────────────────────────────────
-# Set file_output to "png" (or "pdf") to receive a signed download URL for the
-# rendered chart, without saving a report first. The URL is sensitive and
+# Set file_output to "png" (or "pdf" / "csv") to receive a signed download URL
+# for the rendered file, without saving a report first. The URL is sensitive and
 # valid for up to seven days. This example stores the URL and the file contents
 # in Terraform state, so protect that state appropriately.
 
@@ -178,7 +180,7 @@ resource "local_sensitive_file" "top_services_png" {
 
 ### Optional
 
-- `file_output` (String) Optional file format to render from the query result: `pdf` or `png`.
+- `file_output` (String) Optional file format to render from the query result: `pdf`, `png`, or `csv`.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only

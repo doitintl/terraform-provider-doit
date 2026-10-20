@@ -2,9 +2,11 @@ package provider_test
 
 import (
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -101,9 +103,60 @@ resource "local_sensitive_file" "report_pdf" {
 	})
 }
 
+func TestAccReportResultDataSource_FileOutputCSV(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-rr-csv")
+	filename := t.TempDir() + "/report.csv"
+	config := strings.Replace(testAccReportResultDataSourceConfig(rName),
+		"id = doit_report.test.id", "id = doit_report.test.id\n    file_output = \"csv\"", 1)
+	config += fmt.Sprintf(`
+data "http" "report_csv" {
+    url = data.doit_report_result.test.file_output_url
+}
+
+resource "local_sensitive_file" "report_csv" {
+    filename       = %q
+    content_base64 = data.http.report_csv.response_body_base64
+}
+`, filename)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config: config,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+			},
+			Check: func(_ *terraform.State) error {
+				content, err := os.ReadFile(filename)
+				if err != nil {
+					return err
+				}
+				records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+				if err != nil {
+					return fmt.Errorf("downloaded file is not valid CSV: %w", err)
+				}
+				if len(records) < 1 {
+					return fmt.Errorf("downloaded CSV has no rows")
+				}
+				if !slices.Contains(records[0], "Cost") {
+					return fmt.Errorf("downloaded CSV header %v does not contain \"Cost\"", records[0])
+				}
+				return nil
+			},
+		}},
+	})
+}
+
 func TestAccReportResultDataSource_InvalidFileOutput(t *testing.T) {
 	config := strings.Replace(testAccReportResultDataSourceNotFoundConfig(),
-		"id = \"non-existent-report-id\"", "id = \"non-existent-report-id\"\n    file_output = \"csv\"", 1)
+		"id = \"non-existent-report-id\"", "id = \"non-existent-report-id\"\n    file_output = \"xlsx\"", 1)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
