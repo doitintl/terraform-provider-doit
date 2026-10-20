@@ -1495,6 +1495,93 @@ func (e CommitmentTerm) Valid() bool {
 	}
 }
 
+// Defines values for ComposerProvider.
+const (
+	ComposerProviderAws               ComposerProvider = "aws"
+	ComposerProviderAzure             ComposerProvider = "azure"
+	ComposerProviderAzureAd           ComposerProvider = "azure_ad"
+	ComposerProviderGcp               ComposerProvider = "gcp"
+	ComposerProviderGeneral           ComposerProvider = "general"
+	ComposerProviderGoogleCloudSource ComposerProvider = "google_cloud_source"
+	ComposerProviderGoogleWorkspace   ComposerProvider = "google_workspace"
+	ComposerProviderK8s               ComposerProvider = "k8s"
+	ComposerProviderOci               ComposerProvider = "oci"
+	ComposerProviderVmware            ComposerProvider = "vmware"
+)
+
+// Valid indicates whether the value is a known member of the ComposerProvider enum.
+func (e ComposerProvider) Valid() bool {
+	switch e {
+	case ComposerProviderAws:
+		return true
+	case ComposerProviderAzure:
+		return true
+	case ComposerProviderAzureAd:
+		return true
+	case ComposerProviderGcp:
+		return true
+	case ComposerProviderGeneral:
+		return true
+	case ComposerProviderGoogleCloudSource:
+		return true
+	case ComposerProviderGoogleWorkspace:
+		return true
+	case ComposerProviderK8s:
+		return true
+	case ComposerProviderOci:
+		return true
+	case ComposerProviderVmware:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerRecipeSeverity.
+const (
+	ComposerRecipeSeverityCritical ComposerRecipeSeverity = "critical"
+	ComposerRecipeSeverityHigh     ComposerRecipeSeverity = "high"
+	ComposerRecipeSeverityLow      ComposerRecipeSeverity = "low"
+	ComposerRecipeSeverityMedium   ComposerRecipeSeverity = "medium"
+)
+
+// Valid indicates whether the value is a known member of the ComposerRecipeSeverity enum.
+func (e ComposerRecipeSeverity) Valid() bool {
+	switch e {
+	case ComposerRecipeSeverityCritical:
+		return true
+	case ComposerRecipeSeverityHigh:
+		return true
+	case ComposerRecipeSeverityLow:
+		return true
+	case ComposerRecipeSeverityMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerRecipeStatus.
+const (
+	ComposerRecipeStatusActive    ComposerRecipeStatus = "active"
+	ComposerRecipeStatusDismissed ComposerRecipeStatus = "dismissed"
+	ComposerRecipeStatusResolved  ComposerRecipeStatus = "resolved"
+)
+
+// Valid indicates whether the value is a known member of the ComposerRecipeStatus enum.
+func (e ComposerRecipeStatus) Valid() bool {
+	switch e {
+	case ComposerRecipeStatusActive:
+		return true
+	case ComposerRecipeStatusDismissed:
+		return true
+	case ComposerRecipeStatusResolved:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Condition.
 const (
 	ConditionForecast         Condition = "forecast"
@@ -4054,6 +4141,90 @@ func (e WidgetKind) Valid() bool {
 	}
 }
 
+// Defines values for ComposerRecipeSortBy.
+const (
+	ComposerRecipeSortByActiveResultsCount ComposerRecipeSortBy = "active_results_count"
+	ComposerRecipeSortByDetectionTime      ComposerRecipeSortBy = "detection_time"
+	ComposerRecipeSortBySeverity           ComposerRecipeSortBy = "severity"
+	ComposerRecipeSortByTitle              ComposerRecipeSortBy = "title"
+	ComposerRecipeSortByTotalResultsCount  ComposerRecipeSortBy = "total_results_count"
+)
+
+// Valid indicates whether the value is a known member of the ComposerRecipeSortBy enum.
+func (e ComposerRecipeSortBy) Valid() bool {
+	switch e {
+	case ComposerRecipeSortByActiveResultsCount:
+		return true
+	case ComposerRecipeSortByDetectionTime:
+		return true
+	case ComposerRecipeSortBySeverity:
+		return true
+	case ComposerRecipeSortByTitle:
+		return true
+	case ComposerRecipeSortByTotalResultsCount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerResultSortBy.
+const (
+	ComposerResultSortByAccountId                                           ComposerResultSortBy = "account_id"
+	ComposerResultSortByCostEstimationPotentialFreedCommitments             ComposerResultSortBy = "cost_estimation_potential_freed_commitments"
+	ComposerResultSortByCostEstimationPotentialIncreasedCommitmentsRequired ComposerResultSortBy = "cost_estimation_potential_increased_commitments_required"
+	ComposerResultSortByCostEstimationPotentialIncreasedCosts               ComposerResultSortBy = "cost_estimation_potential_increased_costs"
+	ComposerResultSortByCostEstimationPotentialSavings                      ComposerResultSortBy = "cost_estimation_potential_savings"
+	ComposerResultSortByDetectionTime                                       ComposerResultSortBy = "detection_time"
+	ComposerResultSortByRegion                                              ComposerResultSortBy = "region"
+	ComposerResultSortByResolvedTime                                        ComposerResultSortBy = "resolved_time"
+	ComposerResultSortByResourceClass                                       ComposerResultSortBy = "resource_class"
+)
+
+// Valid indicates whether the value is a known member of the ComposerResultSortBy enum.
+func (e ComposerResultSortBy) Valid() bool {
+	switch e {
+	case ComposerResultSortByAccountId:
+		return true
+	case ComposerResultSortByCostEstimationPotentialFreedCommitments:
+		return true
+	case ComposerResultSortByCostEstimationPotentialIncreasedCommitmentsRequired:
+		return true
+	case ComposerResultSortByCostEstimationPotentialIncreasedCosts:
+		return true
+	case ComposerResultSortByCostEstimationPotentialSavings:
+		return true
+	case ComposerResultSortByDetectionTime:
+		return true
+	case ComposerResultSortByRegion:
+		return true
+	case ComposerResultSortByResolvedTime:
+		return true
+	case ComposerResultSortByResourceClass:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerSortOrder.
+const (
+	ComposerSortOrderAsc  ComposerSortOrder = "asc"
+	ComposerSortOrderDesc ComposerSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ComposerSortOrder enum.
+func (e ComposerSortOrder) Valid() bool {
+	switch e {
+	case ComposerSortOrderAsc:
+		return true
+	case ComposerSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for EligibleSpendGranularity.
 const (
 	EligibleSpendGranularityDay   EligibleSpendGranularity = "day"
@@ -4624,6 +4795,108 @@ func (e ListServiceQuotasParamsCloudProvider) Valid() bool {
 	case ListServiceQuotasParamsCloudProviderAws:
 		return true
 	case ListServiceQuotasParamsCloudProviderGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipesParamsSortBy.
+const (
+	ListComposerRecipesParamsSortByActiveResultsCount ListComposerRecipesParamsSortBy = "active_results_count"
+	ListComposerRecipesParamsSortByDetectionTime      ListComposerRecipesParamsSortBy = "detection_time"
+	ListComposerRecipesParamsSortBySeverity           ListComposerRecipesParamsSortBy = "severity"
+	ListComposerRecipesParamsSortByTitle              ListComposerRecipesParamsSortBy = "title"
+	ListComposerRecipesParamsSortByTotalResultsCount  ListComposerRecipesParamsSortBy = "total_results_count"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipesParamsSortBy enum.
+func (e ListComposerRecipesParamsSortBy) Valid() bool {
+	switch e {
+	case ListComposerRecipesParamsSortByActiveResultsCount:
+		return true
+	case ListComposerRecipesParamsSortByDetectionTime:
+		return true
+	case ListComposerRecipesParamsSortBySeverity:
+		return true
+	case ListComposerRecipesParamsSortByTitle:
+		return true
+	case ListComposerRecipesParamsSortByTotalResultsCount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipesParamsSortOrder.
+const (
+	ListComposerRecipesParamsSortOrderAsc  ListComposerRecipesParamsSortOrder = "asc"
+	ListComposerRecipesParamsSortOrderDesc ListComposerRecipesParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipesParamsSortOrder enum.
+func (e ListComposerRecipesParamsSortOrder) Valid() bool {
+	switch e {
+	case ListComposerRecipesParamsSortOrderAsc:
+		return true
+	case ListComposerRecipesParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipeResultsParamsSortBy.
+const (
+	ListComposerRecipeResultsParamsSortByAccountId                                           ListComposerRecipeResultsParamsSortBy = "account_id"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialFreedCommitments             ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_freed_commitments"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCommitmentsRequired ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_increased_commitments_required"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCosts               ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_increased_costs"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialSavings                      ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_savings"
+	ListComposerRecipeResultsParamsSortByDetectionTime                                       ListComposerRecipeResultsParamsSortBy = "detection_time"
+	ListComposerRecipeResultsParamsSortByRegion                                              ListComposerRecipeResultsParamsSortBy = "region"
+	ListComposerRecipeResultsParamsSortByResolvedTime                                        ListComposerRecipeResultsParamsSortBy = "resolved_time"
+	ListComposerRecipeResultsParamsSortByResourceClass                                       ListComposerRecipeResultsParamsSortBy = "resource_class"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipeResultsParamsSortBy enum.
+func (e ListComposerRecipeResultsParamsSortBy) Valid() bool {
+	switch e {
+	case ListComposerRecipeResultsParamsSortByAccountId:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialFreedCommitments:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCommitmentsRequired:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCosts:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialSavings:
+		return true
+	case ListComposerRecipeResultsParamsSortByDetectionTime:
+		return true
+	case ListComposerRecipeResultsParamsSortByRegion:
+		return true
+	case ListComposerRecipeResultsParamsSortByResolvedTime:
+		return true
+	case ListComposerRecipeResultsParamsSortByResourceClass:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipeResultsParamsSortOrder.
+const (
+	ListComposerRecipeResultsParamsSortOrderAsc  ListComposerRecipeResultsParamsSortOrder = "asc"
+	ListComposerRecipeResultsParamsSortOrderDesc ListComposerRecipeResultsParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipeResultsParamsSortOrder enum.
+func (e ListComposerRecipeResultsParamsSortOrder) Valid() bool {
+	switch e {
+	case ListComposerRecipeResultsParamsSortOrderAsc:
+		return true
+	case ListComposerRecipeResultsParamsSortOrderDesc:
 		return true
 	default:
 		return false
@@ -7462,6 +7735,266 @@ type CommitmentPolicyId = string
 
 // CommitmentTerm Preferred or actual commitment term length for Savings Plans and related settings.
 type CommitmentTerm string
+
+// ComposerProvider Cloud provider or platform, using the Console's provider names.
+//
+// Example: aws
+type ComposerProvider string
+
+// ComposerRecipe A Composer recipe with findings in your cloud accounts. Counts and savings cover results from recently scanned accounts only.
+type ComposerRecipe struct {
+	// ActiveResultsCount Number of active results (not resolved and not snoozed). 0 when the recipe is dismissed.
+	//
+	// Example: 3
+	ActiveResultsCount int `json:"activeResultsCount"`
+
+	// AffectedResourceType Type of cloud resource the recipe's findings are on. Absent when unknown.
+	//
+	// Example: s3-bucket
+	AffectedResourceType *string `json:"affectedResourceType,omitempty"`
+
+	// Description Longer explanation of what the recipe detects. Fetched on a best-effort basis, so it can be absent even when the recipe has one.
+	//
+	// Example: S3 buckets should not grant public read access.
+	Description *string `json:"description,omitempty"`
+
+	// DetectionTime When the earliest of the recipe's results was first detected (RFC 3339, UTC). Absent when unavailable.
+	//
+	// Example: 2026-08-18T09:30:00Z
+	DetectionTime *time.Time `json:"detectionTime,omitempty"`
+
+	// EstimatedFixTimeMinutes Estimated time to fix one finding, in minutes. Absent when not estimated.
+	//
+	// Example: 15
+	EstimatedFixTimeMinutes *int `json:"estimatedFixTimeMinutes,omitempty"`
+
+	// Id Recipe ID. Use it as `recipeId` to list the recipe's results.
+	//
+	// Example: 42
+	Id int64 `json:"id"`
+
+	// IsDismissed Whether the recipe has been dismissed for your customer.
+	//
+	// Example: false
+	IsDismissed bool `json:"isDismissed"`
+
+	// Metadata Remediation guidance for the recipe. Always present; an empty object means no guidance is available. Each field is present only when the recipe has that content.
+	Metadata ComposerRecipeMetadata `json:"metadata"`
+
+	// Provider Cloud provider or platform, using the Console's provider names.
+	//
+	// Example: aws
+	Provider ComposerProvider `json:"provider"`
+
+	// ResolvedResultsCount Number of resolved results. 0 when the recipe is dismissed.
+	//
+	// Example: 2
+	ResolvedResultsCount int `json:"resolvedResultsCount"`
+
+	// Severity Severity of the recipe's results, set by the recipe's author.
+	//
+	// Example: critical
+	Severity ComposerRecipeSeverity `json:"severity"`
+
+	// SnoozedResultsCount Number of snoozed results. 0 when the recipe is dismissed.
+	//
+	// Example: 0
+	SnoozedResultsCount int `json:"snoozedResultsCount"`
+
+	// Status Recipe status, derived from its results and whether it is dismissed. Absent when unavailable.
+	//
+	// Example: active
+	Status *ComposerRecipeStatus `json:"status,omitempty"`
+
+	// Title Recipe title, as shown in the Console.
+	//
+	// Example: Publicly readable S3 bucket
+	Title string `json:"title"`
+
+	// TotalPotentialSavings Potential cost savings across the recipe's active results, as a daily amount in US dollars. A decimal string with 2 decimal places (8 for amounts below 0.01), unlike the numeric per-result `costEstimationPotentialSavings`. When no active result has an estimate, it is the total recorded on the recipe's resolved results instead. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated.
+	//
+	// Example: 120.00
+	TotalPotentialSavings *string `json:"totalPotentialSavings,omitempty"`
+
+	// TotalResultsCount Number of results in any status. 0 when the recipe is dismissed.
+	//
+	// Example: 5
+	TotalResultsCount int `json:"totalResultsCount"`
+}
+
+// ComposerRecipeSeverity Severity of the recipe's results, set by the recipe's author.
+//
+// Example: critical
+type ComposerRecipeSeverity string
+
+// ComposerRecipeStatus Recipe status, derived from its results and whether it is dismissed. Absent when unavailable.
+//
+// Example: active
+type ComposerRecipeStatus string
+
+// ComposerRecipeList One page of Composer recipes.
+type ComposerRecipeList struct {
+	// Items Recipes on this page.
+	Items []ComposerRecipe `json:"items"`
+
+	// PageToken Token for the next page. Absent on the last page.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of recipes across all pages.
+	//
+	// Example: 137
+	RowCount int64 `json:"rowCount"`
+}
+
+// ComposerRecipeMetadata Remediation guidance for the recipe. Always present; an empty object means no guidance is available. Each field is present only when the recipe has that content.
+type ComposerRecipeMetadata struct {
+	// Impacts Possible impact of applying the remediation.
+	//
+	// Example: Blocking public access may break static-site hosting.
+	Impacts *string `json:"impacts,omitempty"`
+
+	// ImportantPoints Points to consider before remediating.
+	//
+	// Example: ["Check bucket policies too."]
+	ImportantPoints *[]string `json:"importantPoints,omitempty"`
+
+	// ManualRemediation HTML describing how to remediate the finding manually.
+	//
+	// Example: <ol><li>Open the S3 console.</li></ol>
+	ManualRemediation *string `json:"manualRemediation,omitempty"`
+
+	// Reference Documentation URL for the finding.
+	//
+	// Example: https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+	Reference *string `json:"reference,omitempty"`
+}
+
+// ComposerRecipeResult One result of a Composer recipe — a finding on one affected resource.
+type ComposerRecipeResult struct {
+	// AccountId Cloud account the affected resource belongs to (for example, an AWS account ID or a Google Cloud project ID).
+	//
+	// Example: 123456789012
+	AccountId string `json:"accountId"`
+
+	// CostEstimationPotentialFreedCommitments Freed commitments — the daily amount in US dollars of commitment coverage (Savings Plans, Reserved Instances or CUDs) that acting on this result frees up for other usage. The Console **Freed commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 0
+	CostEstimationPotentialFreedCommitments *float64 `json:"costEstimationPotentialFreedCommitments,omitempty"`
+
+	// CostEstimationPotentialIncreasedCommitmentsRequired Avoidable commitments — the daily amount in US dollars of extra commitment or overlapping cost you avoid by timing the action, for example to a Reserved Instance's expiry. The Console **Avoidable commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 0
+	CostEstimationPotentialIncreasedCommitmentsRequired *float64 `json:"costEstimationPotentialIncreasedCommitmentsRequired,omitempty"`
+
+	// CostEstimationPotentialIncreasedCosts Cost avoidance — the daily amount in US dollars of a future charge (for example, extended-support fees) you prevent by acting on this result in time. The Console **Cost avoidance** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 0
+	CostEstimationPotentialIncreasedCosts *float64 `json:"costEstimationPotentialIncreasedCosts,omitempty"`
+
+	// CostEstimationPotentialSavings Potential cost savings — the daily amount in US dollars you would stop paying by acting on this result. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 120
+	CostEstimationPotentialSavings *float64 `json:"costEstimationPotentialSavings,omitempty"`
+
+	// DetectionTime When the result was first detected (RFC 3339, UTC).
+	//
+	// Example: 2026-08-18T09:30:00Z
+	DetectionTime time.Time `json:"detectionTime"`
+
+	// FirstFlowId ID of the Composer scan that first reported this result. Absent when unknown.
+	//
+	// Example: example-first-scan-id
+	FirstFlowId *string `json:"firstFlowId,omitempty"`
+
+	// Id Result ID.
+	//
+	// Example: 1001
+	Id int64 `json:"id"`
+
+	// IsActive Whether the result's account was scanned recently. It does not say whether the result is resolved or snoozed; use `solved` and `snoozed` for that, or the `status` filter.
+	//
+	// Example: true
+	IsActive bool `json:"isActive"`
+
+	// IssuedResourceId Identifier of the affected resource, as stored by Composer.
+	//
+	// Example: arn:aws:s3:::example-public-bucket
+	IssuedResourceId string `json:"issuedResourceId"`
+
+	// IssuedResourceName Name of the affected resource.
+	//
+	// Example: example-public-bucket
+	IssuedResourceName string `json:"issuedResourceName"`
+
+	// LastFlowId ID of the most recent Composer scan that reported this result. Absent when unknown.
+	//
+	// Example: example-latest-scan-id
+	LastFlowId *string `json:"lastFlowId,omitempty"`
+
+	// Provider Cloud provider or platform, using the Console's provider names.
+	//
+	// Example: aws
+	Provider ComposerProvider `json:"provider"`
+
+	// ProviderIdentifier Canonical cloud-provider identifier of the affected resource.
+	// - AWS: the resource's ARN when one is available, otherwise the stored identifier (for example, an EC2 instance ID).
+	// - Google Cloud: the API relative resource name (for example, `projects/my-project/zones/us-central1-a/instances/vm-1`), or the bucket name for Cloud Storage; otherwise the stored identifier.
+	// - Other providers: the provider-native identifier.
+	//
+	// `null` when no identifier is stored or it could not be resolved; resolving it never fails the request.
+	//
+	// Example: arn:aws:s3:::example-public-bucket
+	ProviderIdentifier nullable.Nullable[string] `json:"providerIdentifier"`
+
+	// Region Cloud region of the affected resource. Absent for global resources.
+	//
+	// Example: us-east-1
+	Region *string `json:"region,omitempty"`
+
+	// ResolvedTime When the result was resolved (RFC 3339, UTC). Absent while unresolved.
+	//
+	// Example: 2026-08-19T11:05:00Z
+	ResolvedTime *time.Time `json:"resolvedTime,omitempty"`
+
+	// ResourceClass Type of the affected resource. Absent when unknown.
+	//
+	// Example: s3-bucket
+	ResourceClass *string `json:"resourceClass,omitempty"`
+
+	// RuleId ID of the recipe the result belongs to. Equal to the `recipeId` path parameter.
+	//
+	// Example: 42
+	RuleId int64 `json:"ruleId"`
+
+	// Snoozed Whether the result is currently snoozed. Present only when `true`; absent means not snoozed.
+	//
+	// Example: true
+	Snoozed *bool `json:"snoozed,omitempty"`
+
+	// Solved Whether the result is resolved.
+	//
+	// Example: false
+	Solved bool `json:"solved"`
+
+	// Tags Cloud-provider tags on the affected resource, as key/value pairs. An empty object means the resource has no tags. `null` means the tags could not be resolved; resolving them never fails the request.
+	//
+	// Example: {"environment":"production","team":"platform"}
+	Tags nullable.Nullable[map[string]string] `json:"tags"`
+}
+
+// ComposerRecipeResultList One page of a Composer recipe's results.
+type ComposerRecipeResultList struct {
+	// Items Results on this page.
+	Items []ComposerRecipeResult `json:"items"`
+
+	// PageToken Token for the next page. Absent on the last page.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of results across all pages.
+	//
+	// Example: 5
+	RowCount int64 `json:"rowCount"`
+}
 
 // Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 type Condition string
@@ -11306,6 +11839,30 @@ type BillingAccountId = string
 // BillingExplainerInvoiceMonth Example: 2026-06
 type BillingExplainerInvoiceMonth = string
 
+// ComposerMaxResults Example: 50
+type ComposerMaxResults = int
+
+// ComposerPageToken defines model for composerPageToken.
+type ComposerPageToken = string
+
+// ComposerRecipeFilter Example: severity:critical,high|provider:aws,gcp
+type ComposerRecipeFilter = string
+
+// ComposerRecipeId Example: 42
+type ComposerRecipeId = int64
+
+// ComposerRecipeSortBy defines model for composerRecipeSortBy.
+type ComposerRecipeSortBy string
+
+// ComposerResultFilter Example: status:active|region:us-east-1,us-west-2
+type ComposerResultFilter = string
+
+// ComposerResultSortBy defines model for composerResultSortBy.
+type ComposerResultSortBy string
+
+// ComposerSortOrder defines model for composerSortOrder.
+type ComposerSortOrder string
+
 // CustomerId defines model for customerId.
 type CustomerId = string
 
@@ -11404,6 +11961,9 @@ type N503 = Error
 
 // BadRequest RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type BadRequest = ProblemDetails
+
+// ComposerAllocationNotFound RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type ComposerAllocationNotFound = ProblemDetails
 
 // Conflict RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type Conflict = ProblemDetails
@@ -12061,6 +12621,84 @@ type ListUsersParams struct {
 	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
 	Email *openapi_types.Email `form:"email,omitempty" json:"email,omitempty"`
 }
+
+// ListComposerRecipesParams defines parameters for ListComposerRecipes.
+type ListComposerRecipesParams struct {
+	// MaxResults Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.
+	MaxResults *ComposerMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.
+	//
+	// The token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page.
+	PageToken *ComposerPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// SortBy Field to sort recipes by. Defaults to `severity`. Ties break by title (case-insensitive, ascending), then by `id` (ascending), whatever the `sortOrder`.
+	SortBy *ListComposerRecipesParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort direction for `sortBy`. Defaults to `desc`.
+	SortOrder *ListComposerRecipesParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// Filter Restricts the recipes returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `severity:critical,high|provider:aws,gcp` returns recipes whose severity is critical or high and whose provider is Amazon Web Services or Google Cloud Platform. Because `,` and `|` are separators, a value itself can't contain them. Only equality matching is supported. Omit `filter` to list every recipe that has results in your recently scanned accounts, including dismissed recipes.
+	//
+	// Keys:
+	// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+	// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+	// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. Matches recipes tagged with that pillar; `compliance` matches recipes tagged with at least one compliance standard (such as SOC2 or HIPAA).
+	// - `has_active_results`: exactly one of `true` or `false`.
+	// - `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches recipes with results on resources in any of those allocations, as resolved by Cloud Analytics; counts, savings and `rowCount` then cover only those resources. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.
+	//
+	// Errors:
+	// - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
+	// - A value outside the allowed list, a non-boolean `has_active_results`, more than one `has_active_results` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
+	// - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
+	Filter *ComposerRecipeFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// ListComposerRecipesParamsSortBy defines parameters for ListComposerRecipes.
+type ListComposerRecipesParamsSortBy string
+
+// ListComposerRecipesParamsSortOrder defines parameters for ListComposerRecipes.
+type ListComposerRecipesParamsSortOrder string
+
+// ListComposerRecipeResultsParams defines parameters for ListComposerRecipeResults.
+type ListComposerRecipeResultsParams struct {
+	// MaxResults Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.
+	MaxResults *ComposerMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.
+	//
+	// The token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page.
+	PageToken *ComposerPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// SortBy Field to sort results by. Defaults to `detection_time`. Ties break by `id` (ascending), whatever the `sortOrder`.
+	SortBy *ListComposerRecipeResultsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort direction for `sortBy`. Defaults to `desc`.
+	SortOrder *ListComposerRecipeResultsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// Filter Restricts the results returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `region:us-east-1,us-west-2|status:active` returns active results in either region. Because `,` and `|` are separators, a value itself can't contain them. Matching is exact unless a key says otherwise. Omit `filter` to list the recipe's results from the most recent scan of each recently scanned account, in every status.
+	//
+	// Keys:
+	// - `account_id`: one or more cloud account IDs, matched exactly.
+	// - `region`: one or more cloud regions, matched exactly.
+	// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+	// - `related_resource_name`: one or more names of resources related to the result (for example, an attached IAM policy). Each value is matched as a substring anywhere in the result's related-resource details, not only against names.
+	// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+	// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default. `false` returns results from every scan and account, including resolved ones.
+	// - `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches results on resources in any of those allocations, as resolved by Cloud Analytics; `rowCount` then counts only those results. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.
+	//
+	// Errors:
+	// - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
+	// - A `status` outside the allowed list, a non-boolean `last_scan_only`, more than one `status` or `last_scan_only` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
+	// - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
+	Filter *ComposerResultFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// ListComposerRecipeResultsParamsSortBy defines parameters for ListComposerRecipeResults.
+type ListComposerRecipeResultsParamsSortBy string
+
+// ListComposerRecipeResultsParamsSortOrder defines parameters for ListComposerRecipeResults.
+type ListComposerRecipeResultsParamsSortOrder string
 
 // ListAwsOrganizationsParams defines parameters for ListAwsOrganizations.
 type ListAwsOrganizationsParams struct {
@@ -14332,6 +14970,44 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 	UpdateUser(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListComposerRecipes List Composer recipes
+	//
+	// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+	//
+	// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+	// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+	// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+	// - `has_active_results`: exactly one of `true` or `false`.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+	//
+	// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+	ListComposerRecipes(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListComposerRecipeResults List Composer recipe results
+	//
+	// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+	//
+	// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `account_id`: one or more cloud account IDs, matched exactly.
+	// - `region`: one or more cloud regions, matched exactly.
+	// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+	// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+	// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+	// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to.
+	//
+	// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+	ListComposerRecipeResults(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListAwsOrganizations List AWS organizations
 	//
@@ -17596,6 +18272,64 @@ func (c *Client) UpdateUserWithBody(ctx context.Context, id string, contentType 
 // Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 func (c *Client) UpdateUser(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListComposerRecipes List Composer recipes
+//
+// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+//
+// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+// - `has_active_results`: exactly one of `true` or `false`.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+//
+// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+func (c *Client) ListComposerRecipes(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListComposerRecipesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListComposerRecipeResults List Composer recipe results
+//
+// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+//
+// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `account_id`: one or more cloud account IDs, matched exactly.
+// - `region`: one or more cloud regions, matched exactly.
+// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to.
+//
+// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+func (c *Client) ListComposerRecipeResults(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListComposerRecipeResultsRequest(c.Server, recipeId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -24480,6 +25214,217 @@ func NewUpdateUserRequestWithBody(server string, id string, contentType string, 
 	return req, nil
 }
 
+// NewListComposerRecipesRequest constructs an http.Request for the ListComposerRecipes method
+func NewListComposerRecipesRequest(server string, params *ListComposerRecipesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/insights/v2/recipes")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortOrder", *params.SortOrder, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListComposerRecipeResultsRequest constructs an http.Request for the ListComposerRecipeResults method
+func NewListComposerRecipeResultsRequest(server string, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "recipeId", recipeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/insights/v2/recipes/%s/results", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortOrder", *params.SortOrder, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListAwsOrganizationsRequest constructs an http.Request for the ListAwsOrganizations method
 func NewListAwsOrganizationsRequest(server string, params *ListAwsOrganizationsParams) (*http.Request, error) {
 	var err error
@@ -27561,6 +28506,48 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 	UpdateUserWithResponse(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserResp, error)
+
+	// ListComposerRecipesWithResponse List Composer recipes
+	//
+	// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+	//
+	// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+	// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+	// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+	// - `has_active_results`: exactly one of `true` or `false`.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+	ListComposerRecipesWithResponse(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*ListComposerRecipesResp, error)
+
+	// ListComposerRecipeResultsWithResponse List Composer recipe results
+	//
+	// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+	//
+	// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `account_id`: one or more cloud account IDs, matched exactly.
+	// - `region`: one or more cloud regions, matched exactly.
+	// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+	// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+	// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+	// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+	ListComposerRecipeResultsWithResponse(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*ListComposerRecipeResultsResp, error)
 
 	// ListAwsOrganizationsWithResponse List AWS organizations
 	//
@@ -36770,6 +37757,272 @@ func (r UpdateUserResp) ContentType() string {
 	return ""
 }
 
+// ListComposerRecipesResp400Headers the declared response headers of an HTTP 400 response for ListComposerRecipes
+type ListComposerRecipesResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp401Headers the declared response headers of an HTTP 401 response for ListComposerRecipes
+type ListComposerRecipesResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListComposerRecipesResp403Headers the declared response headers of an HTTP 403 response for ListComposerRecipes
+type ListComposerRecipesResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp404Headers the declared response headers of an HTTP 404 response for ListComposerRecipes
+type ListComposerRecipesResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp500Headers the declared response headers of an HTTP 500 response for ListComposerRecipes
+type ListComposerRecipesResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp503Headers the declared response headers of an HTTP 503 response for ListComposerRecipes
+type ListComposerRecipesResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListComposerRecipesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ComposerRecipeList
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *ComposerAllocationNotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListComposerRecipesResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListComposerRecipesResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListComposerRecipesResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListComposerRecipesResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListComposerRecipesResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListComposerRecipesResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListComposerRecipesResp) GetJSON200() *ComposerRecipeList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON404() *ComposerAllocationNotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListComposerRecipesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListComposerRecipesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListComposerRecipesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListComposerRecipesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListComposerRecipeResultsResp400Headers the declared response headers of an HTTP 400 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp401Headers the declared response headers of an HTTP 401 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListComposerRecipeResultsResp403Headers the declared response headers of an HTTP 403 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp404Headers the declared response headers of an HTTP 404 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp500Headers the declared response headers of an HTTP 500 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp503Headers the declared response headers of an HTTP 503 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListComposerRecipeResultsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ComposerRecipeResultList
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *ComposerAllocationNotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListComposerRecipeResultsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListComposerRecipeResultsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListComposerRecipeResultsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListComposerRecipeResultsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListComposerRecipeResultsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListComposerRecipeResultsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListComposerRecipeResultsResp) GetJSON200() *ComposerRecipeResultList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON404() *ComposerAllocationNotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListComposerRecipeResultsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListComposerRecipeResultsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListComposerRecipeResultsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListComposerRecipeResultsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListAwsOrganizationsResp200Headers the declared response headers of an HTTP 200 response for ListAwsOrganizations
 type ListAwsOrganizationsResp200Headers struct {
 	ContentLanguage *string
@@ -41659,6 +42912,60 @@ func (c *ClientWithResponses) UpdateUserWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseUpdateUserResp(rsp)
+}
+
+// ListComposerRecipesWithResponse List Composer recipes
+//
+// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+//
+// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+// - `has_active_results`: exactly one of `true` or `false`.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+func (c *ClientWithResponses) ListComposerRecipesWithResponse(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*ListComposerRecipesResp, error) {
+	rsp, err := c.ListComposerRecipes(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListComposerRecipesResp(rsp)
+}
+
+// ListComposerRecipeResultsWithResponse List Composer recipe results
+//
+// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+//
+// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `account_id`: one or more cloud account IDs, matched exactly.
+// - `region`: one or more cloud regions, matched exactly.
+// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+func (c *ClientWithResponses) ListComposerRecipeResultsWithResponse(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*ListComposerRecipeResultsResp, error) {
+	rsp, err := c.ListComposerRecipeResults(ctx, recipeId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListComposerRecipeResultsResp(rsp)
 }
 
 // ListAwsOrganizationsWithResponse List AWS organizations
@@ -50038,6 +51345,380 @@ func ParseUpdateUserResp(rsp *http.Response) (*UpdateUserResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListComposerRecipesResp parses an HTTP response from a ListComposerRecipesWithResponse call
+func ParseListComposerRecipesResp(rsp *http.Response) (*ListComposerRecipesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListComposerRecipesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComposerRecipeList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ComposerAllocationNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListComposerRecipesResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListComposerRecipesResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListComposerRecipesResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListComposerRecipesResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListComposerRecipesResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListComposerRecipesResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListComposerRecipeResultsResp parses an HTTP response from a ListComposerRecipeResultsWithResponse call
+func ParseListComposerRecipeResultsResp(rsp *http.Response) (*ListComposerRecipeResultsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListComposerRecipeResultsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComposerRecipeResultList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ComposerAllocationNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListComposerRecipeResultsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListComposerRecipeResultsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListComposerRecipeResultsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListComposerRecipeResultsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListComposerRecipeResultsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListComposerRecipeResultsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil

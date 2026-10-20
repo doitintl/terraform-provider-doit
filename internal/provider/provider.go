@@ -346,6 +346,8 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewServiceAccountsDataSource,
 		NewServiceAccountTokenDataSource,
 		NewServiceAccountTokensDataSource,
+		NewComposerRecipesDataSource,
+		NewComposerRecipeResultsDataSource,
 	}
 }
 
