@@ -7,8 +7,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+func isReportConfigWrapperNullOrUnknown(ctx context.Context, cfg tfsdk.Config) bool {
+	if cfg.Raw.Type() == nil {
+		return false
+	}
+	var rawConfig attr.Value
+	diags := cfg.GetAttribute(ctx, path.Root("config"), &rawConfig)
+	if diags.HasError() || rawConfig == nil {
+		return true
+	}
+	return rawConfig.IsNull() || rawConfig.IsUnknown()
+}
 
 func useNullOrDefaultForForecastSettings() planmodifier.Object {
 	return useNullOrDefaultForForecastSettingsModifier{}
@@ -133,7 +146,10 @@ func (m useNullForCountModifier) MarkdownDescription(ctx context.Context) string
 	return m.Description(ctx)
 }
 
-func (m useNullForCountModifier) PlanModifyObject(_ context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+func (m useNullForCountModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+		return
+	}
 	if req.ConfigValue.IsNull() {
 		resp.PlanValue = req.ConfigValue
 	}
@@ -153,7 +169,10 @@ func (m useNullForCustomTimeRangeModifier) MarkdownDescription(ctx context.Conte
 	return m.Description(ctx)
 }
 
-func (m useNullForCustomTimeRangeModifier) PlanModifyObject(_ context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+func (m useNullForCustomTimeRangeModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+		return
+	}
 	if req.ConfigValue.IsNull() {
 		resp.PlanValue = req.ConfigValue
 	}
@@ -173,7 +192,10 @@ func (m useNullForLimitByChangeModifier) MarkdownDescription(ctx context.Context
 	return m.Description(ctx)
 }
 
-func (m useNullForLimitByChangeModifier) PlanModifyObject(_ context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+func (m useNullForLimitByChangeModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+		return
+	}
 	if req.ConfigValue.IsNull() {
 		resp.PlanValue = req.ConfigValue
 	}
@@ -193,7 +215,10 @@ func (m useNullForMetricFilterModifier) MarkdownDescription(ctx context.Context)
 	return m.Description(ctx)
 }
 
-func (m useNullForMetricFilterModifier) PlanModifyObject(_ context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+func (m useNullForMetricFilterModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+		return
+	}
 	if req.ConfigValue.IsNull() {
 		resp.PlanValue = req.ConfigValue
 	}

@@ -324,6 +324,14 @@ func (v reportCountAggregationValidator) MarkdownDescription(_ context.Context) 
 }
 
 func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	// Defer when aggregation is omitted in config so ModifyPlan can inherit the
+	// stored aggregation on update (or reject on create).
+	var aggregation types.String
+	d := req.Config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() || aggregation.IsNull() {
+		return
+	}
 	validateReportCountAggregation(ctx, req.Config, nil, &resp.Diagnostics)
 }
 
@@ -346,6 +354,14 @@ func (v reportCustomTimeRangeModeValidator) MarkdownDescription(_ context.Contex
 }
 
 func (v reportCustomTimeRangeModeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	// Defer when time_range or time_range.mode is omitted in config so ModifyPlan
+	// can inherit the stored mode on update (or reject on create).
+	var timeRange resource_report.TimeRangeValue
+	d := req.Config.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() || timeRange.IsNull() || timeRange.Mode.IsNull() {
+		return
+	}
 	validateReportCustomTimeRangeMode(ctx, req.Config, nil, &resp.Diagnostics)
 }
 
@@ -416,8 +432,15 @@ func validateReportCustomTimeRangeUnit(ctx context.Context, config tfsdk.Config,
 // API retains the stored value). Unknown values (e.g. cross-resource references)
 // are deferred, since they may resolve to a valid combination.
 func validateReportCountAggregation(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
 	var count resource_report.CountValue
-	d := getter.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
 	diags.Append(d...)
 	if d.HasError() {
 		return
@@ -480,8 +503,15 @@ func validateReportCountAggregation(ctx context.Context, getter, priorState attr
 // update (time_range is Optional+Computed and not clearable in place, so the
 // API retains the stored value). Unknown values are deferred.
 func validateReportCustomTimeRangeMode(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
 	var customTimeRange resource_report.CustomTimeRangeValue
-	d := getter.GetAttribute(ctx, path.Root("config").AtName("custom_time_range"), &customTimeRange)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("custom_time_range"), &customTimeRange)
 	diags.Append(d...)
 	if d.HasError() {
 		return
@@ -506,6 +536,20 @@ func validateReportCustomTimeRangeMode(ctx context.Context, getter, priorState a
 	}
 
 	mode := timeRange.Mode
+	if mode.IsNull() && priorState != nil {
+		var priorTimeRange resource_report.TimeRangeValue
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &priorTimeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		if priorTimeRange.IsUnknown() {
+			return
+		}
+		if !priorTimeRange.IsNull() {
+			mode = priorTimeRange.Mode
+		}
+	}
 	if mode.IsUnknown() {
 		return
 	}

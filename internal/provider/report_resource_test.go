@@ -5282,8 +5282,51 @@ func TestAccReport_Count_ClearedInPlace(t *testing.T) {
 					},
 				},
 			},
+			// Step 6: Keep count while omitting aggregation (aggregation = "count"
+			// is preserved via Category B / UseStateForUnknown).
+			{
+				Config: testAccReportCountOmitAggregation(n, "service_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("id"),
+						knownvalue.StringExact("service_description")),
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("aggregation"),
+						knownvalue.StringExact("count")),
+				},
+			},
 		},
 	})
+}
+
+func testAccReportCountOmitAggregation(i int, id, ctype string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "count_test" {
+    name = "test-count-%d"
+    config = {
+        metrics = [{
+            type  = "basic"
+            value = "cost"
+        }]
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        count = {
+            id   = %q
+            type = %q
+        }
+    }
+}
+`, i, id, ctype)
 }
 
 // TestAccReport_Count_RequiredWhenAggregationCount verifies that aggregation =
@@ -5504,8 +5547,80 @@ func TestAccReport_CustomTimeRange_ClearedInPlace(t *testing.T) {
 					},
 				},
 			},
+			// Step 6: keep custom_time_range while omitting time_range (time_range.mode =
+			// "custom" is preserved via Category B / UseStateForUnknown).
+			{
+				Config: testAccReportWithCustomTimeRangeOmitTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					present,
+					statecheck.ExpectKnownValue(
+						"doit_report.ctr_clear",
+						tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("mode"),
+						knownvalue.StringExact("custom")),
+				},
+			},
+			// Step 7: update to a name-only config omitting the top-level config
+			// wrapper altogether (config wrapper and custom_time_range are preserved).
+			{
+				Config: testAccReportCustomTimeRangeNameOnly(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.ctr_clear",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 8: drift check on the name-only config.
+			{
+				Config: testAccReportCustomTimeRangeNameOnly(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
+}
+
+func testAccReportWithCustomTimeRangeOmitTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_clear" {
+    name = "test-ctr-clear-%d"
+    config = {
+        metrics = [{
+            type  = "basic"
+            value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        custom_time_range = {
+            from = "2024-01-01T00:00:00Z"
+            to   = "2024-02-01T00:00:00Z"
+        }
+    }
+}
+`, i)
+}
+
+func testAccReportCustomTimeRangeNameOnly(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_clear" {
+    name = "test-ctr-clear-renamed-%d"
+}
+`, i)
 }
 
 // TestAccReport_CustomTimeRange_ModeValidation verifies the plan-time validator

@@ -315,7 +315,15 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 
 	// Re-run cross-field checks against priorState for Category B unclearable attributes
 	// (aggregation, time_range, secondary_time_range, metrics) that the API retains on update
-	// when omitted from config.
+	// when omitted from config. Skip when the top-level `config` wrapper is omitted or unknown:
+	// `config` itself is Category B (preserved on omission, not cleared).
+	var configWrapper resource_report.ConfigValue
+	diags := req.Config.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
 	var priorState attributeGetter
 	if !req.State.Raw.IsNull() && len(resp.RequiresReplace) == 0 {
 		priorState = req.State
