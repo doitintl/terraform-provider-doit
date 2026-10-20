@@ -845,16 +845,18 @@ func TestReportResource_ModifyPlan_LimitByChange_InheritedSecondaryRange(t *test
 	}
 }
 
-// Omitting aggregation and the count block forces a replacement (count is Category C),
-// and the replacement is created from config alone, so the plan's inherited
-// count/secondary values must not be treated as the effective configuration.
-func TestReportResource_ModifyPlan_LimitByChange_OmittedCountForcesReplace(t *testing.T) {
+// Omitting aggregation and the count block on update clears count in place (Category A)
+// while inheriting aggregation = "count" and secondary_time_range from prior state,
+// so ModifyPlan rejects both the missing count block and the limit_by_change +
+// count + secondary_time_range combination.
+func TestReportResource_ModifyPlan_LimitByChange_OmittedCountInheritsAggregation(t *testing.T) {
 	ctx := t.Context()
 
 	state := lbcCountSecondaryStateMap(ctx, t)
 
 	plan := lbcCountSecondaryStateMap(ctx, t)
 	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcCost))
+	plan["count"] = resource_report.NewCountValueNull()
 	plan["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueUnknown()
 
 	cfg := lbcCountSecondaryStateMap(ctx, t)
@@ -864,11 +866,14 @@ func TestReportResource_ModifyPlan_LimitByChange_OmittedCountForcesReplace(t *te
 	cfg["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
 
 	resp := lbcModifyPlan(ctx, t, state, plan, cfg)
-	if resp.Diagnostics.HasError() {
-		t.Fatalf("expected no errors, got: %v", resp.Diagnostics)
+	if got := lbcCountErrors(resp.Diagnostics, lbcCountSummary); got != 1 {
+		t.Fatalf("expected one %q error for inherited count aggregation + secondary range, got %d: %v", lbcCountSummary, got, resp.Diagnostics)
 	}
-	if len(resp.RequiresReplace) == 0 {
-		t.Fatalf("expected the removed count block to force replacement")
+	if got := lbcCountErrors(resp.Diagnostics, "Missing Count Configuration"); got != 1 {
+		t.Fatalf("expected one \"Missing Count Configuration\" error for cleared count with inherited count aggregation, got %d: %v", got, resp.Diagnostics)
+	}
+	if len(resp.RequiresReplace) != 0 {
+		t.Fatalf("expected count removal to update in place without replacement, got RequiresReplace: %v", resp.RequiresReplace)
 	}
 }
 
@@ -963,9 +968,10 @@ func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsListed(t *testing
 	}
 }
 
-// A forced replacement is created from config alone, so omitted metrics are not checked
-// against the stored list.
-func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsWithReplaceDeferred(t *testing.T) {
+// Omitting metrics, aggregation, and count on update clears count in place (Category A)
+// while inheriting metrics and aggregation = "count" from prior state, so ModifyPlan
+// rejects both the unlisted limit_by_change metric and the missing count block.
+func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsAndCountValidatesAgainstPriorState(t *testing.T) {
 	ctx := t.Context()
 
 	state := lbcMetricsStateMap(ctx, t, lbcCost)
@@ -975,6 +981,7 @@ func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsWithReplaceDeferr
 	plan := lbcMetricsStateMap(ctx, t, lbcCost)
 	plan["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
 	plan["metrics"] = types.ListUnknown(resource_report.MetricsValue{}.Type(ctx))
+	plan["count"] = resource_report.NewCountValueNull()
 
 	cfg := lbcMetricsStateMap(ctx, t, lbcCost)
 	cfg["limit_by_change"] = lbcValueFor(ctx, t, lbcMetricValue(ctx, lbcUsage))
@@ -983,11 +990,14 @@ func TestReportResource_ModifyPlan_LimitByChange_OmittedMetricsWithReplaceDeferr
 	cfg["count"] = resource_report.NewCountValueNull()
 
 	resp := lbcModifyPlan(ctx, t, state, plan, cfg)
-	if got := lbcCountErrors(resp.Diagnostics, lbcMetricListedError); got != 0 {
-		t.Fatalf("expected no %q error, got %d: %v", lbcMetricListedError, got, resp.Diagnostics)
+	if got := lbcCountErrors(resp.Diagnostics, lbcMetricListedError); got != 1 {
+		t.Fatalf("expected one %q error against stored metrics, got %d: %v", lbcMetricListedError, got, resp.Diagnostics)
 	}
-	if len(resp.RequiresReplace) == 0 {
-		t.Fatalf("expected the removed count block to force replacement")
+	if got := lbcCountErrors(resp.Diagnostics, "Missing Count Configuration"); got != 1 {
+		t.Fatalf("expected one \"Missing Count Configuration\" error, got %d: %v", got, resp.Diagnostics)
+	}
+	if len(resp.RequiresReplace) != 0 {
+		t.Fatalf("expected count removal to update in place without replacement, got RequiresReplace: %v", resp.RequiresReplace)
 	}
 }
 

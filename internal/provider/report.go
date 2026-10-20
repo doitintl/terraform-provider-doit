@@ -678,25 +678,17 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	// "count". Children are Required, so no per-field unknown guards are needed once
 	// the object itself is known.
 	//
-	// NOTE: count cannot be cleared in place. The report update is a PATCH that
-	// MERGES config, and count is *ExternalConfigCount (omitempty) with no null
-	// representation — a nil pointer omits the field entirely (we never send an
-	// explicit null), so the server's stored copy survives the merge. Removing the
-	// count block from config is therefore handled by RequiresReplace (see
-	// reportResource.ModifyPlan / requiresReplaceWhenCleared): the resource is
-	// recreated, which honors the removal via destroy+create instead of drifting
-	// (nested O+C count is otherwise re-marked "known after apply" every plan) or
-	// failing at the API (400 when aggregation also changes away from "count").
-	// Making count clearable in place would require the upstream schema to mark it
-	// nullable (generating nullable.Nullable so we can send an explicit null, like
-	// forecast_settings). reportCountAggregationValidator separately catches the
-	// in-config misconfiguration (count set with a non-"count"/omitted aggregation)
-	// at plan time.
+	// count is nullable (Category A): when omitted from config, useNullForCount
+	// sets the plan value to null and we send an explicit null so the PATCH merge
+	// clears the stored count on the server. reportCountAggregationValidator
+	// enforces the two-way count/aggregation coupling at plan time.
 	if !config.Count.IsNull() && !config.Count.IsUnknown() {
-		externalConfig.Count = &models.ExternalConfigCount{
+		externalConfig.Count.Set(models.ExternalConfigCount{
 			Id:   config.Count.Id.ValueString(),
 			Type: models.ExternalConfigCountType(config.Count.CountType.ValueString()),
-		}
+		})
+	} else if config.Count.IsNull() {
+		externalConfig.Count.SetNull()
 	}
 	if !config.Currency.IsNull() && !config.Currency.IsUnknown() {
 		externalConfig.Currency = new(models.Currency(config.Currency.ValueString()))
@@ -763,8 +755,10 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			customTimeRange.To = &toTime
 		}
 		if !diags.HasError() {
-			externalConfig.CustomTimeRange = &customTimeRange
+			externalConfig.CustomTimeRange.Set(customTimeRange)
 		}
+	} else if config.CustomTimeRange.IsNull() {
+		externalConfig.CustomTimeRange.SetNull()
 	}
 
 	if !config.Dimensions.IsNull() && !config.Dimensions.IsUnknown() {
@@ -870,31 +864,39 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		// once metric_filter itself is set.
 		var values []float64
 		diags.Append(config.MetricFilter.Values.ElementsAs(ctx, &values, false)...)
-		externalConfig.MetricFilter = &models.ExternalConfigMetricFilter{
-			Metric:   *baseTypeObjectValueToExternalMetric(config.MetricFilter.Metric),
-			Operator: models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString()),
-			Values:   values,
+		if !diags.HasError() {
+			mf := models.ExternalConfigMetricFilter{
+				Metric:   *baseTypeObjectValueToExternalMetric(config.MetricFilter.Metric),
+				Operator: models.ExternalConfigMetricFilterOperator(config.MetricFilter.Operator.ValueString()),
+				Values:   values,
+			}
+			// operand is Optional+Computed with a schema Default ("single_value"), so it
+			// is never Unknown at plan time — guard on IsNull only.
+			if !config.MetricFilter.Operand.IsNull() {
+				mf.Operand = new(models.ExternalConfigMetricFilterOperand(config.MetricFilter.Operand.ValueString()))
+			}
+			externalConfig.MetricFilter.Set(mf)
 		}
-		// operand is Optional+Computed with a schema Default ("single_value"), so it
-		// is never Unknown at plan time — guard on IsNull only.
-		if !config.MetricFilter.Operand.IsNull() {
-			externalConfig.MetricFilter.Operand = new(models.ExternalConfigMetricFilterOperand(config.MetricFilter.Operand.ValueString()))
-		}
+	} else if config.MetricFilter.IsNull() {
+		externalConfig.MetricFilter.SetNull()
 	}
 
 	if !config.LimitByChange.IsNull() && !config.LimitByChange.IsUnknown() {
 		// change_type, operator, values, include_incomplete_data and metric (incl.
 		// metric.type/value) are all Required, so they are always Known here.
-		lbc := &models.ExternalLimitByChange{
-			ChangeType:            models.ExternalLimitByChangeChangeType(config.LimitByChange.ChangeType.ValueString()),
-			Operator:              models.ExternalLimitByChangeOperator(config.LimitByChange.Operator.ValueString()),
-			IncludeIncompleteData: config.LimitByChange.IncludeIncompleteData.ValueBool(),
-			Metric:                *baseTypeObjectValueToExternalMetric(config.LimitByChange.Metric),
-		}
 		var values []float64
 		diags.Append(config.LimitByChange.Values.ElementsAs(ctx, &values, false)...)
-		lbc.Values = values
-		externalConfig.LimitByChange = lbc
+		if !diags.HasError() {
+			externalConfig.LimitByChange.Set(models.ExternalLimitByChange{
+				ChangeType:            models.ExternalLimitByChangeChangeType(config.LimitByChange.ChangeType.ValueString()),
+				Operator:              models.ExternalLimitByChangeOperator(config.LimitByChange.Operator.ValueString()),
+				IncludeIncompleteData: config.LimitByChange.IncludeIncompleteData.ValueBool(),
+				Metric:                *baseTypeObjectValueToExternalMetric(config.LimitByChange.Metric),
+				Values:                values,
+			})
+		}
+	} else if config.LimitByChange.IsNull() {
+		externalConfig.LimitByChange.SetNull()
 	}
 
 	if !config.Splits.IsNull() && !config.Splits.IsUnknown() {
@@ -1138,12 +1140,12 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 	// Nested Object: Count (id + type). Default null; populate when present.
 	configMap["count"] = resource_report.NewCountValueNull()
-	if config.Count != nil {
+	if count := nullableToPointer(config.Count); count != nil {
 		countVal, countDiags := resource_report.NewCountValue(
 			resource_report.CountValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
-				"id":   types.StringValue(config.Count.Id),
-				"type": types.StringValue(string(config.Count.Type)),
+				"id":   types.StringValue(count.Id),
+				"type": types.StringValue(string(count.Type)),
 			})
 		diags.Append(countDiags...)
 		configMap["count"] = countVal
@@ -1202,7 +1204,7 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	// Nested Object: CustomTimeRange
 	configMap["custom_time_range"] = resource_report.NewCustomTimeRangeValueNull()
 
-	if config.CustomTimeRange != nil {
+	if ctr := nullableToPointer(config.CustomTimeRange); ctr != nil {
 		ctrMap := map[string]attr.Value{
 			"from": types.StringNull(),
 			"to":   types.StringNull(),
@@ -1216,22 +1218,22 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			existingTo = state.Config.CustomTimeRange.To.ValueString()
 		}
 
-		if config.CustomTimeRange.From != nil {
+		if ctr.From != nil {
 			// Preserve user's timestamp format if semantically equal
 			existingTime, err := time.Parse(time.RFC3339, existingFrom)
-			if err == nil && existingTime.Equal(*config.CustomTimeRange.From) {
+			if err == nil && existingTime.Equal(*ctr.From) {
 				ctrMap["from"] = types.StringValue(existingFrom)
 			} else {
-				ctrMap["from"] = types.StringValue(config.CustomTimeRange.From.Format(time.RFC3339))
+				ctrMap["from"] = types.StringValue(ctr.From.Format(time.RFC3339))
 			}
 		}
-		if config.CustomTimeRange.To != nil {
+		if ctr.To != nil {
 			// Preserve user's timestamp format if semantically equal
 			existingTime, err := time.Parse(time.RFC3339, existingTo)
-			if err == nil && existingTime.Equal(*config.CustomTimeRange.To) {
+			if err == nil && existingTime.Equal(*ctr.To) {
 				ctrMap["to"] = types.StringValue(existingTo)
 			} else {
-				ctrMap["to"] = types.StringValue(config.CustomTimeRange.To.Format(time.RFC3339))
+				ctrMap["to"] = types.StringValue(ctr.To.Format(time.RFC3339))
 			}
 		}
 		ctrVal, d := resource_report.NewCustomTimeRangeValue(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
@@ -1523,25 +1525,25 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	}
 
 	// Nested Object: MetricFilter
-	if config.MetricFilter != nil {
+	if mf := nullableToPointer(config.MetricFilter); mf != nil {
 		mfMap := map[string]attr.Value{
-			"operator": types.StringValue(string(config.MetricFilter.Operator)),
+			"operator": types.StringValue(string(mf.Operator)),
 			// operand has schema Default "single_value"; map nil to the default.
 			"operand": types.StringValue("single_value"),
 		}
-		if config.MetricFilter.Operand != nil {
-			mfMap["operand"] = types.StringValue(string(*config.MetricFilter.Operand))
+		if mf.Operand != nil {
+			mfMap["operand"] = types.StringValue(string(*mf.Operand))
 		}
 
-		metricFilterMetricVal, mfMetricDiags := externalMetricToBaseTypeObjectValue(ctx, &config.MetricFilter.Metric)
+		metricFilterMetricVal, mfMetricDiags := externalMetricToBaseTypeObjectValue(ctx, &mf.Metric)
 		diags.Append(mfMetricDiags...)
 		if diags.HasError() {
 			return diags
 		}
 		mfMap["metric"] = metricFilterMetricVal
-		if config.MetricFilter.Values != nil {
+		if mf.Values != nil {
 			var mfValueDiags diag.Diagnostics
-			mfMap["values"], mfValueDiags = types.ListValueFrom(ctx, types.Float64Type, config.MetricFilter.Values)
+			mfMap["values"], mfValueDiags = types.ListValueFrom(ctx, types.Float64Type, mf.Values)
 			diags.Append(mfValueDiags...)
 			if diags.HasError() {
 				return diags
@@ -1562,21 +1564,21 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 	}
 
 	// Nested Object: LimitByChange
-	if config.LimitByChange != nil {
-		lbcMetricVal, lbcMetricDiags := externalMetricToBaseTypeObjectValue(ctx, &config.LimitByChange.Metric)
+	if lbc := nullableToPointer(config.LimitByChange); lbc != nil {
+		lbcMetricVal, lbcMetricDiags := externalMetricToBaseTypeObjectValue(ctx, &lbc.Metric)
 		diags.Append(lbcMetricDiags...)
 		if diags.HasError() {
 			return diags
 		}
-		lbcValues, lbcValuesDiags := types.ListValueFrom(ctx, types.Float64Type, config.LimitByChange.Values)
+		lbcValues, lbcValuesDiags := types.ListValueFrom(ctx, types.Float64Type, lbc.Values)
 		diags.Append(lbcValuesDiags...)
 		if diags.HasError() {
 			return diags
 		}
 		lbcMap := map[string]attr.Value{
-			"change_type":             types.StringValue(string(config.LimitByChange.ChangeType)),
-			"operator":                types.StringValue(string(config.LimitByChange.Operator)),
-			"include_incomplete_data": types.BoolValue(config.LimitByChange.IncludeIncompleteData),
+			"change_type":             types.StringValue(string(lbc.ChangeType)),
+			"operator":                types.StringValue(string(lbc.Operator)),
+			"include_incomplete_data": types.BoolValue(lbc.IncludeIncompleteData),
 			"metric":                  lbcMetricVal,
 			"values":                  lbcValues,
 		}

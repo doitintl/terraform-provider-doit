@@ -18206,7 +18206,9 @@ components:
           items:
             $ref: "#/components/schemas/ExternalMetric"
         metricFilter:
-          $ref: "#/components/schemas/ExternalConfigMetricFilter"
+          allOf:
+            - $ref: "#/components/schemas/ExternalConfigMetricFilter"
+          nullable: true
         limitAggregation:
           type: string
           description: |-
@@ -18220,7 +18222,9 @@ components:
             - all
           default: none
         limitByChange:
-          $ref: "#/components/schemas/ExternalLimitByChange"
+          allOf:
+            - $ref: "#/components/schemas/ExternalLimitByChange"
+          nullable: true
         aggregation:
           description: How to aggregate data values in the report.
           type: string
@@ -18337,8 +18341,12 @@ components:
         displaySettings:
           $ref: "#/components/schemas/ExternalDisplaySettings"
         customTimeRange:
-          description: Required when the time range is set to "custom".
+          description: |-
+            Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+            A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+            Sending null while `timeRange.mode` stays "custom" is rejected.
           type: object
+          nullable: true
           properties:
             from:
               type: string
@@ -18352,8 +18360,11 @@ components:
               example: "2024-03-12T23:00:00Z"
         count:
           type: object
+          nullable: true
           description: |-
             The field to count distinct values of. Only applicable when aggregation is set to "count".
+            On PATCH, omit to preserve the existing field; send null to remove it.
+            A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
           required:
             - id
             - type
@@ -18543,7 +18554,9 @@ components:
         values:
           - google-cloud
     ExternalConfigMetricFilter:
-      description: Metric filter to limit report rows by metric value.
+      description: |-
+        Metric filter to limit report rows by metric value.
+        On PATCH, omit to preserve the existing filter; send null to remove it.
       type: object
       required:
         - metric
@@ -18603,6 +18616,7 @@ components:
         one range counts as zero there, so a percentage threshold cannot be met from zero. A
         percentage-typed custom metric, or count aggregation, is rejected with
         `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
+        On PATCH, omit to preserve the existing limit; send null to remove it.
       type: object
       required:
         - metric

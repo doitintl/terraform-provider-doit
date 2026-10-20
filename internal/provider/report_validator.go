@@ -324,7 +324,45 @@ func (v reportCountAggregationValidator) MarkdownDescription(_ context.Context) 
 }
 
 func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
+	// Defer when aggregation is omitted in config so ModifyPlan can inherit the
+	// stored aggregation on update (or reject on create).
+	var aggregation types.String
+	d := req.Config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() || aggregation.IsNull() {
+		return
+	}
+	validateReportCountAggregation(ctx, req.Config, nil, &resp.Diagnostics)
+}
+
+// reportCustomTimeRangeModeValidator enforces the two-way coupling between
+// config.custom_time_range and config.time_range.mode:
+//   - custom_time_range is only valid when time_range.mode is "custom"; and
+//   - time_range.mode = "custom" requires a custom_time_range block.
+//
+// The API rejects either mismatch with a 400, so surface both at plan time.
+type reportCustomTimeRangeModeValidator struct{}
+
+var _ resource.ConfigValidator = reportCustomTimeRangeModeValidator{}
+
+func (v reportCustomTimeRangeModeValidator) Description(_ context.Context) string {
+	return "Validates that custom_time_range is set if and only if time_range.mode is \"custom\""
+}
+
+func (v reportCustomTimeRangeModeValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `custom_time_range` is set if and only if `time_range.mode` is `\"custom\"`"
+}
+
+func (v reportCustomTimeRangeModeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	// Defer when time_range or time_range.mode is omitted in config so ModifyPlan
+	// can inherit the stored mode on update (or reject on create).
+	var timeRange resource_report.TimeRangeValue
+	d := req.Config.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() || timeRange.IsNull() || timeRange.Mode.IsNull() {
+		return
+	}
+	validateReportCustomTimeRangeMode(ctx, req.Config, nil, &resp.Diagnostics)
 }
 
 // reportCustomTimeRangeUnitValidator rejects time_range.unit alongside
@@ -387,21 +425,39 @@ func validateReportCustomTimeRangeUnit(ctx context.Context, config tfsdk.Config,
 // resource and the report_query data source, which build the same ExternalConfig
 // from an identical schema. It enforces the count/aggregation coupling in both
 // directions (the API rejects either mismatch with a 400; verified: an omitted
-// aggregation does NOT default to "count"). Unknown values (e.g. cross-resource
-// references) are deferred, since they may resolve to a valid combination.
-func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
+// aggregation does NOT default to "count").
+//
+// priorState, when non-nil, supplies aggregation when the config omits it on
+// update (aggregation is Optional+Computed and not clearable in place, so the
+// API retains the stored value). Unknown values (e.g. cross-resource references)
+// are deferred, since they may resolve to a valid combination.
+func validateReportCountAggregation(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
 	var count resource_report.CountValue
-	d := config.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
 	diags.Append(d...)
 	if d.HasError() {
 		return
 	}
 
 	var aggregation types.String
-	d = config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
 	diags.Append(d...)
 	if d.HasError() {
 		return
+	}
+	if aggregation.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
 	}
 
 	// Defer while either value is unknown — it may resolve to a valid combination.
@@ -435,6 +491,92 @@ func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, di
 			"Missing Count Configuration",
 			"`aggregation = \"count\"` requires a `count` block specifying the field to count "+
 				"(e.g. count = { id = \"service_description\", type = \"fixed\" }).",
+		)
+	}
+}
+
+// validateReportCustomTimeRangeMode is the shared body used by both the report
+// resource and the report_query data source. It enforces the two-way coupling
+// between config.custom_time_range and config.time_range.mode.
+//
+// priorState, when non-nil, supplies time_range when the config omits it on
+// update (time_range is Optional+Computed and not clearable in place, so the
+// API retains the stored value). Unknown values are deferred.
+func validateReportCustomTimeRangeMode(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
+	var customTimeRange resource_report.CustomTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("custom_time_range"), &customTimeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var timeRange resource_report.TimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if timeRange.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+	}
+
+	if customTimeRange.IsUnknown() || timeRange.IsUnknown() {
+		return
+	}
+
+	mode := timeRange.Mode
+	if mode.IsNull() && priorState != nil {
+		var priorTimeRange resource_report.TimeRangeValue
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &priorTimeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		if priorTimeRange.IsUnknown() {
+			return
+		}
+		if !priorTimeRange.IsNull() {
+			mode = priorTimeRange.Mode
+		}
+	}
+	if mode.IsUnknown() {
+		return
+	}
+
+	if !customTimeRange.IsNull() {
+		if mode.ValueString() == "custom" {
+			return
+		}
+		detail := "`custom_time_range` is only applicable when `time_range.mode = \"custom\"`. " +
+			"Either set `time_range.mode = \"custom\"` or remove the `custom_time_range` block."
+		if !mode.IsNull() {
+			detail = fmt.Sprintf("`custom_time_range` is only applicable when `time_range.mode = \"custom\"`, but `time_range.mode` is %q. "+
+				"Either set `time_range.mode = \"custom\"` or remove the `custom_time_range` block.", mode.ValueString())
+		}
+		diags.AddAttributeError(
+			path.Root("config").AtName("custom_time_range"),
+			"Invalid Custom Time Range Configuration",
+			detail,
+		)
+		return
+	}
+
+	if mode.ValueString() == "custom" {
+		diags.AddAttributeError(
+			path.Root("config").AtName("custom_time_range"),
+			"Missing Custom Time Range",
+			"`time_range.mode = \"custom\"` requires a `custom_time_range` block specifying `from` and `to`.",
 		)
 	}
 }
