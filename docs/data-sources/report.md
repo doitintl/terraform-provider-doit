@@ -76,9 +76,13 @@ Read-Only:
 
 - `advanced_analysis` (Attributes) Advanced analysis options. Each can be set independently. (see [below for nested schema](#nestedatt--config--advanced_analysis))
 - `aggregation` (String) How to aggregate data values in the report.
-- `count` (Attributes) The field to count distinct values of. Only applicable when aggregation is set to "count". (see [below for nested schema](#nestedatt--config--count))
+- `count` (Attributes) The field to count distinct values of. Only applicable when aggregation is set to "count".
+On PATCH, omit to preserve the existing field; send null to remove it.
+A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it. (see [below for nested schema](#nestedatt--config--count))
 - `currency` (String) Currency code for monetary values.
-- `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
+- `custom_time_range` (Attributes) Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+Sending null while `timeRange.mode` stays "custom" is rejected. (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
 - `display_settings` (Attributes) Display settings for the report. (see [below for nested schema](#nestedatt--config--display_settings))
@@ -104,8 +108,10 @@ is comparable while both periods hold the same number of buckets; an absolute ch
 is their plain difference and so scales with the bucket count. A row present in only
 one range counts as zero there, so a percentage threshold cannot be met from zero. A
 percentage-typed custom metric, or count aggregation, is rejected with
-`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`. (see [below for nested schema](#nestedatt--config--limit_by_change))
-- `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
+`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
+On PATCH, omit to preserve the existing limit; send null to remove it. (see [below for nested schema](#nestedatt--config--limit_by_change))
+- `metric_filter` (Attributes) Metric filter to limit report rows by metric value.
+On PATCH, omit to preserve the existing filter; send null to remove it. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
 - `sort_dimensions` (String) Orders the columns produced by `dimensions`, both in the console and in a rendered

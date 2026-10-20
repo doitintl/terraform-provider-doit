@@ -194,8 +194,9 @@ func (d *reportQueryDataSource) Configure(_ context.Context, req datasource.Conf
 // Required), since report_query's config schema is derived from the report
 // resource schema (which now marks them Required).
 func (d *reportQueryDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
-	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
+	validateReportCountAggregation(ctx, req.Config, nil, &resp.Diagnostics)
 	validateReportCustomTimeRangeUnit(ctx, req.Config, &resp.Diagnostics)
+	validateReportCustomTimeRangeMode(ctx, req.Config, nil, &resp.Diagnostics)
 }
 
 func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

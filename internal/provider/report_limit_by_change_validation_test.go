@@ -386,12 +386,16 @@ func TestAccReport_LimitByChange_InheritedSecondaryRange(t *testing.T) {
 	})
 }
 
-// TestAccReport_LimitByChange_OmittedCountReplaces verifies that dropping aggregation and the
-// count block while adding limit_by_change replaces the report and is accepted by the API.
-func TestAccReport_LimitByChange_OmittedCountReplaces(t *testing.T) {
+// TestAccReport_LimitByChange_ClearedCountUpdatesInPlace verifies that because count is
+// cleared in place on update (Category A), omitting aggregation and count while adding
+// limit_by_change inherits aggregation = "count" and secondary_time_range from prior state
+// and is rejected at plan time, whereas explicitly switching aggregation to "total" while
+// dropping count and adding limit_by_change updates the report in place.
+func TestAccReport_LimitByChange_ClearedCountUpdatesInPlace(t *testing.T) {
 	n := acctest.RandInt()
 	before := lbcSpec{aggregation: "count", count: true, secondary: true, metrics: []string{lbcCostMetric}}
-	after := lbcSpec{omitAggregation: true, limitByChange: true, metrics: []string{lbcCostMetric}, limitMetric: "cost"}
+	omittedAgg := lbcSpec{omitAggregation: true, limitByChange: true, metrics: []string{lbcCostMetric}, limitMetric: "cost"}
+	switchedAgg := lbcSpec{aggregation: "total", limitByChange: true, metrics: []string{lbcCostMetric}, limitMetric: "cost"}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -400,10 +404,14 @@ func TestAccReport_LimitByChange_OmittedCountReplaces(t *testing.T) {
 		Steps: []resource.TestStep{
 			{Config: before.report(n)},
 			{
-				Config: after.report(n),
+				Config:      omittedAgg.report(n),
+				ExpectError: regexp.MustCompile(lbcCountError),
+			},
+			{
+				Config: switchedAgg.report(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectResourceAction("doit_report.lbc_validation", plancheck.ResourceActionDestroyBeforeCreate),
+						plancheck.ExpectResourceAction("doit_report.lbc_validation", plancheck.ResourceActionUpdate),
 					},
 				},
 			},
@@ -452,8 +460,8 @@ func TestAccReport_LimitByChange_OmittedMetricsUnlistedMetric(t *testing.T) {
 }
 
 // TestAccReport_LimitByChange_RemovedWithItsMetric verifies that dropping limit_by_change
-// together with the metric it used replaces the report and is not rejected by the validators,
-// even though the plan still carries the old limit_by_change.
+// together with the metric it used updates the report in place (Category A) and is not
+// rejected by the validators.
 func TestAccReport_LimitByChange_RemovedWithItsMetric(t *testing.T) {
 	n := acctest.RandInt()
 	before := lbcSpec{aggregation: "total", limitByChange: true, metrics: []string{lbcCostMetric, lbcMetricHCL("basic", "usage")}, limitMetric: "usage"}
@@ -469,7 +477,7 @@ func TestAccReport_LimitByChange_RemovedWithItsMetric(t *testing.T) {
 				Config: after.report(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectResourceAction("doit_report.lbc_validation", plancheck.ResourceActionDestroyBeforeCreate),
+						plancheck.ExpectResourceAction("doit_report.lbc_validation", plancheck.ResourceActionUpdate),
 					},
 				},
 			},

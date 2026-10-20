@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	resource_report "github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
@@ -359,6 +360,119 @@ func TestOverlayListElements_NilNullOrUnknownLists(t *testing.T) {
 				if tt.plan.IsUnknown() && !planCopy.IsUnknown() {
 					t.Errorf("plan was mutated from Unknown to known (%v)", planCopy)
 				}
+			}
+		})
+	}
+}
+
+// TestUseNullForClearableReportObjects verifies that the Category A object plan
+// modifiers for config.count, config.custom_time_range, config.limit_by_change,
+// and config.metric_filter preserve ConfigValue when ConfigValue is null (even
+// when the framework initially marks PlanValue unknown on update removal) and
+// leave PlanValue untouched when ConfigValue is non-null.
+func TestUseNullForClearableReportObjects(t *testing.T) {
+	ctx := t.Context()
+
+	countTypes := resource_report.CountValue{}.AttributeTypes(ctx)
+	ctrTypes := resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx)
+	lbcTypes := resource_report.LimitByChangeValue{}.AttributeTypes(ctx)
+	mfTypes := resource_report.MetricFilterValue{}.AttributeTypes(ctx)
+
+	knownCount := types.ObjectValueMust(countTypes, map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+	knownCTR := types.ObjectValueMust(ctrTypes, map[string]attr.Value{
+		"from": types.StringValue("2025-01-01T00:00:00Z"),
+		"to":   types.StringValue("2025-02-01T00:00:00Z"),
+	})
+	knownLBC := types.ObjectValueMust(lbcTypes, map[string]attr.Value{
+		"change_type":             types.StringValue("percentage"),
+		"include_incomplete_data": types.BoolValue(false),
+		"metric":                  resource_report.NewMetricValueNull(),
+		"operator":                types.StringValue("gte"),
+		"values":                  types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(50)}),
+	})
+	knownMF := types.ObjectValueMust(mfTypes, map[string]attr.Value{
+		"metric":   resource_report.NewMetricValueNull(),
+		"operand":  types.StringNull(),
+		"operator": types.StringValue("gt"),
+		"values":   types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(100)}),
+	})
+
+	modifiers := []struct {
+		name      string
+		modifier  planmodifier.Object
+		attrTypes map[string]attr.Type
+		knownObj  types.Object
+	}{
+		{
+			name:      "useNullForCount",
+			modifier:  useNullForCount(),
+			attrTypes: countTypes,
+			knownObj:  knownCount,
+		},
+		{
+			name:      "useNullForCustomTimeRange",
+			modifier:  useNullForCustomTimeRange(),
+			attrTypes: ctrTypes,
+			knownObj:  knownCTR,
+		},
+		{
+			name:      "useNullForLimitByChange",
+			modifier:  useNullForLimitByChange(),
+			attrTypes: lbcTypes,
+			knownObj:  knownLBC,
+		},
+		{
+			name:      "useNullForMetricFilter",
+			modifier:  useNullForMetricFilter(),
+			attrTypes: mfTypes,
+			knownObj:  knownMF,
+		},
+	}
+
+	for _, tc := range modifiers {
+		t.Run(tc.name+"/config_null_plan_unknown_resolves_to_null", func(t *testing.T) {
+			nullObj := types.ObjectNull(tc.attrTypes)
+			unknownObj := types.ObjectUnknown(tc.attrTypes)
+
+			req := planmodifier.ObjectRequest{
+				ConfigValue: nullObj,
+				StateValue:  tc.knownObj,
+				PlanValue:   unknownObj,
+			}
+			resp := &planmodifier.ObjectResponse{
+				PlanValue: unknownObj,
+			}
+
+			tc.modifier.PlanModifyObject(ctx, req, resp)
+
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+			}
+			if !resp.PlanValue.IsNull() {
+				t.Errorf("expected PlanValue to be null when ConfigValue is null, got %v", resp.PlanValue)
+			}
+		})
+
+		t.Run(tc.name+"/config_known_preserves_plan", func(t *testing.T) {
+			req := planmodifier.ObjectRequest{
+				ConfigValue: tc.knownObj,
+				StateValue:  types.ObjectNull(tc.attrTypes),
+				PlanValue:   tc.knownObj,
+			}
+			resp := &planmodifier.ObjectResponse{
+				PlanValue: tc.knownObj,
+			}
+
+			tc.modifier.PlanModifyObject(ctx, req, resp)
+
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+			}
+			if !resp.PlanValue.Equal(tc.knownObj) {
+				t.Errorf("expected PlanValue to remain unchanged, got %v", resp.PlanValue)
 			}
 		})
 	}

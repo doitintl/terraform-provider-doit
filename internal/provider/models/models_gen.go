@@ -7931,13 +7931,17 @@ type ExternalConfig struct {
 	Aggregation *ExternalConfigAggregation `json:"aggregation,omitempty"`
 
 	// Count The field to count distinct values of. Only applicable when aggregation is set to "count".
-	Count *ExternalConfigCount `json:"count,omitempty"`
+	// On PATCH, omit to preserve the existing field; send null to remove it.
+	// A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
+	Count nullable.Nullable[ExternalConfigCount] `json:"count,omitempty"`
 
 	// Currency Currency code for monetary values.
 	Currency *Currency `json:"currency,omitempty"`
 
-	// CustomTimeRange Required when the time range is set to "custom".
-	CustomTimeRange *ExternalConfigCustomTimeRange `json:"customTimeRange,omitempty"`
+	// CustomTimeRange Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+	// A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+	// Sending null while `timeRange.mode` stays "custom" is rejected.
+	CustomTimeRange nullable.Nullable[ExternalConfigCustomTimeRange] `json:"customTimeRange,omitempty"`
 
 	// DataSource Data source of the report.
 	DataSource *ExternalConfigDataSource `json:"dataSource,omitempty"`
@@ -7974,27 +7978,9 @@ type ExternalConfig struct {
 	// (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
 	// at most two of those three limit types — not all three. When `displayValues` is not
 	// `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
-	LimitAggregation *ExternalConfigLimitAggregation `json:"limitAggregation,omitempty"`
-
-	// LimitByChange Limit by change filter; a report may configure at most two of `metricFilter`,
-	// `limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
-	// a period-over-period delta between adjacent time buckets. With it, each row's
-	// primary-range total is compared with its secondary-range total, so column dimensions
-	// (`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
-	// to those totals, while `group` gives every row its own change. A percentage change
-	// is comparable while both periods hold the same number of buckets; an absolute change
-	// is their plain difference and so scales with the bucket count. A row present in only
-	// one range counts as zero there, so a percentage threshold cannot be met from zero. A
-	// percentage-typed custom metric, or count aggregation, is rejected with
-	// `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
-	//
-	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
-	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
-
-	// MetricFilter Metric filter to limit report rows by metric value.
-	//
-	// Example: {"metric":{"type":"basic","value":"cost"},"operator":"gt","values":[50]}
-	MetricFilter *ExternalConfigMetricFilter `json:"metricFilter,omitempty"`
+	LimitAggregation *ExternalConfigLimitAggregation               `json:"limitAggregation,omitempty"`
+	LimitByChange    nullable.Nullable[ExternalLimitByChange]      `json:"limitByChange,omitempty"`
+	MetricFilter     nullable.Nullable[ExternalConfigMetricFilter] `json:"metricFilter,omitempty"`
 
 	// Metrics The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
 	Metrics *[]ExternalMetric `json:"metrics,omitempty"`
@@ -8067,6 +8053,8 @@ type ExternalConfigSortGroups string
 type ExternalConfigTimeInterval string
 
 // ExternalConfigCount The field to count distinct values of. Only applicable when aggregation is set to "count".
+// On PATCH, omit to preserve the existing field; send null to remove it.
+// A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
 type ExternalConfigCount struct {
 	// Id The field identifier to count distinct values of.
 	Id string `json:"id"`
@@ -8078,7 +8066,9 @@ type ExternalConfigCount struct {
 // ExternalConfigCountType The metadata field type.
 type ExternalConfigCountType string
 
-// ExternalConfigCustomTimeRange Required when the time range is set to "custom".
+// ExternalConfigCustomTimeRange Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+// A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+// Sending null while `timeRange.mode` stays "custom" is rejected.
 type ExternalConfigCustomTimeRange struct {
 	// From The start timestamp of the time range in RFC3339 format.
 	//
@@ -8123,6 +8113,7 @@ type ExternalConfigFilter struct {
 type ExternalConfigFilterMode string
 
 // ExternalConfigMetricFilter Metric filter to limit report rows by metric value.
+// On PATCH, omit to preserve the existing filter; send null to remove it.
 //
 // Example: {"metric":{"type":"basic","value":"cost"},"operator":"gt","values":[50]}
 type ExternalConfigMetricFilter struct {
@@ -8243,6 +8234,7 @@ type ExternalForecastSettingsMode string
 // one range counts as zero there, so a percentage threshold cannot be met from zero. A
 // percentage-typed custom metric, or count aggregation, is rejected with
 // `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
+// On PATCH, omit to preserve the existing limit; send null to remove it.
 //
 // Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 type ExternalLimitByChange struct {

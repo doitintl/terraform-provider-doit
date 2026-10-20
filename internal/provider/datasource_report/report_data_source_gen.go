@@ -68,8 +68,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "The field to count distinct values of. Only applicable when aggregation is set to \"count\".",
-						MarkdownDescription: "The field to count distinct values of. Only applicable when aggregation is set to \"count\".",
+						Description:         "The field to count distinct values of. Only applicable when aggregation is set to \"count\".\nOn PATCH, omit to preserve the existing field; send null to remove it.\nA PATCH that sets `aggregation` to a value other than \"count\" without sending `count` removes it.",
+						MarkdownDescription: "The field to count distinct values of. Only applicable when aggregation is set to \"count\".\nOn PATCH, omit to preserve the existing field; send null to remove it.\nA PATCH that sets `aggregation` to a value other than \"count\" without sending `count` removes it.",
 					},
 					"currency": schema.StringAttribute{
 						Computed:            true,
@@ -95,8 +95,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Required when the time range is set to \"custom\".",
-						MarkdownDescription: "Required when the time range is set to \"custom\".",
+						Description:         "Required when the time range is set to \"custom\". On PATCH, omit to preserve the existing range; send null to remove it.\nA PATCH that sets `timeRange` to a mode other than \"custom\" without sending `customTimeRange` removes it.\nSending null while `timeRange.mode` stays \"custom\" is rejected.",
+						MarkdownDescription: "Required when the time range is set to \"custom\". On PATCH, omit to preserve the existing range; send null to remove it.\nA PATCH that sets `timeRange` to a mode other than \"custom\" without sending `customTimeRange` removes it.\nSending null while `timeRange.mode` stays \"custom\" is rejected.",
 					},
 					"data_source": schema.StringAttribute{
 						Computed:            true,
@@ -428,8 +428,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.",
-						MarkdownDescription: "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.",
+						Description:         "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.\nOn PATCH, omit to preserve the existing limit; send null to remove it.",
+						MarkdownDescription: "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.\nOn PATCH, omit to preserve the existing limit; send null to remove it.",
 					},
 					"metric_filter": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
@@ -476,8 +476,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Metric filter to limit report rows by metric value.",
-						MarkdownDescription: "Metric filter to limit report rows by metric value.",
+						Description:         "Metric filter to limit report rows by metric value.\nOn PATCH, omit to preserve the existing filter; send null to remove it.",
+						MarkdownDescription: "Metric filter to limit report rows by metric value.\nOn PATCH, omit to preserve the existing filter; send null to remove it.",
 					},
 					"metrics": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{

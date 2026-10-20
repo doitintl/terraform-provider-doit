@@ -99,6 +99,25 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			configAttr.Attributes["forecast_settings"] = fsAttr
 		}
 
+		// Category A: count, custom_time_range, limit_by_change, and metric_filter are
+		// clearable in place via explicit JSON null (doiteng/omni#68444).
+		if countAttr, ok := configAttr.Attributes["count"].(schema.SingleNestedAttribute); ok {
+			countAttr.PlanModifiers = append(countAttr.PlanModifiers, useNullForCount())
+			configAttr.Attributes["count"] = countAttr
+		}
+		if ctrAttr, ok := configAttr.Attributes["custom_time_range"].(schema.SingleNestedAttribute); ok {
+			ctrAttr.PlanModifiers = append(ctrAttr.PlanModifiers, useNullForCustomTimeRange())
+			configAttr.Attributes["custom_time_range"] = ctrAttr
+		}
+		if lbcAttr, ok := configAttr.Attributes["limit_by_change"].(schema.SingleNestedAttribute); ok {
+			lbcAttr.PlanModifiers = append(lbcAttr.PlanModifiers, useNullForLimitByChange())
+			configAttr.Attributes["limit_by_change"] = lbcAttr
+		}
+		if mfAttr, ok := configAttr.Attributes["metric_filter"].(schema.SingleNestedAttribute); ok {
+			mfAttr.PlanModifiers = append(mfAttr.PlanModifiers, useNullForMetricFilter())
+			configAttr.Attributes["metric_filter"] = mfAttr
+		}
+
 		// metrics is Optional+Computed and its type/value leaves are Required, so an
 		// API-populated list left in state while absent from config permanently
 		// diffs the resource. Keep it out of state when unconfigured. Not a clearing
@@ -194,9 +213,9 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		// removed (Category B): omitting the block is idempotent — the prior value
 		// sticks with no drift and no error, matching the default Optional+Computed
 		// behavior for unclearable leaves. Verified by the TestAccReport_*_NotClearable
-		// acceptance tests. (The *harmful* containers — count, limit_by_change,
-		// metric_filter, custom_time_range — are handled as Category C via
-		// requiresReplaceWhenCleared in ModifyPlan instead, not acknowledged here.)
+		// acceptance tests. (The clearable containers — count, limit_by_change,
+		// metric_filter, custom_time_range, forecast_settings — are Category A, cleared
+		// in place with an explicit null via their plan modifiers above.)
 		"config.advanced_analysis",                      // silently preserved on removal
 		"config.display_settings",                       // silently preserved on removal
 		"config.secondary_time_range",                   // silently preserved on removal
@@ -242,6 +261,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportCountAggregationValidator{},
 		// unit has no meaning when time_range.mode is "custom".
 		reportCustomTimeRangeUnitValidator{},
+		// custom_time_range is required iff time_range.mode is "custom".
+		reportCustomTimeRangeModeValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in filter values.
 		reportFilterNAValidator{},
 		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
@@ -249,41 +270,13 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 	}
 }
 
-// ModifyPlan forces replacement for Optional+Computed nested objects that the API
-// cannot clear in place when they are removed from config. The report update is a
-// PATCH that merges config and these fields have no null representation, so
-// removing them from config is either impossible or actively harmful:
-//
-//   - config.count: perpetual drift (or a 400 if aggregation also leaves "count").
-//   - config.limit_by_change: perpetual drift (the merge retains the stored value).
-//   - config.metric_filter: the update sends an empty metricFilter and the API
-//     rejects it (400 "invalid number of values: 0").
-//   - config.custom_time_range: the stored range is retained and conflicts with a
-//     changed time_range.mode, so the API rejects the update (400).
-//
-// Replacing the resource honors the removal via destroy+create instead. This is a
-// stopgap (Category C) until the API marks these fields nullable (then they become
-// Category A, cleared with an explicit null like config.forecast_settings).
-//
-// Silently-preserved Optional+Computed objects (advanced_analysis, display_settings,
-// time_range, secondary_time_range, metric, and the forecast_settings custom date
-// ranges) are intentionally NOT listed: removing them is idempotent (the prior
-// value sticks with no drift), matching the default Category B behavior for
-// unclearable leaves, so forcing a replace would be gratuitously destructive.
+// ModifyPlan validates cross-field constraints that depend on resolved unknown values or
+// Category B unclearable attributes inherited from prior state on update (layout,
+// aggregation, time_range, secondary_time_range, and metrics).
 func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Skip on destroy (no plan).
 	if req.Plan.Raw.IsNull() {
 		return
-	}
-
-	if !req.State.Raw.IsNull() {
-		requiresReplaceWhenCleared[resource_report.CountValue](ctx, req, resp, path.Root("config").AtName("count"))
-		requiresReplaceWhenCleared[resource_report.LimitByChangeValue](ctx, req, resp, path.Root("config").AtName("limit_by_change"))
-		requiresReplaceWhenCleared[resource_report.MetricFilterValue](ctx, req, resp, path.Root("config").AtName("metric_filter"))
-		requiresReplaceWhenCleared[resource_report.CustomTimeRangeValue](ctx, req, resp, path.Root("config").AtName("custom_time_range"))
-		if resp.Diagnostics.HasError() {
-			return
-		}
 	}
 
 	// Determine effective layout: use plan layout if known. If layout was omitted from
@@ -320,23 +313,15 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	}
 	validateReportCumulativeComparisonWithLayout(ctx, target, layout, &resp.Diagnostics)
 
-	// Re-run the limit_by_change checks now that unknown values have resolved (ConfigValidators
-	// defer on them).
-	//
-	// count + secondary_time_range: aggregation and secondary_time_range are Optional+Computed and
-	// not clearable in place, so an update that omits them keeps the stored value. The plan marks
-	// them unknown, so fall back to prior state for omitted attributes — unless a replacement is
-	// forced, because a replacement is created from config alone. Removing limit_by_change or count
-	// from config forces a replacement, which also keeps a config that drops limit_by_change
-	// together with its metric from being rejected.
-	//
-	// metric listed in metrics: an omitted metrics list keeps its stored value on update, so it
-	// falls back to prior state the same way (and is deferred on create or replacement, where
-	// the API may default it).
+	// Re-run cross-field checks against priorState for Category B unclearable attributes
+	// (aggregation, time_range, secondary_time_range, metrics) that the API retains on update
+	// when omitted from config.
 	var priorState attributeGetter
 	if !req.State.Raw.IsNull() && len(resp.RequiresReplace) == 0 {
 		priorState = req.State
 	}
+	validateReportCountAggregation(ctx, req.Config, priorState, &resp.Diagnostics)
+	validateReportCustomTimeRangeMode(ctx, req.Config, priorState, &resp.Diagnostics)
 	validateReportLimitByChangeCountSecondary(ctx, req.Config, priorState, &resp.Diagnostics)
 	validateReportLimitByChangeMetricListed(ctx, req.Config, priorState, &resp.Diagnostics)
 }

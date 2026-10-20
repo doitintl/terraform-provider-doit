@@ -1427,3 +1427,417 @@ func TestReportCumulativeComparison_PartialUnknownStillReportsDefiniteErrors(t *
 		})
 	}
 }
+
+// ---------------------------------------------------------------------------
+// TestToExternalConfig_ClearableNestedAttributes
+// ---------------------------------------------------------------------------
+
+// TestToExternalConfig_ClearableNestedAttributes verifies that toExternalConfig
+// populates nullable.Nullable fields with SetNull() when count, custom_time_range,
+// limit_by_change, and metric_filter are null on ConfigValue, and with Set(...)
+// when they are populated.
+func TestToExternalConfig_ClearableNestedAttributes(t *testing.T) {
+	ctx := t.Context()
+
+	t.Run("all null sends explicit JSON null", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), cfgMap)
+		if diags.HasError() {
+			t.Fatalf("NewConfigValue: %v", diags)
+		}
+
+		ext, extDiags := toExternalConfig(ctx, cfgVal)
+		if extDiags.HasError() {
+			t.Fatalf("toExternalConfig: %v", extDiags)
+		}
+
+		if !ext.Count.IsSpecified() || !ext.Count.IsNull() {
+			t.Errorf("expected Count to be specified and null, got specified=%v null=%v", ext.Count.IsSpecified(), ext.Count.IsNull())
+		}
+		if !ext.CustomTimeRange.IsSpecified() || !ext.CustomTimeRange.IsNull() {
+			t.Errorf("expected CustomTimeRange to be specified and null, got specified=%v null=%v", ext.CustomTimeRange.IsSpecified(), ext.CustomTimeRange.IsNull())
+		}
+		if !ext.LimitByChange.IsSpecified() || !ext.LimitByChange.IsNull() {
+			t.Errorf("expected LimitByChange to be specified and null, got specified=%v null=%v", ext.LimitByChange.IsSpecified(), ext.LimitByChange.IsNull())
+		}
+		if !ext.MetricFilter.IsSpecified() || !ext.MetricFilter.IsNull() {
+			t.Errorf("expected MetricFilter to be specified and null, got specified=%v null=%v", ext.MetricFilter.IsSpecified(), ext.MetricFilter.IsNull())
+		}
+	})
+
+	t.Run("all populated sends non-null values", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["count"] = resource_report.NewCountValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"id":   types.StringValue("service_description"),
+			"type": types.StringValue("fixed"),
+		})
+		cfgMap["custom_time_range"] = resource_report.NewCustomTimeRangeValueMust(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"from": types.StringValue("2025-01-01T00:00:00Z"),
+			"to":   types.StringValue("2025-02-01T00:00:00Z"),
+		})
+		metricObj := resource_report.NewMetricValueMust(resource_report.MetricValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"type":  types.StringValue("basic"),
+			"value": types.StringValue("cost"),
+		})
+		cfgMap["limit_by_change"] = resource_report.NewLimitByChangeValueMust(resource_report.LimitByChangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"change_type":             types.StringValue("percentage"),
+			"include_incomplete_data": types.BoolValue(false),
+			"metric":                  metricObj,
+			"operator":                types.StringValue("gte"),
+			"values":                  types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(50)}),
+		})
+		cfgMap["metric_filter"] = resource_report.NewMetricFilterValueMust(resource_report.MetricFilterValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"metric":   metricObj,
+			"operand":  types.StringNull(),
+			"operator": types.StringValue("gt"),
+			"values":   types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(100)}),
+		})
+
+		cfgVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), cfgMap)
+		if diags.HasError() {
+			t.Fatalf("NewConfigValue: %v", diags)
+		}
+
+		ext, extDiags := toExternalConfig(ctx, cfgVal)
+		if extDiags.HasError() {
+			t.Fatalf("toExternalConfig: %v", extDiags)
+		}
+
+		if !ext.Count.IsSpecified() || ext.Count.IsNull() {
+			t.Errorf("expected Count to be specified and non-null, got specified=%v null=%v", ext.Count.IsSpecified(), ext.Count.IsNull())
+		}
+		if !ext.CustomTimeRange.IsSpecified() || ext.CustomTimeRange.IsNull() {
+			t.Errorf("expected CustomTimeRange to be specified and non-null, got specified=%v null=%v", ext.CustomTimeRange.IsSpecified(), ext.CustomTimeRange.IsNull())
+		}
+		if !ext.LimitByChange.IsSpecified() || ext.LimitByChange.IsNull() {
+			t.Errorf("expected LimitByChange to be specified and non-null, got specified=%v null=%v", ext.LimitByChange.IsSpecified(), ext.LimitByChange.IsNull())
+		}
+		if !ext.MetricFilter.IsSpecified() || ext.MetricFilter.IsNull() {
+			t.Errorf("expected MetricFilter to be specified and non-null, got specified=%v null=%v", ext.MetricFilter.IsSpecified(), ext.MetricFilter.IsNull())
+		}
+	})
+}
+
+// ---------------------------------------------------------------------------
+// TestReportCustomTimeRangeModeValidator
+// ---------------------------------------------------------------------------
+
+func TestReportCustomTimeRangeModeValidator(t *testing.T) {
+	ctx := t.Context()
+
+	knownCTR := resource_report.NewCustomTimeRangeValueMust(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"from": types.StringValue("2025-01-01T00:00:00Z"),
+		"to":   types.StringValue("2025-02-01T00:00:00Z"),
+	})
+	nullCTR := resource_report.NewCustomTimeRangeValueNull()
+	unknownCTR := resource_report.NewCustomTimeRangeValueUnknown()
+
+	makeTimeRange := func(mode types.String) resource_report.TimeRangeValue {
+		return resource_report.NewTimeRangeValueMust(resource_report.TimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"amount":          types.Int64Value(1),
+			"include_current": types.BoolValue(true),
+			"mode":            mode,
+			"unit":            types.StringValue("month"),
+		})
+	}
+	trCustom := makeTimeRange(types.StringValue("custom"))
+	trLast := makeTimeRange(types.StringValue("last"))
+	trCurrent := makeTimeRange(types.StringValue("current"))
+	trUnknownMode := makeTimeRange(types.StringUnknown())
+	trNullMode := makeTimeRange(types.StringNull())
+	nullTR := resource_report.NewTimeRangeValueNull()
+	unknownTR := resource_report.NewTimeRangeValueUnknown()
+
+	ctrPath := path.Root("config").AtName("custom_time_range")
+
+	tests := []struct {
+		name        string
+		ctr         resource_report.CustomTimeRangeValue
+		tr          resource_report.TimeRangeValue
+		priorTR     *resource_report.TimeRangeValue
+		wantCount   int
+		wantSummary string
+		wantPath    path.Path
+	}{
+		{
+			name:      "both custom_time_range and time_range are null",
+			ctr:       nullCTR,
+			tr:        nullTR,
+			wantCount: 0,
+		},
+		{
+			name:      "valid custom_time_range with time_range.mode = custom",
+			ctr:       knownCTR,
+			tr:        trCustom,
+			wantCount: 0,
+		},
+		{
+			name:      "valid time_range.mode = last without custom_time_range",
+			ctr:       nullCTR,
+			tr:        trLast,
+			wantCount: 0,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range is null",
+			ctr:         knownCTR,
+			tr:          nullTR,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range.mode is last",
+			ctr:         knownCTR,
+			tr:          trLast,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range.mode is current",
+			ctr:         knownCTR,
+			tr:          trCurrent,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range.mode is null",
+			ctr:         knownCTR,
+			tr:          trNullMode,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid time_range.mode = custom when custom_time_range is null",
+			ctr:         nullCTR,
+			tr:          trCustom,
+			wantCount:   1,
+			wantSummary: "Missing Custom Time Range",
+			wantPath:    ctrPath,
+		},
+		{
+			name:      "unknown custom_time_range defers validation when mode is last",
+			ctr:       unknownCTR,
+			tr:        trLast,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown custom_time_range defers validation when mode is custom",
+			ctr:       unknownCTR,
+			tr:        trCustom,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown time_range defers validation when custom_time_range is set",
+			ctr:       knownCTR,
+			tr:        unknownTR,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown time_range.mode defers validation when custom_time_range is set",
+			ctr:       knownCTR,
+			tr:        trUnknownMode,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown time_range.mode defers validation when custom_time_range is null",
+			ctr:       nullCTR,
+			tr:        trUnknownMode,
+			wantCount: 0,
+		},
+		{
+			name:        "update inherits priorState time_range.mode = custom and rejects cleared custom_time_range",
+			ctr:         nullCTR,
+			tr:          nullTR,
+			priorTR:     &trCustom,
+			wantCount:   1,
+			wantSummary: "Missing Custom Time Range",
+			wantPath:    ctrPath,
+		},
+		{
+			name:      "update inherits priorState time_range.mode = custom and allows kept custom_time_range",
+			ctr:       knownCTR,
+			tr:        nullTR,
+			priorTR:   &trCustom,
+			wantCount: 0,
+		},
+		{
+			name:        "update inherits priorState time_range.mode = last and rejects added custom_time_range",
+			ctr:         knownCTR,
+			tr:          nullTR,
+			priorTR:     &trLast,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:      "update inherits priorState time_range.mode = last and allows null custom_time_range",
+			ctr:       nullCTR,
+			tr:        nullTR,
+			priorTR:   &trLast,
+			wantCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+			cfgMap["layout"] = types.StringValue("table")
+			cfgMap["custom_time_range"] = tt.ctr
+			cfgMap["time_range"] = tt.tr
+			config := buildReportConfigWithMap(ctx, t, cfgMap)
+
+			var priorState attributeGetter
+			if tt.priorTR != nil {
+				priorMap := validCumulativeComparisonConfigMap(ctx, t)
+				priorMap["layout"] = types.StringValue("table")
+				priorMap["time_range"] = *tt.priorTR
+				priorCfg := buildReportConfigWithMap(ctx, t, priorMap)
+				priorState = tfsdk.State(priorCfg)
+			}
+
+			var diagnostics diag.Diagnostics
+			validateReportCustomTimeRangeMode(ctx, config, priorState, &diagnostics)
+
+			if len(diagnostics) != tt.wantCount {
+				t.Fatalf("diagnostic count = %d, want %d: %v", len(diagnostics), tt.wantCount, diagnostics)
+			}
+			if tt.wantCount == 0 {
+				return
+			}
+			diagnostic := diagnostics[0]
+			if diagnostic.Severity() != diag.SeverityError {
+				t.Errorf("severity = %s, want error", diagnostic.Severity())
+			}
+			if diagnostic.Summary() != tt.wantSummary {
+				t.Errorf("summary = %q, want %q", diagnostic.Summary(), tt.wantSummary)
+			}
+			withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+			if !ok {
+				t.Fatalf("diagnostic %T has no path", diagnostic)
+			}
+			if got := withPath.Path(); !got.Equal(tt.wantPath) {
+				t.Errorf("path = %s, want %s", got, tt.wantPath)
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestReportCountAggregationValidator_PriorStateInheritance
+// ---------------------------------------------------------------------------
+
+func TestReportCountAggregationValidator_PriorStateInheritance(t *testing.T) {
+	ctx := t.Context()
+
+	knownCount := resource_report.NewCountValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+	nullCount := resource_report.NewCountValueNull()
+	unknownCount := resource_report.NewCountValueUnknown()
+
+	countPath := path.Root("config").AtName("count")
+
+	tests := []struct {
+		name        string
+		count       resource_report.CountValue
+		agg         types.String
+		priorAgg    *types.String
+		wantCount   int
+		wantSummary string
+		wantPath    path.Path
+	}{
+		{
+			name:        "update with omitted aggregation inherits priorState aggregation=count and rejects cleared count",
+			count:       nullCount,
+			agg:         types.StringNull(),
+			priorAgg:    new(types.StringValue("count")),
+			wantCount:   1,
+			wantSummary: "Missing Count Configuration",
+			wantPath:    countPath,
+		},
+		{
+			name:      "update with omitted aggregation inherits priorState aggregation=count and allows kept count",
+			count:     knownCount,
+			agg:       types.StringNull(),
+			priorAgg:  new(types.StringValue("count")),
+			wantCount: 0,
+		},
+		{
+			name:        "update with omitted aggregation inherits priorState aggregation=total and rejects added count",
+			count:       knownCount,
+			agg:         types.StringNull(),
+			priorAgg:    new(types.StringValue("total")),
+			wantCount:   1,
+			wantSummary: "Invalid Count Configuration",
+			wantPath:    countPath,
+		},
+		{
+			name:      "update with omitted aggregation inherits priorState aggregation=total and allows null count",
+			count:     nullCount,
+			agg:       types.StringNull(),
+			priorAgg:  new(types.StringValue("total")),
+			wantCount: 0,
+		},
+		{
+			name:      "update with unknown aggregation defers validation even if priorState had aggregation=count",
+			count:     nullCount,
+			agg:       types.StringUnknown(),
+			priorAgg:  new(types.StringValue("count")),
+			wantCount: 0,
+		},
+		{
+			name:      "update with unknown count defers validation",
+			count:     unknownCount,
+			agg:       types.StringNull(),
+			priorAgg:  new(types.StringValue("count")),
+			wantCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+			cfgMap["layout"] = types.StringValue("table")
+			cfgMap["count"] = tt.count
+			cfgMap["aggregation"] = tt.agg
+			config := buildReportConfigWithMap(ctx, t, cfgMap)
+
+			var priorState attributeGetter
+			if tt.priorAgg != nil {
+				priorMap := validCumulativeComparisonConfigMap(ctx, t)
+				priorMap["layout"] = types.StringValue("table")
+				priorMap["aggregation"] = *tt.priorAgg
+				priorCfg := buildReportConfigWithMap(ctx, t, priorMap)
+				priorState = tfsdk.State(priorCfg)
+			}
+
+			var diagnostics diag.Diagnostics
+			validateReportCountAggregation(ctx, config, priorState, &diagnostics)
+
+			if len(diagnostics) != tt.wantCount {
+				t.Fatalf("diagnostic count = %d, want %d: %v", len(diagnostics), tt.wantCount, diagnostics)
+			}
+			if tt.wantCount == 0 {
+				return
+			}
+			diagnostic := diagnostics[0]
+			if diagnostic.Severity() != diag.SeverityError {
+				t.Errorf("severity = %s, want error", diagnostic.Severity())
+			}
+			if diagnostic.Summary() != tt.wantSummary {
+				t.Errorf("summary = %q, want %q", diagnostic.Summary(), tt.wantSummary)
+			}
+			withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+			if !ok {
+				t.Fatalf("diagnostic %T has no path", diagnostic)
+			}
+			if got := withPath.Path(); !got.Equal(tt.wantPath) {
+				t.Errorf("path = %s, want %s", got, tt.wantPath)
+			}
+		})
+	}
+}
