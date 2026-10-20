@@ -55,6 +55,49 @@ data "doit_composer_recipe_results" "test" {
 	})
 }
 
+func TestAccComposerRecipeResultsDataSource_PageTokenOnly(t *testing.T) {
+	initComposerRecipeTestInfo(t)
+	if composerRecipeWithResultsID == 0 || composerRecipeWithResultsCount < 2 {
+		t.Skipf("Need a Composer recipe with at least 2 results to test page_token, got recipe %d with %d results", composerRecipeWithResultsID, composerRecipeWithResultsCount)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "doit_composer_recipe_results" "first_page" {
+  recipe_id   = %d
+  max_results = 1
+}
+
+data "doit_composer_recipe_results" "from_token" {
+  recipe_id  = %d
+  page_token = data.doit_composer_recipe_results.first_page.page_token
+}
+`, composerRecipeWithResultsID, composerRecipeWithResultsID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_composer_recipe_results.first_page", "items.#", "1"),
+					resource.TestCheckResourceAttr("data.doit_composer_recipe_results.first_page", "row_count", strconv.Itoa(composerRecipeWithResultsCount)),
+					resource.TestCheckResourceAttrSet("data.doit_composer_recipe_results.first_page", "page_token"),
+					testCheckResourceAttrLessThan("data.doit_composer_recipe_results.from_token", "row_count", composerRecipeWithResultsCount),
+					resource.TestCheckResourceAttr("data.doit_composer_recipe_results.from_token", "row_count", strconv.Itoa(composerRecipeWithResultsCount-1)),
+					resource.TestCheckResourceAttr("data.doit_composer_recipe_results.from_token", "items.#", strconv.Itoa(composerRecipeWithResultsCount-1)),
+					resource.TestCheckNoResourceAttr("data.doit_composer_recipe_results.from_token", "page_token"),
+					testCheckResourceAttrNotEqualAttr(
+						"data.doit_composer_recipe_results.first_page", "items.0.id",
+						"data.doit_composer_recipe_results.from_token", "items.0.id",
+					),
+				),
+			},
+		},
+	})
+}
+
 func TestAccComposerRecipeResultsDataSource_MaxResultsAndPageToken(t *testing.T) {
 	initComposerRecipeTestInfo(t)
 	if composerRecipeWithResultsID == 0 || composerRecipeWithResultsCount < 2 {

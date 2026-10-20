@@ -329,6 +329,87 @@ func TestComposerRecipeResultsDataSource_Read(t *testing.T) {
 		}
 	})
 
+	t.Run("page_token-only auto-pagination sets row_count to fetched item count", func(t *testing.T) {
+		var calls atomic.Int32
+		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			n := calls.Add(1)
+			if n == 1 {
+				if got := r.URL.Query().Get("pageToken"); got != "tok-after-1" {
+					t.Errorf("call 1 pageToken = %q, want tok-after-1", got)
+				}
+				if got := r.URL.Query().Get("maxResults"); got != "" {
+					t.Errorf("call 1 maxResults = %q, want empty", got)
+				}
+				// Upstream API reports total rowCount=3 across all pages even when starting at a pageToken.
+				_, _ = w.Write([]byte(`{
+					"items": [{
+						"id": 52816,
+						"ruleId": 569,
+						"accountId": "sub-1",
+						"issuedResourceId": "res-2",
+						"issuedResourceName": "res-2",
+						"provider": "azure",
+						"providerIdentifier": "res-2",
+						"detectionTime": "2026-03-02T16:46:39Z",
+						"isActive": true,
+						"solved": false,
+						"tags": {}
+					}],
+					"pageToken": "tok-after-2",
+					"rowCount": 3
+				}`))
+				return
+			}
+			if got := r.URL.Query().Get("pageToken"); got != "tok-after-2" {
+				t.Errorf("call 2 pageToken = %q, want tok-after-2", got)
+			}
+			_, _ = w.Write([]byte(`{
+				"items": [{
+					"id": 52817,
+					"ruleId": 569,
+					"accountId": "sub-1",
+					"issuedResourceId": "res-3",
+					"issuedResourceName": "res-3",
+					"provider": "azure",
+					"providerIdentifier": "res-3",
+					"detectionTime": "2026-03-02T16:46:39Z",
+					"isActive": true,
+					"solved": false,
+					"tags": {}
+				}],
+				"rowCount": 3
+			}`))
+		}))
+
+		resp := readComposerRecipeResults(t, server, map[string]tftypes.Value{
+			"recipe_id":  tftypes.NewValue(tftypes.Number, 569),
+			"page_token": tftypes.NewValue(tftypes.String, "tok-after-1"),
+		})
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+		}
+		if calls.Load() != 2 {
+			t.Fatalf("expected 2 API calls in page_token-only auto-pagination, got %d", calls.Load())
+		}
+
+		var state composerRecipeResultsDataSourceModel
+		if diags := resp.State.Get(t.Context(), &state); diags.HasError() {
+			t.Fatal(diags)
+		}
+		// Per provider-wide auto-pagination convention, row_count equals len(allItems) (2 remaining items),
+		// not the upstream pre-pagination total (3).
+		if state.RowCount.ValueInt64() != 2 {
+			t.Errorf("row_count = %d, want 2 (len(allItems))", state.RowCount.ValueInt64())
+		}
+		if !state.PageToken.IsNull() {
+			t.Errorf("expected null page_token after auto-pagination, got %v", state.PageToken)
+		}
+		if len(state.Items.Elements()) != 2 {
+			t.Fatalf("expected 2 items, got %d", len(state.Items.Elements()))
+		}
+	})
+
 	t.Run("server error 500", func(t *testing.T) {
 		server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
