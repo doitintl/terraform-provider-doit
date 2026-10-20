@@ -10346,6 +10346,516 @@
 			}
 		},
 		{
+			"name": "composer_recipe_results",
+			"schema": {
+				"attributes": [
+					{
+						"name": "recipe_id",
+						"int64": {
+							"computed_optional_required": "required",
+							"description": "ID of the Composer recipe whose results to list. Get recipe IDs from `GET /insights/v2/recipes`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.AtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 500)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.\n\nThe token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Field to sort results by. Defaults to `detection_time`. Ties break by `id` (ascending), whatever the `sortOrder`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"detection_time\",\n\"resolved_time\",\n\"account_id\",\n\"region\",\n\"resource_class\",\n\"cost_estimation_potential_savings\",\n\"cost_estimation_potential_increased_costs\",\n\"cost_estimation_potential_freed_commitments\",\n\"cost_estimation_potential_increased_commitments_required\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort direction for `sortBy`. Defaults to `desc`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Restricts the results returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `region:us-east-1,us-west-2|status:active` returns active results in either region. Because `,` and `|` are separators, a value itself can't contain them. Matching is exact unless a key says otherwise. Omit `filter` to list the recipe's results from the most recent scan of each recently scanned account, in every status.\n\nKeys:\n- `account_id`: one or more cloud account IDs, matched exactly.\n- `region`: one or more cloud regions, matched exactly.\n- `issued_resource_name`: one or more names of the affected resource, matched exactly.\n- `related_resource_name`: one or more names of resources related to the result (for example, an attached IAM policy). Each value is matched as a substring anywhere in the result's related-resource details, not only against names.\n- `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.\n- `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default. `false` returns results from every scan and account, including resolved ones.\n- `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches results on resources in any of those allocations, as resolved by Cloud Analytics; `rowCount` then counts only those results. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.\n\nErrors:\n- An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.\n- A `status` outside the allowed list, a non-boolean `last_scan_only`, more than one `status` or `last_scan_only` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.\n- An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`."
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "account_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud account the affected resource belongs to (for example, an AWS account ID or a Google Cloud project ID)."
+										}
+									},
+									{
+										"name": "cost_estimation_potential_freed_commitments",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Freed commitments — the daily amount in US dollars of commitment coverage (Savings Plans, Reserved Instances or CUDs) that acting on this result frees up for other usage. The Console **Freed commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results."
+										}
+									},
+									{
+										"name": "cost_estimation_potential_increased_commitments_required",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Avoidable commitments — the daily amount in US dollars of extra commitment or overlapping cost you avoid by timing the action, for example to a Reserved Instance's expiry. The Console **Avoidable commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results."
+										}
+									},
+									{
+										"name": "cost_estimation_potential_increased_costs",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Cost avoidance — the daily amount in US dollars of a future charge (for example, extended-support fees) you prevent by acting on this result in time. The Console **Cost avoidance** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results."
+										}
+									},
+									{
+										"name": "cost_estimation_potential_savings",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Potential cost savings — the daily amount in US dollars you would stop paying by acting on this result. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results."
+										}
+									},
+									{
+										"name": "detection_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the result was first detected (RFC 3339, UTC)."
+										}
+									},
+									{
+										"name": "first_flow_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the Composer scan that first reported this result. Absent when unknown."
+										}
+									},
+									{
+										"name": "id",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Result ID."
+										}
+									},
+									{
+										"name": "is_active",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the result's account was scanned recently. It does not say whether the result is resolved or snoozed; use `solved` and `snoozed` for that, or the `status` filter."
+										}
+									},
+									{
+										"name": "issued_resource_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Identifier of the affected resource, as stored by Composer."
+										}
+									},
+									{
+										"name": "issued_resource_name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Name of the affected resource."
+										}
+									},
+									{
+										"name": "last_flow_id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "ID of the most recent Composer scan that reported this result. Absent when unknown."
+										}
+									},
+									{
+										"name": "provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud provider or platform, using the Console's provider names."
+										}
+									},
+									{
+										"name": "provider_identifier",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Canonical cloud-provider identifier of the affected resource.\n- AWS: the resource's ARN when one is available, otherwise the stored identifier (for example, an EC2 instance ID).\n- Google Cloud: the API relative resource name (for example, `projects/my-project/zones/us-central1-a/instances/vm-1`), or the bucket name for Cloud Storage; otherwise the stored identifier.\n- Other providers: the provider-native identifier.\n\n`null` when no identifier is stored or it could not be resolved; resolving it never fails the request."
+										}
+									},
+									{
+										"name": "region",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud region of the affected resource. Absent for global resources."
+										}
+									},
+									{
+										"name": "resolved_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the result was resolved (RFC 3339, UTC). Absent while unresolved."
+										}
+									},
+									{
+										"name": "resource_class",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Type of the affected resource. Absent when unknown."
+										}
+									},
+									{
+										"name": "rule_id",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "ID of the recipe the result belongs to. Equal to the `recipeId` path parameter."
+										}
+									},
+									{
+										"name": "snoozed",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the result is currently snoozed. Present only when `true`; absent means not snoozed."
+										}
+									},
+									{
+										"name": "solved",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the result is resolved."
+										}
+									},
+									{
+										"name": "tags",
+										"map": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Cloud-provider tags on the affected resource, as key/value pairs. An empty object means the resource has no tags. `null` means the tags could not be resolved; resolving them never fails the request."
+										}
+									}
+								]
+							},
+							"description": "Results on this page."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of results across all pages."
+						}
+					}
+				],
+				"description": "Beta. Read-only access to Composer recipes and their results. A recipe evaluates your cloud resources against a set of conditions; each result is a finding on one affected resource, and published recipes surface as proprietary Insights in the Console.",
+				"markdown_description": "Beta. Read-only access to Composer recipes and their results. A recipe evaluates your cloud resources against a set of conditions; each result is a finding on one affected resource, and published recipes surface as proprietary Insights in the Console."
+			}
+		},
+		{
+			"name": "composer_recipes",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+											}
+										],
+										"schema_definition": "int64validator.Between(1, 500)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.\n\nThe token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page."
+						}
+					},
+					{
+						"name": "sort_by",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Field to sort recipes by. Defaults to `severity`. Ties break by title (case-insensitive, ascending), then by `id` (ascending), whatever the `sortOrder`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"severity\",\n\"title\",\n\"detection_time\",\n\"active_results_count\",\n\"total_results_count\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "sort_order",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Sort direction for `sortBy`. Defaults to `desc`.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"asc\",\n\"desc\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "filter",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Restricts the recipes returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `severity:critical,high|provider:aws,gcp` returns recipes whose severity is critical or high and whose provider is Amazon Web Services or Google Cloud Platform. Because `,` and `|` are separators, a value itself can't contain them. Only equality matching is supported. Omit `filter` to list every recipe that has results in your recently scanned accounts, including dismissed recipes.\n\nKeys:\n- `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.\n- `severity`: one or more of `critical`, `high`, `medium`, `low`.\n- `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. Matches recipes tagged with that pillar; `compliance` matches recipes tagged with at least one compliance standard (such as SOC2 or HIPAA).\n- `has_active_results`: exactly one of `true` or `false`.\n- `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches recipes with results on resources in any of those allocations, as resolved by Cloud Analytics; counts, savings and `rowCount` then cover only those resources. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.\n\nErrors:\n- An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.\n- A value outside the allowed list, a non-boolean `has_active_results`, more than one `has_active_results` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.\n- An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`."
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "active_results_count",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Number of active results (not resolved and not snoozed). 0 when the recipe is dismissed."
+										}
+									},
+									{
+										"name": "affected_resource_type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Type of cloud resource the recipe's findings are on. Absent when unknown."
+										}
+									},
+									{
+										"name": "description",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Longer explanation of what the recipe detects. Fetched on a best-effort basis, so it can be absent even when the recipe has one."
+										}
+									},
+									{
+										"name": "detection_time",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "When the earliest of the recipe's results was first detected (RFC 3339, UTC). Absent when unavailable."
+										}
+									},
+									{
+										"name": "estimated_fix_time_minutes",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Estimated time to fix one finding, in minutes. Absent when not estimated."
+										}
+									},
+									{
+										"name": "id",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Recipe ID. Use it as `recipeId` to list the recipe's results."
+										}
+									},
+									{
+										"name": "is_dismissed",
+										"bool": {
+											"computed_optional_required": "computed",
+											"description": "Whether the recipe has been dismissed for your customer."
+										}
+									},
+									{
+										"name": "metadata",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "impacts",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Possible impact of applying the remediation."
+													}
+												},
+												{
+													"name": "important_points",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Points to consider before remediating."
+													}
+												},
+												{
+													"name": "manual_remediation",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "HTML describing how to remediate the finding manually."
+													}
+												},
+												{
+													"name": "reference",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Documentation URL for the finding."
+													}
+												}
+											],
+											"description": "Remediation guidance for the recipe. Always present; an empty object means no guidance is available. Each field is present only when the recipe has that content."
+										}
+									},
+									{
+										"name": "provider",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Cloud provider or platform, using the Console's provider names."
+										}
+									},
+									{
+										"name": "resolved_results_count",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Number of resolved results. 0 when the recipe is dismissed."
+										}
+									},
+									{
+										"name": "severity",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Severity of the recipe's results, set by the recipe's author."
+										}
+									},
+									{
+										"name": "snoozed_results_count",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Number of snoozed results. 0 when the recipe is dismissed."
+										}
+									},
+									{
+										"name": "status",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Recipe status, derived from its results and whether it is dismissed. Absent when unavailable."
+										}
+									},
+									{
+										"name": "title",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Recipe title, as shown in the Console."
+										}
+									},
+									{
+										"name": "total_potential_savings",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Potential cost savings across the recipe's active results, as a daily amount in US dollars. A decimal string with 2 decimal places (8 for amounts below 0.01), unlike the numeric per-result `costEstimationPotentialSavings`. When no active result has an estimate, it is the total recorded on the recipe's resolved results instead. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated."
+										}
+									},
+									{
+										"name": "total_results_count",
+										"int64": {
+											"computed_optional_required": "computed",
+											"description": "Number of results in any status. 0 when the recipe is dismissed."
+										}
+									}
+								]
+							},
+							"description": "Recipes on this page."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of recipes across all pages."
+						}
+					}
+				],
+				"description": "Beta. Read-only access to Composer recipes and their results. A recipe evaluates your cloud resources against a set of conditions; each result is a finding on one affected resource, and published recipes surface as proprietary Insights in the Console.",
+				"markdown_description": "Beta. Read-only access to Composer recipes and their results. A recipe evaluates your cloud resources against a set of conditions; each result is a finding on one affected resource, and published recipes surface as proprietary Insights in the Console."
+			}
+		},
+		{
 			"name": "current_user",
 			"schema": {
 				"attributes": [
