@@ -2280,6 +2280,15 @@ func TestUseNullModifiers_PreserveWhenConfigWrapperNull(t *testing.T) {
 	nullWrapperCfg := buildReportConfigWithConfigValue(ctx, t, resource_report.NewConfigValueNull())
 	unknownWrapperCfg := buildReportConfigWithConfigValue(ctx, t, resource_report.NewConfigValueUnknown())
 	presentWrapperCfg := buildReportConfigWithMap(ctx, t, validCumulativeComparisonConfigMap(ctx, t))
+	errorWrapperCfg := tfsdk.Config{
+		Schema: resource_report.ReportResourceSchema(ctx),
+		Raw: tftypes.NewValue(
+			tftypes.Object{AttributeTypes: map[string]tftypes.Type{"config": tftypes.String}},
+			map[string]tftypes.Value{
+				"config": tftypes.NewValue(tftypes.String, "invalid-config-type"),
+			},
+		),
+	}
 
 	for _, tc := range modifiers {
 		t.Run(tc.name+"/preserves_when_config_wrapper_is_null", func(t *testing.T) {
@@ -2321,6 +2330,23 @@ func TestUseNullModifiers_PreserveWhenConfigWrapperNull(t *testing.T) {
 			tc.mod.PlanModifyObject(ctx, req, resp)
 			if !resp.PlanValue.IsNull() {
 				t.Fatalf("expected %s plan modifier to set PlanValue to null when config is present and child is omitted", tc.name)
+			}
+		})
+
+		t.Run(tc.name+"/propagates_diagnostics_when_get_attribute_fails", func(t *testing.T) {
+			req := planmodifier.ObjectRequest{
+				Config:      errorWrapperCfg,
+				ConfigValue: tc.nullObj,
+				StateValue:  tc.knownObj,
+				PlanValue:   tc.knownObj,
+			}
+			resp := &planmodifier.ObjectResponse{PlanValue: tc.knownObj}
+			tc.mod.PlanModifyObject(ctx, req, resp)
+			if !resp.Diagnostics.HasError() {
+				t.Fatalf("expected %s plan modifier to propagate GetAttribute error diagnostics, got none", tc.name)
+			}
+			if resp.PlanValue.IsNull() {
+				t.Fatalf("expected %s plan modifier not to clear PlanValue when GetAttribute errors", tc.name)
 			}
 		})
 	}

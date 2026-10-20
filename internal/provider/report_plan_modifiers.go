@@ -5,22 +5,24 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func isReportConfigWrapperNullOrUnknown(ctx context.Context, cfg tfsdk.Config) bool {
+func isReportConfigWrapperNullOrUnknown(ctx context.Context, cfg tfsdk.Config) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	if cfg.Raw.Type() == nil {
-		return false
+		return false, diags
 	}
-	var rawConfig attr.Value
-	diags := cfg.GetAttribute(ctx, path.Root("config"), &rawConfig)
-	if diags.HasError() || rawConfig == nil {
-		return true
+	var configWrapper resource_report.ConfigValue
+	diags = cfg.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	if diags.HasError() {
+		return false, diags
 	}
-	return rawConfig.IsNull() || rawConfig.IsUnknown()
+	return configWrapper.IsNull() || configWrapper.IsUnknown(), diags
 }
 
 func useNullOrDefaultForForecastSettings() planmodifier.Object {
@@ -147,7 +149,9 @@ func (m useNullForCountModifier) MarkdownDescription(ctx context.Context) string
 }
 
 func (m useNullForCountModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
 		return
 	}
 	if req.ConfigValue.IsNull() {
@@ -170,7 +174,9 @@ func (m useNullForCustomTimeRangeModifier) MarkdownDescription(ctx context.Conte
 }
 
 func (m useNullForCustomTimeRangeModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
 		return
 	}
 	if req.ConfigValue.IsNull() {
@@ -193,7 +199,9 @@ func (m useNullForLimitByChangeModifier) MarkdownDescription(ctx context.Context
 }
 
 func (m useNullForLimitByChangeModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
 		return
 	}
 	if req.ConfigValue.IsNull() {
@@ -216,7 +224,9 @@ func (m useNullForMetricFilterModifier) MarkdownDescription(ctx context.Context)
 }
 
 func (m useNullForMetricFilterModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if isReportConfigWrapperNullOrUnknown(ctx, req.Config) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
 		return
 	}
 	if req.ConfigValue.IsNull() {
