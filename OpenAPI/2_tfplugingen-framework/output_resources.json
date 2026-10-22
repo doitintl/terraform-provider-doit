@@ -4268,6 +4268,381 @@
 				"description": "Manage users who have access to the DoiT platform.",
 				"markdown_description": "Manage users who have access to the DoiT platform."
 			}
+		},
+		{
+			"name": "user_notification",
+			"schema": {
+				"attributes": [
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Display name for the new notification config.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 200)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "settings",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "cost_anomalies",
+									"single_nested": {
+										"computed_optional_required": "required",
+										"attributes": [
+											{
+												"name": "allocations",
+												"single_nested": {
+													"computed_optional_required": "required",
+													"attributes": [
+														{
+															"name": "ids",
+															"list": {
+																"computed_optional_required": "required",
+																"element_type": {
+																	"string": {}
+																},
+																"description": "Allocation ids, in the order sent. A read returns that same order. A duplicate id is rejected\nwith `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.\n"
+															}
+														},
+														{
+															"name": "mode",
+															"string": {
+																"computed_optional_required": "required",
+																"description": "`all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —\nonly the listed ids. `exclude` — all enabled allocations except the listed ids.\n",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.OneOf(\n\"all\",\n\"include\",\n\"exclude\",\n)"
+																		}
+																	}
+																]
+															}
+														}
+													],
+													"description": "Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET\n/analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying\nwhether it exists elsewhere.\n\n`mode: all` means every allocation with anomaly detection enabled, including anomalies that are not\ntied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one\nid. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not\nsort or drop entries. A duplicate id is rejected with `422`.\n"
+												}
+											},
+											{
+												"name": "min_excess_cost",
+												"single_nested": {
+													"computed_optional_required": "required",
+													"attributes": [
+														{
+															"name": "amount",
+															"string": {
+																"computed_optional_required": "required",
+																"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "regexp"
+																				},
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^-?(0|[1-9]\\\\d*)(\\\\.\\\\d+)?$\"), \"\")"
+																		}
+																	}
+																]
+															}
+														},
+														{
+															"name": "currency",
+															"string": {
+																"computed_optional_required": "required",
+																"description": "ISO 4217 currency code.",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "regexp"
+																				},
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Z]{3}$\"), \"\")"
+																		}
+																	}
+																]
+															}
+														}
+													],
+													"description": "Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.\n`100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a\nwhole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"100.00\"`. `0` is accepted.\n"
+												}
+											},
+											{
+												"name": "min_severity",
+												"string": {
+													"computed_optional_required": "required",
+													"description": "`warning` — warning and above. `critical` — critical only. There is no `information` or `all`\nvalue; a write of `all` is rejected with `422`. A read of a missing stored severity (console \"All\nseverity levels\") and of warning both return `warning`. `critical` is stored and returned as\n`critical`.\n",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"warning\",\n\"critical\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "repeat",
+												"single_nested": {
+													"computed_optional_required": "computed_optional",
+													"attributes": [
+														{
+															"name": "every_hours",
+															"int64": {
+																"computed_optional_required": "computed_optional",
+																"description": "Resend until the anomaly is inactive, every N hours (1–24).\n",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																				}
+																			],
+																			"schema_definition": "int64validator.Between(1, 24)"
+																		}
+																	}
+																]
+															}
+														},
+														{
+															"name": "when_cost_grows",
+															"single_nested": {
+																"computed_optional_required": "computed_optional",
+																"attributes": [
+																	{
+																		"name": "match",
+																		"string": {
+																			"computed_optional_required": "computed_optional",
+																			"description": "How to combine percent and dollar growth when both are set. Required when both amounts are present;\nomit when only one amount is present.\n",
+																			"validators": [
+																				{
+																					"custom": {
+																						"imports": [
+																							{
+																								"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																							}
+																						],
+																						"schema_definition": "stringvalidator.OneOf(\n\"or\",\n\"and\",\n)"
+																					}
+																				}
+																			]
+																		}
+																	},
+																	{
+																		"name": "min_increase",
+																		"single_nested": {
+																			"computed_optional_required": "computed_optional",
+																			"attributes": [
+																				{
+																					"name": "amount",
+																					"string": {
+																						"computed_optional_required": "required",
+																						"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+																						"validators": [
+																							{
+																								"custom": {
+																									"imports": [
+																										{
+																											"path": "regexp"
+																										},
+																										{
+																											"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																										}
+																									],
+																									"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^-?(0|[1-9]\\\\d*)(\\\\.\\\\d+)?$\"), \"\")"
+																								}
+																							}
+																						]
+																					}
+																				},
+																				{
+																					"name": "currency",
+																					"string": {
+																						"computed_optional_required": "required",
+																						"description": "ISO 4217 currency code.",
+																						"validators": [
+																							{
+																								"custom": {
+																									"imports": [
+																										{
+																											"path": "regexp"
+																										},
+																										{
+																											"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																										}
+																									],
+																									"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Z]{3}$\"), \"\")"
+																								}
+																							}
+																						]
+																					}
+																				}
+																			],
+																			"description": "Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.\n`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a\nwhole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"150.00\"`.\n"
+																		}
+																	},
+																	{
+																		"name": "percent_increase",
+																		"int64": {
+																			"computed_optional_required": "computed_optional",
+																			"description": "Minimum percent cost increase that triggers a resend. `10` means 10 percent. Must be greater than 0.\n",
+																			"validators": [
+																				{
+																					"custom": {
+																						"imports": [
+																							{
+																								"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																							}
+																						],
+																						"schema_definition": "int64validator.AtLeast(1)"
+																					}
+																				}
+																			]
+																		}
+																	},
+																	{
+																		"name": "within_hours",
+																		"int64": {
+																			"computed_optional_required": "computed_optional",
+																			"description": "Optional window in hours for the growth check (1–24).",
+																			"validators": [
+																				{
+																					"custom": {
+																						"imports": [
+																							{
+																								"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																							}
+																						],
+																						"schema_definition": "int64validator.Between(1, 24)"
+																					}
+																				}
+																			]
+																		}
+																	}
+																],
+																"description": "Resend when the anomaly's cost grows:\n\n- both `percentIncrease` and `minIncrease` present → `match` is\n  required (`or` or `and`)\n- exactly one of `percentIncrease` or `minIncrease` present → omit\n  `match` (percentage-only or value-only)\n- neither amount present → rejected with `422`\n\n`percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time\nwindow is off.\n"
+															}
+														}
+													],
+													"description": "Resend controls for an active cost anomaly. Omit the whole `repeat` object when neither control is\nset. An empty object is rejected with `422`.\n"
+												}
+											}
+										],
+										"description": "Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and\noptional resend controls.\n"
+									}
+								}
+							],
+							"description": "Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are\nrejected; omitting `costAnomalies` is rejected.\n"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the config was created. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "destinations",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "address",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Target user's email, copied by the server."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Delivery channel. Personal delivery is email only."
+										}
+									}
+								]
+							},
+							"description": "Server-managed destinations. Always one email entry with the target user's address.\n"
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run\ncreate.\n"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned notification id. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the config was last changed. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "user_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional\n`X-Tenant-Id`.\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					}
+				],
+				"description": "Personal notification configs for a user. Cost-anomaly configs are\nsupported.\n",
+				"markdown_description": "Personal notification configs for a user. Cost-anomaly configs are\nsupported.\n"
+			}
 		}
 	],
 	"version": "0.1"
