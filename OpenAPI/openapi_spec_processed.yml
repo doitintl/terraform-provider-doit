@@ -64,6 +64,10 @@ tags:
       Link and manage shared-payer account mappings for PartnerOps resellers (T2), reassigning AWS accounts under a shared payer to T3 end customers.
   - name: Users
     description: Manage users who have access to the DoiT platform.
+  - name: Notifications
+    description: |
+      Personal notification configs for a user. Cost-anomaly configs are
+      supported.
   - name: Roles
     description: Manage user permissions and access levels in your organization.
   - name: Organizations
@@ -3375,6 +3379,444 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  /iam/v1/users/{userId}/notifications:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: |
+          The unique ID of the user (including invited users). Must belong to the tenant resolved from the
+          bearer token and optional `X-Tenant-Id`.
+        schema:
+          type: string
+          minLength: 1
+    post:
+      operationId: createUserNotification
+      tags:
+        - Notifications
+      summary: Create a personal notification for a user
+      description: |
+        Creates a personal cost-anomaly notification config for the user. The request body has no email
+        address; the server copies the target user's email onto the config as the sole destination.
+
+        Requires `usersManager` permission. The user id must belong to the resolved tenant.
+
+        Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+        original response and does not create a second config. With `dryRun=true` the request goes through
+        the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+        (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+
+        Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+        config.
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        required: true
+        description: |
+          Personal cost-anomaly notification to create. No email address — the server copies the target user's
+          email as the destination.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserNotificationRequest"
+            example:
+              name: Anomaly alerts
+              settings:
+                costAnomalies:
+                  minSeverity: warning
+                  minExcessCost:
+                    amount: "100.00"
+                    currency: USD
+                  allocations:
+                    mode: include
+                    ids:
+                      - alloc_abc
+                      - alloc_def
+                  repeat:
+                    everyHours: 24
+                    whenCostGrows:
+                      match: or
+                      percentIncrease: 10
+                      minIncrease:
+                        amount: "150.00"
+                        currency: USD
+                      withinHours: 6
+      responses:
+        "200":
+          description: |
+            OK - Dry run only (`dryRun=true`). Every check of a real create passed and nothing was created;
+            `id`, `createTime`, `updateTime`, and `etag` are `null`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              example:
+                id: null
+                name: Anomaly alerts
+                createTime: null
+                updateTime: null
+                etag: null
+                destinations:
+                  - type: email
+                    address: jane.doe@example.com
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "201":
+          description: Created - Personal notification created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            Location:
+              description: URL of the created personal notification.
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              example:
+                id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                name: Anomaly alerts
+                createTime: "2026-10-01T08:00:00Z"
+                updateTime: "2026-10-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                destinations:
+                  - type: email
+                    address: jane.doe@example.com
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/users/{userId}/notifications/{id}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: |
+          The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional
+          `X-Tenant-Id`.
+        schema:
+          type: string
+          minLength: 1
+      - name: id
+        in: path
+        required: true
+        description: The unique ID of the notification config returned by create or list.
+        schema:
+          type: string
+          minLength: 1
+    get:
+      operationId: getUserNotification
+      tags:
+        - Notifications
+      summary: Get a personal notification
+      description: |
+        Returns one personal notification config. Requires `usersManager` permission. A notification id that
+        does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
+        elsewhere.
+      responses:
+        "200":
+          description: OK - Personal notification returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              example:
+                id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                name: Anomaly alerts
+                createTime: "2026-10-01T08:00:00Z"
+                updateTime: "2026-10-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                destinations:
+                  - type: email
+                    address: jane.doe@example.com
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      operationId: updateUserNotification
+      tags:
+        - Notifications
+      summary: Update a personal notification
+      description: |
+        Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+        Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+        `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+        example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+        `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+        same checks as a real update and returns the notification as it would look after the patch, without
+        changing anything.
+
+        Reads are immediately consistent. After a completed update, a GET of that notification returns the
+        new state.
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        required: true
+        description: |
+          JSON Merge Patch document (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged;
+          nested arrays are replaced when present. Send `null` to clear optional members such as `repeat`.
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserNotificationRequest"
+            examples:
+              changeSeverity:
+                value:
+                  settings:
+                    costAnomalies:
+                      minSeverity: critical
+              clearRepeat:
+                value:
+                  settings:
+                    costAnomalies:
+                      repeat: null
+      responses:
+        "200":
+          description: |
+            OK - Notification updated. The `updated` example is a completed patch: `updateTime` and `etag`
+            change. The `dryRun` example is the preview when `dryRun=true`: the merged settings, with the
+            current `updateTime` and `etag` left unchanged.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              examples:
+                updated:
+                  summary: Completed update
+                  value:
+                    id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-12T09:30:00Z"
+                    etag: 9b2e4d6f8a0c1e3b5d7f9a1c3e5b7d9f1a3c5e7a9b1d3f5a7c9e1b3d5f7a9c1e
+                    destinations:
+                      - type: email
+                        address: jane.doe@example.com
+                    settings:
+                      costAnomalies:
+                        minSeverity: critical
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                        repeat:
+                          everyHours: 24
+                          whenCostGrows:
+                            match: or
+                            percentIncrease: 10
+                            minIncrease:
+                              amount: "150.00"
+                              currency: USD
+                            withinHours: 6
+                dryRun:
+                  summary: Dry-run preview
+                  description: |
+                    Merged result with the current `etag` and `updateTime`. Nothing was stored. The response
+                    includes `X-Dry-Run: true`.
+                  value:
+                    id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                    destinations:
+                      - type: email
+                        address: jane.doe@example.com
+                    settings:
+                      costAnomalies:
+                        minSeverity: critical
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                        repeat:
+                          everyHours: 24
+                          whenCostGrows:
+                            match: or
+                            percentIncrease: 10
+                            minIncrease:
+                              amount: "150.00"
+                              currency: USD
+                            withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      operationId: deleteUserNotification
+      tags:
+        - Notifications
+      summary: Delete a personal notification
+      description: |
+        Permanently deletes a personal notification config. Requires `usersManager` permission, the
+        `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+        same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
+        `404`.
+
+        Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
+        of that notification returns `404`.
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      responses:
+        "204":
+          description: No Content - Notification deleted, or validated when `dryRun=true`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /iam/v1/roles:
     get:
       tags:
@@ -10270,6 +10712,143 @@ components:
         value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
         percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
         forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
+    CostAnomalyAllocations:
+      type: object
+      additionalProperties: false
+      description: |
+        Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET
+        /analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying
+        whether it exists elsewhere.
+
+        `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
+        tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
+        id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
+        sort or drop entries. A duplicate id is rejected with `422`.
+      required:
+        - mode
+        - ids
+      properties:
+        mode:
+          type: string
+          enum:
+            - all
+            - include
+            - exclude
+          description: |
+            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+            only the listed ids. `exclude` — all enabled allocations except the listed ids.
+          example: include
+        ids:
+          type: array
+          description: |
+            Allocation ids, in the order sent. A read returns that same order. A duplicate id is rejected
+            with `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.
+          items:
+            type: string
+            minLength: 1
+          example:
+            - alloc_abc
+            - alloc_def
+    CostAnomalyRepeat:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: |
+        Resend controls for an active cost anomaly. Omit the whole `repeat` object when neither control is
+        set. An empty object is rejected with `422`.
+      properties:
+        everyHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: |
+            Resend until the anomaly is inactive, every N hours (1–24).
+          example: 24
+        whenCostGrows:
+          $ref: "#/components/schemas/CostAnomalyWhenCostGrows"
+    CostAnomalySettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
+        optional resend controls.
+      required:
+        - minSeverity
+        - minExcessCost
+        - allocations
+      properties:
+        minSeverity:
+          type: string
+          enum:
+            - warning
+            - critical
+          description: |
+            `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
+            value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
+            severity levels") and of warning both return `warning`. `critical` is stored and returned as
+            `critical`.
+          example: warning
+        minExcessCost:
+          description: |
+            Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.
+            `100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A
+            negative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a
+            whole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole
+            dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+            Responses return the amount as `"100.00"`. `0` is accepted.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+        allocations:
+          $ref: "#/components/schemas/CostAnomalyAllocations"
+        repeat:
+          $ref: "#/components/schemas/CostAnomalyRepeat"
+    CostAnomalyWhenCostGrows:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: |
+        Resend when the anomaly's cost grows:
+
+        - both `percentIncrease` and `minIncrease` present → `match` is
+          required (`or` or `and`)
+        - exactly one of `percentIncrease` or `minIncrease` present → omit
+          `match` (percentage-only or value-only)
+        - neither amount present → rejected with `422`
+
+        `percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
+        window is off.
+      properties:
+        match:
+          type: string
+          enum:
+            - or
+            - and
+          description: |
+            How to combine percent and dollar growth when both are set. Required when both amounts are present;
+            omit when only one amount is present.
+          example: or
+        percentIncrease:
+          type: integer
+          minimum: 1
+          description: |
+            Minimum percent cost increase that triggers a resend. `10` means 10 percent. Must be greater than 0.
+          example: 10
+        minIncrease:
+          description: |
+            Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.
+            `150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A
+            negative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a
+            whole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole
+            dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+            Responses return the amount as `"150.00"`.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+        withinHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: Optional window in hours for the growth check (1–24).
+          example: 6
     CreateAccountRoleRequestBody:
       type: object
       required:
@@ -10637,6 +11216,36 @@ components:
           readOnly: true
           description: The token credential, and the secret that authenticates as this service account. Returned only by this operation and never retrievable again, so store it somewhere safe on receipt; an empty string on a dry-run create. Treat it like a password.
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+    CreateUserNotificationRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Fields of a new personal notification. No email address — the server copies the target user's email
+        as the destination. Unknown fields are rejected. `settings` must include `costAnomalies` and must
+        not include any other notification type.
+      required:
+        - name
+        - settings
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name for the new notification config.
+          example: Anomaly alerts
+        settings:
+          $ref: "#/components/schemas/UserNotificationSettings"
+      example:
+        name: Anomaly alerts
+        settings:
+          costAnomalies:
+            minSeverity: warning
+            minExcessCost:
+              amount: "100.00"
+              currency: USD
+            allocations:
+              mode: all
+              ids: []
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -13900,6 +14509,128 @@ components:
         name:
           type: string
           description: The name of the organization
+    PatchCostAnomalyAllocations:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
+        the current list.
+      properties:
+        mode:
+          type: string
+          enum:
+            - all
+            - include
+            - exclude
+          description: |
+            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+            only the listed ids. `exclude` — all enabled allocations except the listed ids.
+        ids:
+          type: array
+          description: |
+            Replacement allocation ids when present, in the order sent. A read returns that same order. A
+            duplicate id is rejected with `422`. Empty when `mode` is `all`. Non-empty when `mode` is
+            `include` or `exclude`.
+          items:
+            type: string
+            minLength: 1
+    PatchCostAnomalyRepeat:
+      type: object
+      additionalProperties: false
+      properties:
+        everyHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: |
+            Resend until the anomaly is inactive, every N hours (1–24). Send `null` to clear.
+          nullable: true
+        whenCostGrows:
+          allOf:
+            - $ref: "#/components/schemas/PatchCostAnomalyWhenCostGrows"
+          description: |
+            Growth-based resend controls. Send `null` to clear this branch while leaving `everyHours`.
+          nullable: true
+      description: |
+        Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. To clear
+        every resend control, send `null` for `costAnomalies.repeat` itself.
+    PatchCostAnomalySettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
+        resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
+        send a new value.
+      properties:
+        minSeverity:
+          type: string
+          enum:
+            - warning
+            - critical
+          description: |
+            `warning` — warning and above. `critical` — critical only. A write of `all` is rejected with `422`.
+        minExcessCost:
+          description: |
+            Minimum excess cost, as Money. Omit it to leave the current value; it cannot be cleared. `currency`
+            must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with `422`.
+            A fractional amount is rejected with `422` (`100.99` is not a whole number of dollars). `100` and
+            `100.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
+            exponents, a leading `+`, or underscores, are rejected with `422`. `0` is accepted.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+        allocations:
+          $ref: "#/components/schemas/PatchCostAnomalyAllocations"
+        repeat:
+          description: Resend controls, or `null` to clear them all.
+          allOf:
+            - $ref: "#/components/schemas/PatchCostAnomalyRepeat"
+          nullable: true
+    PatchCostAnomalyWhenCostGrows:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `whenCostGrows`. Omit a field to leave it; send `null` to clear `match`,
+        `percentIncrease`, `minIncrease`, or `withinHours`.
+      properties:
+        match:
+          type: string
+          enum:
+            - or
+            - and
+          description: |
+            How to combine percent and dollar growth when both are set. Send `null` to clear.
+          nullable: true
+        percentIncrease:
+          type: integer
+          minimum: 1
+          description: |
+            Minimum percent cost increase that triggers a resend. Must be greater than 0. Send `null` to clear.
+          nullable: true
+        minIncrease:
+          description: |
+            Minimum cost growth, as Money. Must be a positive whole number of dollars. Send `null` to clear.
+            `currency` must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with
+            `422`. A fractional amount is rejected with `422` (`150.99` is not a whole number of dollars). `150` and
+            `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
+            exponents, a leading `+`, or underscores, are rejected with `422`.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          nullable: true
+        withinHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: Optional window in hours (1–24). Send `null` to clear.
+          nullable: true
+    PatchUserNotificationSettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies`
+        is accepted.
+      properties:
+        costAnomalies:
+          $ref: "#/components/schemas/PatchCostAnomalySettings"
     PlatformAPI:
       type: object
       description: Platform metadata used by product listing endpoints.
@@ -15164,6 +15895,28 @@ components:
             - disabled
           description: "`active` to enable the token, `disabled` to stop it authenticating. Any other value, `deleted` and `expired` included, returns `400`. Re-enabling a token whose expiry has passed returns `422`."
           example: disabled
+    UpdateUserNotificationRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: |
+        JSON Merge Patch (RFC 7396) for a personal notification. Omitted fields stay unchanged; nested
+        objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present.
+        Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`,
+        `percentIncrease`, and `minIncrease`.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Replacement display name when renaming the config.
+          example: Anomaly alerts (updated)
+        settings:
+          $ref: "#/components/schemas/PatchUserNotificationSettings"
+      example:
+        settings:
+          costAnomalies:
+            minSeverity: critical
     UpdateUserRequest:
       type: object
       description: Fields allowed when updating an existing user.
@@ -15331,6 +16084,110 @@ components:
           enum:
             - active
             - invited
+    UserNotification:
+      type: object
+      additionalProperties: false
+      description: |
+        Personal notification config for one user. Create and read return the full resource with the same
+        field names. Update and delete require `If-Match` against the strong `etag`.
+      required:
+        - id
+        - name
+        - createTime
+        - updateTime
+        - etag
+        - destinations
+        - settings
+      properties:
+        id:
+          type: string
+          readOnly: true
+          x-terraform-computed: true
+          description: Server-assigned notification id. `null` only on a dry-run create.
+          nullable: true
+          example: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name of the notification config.
+          example: Anomaly alerts
+        createTime:
+          type: string
+          format: date-time
+          readOnly: true
+          x-terraform-computed: true
+          description: When the config was created. `null` only on a dry-run create.
+          nullable: true
+          example: "2026-10-01T08:00:00Z"
+        updateTime:
+          type: string
+          format: date-time
+          readOnly: true
+          x-terraform-computed: true
+          description: When the config was last changed. `null` only on a dry-run create.
+          nullable: true
+          example: "2026-10-01T08:00:00Z"
+        etag:
+          type: string
+          readOnly: true
+          x-terraform-computed: true
+          description: |
+            Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run
+            create.
+          nullable: true
+          example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        destinations:
+          type: array
+          readOnly: true
+          x-terraform-computed: true
+          minItems: 1
+          maxItems: 1
+          description: |
+            Server-managed destinations. Always one email entry with the target user's address.
+          items:
+            $ref: "#/components/schemas/UserNotificationEmailDestination"
+          example:
+            - type: email
+              address: jane.doe@example.com
+        settings:
+          description: Subscribed settings.
+          allOf:
+            - $ref: "#/components/schemas/UserNotificationSettings"
+    UserNotificationEmailDestination:
+      type: object
+      additionalProperties: false
+      description: |
+        Server-copied email destination. The create/update body does not accept an email address; the server
+        copies the target user's email.
+      required:
+        - type
+        - address
+      properties:
+        type:
+          type: string
+          description: Delivery channel. Personal delivery is email only.
+          enum:
+            - email
+        address:
+          type: string
+          format: email
+          readOnly: true
+          x-doit-pii: true
+          x-terraform-computed: true
+          description: Target user's email, copied by the server.
+          example: jane.doe@example.com
+    UserNotificationSettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are
+        rejected; omitting `costAnomalies` is rejected.
+      required:
+        - costAnomalies
+      properties:
+        costAnomalies:
+          $ref: "#/components/schemas/CostAnomalySettings"
     ValidateResponse:
       type: object
       description: A response confirming caller's domain and email.
