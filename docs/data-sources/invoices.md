@@ -75,4 +75,4 @@ Read-Only:
 - `platform` (String) Platform identifier for invoice source.
 - `status` (String) Status of the invoice
 - `total_amount` (Number) Total invoiced amount
-- `url` (String) Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+- `url` (String) Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).

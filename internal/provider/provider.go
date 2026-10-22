@@ -270,6 +270,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewAnomalyDataSource,
 		NewAnomalyExplanationDataSource,
 		NewInvoiceDataSource,
+		NewInvoicePdfDataSource,
 		NewBillingExplainerDataSource,
 		NewCloudIncidentDataSource,
 		NewCommitmentDataSource,

@@ -5135,12 +5135,90 @@ paths:
                     $ref: "#/components/schemas/Currency"
                   url:
                     type: string
-                    description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+                    description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
                   lineItems:
                     type: array
                     description: Invoice line items.
                     items:
                       $ref: "#/components/schemas/ListItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/billing/v1/invoices/{id}/pdf":
+    get:
+      tags:
+        - Invoices
+      summary: Download an invoice PDF
+      description: >-
+        Returns the PDF document for the invoice specified by the invoice
+        number. The response body is the PDF bytes.
+
+        The PDF is returned decompressed by default. It is only gzip-compressed
+        when the request advertises `Accept-Encoding: gzip`, in which case the
+        response carries `Content-Encoding: gzip` with a `Content-Length` for the
+        compressed bytes and must be decoded as a standard `Content-Encoding:
+        gzip` body. HTTP clients whose stack negotiates the encoding
+        automatically also decode it automatically; a client that sets the header
+        by hand may instead receive the raw gzip bytes (for example `curl` decodes
+        only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to
+        always receive the decompressed PDF. A very large invoice may exceed the
+        decompressed-response size limit and respond with `500`; request it with
+        `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+
+        A `404` is returned both when no invoice with the given number exists for
+        the authenticated tenant and when the invoice exists but has no PDF
+        document available.
+      operationId: getInvoicePdf
+      parameters:
+        - name: id
+          in: path
+          description: Invoice number.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - The invoice PDF document.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            Content-Disposition:
+              description: Attachment disposition carrying the suggested filename, `<id>.pdf`.
+              schema:
+                type: string
+            Content-Encoding:
+              description: >-
+                Set to `gzip` when the PDF is returned gzip-compressed
+                (negotiated via `Accept-Encoding: gzip`, used for large
+                invoices). Absent when the body is the decompressed PDF.
+              schema:
+                type: string
+            Cache-Control:
+              description: Always `private, no-store`; invoice PDFs must not be cached by shared or browser caches.
+              schema:
+                type: string
+            Vary:
+              description: Always `Accept-Encoding`; the response body is content-negotiated on `Accept-Encoding`.
+              schema:
+                type: string
+            X-Content-Type-Options:
+              description: Always `nosniff`.
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -19653,7 +19731,7 @@ components:
           $ref: "#/components/schemas/Currency"
         url:
           type: string
-          description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+          description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
     InvoicePlatform:
       type: string
       description: Platform identifier for invoice source.

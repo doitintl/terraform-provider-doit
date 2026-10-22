@@ -11714,7 +11714,30 @@
 						"name": "url",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page."
+							"description": "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`)."
+						}
+					}
+				],
+				"description": "Access your current and historical billing documents.",
+				"markdown_description": "Access your current and historical billing documents."
+			}
+		},
+		{
+			"name": "invoice_pdf",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Invoice number."
+						}
+					},
+					{
+						"name": "content_base64",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Base64-encoded binary content."
 						}
 					}
 				],
@@ -11827,7 +11850,7 @@
 										"name": "url",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page."
+											"description": "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`)."
 										}
 									}
 								]

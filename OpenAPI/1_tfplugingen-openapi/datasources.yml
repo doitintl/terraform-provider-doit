@@ -356,3 +356,7 @@ data_sources:
     read:
       path: /insights/v2/recipes/{recipeId}/results
       method: GET
+  invoice_pdf:
+    read:
+      path: /billing/v1/invoices/{id}/pdf
+      method: GET
