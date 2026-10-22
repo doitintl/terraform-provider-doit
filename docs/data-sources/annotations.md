@@ -39,7 +39,8 @@ output "annotation_summary" {
 Valid fields: **content**, **timestamp**, **labels**.
 - `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
-- `sort_by` (String) A field by which the results will be sorted.
+- `sort_by` (String) A field by which the results will be sorted. timeCreated sorts by the response's createTime;
+timeModified sorts by updateTime.
 Possible values: `id`, `content`, `timestamp`, `timeCreated`, `timeModified`
 - `sort_order` (String) Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 Possible values: `asc`, `desc`

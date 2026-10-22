@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 // TestAccAnnotationsDataSource_MaxResultsOnly tests that setting max_results limits results.
@@ -149,6 +151,125 @@ func TestAccAnnotationsDataSource_AutoPagination(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestAccAnnotationsDataSource_SortByAcceptsAllValues verifies that every documented sort_by value
+// is accepted by the API and that sort_order is honored alongside it.
+func TestAccAnnotationsDataSource_SortByAcceptsAllValues(t *testing.T) {
+	for _, sortBy := range []string{"id", "content", "timestamp", "timeCreated", "timeModified"} {
+		t.Run(sortBy, func(t *testing.T) {
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{
+					{
+						Config: testAccAnnotationsDataSourceSortConfig(sortBy, "asc"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.doit_annotations.test", "sort_by", sortBy),
+							resource.TestCheckResourceAttr("data.doit_annotations.test", "sort_order", "asc"),
+							resource.TestCheckResourceAttrSet("data.doit_annotations.test", "row_count"),
+						),
+					},
+					{
+						Config: testAccAnnotationsDataSourceSortConfig(sortBy, "desc"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.doit_annotations.test", "sort_by", sortBy),
+							resource.TestCheckResourceAttr("data.doit_annotations.test", "sort_order", "desc"),
+							resource.TestCheckResourceAttrSet("data.doit_annotations.test", "row_count"),
+						),
+					},
+					// Drift verification: re-apply the same config should produce an empty plan
+					{
+						Config: testAccAnnotationsDataSourceSortConfig(sortBy, "desc"),
+						ConfigPlanChecks: resource.ConfigPlanChecks{
+							PreApply: []plancheck.PlanCheck{
+								plancheck.ExpectEmptyPlan(),
+							},
+						},
+					},
+				},
+			})
+		})
+	}
+}
+
+// TestAccAnnotationsDataSource_SortByOrdering verifies the documented mapping of the sort_by
+// values onto the response fields: timestamp -> timestamp, timeCreated -> create_time and
+// timeModified -> update_time, in both directions.
+func TestAccAnnotationsDataSource_SortByOrdering(t *testing.T) {
+	if getAnnotationCount(t) < 2 {
+		t.Skip("Need at least 2 annotations to verify sort ordering")
+	}
+
+	for _, tc := range []struct{ sortBy, field string }{
+		{"timestamp", "timestamp"},
+		{"timeCreated", "create_time"},
+		{"timeModified", "update_time"},
+	} {
+		t.Run(tc.sortBy, func(t *testing.T) {
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{
+					{
+						Config: testAccAnnotationsDataSourceSortConfig(tc.sortBy, "asc"),
+						Check:  testAccCheckAnnotationsSortedByTime("data.doit_annotations.test", tc.field, true),
+					},
+					{
+						Config: testAccAnnotationsDataSourceSortConfig(tc.sortBy, "desc"),
+						Check:  testAccCheckAnnotationsSortedByTime("data.doit_annotations.test", tc.field, false),
+					},
+				},
+			})
+		})
+	}
+}
+
+// testAccCheckAnnotationsSortedByTime checks that the RFC3339 field of the annotations list is
+// monotonic in the requested direction. Ties are allowed.
+func testAccCheckAnnotationsSortedByTime(name, field string, ascending bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("resource %s not found in state", name)
+		}
+		attrs := rs.Primary.Attributes
+
+		var count int
+		if _, err := fmt.Sscanf(attrs["annotations.#"], "%d", &count); err != nil {
+			return fmt.Errorf("parsing annotations.#: %w", err)
+		}
+
+		var prev time.Time
+		for i := range count {
+			key := fmt.Sprintf("annotations.%d.%s", i, field)
+			raw, ok := attrs[key]
+			if !ok {
+				return fmt.Errorf("%s is not set", key)
+			}
+			cur, err := time.Parse(time.RFC3339, raw)
+			if err != nil {
+				return fmt.Errorf("parsing %s=%q: %w", key, raw, err)
+			}
+			if i > 0 && ((ascending && cur.Before(prev)) || (!ascending && cur.After(prev))) {
+				return fmt.Errorf("annotations not sorted by %s (ascending=%t): index %d is %s, previous is %s",
+					field, ascending, i, cur.Format(time.RFC3339), prev.Format(time.RFC3339))
+			}
+			prev = cur
+		}
+		return nil
+	}
+}
+
+func testAccAnnotationsDataSourceSortConfig(sortBy, sortOrder string) string {
+	return fmt.Sprintf(`
+data "doit_annotations" "test" {
+  sort_by    = "%s"
+  sort_order = "%s"
+}
+`, sortBy, sortOrder)
 }
 
 func testAccAnnotationsDataSourceConfig() string {

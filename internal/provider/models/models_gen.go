@@ -12613,7 +12613,8 @@ type ListAnnotationsParams struct {
 	// Valid fields: **content**, **timestamp**, **labels**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// SortBy A field by which the results will be sorted.
+	// SortBy A field by which the results will be sorted. timeCreated sorts by the response's createTime;
+	// timeModified sorts by updateTime.
 	SortBy *ListAnnotationsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
 	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
