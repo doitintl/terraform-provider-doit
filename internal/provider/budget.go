@@ -57,28 +57,16 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	if plan.Amount.IsUnknown() {
 		plan.Amount = resolved.Amount
 	}
-	if plan.Currency.IsUnknown() {
-		plan.Currency = resolved.Currency
-	}
 
 	if plan.EndPeriod.IsUnknown() {
 		plan.EndPeriod = resolved.EndPeriod
 	}
 
-	if plan.Name.IsUnknown() {
-		plan.Name = resolved.Name
-	}
 	if plan.Public.IsUnknown() {
 		plan.Public = resolved.Public
 	}
-	if plan.StartPeriod.IsUnknown() {
-		plan.StartPeriod = resolved.StartPeriod
-	}
 	if plan.TimeInterval.IsUnknown() {
 		plan.TimeInterval = resolved.TimeInterval
-	}
-	if plan.Type.IsUnknown() {
-		plan.Type = resolved.Type
 	}
 
 	// ── List fields: resolve whole list when Unknown, overlay elements when Known ──
@@ -105,11 +93,8 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 		diags.Append(overlayListElements(ctx, &resolved.RecipientsSlackChannels, &plan.RecipientsSlackChannels, overlayBudgetSlackChannel)...)
 	}
 
-	if plan.Scopes.IsUnknown() {
-		plan.Scopes = resolved.Scopes
-	} else if !plan.Scopes.IsNull() {
-		diags.Append(overlayListElements(ctx, &resolved.Scopes, &plan.Scopes, overlayBudgetScope)...)
-	}
+	// scopes is Required; only its Optional+Computed elements can be unknown.
+	diags.Append(overlayListElements(ctx, &resolved.Scopes, &plan.Scopes, overlayBudgetScope)...)
 
 	if plan.SeasonalAmounts.IsUnknown() {
 		plan.SeasonalAmounts = resolved.SeasonalAmounts
@@ -178,15 +163,24 @@ func overlayBudgetScope(_ context.Context, resolved, plan *resource_budget.Scope
 	return nil
 }
 
-// toUpdateRequest converts the Terraform model to the API BudgetCreateUpdateRequest.
-// This is used for both create and update operations since they use the same request type.
-func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req models.BudgetCreateUpdateRequest, diags diag.Diagnostics) {
-	// Convert alerts
+// budgetRequestParts holds the request fragments that POST and PATCH share.
+// The two request types differ only in which fields are required and in their
+// per-type enum types, so the conversions that do not depend on either live here.
+type budgetRequestParts struct {
+	alerts        *[]models.BudgetCreateUpdateAlert
+	collaborators *[]models.Collaborator
+	recipients    *[]string
+	slackChannels *[]models.SlackChannel
+	scopes        []models.ExternalConfigFilter
+	seasonal      *[]float64
+}
+
+func (plan *budgetResourceModel) toRequestParts(ctx context.Context) (parts budgetRequestParts, diags diag.Diagnostics) {
 	if !plan.Alerts.IsNull() && !plan.Alerts.IsUnknown() {
 		var alerts []resource_budget.AlertsValue
 		diags.Append(plan.Alerts.ElementsAs(ctx, &alerts, false)...)
 		if diags.HasError() {
-			return req, diags
+			return parts, diags
 		}
 
 		reqAlerts := make([]models.BudgetCreateUpdateAlert, len(alerts))
@@ -195,15 +189,14 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 				Percentage: alert.Percentage.ValueFloat64Pointer(),
 			}
 		}
-		req.Alerts = &reqAlerts
+		parts.alerts = &reqAlerts
 	}
 
-	// Convert collaborators
 	if !plan.Collaborators.IsNull() && !plan.Collaborators.IsUnknown() {
 		var collaborators []resource_budget.CollaboratorsValue
 		diags.Append(plan.Collaborators.ElementsAs(ctx, &collaborators, false)...)
 		if diags.HasError() {
-			return req, diags
+			return parts, diags
 		}
 
 		reqCollaborators := make([]models.Collaborator, len(collaborators))
@@ -213,50 +206,23 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 				Role:  new(models.CollaboratorRole(collaborator.Role.ValueString())),
 			}
 		}
-		req.Collaborators = &reqCollaborators
-	}
-
-	// Simple fields
-	if !plan.Amount.IsNull() && !plan.Amount.IsUnknown() {
-		req.Amount = plan.Amount.ValueFloat64Pointer()
-	}
-	if !plan.Currency.IsNull() && !plan.Currency.IsUnknown() {
-		req.Currency = new(models.Currency(plan.Currency.ValueString()))
-	}
-	req.Description = plan.Description.ValueStringPointer()
-
-	// Only set EndPeriod if it's not null/unknown
-	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
-		req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
-	}
-
-	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
-	if !plan.Metric.IsNull() {
-		req.Metric = new(models.BudgetCreateUpdateRequestMetric(plan.Metric.ValueString()))
-	}
-	if !plan.Name.IsNull() && !plan.Name.IsUnknown() {
-		req.Name = plan.Name.ValueStringPointer()
-	}
-
-	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
-		req.Public = new(models.BudgetCreateUpdateRequestPublic(plan.Public.ValueString()))
+		parts.collaborators = &reqCollaborators
 	}
 
 	if !plan.Recipients.IsNull() && !plan.Recipients.IsUnknown() {
 		var recipients []string
 		diags.Append(plan.Recipients.ElementsAs(ctx, &recipients, false)...)
 		if diags.HasError() {
-			return req, diags
+			return parts, diags
 		}
-		req.Recipients = &recipients
+		parts.recipients = &recipients
 	}
 
-	// RecipientsSlackChannels
 	if !plan.RecipientsSlackChannels.IsNull() && !plan.RecipientsSlackChannels.IsUnknown() {
 		var slackChannels []resource_budget.RecipientsSlackChannelsValue
 		diags.Append(plan.RecipientsSlackChannels.ElementsAs(ctx, &slackChannels, false)...)
 		if diags.HasError() {
-			return req, diags
+			return parts, diags
 		}
 
 		reqSlackChannels := make([]models.SlackChannel, len(slackChannels))
@@ -270,61 +236,132 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 				Type:       channel.RecipientsSlackChannelsType.ValueStringPointer(),
 			}
 		}
-		req.RecipientsSlackChannels = &reqSlackChannels
+		parts.slackChannels = &reqSlackChannels
 	}
 
-	if !plan.Scopes.IsNull() && !plan.Scopes.IsUnknown() {
-		var scopes []resource_budget.ScopesValue
-		diags.Append(plan.Scopes.ElementsAs(ctx, &scopes, false)...)
-		if diags.HasError() {
-			return req, diags
-		}
+	// scopes is Required, so it is known at apply time.
+	var scopes []resource_budget.ScopesValue
+	diags.Append(plan.Scopes.ElementsAs(ctx, &scopes, false)...)
+	if diags.HasError() {
+		return parts, diags
+	}
 
-		reqScopes := make([]models.ExternalConfigFilter, len(scopes))
-		for i, scope := range scopes {
-			filterType := models.DimensionsTypes(scope.ScopesType.ValueString())
-
-			reqScopes[i] = models.ExternalConfigFilter{
-				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
-				Id:              scope.Id.ValueString(),
-				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
-				Inverse:         scope.Inverse.ValueBoolPointer(),
-				Type:            filterType,
-			}
-			if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
-				reqScopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
-			}
-			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
-				var values []string
-				diags.Append(scope.Values.ElementsAs(ctx, &values, false)...)
-				if diags.HasError() {
-					return req, diags
-				}
-				reqScopes[i].Values = &values
-			}
+	parts.scopes = make([]models.ExternalConfigFilter, len(scopes))
+	for i, scope := range scopes {
+		parts.scopes[i] = models.ExternalConfigFilter{
+			CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
+			Id:              scope.Id.ValueString(),
+			IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
+			Inverse:         scope.Inverse.ValueBoolPointer(),
+			Type:            models.DimensionsTypes(scope.ScopesType.ValueString()),
 		}
-		req.Scopes = &reqScopes // Note: models.Scopes is now []ExternalConfigFilter, not a pointer to slice
+		if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
+			parts.scopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
+		}
+		if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
+			var values []string
+			diags.Append(scope.Values.ElementsAs(ctx, &values, false)...)
+			if diags.HasError() {
+				return parts, diags
+			}
+			parts.scopes[i].Values = &values
+		}
 	}
 
 	if !plan.SeasonalAmounts.IsNull() && !plan.SeasonalAmounts.IsUnknown() {
 		var seasonalAmounts []float64
 		diags.Append(plan.SeasonalAmounts.ElementsAs(ctx, &seasonalAmounts, false)...)
 		if diags.HasError() {
-			return req, diags
+			return parts, diags
 		}
-		req.SeasonalAmounts = &seasonalAmounts
+		parts.seasonal = &seasonalAmounts
 	}
 
-	// Only set StartPeriod if it's not null/unknown
-	if !plan.StartPeriod.IsNull() && !plan.StartPeriod.IsUnknown() {
-		req.StartPeriod = plan.StartPeriod.ValueInt64Pointer()
+	return parts, diags
+}
+
+// toCreateRequest converts the Terraform model to the API BudgetCreateRequest.
+// name, currency, type, start_period and scopes are Required in the schema, so
+// they are copied unconditionally.
+func (plan *budgetResourceModel) toCreateRequest(ctx context.Context) (req models.BudgetCreateRequest, diags diag.Diagnostics) {
+	parts, d := plan.toRequestParts(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return req, diags
 	}
 
+	req.Alerts = parts.alerts
+	req.Collaborators = parts.collaborators
+	req.Recipients = parts.recipients
+	req.RecipientsSlackChannels = parts.slackChannels
+	req.Scopes = parts.scopes
+	req.SeasonalAmounts = parts.seasonal
+
+	req.Name = plan.Name.ValueString()
+	req.Currency = models.Currency(plan.Currency.ValueString())
+	req.Type = plan.Type.ValueString()
+	req.StartPeriod = plan.StartPeriod.ValueInt64()
+
+	if !plan.Amount.IsNull() && !plan.Amount.IsUnknown() {
+		req.Amount = plan.Amount.ValueFloat64Pointer()
+	}
+	req.Description = plan.Description.ValueStringPointer()
+	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
+		req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
+	}
+	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
+	if !plan.Metric.IsNull() {
+		req.Metric = new(models.BudgetCreateRequestMetric(plan.Metric.ValueString()))
+	}
+	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
+		req.Public = new(models.BudgetCreateRequestPublic(plan.Public.ValueString()))
+	}
 	if !plan.TimeInterval.IsNull() && !plan.TimeInterval.IsUnknown() {
 		req.TimeInterval = plan.TimeInterval.ValueStringPointer()
 	}
-	if !plan.Type.IsNull() && !plan.Type.IsUnknown() {
-		req.Type = plan.Type.ValueStringPointer()
+	req.UsePrevSpend = plan.UsePrevSpend.ValueBoolPointer()
+
+	return req, diags
+}
+
+// toUpdateRequest converts the Terraform model to the API BudgetUpdateRequest.
+// The plan is always sent in full: PATCH only changes supplied fields, and every
+// Required attribute is known in the plan.
+func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req models.BudgetUpdateRequest, diags diag.Diagnostics) {
+	parts, d := plan.toRequestParts(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return req, diags
+	}
+
+	req.Alerts = parts.alerts
+	req.Collaborators = parts.collaborators
+	req.Recipients = parts.recipients
+	req.RecipientsSlackChannels = parts.slackChannels
+	req.Scopes = &parts.scopes
+	req.SeasonalAmounts = parts.seasonal
+
+	req.Name = plan.Name.ValueStringPointer()
+	req.Currency = new(models.Currency(plan.Currency.ValueString()))
+	req.Type = plan.Type.ValueStringPointer()
+	req.StartPeriod = plan.StartPeriod.ValueInt64Pointer()
+
+	if !plan.Amount.IsNull() && !plan.Amount.IsUnknown() {
+		req.Amount = plan.Amount.ValueFloat64Pointer()
+	}
+	req.Description = plan.Description.ValueStringPointer()
+	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
+		req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
+	}
+	req.GrowthPerPeriod = plan.GrowthPerPeriod.ValueFloat64Pointer()
+	if !plan.Metric.IsNull() {
+		req.Metric = new(models.BudgetUpdateRequestMetric(plan.Metric.ValueString()))
+	}
+	if !plan.Public.IsNull() && !plan.Public.IsUnknown() {
+		req.Public = new(models.BudgetUpdateRequestPublic(plan.Public.ValueString()))
+	}
+	if !plan.TimeInterval.IsNull() && !plan.TimeInterval.IsUnknown() {
+		req.TimeInterval = plan.TimeInterval.ValueStringPointer()
 	}
 	req.UsePrevSpend = plan.UsePrevSpend.ValueBoolPointer()
 

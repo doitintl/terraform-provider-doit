@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### ENHANCEMENTS
+
+- **resource/doit_budget**: `name`, `currency`, `type`, `start_period` and `scopes` are now declared `Required` in the schema, and `name` and `scopes` reject empty values, following the upstream split of the budget create and update request schemas. The API has always rejected a create without them, so new budgets are unaffected and Terraform now reports it at validation time. A configuration that omitted one of them for an existing budget (for example after `terraform import`, or after removing it from the config following creation) used to keep the value from state silently; it must now set the attribute explicitly, using the value shown in `terraform state show`. Create and update requests use their own request types
+
 ### BUG FIXES
+
+- **resource/doit_budget**: The `scoped_to_allocation` example scoped the budget to every allocation, including group allocations, which budgets reject. It now uses the first single allocation
 
 - **resource/doit_sharing**: Group allocations can now be shared. Previously the provider sent `public = ""`, which the API rejected for group allocations ([#317](https://github.com/doitintl/terraform-provider-doit/issues/317)). Requires the upstream API change from CMP-51363, which is already deployed
 - **resource/doit_sharing, data-source/doit_sharing**: Allocations always have at least `viewer` public access. `public` can now be set to `viewer` or `editor` on allocations (it was rejected before) and omitting it no longer causes a permanent `viewer -> null` diff on single allocations. Removing `public` from the configuration keeps the current value, because allocation public access cannot be cleared ([#317](https://github.com/doitintl/terraform-provider-doit/issues/317))

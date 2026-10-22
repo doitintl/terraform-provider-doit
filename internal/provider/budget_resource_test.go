@@ -141,6 +141,7 @@ resource "terraform_data" "end_period" {
 
 resource "doit_budget" "this" {
   name         = "test-unknown-end-period-%d"
+  currency     = "USD"
   amount       = 500
   type         = "fixed"
   start_period = %d
@@ -173,7 +174,7 @@ func TestAccBudget_PeriodValidation(t *testing.T) {
 		wantError   string
 	}{
 		{"invalid interval", "recurring", "time_interval = \"monthly\"\nstart_period = 1759276800000", "", "Invalid Budget Time Interval"},
-		{"missing start", "recurring", "time_interval = \"month\"", "", "Missing Required Attribute"},
+		{"missing start", "recurring", "time_interval = \"month\"", "", `The argument "start_period" is required`},
 		{"missing recurring interval", "recurring", "start_period = 1759276800000", "", "Missing Required Attribute"},
 		{"fixed other interval", "fixed", "start_period = 1759276800000\nend_period = 1761955200000\ntime_interval = \"week\"", "", "Invalid Budget Time Interval"},
 		{"fixed omitted interval", "fixed", "start_period = 1759276800000\nend_period = 1761955200000", "", ""},
@@ -187,6 +188,7 @@ func TestAccBudget_PeriodValidation(t *testing.T) {
 %s
 resource "doit_budget" "this" {
   name = "test-budget-period-validation"
+  currency = "USD"
   amount = 100
   type = %q
   %s
@@ -254,6 +256,144 @@ func testSlackWorkspaceChannel() string {
 
 func testCustomerID() string {
 	return os.Getenv("TEST_CUSTOMER_ID")
+}
+
+// budgetRequiredAttrs are the attributes the create schema marks required.
+// Each maps to the config line that sets it, so a case can drop exactly one.
+var budgetRequiredAttrs = []struct{ name, line string }{
+	{"name", `name = "test-budget-required"`},
+	{"currency", `currency = "USD"`},
+	{"type", `type = "fixed"`},
+	{"start_period", `start_period = 1759276800000`},
+}
+
+// budgetRequiredScopesBlock is the scopes attribute shared by the plan-only
+// validation configs below.
+func budgetRequiredScopesBlock() string {
+	return fmt.Sprintf(`scopes = [{
+    id = "allocation_rule"
+    type = "allocation_rule"
+    mode = "is"
+    values = [%q]
+  }]`, testAttribution())
+}
+
+// TestAccBudget_MissingRequiredAttributes verifies that each attribute required
+// by the create schema is rejected at validate time when omitted. None of the
+// steps call the API.
+func TestAccBudget_MissingRequiredAttributes(t *testing.T) {
+	type tc struct{ omit, wantError string }
+	cases := []tc{{"scopes", `The argument "scopes" is required`}}
+	for _, a := range budgetRequiredAttrs {
+		cases = append(cases, tc{a.name, fmt.Sprintf(`The argument %q is required`, a.name)})
+	}
+	for _, c := range cases {
+		t.Run(c.omit, func(t *testing.T) {
+			var lines []string
+			for _, a := range budgetRequiredAttrs {
+				if a.name != c.omit {
+					lines = append(lines, a.line)
+				}
+			}
+			if c.omit != "scopes" {
+				lines = append(lines, budgetRequiredScopesBlock())
+			}
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{{
+					Config:      fmt.Sprintf("resource \"doit_budget\" \"this\" {\n  amount = 100\n  end_period = 1761955200000\n  %s\n}\n", strings.Join(lines, "\n  ")),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(c.wantError),
+				}},
+			})
+		})
+	}
+}
+
+// TestAccBudget_InvalidRequiredValues verifies the length constraints the create
+// schema puts on name and scopes.
+func TestAccBudget_InvalidRequiredValues(t *testing.T) {
+	cases := []struct{ name, config, wantError string }{
+		{
+			"empty name",
+			fmt.Sprintf(`resource "doit_budget" "this" {
+  name = ""
+  amount = 100
+  currency = "USD"
+  type = "fixed"
+  start_period = 1759276800000
+  end_period = 1761955200000
+  %s
+}`, budgetRequiredScopesBlock()),
+			`string length must be at least 1`,
+		},
+		{
+			"empty scopes",
+			`resource "doit_budget" "this" {
+  name = "test-budget-empty-scopes"
+  amount = 100
+  currency = "USD"
+  type = "fixed"
+  start_period = 1759276800000
+  end_period = 1761955200000
+  scopes = []
+}`,
+			`must contain at least 1 elements`,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{{
+					Config:      c.config,
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(c.wantError),
+				}},
+			})
+		})
+	}
+}
+
+// TestAccBudget_UnknownRequiredAttributes verifies that name and scopes computed
+// from another resource are deferred to apply rather than rejected at plan time.
+func TestAccBudget_UnknownRequiredAttributes(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config: fmt.Sprintf(`
+resource "terraform_data" "deferred" {
+  input = {
+    name   = "test-budget-unknown-required"
+    scopes = [{
+      id     = "allocation_rule"
+      type   = "allocation_rule"
+      mode   = "is"
+      values = [%q]
+    }]
+  }
+}
+
+resource "doit_budget" "this" {
+  name         = terraform_data.deferred.output.name
+  amount       = 100
+  currency     = "USD"
+  type         = "fixed"
+  start_period = 1759276800000
+  end_period   = 1761955200000
+  scopes       = terraform_data.deferred.output.scopes
+}
+`, testAttribution()),
+			PlanOnly:           true,
+			ExpectNonEmptyPlan: true,
+		}},
+	})
 }
 
 func testAccBudget(i int) string {
@@ -327,6 +467,7 @@ func testAccBudgetFixed(i int) string {
 
 resource "doit_budget" "this" {
   name          = "test-fixed-%d"
+  currency      = "USD"
   amount        = 500
   type          = "fixed"
   start_period  = local.start_period

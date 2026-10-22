@@ -56,13 +56,14 @@ resource "doit_budget" "scoped_to_allocation" {
     { percentage = 80 },
     { percentage = 100 }
   ]
-  # Scope the budget to the first allocation from the data source
+  # Scope the budget to the first single allocation from the data source.
+  # Group allocations are not valid budget scopes, so filter them out.
   scopes = [
     {
       type   = "allocation_rule"
       id     = "allocation_rule"
       mode   = "is"
-      values = [for a in data.doit_allocations.all.allocations : a.id]
+      values = [[for a in data.doit_allocations.all.allocations : a.id if a.allocation_type == "single"][0]]
     }
   ]
 }

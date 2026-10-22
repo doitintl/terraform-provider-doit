@@ -1321,7 +1321,7 @@
 					{
 						"name": "currency",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Currency code for monetary values.",
 							"validators": [
 								{
@@ -1389,8 +1389,20 @@
 					{
 						"name": "name",
 						"string": {
-							"computed_optional_required": "computed_optional",
-							"description": "Budget Name."
+							"computed_optional_required": "required",
+							"description": "Budget Name.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
 						}
 					},
 					{
@@ -1472,7 +1484,7 @@
 					{
 						"name": "scopes",
 						"list_nested": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"nested_object": {
 								"attributes": [
 									{
@@ -1559,7 +1571,19 @@
 									}
 								]
 							},
-							"description": "The filters selected define the scope of the budget."
+							"description": "The filters selected define the scope of the budget. At least one filter is required.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.SizeAtLeast(1)"
+									}
+								}
+							]
 						}
 					},
 					{
@@ -1575,7 +1599,7 @@
 					{
 						"name": "start_period",
 						"int64": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Budget start Date"
 						}
 					},
@@ -1589,7 +1613,7 @@
 					{
 						"name": "type",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "budget type can be one of: [\"fixed\", \"recurring\"]"
 						}
 					},
