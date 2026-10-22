@@ -18,9 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -432,37 +430,6 @@ func TestUserNotification_PopulateState_NotFound(t *testing.T) {
 	}
 }
 
-// testUserNotificationDeleteState builds a state with user_id, id and etag set
-// and every other attribute null.
-func testUserNotificationDeleteState(ctx context.Context, t *testing.T, r *userNotificationResource, etag string) tfsdk.State {
-	t.Helper()
-	schemaResp := &resource.SchemaResponse{}
-	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
-	if schemaResp.Diagnostics.HasError() {
-		t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
-	}
-
-	set := map[string]string{"user_id": "user-1", "id": "notif-1"}
-	if etag != "" {
-		set["etag"] = etag
-	}
-	values := map[string]tftypes.Value{}
-	for name, a := range schemaResp.Schema.Attributes {
-		if v, ok := set[name]; ok {
-			values[name] = tftypes.NewValue(tftypes.String, v)
-			continue
-		}
-		values[name] = tftypes.NewValue(a.GetType().TerraformType(ctx), nil)
-	}
-
-	return tfsdk.State{
-		Schema: schemaResp.Schema,
-		Raw: tftypes.NewValue(tftypes.Object{
-			AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
-		}, values),
-	}
-}
-
 // TestUserNotificationResourceDelete runs every case through the plain test
 // client and through DCIRetryClient, which production uses: a status the retry
 // client turns into an error never reaches the resource's status handling.
@@ -535,7 +502,11 @@ func TestUserNotificationResourceDelete(t *testing.T) {
 				defer cancel()
 				r := &userNotificationResource{client: newClient(t, srv)}
 				resp := &resource.DeleteResponse{}
-				r.Delete(ctx, resource.DeleteRequest{State: testUserNotificationDeleteState(ctx, t, r, tt.stateEtag)}, resp)
+				values := map[string]string{"user_id": "user-1", "id": "notif-1"}
+				if tt.stateEtag != "" {
+					values["etag"] = tt.stateEtag
+				}
+				r.Delete(ctx, resource.DeleteRequest{State: newTestState(ctx, t, r, values)}, resp)
 
 				if got := resp.Diagnostics.HasError(); got != tt.expectError {
 					t.Errorf("hasError = %v, want %v; diagnostics: %v", got, tt.expectError, resp.Diagnostics)

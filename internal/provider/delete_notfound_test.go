@@ -338,6 +338,39 @@ func getAttributeTypes(ctx context.Context, attrs map[string]schema.Attribute) m
 	return result
 }
 
+// newTestState builds a state for r with the given top-level string attributes
+// set and every other attribute null.
+func newTestState(ctx context.Context, t *testing.T, r resource.Resource, values map[string]string) tfsdk.State {
+	t.Helper()
+
+	schemaResp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	if schemaResp.Diagnostics.HasError() {
+		t.Fatalf("Failed to get schema: %v", schemaResp.Diagnostics)
+	}
+
+	stateValues := map[string]tftypes.Value{}
+	for name, attr := range schemaResp.Schema.Attributes {
+		if v, ok := values[name]; ok {
+			stateValues[name] = tftypes.NewValue(tftypes.String, v)
+			continue
+		}
+		stateValues[name] = tftypes.NewValue(attr.GetType().TerraformType(ctx), nil)
+	}
+	for name := range values {
+		if _, ok := schemaResp.Schema.Attributes[name]; !ok {
+			t.Fatalf("attribute %q is not in the schema", name)
+		}
+	}
+
+	return tfsdk.State{
+		Schema: schemaResp.Schema,
+		Raw: tftypes.NewValue(tftypes.Object{
+			AttributeTypes: getAttributeTypes(ctx, schemaResp.Schema.Attributes),
+		}, stateValues),
+	}
+}
+
 // TestIs404Error tests that the 404 detection logic works correctly for error messages.
 func TestIs404Error(t *testing.T) {
 	tests := []struct {
