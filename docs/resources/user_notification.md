@@ -154,7 +154,7 @@ Possible values: `all`, `include`, `exclude`
 
 Required:
 
-- `amount` (String) Amount in whole US dollars, such as `100` or `100.00`. The API returns amounts with two decimals; state keeps the configured spelling while the value is unchanged, but an imported notification has the two-decimal spelling. `0` is accepted.
+- `amount` (String) Amount in whole US dollars, such as `100` or `100.00`. The API returns amounts with two decimals; state keeps the configured spelling while the value is unchanged, but an imported notification has the two-decimal spelling. Must be between `0` and `1000000000`.
 - `currency` (String) Currency code. Must be `USD`.
 
 
@@ -181,7 +181,7 @@ Optional:
 
 Required:
 
-- `amount` (String) Amount in whole US dollars, such as `100` or `100.00`. The API returns amounts with two decimals; state keeps the configured spelling while the value is unchanged, but an imported notification has the two-decimal spelling.
+- `amount` (String) Amount in whole US dollars, such as `100` or `100.00`. The API returns amounts with two decimals; state keeps the configured spelling while the value is unchanged, but an imported notification has the two-decimal spelling. Must be between `1` and `1000000000`.
 - `currency` (String) Currency code. Must be `USD`.
 
 

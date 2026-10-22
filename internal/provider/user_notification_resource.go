@@ -121,9 +121,9 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 	if settings, ok := s.Attributes["settings"].(schema.SingleNestedAttribute); ok {
 		if costAnomalies, ok := settings.Attributes["cost_anomalies"].(schema.SingleNestedAttribute); ok {
 			if minExcessCost, ok := costAnomalies.Attributes["min_excess_cost"].(schema.SingleNestedAttribute); ok {
-				appendUserNotificationMoneyValidators(minExcessCost.Attributes)
+				appendUserNotificationMoneyValidators(minExcessCost.Attributes, false)
 				setUserNotificationDescriptions(minExcessCost.Attributes, map[string]string{
-					"amount": userNotificationAmountDescription + " `0` is accepted.",
+					"amount": userNotificationAmountDescription + " Must be between `0` and `1000000000`.",
 				})
 				costAnomalies.Attributes["min_excess_cost"] = minExcessCost
 			}
@@ -153,9 +153,9 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 					}
 					if minIncrease, ok := whenCostGrows.Attributes["min_increase"].(schema.SingleNestedAttribute); ok {
 						minIncrease.Computed = false
-						appendUserNotificationMoneyValidators(minIncrease.Attributes)
+						appendUserNotificationMoneyValidators(minIncrease.Attributes, true)
 						setUserNotificationDescriptions(minIncrease.Attributes, map[string]string{
-							"amount": userNotificationAmountDescription,
+							"amount": userNotificationAmountDescription + " Must be between `1` and `1000000000`.",
 						})
 						whenCostGrows.Attributes["min_increase"] = minIncrease
 					}
@@ -236,10 +236,14 @@ func setUserNotificationDescriptions(attributes map[string]schema.Attribute, des
 }
 
 // appendUserNotificationMoneyValidators tightens the generated Money checks to
-// what the API accepts: whole US dollars.
-func appendUserNotificationMoneyValidators(attributes map[string]schema.Attribute) {
+// what the API accepts: whole US dollars up to 1,000,000,000, and above zero
+// when positive is set.
+func appendUserNotificationMoneyValidators(attributes map[string]schema.Attribute, positive bool) {
 	if amount, ok := attributes["amount"].(schema.StringAttribute); ok {
-		amount.Validators = append(amount.Validators, stringvalidator.RegexMatches(userNotificationAmountPattern, userNotificationAmountMessage))
+		amount.Validators = append(amount.Validators,
+			stringvalidator.RegexMatches(userNotificationAmountPattern, userNotificationAmountMessage),
+			userNotificationAmountRangeValidator{positive: positive},
+		)
 		attributes["amount"] = amount
 	}
 	if currency, ok := attributes["currency"].(schema.StringAttribute); ok {

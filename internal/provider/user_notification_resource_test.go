@@ -433,6 +433,7 @@ func TestAccUserNotification_Validation(t *testing.T) {
 `
 	cases := map[string]struct {
 		settings string
+		extra    string // config outside the notification, e.g. a source of unknown values
 		err      string
 	}{
 		"non_usd_currency": {
@@ -510,6 +511,55 @@ func TestAccUserNotification_Validation(t *testing.T) {
 `,
 			err: `every_hours`,
 		},
+		"min_excess_cost_above_maximum": {
+			settings: `
+      min_severity    = "warning"
+      min_excess_cost = { amount = "1000000001", currency = "USD" }
+      allocations     = { mode = "all", ids = [] }
+`,
+			err: `at\s+most\s+1000000000`,
+		},
+		"min_increase_zero": {
+			settings: base + `
+      repeat = { when_cost_grows = { min_increase = { amount = "0.00", currency = "USD" } } }
+`,
+			err: `greater\s+than\s+0`,
+		},
+		"min_increase_above_maximum": {
+			settings: base + `
+      repeat = { when_cost_grows = { min_increase = { amount = "1000000001", currency = "USD" } } }
+`,
+			err: `at\s+most\s+1000000000`,
+		},
+		"null_allocation_id": {
+			settings: `
+      min_severity    = "warning"
+      min_excess_cost = { amount = "100", currency = "USD" }
+      allocations     = { mode = "include", ids = [null] }
+`,
+			err: `Invalid Allocation ID`,
+		},
+		"empty_allocation_id": {
+			settings: `
+      min_severity    = "warning"
+      min_excess_cost = { amount = "100", currency = "USD" }
+      allocations     = { mode = "include", ids = ["alloc-a", ""] }
+`,
+			err: `Invalid Allocation ID`,
+		},
+		// match is unknown at plan time, but no value of it can make a rule
+		// without thresholds valid.
+		"unknown_match_without_threshold": {
+			extra: `
+resource "terraform_data" "match" {
+  input = "or"
+}
+`,
+			settings: base + `
+      repeat = { when_cost_grows = { match = terraform_data.match.output, within_hours = 3 } }
+`,
+			err: `Missing Cost Growth\s+Threshold`,
+		},
 	}
 
 	for name, tc := range cases {
@@ -520,7 +570,7 @@ func TestAccUserNotification_Validation(t *testing.T) {
 				TerraformVersionChecks:   testAccTFVersionChecks,
 				Steps: []resource.TestStep{
 					{
-						Config: fmt.Sprintf(`
+						Config: tc.extra + fmt.Sprintf(`
 resource "doit_user_notification" "this" {
   user_id = "user-id"
   name    = "validation"

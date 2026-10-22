@@ -15,7 +15,9 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -600,6 +602,13 @@ func TestValidateUserNotificationAllocations(t *testing.T) {
 		{"include ids", testAllocationsValue(t, types.StringValue("include"), stringList(t, a, b)), ""},
 		{"duplicate before unknown", testAllocationsValue(t, types.StringValue("include"), stringList(t, a, a, unknown)), "Duplicate Allocation ID"},
 		{"duplicate after unknown", testAllocationsValue(t, types.StringValue("include"), stringList(t, unknown, a, a)), "Duplicate Allocation ID"},
+		// Null and empty IDs are rejected by the API, and a null element cannot
+		// be converted to the request's []string.
+		{"null id", testAllocationsValue(t, types.StringValue("include"), stringList(t, types.StringNull())), "Invalid Allocation ID"},
+		{"empty id", testAllocationsValue(t, types.StringValue("include"), stringList(t, a, types.StringValue(""))), "Invalid Allocation ID"},
+		{"null id after unknown", testAllocationsValue(t, types.StringValue("include"), stringList(t, unknown, types.StringNull())), "Invalid Allocation ID"},
+		{"empty id before unknown", testAllocationsValue(t, types.StringValue("exclude"), stringList(t, types.StringValue(""), unknown)), "Invalid Allocation ID"},
+		{"null id with unknown mode", testAllocationsValue(t, types.StringUnknown(), stringList(t, types.StringNull())), "Invalid Allocation ID"},
 	}
 
 	for _, tt := range tests {
@@ -685,6 +694,10 @@ func TestValidateUserNotificationWhenCostGrows(t *testing.T) {
 		{"one threshold with match", testWhenCostGrowsValue(t, types.StringValue("or"), types.Int64Value(5), noMin), "", ""},
 		{"both without match", testWhenCostGrowsValue(t, types.StringNull(), types.Int64Value(5), minInc), "Missing Match", "when_cost_grows.match"},
 		{"both with unknown match", testWhenCostGrowsValue(t, types.StringUnknown(), types.Int64Value(5), minInc), "", ""},
+		// No value of match can make a rule without thresholds valid.
+		{"no threshold with unknown match", testWhenCostGrowsValue(t, types.StringUnknown(), types.Int64Null(), noMin), "Missing Cost Growth Threshold", "when_cost_grows"},
+		{"one threshold with unknown match", testWhenCostGrowsValue(t, types.StringUnknown(), types.Int64Value(5), noMin), "", ""},
+		{"unknown percent with null match", testWhenCostGrowsValue(t, types.StringNull(), types.Int64Unknown(), minInc), "", ""},
 		{"both with match", testWhenCostGrowsValue(t, types.StringValue("and"), types.Int64Value(5), minInc), "", ""},
 	}
 
@@ -693,6 +706,53 @@ func TestValidateUserNotificationWhenCostGrows(t *testing.T) {
 			var diags diag.Diagnostics
 			validateUserNotificationWhenCostGrows(tt.value, &diags)
 			assertSingleError(t, diags, tt.summary, tt.path)
+		})
+	}
+}
+
+func TestUserNotificationAmountRangeValidator(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    types.String
+		positive bool
+		wantErr  string
+	}{
+		{"null", types.StringNull(), true, ""},
+		{"unknown", types.StringUnknown(), true, ""},
+		{"malformed is left to the pattern validator", types.StringValue("abc"), true, ""},
+		{"zero excess cost", types.StringValue("0"), false, ""},
+		{"zero excess cost with decimals", types.StringValue("0.00"), false, ""},
+		{"zero increase", types.StringValue("0"), true, "must be greater than 0"},
+		{"zero increase with decimals", types.StringValue("0.00"), true, "must be greater than 0"},
+		{"smallest increase", types.StringValue("1"), true, ""},
+		{"maximum", types.StringValue("1000000000"), false, ""},
+		{"maximum with decimals", types.StringValue("1000000000.00"), true, ""},
+		{"above maximum", types.StringValue("1000000001"), false, "must be at most 1000000000 US dollars"},
+		{"above maximum increase", types.StringValue("1000000001"), true, "must be at most 1000000000 US dollars"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := path.Root("settings").AtName("cost_anomalies").AtName("min_excess_cost").AtName("amount")
+			resp := &validator.StringResponse{}
+			userNotificationAmountRangeValidator{positive: tt.positive}.ValidateString(t.Context(), validator.StringRequest{Path: p, ConfigValue: tt.value}, resp)
+
+			if tt.wantErr == "" {
+				if resp.Diagnostics.HasError() {
+					t.Errorf("unexpected diagnostics: %v", resp.Diagnostics)
+				}
+				return
+			}
+			if resp.Diagnostics.ErrorsCount() != 1 {
+				t.Fatalf("errors = %d, want 1: %v", resp.Diagnostics.ErrorsCount(), resp.Diagnostics)
+			}
+			d := resp.Diagnostics.Errors()[0]
+			if d.Summary() != "Invalid Amount" || !strings.Contains(d.Detail(), tt.wantErr) {
+				t.Errorf("diagnostic = %q / %q, want detail containing %q", d.Summary(), d.Detail(), tt.wantErr)
+			}
+			if withPath, ok := d.(diag.DiagnosticWithPath); !ok || !withPath.Path().Equal(p) {
+				t.Errorf("diagnostic path mismatch: %v", d)
+			}
 		})
 	}
 }
