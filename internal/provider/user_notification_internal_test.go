@@ -463,8 +463,18 @@ func testUserNotificationDeleteState(ctx context.Context, t *testing.T, r *userN
 	}
 }
 
+// TestUserNotificationResourceDelete runs every case through the plain test
+// client and through DCIRetryClient, which production uses: a status the retry
+// client turns into an error never reaches the resource's status handling.
 func TestUserNotificationResourceDelete(t *testing.T) {
 	const path = "/iam/v1/users/user-1/notifications/notif-1"
+
+	clients := map[string]func(*testing.T, *httptest.Server) *models.ClientWithResponses{
+		"plain": newTestAPIClient,
+		"retry": func(t *testing.T, srv *httptest.Server) *models.ClientWithResponses {
+			return newTestRetryAPIClient(t, srv, DefaultRequestTimeout, constantBackOff(time.Millisecond))
+		},
+	}
 
 	tests := []struct {
 		name        string
@@ -484,57 +494,60 @@ func TestUserNotificationResourceDelete(t *testing.T) {
 		{name: "server error", stateEtag: "e1", currentEtag: "e1", getStatus: 200, deleteFinal: 500, wantDeletes: 1, wantGets: 0, expectError: true},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var deletes, gets atomic.Int32
-			srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.URL.Path != path {
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				switch r.Method {
-				case http.MethodGet:
-					gets.Add(1)
-					if tt.getStatus != 200 {
-						w.Header().Set("Content-Type", "application/problem+json")
+	for clientName, newClient := range clients {
+		for _, tt := range tests {
+			t.Run(clientName+"/"+tt.name, func(t *testing.T) {
+				var deletes, gets atomic.Int32
+				srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path != path {
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+					switch r.Method {
+					case http.MethodGet:
+						gets.Add(1)
+						if tt.getStatus != 200 {
+							w.Header().Set("Content-Type", "application/problem+json")
+							w.WriteHeader(tt.getStatus)
+							_, _ = w.Write([]byte(`{"code":"not_found","status":404,"title":"Not found"}`))
+							return
+						}
+						w.Header().Set("Content-Type", "application/json")
 						w.WriteHeader(tt.getStatus)
-						_, _ = w.Write([]byte(`{"code":"not_found","status":404,"title":"Not found"}`))
-						return
+						_, _ = w.Write([]byte(`{"id":"notif-1","name":"n","etag":"` + tt.currentEtag + `","settings":{"costAnomalies":{"minSeverity":"warning","minExcessCost":{"amount":"1.00","currency":"USD"},"allocations":{"mode":"all","ids":[]}}}}`))
+					case http.MethodDelete:
+						deletes.Add(1)
+						if r.Header.Get("Idempotency-Key") == "" {
+							w.WriteHeader(http.StatusBadRequest)
+							return
+						}
+						if r.Header.Get("If-Match") != tt.currentEtag {
+							w.WriteHeader(http.StatusPreconditionFailed)
+							return
+						}
+						w.WriteHeader(tt.deleteFinal)
+					default:
+						w.WriteHeader(http.StatusMethodNotAllowed)
 					}
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(tt.getStatus)
-					_, _ = w.Write([]byte(`{"id":"notif-1","name":"n","etag":"` + tt.currentEtag + `","settings":{"costAnomalies":{"minSeverity":"warning","minExcessCost":{"amount":"1.00","currency":"USD"},"allocations":{"mode":"all","ids":[]}}}}`))
-				case http.MethodDelete:
-					deletes.Add(1)
-					if r.Header.Get("Idempotency-Key") == "" {
-						w.WriteHeader(http.StatusBadRequest)
-						return
-					}
-					if r.Header.Get("If-Match") != tt.currentEtag {
-						w.WriteHeader(http.StatusPreconditionFailed)
-						return
-					}
-					w.WriteHeader(tt.deleteFinal)
-				default:
-					w.WriteHeader(http.StatusMethodNotAllowed)
+				}))
+
+				ctx, cancel := context.WithTimeout(t.Context(), retryTestTimeout)
+				defer cancel()
+				r := &userNotificationResource{client: newClient(t, srv)}
+				resp := &resource.DeleteResponse{}
+				r.Delete(ctx, resource.DeleteRequest{State: testUserNotificationDeleteState(ctx, t, r, tt.stateEtag)}, resp)
+
+				if got := resp.Diagnostics.HasError(); got != tt.expectError {
+					t.Errorf("hasError = %v, want %v; diagnostics: %v", got, tt.expectError, resp.Diagnostics)
 				}
-			}))
-
-			ctx := t.Context()
-			r := &userNotificationResource{client: newTestAPIClient(t, srv)}
-			resp := &resource.DeleteResponse{}
-			r.Delete(ctx, resource.DeleteRequest{State: testUserNotificationDeleteState(ctx, t, r, tt.stateEtag)}, resp)
-
-			if got := resp.Diagnostics.HasError(); got != tt.expectError {
-				t.Errorf("hasError = %v, want %v; diagnostics: %v", got, tt.expectError, resp.Diagnostics)
-			}
-			if got := deletes.Load(); got != tt.wantDeletes {
-				t.Errorf("DELETE calls = %d, want %d", got, tt.wantDeletes)
-			}
-			if got := gets.Load(); got != tt.wantGets {
-				t.Errorf("GET calls = %d, want %d", got, tt.wantGets)
-			}
-		})
+				if got := deletes.Load(); got != tt.wantDeletes {
+					t.Errorf("DELETE calls = %d, want %d", got, tt.wantDeletes)
+				}
+				if got := gets.Load(); got != tt.wantGets {
+					t.Errorf("GET calls = %d, want %d", got, tt.wantGets)
+				}
+			})
+		}
 	}
 }
 
