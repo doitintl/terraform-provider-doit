@@ -1,12 +1,15 @@
 package provider
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -266,5 +269,101 @@ func TestServiceAccount_PopulateState_NotFound(t *testing.T) {
 	}
 	if !state.Id.IsNull() {
 		t.Errorf("expected state.Id to be set to null on 404, got '%s'", state.Id.ValueString())
+	}
+}
+
+// TestServiceAccountResourceDelete covers the ETag handling of Delete. Every
+// case runs through the plain test client and through DCIRetryClient, which
+// production uses: a status the retry client turns into an error never reaches
+// the resource's status handling (412 did until it was passed through).
+func TestServiceAccountResourceDelete(t *testing.T) {
+	const path = "/iam/v1/service-accounts/sa-1"
+
+	clients := map[string]func(*testing.T, *httptest.Server) *models.ClientWithResponses{
+		"plain": newTestAPIClient,
+		"retry": func(t *testing.T, srv *httptest.Server) *models.ClientWithResponses {
+			return newTestRetryAPIClient(t, srv, DefaultRequestTimeout, constantBackOff(time.Millisecond))
+		},
+	}
+
+	tests := []struct {
+		name        string
+		stateEtag   string
+		currentEtag string // etag the server accepts; GET returns it
+		getStatus   int
+		deleteFinal int // status once the etag matches
+		wantDeletes int32
+		wantGets    int32
+		expectError bool
+	}{
+		{name: "etag from state", stateEtag: "e1", currentEtag: "e1", getStatus: 200, deleteFinal: 204, wantDeletes: 1},
+		{name: "stale etag retried once", stateEtag: "old", currentEtag: "e2", getStatus: 200, deleteFinal: 204, wantDeletes: 2, wantGets: 1},
+		{name: "no etag in state fetched first", currentEtag: "e3", getStatus: 200, deleteFinal: 204, wantDeletes: 1, wantGets: 1},
+		{name: "no etag in state and already gone", currentEtag: "e3", getStatus: 404, deleteFinal: 204, wantGets: 1},
+		{name: "already gone", stateEtag: "e1", currentEtag: "e1", getStatus: 200, deleteFinal: 404, wantDeletes: 1},
+		{name: "gone before retry", stateEtag: "old", currentEtag: "e2", getStatus: 404, deleteFinal: 204, wantDeletes: 1, wantGets: 1},
+		{name: "refetch after 412 fails", stateEtag: "old", currentEtag: "e2", getStatus: 500, deleteFinal: 204, wantDeletes: 1, wantGets: 1, expectError: true},
+		{name: "server error", stateEtag: "e1", currentEtag: "e1", getStatus: 200, deleteFinal: 500, wantDeletes: 1, expectError: true},
+	}
+
+	for clientName, newClient := range clients {
+		for _, tt := range tests {
+			t.Run(clientName+"/"+tt.name, func(t *testing.T) {
+				var deletes, gets atomic.Int32
+				srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path != path {
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+					switch r.Method {
+					case http.MethodGet:
+						gets.Add(1)
+						if tt.getStatus != 200 {
+							w.Header().Set("Content-Type", "application/problem+json")
+							w.WriteHeader(tt.getStatus)
+							_, _ = w.Write([]byte(`{"title":"error"}`))
+							return
+						}
+						w.Header().Set("Content-Type", "application/json")
+						_, _ = w.Write([]byte(`{"id":"sa-1","name":"sa","etag":"` + tt.currentEtag + `"}`))
+					case http.MethodDelete:
+						deletes.Add(1)
+						if r.Header.Get("Idempotency-Key") == "" {
+							w.WriteHeader(http.StatusBadRequest)
+							return
+						}
+						if r.Header.Get("If-Match") != tt.currentEtag {
+							w.Header().Set("Content-Type", "application/problem+json")
+							w.WriteHeader(http.StatusPreconditionFailed)
+							_, _ = w.Write([]byte(`{"title":"Precondition failed"}`))
+							return
+						}
+						w.WriteHeader(tt.deleteFinal)
+					default:
+						w.WriteHeader(http.StatusMethodNotAllowed)
+					}
+				}))
+
+				ctx, cancel := context.WithTimeout(t.Context(), retryTestTimeout)
+				defer cancel()
+				r := &serviceAccountResource{client: newClient(t, srv)}
+				values := map[string]string{"id": "sa-1"}
+				if tt.stateEtag != "" {
+					values["etag"] = tt.stateEtag
+				}
+				resp := &resource.DeleteResponse{}
+				r.Delete(ctx, resource.DeleteRequest{State: newTestState(ctx, t, r, values)}, resp)
+
+				if got := resp.Diagnostics.HasError(); got != tt.expectError {
+					t.Errorf("hasError = %v, want %v; diagnostics: %v", got, tt.expectError, resp.Diagnostics)
+				}
+				if got := deletes.Load(); got != tt.wantDeletes {
+					t.Errorf("DELETE calls = %d, want %d", got, tt.wantDeletes)
+				}
+				if got := gets.Load(); got != tt.wantGets {
+					t.Errorf("GET calls = %d, want %d", got, tt.wantGets)
+				}
+			})
+		}
 	}
 }
