@@ -4,7 +4,7 @@
 
 ### ENHANCEMENTS
 
-- **resource/doit_budget**: `name`, `currency`, `type`, `start_period` and `scopes` are now declared `Required` in the schema, and `name` and `scopes` reject empty values, following the upstream split of the budget create and update request schemas. Omitting them was already rejected by the API or by provider validators; Terraform now reports it at validation time. Create and update requests use their own request types
+- **resource/doit_budget**: `name`, `currency`, `type`, `start_period` and `scopes` are now declared `Required` in the schema, and `name` and `scopes` reject empty values, following the upstream split of the budget create and update request schemas. The API has always rejected a create without them, so new budgets are unaffected and Terraform now reports it at validation time. A configuration that omitted one of them for an existing budget (for example after `terraform import`, or after removing it from the config following creation) used to keep the value from state silently; it must now set the attribute explicitly, using the value shown in `terraform state show`. Create and update requests use their own request types
 
 ### BUG FIXES
 
