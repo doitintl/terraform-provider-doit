@@ -1628,7 +1628,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BudgetCreateUpdateRequest"
+              $ref: "#/components/schemas/BudgetCreateRequest"
             example:
               name: monthly-cloud-budget
               amount: 100
@@ -1646,6 +1646,7 @@ paths:
               collaborators:
                 - role: owner
                   email: placeholder@example.com
+        required: true
       responses:
         "201":
           description: Created - New budget created.
@@ -1750,7 +1751,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BudgetCreateUpdateRequest"
+              $ref: "#/components/schemas/BudgetUpdateRequest"
         required: false
       responses:
         "200":
@@ -18117,9 +18118,15 @@ components:
         percentage:
           type: number
           format: double
-    BudgetCreateUpdateRequest:
+    BudgetCreateRequest:
       type: object
-      description: Request body for creating or updating a budget.
+      description: Request body for creating a budget.
+      required:
+        - name
+        - scopes
+        - currency
+        - type
+        - startPeriod
       properties:
         alerts:
           type: array
@@ -18170,6 +18177,7 @@ components:
         name:
           type: string
           description: Budget Name.
+          minLength: 1
         public:
           type: string
           enum:
@@ -18188,7 +18196,99 @@ components:
             $ref: "#/components/schemas/SlackChannel"
         scopes:
           type: array
-          description: The filters selected define the scope of the budget.
+          description: The filters selected define the scope of the budget. At least one filter is required.
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ExternalConfigFilter"
+        startPeriod:
+          type: integer
+          description: Budget start Date
+          format: int64
+        timeInterval:
+          type: string
+          description: 'Recurring budget interval can be one of: ["day", "week", "month",
+            "quarter", "year"]'
+        type:
+          type: string
+          description: 'budget type can be one of: ["fixed", "recurring"]'
+        usePrevSpend:
+          type: boolean
+          description: Use the last period's spend as the target amount for recurring
+            budgets
+          default: false
+    BudgetUpdateRequest:
+      type: object
+      description: Request body for updating a budget. Only the supplied fields change.
+      properties:
+        alerts:
+          type: array
+          description: List of up to three thresholds defined as a percentage of the amount.
+          items:
+            $ref: "#/components/schemas/BudgetCreateUpdateAlert"
+        amount:
+          type: number
+          description: |-
+            Budget period amount
+            required: true(if usePrevSpend is false)
+          format: double
+        seasonalAmounts:
+          type: array
+          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          items:
+            type: number
+            format: double
+        collaborators:
+          type: array
+          description: List of permitted users to view/edit the report.
+          items:
+            $ref: "#/components/schemas/Collaborator"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        description:
+          type: string
+          description: Budget description
+          default: ""
+        endPeriod:
+          type: integer
+          description: |-
+            Fixed budget end date
+            required: true(if budget type is fixed)
+          format: int64
+        growthPerPeriod:
+          type: number
+          description: Periodical growth percentage in recurring budget
+          format: double
+          default: 0
+        metric:
+          type: string
+          description: Budget metric
+          enum:
+            - cost
+            - amortized_cost
+          default: "cost"
+        name:
+          type: string
+          description: Budget Name.
+          minLength: 1
+        public:
+          type: string
+          enum:
+            - owner
+            - editor
+            - viewer
+        recipients:
+          type: array
+          description: List of emails to notify when reaching alert threshold.
+          items:
+            type: string
+        recipientsSlackChannels:
+          type: array
+          description: List of Slack channels to notify when reaching alert threshold.
+          items:
+            $ref: "#/components/schemas/SlackChannel"
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget. Omit to keep the existing scope.
           items:
             $ref: "#/components/schemas/ExternalConfigFilter"
         startPeriod:

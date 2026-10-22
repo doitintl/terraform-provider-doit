@@ -5,6 +5,7 @@ package resource_budget
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -92,8 +93,7 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Creation time (in UNIX timestamp).",
 			},
 			"currency": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
 				MarkdownDescription: "Currency code for monetary values.\nPossible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`",
 				Validators: []validator.String{
@@ -168,10 +168,12 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Default: stringdefault.StaticString("cost"),
 			},
 			"name": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "Budget Name.",
 				MarkdownDescription: "Budget Name.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"public": schema.StringAttribute{
 				Optional:            true,
@@ -310,10 +312,12 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 						},
 					},
 				},
-				Optional:            true,
-				Computed:            true,
-				Description:         "The filters selected define the scope of the budget.",
-				MarkdownDescription: "The filters selected define the scope of the budget.",
+				Required:            true,
+				Description:         "The filters selected define the scope of the budget. At least one filter is required.",
+				MarkdownDescription: "The filters selected define the scope of the budget. At least one filter is required.",
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+				},
 			},
 			"seasonal_amounts": schema.ListAttribute{
 				ElementType:         types.Float64Type,
@@ -323,8 +327,7 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "List of seasonal amounts for recurring budgets with different amounts per period.",
 			},
 			"start_period": schema.Int64Attribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "Budget start Date",
 				MarkdownDescription: "Budget start Date",
 			},
@@ -335,8 +338,7 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Recurring budget interval can be one of: [\"day\", \"week\", \"month\", \"quarter\", \"year\"]",
 			},
 			"type": schema.StringAttribute{
-				Optional:            true,
-				Computed:            true,
+				Required:            true,
 				Description:         "budget type can be one of: [\"fixed\", \"recurring\"]",
 				MarkdownDescription: "budget type can be one of: [\"fixed\", \"recurring\"]",
 			},

@@ -568,39 +568,39 @@ func (e BudgetAPIPublic) Valid() bool {
 	}
 }
 
-// Defines values for BudgetCreateUpdateRequestMetric.
+// Defines values for BudgetCreateRequestMetric.
 const (
-	BudgetCreateUpdateRequestMetricAmortizedCost BudgetCreateUpdateRequestMetric = "amortized_cost"
-	BudgetCreateUpdateRequestMetricCost          BudgetCreateUpdateRequestMetric = "cost"
+	BudgetCreateRequestMetricAmortizedCost BudgetCreateRequestMetric = "amortized_cost"
+	BudgetCreateRequestMetricCost          BudgetCreateRequestMetric = "cost"
 )
 
-// Valid indicates whether the value is a known member of the BudgetCreateUpdateRequestMetric enum.
-func (e BudgetCreateUpdateRequestMetric) Valid() bool {
+// Valid indicates whether the value is a known member of the BudgetCreateRequestMetric enum.
+func (e BudgetCreateRequestMetric) Valid() bool {
 	switch e {
-	case BudgetCreateUpdateRequestMetricAmortizedCost:
+	case BudgetCreateRequestMetricAmortizedCost:
 		return true
-	case BudgetCreateUpdateRequestMetricCost:
+	case BudgetCreateRequestMetricCost:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for BudgetCreateUpdateRequestPublic.
+// Defines values for BudgetCreateRequestPublic.
 const (
-	BudgetCreateUpdateRequestPublicEditor BudgetCreateUpdateRequestPublic = "editor"
-	BudgetCreateUpdateRequestPublicOwner  BudgetCreateUpdateRequestPublic = "owner"
-	BudgetCreateUpdateRequestPublicViewer BudgetCreateUpdateRequestPublic = "viewer"
+	BudgetCreateRequestPublicEditor BudgetCreateRequestPublic = "editor"
+	BudgetCreateRequestPublicOwner  BudgetCreateRequestPublic = "owner"
+	BudgetCreateRequestPublicViewer BudgetCreateRequestPublic = "viewer"
 )
 
-// Valid indicates whether the value is a known member of the BudgetCreateUpdateRequestPublic enum.
-func (e BudgetCreateUpdateRequestPublic) Valid() bool {
+// Valid indicates whether the value is a known member of the BudgetCreateRequestPublic enum.
+func (e BudgetCreateRequestPublic) Valid() bool {
 	switch e {
-	case BudgetCreateUpdateRequestPublicEditor:
+	case BudgetCreateRequestPublicEditor:
 		return true
-	case BudgetCreateUpdateRequestPublicOwner:
+	case BudgetCreateRequestPublicOwner:
 		return true
-	case BudgetCreateUpdateRequestPublicViewer:
+	case BudgetCreateRequestPublicViewer:
 		return true
 	default:
 		return false
@@ -667,6 +667,45 @@ func (e BudgetSuggestionStatus) Valid() bool {
 	case BudgetSuggestionStatusPending:
 		return true
 	case BudgetSuggestionStatusSkippedDraft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BudgetUpdateRequestMetric.
+const (
+	BudgetUpdateRequestMetricAmortizedCost BudgetUpdateRequestMetric = "amortized_cost"
+	BudgetUpdateRequestMetricCost          BudgetUpdateRequestMetric = "cost"
+)
+
+// Valid indicates whether the value is a known member of the BudgetUpdateRequestMetric enum.
+func (e BudgetUpdateRequestMetric) Valid() bool {
+	switch e {
+	case BudgetUpdateRequestMetricAmortizedCost:
+		return true
+	case BudgetUpdateRequestMetricCost:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BudgetUpdateRequestPublic.
+const (
+	BudgetUpdateRequestPublicEditor BudgetUpdateRequestPublic = "editor"
+	BudgetUpdateRequestPublicOwner  BudgetUpdateRequestPublic = "owner"
+	BudgetUpdateRequestPublicViewer BudgetUpdateRequestPublic = "viewer"
+)
+
+// Valid indicates whether the value is a known member of the BudgetUpdateRequestPublic enum.
+func (e BudgetUpdateRequestPublic) Valid() bool {
+	switch e {
+	case BudgetUpdateRequestPublicEditor:
+		return true
+	case BudgetUpdateRequestPublicOwner:
+		return true
+	case BudgetUpdateRequestPublicViewer:
 		return true
 	default:
 		return false
@@ -6325,13 +6364,8 @@ type BudgetAPI struct {
 // BudgetAPIPublic Public sharing access level for the budget.
 type BudgetAPIPublic string
 
-// BudgetCreateUpdateAlert Threshold settings for budget alerts.
-type BudgetCreateUpdateAlert struct {
-	Percentage *float64 `json:"percentage,omitempty"`
-}
-
-// BudgetCreateUpdateRequest Request body for creating or updating a budget.
-type BudgetCreateUpdateRequest struct {
+// BudgetCreateRequest Request body for creating a budget.
+type BudgetCreateRequest struct {
 	// Alerts List of up to three thresholds defined as a percentage of the amount.
 	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
 
@@ -6343,7 +6377,7 @@ type BudgetCreateUpdateRequest struct {
 	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
 
 	// Currency Currency code for monetary values.
-	Currency *Currency `json:"currency,omitempty"`
+	Currency Currency `json:"currency"`
 
 	// Description Budget description
 	Description *string `json:"description,omitempty"`
@@ -6356,11 +6390,11 @@ type BudgetCreateUpdateRequest struct {
 	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
 
 	// Metric Budget metric
-	Metric *BudgetCreateUpdateRequestMetric `json:"metric,omitempty"`
+	Metric *BudgetCreateRequestMetric `json:"metric,omitempty"`
 
 	// Name Budget Name.
-	Name   *string                          `json:"name,omitempty"`
-	Public *BudgetCreateUpdateRequestPublic `json:"public,omitempty"`
+	Name   string                     `json:"name"`
+	Public *BudgetCreateRequestPublic `json:"public,omitempty"`
 
 	// Recipients List of emails to notify when reaching alert threshold.
 	Recipients *[]string `json:"recipients,omitempty"`
@@ -6368,30 +6402,35 @@ type BudgetCreateUpdateRequest struct {
 	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scopes The filters selected define the scope of the budget.
-	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	// Scopes The filters selected define the scope of the budget. At least one filter is required.
+	Scopes []ExternalConfigFilter `json:"scopes"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
 
 	// StartPeriod Budget start Date
-	StartPeriod *int64 `json:"startPeriod,omitempty"`
+	StartPeriod int64 `json:"startPeriod"`
 
 	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
 	TimeInterval *string `json:"timeInterval,omitempty"`
 
 	// Type budget type can be one of: ["fixed", "recurring"]
-	Type *string `json:"type,omitempty"`
+	Type string `json:"type"`
 
 	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
-// BudgetCreateUpdateRequestMetric Budget metric
-type BudgetCreateUpdateRequestMetric string
+// BudgetCreateRequestMetric Budget metric
+type BudgetCreateRequestMetric string
 
-// BudgetCreateUpdateRequestPublic defines model for BudgetCreateUpdateRequest.Public.
-type BudgetCreateUpdateRequestPublic string
+// BudgetCreateRequestPublic defines model for BudgetCreateRequest.Public.
+type BudgetCreateRequestPublic string
+
+// BudgetCreateUpdateAlert Threshold settings for budget alerts.
+type BudgetCreateUpdateAlert struct {
+	Percentage *float64 `json:"percentage,omitempty"`
+}
 
 // BudgetListItem Summary information for a budget.
 type BudgetListItem struct {
@@ -6471,6 +6510,69 @@ type BudgetSuggestionScopeChipsItem struct {
 	Key    *string   `json:"key,omitempty"`
 	Values *[]string `json:"values,omitempty"`
 }
+
+// BudgetUpdateRequest Request body for updating a budget. Only the supplied fields change.
+type BudgetUpdateRequest struct {
+	// Alerts List of up to three thresholds defined as a percentage of the amount.
+	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
+
+	// Amount Budget period amount
+	// required: true(if usePrevSpend is false)
+	Amount *float64 `json:"amount,omitempty"`
+
+	// Collaborators List of permitted users to view/edit the report.
+	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
+
+	// Description Budget description
+	Description *string `json:"description,omitempty"`
+
+	// EndPeriod Fixed budget end date
+	// required: true(if budget type is fixed)
+	EndPeriod *int64 `json:"endPeriod,omitempty"`
+
+	// GrowthPerPeriod Periodical growth percentage in recurring budget
+	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
+
+	// Metric Budget metric
+	Metric *BudgetUpdateRequestMetric `json:"metric,omitempty"`
+
+	// Name Budget Name.
+	Name   *string                    `json:"name,omitempty"`
+	Public *BudgetUpdateRequestPublic `json:"public,omitempty"`
+
+	// Recipients List of emails to notify when reaching alert threshold.
+	Recipients *[]string `json:"recipients,omitempty"`
+
+	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
+	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
+
+	// Scopes The filters selected define the scope of the budget. Omit to keep the existing scope.
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+
+	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
+	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
+
+	// StartPeriod Budget start Date
+	StartPeriod *int64 `json:"startPeriod,omitempty"`
+
+	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
+	TimeInterval *string `json:"timeInterval,omitempty"`
+
+	// Type budget type can be one of: ["fixed", "recurring"]
+	Type *string `json:"type,omitempty"`
+
+	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
+	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
+}
+
+// BudgetUpdateRequestMetric Budget metric
+type BudgetUpdateRequestMetric string
+
+// BudgetUpdateRequestPublic defines model for BudgetUpdateRequest.Public.
+type BudgetUpdateRequestPublic string
 
 // CloudDiagramActivityItem An individual activity record within an activity group.
 type CloudDiagramActivityItem struct {
@@ -13010,10 +13112,10 @@ type CreateAnnotationJSONRequestBody = CreateAnnotationRequest
 type UpdateAnnotationJSONRequestBody = UpdateAnnotationRequest
 
 // CreateBudgetJSONRequestBody defines body for CreateBudget for application/json ContentType.
-type CreateBudgetJSONRequestBody = BudgetCreateUpdateRequest
+type CreateBudgetJSONRequestBody = BudgetCreateRequest
 
 // UpdateBudgetJSONRequestBody defines body for UpdateBudget for application/json ContentType.
-type UpdateBudgetJSONRequestBody = BudgetCreateUpdateRequest
+type UpdateBudgetJSONRequestBody = BudgetUpdateRequest
 
 // CreateFolderJSONRequestBody defines body for CreateFolder for application/json ContentType.
 type CreateFolderJSONRequestBody = CreateFolderRequest
