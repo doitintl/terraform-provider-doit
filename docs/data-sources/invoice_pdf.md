@@ -20,7 +20,7 @@ data "doit_invoice_pdf" "example" {
 
 # Save the decoded PDF to disk using the hashicorp/local provider
 resource "local_file" "invoice_pdf" {
-  filename       = "${path.module}/invoice-${data.doit_invoice_pdf.example.id}.pdf"
+  filename       = "${path.module}/${data.doit_invoice_pdf.example.filename}"
   content_base64 = data.doit_invoice_pdf.example.content_base64
 }
 ```
@@ -39,6 +39,7 @@ resource "local_file" "invoice_pdf" {
 ### Read-Only
 
 - `content_base64` (String) Base64-encoded binary content.
+- `filename` (String) Suggested filename for the invoice PDF from the Content-Disposition response header (for example, `<id>.pdf`).
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

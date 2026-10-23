@@ -53,6 +53,7 @@ func TestAccInvoicePdfDataSource_Basic(t *testing.T) {
 				Config: testAccInvoicePdfDataSourceConfig(invoiceID),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_invoice_pdf.test", "id", invoiceID),
+					resource.TestCheckResourceAttr("data.doit_invoice_pdf.test", "filename", invoiceID+".pdf"),
 					resource.TestCheckResourceAttrWith("data.doit_invoice_pdf.test", "content_base64", func(value string) error {
 						if value == "" {
 							return fmt.Errorf("expected non-empty content_base64")

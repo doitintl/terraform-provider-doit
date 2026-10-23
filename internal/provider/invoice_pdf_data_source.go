@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"mime"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/datasource_invoice_pdf"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -25,6 +27,7 @@ type invoicePdfDataSource struct {
 
 type invoicePdfDataSourceModel struct {
 	datasource_invoice_pdf.InvoicePdfModel
+	Filename types.String   `tfsdk:"filename"`
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 }
 
@@ -50,6 +53,11 @@ func (ds *invoicePdfDataSource) Configure(_ context.Context, req datasource.Conf
 func (ds *invoicePdfDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_invoice_pdf.InvoicePdfDataSourceSchema(ctx)
 
+	s.Attributes["filename"] = schema.StringAttribute{
+		Computed:            true,
+		Description:         "Suggested filename for the invoice PDF from the Content-Disposition response header (for example, `<id>.pdf`).",
+		MarkdownDescription: "Suggested filename for the invoice PDF from the Content-Disposition response header (for example, `<id>.pdf`).",
+	}
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	s.Description = "Downloads the PDF document for an invoice as a base64-encoded string."
 	s.MarkdownDescription = "Downloads the PDF document for an invoice as a base64-encoded string."
@@ -76,6 +84,7 @@ func (ds *invoicePdfDataSource) Read(ctx context.Context, req datasource.ReadReq
 	// attributes to unknown so consumers don't treat null as a real value during planning.
 	if state.Id.IsUnknown() {
 		state.ContentBase64 = types.StringUnknown()
+		state.Filename = types.StringUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}
@@ -99,6 +108,21 @@ func (ds *invoicePdfDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	state.ContentBase64 = types.StringValue(base64.StdEncoding.EncodeToString(invoicePdfResp.Body))
+	state.Filename = parseContentDispositionFilename(invoicePdfResp.Headers200)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+}
+
+func parseContentDispositionFilename(headers *models.GetInvoicePdfResp200Headers) types.String {
+	if headers == nil || headers.ContentDisposition == nil || *headers.ContentDisposition == "" {
+		return types.StringNull()
+	}
+	_, params, err := mime.ParseMediaType(*headers.ContentDisposition)
+	if err != nil {
+		return types.StringNull()
+	}
+	if filename := params["filename"]; filename != "" {
+		return types.StringValue(filename)
+	}
+	return types.StringNull()
 }
