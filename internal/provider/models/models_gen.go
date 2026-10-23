@@ -10367,7 +10367,7 @@ type GetInvoice200Response struct {
 	// TotalAmount Total invoiced amount
 	TotalAmount *float64 `json:"totalAmount,omitempty"`
 
-	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
 	Url *string `json:"url,omitempty"`
 }
 
@@ -10584,7 +10584,7 @@ type InvoiceListItem struct {
 	// TotalAmount Total invoiced amount
 	TotalAmount *float64 `json:"totalAmount,omitempty"`
 
-	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
 	Url *string `json:"url,omitempty"`
 }
 
@@ -14952,6 +14952,15 @@ type ClientInterface interface {
 	// Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetInvoicePdf Download an invoice PDF
+	//
+	// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+	// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+	// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+	//
+	// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+	GetInvoicePdf(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListCloudDiagramActivityGroups List activity groups for a layer
 	//
 	// Returns snapshot activity groups for the specified diagram layer,
@@ -17701,6 +17710,25 @@ func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, r
 // Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInvoiceRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetInvoicePdf Download an invoice PDF
+//
+// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+//
+// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+func (c *Client) GetInvoicePdf(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInvoicePdfRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -23336,6 +23364,40 @@ func NewGetInvoiceRequest(server string, id string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/billing/v1/invoices/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetInvoicePdfRequest constructs an http.Request for the GetInvoicePdf method
+func NewGetInvoicePdfRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/billing/v1/invoices/%s/pdf", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -29002,6 +29064,17 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 	GetInvoiceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoiceResp, error)
+
+	// GetInvoicePdfWithResponse Download an invoice PDF
+	//
+	// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+	// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+	// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+	GetInvoicePdfWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoicePdfResp, error)
 
 	// ListCloudDiagramActivityGroupsWithResponse List activity groups for a layer
 	//
@@ -35200,6 +35273,129 @@ func (r GetInvoiceResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetInvoiceResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetInvoicePdfResp200Headers the declared response headers of an HTTP 200 response for GetInvoicePdf
+type GetInvoicePdfResp200Headers struct {
+	CacheControl        *string
+	ContentDisposition  *string
+	ContentEncoding     *string
+	ContentLanguage     *string
+	RequestId           *string
+	Vary                *string
+	XContentTypeOptions *string
+}
+
+// GetInvoicePdfResp400Headers the declared response headers of an HTTP 400 response for GetInvoicePdf
+type GetInvoicePdfResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoicePdfResp401Headers the declared response headers of an HTTP 401 response for GetInvoicePdf
+type GetInvoicePdfResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetInvoicePdfResp403Headers the declared response headers of an HTTP 403 response for GetInvoicePdf
+type GetInvoicePdfResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoicePdfResp404Headers the declared response headers of an HTTP 404 response for GetInvoicePdf
+type GetInvoicePdfResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoicePdfResp500Headers the declared response headers of an HTTP 500 response for GetInvoicePdf
+type GetInvoicePdfResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetInvoicePdfResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetInvoicePdfResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetInvoicePdfResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetInvoicePdfResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetInvoicePdfResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetInvoicePdfResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetInvoicePdfResp500Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetInvoicePdfResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInvoicePdfResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInvoicePdfResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetInvoicePdfResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -43802,6 +43998,23 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 	return ParseGetInvoiceResp(rsp)
 }
 
+// GetInvoicePdfWithResponse Download an invoice PDF
+//
+// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+func (c *ClientWithResponses) GetInvoicePdfWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoicePdfResp, error) {
+	rsp, err := c.GetInvoicePdf(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInvoicePdfResp(rsp)
+}
+
 // ListCloudDiagramActivityGroupsWithResponse List activity groups for a layer
 //
 // Returns snapshot activity groups for the specified diagram layer,
@@ -49900,6 +50113,207 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 		response.Headers404 = &headers
 	case rsp.StatusCode == 500:
 		var headers GetInvoiceResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetInvoicePdfResp parses an HTTP response from a GetInvoicePdfWithResponse call
+func ParseGetInvoicePdfResp(rsp *http.Response) (*GetInvoicePdfResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInvoicePdfResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetInvoicePdfResp200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Content-Disposition"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Disposition", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentDisposition = &value
+		}
+		if values := rsp.Header.Values("Content-Encoding"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Encoding", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentEncoding = &value
+		}
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Vary"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Vary", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Vary = &value
+		}
+		if values := rsp.Header.Values("X-Content-Type-Options"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Content-Type-Options", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XContentTypeOptions = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetInvoicePdfResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetInvoicePdfResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetInvoicePdfResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetInvoicePdfResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetInvoicePdfResp500Headers
 		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
 			var value string
 			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

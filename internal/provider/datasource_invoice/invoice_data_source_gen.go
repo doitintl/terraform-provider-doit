@@ -92,8 +92,8 @@ func InvoiceDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"url": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.",
-				MarkdownDescription: "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.",
+				Description:         "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).",
+				MarkdownDescription: "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).",
 			},
 		},
 		Description:         "Access your current and historical billing documents.",
