@@ -132,6 +132,8 @@ paths:
         verifies the request. Human channels (console, web) additionally require a Cloudflare Turnstile token
         and an accepted Terms of Service version; the emailed 6-digit verification code is then the consent act.
         Agents should present consentUrl to the organization's admin and poll getSignupRequest.
+        Existing accounts, customer domains and previous trials receive the same pending response as new
+        organizations. Eligibility is evaluated after mailbox verification or authenticated human consent.
       operationId: createSignupRequest
       security: []
       parameters:
@@ -171,15 +173,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/SignupProblem"
         "403":
-          description: New trial invitations are only available in production (code trial_invites_disabled).
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/SignupProblem"
-        "409":
           description: >-
-            Conflict. code is one of email_already_registered, domain_already_registered (both carry signInUrl),
-            partner_domain_not_allowed, signup_already_pending (carries signupRequestId), trial_already_used.
+            Forbidden. code is trial_invites_disabled (new trial invitations are only available in production) or
+            signup_blocked (suspected Terms of Use violation; carries appealUrl, the page where the person can appeal).
           content:
             application/problem+json:
               schema:
@@ -191,7 +187,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SignupProblem"
         "503":
-          description: Signup temporarily unavailable (signup_disabled, validation_unavailable, verification_unavailable); retryable.
+          description: Signup temporarily unavailable (signup_disabled, limiter_unavailable, verification_unavailable); retryable.
           content:
             application/problem+json:
               schema:
@@ -204,10 +200,19 @@ paths:
         Returns the current state of a signup request. Poll at the returned pollAfterSeconds cadence; once
         status is completed the response carries customerId, consoleUrl and signInUrl. The response never
         includes the requester's email or the verification code.
+        A browser must send the Signup-Result-Token returned by verifySignupRequest to read results after
+        email verification. Without it, the request remains pending until its consent window expires.
+        Agents may read results after the matching authenticated human explicitly approves their request.
       operationId: getSignupRequest
       security: []
       parameters:
         - $ref: "#/components/parameters/signupRequestId"
+        - name: Signup-Result-Token
+          in: header
+          required: false
+          schema:
+            type: string
+            description: Request-bound result credential returned after successful email verification; valid for one hour.
       responses:
         "200":
           description: OK
@@ -248,7 +253,7 @@ paths:
               $ref: "#/components/schemas/SignupVerificationCode"
       responses:
         "200":
-          description: OK - the request is consented (or already past that point).
+          description: OK - the request is consented; resultToken authorizes subsequent polling. The code is consumed once.
           content:
             application/json:
               schema:
@@ -3388,7 +3393,7 @@ paths:
       tags:
         - Contracts
       summary: List contracts
-      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires contractsReadOnly, contractsViewer, or a write-capable role (without contractsReadOnly). User API tokens must include the matching permission in their scope.
+      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires contractsReadOnly or contractsViewer, plus the billing:contracts or channelops entitlement. User API tokens must include the matching permission in their scope.
       operationId: listContracts
       parameters:
         - name: customerID
@@ -3414,7 +3419,7 @@ paths:
       tags:
         - Contracts
       summary: Create contract
-      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires a role without contractsReadOnly; user API tokens must include the matching permission in their scope.
+      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires contractsViewer without contractsReadOnly, plus the billing:contracts or channelops entitlement; user API tokens must include the matching permission in their scope.
       operationId: createContract
       parameters:
         - name: customerID
@@ -3596,6 +3601,7 @@ paths:
       summary: List anomalies
       description: |-
         Returns a list of detected anomalies.
+        Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
         Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
         The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
         The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -3680,7 +3686,9 @@ paths:
       tags:
         - Anomalies
       summary: Retrieve an anomaly
-      description: Returns the specified anomaly.
+      description: >-
+        Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement
+        and the `AnomaliesViewer` permission.
       operationId: getAnomaly
       parameters:
         - name: id
@@ -3881,7 +3889,7 @@ paths:
         `EXPECTED_COST_SPIKE` or `ANOMALOUS_OTHER` for `ANOMALY_CONFIRMED`, and
         `FAULTY_ANOMALY_DETECTION_MODEL`, `INCORRECT_DATA`, `LOW_IMPACT` or
         `NON_ANOMALOUS_OTHER` for `NOT_ANOMALY`. Requires the `AnomaliesManager` permission
-        and DoiT API access (`platform:externalApi`).
+        and the `governance:costAnomalies` and `governance:costAnomalies:acknowledgement` entitlements.
       operationId: patchAnomaly
       parameters:
         - name: id
@@ -3917,7 +3925,8 @@ paths:
         facts and evidence references it was generated from. The explanation itself is
         AI-generated; it is always returned separately from the deterministic `facts`, and is
         marked as such in the `explanation` object. Generation is ephemeral: no conversation is
-        persisted on your behalf.
+        persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the
+        `AnomaliesViewer` permission.
       operationId: getAnomalyExplanation
       parameters:
         - name: id
@@ -5514,7 +5523,7 @@ paths:
       summary: List contract templates
       description: >-
         Lists contract templates owned by the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: listContractTemplates
       responses:
         "200":
@@ -5537,7 +5546,7 @@ paths:
       summary: Create contract template
       description: >-
         Creates a contract template for the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: createContractTemplate
       requestBody:
         required: true
@@ -5569,7 +5578,7 @@ paths:
       summary: Get contract template
       description: >-
         Returns a single contract template owned by the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: getContractTemplate
       parameters:
         - name: templateID
@@ -5598,7 +5607,7 @@ paths:
       summary: Update contract template
       description: >-
         Updates a contract template owned by the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: updateContractTemplate
       parameters:
         - name: templateID
@@ -5638,7 +5647,7 @@ paths:
       description: >-
         Soft-deletes (archives) a contract template owned by the authenticated tenant
         (from the bearer token). Instantiated contracts are unaffected.
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: archiveContractTemplate
       parameters:
         - name: templateID
@@ -5673,7 +5682,7 @@ paths:
         child customers, creating a draft contract for each. Drafts have no billing effect until
         each one is completed and activated. The template must not be archived, and the current
         date must fall within its eligibility window.
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: assignContractTemplate
       parameters:
         - name: templateID
@@ -5712,7 +5721,9 @@ paths:
       tags:
         - AccountTeam
       summary: List account team
-      description: Returns a list of all DoiT account managers assigned to your organization.
+      description: >-
+        Returns a list of all DoiT account managers assigned to your organization. Requires
+        the `Settings` permission.
       operationId: listAccountTeam
       responses:
         "200":
@@ -5742,7 +5753,7 @@ paths:
         `{customerId}`. `{customerId}` must match the customer resolved from the bearer
         token; a token scoped to a different customer gets `403`, even if that customer
         would otherwise be reachable through a reseller/MTS relationship. Requires the
-        `Settings` permission and DoiT API access (`platform:externalApi`).
+        `Settings` permission.
       operationId: getCustomer
       parameters:
         - $ref: "#/components/parameters/customerId"
@@ -5772,7 +5783,7 @@ paths:
         by `{customerId}`. `{customerId}` must match the customer resolved from the bearer
         token; a token scoped to a different customer gets `403`, even if that customer
         would otherwise be reachable through a reseller/MTS relationship. Requires
-        the `Settings` permission and DoiT API access (`platform:externalApi`); updating
+        the `Settings` permission; updating
         `allowedInviteDomains` additionally requires the `UsersManager` permission.
 
 
@@ -5843,7 +5854,7 @@ paths:
         end customer each is currently mapped to. `{customerId}` (the reseller itself) means
         the account has not yet been reassigned to an end customer. Each payer's own
         management account is included alongside its member accounts. Requires the
-        `SharedPayersAdmin` permission and DoiT API access (`platform:externalApi`). User API
+        `SharedPayersAdmin` permission and the AWS integration (`pdi:aws`) entitlement. User API
         tokens must include the permission in their scope.
       operationId: listSharedPayerAccountMappings
       parameters:
@@ -5876,7 +5887,7 @@ paths:
       description: >-
         Lists the reseller's linked shared-payer management (payer) accounts that have
         completed onboarding, for use in an account picker. Requires the `SharedPayersAdmin`
-        permission and DoiT API access (`platform:externalApi`). User API tokens must include
+        permission and the AWS integration (`pdi:aws`) entitlement. User API tokens must include
         the permission in their scope.
       operationId: listSharedPayerManagementAccounts
       parameters:
@@ -5904,7 +5915,7 @@ paths:
       description: >-
         Lists every shared payer linked to the reseller, including ones still mid-onboarding,
         with per-payer counts of linked and mapped accounts. Requires the `SharedPayersAdmin`
-        permission and DoiT API access (`platform:externalApi`). User API tokens must include
+        permission and the AWS integration (`pdi:aws`) entitlement. User API tokens must include
         the permission in their scope.
       operationId: listSharedPayers
       parameters:
@@ -5932,8 +5943,8 @@ paths:
       description: >-
         Reassigns one AWS account under a linked shared payer - a member account or the
         payer's own management account - to the reseller itself or to a T3 end customer
-        within its hierarchy. Requires the `SharedPayersAdmin` permission and DoiT API access
-        (`platform:externalApi`). User API tokens must include the permission in their scope.
+        within its hierarchy. Requires the `SharedPayersAdmin` permission and the AWS integration
+        (`pdi:aws`) entitlement. User API tokens must include the permission in their scope.
       operationId: reassignSharedPayerAccount
       parameters:
         - $ref: "#/components/parameters/customerId"
@@ -19721,6 +19732,11 @@ components:
           description: >-
             Returned once, by the verifySignupRequest call that performed the verification. Redeem it with
             createSignupSession after the request is completed.
+        resultToken:
+          type: string
+          description: >-
+            Returned only by successful verifySignupRequest. Send as Signup-Result-Token when polling this
+            request to read its result. Valid for one hour; never returned by create, replay, resend or GET.
         verification:
           $ref: "#/components/schemas/SignupVerification"
         expiresAt:
@@ -19786,6 +19802,10 @@ components:
           type: string
           format: uri
           description: Where an existing DoiT user or customer should sign in instead.
+        appealUrl:
+          type: string
+          format: uri
+          description: Where a blocked signup (code signup_blocked) can ask DoiT to review the decision.
     Error:
       type: object
       description: Standard error response structure.

@@ -14846,6 +14846,7 @@ type ClientInterface interface {
 	// ListAnomalies List anomalies
 	//
 	// Returns a list of detected anomalies.
+	// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -14856,14 +14857,14 @@ type ClientInterface interface {
 
 	// GetAnomaly Retrieve an anomaly
 	//
-	// Returns the specified anomaly.
+	// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Corresponds with GET /anomalies/v1/{id} (the `GetAnomaly` operationId).
 	GetAnomaly(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetAnomalyExplanation Explain an anomaly
 	//
-	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
 	GetAnomalyExplanation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -15201,21 +15202,21 @@ type ClientInterface interface {
 
 	// ListAccountTeam List account team
 	//
-	// Returns a list of all DoiT account managers assigned to your organization.
+	// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 	//
 	// Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 	ListAccountTeam(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCustomer Get customer
 	//
-	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 	//
 	// Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
 	GetCustomer(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateCustomerWithBody Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -15228,7 +15229,7 @@ type ClientInterface interface {
 
 	// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -17484,6 +17485,7 @@ func (c *Client) GetWidget(ctx context.Context, widgetId string, params *GetWidg
 // ListAnomalies List anomalies
 //
 // Returns a list of detected anomalies.
+// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 // Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 // The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -17504,7 +17506,7 @@ func (c *Client) ListAnomalies(ctx context.Context, params *ListAnomaliesParams,
 
 // GetAnomaly Retrieve an anomaly
 //
-// Returns the specified anomaly.
+// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Corresponds with GET /anomalies/v1/{id} (the `GetAnomaly` operationId).
 func (c *Client) GetAnomaly(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -17521,7 +17523,7 @@ func (c *Client) GetAnomaly(ctx context.Context, id string, reqEditors ...Reques
 
 // GetAnomalyExplanation Explain an anomaly
 //
-// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
 func (c *Client) GetAnomalyExplanation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -18239,7 +18241,7 @@ func (c *Client) ListServiceQuotas(ctx context.Context, params *ListServiceQuota
 
 // ListAccountTeam List account team
 //
-// Returns a list of all DoiT account managers assigned to your organization.
+// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 //
 // Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -18256,7 +18258,7 @@ func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEdito
 
 // GetCustomer Get customer
 //
-// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 //
 // Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
 func (c *Client) GetCustomer(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -18273,7 +18275,7 @@ func (c *Client) GetCustomer(ctx context.Context, customerId CustomerId, reqEdit
 
 // UpdateCustomerWithBody Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -18296,7 +18298,7 @@ func (c *Client) UpdateCustomerWithBody(ctx context.Context, customerId Customer
 
 // UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -28941,6 +28943,7 @@ type ClientWithResponsesInterface interface {
 	// ListAnomaliesWithResponse List anomalies
 	//
 	// Returns a list of detected anomalies.
+	// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -28953,7 +28956,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetAnomalyWithResponse Retrieve an anomaly
 	//
-	// Returns the specified anomaly.
+	// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -28962,7 +28965,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetAnomalyExplanationWithResponse Explain an anomaly
 	//
-	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -29344,7 +29347,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListAccountTeamWithResponse List account team
 	//
-	// Returns a list of all DoiT account managers assigned to your organization.
+	// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -29353,7 +29356,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetCustomerWithResponse Get customer
 	//
-	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -29362,7 +29365,7 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateCustomerWithBodyWithResponse Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -29375,7 +29378,7 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -43796,6 +43799,7 @@ func (c *ClientWithResponses) GetWidgetWithResponse(ctx context.Context, widgetI
 // ListAnomaliesWithResponse List anomalies
 //
 // Returns a list of detected anomalies.
+// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 // Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 // The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -43814,7 +43818,7 @@ func (c *ClientWithResponses) ListAnomaliesWithResponse(ctx context.Context, par
 
 // GetAnomalyWithResponse Retrieve an anomaly
 //
-// Returns the specified anomaly.
+// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -43829,7 +43833,7 @@ func (c *ClientWithResponses) GetAnomalyWithResponse(ctx context.Context, id str
 
 // GetAnomalyExplanationWithResponse Explain an anomaly
 //
-// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -44439,7 +44443,7 @@ func (c *ClientWithResponses) ListServiceQuotasWithResponse(ctx context.Context,
 
 // ListAccountTeamWithResponse List account team
 //
-// Returns a list of all DoiT account managers assigned to your organization.
+// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -44454,7 +44458,7 @@ func (c *ClientWithResponses) ListAccountTeamWithResponse(ctx context.Context, r
 
 // GetCustomerWithResponse Get customer
 //
-// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -44469,7 +44473,7 @@ func (c *ClientWithResponses) GetCustomerWithResponse(ctx context.Context, custo
 
 // UpdateCustomerWithBodyWithResponse Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -44488,7 +44492,7 @@ func (c *ClientWithResponses) UpdateCustomerWithBodyWithResponse(ctx context.Con
 
 // UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
