@@ -53,6 +53,10 @@ func (ds *invoicePdfDataSource) Configure(_ context.Context, req datasource.Conf
 func (ds *invoicePdfDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_invoice_pdf.InvoicePdfDataSourceSchema(ctx)
 
+	if attr, ok := s.Attributes["content_base64"].(schema.StringAttribute); ok {
+		attr.Sensitive = true
+		s.Attributes["content_base64"] = attr
+	}
 	s.Attributes["filename"] = schema.StringAttribute{
 		Computed:            true,
 		Description:         "Suggested filename for the invoice PDF from the Content-Disposition response header (for example, `<id>.pdf`).",

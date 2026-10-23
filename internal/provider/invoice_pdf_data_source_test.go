@@ -11,7 +11,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestInvoicePdfDataSource_Unit_UnknownID(t *testing.T) {
@@ -65,6 +67,9 @@ resource "local_sensitive_file" "invoice_pdf" {
 		Steps: []resource.TestStep{
 			{
 				Config: config,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectSensitiveValue("data.doit_invoice_pdf.test", tfjsonpath.New("content_base64")),
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_invoice_pdf.test", "id", invoiceID),
 					resource.TestCheckResourceAttr("data.doit_invoice_pdf.test", "filename", invoiceID+".pdf"),
