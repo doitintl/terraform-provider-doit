@@ -2574,6 +2574,7 @@ paths:
       summary: List anomalies
       description: |-
         Returns a list of detected anomalies.
+        Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
         Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
         The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
         The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -2649,7 +2650,8 @@ paths:
       tags:
         - Anomalies
       summary: Retrieve an anomaly
-      description: Returns the specified anomaly.
+      description: >-
+        Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
       operationId: getAnomaly
       parameters:
         - name: id
@@ -2679,7 +2681,7 @@ paths:
         - Anomalies
       summary: Explain an anomaly
       description: >-
-        Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+        Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
       operationId: getAnomalyExplanation
       parameters:
         - name: id
@@ -3224,7 +3226,8 @@ paths:
       tags:
         - AccountTeam
       summary: List account team
-      description: Returns a list of all DoiT account managers assigned to your organization.
+      description: >-
+        Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
       operationId: listAccountTeam
       responses:
         "200":
@@ -3245,7 +3248,7 @@ paths:
         - Customers
       summary: Get customer
       description: >-
-        Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+        Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
       operationId: getCustomer
       parameters:
         - $ref: "#/components/parameters/customerId"
@@ -3271,7 +3274,7 @@ paths:
         - Customers
       summary: Update customer
       description: >-
-        Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+        Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 
 
         The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
