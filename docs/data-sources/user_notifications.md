@@ -51,10 +51,11 @@ data "doit_user_notifications" "source" {
 }
 
 locals {
-  # One copy per target user and source notification.
+  # One copy per target user and source notification. Notification names are
+  # not unique, so the key uses the ID of the source notification.
   copies = {
     for pair in setproduct(var.target_user_emails, data.doit_user_notifications.source.items) :
-    "${pair[0]}/${pair[1].name}" => {
+    "${pair[0]}/${pair[1].id}" => {
       user_id  = data.doit_users.target[pair[0]].users[0].id
       name     = pair[1].name
       settings = pair[1].settings
