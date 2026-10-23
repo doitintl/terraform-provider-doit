@@ -1341,7 +1341,7 @@
 						"name": "sort_by",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "A field by which the results will be sorted.",
+							"description": "A field by which the results will be sorted. timeCreated sorts by the response's createTime;\ntimeModified sorts by updateTime.",
 							"validators": [
 								{
 									"custom": {

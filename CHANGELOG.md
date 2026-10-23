@@ -6,6 +6,8 @@
 
 - **resource/doit_budget**: `name`, `currency`, `type`, `start_period` and `scopes` are now declared `Required` in the schema, and `name` and `scopes` reject empty values, following the upstream split of the budget create and update request schemas. The API has always rejected a create without them, so new budgets are unaffected and Terraform now reports it at validation time. A configuration that omitted one of them for an existing budget (for example after `terraform import`, or after removing it from the config following creation) used to keep the value from state silently; it must now set the attribute explicitly, using the value shown in `terraform state show`. Create and update requests use their own request types
 
+- **data-source/doit_annotations**: The `sort_by` documentation now states that `timeCreated` sorts by `create_time` and `timeModified` by `update_time`. No behavior change
+
 ### BUG FIXES
 
 - **resource/doit_budget**: The `scoped_to_allocation` example scoped the budget to every allocation, including group allocations, which budgets reject. It now uses the first single allocation

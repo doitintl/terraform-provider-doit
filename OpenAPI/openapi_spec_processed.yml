@@ -557,7 +557,9 @@ paths:
             type: string
         - name: sortBy
           in: query
-          description: A field by which the results will be sorted.
+          description: |-
+            A field by which the results will be sorted. timeCreated sorts by the response's createTime;
+            timeModified sorts by updateTime.
           schema:
             type: string
             enum:
