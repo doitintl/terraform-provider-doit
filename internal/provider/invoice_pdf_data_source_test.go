@@ -5,11 +5,13 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestInvoicePdfDataSource_Unit_UnknownID(t *testing.T) {
@@ -44,13 +46,25 @@ func TestAccInvoicePdfDataSource_Basic(t *testing.T) {
 		t.Skip("TEST_INVOICE_ID environment variable not set")
 	}
 
+	tempDir := t.TempDir()
+	outputPath := filepath.Join(tempDir, invoiceID+".pdf")
+	config := testAccInvoicePdfDataSourceConfig(invoiceID) + fmt.Sprintf(`
+resource "local_sensitive_file" "invoice_pdf" {
+  filename       = "%s/${data.doit_invoice_pdf.test.filename}"
+  content_base64 = data.doit_invoice_pdf.test.content_base64
+}
+`, filepath.ToSlash(tempDir))
+
 	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInvoicePdfDataSourceConfig(invoiceID),
+				Config: config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_invoice_pdf.test", "id", invoiceID),
 					resource.TestCheckResourceAttr("data.doit_invoice_pdf.test", "filename", invoiceID+".pdf"),
@@ -67,11 +81,21 @@ func TestAccInvoicePdfDataSource_Basic(t *testing.T) {
 						}
 						return nil
 					}),
+					func(_ *terraform.State) error {
+						content, err := os.ReadFile(outputPath)
+						if err != nil {
+							return err
+						}
+						if !bytes.HasPrefix(content, []byte("%PDF-")) {
+							return fmt.Errorf("downloaded file does not have a PDF header")
+						}
+						return nil
+					},
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
 			{
-				Config: testAccInvoicePdfDataSourceConfig(invoiceID),
+				Config: config,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
