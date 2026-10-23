@@ -3459,6 +3459,69 @@ paths:
         schema:
           type: string
           minLength: 1
+    get:
+      operationId: listUserNotifications
+      tags:
+        - Notifications
+      summary: List personal notifications for a user
+      description: |
+        Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+        array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+        ascending, then by `id` ascending.
+
+        Requires `usersManager` permission. The user id must belong to the resolved tenant.
+      responses:
+        "200":
+          description: OK - Personal notification configs returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotificationListResponse"
+              example:
+                items:
+                  - id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                    destinations:
+                      - type: email
+                        address: jane.doe@example.com
+                    settings:
+                      costAnomalies:
+                        minSeverity: warning
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                        repeat:
+                          everyHours: 24
+                          whenCostGrows:
+                            match: or
+                            percentIncrease: 10
+                            minIncrease:
+                              amount: "150.00"
+                              currency: USD
+                            withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       operationId: createUserNotification
       tags:
@@ -16343,6 +16406,21 @@ components:
           x-terraform-computed: true
           description: Target user's email, copied by the server.
           example: jane.doe@example.com
+    UserNotificationListResponse:
+      type: object
+      additionalProperties: false
+      description: Unpaginated list of personal notification configs for one user.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          description: Notification configs for the user, ordered by `createTime` ascending, then by `id` ascending.
+          items:
+            $ref: "#/components/schemas/UserNotification"
+          example: []
+      example:
+        items: []
     UserNotificationSettings:
       type: object
       additionalProperties: false

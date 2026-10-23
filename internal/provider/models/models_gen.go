@@ -12236,6 +12236,16 @@ type UserNotificationEmailDestination struct {
 // UserNotificationEmailDestinationType Delivery channel. Personal delivery is email only.
 type UserNotificationEmailDestinationType string
 
+// UserNotificationListResponse Unpaginated list of personal notification configs for one user.
+//
+// Example: {"items":[]}
+type UserNotificationListResponse struct {
+	// Items Notification configs for the user, ordered by `createTime` ascending, then by `id` ascending.
+	//
+	// Example: []
+	Items []UserNotification `json:"items"`
+}
+
 // UserNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are
 // rejected; omitting `costAnomalies` is rejected.
 type UserNotificationSettings struct {
@@ -15570,6 +15580,17 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 	UpdateUser(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListUserNotifications List personal notifications for a user
+	//
+	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+	// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+	// ascending, then by `id` ascending.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+	ListUserNotifications(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateUserNotificationWithBody Create a personal notification for a user
 	//
@@ -18990,6 +19011,27 @@ func (c *Client) UpdateUserWithBody(ctx context.Context, id string, contentType 
 // Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 func (c *Client) UpdateUser(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListUserNotifications List personal notifications for a user
+//
+// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+// ascending, then by `id` ascending.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+func (c *Client) ListUserNotifications(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUserNotificationsRequest(c.Server, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -26124,6 +26166,40 @@ func NewUpdateUserRequestWithBody(server string, id string, contentType string, 
 	return req, nil
 }
 
+// NewListUserNotificationsRequest constructs an http.Request for the ListUserNotifications method
+func NewListUserNotificationsRequest(server string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/users/%s/notifications", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateUserNotificationRequest calls the generic CreateUserNotification builder with application/json body
 func NewCreateUserNotificationRequest(server string, userId string, params *CreateUserNotificationParams, body CreateUserNotificationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -29749,6 +29825,19 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 	UpdateUserWithResponse(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserResp, error)
+
+	// ListUserNotificationsWithResponse List personal notifications for a user
+	//
+	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+	// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+	// ascending, then by `id` ascending.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+	ListUserNotificationsWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*ListUserNotificationsResp, error)
 
 	// CreateUserNotificationWithBodyWithResponse Create a personal notification for a user
 	//
@@ -39225,6 +39314,131 @@ func (r UpdateUserResp) ContentType() string {
 	return ""
 }
 
+// ListUserNotificationsResp200Headers the declared response headers of an HTTP 200 response for ListUserNotifications
+type ListUserNotificationsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp400Headers the declared response headers of an HTTP 400 response for ListUserNotifications
+type ListUserNotificationsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp401Headers the declared response headers of an HTTP 401 response for ListUserNotifications
+type ListUserNotificationsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListUserNotificationsResp403Headers the declared response headers of an HTTP 403 response for ListUserNotifications
+type ListUserNotificationsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp404Headers the declared response headers of an HTTP 404 response for ListUserNotifications
+type ListUserNotificationsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp500Headers the declared response headers of an HTTP 500 response for ListUserNotifications
+type ListUserNotificationsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListUserNotificationsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *UserNotificationListResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListUserNotificationsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListUserNotificationsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListUserNotificationsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListUserNotificationsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListUserNotificationsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListUserNotificationsResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListUserNotificationsResp) GetJSON200() *UserNotificationListResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListUserNotificationsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListUserNotificationsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListUserNotificationsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListUserNotificationsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateUserNotificationResp200Headers the declared response headers of an HTTP 200 response for CreateUserNotification
 type CreateUserNotificationResp200Headers struct {
 	ContentLanguage *string
@@ -45078,6 +45292,25 @@ func (c *ClientWithResponses) UpdateUserWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseUpdateUserResp(rsp)
+}
+
+// ListUserNotificationsWithResponse List personal notifications for a user
+//
+// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+// ascending, then by `id` ascending.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+func (c *ClientWithResponses) ListUserNotificationsWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*ListUserNotificationsResp, error) {
+	rsp, err := c.ListUserNotifications(ctx, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListUserNotificationsResp(rsp)
 }
 
 // CreateUserNotificationWithBodyWithResponse Create a personal notification for a user
@@ -53850,6 +54083,179 @@ func ParseUpdateUserResp(rsp *http.Response) (*UpdateUserResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListUserNotificationsResp parses an HTTP response from a ListUserNotificationsWithResponse call
+func ParseListUserNotificationsResp(rsp *http.Response) (*ListUserNotificationsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListUserNotificationsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserNotificationListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListUserNotificationsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListUserNotificationsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListUserNotificationsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListUserNotificationsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListUserNotificationsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListUserNotificationsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil

@@ -348,6 +348,14 @@ data_sources:
     read:
       path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens
       method: GET
+  user_notification:
+    read:
+      path: /iam/v1/users/{userId}/notifications/{id}
+      method: GET
+  user_notifications:
+    read:
+      path: /iam/v1/users/{userId}/notifications
+      method: GET
   composer_recipes:
     read:
       path: /insights/v2/recipes
