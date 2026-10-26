@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -332,6 +333,53 @@ func TestSharingPublicPlanModifierChain(t *testing.T) {
 
 			if !req.PlanValue.Equal(tt.want) {
 				t.Errorf("PlanValue = %v, want %v", req.PlanValue, tt.want)
+			}
+		})
+	}
+}
+
+// TestSharingPublicValidator pins the set of values accepted for `public`. The empty
+// string is a legacy alias the API still tolerates (allocations store it as viewer, other
+// resource types reject it), but the provider must not accept it: on allocations it
+// produces a permanent diff because the API reads back "viewer".
+func TestSharingPublicValidator(t *testing.T) {
+	ctx := t.Context()
+
+	r := &sharingResource{}
+	schemaResp := resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, &schemaResp)
+	attr, ok := schemaResp.Schema.Attributes["public"].(rschema.StringAttribute)
+	if !ok {
+		t.Fatal("public is not a StringAttribute")
+	}
+
+	tests := []struct {
+		name    string
+		value   types.String
+		wantErr bool
+	}{
+		{name: "viewer", value: types.StringValue("viewer")},
+		{name: "editor", value: types.StringValue("editor")},
+		{name: "null", value: types.StringNull()},
+		{name: "unknown", value: types.StringUnknown()},
+		{name: "empty string", value: types.StringValue(""), wantErr: true},
+		{name: "owner", value: types.StringValue("owner"), wantErr: true},
+		{name: "arbitrary value", value: types.StringValue("bogus"), wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := validator.StringRequest{Path: path.Root("public"), ConfigValue: tt.value}
+			var errCount int
+			for _, v := range attr.Validators {
+				resp := &validator.StringResponse{}
+				v.ValidateString(ctx, req, resp)
+				if resp.Diagnostics.HasError() {
+					errCount++
+				}
+			}
+			if gotErr := errCount > 0; gotErr != tt.wantErr {
+				t.Errorf("value %v: rejected = %v, want %v", tt.value, gotErr, tt.wantErr)
 			}
 		})
 	}

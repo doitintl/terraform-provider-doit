@@ -17,7 +17,9 @@
 							"description": "Identifier of the theme to activate. Send the reserved sentinel\n`\"default\"` to clear the active theme and fall back to the built-in\ndefault."
 						}
 					}
-				]
+				],
+				"description": "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+				"markdown_description": "Configure presentation settings for Cloud Analytics reports, including custom color themes."
 			}
 		},
 		{
@@ -1863,7 +1865,9 @@
 							"description": "The time when the custom theme was last updated."
 						}
 					}
-				]
+				],
+				"description": "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+				"markdown_description": "Configure presentation settings for Cloud Analytics reports, including custom color themes."
 			}
 		},
 		{
