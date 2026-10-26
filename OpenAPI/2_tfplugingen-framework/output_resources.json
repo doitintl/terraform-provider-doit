@@ -76,10 +76,7 @@
 									"name": "data_source",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"default": {
-											"static": "billing"
-										},
-										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available.",
+										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.",
 										"validators": [
 											{
 												"custom": {
@@ -1340,6 +1337,25 @@
 						}
 					},
 					{
+						"name": "data_source",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Data source used to evaluate the budget.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn update, omission preserves the saved data source.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"billing-datahub\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
 						"name": "description",
 						"string": {
 							"computed_optional_required": "computed_optional",
@@ -2445,7 +2461,7 @@
 									"name": "data_source",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "Data source of the report.",
+										"description": "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.",
 										"validators": [
 											{
 												"custom": {

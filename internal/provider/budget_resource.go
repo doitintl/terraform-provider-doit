@@ -111,6 +111,7 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"time_interval",    // omitting on update retains the prior value
 		"amount",           // API-computed for use_prev_spend budgets
 		"public",           // API defaults to false
+		"data_source",      // API resolves default (billing-datahub with DataHub metrics, else billing)
 		"end_period",       // API rejects clearing (endPeriod=0/null)
 		"recipients",       // API auto-assigns creator's email on create
 

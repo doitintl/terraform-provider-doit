@@ -140,7 +140,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config",                             // top-level O+C wrapper, silently preserved (no drift)
 		"config.currency",                    // API defaults to org currency
 		"config.time_interval",               // API defaults time interval
-		"config.data_source",                 // API defaults data source
+		"config.data_source",                 // API resolves default (billing-datahub with DataHub metrics, else billing)
 		"config.aggregation",                 // API defaults aggregation
 		"config.display_values",              // API defaults display values
 		"config.include_promotional_credits", // API defaults to false

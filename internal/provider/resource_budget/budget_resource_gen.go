@@ -126,6 +126,18 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"current_utilization": schema.Float64Attribute{
 				Computed: true,
 			},
+			"data_source": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Data source used to evaluate the budget.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn update, omission preserves the saved data source.\nPossible values: `billing`, `billing-datahub`",
+				MarkdownDescription: "Data source used to evaluate the budget.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn update, omission preserves the saved data source.\nPossible values: `billing`, `billing-datahub`",
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"billing",
+						"billing-datahub",
+					),
+				},
+			},
 			"description": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
@@ -367,6 +379,7 @@ type BudgetModel struct {
 	CreateTime              types.Int64   `tfsdk:"create_time"`
 	Currency                types.String  `tfsdk:"currency"`
 	CurrentUtilization      types.Float64 `tfsdk:"current_utilization"`
+	DataSource              types.String  `tfsdk:"data_source"`
 	Description             types.String  `tfsdk:"description"`
 	EndPeriod               types.Int64   `tfsdk:"end_period"`
 	ForecastedUtilization   types.Float64 `tfsdk:"forecasted_utilization"`

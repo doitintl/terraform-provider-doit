@@ -84,6 +84,8 @@ A PATCH that sets `aggregation` to a value other than "count" without sending `c
 A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
 Sending null while `timeRange.mode` stays "custom" is rejected. (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
+When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+On report update (PATCH), omission preserves the saved data source.
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
 - `display_settings` (Attributes) Display settings for the report. (see [below for nested schema](#nestedatt--config--display_settings))
 - `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).

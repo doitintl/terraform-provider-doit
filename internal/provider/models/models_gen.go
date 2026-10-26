@@ -19,30 +19,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Defines values for AlertConfigDataSource.
-const (
-	AlertConfigDataSourceBilling               AlertConfigDataSource = "billing"
-	AlertConfigDataSourceBillingDatahub        AlertConfigDataSource = "billing-datahub"
-	AlertConfigDataSourceKubernetesUtilization AlertConfigDataSource = "kubernetes-utilization"
-	AlertConfigDataSourceTokenomics            AlertConfigDataSource = "tokenomics"
-)
-
-// Valid indicates whether the value is a known member of the AlertConfigDataSource enum.
-func (e AlertConfigDataSource) Valid() bool {
-	switch e {
-	case AlertConfigDataSourceBilling:
-		return true
-	case AlertConfigDataSourceBillingDatahub:
-		return true
-	case AlertConfigDataSourceKubernetesUtilization:
-		return true
-	case AlertConfigDataSourceTokenomics:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for AlertConfigTimeInterval.
 const (
 	AlertConfigTimeIntervalDay     AlertConfigTimeInterval = "day"
@@ -712,6 +688,90 @@ func (e BudgetUpdateRequestPublic) Valid() bool {
 	case BudgetUpdateRequestPublicOwner:
 		return true
 	case BudgetUpdateRequestPublicViewer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsAlertConfigDataSource.
+const (
+	CloudAnalyticsAlertConfigDataSourceBilling               CloudAnalyticsAlertConfigDataSource = "billing"
+	CloudAnalyticsAlertConfigDataSourceBillingDatahub        CloudAnalyticsAlertConfigDataSource = "billing-datahub"
+	CloudAnalyticsAlertConfigDataSourceKubernetesUtilization CloudAnalyticsAlertConfigDataSource = "kubernetes-utilization"
+	CloudAnalyticsAlertConfigDataSourceTokenomics            CloudAnalyticsAlertConfigDataSource = "tokenomics"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsAlertConfigDataSource enum.
+func (e CloudAnalyticsAlertConfigDataSource) Valid() bool {
+	switch e {
+	case CloudAnalyticsAlertConfigDataSourceBilling:
+		return true
+	case CloudAnalyticsAlertConfigDataSourceBillingDatahub:
+		return true
+	case CloudAnalyticsAlertConfigDataSourceKubernetesUtilization:
+		return true
+	case CloudAnalyticsAlertConfigDataSourceTokenomics:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsBudgetDataSource.
+const (
+	CloudAnalyticsBudgetDataSourceBilling        CloudAnalyticsBudgetDataSource = "billing"
+	CloudAnalyticsBudgetDataSourceBillingDatahub CloudAnalyticsBudgetDataSource = "billing-datahub"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsBudgetDataSource enum.
+func (e CloudAnalyticsBudgetDataSource) Valid() bool {
+	switch e {
+	case CloudAnalyticsBudgetDataSourceBilling:
+		return true
+	case CloudAnalyticsBudgetDataSourceBillingDatahub:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsBudgetDataSourceReadOnly.
+const (
+	CloudAnalyticsBudgetDataSourceReadOnlyBilling        CloudAnalyticsBudgetDataSourceReadOnly = "billing"
+	CloudAnalyticsBudgetDataSourceReadOnlyBillingDatahub CloudAnalyticsBudgetDataSourceReadOnly = "billing-datahub"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsBudgetDataSourceReadOnly enum.
+func (e CloudAnalyticsBudgetDataSourceReadOnly) Valid() bool {
+	switch e {
+	case CloudAnalyticsBudgetDataSourceReadOnlyBilling:
+		return true
+	case CloudAnalyticsBudgetDataSourceReadOnlyBillingDatahub:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsExternalConfigDataSource.
+const (
+	CloudAnalyticsExternalConfigDataSourceBilling               CloudAnalyticsExternalConfigDataSource = "billing"
+	CloudAnalyticsExternalConfigDataSourceBillingDatahub        CloudAnalyticsExternalConfigDataSource = "billing-datahub"
+	CloudAnalyticsExternalConfigDataSourceBqlens                CloudAnalyticsExternalConfigDataSource = "bqlens"
+	CloudAnalyticsExternalConfigDataSourceKubernetesUtilization CloudAnalyticsExternalConfigDataSource = "kubernetes-utilization"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsExternalConfigDataSource enum.
+func (e CloudAnalyticsExternalConfigDataSource) Valid() bool {
+	switch e {
+	case CloudAnalyticsExternalConfigDataSourceBilling:
+		return true
+	case CloudAnalyticsExternalConfigDataSourceBillingDatahub:
+		return true
+	case CloudAnalyticsExternalConfigDataSourceBqlens:
+		return true
+	case CloudAnalyticsExternalConfigDataSourceKubernetesUtilization:
 		return true
 	default:
 		return false
@@ -2116,30 +2176,6 @@ func (e ExternalConfigAggregation) Valid() bool {
 	case ExternalConfigAggregationTotal:
 		return true
 	case ExternalConfigAggregationTotalOverTotal:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ExternalConfigDataSource.
-const (
-	ExternalConfigDataSourceBilling               ExternalConfigDataSource = "billing"
-	ExternalConfigDataSourceBillingDatahub        ExternalConfigDataSource = "billing-datahub"
-	ExternalConfigDataSourceBqlens                ExternalConfigDataSource = "bqlens"
-	ExternalConfigDataSourceKubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
-)
-
-// Valid indicates whether the value is a known member of the ExternalConfigDataSource enum.
-func (e ExternalConfigDataSource) Valid() bool {
-	switch e {
-	case ExternalConfigDataSourceBilling:
-		return true
-	case ExternalConfigDataSourceBillingDatahub:
-		return true
-	case ExternalConfigDataSourceBqlens:
-		return true
-	case ExternalConfigDataSourceKubernetesUtilization:
 		return true
 	default:
 		return false
@@ -5326,7 +5362,7 @@ type AdvancedAnalysis struct {
 
 // Alert Configuration and runtime metadata of an alert.
 //
-// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
 type Alert struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
@@ -5362,7 +5398,8 @@ type AlertConfig struct {
 	Currency *Currency `json:"currency,omitempty"`
 
 	// DataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
-	DataSource *AlertConfigDataSource `json:"dataSource,omitempty"`
+	// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	DataSource *CloudAnalyticsAlertConfigDataSource `json:"dataSource,omitempty"`
 
 	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 	EvaluateForEach *string `json:"evaluateForEach,omitempty"`
@@ -5385,9 +5422,6 @@ type AlertConfig struct {
 	// Value The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
 	Value float64 `json:"value"`
 }
-
-// AlertConfigDataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
-type AlertConfigDataSource string
 
 // AlertConfigTimeInterval The period each evaluation looks at.
 type AlertConfigTimeInterval string
@@ -5442,7 +5476,7 @@ type AlertIgnoreValuesRange struct {
 
 // AlertListItem Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
 //
-// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
 type AlertListItem struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
@@ -6090,7 +6124,7 @@ type AsyncOperationResponseStatus string
 type AsyncRunInlineRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
@@ -6462,6 +6496,9 @@ type BudgetAPI struct {
 	Currency           Currency `json:"currency"`
 	CurrentUtilization *float64 `json:"currentUtilization,omitempty"`
 
+	// DataSource Data source used to evaluate the budget.
+	DataSource *CloudAnalyticsBudgetDataSourceReadOnly `json:"dataSource,omitempty"`
+
 	// Description Budget description.
 	Description *string `json:"description,omitempty"`
 
@@ -6531,6 +6568,11 @@ type BudgetCreateRequest struct {
 
 	// Currency Currency code for monetary values.
 	Currency Currency `json:"currency"`
+
+	// DataSource Data source used to evaluate the budget.
+	// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	// On update, omission preserves the saved data source.
+	DataSource *CloudAnalyticsBudgetDataSource `json:"dataSource,omitempty"`
 
 	// Description Budget description
 	Description *string `json:"description,omitempty"`
@@ -6679,6 +6721,11 @@ type BudgetUpdateRequest struct {
 	// Currency Currency code for monetary values.
 	Currency *Currency `json:"currency,omitempty"`
 
+	// DataSource Data source used to evaluate the budget.
+	// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	// On update, omission preserves the saved data source.
+	DataSource *CloudAnalyticsBudgetDataSource `json:"dataSource,omitempty"`
+
 	// Description Budget description
 	Description *string `json:"description,omitempty"`
 
@@ -6726,6 +6773,23 @@ type BudgetUpdateRequestMetric string
 
 // BudgetUpdateRequestPublic defines model for BudgetUpdateRequest.Public.
 type BudgetUpdateRequestPublic string
+
+// CloudAnalyticsAlertConfigDataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
+// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+type CloudAnalyticsAlertConfigDataSource string
+
+// CloudAnalyticsBudgetDataSource Data source used to evaluate the budget.
+// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+// On update, omission preserves the saved data source.
+type CloudAnalyticsBudgetDataSource string
+
+// CloudAnalyticsBudgetDataSourceReadOnly Data source used to evaluate the budget.
+type CloudAnalyticsBudgetDataSourceReadOnly string
+
+// CloudAnalyticsExternalConfigDataSource Data source of the report.
+// When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+// On report update (PATCH), omission preserves the saved data source.
+type CloudAnalyticsExternalConfigDataSource string
 
 // CloudDiagramActivityItem An individual activity record within an activity group.
 type CloudDiagramActivityItem struct {
@@ -8566,7 +8630,7 @@ type CreateLabelRequestColor string
 type CreateReportRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -8978,7 +9042,7 @@ type ExternalBudgetAlert struct {
 
 // ExternalConfig Report configuration.
 //
-// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 type ExternalConfig struct {
 	// AdvancedAnalysis Advanced analysis options. Each can be set independently.
 	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
@@ -9000,7 +9064,9 @@ type ExternalConfig struct {
 	CustomTimeRange nullable.Nullable[ExternalConfigCustomTimeRange] `json:"customTimeRange,omitempty"`
 
 	// DataSource Data source of the report.
-	DataSource *ExternalConfigDataSource `json:"dataSource,omitempty"`
+	// When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	// On report update (PATCH), omission preserves the saved data source.
+	DataSource *CloudAnalyticsExternalConfigDataSource `json:"dataSource,omitempty"`
 
 	// Dimensions See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).
 	Dimensions *[]Dimension `json:"dimensions,omitempty"`
@@ -9077,9 +9143,6 @@ type ExternalConfig struct {
 
 // ExternalConfigAggregation How to aggregate data values in the report.
 type ExternalConfigAggregation string
-
-// ExternalConfigDataSource Data source of the report.
-type ExternalConfigDataSource string
 
 // ExternalConfigDisplayValues See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 type ExternalConfigDisplayValues string
@@ -9359,7 +9422,7 @@ type ExternalRenderer string
 type ExternalReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -9444,7 +9507,7 @@ type ExternalSplitTargetType string
 type ExternalUpdateReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description

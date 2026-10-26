@@ -79,6 +79,11 @@ func BudgetDataSourceSchema(ctx context.Context) schema.Schema {
 			"current_utilization": schema.Float64Attribute{
 				Computed: true,
 			},
+			"data_source": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Data source used to evaluate the budget.",
+				MarkdownDescription: "Data source used to evaluate the budget.",
+			},
 			"description": schema.StringAttribute{
 				Computed:            true,
 				Description:         "Budget description.",
@@ -249,6 +254,7 @@ type BudgetModel struct {
 	CreateTime              types.Int64   `tfsdk:"create_time"`
 	Currency                types.String  `tfsdk:"currency"`
 	CurrentUtilization      types.Float64 `tfsdk:"current_utilization"`
+	DataSource              types.String  `tfsdk:"data_source"`
 	Description             types.String  `tfsdk:"description"`
 	EndPeriod               types.Int64   `tfsdk:"end_period"`
 	ForecastedUtilization   types.Float64 `tfsdk:"forecasted_utilization"`

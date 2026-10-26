@@ -89,6 +89,7 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 	acknowledgeNotClearable(s,
 		"recipients",                               // API defaults to creator's email
 		"config.currency",                          // API defaults to org currency
+		"config.data_source",                       // API resolves default (billing-datahub with DataHub metrics, else billing)
 		"config.evaluate_for_each",                 // API defaults to false
 		"config.scopes[*].inverse",                 // API defaults to false
 		"config.scopes[*].values",                  // API defaults scope values

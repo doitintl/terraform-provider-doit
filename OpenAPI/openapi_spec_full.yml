@@ -2320,6 +2320,8 @@ paths:
         it.
 
         Fields that are not populated will use their default values if needed.
+
+        When `config.dataSource` is omitted, see `CloudAnalyticsExternalConfigDataSource` for the resolved default.
       operationId: query
       requestBody:
         content:
@@ -2331,7 +2333,6 @@ paths:
                   $ref: "#/components/schemas/ExternalConfig"
             example:
               config:
-                dataSource: billing
                 metrics:
                   - type: basic
                     value: cost
@@ -13101,7 +13102,67 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 components:
+  x-doit-doc-anchors:
+    caBudgetDataSourceDescription: &caBudgetDataSourceDescription |-
+      Data source used to evaluate the budget.
+      When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+      On update, omission preserves the saved data source.
+    caAlertConfigDataSourceDescription: &caAlertConfigDataSourceDescription |-
+      Data source used to query data for the alert. Affects which dimensions and metrics are available.
+      When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+    caExternalConfigDataSourceDescription: &caExternalConfigDataSourceDescription |-
+      Data source of the report.
+      When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+      On report update (PATCH), omission preserves the saved data source.
   schemas:
+    CloudAnalyticsBillingDataSource:
+      type: string
+      enum:
+        - billing
+        - billing-datahub
+      x-enumDescriptions:
+        billing: Standard Cloud Analytics billing data only.
+        billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+    CloudAnalyticsBudgetDataSource:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsBillingDataSource"
+        - description: *caBudgetDataSourceDescription
+    CloudAnalyticsBudgetDataSourceReadOnly:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsBillingDataSource"
+        - description: Data source used to evaluate the budget.
+    CloudAnalyticsAlertDataSource:
+      type: string
+      enum:
+        - billing
+        - billing-datahub
+        - kubernetes-utilization
+        - tokenomics
+      x-enumDescriptions:
+        billing: Standard Cloud Analytics billing data only.
+        billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        kubernetes-utilization: Kubernetes utilization data.
+        tokenomics: Tokenomics data; requires the customer to have Tokenomics enabled.
+    CloudAnalyticsAlertConfigDataSource:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsAlertDataSource"
+        - description: *caAlertConfigDataSourceDescription
+    CloudAnalyticsReportDataSource:
+      type: string
+      enum:
+        - billing
+        - bqlens
+        - billing-datahub
+        - kubernetes-utilization
+      x-enumDescriptions:
+        billing: Standard Cloud Analytics billing data only.
+        billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        bqlens: BigQuery Lens data.
+        kubernetes-utilization: Kubernetes utilization data.
+    CloudAnalyticsExternalConfigDataSource:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsReportDataSource"
+        - description: *caExternalConfigDataSourceDescription
     CommitmentPolicy:
       type: object
       description: |-
@@ -17227,7 +17288,6 @@ components:
               values:
                 - PvqyGcdFcTHh7aLUdGdf
           timeInterval: month
-          dataSource: billing
           value: 500
     AlertListItem:
       description: >-
@@ -17253,19 +17313,7 @@ components:
         ignoreValuesRange:
           $ref: "#/components/schemas/AlertIgnoreValuesRange"
         dataSource:
-          type: string
-          description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
-          default: billing
-          enum:
-            - billing
-            - billing-datahub
-            - kubernetes-utilization
-            - tokenomics
-          x-enumDescriptions:
-            billing: Standard Cloud Analytics billing data only.
-            billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
-            kubernetes-utilization: Kubernetes utilization data.
-            tokenomics: Tokenomics data; requires the customer to have Tokenomics enabled.
+          $ref: "#/components/schemas/CloudAnalyticsAlertConfigDataSource"
         scopes:
           type: array
           description: >-
@@ -17391,9 +17439,9 @@ components:
         ignoreValuesRange:
           $ref: "#/components/schemas/AlertIgnoreValuesRange"
         dataSource:
-          type: string
-          enum: [billing, billing-datahub, kubernetes-utilization, tokenomics]
-          description: Omission preserves the saved data source. Tokenomics requires customer enablement.
+          allOf:
+            - $ref: "#/components/schemas/CloudAnalyticsAlertDataSource"
+            - description: Omission preserves the saved data source. Tokenomics requires customer enablement.
         scopes:
           type: array
           description: >-
@@ -18895,6 +18943,8 @@ components:
         currentUtilization:
           type: number
           format: double
+        dataSource:
+          $ref: "#/components/schemas/CloudAnalyticsBudgetDataSourceReadOnly"
         description:
           type: string
           description: Budget description.
@@ -19080,6 +19130,8 @@ components:
             $ref: "#/components/schemas/Collaborator"
         currency:
           $ref: "#/components/schemas/Currency"
+        dataSource:
+          $ref: "#/components/schemas/CloudAnalyticsBudgetDataSource"
         description:
           type: string
           description: Budget description
@@ -19172,6 +19224,8 @@ components:
             $ref: "#/components/schemas/Collaborator"
         currency:
           $ref: "#/components/schemas/Currency"
+        dataSource:
+          $ref: "#/components/schemas/CloudAnalyticsBudgetDataSource"
         description:
           type: string
           description: Budget description
@@ -19855,13 +19909,7 @@ components:
             A report with a forecast is always charted chronologically and ignores this field, and a
             comparative `displayValues` mode requires `a_to_z`.
         dataSource:
-          type: string
-          description: Data source of the report.
-          enum:
-            - billing
-            - bqlens
-            - billing-datahub
-            - kubernetes-utilization
+          $ref: "#/components/schemas/CloudAnalyticsExternalConfigDataSource"
         splits:
           type: array
           description: The splits to use in the report.
@@ -19986,7 +20034,6 @@ components:
         currency: USD
         sortGroups: a_to_z
         sortDimensions: a_to_z
-        dataSource: billing
     ExternalDisplaySettings:
       type: object
       description: Display settings for the report.

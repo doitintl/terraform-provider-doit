@@ -16,6 +16,7 @@ import (
 	"maps"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -734,10 +735,21 @@ func flattenAllOf(allOfNode *yaml.Node, schemasNode *yaml.Node, contextName stri
 	// Build the merged result.
 	result := &yaml.Node{Kind: yaml.MappingNode}
 
-	// Set type: object
+	// Use the sub-schemas' type when they agree on one (e.g. a string enum
+	// $ref plus a description-only sub-schema); otherwise default to object.
+	resultType := "object"
+	var seenTypes []string
+	for _, r := range resolved {
+		if t := getScalarValue(r, "type"); t != "" && !slices.Contains(seenTypes, t) {
+			seenTypes = append(seenTypes, t)
+		}
+	}
+	if len(seenTypes) == 1 {
+		resultType = seenTypes[0]
+	}
 	result.Content = append(result.Content,
 		&yaml.Node{Kind: yaml.ScalarNode, Value: "type", Tag: "!!str"},
-		&yaml.Node{Kind: yaml.ScalarNode, Value: "object", Tag: "!!str"},
+		&yaml.Node{Kind: yaml.ScalarNode, Value: resultType, Tag: "!!str"},
 	)
 
 	// Merge required arrays.
