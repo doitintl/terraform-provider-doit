@@ -99,7 +99,7 @@
 									"name": "data_source",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available."
+										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`."
 									}
 								},
 								{
@@ -432,7 +432,7 @@
 													"name": "data_source",
 													"string": {
 														"computed_optional_required": "computed",
-														"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available."
+														"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`."
 													}
 												},
 												{
@@ -4544,6 +4544,13 @@
 						"name": "current_utilization",
 						"float64": {
 							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "data_source",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Data source used to evaluate the budget."
 						}
 					},
 					{
@@ -16022,7 +16029,7 @@
 									"name": "data_source",
 									"string": {
 										"computed_optional_required": "computed",
-										"description": "Data source of the report."
+										"description": "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source."
 									}
 								},
 								{

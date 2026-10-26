@@ -162,8 +162,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"data_source": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
-						MarkdownDescription: "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
+						Description:         "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
+						MarkdownDescription: "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"billing",

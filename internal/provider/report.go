@@ -718,7 +718,7 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	}
 
 	if !config.DataSource.IsNull() && !config.DataSource.IsUnknown() {
-		externalConfig.DataSource = new(models.ExternalConfigDataSource(config.DataSource.ValueString()))
+		externalConfig.DataSource = new(models.CloudAnalyticsExternalConfigDataSource(config.DataSource.ValueString()))
 	}
 
 	if !config.AdvancedAnalysis.IsNull() && !config.AdvancedAnalysis.IsUnknown() {

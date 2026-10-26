@@ -58,6 +58,10 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 		plan.Amount = resolved.Amount
 	}
 
+	if plan.DataSource.IsUnknown() {
+		plan.DataSource = resolved.DataSource
+	}
+
 	if plan.EndPeriod.IsUnknown() {
 		plan.EndPeriod = resolved.EndPeriod
 	}
@@ -305,6 +309,9 @@ func (plan *budgetResourceModel) toCreateRequest(ctx context.Context) (req model
 	if !plan.Amount.IsNull() && !plan.Amount.IsUnknown() {
 		req.Amount = plan.Amount.ValueFloat64Pointer()
 	}
+	if !plan.DataSource.IsNull() && !plan.DataSource.IsUnknown() {
+		req.DataSource = new(models.CloudAnalyticsBudgetDataSource(plan.DataSource.ValueString()))
+	}
 	req.Description = plan.Description.ValueStringPointer()
 	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
 		req.EndPeriod = plan.EndPeriod.ValueInt64Pointer()
@@ -348,6 +355,9 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 
 	if !plan.Amount.IsNull() && !plan.Amount.IsUnknown() {
 		req.Amount = plan.Amount.ValueFloat64Pointer()
+	}
+	if !plan.DataSource.IsNull() && !plan.DataSource.IsUnknown() {
+		req.DataSource = new(models.CloudAnalyticsBudgetDataSource(plan.DataSource.ValueString()))
 	}
 	req.Description = plan.Description.ValueStringPointer()
 	if !plan.EndPeriod.IsNull() && !plan.EndPeriod.IsUnknown() {
@@ -470,6 +480,7 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	}
 
 	state.Currency = types.StringValue(string(resp.Currency))
+	state.DataSource = types.StringPointerValue((*string)(resp.DataSource))
 	if resp.Description != nil {
 		state.Description = types.StringValue(*resp.Description)
 	} else {

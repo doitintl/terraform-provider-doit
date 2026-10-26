@@ -79,6 +79,9 @@ func overlayAlertConfig(ctx context.Context, resolved, plan *resource_alert.Conf
 	if plan.Currency.IsUnknown() {
 		plan.Currency = resolved.Currency
 	}
+	if plan.DataSource.IsUnknown() {
+		plan.DataSource = resolved.DataSource
+	}
 	if plan.EvaluateForEach.IsUnknown() {
 		plan.EvaluateForEach = resolved.EvaluateForEach
 	}
@@ -258,8 +261,8 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 		config.Currency = new(models.Currency(configVal.Currency.ValueString()))
 	}
 
-	if !configVal.DataSource.IsNull() {
-		config.DataSource = new(models.AlertConfigDataSource(configVal.DataSource.ValueString()))
+	if !configVal.DataSource.IsNull() && !configVal.DataSource.IsUnknown() {
+		config.DataSource = new(models.CloudAnalyticsAlertConfigDataSource(configVal.DataSource.ValueString()))
 	}
 
 	if !configVal.EvaluateForEach.IsNull() && !configVal.EvaluateForEach.IsUnknown() {
@@ -337,7 +340,7 @@ func (plan *alertResourceModel) toAlertConfigUpdate(ctx context.Context) (config
 	if !configVal.Currency.IsNull() && !configVal.Currency.IsUnknown() {
 		cfg.Currency = (*models.Currency)(configVal.Currency.ValueStringPointer())
 	}
-	if !configVal.DataSource.IsNull() {
+	if !configVal.DataSource.IsNull() && !configVal.DataSource.IsUnknown() {
 		cfg.DataSource = (*models.AlertConfigUpdateDataSource)(configVal.DataSource.ValueStringPointer())
 	}
 	if !configVal.EvaluateForEach.IsNull() && !configVal.EvaluateForEach.IsUnknown() {

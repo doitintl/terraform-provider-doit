@@ -56,6 +56,7 @@ required: true(if usePrevSpend is false)
 - `create_time` (Number) Creation time (in UNIX timestamp).
 - `currency` (String) Currency code for monetary values.
 - `current_utilization` (Number)
+- `data_source` (String) Data source used to evaluate the budget.
 - `description` (String) Budget description.
 - `end_period` (Number) Fixed budget end date (in UNIX timestamp)
 required: true(if budget type is fixed)

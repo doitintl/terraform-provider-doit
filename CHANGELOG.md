@@ -4,6 +4,10 @@
 
 ### ENHANCEMENTS
 
+- **resource/doit_budget, data-source/doit_budget**: New `data_source` attribute (`billing` or `billing-datahub`). Omitted on create, the API resolves it to `billing-datahub` when the customer has DataHub metrics configured and to `billing` otherwise; omitted on update, the saved value is kept. Existing budgets pick up their current data source on the next refresh
+
+- **resource/doit_alert, resource/doit_report**: When `data_source` is omitted on create, the API now resolves it to `billing-datahub` for customers with DataHub metrics (otherwise `billing`). `doit_alert` no longer has a plan-time default of `billing`, so the value is shown as known after apply. Existing alerts and reports are unaffected and keep their saved data source; set `data_source` explicitly to pin it
+
 - **resource/doit_budget**: `name`, `currency`, `type`, `start_period` and `scopes` are now declared `Required` in the schema, and `name` and `scopes` reject empty values, following the upstream split of the budget create and update request schemas. The API has always rejected a create without them, so new budgets are unaffected and Terraform now reports it at validation time. A configuration that omitted one of them for an existing budget (for example after `terraform import`, or after removing it from the config following creation) used to keep the value from state silently; it must now set the attribute explicitly, using the value shown in `terraform state show`. Create and update requests use their own request types
 
 - **data-source/doit_annotations**: The `sort_by` documentation now states that `timeCreated` sorts by `create_time` and `timeModified` by `update_time`. No behavior change

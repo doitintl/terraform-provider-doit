@@ -237,6 +237,10 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 - `amount` (Number) Budget period amount
 required: true(if usePrevSpend is false)
 - `collaborators` (Attributes List) List of permitted users to view/edit the report. (see [below for nested schema](#nestedatt--collaborators))
+- `data_source` (String) Data source used to evaluate the budget.
+When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+On update, omission preserves the saved data source.
+Possible values: `billing`, `billing-datahub`
 - `description` (String) Budget description
 - `end_period` (Number) Fixed budget end date
 required: true(if budget type is fixed)

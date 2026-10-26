@@ -32,8 +32,8 @@ func AlertDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"data_source": schema.StringAttribute{
 						Computed:            true,
-						Description:         "Data source used to query data for the alert. Affects which dimensions and metrics are available.",
-						MarkdownDescription: "Data source used to query data for the alert. Affects which dimensions and metrics are available.",
+						Description:         "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.",
+						MarkdownDescription: "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.",
 					},
 					"evaluate_for_each": schema.StringAttribute{
 						Computed:            true,

@@ -900,6 +900,30 @@ B:
 	})
 }
 
+func TestFlattenAllOfSchemas_NonObjectType(t *testing.T) {
+	schemasNode := mustParseYAML(t, `
+DataSource:
+  type: string
+  enum: [billing, billing-datahub]
+ConfigDataSource:
+  allOf:
+    - $ref: "#/components/schemas/DataSource"
+    - description: Resolved default
+`)
+	flattenAllOfSchemas(schemasNode)
+
+	got := getMappingValue(schemasNode, "ConfigDataSource")
+	if v := getScalarValue(got, "type"); v != "string" {
+		t.Errorf("type = %q, want string", v)
+	}
+	if enum := getMappingValue(got, "enum"); enum == nil || len(enum.Content) != 2 {
+		t.Errorf("enum not preserved: %v", enum)
+	}
+	if v := getScalarValue(got, "description"); v != "Resolved default" {
+		t.Errorf("description = %q", v)
+	}
+}
+
 func TestFlattenInlineAllOf(t *testing.T) {
 	t.Run("inline property allOf (CloudflowConnection pattern)", func(t *testing.T) {
 		schemasNode := mustParseYAML(t, `

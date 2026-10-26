@@ -100,8 +100,8 @@ func ReportDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 					"data_source": schema.StringAttribute{
 						Computed:            true,
-						Description:         "Data source of the report.",
-						MarkdownDescription: "Data source of the report.",
+						Description:         "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.",
+						MarkdownDescription: "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.",
 					},
 					"dimensions": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{
