@@ -411,15 +411,18 @@ func (e AnomalyCustomerFeedbackResolutionNoteReason) Valid() bool {
 
 // Defines values for AnomalyItemDeactivationReason.
 const (
-	AnomalyItemDeactivationReasonExpired  AnomalyItemDeactivationReason = "expired"
-	AnomalyItemDeactivationReasonReverted AnomalyItemDeactivationReason = "reverted"
-	AnomalyItemDeactivationReasonUnknown  AnomalyItemDeactivationReason = "unknown"
+	AnomalyItemDeactivationReasonExpired     AnomalyItemDeactivationReason = "expired"
+	AnomalyItemDeactivationReasonLessThannil AnomalyItemDeactivationReason = "<nil>"
+	AnomalyItemDeactivationReasonReverted    AnomalyItemDeactivationReason = "reverted"
+	AnomalyItemDeactivationReasonUnknown     AnomalyItemDeactivationReason = "unknown"
 )
 
 // Valid indicates whether the value is a known member of the AnomalyItemDeactivationReason enum.
 func (e AnomalyItemDeactivationReason) Valid() bool {
 	switch e {
 	case AnomalyItemDeactivationReasonExpired:
+		return true
+	case AnomalyItemDeactivationReasonLessThannil:
 		return true
 	case AnomalyItemDeactivationReasonReverted:
 		return true
@@ -450,8 +453,9 @@ func (e AnomalyItemMonitorLevel) Valid() bool {
 
 // Defines values for AnomalyItemStatus.
 const (
-	AnomalyItemStatusActive   AnomalyItemStatus = "active"
-	AnomalyItemStatusInactive AnomalyItemStatus = "inactive"
+	AnomalyItemStatusActive      AnomalyItemStatus = "active"
+	AnomalyItemStatusInactive    AnomalyItemStatus = "inactive"
+	AnomalyItemStatusLessThannil AnomalyItemStatus = "<nil>"
 )
 
 // Valid indicates whether the value is a known member of the AnomalyItemStatus enum.
@@ -460,6 +464,8 @@ func (e AnomalyItemStatus) Valid() bool {
 	case AnomalyItemStatusActive:
 		return true
 	case AnomalyItemStatusInactive:
+		return true
+	case AnomalyItemStatusLessThannil:
 		return true
 	default:
 		return false
@@ -3009,15 +3015,18 @@ func (e GcpStats30dByServiceService) Valid() bool {
 
 // Defines values for GetAnomaly200ResponseDeactivationReason.
 const (
-	GetAnomaly200ResponseDeactivationReasonExpired  GetAnomaly200ResponseDeactivationReason = "expired"
-	GetAnomaly200ResponseDeactivationReasonReverted GetAnomaly200ResponseDeactivationReason = "reverted"
-	GetAnomaly200ResponseDeactivationReasonUnknown  GetAnomaly200ResponseDeactivationReason = "unknown"
+	GetAnomaly200ResponseDeactivationReasonExpired     GetAnomaly200ResponseDeactivationReason = "expired"
+	GetAnomaly200ResponseDeactivationReasonLessThannil GetAnomaly200ResponseDeactivationReason = "<nil>"
+	GetAnomaly200ResponseDeactivationReasonReverted    GetAnomaly200ResponseDeactivationReason = "reverted"
+	GetAnomaly200ResponseDeactivationReasonUnknown     GetAnomaly200ResponseDeactivationReason = "unknown"
 )
 
 // Valid indicates whether the value is a known member of the GetAnomaly200ResponseDeactivationReason enum.
 func (e GetAnomaly200ResponseDeactivationReason) Valid() bool {
 	switch e {
 	case GetAnomaly200ResponseDeactivationReasonExpired:
+		return true
+	case GetAnomaly200ResponseDeactivationReasonLessThannil:
 		return true
 	case GetAnomaly200ResponseDeactivationReasonReverted:
 		return true
@@ -3048,8 +3057,9 @@ func (e GetAnomaly200ResponseMonitorLevel) Valid() bool {
 
 // Defines values for GetAnomaly200ResponseStatus.
 const (
-	GetAnomaly200ResponseStatusActive   GetAnomaly200ResponseStatus = "active"
-	GetAnomaly200ResponseStatusInactive GetAnomaly200ResponseStatus = "inactive"
+	GetAnomaly200ResponseStatusActive      GetAnomaly200ResponseStatus = "active"
+	GetAnomaly200ResponseStatusInactive    GetAnomaly200ResponseStatus = "inactive"
+	GetAnomaly200ResponseStatusLessThannil GetAnomaly200ResponseStatus = "<nil>"
 )
 
 // Valid indicates whether the value is a known member of the GetAnomaly200ResponseStatus enum.
@@ -3058,6 +3068,8 @@ func (e GetAnomaly200ResponseStatus) Valid() bool {
 	case GetAnomaly200ResponseStatusActive:
 		return true
 	case GetAnomaly200ResponseStatusInactive:
+		return true
+	case GetAnomaly200ResponseStatusLessThannil:
 		return true
 	default:
 		return false
@@ -3489,14 +3501,17 @@ func (e PatchCostAnomalySettingsMinSeverity) Valid() bool {
 
 // Defines values for PatchCostAnomalyWhenCostGrowsMatch.
 const (
-	PatchCostAnomalyWhenCostGrowsMatchAnd PatchCostAnomalyWhenCostGrowsMatch = "and"
-	PatchCostAnomalyWhenCostGrowsMatchOr  PatchCostAnomalyWhenCostGrowsMatch = "or"
+	PatchCostAnomalyWhenCostGrowsMatchAnd         PatchCostAnomalyWhenCostGrowsMatch = "and"
+	PatchCostAnomalyWhenCostGrowsMatchLessThannil PatchCostAnomalyWhenCostGrowsMatch = "<nil>"
+	PatchCostAnomalyWhenCostGrowsMatchOr          PatchCostAnomalyWhenCostGrowsMatch = "or"
 )
 
 // Valid indicates whether the value is a known member of the PatchCostAnomalyWhenCostGrowsMatch enum.
 func (e PatchCostAnomalyWhenCostGrowsMatch) Valid() bool {
 	switch e {
 	case PatchCostAnomalyWhenCostGrowsMatchAnd:
+		return true
+	case PatchCostAnomalyWhenCostGrowsMatchLessThannil:
 		return true
 	case PatchCostAnomalyWhenCostGrowsMatchOr:
 		return true
@@ -3546,14 +3561,17 @@ func (e ResourcePermissionRole) Valid() bool {
 
 // Defines values for ResourcePermissionsResponsePublic.
 const (
-	ResourcePermissionsResponsePublicEditor ResourcePermissionsResponsePublic = "editor"
-	ResourcePermissionsResponsePublicViewer ResourcePermissionsResponsePublic = "viewer"
+	ResourcePermissionsResponsePublicEditor      ResourcePermissionsResponsePublic = "editor"
+	ResourcePermissionsResponsePublicLessThannil ResourcePermissionsResponsePublic = "<nil>"
+	ResourcePermissionsResponsePublicViewer      ResourcePermissionsResponsePublic = "viewer"
 )
 
 // Valid indicates whether the value is a known member of the ResourcePermissionsResponsePublic enum.
 func (e ResourcePermissionsResponsePublic) Valid() bool {
 	switch e {
 	case ResourcePermissionsResponsePublicEditor:
+		return true
+	case ResourcePermissionsResponsePublicLessThannil:
 		return true
 	case ResourcePermissionsResponsePublicViewer:
 		return true
@@ -3948,17 +3966,18 @@ func (e UpdateDatahubDatasetRequestBodyLogoName) Valid() bool {
 
 // Defines values for UpdateLabelRequestColor.
 const (
-	UpdateLabelRequestColorApricot    UpdateLabelRequestColor = "apricot"
-	UpdateLabelRequestColorBlue       UpdateLabelRequestColor = "blue"
-	UpdateLabelRequestColorLavender   UpdateLabelRequestColor = "lavender"
-	UpdateLabelRequestColorLime       UpdateLabelRequestColor = "lime"
-	UpdateLabelRequestColorMint       UpdateLabelRequestColor = "mint"
-	UpdateLabelRequestColorPurple     UpdateLabelRequestColor = "purple"
-	UpdateLabelRequestColorRosePink   UpdateLabelRequestColor = "rosePink"
-	UpdateLabelRequestColorSkyBlue    UpdateLabelRequestColor = "skyBlue"
-	UpdateLabelRequestColorSlateGrey  UpdateLabelRequestColor = "slateGrey"
-	UpdateLabelRequestColorSoftYellow UpdateLabelRequestColor = "softYellow"
-	UpdateLabelRequestColorTeal       UpdateLabelRequestColor = "teal"
+	UpdateLabelRequestColorApricot     UpdateLabelRequestColor = "apricot"
+	UpdateLabelRequestColorBlue        UpdateLabelRequestColor = "blue"
+	UpdateLabelRequestColorLavender    UpdateLabelRequestColor = "lavender"
+	UpdateLabelRequestColorLessThannil UpdateLabelRequestColor = "<nil>"
+	UpdateLabelRequestColorLime        UpdateLabelRequestColor = "lime"
+	UpdateLabelRequestColorMint        UpdateLabelRequestColor = "mint"
+	UpdateLabelRequestColorPurple      UpdateLabelRequestColor = "purple"
+	UpdateLabelRequestColorRosePink    UpdateLabelRequestColor = "rosePink"
+	UpdateLabelRequestColorSkyBlue     UpdateLabelRequestColor = "skyBlue"
+	UpdateLabelRequestColorSlateGrey   UpdateLabelRequestColor = "slateGrey"
+	UpdateLabelRequestColorSoftYellow  UpdateLabelRequestColor = "softYellow"
+	UpdateLabelRequestColorTeal        UpdateLabelRequestColor = "teal"
 )
 
 // Valid indicates whether the value is a known member of the UpdateLabelRequestColor enum.
@@ -3969,6 +3988,8 @@ func (e UpdateLabelRequestColor) Valid() bool {
 	case UpdateLabelRequestColorBlue:
 		return true
 	case UpdateLabelRequestColorLavender:
+		return true
+	case UpdateLabelRequestColorLessThannil:
 		return true
 	case UpdateLabelRequestColorLime:
 		return true
@@ -3993,14 +4014,17 @@ func (e UpdateLabelRequestColor) Valid() bool {
 
 // Defines values for UpdateResourcePermissionRequestBodyPublic.
 const (
-	UpdateResourcePermissionRequestBodyPublicEditor UpdateResourcePermissionRequestBodyPublic = "editor"
-	UpdateResourcePermissionRequestBodyPublicViewer UpdateResourcePermissionRequestBodyPublic = "viewer"
+	UpdateResourcePermissionRequestBodyPublicEditor      UpdateResourcePermissionRequestBodyPublic = "editor"
+	UpdateResourcePermissionRequestBodyPublicLessThannil UpdateResourcePermissionRequestBodyPublic = "<nil>"
+	UpdateResourcePermissionRequestBodyPublicViewer      UpdateResourcePermissionRequestBodyPublic = "viewer"
 )
 
 // Valid indicates whether the value is a known member of the UpdateResourcePermissionRequestBodyPublic enum.
 func (e UpdateResourcePermissionRequestBodyPublic) Valid() bool {
 	switch e {
 	case UpdateResourcePermissionRequestBodyPublicEditor:
+		return true
+	case UpdateResourcePermissionRequestBodyPublicLessThannil:
 		return true
 	case UpdateResourcePermissionRequestBodyPublicViewer:
 		return true
@@ -6066,7 +6090,7 @@ type AsyncOperationResponseStatus string
 type AsyncRunInlineRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
@@ -8542,7 +8566,7 @@ type CreateLabelRequestColor string
 type CreateReportRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -8954,7 +8978,7 @@ type ExternalBudgetAlert struct {
 
 // ExternalConfig Report configuration.
 //
-// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 type ExternalConfig struct {
 	// AdvancedAnalysis Advanced analysis options. Each can be set independently.
 	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
@@ -9335,7 +9359,7 @@ type ExternalRenderer string
 type ExternalReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -9420,7 +9444,7 @@ type ExternalSplitTargetType string
 type ExternalUpdateReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description
@@ -12274,9 +12298,6 @@ type Value0 = string
 // Value1 defines model for Value.1.
 type Value1 = float32
 
-// Value2 defines model for Value.2.
-type Value2 = int
-
 // Widget Widget metadata and its latest precomputed cached result.
 type Widget struct {
 	// Alias Stable customer-facing widget identifier.
@@ -14073,32 +14094,6 @@ func (t *Value) FromValue1(v Value1) error {
 
 // MergeValue1 performs a merge with any union data inside the Value, using the provided Value1
 func (t *Value) MergeValue1(v Value1) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsValue2 returns the union data inside the Value as a Value2
-func (t Value) AsValue2() (Value2, error) {
-	var body Value2
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromValue2 overwrites any union data inside the Value as the provided Value2
-func (t *Value) FromValue2(v Value2) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeValue2 performs a merge with any union data inside the Value, using the provided Value2
-func (t *Value) MergeValue2(v Value2) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err

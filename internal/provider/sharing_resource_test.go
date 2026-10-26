@@ -332,6 +332,46 @@ func TestAccSharing_OwnerValidator(t *testing.T) {
 	})
 }
 
+// TestAccSharing_PublicInvalidValue verifies that values outside editor/viewer are rejected
+// at plan time. In particular the empty string, which the API tolerates as a legacy alias for
+// viewer on allocations (and rejects elsewhere), must not be accepted: on allocations it would
+// show a permanent diff because the API reads back "viewer".
+func TestAccSharing_PublicInvalidValue(t *testing.T) {
+	n := acctest.RandInt()
+	invalid := regexp.MustCompile(`(?s)Invalid Attribute Value Match.*value must be one of`)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testUser2() == "" {
+				t.Skip("TEST_USER_2 must be set for this test")
+			}
+			if testProject() == "" {
+				t.Skip("TEST_PROJECT must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Report: empty string
+			{
+				Config:      testAccSharingPublic(n, ""),
+				ExpectError: invalid,
+			},
+			// Report: owner is a permission role, not a valid public access level
+			{
+				Config:      testAccSharingPublic(n, "owner"),
+				ExpectError: invalid,
+			},
+			// Allocation: empty string
+			{
+				Config:      testAccSharingAllocationEmptyPublic(n),
+				ExpectError: invalid,
+			},
+		},
+	})
+}
+
 // TestAccSharing_Disappears verifies Terraform handles externally deleted
 // target resources. When the report is deleted, the sharing GET returns 404.
 func TestAccSharing_Disappears(t *testing.T) {
@@ -1205,4 +1245,39 @@ resource "doit_sharing" "this" {
   ]
 }
 `, testAccSharingReport(i), i, testProject(), resourceType, publicLine, testUser())
+}
+
+// testAccSharingAllocationEmptyPublic configures public = "" explicitly on an allocation.
+// testAccSharingAllocationPublic omits the line for an empty value, so it cannot be reused.
+func testAccSharingAllocationEmptyPublic(i int) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "sharing_target" {
+  name        = "sharing-test-alloc-%d"
+  description = "allocation for sharing test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "project_id"
+        mode   = "is"
+        type   = "fixed"
+        values = ["%s"]
+      }
+    ]
+  }
+}
+
+resource "doit_sharing" "allocation" {
+  resource_type = "allocations"
+  resource_id   = doit_allocation.sharing_target.id
+  public        = ""
+
+  permissions = [
+    {
+      user = "%s"
+      role = "owner"
+    }
+  ]
+}
+`, i, testProject(), testUser())
 }

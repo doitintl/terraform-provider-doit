@@ -85,6 +85,8 @@ func CustomThemesDataSourceSchema(ctx context.Context) schema.Schema {
 				Computed: true,
 			},
 		},
+		Description:         "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+		MarkdownDescription: "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
 	}
 }
 

@@ -84,6 +84,8 @@ func CustomThemeResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "The time when the custom theme was last updated.",
 			},
 		},
+		Description:         "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+		MarkdownDescription: "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
 	}
 }
 

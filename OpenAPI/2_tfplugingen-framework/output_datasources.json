@@ -60,7 +60,9 @@
 							"description": "Identifier of the active theme. The reserved sentinel `\"default\"` is\nreturned when the user is using the built-in default (no custom or\npreset theme stored)."
 						}
 					}
-				]
+				],
+				"description": "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+				"markdown_description": "Configure presentation settings for Cloud Analytics reports, including custom color themes."
 			}
 		},
 		{
@@ -11006,7 +11008,9 @@
 							"description": "The time when the custom theme was last updated."
 						}
 					}
-				]
+				],
+				"description": "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+				"markdown_description": "Configure presentation settings for Cloud Analytics reports, including custom color themes."
 			}
 		},
 		{
@@ -11094,7 +11098,9 @@
 							}
 						}
 					}
-				]
+				],
+				"description": "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+				"markdown_description": "Configure presentation settings for Cloud Analytics reports, including custom color themes."
 			}
 		},
 		{
