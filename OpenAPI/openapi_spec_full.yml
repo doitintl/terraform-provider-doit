@@ -15102,6 +15102,29 @@ components:
           type: string
         infraManagerServiceAccount:
           type: string
+    CloudflowAWSActionRequest:
+      type: object
+      description: A custom IAM action granted to the CloudFlow role.
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: IAM action, for example `s3:ListBucket`.
+    CloudflowAWSPermissionsRequest:
+      type: object
+      description: IAM permissions granted to the CloudFlow role.
+      properties:
+        awsManagedPolicies:
+          type: array
+          description: AWS-managed policy ARNs attached to the role.
+          items:
+            type: string
+        actions:
+          type: array
+          description: Custom IAM actions.
+          items:
+            $ref: "#/components/schemas/CloudflowAWSActionRequest"
     CloudflowAWSConfigRequest:
       type: object
       description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
@@ -15120,7 +15143,7 @@ components:
         roleName:
           type: string
         permissions:
-          type: object
+          $ref: "#/components/schemas/CloudflowAWSPermissionsRequest"
         managementAccount:
           type: string
         organizationRootId:
@@ -15182,6 +15205,21 @@ components:
                       status:
                         type: string
                         description: Server-managed per-account deployment status.
+                permissions:
+                  type: object
+                  description: Response extends request schema with server-assigned action identifiers.
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                            description: IAM action, for example `s3:ListBucket`.
+                          id:
+                            type: string
+                            description: Server-returned row identifier. Not used for permission evaluation.
         collaborators:
           type: array
           items:

@@ -6113,6 +6113,137 @@ paths:
           $ref: "#/components/responses/403"
         "500":
           $ref: "#/components/responses/500"
+  # ============================================================
+  # CloudFlow Connections
+  # ============================================================
+  /cloudflow/v1/connections:
+    post:
+      tags:
+        - Connections
+      summary: Create a connection
+      description: |-
+        Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+        Returns `400 invalid_connection_config` when both or neither are present.
+      operationId: createCloudflowConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCloudflowConnectionRequestBody'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowConnection"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /cloudflow/v1/connections/{connectionId}:
+    get:
+      tags:
+        - Connections
+      summary: Retrieve a connection
+      description: Returns a single connection by ID.
+      operationId: getCloudflowConnection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowConnection"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    patch:
+      tags:
+        - Connections
+      summary: Update a connection
+      description: |-
+        Partially updates a connection. All fields are optional.
+        At most one of `gcpConfig` or `awsConfig` may be set per request.
+      operationId: updateCloudflowConnection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCloudflowConnectionRequestBody'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudflowConnection"
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Connections
+      summary: Delete a connection
+      description: Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
+      operationId: deleteCloudflowConnection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content — connection deleted.
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          description: Conflict — connection is in use by one or more flows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCloudflowConnection409Response'
+        "500":
+          $ref: "#/components/responses/500"
   /ps4commitments/v1/aws/organizations:
     get:
       operationId: listAwsOrganizations
@@ -10237,6 +10368,234 @@ components:
         title:
           type: string
           description: Cloud incident name as provided by the cloud platform vendor
+    CloudflowAWSActionRequest:
+      type: object
+      description: A custom IAM action granted to the CloudFlow role.
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: IAM action, for example `s3:ListBucket`.
+    CloudflowAWSConfigRequest:
+      type: object
+      description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+      properties:
+        context:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowAWSConfigRequestContextItem'
+        roleName:
+          type: string
+        permissions:
+          $ref: "#/components/schemas/CloudflowAWSPermissionsRequest"
+        managementAccount:
+          type: string
+        organizationRootId:
+          type: string
+        scopeTargetedOrganizationalUnitIds:
+          type: array
+          items:
+            type: string
+        scopeExplicitAccountIds:
+          type: array
+          items:
+            type: string
+        scopeExcludedAccountIds:
+          type: array
+          items:
+            type: string
+        scopeManagementAccountExplicitInScope:
+          type: boolean
+    CloudflowAWSConfigRequestContextItem:
+      type: object
+      properties:
+        accountId:
+          type: string
+        regions:
+          type: array
+          items:
+            type: string
+    CloudflowAWSPermissionsRequest:
+      type: object
+      description: IAM permissions granted to the CloudFlow role.
+      properties:
+        awsManagedPolicies:
+          type: array
+          description: AWS-managed policy ARNs attached to the role.
+          items:
+            type: string
+        actions:
+          type: array
+          description: Custom IAM actions.
+          items:
+            $ref: "#/components/schemas/CloudflowAWSActionRequest"
+    CloudflowCollaborator:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [owner, editor, user]
+    CloudflowConnection:
+      type: object
+      description: A cloud provider connection used in CloudFlow workflows.
+      properties:
+        connectionId:
+          type: string
+          description: Unique identifier for the connection.
+        name:
+          type: string
+        description:
+          type: string
+        gcpConfig:
+          type: object
+          properties:
+            organizationId:
+              type: string
+            folderId:
+              type: string
+            projectId:
+              type: string
+            level:
+              type: string
+              enum: [organization, folder, project]
+            serviceAccountName:
+              type: string
+            predefinedRoles:
+              type: array
+              items:
+                type: string
+            customRole:
+              $ref: '#/components/schemas/CloudflowGCPConfigRequestCustomRole'
+            infraManagerProject:
+              type: string
+            infraManagerLocation:
+              type: string
+            infraManagerServiceAccount:
+              type: string
+            status:
+              type: string
+              description: Server-managed GCP config status.
+            deploymentCommand:
+              type: string
+              description: Generated deployment command.
+          description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+        awsConfig:
+          type: object
+          properties:
+            context:
+              type: array
+              items:
+                $ref: '#/components/schemas/CloudflowConnectionAwsConfigAllOf1ContextItem'
+            roleName:
+              type: string
+            permissions:
+              description: Response extends request schema with server-assigned action identifiers.
+              allOf:
+                - $ref: '#/components/schemas/CloudflowConnectionAwsConfigAllOf1Permissions'
+            managementAccount:
+              type: string
+            organizationRootId:
+              type: string
+            scopeTargetedOrganizationalUnitIds:
+              type: array
+              items:
+                type: string
+            scopeExplicitAccountIds:
+              type: array
+              items:
+                type: string
+            scopeExcludedAccountIds:
+              type: array
+              items:
+                type: string
+            scopeManagementAccountExplicitInScope:
+              type: boolean
+          description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+        collaborators:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowCollaborator"
+        enabled:
+          type: boolean
+          description: false when the connection is disabled.
+        status:
+          type: string
+          description: Overall connection status.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CloudflowConnectionAwsConfigAllOf1ContextItem:
+      type: object
+      properties:
+        accountId:
+          type: string
+        regions:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          description: Server-managed per-account deployment status.
+    CloudflowConnectionAwsConfigAllOf1Permissions:
+      type: object
+      description: Response extends request schema with server-assigned action identifiers.
+      properties:
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowConnectionAwsConfigAllOf1PermissionsActionsItem'
+    CloudflowConnectionAwsConfigAllOf1PermissionsActionsItem:
+      type: object
+      properties:
+        value:
+          type: string
+          description: IAM action, for example `s3:ListBucket`.
+        id:
+          type: string
+          description: Server-returned row identifier. Not used for permission evaluation.
+    CloudflowGCPConfigRequest:
+      type: object
+      description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+      properties:
+        organizationId:
+          type: string
+        folderId:
+          type: string
+        projectId:
+          type: string
+        level:
+          type: string
+          enum: [organization, folder, project]
+        serviceAccountName:
+          type: string
+        predefinedRoles:
+          type: array
+          items:
+            type: string
+        customRole:
+          $ref: '#/components/schemas/CloudflowGCPConfigRequestCustomRole'
+        infraManagerProject:
+          type: string
+        infraManagerLocation:
+          type: string
+        infraManagerServiceAccount:
+          type: string
+    CloudflowGCPConfigRequestCustomRole:
+      type: object
+      properties:
+        roleId:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
     Collaborator:
       type: object
       description: A user or identity that has access to a resource.
@@ -11220,6 +11579,29 @@ components:
           items:
             type: string
           description: List of label IDs to associate with the annotation. Labels must already exist.
+    CreateCloudflowConnectionRequestBody:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Human-readable connection name.
+        description:
+          type: string
+          description: Optional description.
+        gcpConfig:
+          $ref: "#/components/schemas/CloudflowGCPConfigRequest"
+        awsConfig:
+          $ref: "#/components/schemas/CloudflowAWSConfigRequest"
+        collaborators:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowCollaborator"
+        enabled:
+          type: boolean
+          description: When false, the connection is created in a disabled state.
+          default: true
     CreateCustomThemeRequest:
       required:
         - name
@@ -11673,6 +12055,17 @@ components:
           $ref: "#/components/schemas/CustomerSettings"
         contact:
           $ref: "#/components/schemas/CustomerContact"
+    DeleteCloudflowConnection409Response:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
     DeleteDatahubDataset200Response:
       type: object
       properties:
@@ -15974,6 +16367,24 @@ components:
             type: string
           description: Declares which supported AWS features the caller intends to enable. Values must match feature names configured in awsFeaturePermissions on app/cloud-connect. The value is persisted and returned in account responses. When "real-time-data" is included, s3Bucket and s3BucketRegion are required; when it is not included, s3Bucket and s3BucketRegion are not allowed.
           example: ["real-time-data"]
+    UpdateCloudflowConnectionRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        gcpConfig:
+          $ref: "#/components/schemas/CloudflowGCPConfigRequest"
+        awsConfig:
+          $ref: "#/components/schemas/CloudflowAWSConfigRequest"
+        collaborators:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudflowCollaborator"
+        enabled:
+          type: boolean
+          description: Set to false to disable the connection, true to re-enable it.
     UpdateCustomThemeRequest:
       type: object
       description: Request body for updating a custom theme. Only provided fields are modified.

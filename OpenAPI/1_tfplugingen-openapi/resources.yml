@@ -227,6 +227,19 @@ resources:
     delete:
       path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
       method: DELETE
+  cloudflow_connection:
+    create:
+      path: /cloudflow/v1/connections
+      method: POST
+    read:
+      path: /cloudflow/v1/connections/{connectionId}
+      method: GET
+    update:
+      path: /cloudflow/v1/connections/{connectionId}
+      method: PATCH
+    delete:
+      path: /cloudflow/v1/connections/{connectionId}
+      method: DELETE
   user_notification:
     create:
       path: /iam/v1/users/{userId}/notifications

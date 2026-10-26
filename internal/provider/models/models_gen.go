@@ -1480,6 +1480,69 @@ func (e CloudIncidentListItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for CloudflowCollaboratorRole.
+const (
+	CloudflowCollaboratorRoleEditor CloudflowCollaboratorRole = "editor"
+	CloudflowCollaboratorRoleOwner  CloudflowCollaboratorRole = "owner"
+	CloudflowCollaboratorRoleUser   CloudflowCollaboratorRole = "user"
+)
+
+// Valid indicates whether the value is a known member of the CloudflowCollaboratorRole enum.
+func (e CloudflowCollaboratorRole) Valid() bool {
+	switch e {
+	case CloudflowCollaboratorRoleEditor:
+		return true
+	case CloudflowCollaboratorRoleOwner:
+		return true
+	case CloudflowCollaboratorRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudflowConnectionGcpConfigLevel.
+const (
+	CloudflowConnectionGcpConfigLevelFolder       CloudflowConnectionGcpConfigLevel = "folder"
+	CloudflowConnectionGcpConfigLevelOrganization CloudflowConnectionGcpConfigLevel = "organization"
+	CloudflowConnectionGcpConfigLevelProject      CloudflowConnectionGcpConfigLevel = "project"
+)
+
+// Valid indicates whether the value is a known member of the CloudflowConnectionGcpConfigLevel enum.
+func (e CloudflowConnectionGcpConfigLevel) Valid() bool {
+	switch e {
+	case CloudflowConnectionGcpConfigLevelFolder:
+		return true
+	case CloudflowConnectionGcpConfigLevelOrganization:
+		return true
+	case CloudflowConnectionGcpConfigLevelProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudflowGCPConfigRequestLevel.
+const (
+	CloudflowGCPConfigRequestLevelFolder       CloudflowGCPConfigRequestLevel = "folder"
+	CloudflowGCPConfigRequestLevelOrganization CloudflowGCPConfigRequestLevel = "organization"
+	CloudflowGCPConfigRequestLevelProject      CloudflowGCPConfigRequestLevel = "project"
+)
+
+// Valid indicates whether the value is a known member of the CloudflowGCPConfigRequestLevel enum.
+func (e CloudflowGCPConfigRequestLevel) Valid() bool {
+	switch e {
+	case CloudflowGCPConfigRequestLevelFolder:
+		return true
+	case CloudflowGCPConfigRequestLevelOrganization:
+		return true
+	case CloudflowGCPConfigRequestLevelProject:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CollaboratorRole.
 const (
 	CollaboratorRoleEditor CollaboratorRole = "editor"
@@ -7719,6 +7782,152 @@ type CloudIncidentListItemPlatform string
 // CloudIncidentListItemStatus The Status of the issue
 type CloudIncidentListItemStatus string
 
+// CloudflowAWSActionRequest A custom IAM action granted to the CloudFlow role.
+type CloudflowAWSActionRequest struct {
+	// Value IAM action, for example `s3:ListBucket`.
+	Value string `json:"value"`
+}
+
+// CloudflowAWSConfigRequest AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+type CloudflowAWSConfigRequest struct {
+	Context            *[]CloudflowAWSConfigRequestContextItem `json:"context,omitempty"`
+	ManagementAccount  *string                                 `json:"managementAccount,omitempty"`
+	OrganizationRootId *string                                 `json:"organizationRootId,omitempty"`
+
+	// Permissions IAM permissions granted to the CloudFlow role.
+	Permissions                           *CloudflowAWSPermissionsRequest `json:"permissions,omitempty"`
+	RoleName                              *string                         `json:"roleName,omitempty"`
+	ScopeExcludedAccountIds               *[]string                       `json:"scopeExcludedAccountIds,omitempty"`
+	ScopeExplicitAccountIds               *[]string                       `json:"scopeExplicitAccountIds,omitempty"`
+	ScopeManagementAccountExplicitInScope *bool                           `json:"scopeManagementAccountExplicitInScope,omitempty"`
+	ScopeTargetedOrganizationalUnitIds    *[]string                       `json:"scopeTargetedOrganizationalUnitIds,omitempty"`
+}
+
+// CloudflowAWSConfigRequestContextItem defines model for CloudflowAWSConfigRequestContextItem.
+type CloudflowAWSConfigRequestContextItem struct {
+	AccountId *string   `json:"accountId,omitempty"`
+	Regions   *[]string `json:"regions,omitempty"`
+}
+
+// CloudflowAWSPermissionsRequest IAM permissions granted to the CloudFlow role.
+type CloudflowAWSPermissionsRequest struct {
+	// Actions Custom IAM actions.
+	Actions *[]CloudflowAWSActionRequest `json:"actions,omitempty"`
+
+	// AwsManagedPolicies AWS-managed policy ARNs attached to the role.
+	AwsManagedPolicies *[]string `json:"awsManagedPolicies,omitempty"`
+}
+
+// CloudflowCollaborator defines model for CloudflowCollaborator.
+type CloudflowCollaborator struct {
+	Email *openapi_types.Email       `json:"email,omitempty"`
+	Role  *CloudflowCollaboratorRole `json:"role,omitempty"`
+}
+
+// CloudflowCollaboratorRole defines model for CloudflowCollaborator.Role.
+type CloudflowCollaboratorRole string
+
+// CloudflowConnection A cloud provider connection used in CloudFlow workflows.
+type CloudflowConnection struct {
+	// AwsConfig AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+	AwsConfig *struct {
+		Context            *[]CloudflowConnectionAwsConfigAllOf1ContextItem `json:"context,omitempty"`
+		ManagementAccount  *string                                          `json:"managementAccount,omitempty"`
+		OrganizationRootId *string                                          `json:"organizationRootId,omitempty"`
+
+		// Permissions Response extends request schema with server-assigned action identifiers.
+		Permissions                           *CloudflowConnectionAwsConfigAllOf1Permissions `json:"permissions,omitempty"`
+		RoleName                              *string                                        `json:"roleName,omitempty"`
+		ScopeExcludedAccountIds               *[]string                                      `json:"scopeExcludedAccountIds,omitempty"`
+		ScopeExplicitAccountIds               *[]string                                      `json:"scopeExplicitAccountIds,omitempty"`
+		ScopeManagementAccountExplicitInScope *bool                                          `json:"scopeManagementAccountExplicitInScope,omitempty"`
+		ScopeTargetedOrganizationalUnitIds    *[]string                                      `json:"scopeTargetedOrganizationalUnitIds,omitempty"`
+	} `json:"awsConfig,omitempty"`
+	Collaborators *[]CloudflowCollaborator `json:"collaborators,omitempty"`
+
+	// ConnectionId Unique identifier for the connection.
+	ConnectionId *string    `json:"connectionId,omitempty"`
+	CreatedAt    *time.Time `json:"createdAt,omitempty"`
+	Description  *string    `json:"description,omitempty"`
+
+	// Enabled false when the connection is disabled.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// GcpConfig GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+	GcpConfig *struct {
+		CustomRole *CloudflowGCPConfigRequestCustomRole `json:"customRole,omitempty"`
+
+		// DeploymentCommand Generated deployment command.
+		DeploymentCommand          *string                            `json:"deploymentCommand,omitempty"`
+		FolderId                   *string                            `json:"folderId,omitempty"`
+		InfraManagerLocation       *string                            `json:"infraManagerLocation,omitempty"`
+		InfraManagerProject        *string                            `json:"infraManagerProject,omitempty"`
+		InfraManagerServiceAccount *string                            `json:"infraManagerServiceAccount,omitempty"`
+		Level                      *CloudflowConnectionGcpConfigLevel `json:"level,omitempty"`
+		OrganizationId             *string                            `json:"organizationId,omitempty"`
+		PredefinedRoles            *[]string                          `json:"predefinedRoles,omitempty"`
+		ProjectId                  *string                            `json:"projectId,omitempty"`
+		ServiceAccountName         *string                            `json:"serviceAccountName,omitempty"`
+
+		// Status Server-managed GCP config status.
+		Status *string `json:"status,omitempty"`
+	} `json:"gcpConfig,omitempty"`
+	Name *string `json:"name,omitempty"`
+
+	// Status Overall connection status.
+	Status    *string    `json:"status,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+}
+
+// CloudflowConnectionGcpConfigLevel defines model for CloudflowConnection.GcpConfig.Level.
+type CloudflowConnectionGcpConfigLevel string
+
+// CloudflowConnectionAwsConfigAllOf1ContextItem defines model for CloudflowConnectionAwsConfigAllOf1ContextItem.
+type CloudflowConnectionAwsConfigAllOf1ContextItem struct {
+	AccountId *string   `json:"accountId,omitempty"`
+	Regions   *[]string `json:"regions,omitempty"`
+
+	// Status Server-managed per-account deployment status.
+	Status *string `json:"status,omitempty"`
+}
+
+// CloudflowConnectionAwsConfigAllOf1Permissions Response extends request schema with server-assigned action identifiers.
+type CloudflowConnectionAwsConfigAllOf1Permissions struct {
+	Actions *[]CloudflowConnectionAwsConfigAllOf1PermissionsActionsItem `json:"actions,omitempty"`
+}
+
+// CloudflowConnectionAwsConfigAllOf1PermissionsActionsItem defines model for CloudflowConnectionAwsConfigAllOf1PermissionsActionsItem.
+type CloudflowConnectionAwsConfigAllOf1PermissionsActionsItem struct {
+	// Id Server-returned row identifier. Not used for permission evaluation.
+	Id *string `json:"id,omitempty"`
+
+	// Value IAM action, for example `s3:ListBucket`.
+	Value *string `json:"value,omitempty"`
+}
+
+// CloudflowGCPConfigRequest GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+type CloudflowGCPConfigRequest struct {
+	CustomRole                 *CloudflowGCPConfigRequestCustomRole `json:"customRole,omitempty"`
+	FolderId                   *string                              `json:"folderId,omitempty"`
+	InfraManagerLocation       *string                              `json:"infraManagerLocation,omitempty"`
+	InfraManagerProject        *string                              `json:"infraManagerProject,omitempty"`
+	InfraManagerServiceAccount *string                              `json:"infraManagerServiceAccount,omitempty"`
+	Level                      *CloudflowGCPConfigRequestLevel      `json:"level,omitempty"`
+	OrganizationId             *string                              `json:"organizationId,omitempty"`
+	PredefinedRoles            *[]string                            `json:"predefinedRoles,omitempty"`
+	ProjectId                  *string                              `json:"projectId,omitempty"`
+	ServiceAccountName         *string                              `json:"serviceAccountName,omitempty"`
+}
+
+// CloudflowGCPConfigRequestLevel defines model for CloudflowGCPConfigRequest.Level.
+type CloudflowGCPConfigRequestLevel string
+
+// CloudflowGCPConfigRequestCustomRole defines model for CloudflowGCPConfigRequestCustomRole.
+type CloudflowGCPConfigRequestCustomRole struct {
+	Permissions *[]string `json:"permissions,omitempty"`
+	RoleId      *string   `json:"roleId,omitempty"`
+}
+
 // Collaborator A user or identity that has access to a resource.
 type Collaborator struct {
 	Email *string           `json:"email,omitempty"`
@@ -8522,6 +8731,25 @@ type CreateAnnotationRequest struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// CreateCloudflowConnectionRequestBody defines model for CreateCloudflowConnectionRequestBody.
+type CreateCloudflowConnectionRequestBody struct {
+	// AwsConfig AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+	AwsConfig     *CloudflowAWSConfigRequest `json:"awsConfig,omitempty"`
+	Collaborators *[]CloudflowCollaborator   `json:"collaborators,omitempty"`
+
+	// Description Optional description.
+	Description *string `json:"description,omitempty"`
+
+	// Enabled When false, the connection is created in a disabled state.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// GcpConfig GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+	GcpConfig *CloudflowGCPConfigRequest `json:"gcpConfig,omitempty"`
+
+	// Name Human-readable connection name.
+	Name string `json:"name"`
+}
+
 // CreateCustomThemeRequest Request body for creating a custom theme.
 type CreateCustomThemeRequest struct {
 	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
@@ -8846,6 +9074,14 @@ type CustomerUpdate struct {
 
 	// UrlSlug The customer's URL display name. An explicit empty string removes the active slug; a non-empty value must be 3-12 characters of lowercase letters, digits, or dashes, starting and ending with a letter or digit, and must be unique across all customers.
 	UrlSlug *string `json:"urlSlug,omitempty"`
+}
+
+// DeleteCloudflowConnection409Response defines model for DeleteCloudflowConnection409Response.
+type DeleteCloudflowConnection409Response struct {
+	Code   *string `json:"code,omitempty"`
+	Status *int    `json:"status,omitempty"`
+	Title  *string `json:"title,omitempty"`
+	Type   *string `json:"type,omitempty"`
 }
 
 // DeleteDatahubDataset200Response defines model for DeleteDatahubDataset200Response.
@@ -11940,6 +12176,21 @@ type UpdateAwsFeatureRequestBody struct {
 	S3BucketRegion *string `json:"s3BucketRegion,omitempty"`
 }
 
+// UpdateCloudflowConnectionRequestBody defines model for UpdateCloudflowConnectionRequestBody.
+type UpdateCloudflowConnectionRequestBody struct {
+	// AwsConfig AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+	AwsConfig     *CloudflowAWSConfigRequest `json:"awsConfig,omitempty"`
+	Collaborators *[]CloudflowCollaborator   `json:"collaborators,omitempty"`
+	Description   *string                    `json:"description,omitempty"`
+
+	// Enabled Set to false to disable the connection, true to re-enable it.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// GcpConfig GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+	GcpConfig *CloudflowGCPConfigRequest `json:"gcpConfig,omitempty"`
+	Name      *string                    `json:"name,omitempty"`
+}
+
 // UpdateCustomThemeRequest Request body for updating a custom theme. Only provided fields are modified.
 type UpdateCustomThemeRequest struct {
 	// Colors Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
@@ -13744,6 +13995,12 @@ type SearchCloudDiagramsJSONRequestBody = CloudDiagramsSearchRequest
 // GetStatussheetComponentsJSONRequestBody defines body for GetStatussheetComponents for application/json ContentType.
 type GetStatussheetComponentsJSONRequestBody = CloudDiagramStatussheetGetRequest
 
+// CreateCloudflowConnectionJSONRequestBody defines body for CreateCloudflowConnection for application/json ContentType.
+type CreateCloudflowConnectionJSONRequestBody = CreateCloudflowConnectionRequestBody
+
+// UpdateCloudflowConnectionJSONRequestBody defines body for UpdateCloudflowConnection for application/json ContentType.
+type UpdateCloudflowConnectionJSONRequestBody = UpdateCloudflowConnectionRequestBody
+
 // CreateAccountRoleJSONRequestBody defines body for CreateAccountRole for application/json ContentType.
 type CreateAccountRoleJSONRequestBody = CreateAccountRoleRequestBody
 
@@ -15177,6 +15434,60 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /clouddiagrams/v1/statussheet/{id}/snapshots (the `ListCloudDiagramLayerSnapshots` operationId).
 	ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCloudflowConnectionWithBody Create a connection
+	//
+	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+	// Returns `400 invalid_connection_config` when both or neither are present.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+	CreateCloudflowConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCloudflowConnection Create a connection
+	//
+	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+	// Returns `400 invalid_connection_config` when both or neither are present.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+	CreateCloudflowConnection(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteCloudflowConnection Delete a connection
+	//
+	// Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
+	//
+	// Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
+	DeleteCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCloudflowConnection Retrieve a connection
+	//
+	// Returns a single connection by ID.
+	//
+	// Corresponds with GET /cloudflow/v1/connections/{connectionId} (the `GetCloudflowConnection` operationId).
+	GetCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCloudflowConnectionWithBody Update a connection
+	//
+	// Partially updates a connection. All fields are optional.
+	// At most one of `gcpConfig` or `awsConfig` may be set per request.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+	UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCloudflowConnection Update a connection
+	//
+	// Partially updates a connection. All fields are optional.
+	// At most one of `gcpConfig` or `awsConfig` may be set per request.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+	UpdateCloudflowConnection(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateAccountRoleWithBody Create or update an AWS account role
 	//
@@ -18118,6 +18429,120 @@ func (c *Client) GetCloudDiagramLayerSnapshot(ctx context.Context, id string, pa
 // Corresponds with GET /clouddiagrams/v1/statussheet/{id}/snapshots (the `ListCloudDiagramLayerSnapshots` operationId).
 func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListCloudDiagramLayerSnapshotsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCloudflowConnectionWithBody Create a connection
+//
+// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+// Returns `400 invalid_connection_config` when both or neither are present.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+func (c *Client) CreateCloudflowConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCloudflowConnectionRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCloudflowConnection Create a connection
+//
+// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+// Returns `400 invalid_connection_config` when both or neither are present.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+func (c *Client) CreateCloudflowConnection(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCloudflowConnectionRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteCloudflowConnection Delete a connection
+//
+// Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
+//
+// Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
+func (c *Client) DeleteCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCloudflowConnectionRequest(c.Server, connectionId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCloudflowConnection Retrieve a connection
+//
+// Returns a single connection by ID.
+//
+// Corresponds with GET /cloudflow/v1/connections/{connectionId} (the `GetCloudflowConnection` operationId).
+func (c *Client) GetCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCloudflowConnectionRequest(c.Server, connectionId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCloudflowConnectionWithBody Update a connection
+//
+// Partially updates a connection. All fields are optional.
+// At most one of `gcpConfig` or `awsConfig` may be set per request.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+func (c *Client) UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCloudflowConnectionRequestWithBody(c.Server, connectionId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCloudflowConnection Update a connection
+//
+// Partially updates a connection. All fields are optional.
+// At most one of `gcpConfig` or `awsConfig` may be set per request.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+func (c *Client) UpdateCloudflowConnection(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCloudflowConnectionRequest(c.Server, connectionId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -24465,6 +24890,161 @@ func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *
 	return req, nil
 }
 
+// NewCreateCloudflowConnectionRequest calls the generic CreateCloudflowConnection builder with application/json body
+func NewCreateCloudflowConnectionRequest(server string, body CreateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateCloudflowConnectionRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateCloudflowConnectionRequestWithBody constructs an http.Request for the CreateCloudflowConnection method, with any body, and a specified content type
+func NewCreateCloudflowConnectionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteCloudflowConnectionRequest constructs an http.Request for the DeleteCloudflowConnection method
+func NewDeleteCloudflowConnectionRequest(server string, connectionId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "connectionId", connectionId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCloudflowConnectionRequest constructs an http.Request for the GetCloudflowConnection method
+func NewGetCloudflowConnectionRequest(server string, connectionId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "connectionId", connectionId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateCloudflowConnectionRequest calls the generic UpdateCloudflowConnection builder with application/json body
+func NewUpdateCloudflowConnectionRequest(server string, connectionId string, body UpdateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCloudflowConnectionRequestWithBody(server, connectionId, "application/json", bodyReader)
+}
+
+// NewUpdateCloudflowConnectionRequestWithBody constructs an http.Request for the UpdateCloudflowConnection method, with any body, and a specified content type
+func NewUpdateCloudflowConnectionRequestWithBody(server string, connectionId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "connectionId", connectionId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/cloudflow/v1/connections/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewCreateAccountRoleRequest calls the generic CreateAccountRole builder with application/json body
 func NewCreateAccountRoleRequest(server string, body CreateAccountRoleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -29376,6 +29956,64 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /clouddiagrams/v1/statussheet/{id}/snapshots (the `ListCloudDiagramLayerSnapshots` operationId).
 	ListCloudDiagramLayerSnapshotsWithResponse(ctx context.Context, id string, params *ListCloudDiagramLayerSnapshotsParams, reqEditors ...RequestEditorFn) (*ListCloudDiagramLayerSnapshotsResp, error)
+
+	// CreateCloudflowConnectionWithBodyWithResponse Create a connection
+	//
+	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+	// Returns `400 invalid_connection_config` when both or neither are present.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+	CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
+
+	// CreateCloudflowConnectionWithResponse Create a connection
+	//
+	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+	// Returns `400 invalid_connection_config` when both or neither are present.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+	CreateCloudflowConnectionWithResponse(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
+
+	// DeleteCloudflowConnectionWithResponse Delete a connection
+	//
+	// Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
+	DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error)
+
+	// GetCloudflowConnectionWithResponse Retrieve a connection
+	//
+	// Returns a single connection by ID.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /cloudflow/v1/connections/{connectionId} (the `GetCloudflowConnection` operationId).
+	GetCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*GetCloudflowConnectionResp, error)
+
+	// UpdateCloudflowConnectionWithBodyWithResponse Update a connection
+	//
+	// Partially updates a connection. All fields are optional.
+	// At most one of `gcpConfig` or `awsConfig` may be set per request.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+	UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
+
+	// UpdateCloudflowConnectionWithResponse Update a connection
+	//
+	// Partially updates a connection. All fields are optional.
+	// At most one of `gcpConfig` or `awsConfig` may be set per request.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+	UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
 
 	// CreateAccountRoleWithBodyWithResponse Create or update an AWS account role
 	//
@@ -36297,6 +36935,303 @@ func (r ListCloudDiagramLayerSnapshotsResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListCloudDiagramLayerSnapshotsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type CreateCloudflowConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *CloudflowConnection
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateCloudflowConnectionResp) GetJSON201() *CloudflowConnection {
+	return r.JSON201
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r CreateCloudflowConnectionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CreateCloudflowConnectionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CreateCloudflowConnectionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r CreateCloudflowConnectionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateCloudflowConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateCloudflowConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateCloudflowConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateCloudflowConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteCloudflowConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON409 the response for an HTTP 409 `application/json` response
+	JSON409 *DeleteCloudflowConnection409Response
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r DeleteCloudflowConnectionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DeleteCloudflowConnectionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r DeleteCloudflowConnectionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r DeleteCloudflowConnectionResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON409 returns the response for an HTTP 409 `application/json` response
+func (r DeleteCloudflowConnectionResp) GetJSON409() *DeleteCloudflowConnection409Response {
+	return r.JSON409
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r DeleteCloudflowConnectionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteCloudflowConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteCloudflowConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteCloudflowConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteCloudflowConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetCloudflowConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CloudflowConnection
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCloudflowConnectionResp) GetJSON200() *CloudflowConnection {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetCloudflowConnectionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetCloudflowConnectionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetCloudflowConnectionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetCloudflowConnectionResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetCloudflowConnectionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCloudflowConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCloudflowConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCloudflowConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCloudflowConnectionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type UpdateCloudflowConnectionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CloudflowConnection
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateCloudflowConnectionResp) GetJSON200() *CloudflowConnection {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r UpdateCloudflowConnectionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateCloudflowConnectionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r UpdateCloudflowConnectionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r UpdateCloudflowConnectionResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r UpdateCloudflowConnectionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateCloudflowConnectionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCloudflowConnectionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCloudflowConnectionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateCloudflowConnectionResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -44551,6 +45486,100 @@ func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx con
 	return ParseListCloudDiagramLayerSnapshotsResp(rsp)
 }
 
+// CreateCloudflowConnectionWithBodyWithResponse Create a connection
+//
+// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+// Returns `400 invalid_connection_config` when both or neither are present.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+func (c *ClientWithResponses) CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
+	rsp, err := c.CreateCloudflowConnectionWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCloudflowConnectionResp(rsp)
+}
+
+// CreateCloudflowConnectionWithResponse Create a connection
+//
+// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+// Returns `400 invalid_connection_config` when both or neither are present.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
+func (c *ClientWithResponses) CreateCloudflowConnectionWithResponse(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
+	rsp, err := c.CreateCloudflowConnection(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCloudflowConnectionResp(rsp)
+}
+
+// DeleteCloudflowConnectionWithResponse Delete a connection
+//
+// Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
+func (c *ClientWithResponses) DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error) {
+	rsp, err := c.DeleteCloudflowConnection(ctx, connectionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteCloudflowConnectionResp(rsp)
+}
+
+// GetCloudflowConnectionWithResponse Retrieve a connection
+//
+// Returns a single connection by ID.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /cloudflow/v1/connections/{connectionId} (the `GetCloudflowConnection` operationId).
+func (c *ClientWithResponses) GetCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*GetCloudflowConnectionResp, error) {
+	rsp, err := c.GetCloudflowConnection(ctx, connectionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCloudflowConnectionResp(rsp)
+}
+
+// UpdateCloudflowConnectionWithBodyWithResponse Update a connection
+//
+// Partially updates a connection. All fields are optional.
+// At most one of `gcpConfig` or `awsConfig` may be set per request.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+func (c *ClientWithResponses) UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
+	rsp, err := c.UpdateCloudflowConnectionWithBody(ctx, connectionId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCloudflowConnectionResp(rsp)
+}
+
+// UpdateCloudflowConnectionWithResponse Update a connection
+//
+// Partially updates a connection. All fields are optional.
+// At most one of `gcpConfig` or `awsConfig` may be set per request.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
+func (c *ClientWithResponses) UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
+	rsp, err := c.UpdateCloudflowConnection(ctx, connectionId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCloudflowConnectionResp(rsp)
+}
+
 // CreateAccountRoleWithBodyWithResponse Create or update an AWS account role
 //
 // Creates or updates a CloudConnect document for an AWS account.
@@ -51194,6 +52223,246 @@ func ParseListCloudDiagramLayerSnapshotsResp(rsp *http.Response) (*ListCloudDiag
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateCloudflowConnectionResp parses an HTTP response from a CreateCloudflowConnectionWithResponse call
+func ParseCreateCloudflowConnectionResp(rsp *http.Response) (*CreateCloudflowConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateCloudflowConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CloudflowConnection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteCloudflowConnectionResp parses an HTTP response from a DeleteCloudflowConnectionWithResponse call
+func ParseDeleteCloudflowConnectionResp(rsp *http.Response) (*DeleteCloudflowConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteCloudflowConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest DeleteCloudflowConnection409Response
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetCloudflowConnectionResp parses an HTTP response from a GetCloudflowConnectionWithResponse call
+func ParseGetCloudflowConnectionResp(rsp *http.Response) (*GetCloudflowConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCloudflowConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudflowConnection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCloudflowConnectionResp parses an HTTP response from a UpdateCloudflowConnectionWithResponse call
+func ParseUpdateCloudflowConnectionResp(rsp *http.Response) (*UpdateCloudflowConnectionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCloudflowConnectionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CloudflowConnection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
 
 	}
 

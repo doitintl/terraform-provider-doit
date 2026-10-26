@@ -1763,6 +1763,350 @@
 			}
 		},
 		{
+			"name": "cloudflow_connection",
+			"schema": {
+				"attributes": [
+					{
+						"name": "aws_config",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "context",
+									"list_nested": {
+										"computed_optional_required": "computed_optional",
+										"nested_object": {
+											"attributes": [
+												{
+													"name": "account_id",
+													"string": {
+														"computed_optional_required": "computed_optional"
+													}
+												},
+												{
+													"name": "regions",
+													"list": {
+														"computed_optional_required": "computed_optional",
+														"element_type": {
+															"string": {}
+														}
+													}
+												},
+												{
+													"name": "status",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Server-managed per-account deployment status."
+													}
+												}
+											]
+										}
+									}
+								},
+								{
+									"name": "management_account",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "organization_root_id",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "permissions",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "actions",
+												"list_nested": {
+													"computed_optional_required": "computed_optional",
+													"nested_object": {
+														"attributes": [
+															{
+																"name": "value",
+																"string": {
+																	"computed_optional_required": "required",
+																	"description": "IAM action, for example `s3:ListBucket`."
+																}
+															},
+															{
+																"name": "id",
+																"string": {
+																	"computed_optional_required": "computed",
+																	"description": "Server-returned row identifier. Not used for permission evaluation."
+																}
+															}
+														]
+													},
+													"description": "Custom IAM actions."
+												}
+											},
+											{
+												"name": "aws_managed_policies",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "AWS-managed policy ARNs attached to the role."
+												}
+											}
+										],
+										"description": "IAM permissions granted to the CloudFlow role."
+									}
+								},
+								{
+									"name": "role_name",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "scope_excluded_account_ids",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										}
+									}
+								},
+								{
+									"name": "scope_explicit_account_ids",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										}
+									}
+								},
+								{
+									"name": "scope_management_account_explicit_in_scope",
+									"bool": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "scope_targeted_organizational_unit_ids",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										}
+									}
+								}
+							],
+							"description": "AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded."
+						}
+					},
+					{
+						"name": "collaborators",
+						"list_nested": {
+							"computed_optional_required": "computed_optional",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "email",
+										"string": {
+											"computed_optional_required": "computed_optional"
+										}
+									},
+									{
+										"name": "role",
+										"string": {
+											"computed_optional_required": "computed_optional",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"owner\",\n\"editor\",\n\"user\",\n)"
+													}
+												}
+											]
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"name": "description",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Optional description."
+						}
+					},
+					{
+						"name": "enabled",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": true
+							},
+							"description": "When false, the connection is created in a disabled state."
+						}
+					},
+					{
+						"name": "gcp_config",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "custom_role",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "permissions",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													}
+												}
+											},
+											{
+												"name": "role_id",
+												"string": {
+													"computed_optional_required": "computed_optional"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "folder_id",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "infra_manager_location",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "infra_manager_project",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "infra_manager_service_account",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "level",
+									"string": {
+										"computed_optional_required": "computed_optional",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+														}
+													],
+													"schema_definition": "stringvalidator.OneOf(\n\"organization\",\n\"folder\",\n\"project\",\n)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "organization_id",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "predefined_roles",
+									"list": {
+										"computed_optional_required": "computed_optional",
+										"element_type": {
+											"string": {}
+										}
+									}
+								},
+								{
+									"name": "project_id",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "service_account_name",
+									"string": {
+										"computed_optional_required": "computed_optional"
+									}
+								},
+								{
+									"name": "deployment_command",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Generated deployment command."
+									}
+								},
+								{
+									"name": "status",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "Server-managed GCP config status."
+									}
+								}
+							],
+							"description": "GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Human-readable connection name."
+						}
+					},
+					{
+						"name": "connection_id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Unique identifier for the connection."
+						}
+					},
+					{
+						"name": "created_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					},
+					{
+						"name": "status",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Overall connection status."
+						}
+					},
+					{
+						"name": "updated_at",
+						"string": {
+							"computed_optional_required": "computed"
+						}
+					}
+				],
+				"description": "Manage cloud provider connections used in CloudFlow workflows (AWS and GCP).",
+				"markdown_description": "Manage cloud provider connections used in CloudFlow workflows (AWS and GCP)."
+			}
+		},
+		{
 			"name": "custom_theme",
 			"schema": {
 				"attributes": [
