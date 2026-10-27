@@ -2,12 +2,15 @@ package provider_test
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"sync"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 // TestAccInvoicesDataSource_MaxResultsOnly tests that setting max_results limits results.
@@ -152,6 +155,145 @@ func testAccInvoicesDataSourceConfig() string {
 data "doit_invoices" "test" {
 }
 `
+}
+
+// TestAccInvoicesDataSource_FilterCanceled tests that filtering by status:CANCELED
+// returns only canceled invoices, including the known canceled test invoice.
+func TestAccInvoicesDataSource_FilterCanceled(t *testing.T) {
+	invoiceID := os.Getenv("TEST_INVOICE_ID_CANCELED")
+	if invoiceID == "" {
+		t.Skip("TEST_INVOICE_ID_CANCELED environment variable not set")
+	}
+
+	config := testAccInvoicesDataSourceFilterConfig("status:CANCELED")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testCheckInvoicesAll("data.doit_invoices.filtered", func(id, status string) error {
+						if status != "CANCELED" {
+							return fmt.Errorf("invoice %s has status %q, expected CANCELED", id, status)
+						}
+						return nil
+					}),
+					testCheckInvoicesContain("data.doit_invoices.filtered", invoiceID, true),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccInvoicesDataSource_DefaultExcludesCanceled tests that canceled invoices
+// are only returned when explicitly requested via the status filter.
+func TestAccInvoicesDataSource_DefaultExcludesCanceled(t *testing.T) {
+	invoiceID := os.Getenv("TEST_INVOICE_ID_CANCELED")
+	if invoiceID == "" {
+		t.Skip("TEST_INVOICE_ID_CANCELED environment variable not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccInvoicesDataSourceConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testCheckInvoicesAll("data.doit_invoices.test", func(id, status string) error {
+						if status == "CANCELED" {
+							return fmt.Errorf("invoice %s is CANCELED but was returned without a status filter", id)
+						}
+						return nil
+					}),
+					testCheckInvoicesContain("data.doit_invoices.test", invoiceID, false),
+				),
+			},
+			// Drift verification: re-apply the same config should produce an empty plan
+			{
+				Config: testAccInvoicesDataSourceConfig(),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccInvoicesDataSourceFilterConfig(filter string) string {
+	return fmt.Sprintf(`
+data "doit_invoices" "filtered" {
+  filter = %q
+}
+`, filter)
+}
+
+// testCheckInvoicesAll runs check against the id and status of every invoice
+// in the data source and fails if the list is empty.
+func testCheckInvoicesAll(name string, check func(id, status string) error) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		attrs, err := invoicesAttrs(s, name)
+		if err != nil {
+			return err
+		}
+		n, _ := strconv.Atoi(attrs["invoices.#"])
+		if n == 0 {
+			return fmt.Errorf("%s returned no invoices", name)
+		}
+		for i := range n {
+			id := attrs[fmt.Sprintf("invoices.%d.id", i)]
+			status := attrs[fmt.Sprintf("invoices.%d.status", i)]
+			if err := check(id, status); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+// testCheckInvoicesContain checks whether the invoice list includes invoiceID.
+func testCheckInvoicesContain(name, invoiceID string, want bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		attrs, err := invoicesAttrs(s, name)
+		if err != nil {
+			return err
+		}
+		n, _ := strconv.Atoi(attrs["invoices.#"])
+		found := false
+		for i := range n {
+			if attrs[fmt.Sprintf("invoices.%d.id", i)] == invoiceID {
+				found = true
+				break
+			}
+		}
+		if found != want {
+			return fmt.Errorf("%s: invoice %s present = %t, expected %t", name, invoiceID, found, want)
+		}
+		return nil
+	}
+}
+
+func invoicesAttrs(s *terraform.State, name string) (map[string]string, error) {
+	rs, ok := s.RootModule().Resources[name]
+	if !ok {
+		return nil, fmt.Errorf("resource not found: %s", name)
+	}
+	return rs.Primary.Attributes, nil
 }
 
 // Helper functions

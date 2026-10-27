@@ -248,6 +248,7 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `TEST_SLACK_WORKSPACE_CHAN`            | Slack workspace channel ID for notification tests            |
 | `TEST_ATTRIBUTION_GROUP`               | Attribution group ID for report tests                        |
 | `TEST_INVOICE_ID`                      | Invoice ID for invoice data source tests                     |
+| `TEST_INVOICE_ID_CANCELED`             | Canceled invoice ID (with PDF) for invoice data source tests |
 | `TEST_ANOMALY_ID`                      | Anomaly ID for anomaly data source tests                     |
 | `TEST_CLOUD_INCIDENT_ID`               | Cloud incident ID for cloud incident data source tests       |
 | `TEST_COMMITMENT_ID`                   | Commitment ID for commitment data source tests               |

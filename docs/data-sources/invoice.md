@@ -59,7 +59,7 @@ output "invoice_url" {
 - `invoice_date` (Number) The time when this invoice was issued, in milliseconds since the epoch.
 - `line_items` (Attributes List) Invoice line items. (see [below for nested schema](#nestedatt--line_items))
 - `platform` (String) Platform identifier for invoice source.
-- `status` (String) Status of the invoice
+- `status` (String) Status of the invoice. `CANCELED` takes precedence over the payment status.
 - `total_amount` (Number) Total invoiced amount
 - `url` (String) Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
 

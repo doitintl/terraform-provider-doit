@@ -11713,7 +11713,7 @@
 						"name": "status",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Status of the invoice"
+							"description": "Status of the invoice. `CANCELED` takes precedence over the payment status."
 						}
 					},
 					{
@@ -11780,7 +11780,7 @@
 						"name": "filter",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "An expression for filtering the results. The syntax is `key:[\u003cvalue\u003e]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters)."
+							"description": "Supported keys: platform (an invoice platform), dueDate (milliseconds since the POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value is applied per request. Cancelled invoices and credit memos are returned only with status:CANCELED, and every other request excludes them."
 						}
 					},
 					{
@@ -11849,7 +11849,7 @@
 										"name": "status",
 										"string": {
 											"computed_optional_required": "computed",
-											"description": "Status of the invoice"
+											"description": "Status of the invoice. `CANCELED` takes precedence over the payment status."
 										}
 									},
 									{
