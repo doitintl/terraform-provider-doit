@@ -269,7 +269,12 @@ So `format: set` is an implementation decision for the provider team, not a free
 - [ ] Is delete idempotent (204 or 404 for an already-deleted resource)?
 - [ ] Are error messages useful for debugging? The client surfaces the raw body of every non-retried error.
 - [ ] `ETag` / `If-Match`: the provider sends the `etag` from state on update and delete. On a 412, a delete refetches the current ETag and retries once; other callers report the 412. Required and optional `If-Match` both work for the provider. Making it required later is a breaking change for other clients, so new contracts should decide now.
-- [ ] `Idempotency-Key`: the provider sends one per apply operation and reuses it on retries. `dryRun` is not used by the provider.
+- [ ] `Idempotency-Key`: the provider mints a key per request. Keys are not kept in state, so re-running `terraform apply` uses new ones.
+  - **Transport retries reuse the key.** `DCIRetryClient.Do` resends the same request, body and headers, on 429 and 502/503/504.
+  - **A request the provider changes gets a new key.** For example, the delete retried after a 412 with a refreshed `If-Match` (`user_notification_resource.go`, `service_account_resource.go`).
+  - **Async report submits replay theirs.** After a timed-out submit, the provider resends with the same key to recover a run the server may already have created (`async_report.go`).
+
+  So the API must return the original response for a replayed key and its original body (§10), and accept a fresh key on a changed request. `dryRun` is not used by the provider.
 - [ ] Retries (`DCIRetryClient.Do`):
   - 429 is retried, honouring `Retry-After` when it parses, otherwise with exponential backoff.
   - 502/503/504 are retried with exponential backoff only; their `Retry-After` is not read, so the API cannot count on it.
