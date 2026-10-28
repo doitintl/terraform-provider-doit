@@ -75,8 +75,8 @@ If the spec for the endpoint is present, run the full code generation pipeline *
 # 1. Add the endpoint to datasources.yml or resources.yml
 # 2. Run the generator
 make generate
-# 3. Inspect the generated output, and the generator log: a resource the
-#    generator cannot map is skipped with a warning, not a failed build
+# 3. Inspect the generated output, and the generator log: mapping failures
+#    are warnings, not a failed build (see Step 4)
 ls internal/provider/datasource_<name>/  # or resource_<name>/
 cat internal/provider/datasource_<name>/*_gen.go
 ```
@@ -93,7 +93,10 @@ cat internal/provider/datasource_<name>/*_gen.go
 
 ```bash
 git checkout -- OpenAPI/ internal/provider/
-rm -rf internal/provider/datasource_<name>/ internal/provider/resource_<name>/  # new, untracked
+# Remove what the run added. git clean only touches untracked files, so the
+# tracked schemas of an existing resource or data source stay. Review first:
+git clean -n -- internal/provider/
+git clean -fd -- internal/provider/datasource_<name>/ internal/provider/resource_<name>/
 ```
 
 ## Step 2: Reserved and Invalid Attribute Names
@@ -156,21 +159,31 @@ The generator turns every `path` and `query` parameter of the **read** operation
 
 ## Step 4: Schema Composition and Types
 
-The generator maps only a narrow set of composition, and it fails per resource. If one property cannot be mapped, the **whole resource or data source is skipped** with a warning. Check the generator log, not just the build.
+The generator maps only a narrow set of composition. One property it cannot map fails the whole request or response body that contains it (`oas/attribute.go`). What happens next depends on which body that is (`resource_mapper.go`, `datasource_mapper.go`):
 
-| Pattern | Verdict |
-|---------|---------|
-| `oneOf`/`anyOf` other than `[<schema>, {type: "null"}]` | **BLOCKER** — `found N oneOf subschema(s), schema composition is currently not supported`. This includes validation-only `anyOf` whose branches only add `required` or `minItems`. Ask for a `kind` enum with flat fields, and for cross-field rules in the description enforced with 422 (standards §13.10). |
-| `discriminator` | **BLOCKER** — not supported. Same alternative. |
-| `type: [A, B]` with two non-null types | **BLOCKER** — a type union. |
-| `allOf` member or property schema without `type` (a Money narrowed with `currency: {const: USD}`) | **BLOCKER** — `no 'type' array or supported allOf, oneOf, anyOf constraint`. Ask for a dedicated typed schema. |
-| Two `allOf` members defining the same property | Finding — preprocessing keeps the last definition. |
-| `if`/`then`/`else`, `not`, `dependentRequired` | Finding — the 3.0.1 projection cannot carry them. Ask for the rule in prose plus 422. |
-| `type: object` without `properties`, or `additionalProperties: true` | Finding — becomes a JSON-string attribute with no validation and no useful diff. Typed maps (`additionalProperties: <schema>`) are fine. |
-| A field that only admits `null` (a placeholder for a future shape) | Finding — it has no Terraform type, and giving it one later breaks configs and state. Ask for it to be left out until it has a shape; adding an optional field later is not breaking for the provider. |
-| Constraints on array items (`items: {minimum: …}`) | Note — the generator drops them, so only the server enforces them. |
-| `number` without `format: double`/`float` | Note — maps to a big-float Number with no validators. |
-| Secret string without `format: password` | Finding — `format: password` is what marks the attribute sensitive. `writeOnly` and `x-terraform-*` are not read by the generator. |
+- **The resource's create request body, or the data source's read response:** the resource or data source is **skipped**, with a warning.
+- **The resource's update request, create response or read response:** that body is dropped, with a warning. The resource is still generated, just without every attribute that body contributed.
+
+So an emitted resource does not prove the contract mapped. Compare the generated attributes with the spec, and read the generator log, not just the build result.
+
+Some rows below are generator failures. Others are standards policy (DoiT API Design Standards §13.10) that the generator would tolerate. Keep the two apart in findings, and name which one applies.
+
+| Pattern | Generator | Verdict |
+|---------|-----------|---------|
+| `oneOf`/`anyOf` with more than two branches, or two non-null branches other than string-plus-primitive. This includes validation-only `anyOf` whose branches only add `required` or `minItems`. | Fails. With N ≠ 2: `found N oneOf subschema(s), schema composition is currently not supported`. With two branches: the multi-type error, or `no 'type' array …` for branches without a type. | **BLOCKER.** Ask for a `kind` enum with flat fields, with cross-field rules stated in the description and enforced with 422. |
+| `oneOf`/`anyOf` of `string` plus `integer`/`number`/`boolean`, or `type: [string, integer]` and similar | Maps to a **string** attribute (`getMultiTypeSchema`, `retrieveType`). | Finding. The standards call it a type union ("No"). The provider must also convert the API's number or boolean to and from a string, and the read has to return a form that compares equal (`1` vs `"1"` vs `1.0`). |
+| Other `type` lists with two non-null types | Fails: the multi-type error. | **BLOCKER.** |
+| `discriminator` | Ignored; the keyword is never read. The `oneOf` it accompanies is what fails (first row). | Report the `oneOf`. The standards rule out discriminated `oneOf`. A `discriminator` on an otherwise flat schema is only a note. |
+| A property that is still untyped after `allOf` flattening, e.g. `allOf: [Money, {properties: {currency: {const: USD}}}]` | Fails with `no 'type' array or supported allOf, oneOf, anyOf constraint`. On a conflict, preprocessing (`flattenAllOf`) keeps the later member's definition of the property whole, so `{const: USD}` replaces `{type: string}`. | **BLOCKER.** Ask for a dedicated typed schema, e.g. `WholeDollarUsdMoney`. |
+| An `allOf` member without its own `type` (`{required: [amount]}`, `{description: …}`) | Fine. Flattening gives the merged schema the members' common type, or `object`. | Not a finding on its own. |
+| Two `allOf` members defining the same property | Keeps the later definition whole (no deep merge) and logs a warning. | Finding. The earlier member's type and constraints for that property are lost. |
+| `if`/`then`/`else`, `not`, `dependentRequired` | Not carried into the 3.0.1 projection. | Finding. Ask for the rule in prose, enforced with 422. |
+| `type: object` without `properties`, or `additionalProperties: true` without `properties` | Becomes a `jsontypes.Normalized` attribute: practitioners write raw JSON, which is syntax-checked and compared semantically, but nothing about its contents is typed or validated. | Finding. Ask whether the shape is really open. Typed maps (`additionalProperties: <schema>`) become map attributes and are fine. |
+| `additionalProperties: true` next to named `properties` | The named properties become nested attributes. Extra keys are not represented, so the provider can neither set nor keep them. | Note. Ask whether the extra keys matter to users. |
+| A field that only admits `null` (a placeholder for a future shape) | Has no Terraform type. | Finding. Giving it a type later breaks configs and state. Ask for it to be left out until it has a shape; adding an optional field later is not breaking for the provider. |
+| Constraints on array items (`items: {minimum: …}`) | Dropped. | Note. Only the server enforces them. |
+| `number` without `format: double`/`float` | Maps to a big-float Number with no validators. | Note. |
+| Secret string without `format: password` | `format: password` is what marks the attribute sensitive. `writeOnly` and `x-terraform-*` are not read. | Finding. |
 
 ## Step 5: CRUD Operation Support
 
@@ -178,7 +191,7 @@ For a **resource** built on a new contract, the API must support all CRUD operat
 
 | Operation | Required HTTP Method | Check |
 |-----------|---------------------|-------|
-| Create | `POST` on the collection | Has a JSON request body (without one the resource is skipped). Returns **201** with the full resource, including `id`. |
+| Create | `POST` on the collection | Has a request body schema (without one the resource is skipped). Returns **201** with the full resource, including `id`. |
 | Read | `GET /{id}` | Returns the full resource. Unknown or deleted IDs return **404**. |
 | Update | `PATCH /{id}` (merge patch) or `PUT /{id}` | Returns **200** with the full resource. The provider takes computed values from the write response; 204-then-read needs hand-written code. |
 | Delete | `DELETE /{id}` | 204 (or 200) on success. 204 or 404 for an already-deleted resource; the provider treats 404 as success. |
@@ -286,7 +299,7 @@ Create a summary with:
    - **BLOCKED** — any **BLOCKER** above, for example:
      - a reserved or invalid attribute name at the schema root;
      - an item path parameter other than `{id}`, or a parent named `{id}`;
-     - unsupported composition;
+     - composition the generator cannot map, which skips the resource or drops a body (Step 4);
      - a state-bearing field settable only through an action;
      - another incompatibility that cannot be resolved provider-side.
 
