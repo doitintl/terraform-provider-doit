@@ -5035,6 +5035,7 @@ paths:
       description: |-
         Returns a list of all the current and historical invoices for your organization.
         Invoices are returned in reverse chronological order by default.
+        Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
       operationId: listInvoices
       parameters:
         - name: maxResults
@@ -5047,6 +5048,11 @@ paths:
         - $ref: "#/components/parameters/pageToken"
         - name: filter
           in: query
+          description: >-
+            Supported keys: platform (an invoice platform), dueDate (milliseconds since the
+            POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value
+            is applied per request. Cancelled invoices and credit memos are returned only with
+            status:CANCELED, and every other request excludes them.
           schema:
             $ref: "#/components/schemas/Filter"
         - name: minCreationTime
@@ -5101,7 +5107,9 @@ paths:
       tags:
         - Invoices
       summary: Retrieve an invoice
-      description: Returns the full details of an invoice specified by the invoice number.
+      description: >-
+        Returns the full details of an invoice specified by the invoice number. A cancelled
+        invoice or credit memo is returned with status `CANCELED`.
       operationId: getInvoice
       parameters:
         - name: id
@@ -5138,11 +5146,12 @@ paths:
                     format: int64
                   status:
                     type: string
-                    description: Status of the invoice
+                    description: Status of the invoice. `CANCELED` takes precedence over the payment status.
                     enum:
                       - OPEN
                       - PAST DUE
                       - PAID
+                      - CANCELED
                   totalAmount:
                     type: number
                     description: Total invoiced amount
@@ -5178,7 +5187,8 @@ paths:
       summary: Download an invoice PDF
       description: >-
         Returns the PDF document for the invoice specified by the invoice
-        number. The response body is the PDF bytes.
+        number, including a cancelled invoice or credit memo. The response body
+        is the PDF bytes.
 
         The PDF is returned decompressed by default. It is only gzip-compressed
         when the request advertises `Accept-Encoding: gzip`, in which case the
@@ -20694,11 +20704,12 @@ components:
           format: int64
         status:
           type: string
-          description: Status of the invoice
+          description: Status of the invoice. `CANCELED` takes precedence over the payment status.
           enum:
             - OPEN
             - PAST DUE
             - PAID
+            - CANCELED
         totalAmount:
           type: number
           description: Total invoiced amount

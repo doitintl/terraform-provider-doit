@@ -4,6 +4,8 @@
 
 ### ENHANCEMENTS
 
+- **data-source/doit_invoice, data-source/doit_invoices, data-source/doit_invoice_pdf**: Canceled invoices and credit memos are now supported. `status` can be `CANCELED`, which takes precedence over the payment status. `doit_invoices` returns canceled invoices only with `filter = "status:CANCELED"`; `doit_invoice` and `doit_invoice_pdf` can fetch them by ID
+
 - **resource/doit_budget, data-source/doit_budget**: New `data_source` attribute (`billing` or `billing-datahub`). Omitted on create, the API resolves it to `billing-datahub` when the customer has DataHub metrics configured and to `billing` otherwise; omitted on update, the saved value is kept. Existing budgets pick up their current data source on the next refresh
 
 - **resource/doit_alert, resource/doit_report**: When `data_source` is omitted on create, the API now resolves it to `billing-datahub` for customers with DataHub metrics (otherwise `billing`). `doit_alert` no longer has a plan-time default of `billing`, so the value is shown as known after apply. Existing alerts and reports are unaffected and keep their saved data source; set `data_source` explicitly to pin it

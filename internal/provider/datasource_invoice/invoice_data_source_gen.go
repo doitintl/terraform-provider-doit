@@ -82,8 +82,8 @@ func InvoiceDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"status": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Status of the invoice",
-				MarkdownDescription: "Status of the invoice",
+				Description:         "Status of the invoice. `CANCELED` takes precedence over the payment status.",
+				MarkdownDescription: "Status of the invoice. `CANCELED` takes precedence over the payment status.",
 			},
 			"total_amount": schema.Float64Attribute{
 				Computed:            true,
