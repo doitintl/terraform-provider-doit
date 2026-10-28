@@ -122,10 +122,10 @@ Reserved Root Attribute/Block Name
 "provider" is a reserved root attribute/block name.
 ```
 
-**Check it explicitly.** Root attributes are emitted at exactly three tabs of indentation in the generated schema:
+**Check it explicitly.** Root attributes are emitted at exactly three tabs of indentation in the generated schema. Use `[[:blank:]]`, not `\t`: GNU grep does not treat `\t` as a tab in `-E` patterns and silently matches nothing.
 
 ```bash
-grep -ohE '^\t\t\t"[a-z0-9_]+": schema\.' internal/provider/{datasource,resource}_<name>/*_gen.go \
+grep -ohE '^[[:blank:]]{3}"[a-z0-9_]+": schema\.' internal/provider/{datasource,resource}_<name>/*_gen.go \
   | sed 's/.*"\(.*\)": schema\./\1/'
 ```
 
@@ -148,13 +148,18 @@ grep -ohE '"[A-Za-z0-9_-]+": schema\.' internal/provider/{datasource,resource}_<
 
 ## Step 3: Path and Query Parameters
 
-The generator turns every `path` and `query` parameter of the **read** operation into an attribute. It merges each one with the request or response field of the **same OpenAPI name** (`ResourceAttributes.Merge` compares the original names). Names are converted to snake_case only afterwards, when the schema is emitted (`ToSpec`). So `{user_id}` next to a body `userId` gives two attributes that both emit as `user_id`, a duplicate; check the generated schema for it. A read path parameter is Required only if the create path has it too (a parent ID); otherwise it is Optional+Computed. A path and a query parameter with the same original name fail generation.
+The generator turns every `path` and `query` parameter of the **read** operation into an attribute. It merges each one with the request or response field of the **same OpenAPI name** (`ResourceAttributes.Merge` compares the original names). Names are converted to snake_case only afterwards, when the schema is emitted (`ToSpec`). So `{user_id}` next to a body `userId` gives two attributes that both emit as `user_id`, a duplicate; check the generated schema for it. Required-ness differs between the two mappers:
+
+- **Resources:** a read path parameter is Required only if the create path has it too (a parent ID); otherwise it is Optional+Computed. Query parameters are Optional+Computed.
+- **Data sources:** every path or query parameter marked `required: true` is Required, and the others are Optional+Computed. So an item data source takes a required `id`.
+
+A path and a query parameter with the same original name fail generation in both.
 
 | Finding | Verdict |
 |---------|---------|
 | Item path parameter is not `{id}` (`/notifications/{notificationId}`) while the response has `id` | **BLOCKER** — the resource gets a stray Optional+Computed `notification_id` that the response never fills, and the data source takes `notification_id` as input instead of `id`. Upstream renames it to `{id}` (standards §7.5, `doit-ids-item-path-param-id`). |
 | A parent is named `{id}` (`/users/{id}/notifications/{notificationId}`) | **BLOCKER** — the parent and the child collapse into one `id` attribute: Required from the path, overwritten with the child ID on read, and the apply fails. Parents are `{<parent>Id}`; only the item is `{id}`. |
-| Query parameter on the item GET (`fields`, `view`, …) | Finding — it becomes an Optional+Computed attribute on the resource and data source, and a partial read cannot confirm a write. Ask for it to be dropped from the item GET (standards §13.1). |
+| Query parameter on the item GET (`fields`, `view`, …) | Finding — it becomes an attribute on the resource (Optional+Computed) and on the data source (Required if the parameter is `required: true`, otherwise Optional+Computed), and a partial read cannot confirm a write. Ask for it to be dropped from the item GET (standards §13.1). |
 | A singleton sub-resource of an item (`/reports/{id}/config`) | Fine — `{id}` is still the item. |
 
 ## Step 4: Schema Composition and Types
@@ -215,7 +220,7 @@ For a **data source**, only Read (GET) is needed. A list data source wants `{ite
 - [ ] Are there any **write-only fields** (accepted in request but not returned)? These cause perpetual drift, unless the field is a secret, which is the documented exception.
 - [ ] Are there any **computed fields** (returned but not sent)? These need `Computed: true` in the schema.
 - [ ] Can the read return an enum value or a representation that create and update reject (a console-only widget type, an `extended` metric)? The request enum becomes a validator, so such a resource can be neither imported and managed nor left alone (`doit-terraform-read-enum-writable`).
-- [ ] When a field is omitted, does the read return a server-chosen value? Then it is Optional+Computed.
+- [ ] When a field is omitted, does the read return a server-chosen value? Then it cannot be cleared by omission (Category B in Step 10).
 - [ ] Does every Terraform default in the generated schema equal what the read returns when the field is omitted? A spec `default` becomes a Terraform default only on the source that first defines the attribute, in practice the create request. Update-request defaults are ignored (`IgnoreDefaults`), and a later source never adds one, because `Merge` copies only description and computability. Check the defaults the generated schema actually has, not every `default` in the spec.
 - [ ] Can a field silently change or disappear later (a referenced Slack channel deleted, a budget's `endTime` once it elapses)? The behaviour must be documented.
 - [ ] Can users find the IDs this resource references (channel IDs, allocation IDs) through a public get or list endpoint, so a data source can look them up?
@@ -236,7 +241,7 @@ Common patterns:
 | Timestamp to UTC | `2024-01-15T00:00:00-05:00` → `2024-01-15T05:00:00Z` | Need timestamp preservation |
 | Boolean defaults | `include_null: true` → API returns `false` | Need state-first read pattern |
 | Empty list to null | `scopes: []` → API returns `null` | Need empty-list fallback |
-| Array order or duplicates | IDs sorted, grouped by type, or de-duplicated | Ordered list → ask for order as sent, with duplicates rejected (422). Documented sort → model as a set. |
+| Array order or duplicates | IDs sorted, grouped by type, or de-duplicated | The generator emits a list unless the array declares `format: set` (`uniqueItems` only adds a validator), and no spec does today. Preferred: ask for order as sent, with duplicates rejected (422). If the API sorts or de-duplicates, a documented sort key is not enough on its own: either the spec declares `format: set` and duplicates carry no meaning, or the provider replaces the attribute by hand. Otherwise every config in a different order diffs. Record which. |
 
 **Test method:** Send a POST/PUT with known values, then GET the resource and compare.
 
@@ -265,16 +270,15 @@ Common patterns:
 
 ## Step 10: Schema Field Classification
 
-Map each API field to a Terraform schema category:
+Map each API field to the attribute it becomes, and for settable fields, to its clearing behaviour. The generator makes every non-required create or update field **Optional+Computed**. The evaluation does not turn any of them into plain Optional. It decides which clearing category from [implement-resource](../implement-resource/SKILL.md) applies, because that is what the API's behaviour determines:
 
-| Category | Criteria | Example |
-|----------|----------|---------|
-| **Required** | Must be provided by user, no default | `name` |
-| **Optional** | User can provide; when omitted, the API stores and returns nothing (or an empty value the provider can map back to null) | `description` |
-| **Optional+Computed** | User can provide; when omitted, the API picks or generates a value and returns it | `formula` |
-| **Computed-only** | API generates, user cannot set | `id`, `create_time` |
-
-The generator emits every non-required create field as Optional+Computed. Deciding which ones are really plain Optional (and clearable) is the A/B/C classification in [implement-resource](../implement-resource/SKILL.md).
+| Category | Criteria | Provider mapping | Example |
+|----------|----------|------------------|---------|
+| **Required** | Must be provided by user, no default | Required | `name` |
+| **Settable, clearable** | User can set it; omitting it or sending `null`/`[]` clears it, and the API then stores and returns nothing | Optional+Computed, Category A (clearing plan modifier) | `description`, `labels` |
+| **Settable, API default** | User can set it; when omitted, the API picks or keeps a value and returns it | Optional+Computed, Category B (`acknowledgeNotClearable`) | `formula` |
+| **Settable, not clearable in place** | User can set it; the update has no way to clear it (merge patch, no null representation), and removal must take effect | Optional+Computed, Category C (replace on clear) | |
+| **Computed-only** | API generates, user cannot set | Computed (`UseStateForUnknown` when stable) | `id`, `create_time` |
 
 ## Step 11: OpenAPI Spec Accuracy
 
