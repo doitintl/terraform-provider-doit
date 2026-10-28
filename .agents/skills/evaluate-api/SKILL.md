@@ -9,7 +9,7 @@ Use this skill when evaluating a new DoiT API endpoint for Terraform resource or
 
 ## Scope: new contracts vs. legacy endpoints
 
-The checks below describe what a **new or changed API contract** must provide. They are not a description of every endpoint the provider already supports. Many endpoints predate the provider, and some shipped resources carry provider-side workarounds for them: `asset` (no DELETE), `customer` (create by PATCH), `user` (read mapped to PATCH), `sharing` and `active_theme` (PUT singletons), `datahub_dataset` (`{name}` key), unpaginated lists. **Do not cite those as precedent** for a new contract, and do not hold a new contract to their shape.
+The checks below describe what a **new or changed API contract** must provide. They are not a description of every endpoint the provider already supports. Many endpoints predate the provider, and some shipped resources carry provider-side workarounds for them: `asset` (no DELETE), `customer` (import-only, create mapped to PATCH; see Step 5), `user` (read mapped to PATCH), `sharing` and `active_theme` (PUT singletons), `datahub_dataset` (`{name}` key), unpaginated lists. **Do not cite those as precedent** for a new contract, and do not hold a new contract to their shape.
 
 For a legacy endpoint whose contract will not change (frozen v1 content), the API owner has to confirm that it is frozen. The verdict may then be **Suitable with documented workaround**. Name the workaround and where it lives (hand-written code, never the forbidden list below). For everything else the forbidden workarounds apply without exception.
 
@@ -55,7 +55,15 @@ make sync-spec PR=<omni-pr>   # or REF=<branch>; replaces OpenAPI/openapi_spec_f
 make apply-pr PR=<omni-pr>    # alternative: apply only the PR's diff to the synced spec
 ```
 
-A contract that exists only as a `doiteng/api-specs` PR is OpenAPI 3.1, and the pipeline cannot consume it yet. `tools/extract-inline-schemas` reads `type` as a single string, and the hand-written code relies on 3.0 `nullable: true`. For such a PR:
+A contract that exists only as a `doiteng/api-specs` PR is OpenAPI 3.1, and the pipeline cannot consume it yet. `tools/extract-inline-schemas` reads `type` as a single string, and the hand-written code relies on 3.0 `nullable: true`.
+
+When both a 3.1 PR and its 3.0.1 omni projection exist, report a difference between them only if it changes one of two things:
+- **What the generator reads:** types, `required`, `nullable`, enums, `format` (including `password` and `set`), `default`, composition, parameter names and locations, declared status codes.
+- **Documented behaviour:** ETag wording, validation rules, ordering, normalization.
+
+Extension keys (`x-terraform-*`, `x-doit-*`), `readOnly`, `writeOnly` and examples are not read by the generator, so a difference there is not drift.
+
+For such a PR:
 
 1. Run the ruleset against the source spec (the rules need no bundling):
 
@@ -159,6 +167,7 @@ A path and a query parameter with the same original name fail generation in both
 |---------|---------|
 | Item path parameter is not `{id}` (`/notifications/{notificationId}`) while the response has `id` | **BLOCKER** — the resource gets a stray Optional+Computed `notification_id` that the response never fills, and the data source takes `notification_id` as input instead of `id`. Upstream renames it to `{id}` (standards §7.5, `doit-ids-item-path-param-id`). |
 | A parent is named `{id}` (`/users/{id}/notifications/{notificationId}`) | **BLOCKER** — the parent and the child collapse into one `id` attribute: Required from the path, overwritten with the child ID on read, and the apply fails. Parents are `{<parent>Id}`; only the item is `{id}`. |
+| Item key is a pair, e.g. `/subscriptions/{type}/{id}`: the item is `{id}`, with a sibling `{type}` or natural-key parameter next to it | Not a generator problem. Both become attributes (Required on a data source), and `{type}` merges with a response `type` of the same name. Ask whether `id` is unique without `type`. If it is not, the resource cannot be fetched by `id` alone (standards §13.3), import needs a composite `type/id` ID in hand-written `ImportState`, and the standards' path grammar (§5.1) expects a resource segment between two parameters. |
 | Query parameter on the item GET (`fields`, `view`, …) | Finding — it becomes an attribute on the resource (Optional+Computed) and on the data source (Required if the parameter is `required: true`, otherwise Optional+Computed), and a partial read cannot confirm a write. Ask for it to be dropped from the item GET (standards §13.1). |
 | A singleton sub-resource of an item (`/reports/{id}/config`) | Fine — `{id}` is still the item. |
 
@@ -180,6 +189,7 @@ Some rows below are generator failures. Others are standards policy (DoiT API De
 | Other `type` lists with two non-null types | Fails: the multi-type error. | **BLOCKER.** |
 | `discriminator` | Ignored; the keyword is never read. The `oneOf` it accompanies is what fails (first row). | Report the `oneOf`. The standards rule out discriminated `oneOf`. A `discriminator` on an otherwise flat schema is only a note. |
 | A property that is still untyped after `allOf` flattening, e.g. `allOf: [Money, {properties: {currency: {const: USD}}}]` | Fails with `no 'type' array or supported allOf, oneOf, anyOf constraint`. On a conflict, preprocessing (`flattenAllOf`) keeps the later member's definition of the property whole, so `{const: USD}` replaces `{type: string}`. | **BLOCKER.** Ask for a dedicated typed schema, e.g. `WholeDollarUsdMoney`. |
+| A single-member `allOf` wrapping a `$ref`, with siblings such as `example`, `description` or `nullable` (the shape the 3.0.1 projection emits for `$ref` siblings) | Fine. The generator resolves the single member and overlays the siblings. | Not a finding. |
 | An `allOf` member without its own `type` (`{required: [amount]}`, `{description: …}`) | Fine. Flattening gives the merged schema the members' common type, or `object`. | Not a finding on its own. |
 | Two `allOf` members defining the same property | Keeps the later definition whole (no deep merge) and logs a warning. | Note. This is fine when the later definition is complete. Check that it repeats the type and every constraint that should survive. |
 | `properties` next to an `allOf` of two or more members | Dropped. `applyMergedAllOf` replaces the schema with the merged members and keeps only `description` and `example`. | **BLOCKER** for those attributes. Ask for them to move into a member. |
@@ -205,9 +215,22 @@ For a **resource** built on a new contract, the API must support all CRUD operat
 
 Every status the API returns must be declared in the spec with its body. The generated client fills `JSON201` / `JSON200` only for declared responses, and the provider checks for the exact status (`!= 201`).
 
-Every configurable field must be settable on create and changeable on update. A field that changes only through an `/actions/<verb>` endpoint (e.g. `visibility` via `share`/`unshare`) cannot be a normal attribute, because the generator produces no action calls: **BLOCKER** for that field. Fields accepted on create but not on update must be documented as immutable; the provider marks them `RequiresReplace`.
+Every configurable field must be settable on create and changeable on update with its full desired value. A field that changes only through an `/actions/<verb>` endpoint (e.g. `visibility` via `share`/`unshare`) cannot be a normal attribute, because the generator produces no action calls: **BLOCKER** for that field.
+
+The same applies to a field that changes only through a delta endpoint, such as `POST /{id}/recipients` with `add`/`remove`. The provider would have to read, diff and send the delta in hand-written code, and "desired state = X" is no longer one call. A delta endpoint next to a `PATCH`/`PUT` that also sets the full list is fine. Fields accepted on create but not on update must be documented as immutable; the provider marks them `RequiresReplace`.
 
 A new contract missing update or delete is a finding. Ask whether that is intended before settling on **Suitable as data source only**.
+
+**No create at all.** The generator refuses a resource config without `create` before it reads the spec (`resource '<name>' must have a create object`). So the missing create cannot be tested through `make generate`, and mapping a stand-in operation just to get past that check is the workaround from the Scope section, not an evaluation. Test the read as a data source instead, and ask the API owner whether objects are meant to exist before Terraform manages them:
+
+- **Yes, by design** (onboarding creates them, one per tenant, and so on). The verdict is **Suitable as import-only resource**, the `doit_customer` shape:
+  - `create` is mapped to the update operation in `resources.yml` as the generator stand-in;
+  - `Create` returns an error with an import hint;
+  - users run `terraform import`;
+  - destroy only removes the resource from state, unless a delete exists.
+
+  It needs read and update.
+- **No.** The missing create is a finding. Without update, the verdict is **Suitable as data source only**.
 
 For a **data source**, only Read (GET) is needed. A list data source wants `{items, pageToken, rowCount}` with `pageToken`/`maxResults`. An unpaginated `{items}` is acceptable when the collection is small and bounded; ask.
 
@@ -325,12 +348,13 @@ Create a summary with:
      - a reserved or invalid attribute name at the schema root;
      - an item path parameter other than `{id}`, or a parent named `{id}`;
      - composition the generator cannot map, which skips the resource or drops a body (Step 4);
-     - a state-bearing field settable only through an action;
+     - a state-bearing field settable only through an action or a delta endpoint;
      - another incompatibility that cannot be resolved provider-side.
 
      Name the required upstream change. Do not propose a provider-side workaround.
    - **Suitable as resource** — full CRUD support confirmed.
    - **Suitable with documented workaround** — legacy endpoints only, with the API owner's confirmation that the contract is frozen (see Scope).
+   - **Suitable as import-only resource** — read and update but no create, because the API owner confirms that objects exist before Terraform by design (Step 5).
    - **Suitable as data source only** — no usable write path (a genuine API limitation, never a way around a schema-level problem).
    - **Not suitable** — the endpoint does not model a Terraform-manageable object.
 2. **Blocking issues** — everything marked **BLOCKER**, each with what breaks in the provider and the upstream change that fixes it. On an api-specs PR, post each one as its own review comment starting with **Blocker.**, citing the standards section.
@@ -338,5 +362,13 @@ Create a summary with:
 4. **Code generator issues** — problems with the generated schema or types.
 5. **Normalization concerns** — field normalization that will need handling.
 6. **Field classification table** — map each field to Required/Optional/Computed.
-7. **Questions for the API team** — behaviour the spec leaves open that decides the attribute model: defaults echoed on read, normalization, array order and duplicates, what happens to references that disappear. Ask instead of assuming.
+7. **Questions for the API team** — behaviour the spec leaves open that decides the attribute model or the verdict:
+   - defaults echoed on read;
+   - normalization;
+   - array order and duplicates;
+   - what happens to references that disappear;
+   - whether `id` is unique on its own;
+   - for a contract without create, whether objects are meant to exist before Terraform.
+
+   Ask instead of assuming.
 8. **Recommendations** — API changes needed before implementation, stated as the change the API team must make.
