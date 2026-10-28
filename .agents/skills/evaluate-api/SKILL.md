@@ -148,7 +148,7 @@ grep -ohE '"[A-Za-z0-9_-]+": schema\.' internal/provider/{datasource,resource}_<
 
 ## Step 3: Path and Query Parameters
 
-The generator turns every `path` and `query` parameter of the **read** operation into an attribute. It merges each one with the response field of the same snake_case name (`resource_mapper.go`). A read path parameter is Required only if the create path has it too (a parent ID); otherwise it is Optional+Computed. A path and a query parameter that map to the same name fail generation.
+The generator turns every `path` and `query` parameter of the **read** operation into an attribute. It merges each one with the request or response field of the **same OpenAPI name** (`ResourceAttributes.Merge` compares the original names). Names are converted to snake_case only afterwards, when the schema is emitted (`ToSpec`). So `{user_id}` next to a body `userId` gives two attributes that both emit as `user_id`, a duplicate; check the generated schema for it. A read path parameter is Required only if the create path has it too (a parent ID); otherwise it is Optional+Computed. A path and a query parameter with the same original name fail generation.
 
 | Finding | Verdict |
 |---------|---------|
@@ -182,7 +182,7 @@ Some rows below are generator failures. Others are standards policy (DoiT API De
 | `if`/`then`/`else`, `not`, `dependentRequired` | Not carried into the 3.0.1 projection. | Finding. Ask for the rule in prose, enforced with 422. |
 | `type: object` without `properties`, or `additionalProperties: true` without `properties` | Becomes a `jsontypes.Normalized` attribute: practitioners write raw JSON, which is syntax-checked and compared semantically, but nothing about its contents is typed or validated. | Finding. Ask whether the shape is really open. Typed maps (`additionalProperties: <schema>`) become map attributes and are fine. |
 | `additionalProperties: true` next to named `properties` | The named properties become nested attributes. Extra keys are not represented, so the provider can neither set nor keep them. | Note. Ask whether the extra keys matter to users. |
-| A field that only admits `null` (a placeholder for a future shape) | Has no Terraform type. | Finding. Giving it a type later breaks configs and state. Ask for it to be left out until it has a shape; adding an optional field later is not breaking for the provider. |
+| A field that only admits `null` (a placeholder for a future shape) | Fails: `invalid schema type 'null'` (no null case in `BuildResourceAttribute`/`BuildDataSourceAttribute`), with the consequences above. Through the 3.0.1 projection it instead becomes a nullable empty object, an attribute the API always rejects. | **BLOCKER.** Ask for it to be left out until it has a shape; adding an optional field later is not breaking for the provider, while retyping a shipped one breaks configs and state. |
 | Constraints on array items (`items: {minimum: …}`) | Dropped. | Note. Only the server enforces them. |
 | `number` without `format: double`/`float` | Maps to a big-float Number with no validators. | Note. |
 | Secret string without `format: password` | `format: password` is what marks the attribute sensitive. `writeOnly` and `x-terraform-*` are not read. | Finding. |
@@ -215,7 +215,8 @@ For a **data source**, only Read (GET) is needed. A list data source wants `{ite
 - [ ] Are there any **write-only fields** (accepted in request but not returned)? These cause perpetual drift, unless the field is a secret, which is the documented exception.
 - [ ] Are there any **computed fields** (returned but not sent)? These need `Computed: true` in the schema.
 - [ ] Can the read return an enum value or a representation that create and update reject (a console-only widget type, an `extended` metric)? The request enum becomes a validator, so such a resource can be neither imported and managed nor left alone (`doit-terraform-read-enum-writable`).
-- [ ] When a field is omitted, does the read return a server-chosen value? Then it is Optional+Computed. Any `default` in the spec becomes a Terraform default, so it must equal what the read returns.
+- [ ] When a field is omitted, does the read return a server-chosen value? Then it is Optional+Computed.
+- [ ] Does every Terraform default in the generated schema equal what the read returns when the field is omitted? A spec `default` becomes a Terraform default only on the source that first defines the attribute, in practice the create request. Update-request defaults are ignored (`IgnoreDefaults`), and a later source never adds one, because `Merge` copies only description and computability. Check the defaults the generated schema actually has, not every `default` in the spec.
 - [ ] Can a field silently change or disappear later (a referenced Slack channel deleted, a budget's `endTime` once it elapses)? The behaviour must be documented.
 - [ ] Can users find the IDs this resource references (channel IDs, allocation IDs) through a public get or list endpoint, so a data source can look them up?
 
@@ -253,9 +254,13 @@ Common patterns:
 - [ ] Does a GET of an unknown or deleted ID return a real **404**? Not 200 with an error body, and not 403 for "not yours". The provider removes the resource from state on a read 404; anything else leaves a deleted resource in state.
 - [ ] Is delete idempotent (204 or 404 for an already-deleted resource)?
 - [ ] Are error messages useful for debugging? The client surfaces the raw body of every non-retried error.
-- [ ] `ETag` / `If-Match`: the provider sends the `etag` from state on update and delete and surfaces a 412. Required and optional `If-Match` both work for the provider. Making it required later is a breaking change for other clients, so new contracts should decide now.
+- [ ] `ETag` / `If-Match`: the provider sends the `etag` from state on update and delete. On a 412, a delete refetches the current ETag and retries once; other callers report the 412. Required and optional `If-Match` both work for the provider. Making it required later is a breaking change for other clients, so new contracts should decide now.
 - [ ] `Idempotency-Key`: the provider sends one per apply operation and reuses it on retries. `dryRun` is not used by the provider.
-- [ ] 429 and 502/503/504 are retried, honouring `Retry-After`. Other statuses are permanent errors.
+- [ ] Retries (`DCIRetryClient.Do`):
+  - 429 is retried, honouring `Retry-After` when it parses, otherwise with exponential backoff.
+  - 502/503/504 are retried with exponential backoff only; their `Retry-After` is not read, so the API cannot count on it.
+  - 404, 412 and 425 are passed to the caller for resource-specific handling: drop state, refetch the ETag, or poll an async result.
+  - Any other status ≥ 400 is a permanent error carrying the raw body.
 - [ ] Long-running create, update or delete: is there an operation resource or a state field to wait on? Is the resource readable right after create?
 
 ## Step 10: Schema Field Classification
