@@ -241,7 +241,16 @@ Common patterns:
 | Timestamp to UTC | `2024-01-15T00:00:00-05:00` → `2024-01-15T05:00:00Z` | Need timestamp preservation |
 | Boolean defaults | `include_null: true` → API returns `false` | Need state-first read pattern |
 | Empty list to null | `scopes: []` → API returns `null` | Need empty-list fallback |
-| Array order or duplicates | IDs sorted, grouped by type, or de-duplicated | The generator emits a list unless the array declares `format: set` (`uniqueItems` only adds a validator), and no spec does today. Preferred: ask for order as sent, with duplicates rejected (422). If the API sorts or de-duplicates, a documented sort key is not enough on its own: either the spec declares `format: set` and duplicates carry no meaning, or the provider replaces the attribute by hand. Otherwise every config in a different order diffs. Record which. |
+| Array order or duplicates | IDs sorted, grouped by type, or de-duplicated | The generator emits a list unless the array declares `format: set` (`uniqueItems` only adds a validator), and no spec does today. Preferred: ask for order as sent, with duplicates rejected (422). If the API sorts or de-duplicates, a documented sort key is not enough on its own: either the array becomes a set (see **Sets** below), or users must write the server's order, and every config in another order diffs. Record which. |
+
+**Sets.** The generator turns an array into a Terraform set only when the spec declares `format: set` on it. This is a custom format the fork documents (`DESIGN.md`) and that OpenAPI, the DoiT standards and other generators do not know. `uniqueItems: true` only adds a validator to a list. No spec uses `format: set` today, and no generated resource has a set attribute. Verified on the alert `recipients` and `recipientsSlackChannels` arrays:
+
+- `make generate` turns `ListAttribute` / `ListNestedAttribute` into `SetAttribute` / `SetNestedAttribute`. It carries `maxItems` over as `setvalidator.SizeAtMost`, and the model fields become `types.Set`. The generated API client (`models_gen.go`) does not change; it still uses slices.
+- The provider then fails to build. Every hand-written helper for that field assumes a list: the overlay, the conversions and the list-only plan modifiers such as `useNullForUnknownListWhenConfigNull`. All of them need set equivalents. Data sources that share the schema become sets too.
+- On a shipped resource, list → set changes the attribute's type in user state. Plan a schema version bump and state upgrade, and treat it as a user-visible change.
+- A set of objects identifies each element by its whole value. Elements with server-filled attributes (the Slack channel's `customer_id`, or a name "resolved server-side") are a known source of plan churn and "inconsistent result" errors in Terraform providers. Prefer sets of scalars, or elements the user configures fully. This was not exercised with real plans.
+
+So `format: set` is an implementation decision for the provider team, not a free answer to "the API sorts". Prefer order kept as sent, and agree a set in the spec PR.
 
 **Test method:** Send a POST/PUT with known values, then GET the resource and compare.
 
