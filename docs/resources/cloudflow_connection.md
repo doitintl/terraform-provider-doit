@@ -4,7 +4,7 @@ page_title: "doit_cloudflow_connection Resource - terraform-provider-doit"
 subcategory: ""
 description: |-
   Manages a CloudFlow connection: a GCP or AWS configuration that CloudFlow workflows use to act on a cloud account.
-  Set exactly one of gcp_config or aws_config; switching between them replaces the connection. Updates send the complete configuration, so anything removed from the configuration block is cleared.
+  Set exactly one of gcp_config or aws_config; switching between them replaces the connection. Updates send the complete configuration, so a value removed from it is cleared.
   ~> Note: The user behind the API token must be a collaborator of the connection, otherwise the API denies access to it right after creating it. Declare that user as the owner.
 ---
 
@@ -12,7 +12,7 @@ description: |-
 
 Manages a CloudFlow connection: a GCP or AWS configuration that CloudFlow workflows use to act on a cloud account.
 
-Set exactly one of `gcp_config` or `aws_config`; switching between them replaces the connection. Updates send the complete configuration, so anything removed from the configuration block is cleared.
+Set exactly one of `gcp_config` or `aws_config`; switching between them replaces the connection. Updates send the complete configuration, so a value removed from it is cleared.
 
 ~> **Note:** The user behind the API token must be a collaborator of the connection, otherwise the API denies access to it right after creating it. Declare that user as the `owner`.
 
@@ -101,23 +101,23 @@ resource "doit_cloudflow_connection" "disabled" {
 ### Required
 
 - `collaborators` (Attributes List) Users with access to the connection. Exactly one must be the `owner`, and the user behind the API token must be listed. Roles: `owner` can update, delete and transfer the connection, `editor` can update it, `user` has read access. (see [below for nested schema](#nestedatt--collaborators))
-- `name` (String) Display name of the connection.
+- `name` (String) Human-readable connection name.
 
 ### Optional
 
-- `aws_config` (Attributes) AWS configuration. Set exactly one of `gcp_config` or `aws_config`. Changing between them replaces the connection. (see [below for nested schema](#nestedatt--aws_config))
-- `description` (String) Description of the connection. Remove it to clear it.
-- `enabled` (Boolean) Whether the connection is enabled. Defaults to `true`. Set to `false` to disable it without deleting it.
-- `gcp_config` (Attributes) GCP configuration. Set exactly one of `gcp_config` or `aws_config`. Changing between them replaces the connection. (see [below for nested schema](#nestedatt--gcp_config))
+- `aws_config` (Attributes) AWS configuration. Set exactly one of `gcp_config` or `aws_config`; switching between them replaces the connection. Removing a value from it clears the value. (see [below for nested schema](#nestedatt--aws_config))
+- `description` (String) Optional description.
+- `enabled` (Boolean) When false, the connection is created in a disabled state.
+- `gcp_config` (Attributes) GCP configuration. Set exactly one of `gcp_config` or `aws_config`; switching between them replaces the connection. Removing a value from it clears the value. (see [below for nested schema](#nestedatt--gcp_config))
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `connection_id` (String) The ID of the connection.
-- `created_at` (String) When the connection was created (RFC 3339, UTC).
+- `created_at` (String)
 - `etag` (String) Current version of the connection. The provider sends it with updates and deletes to detect changes made outside Terraform.
-- `status` (String) Overall status of the connection, as reported by the API.
-- `updated_at` (String) When the connection was last changed (RFC 3339, UTC).
+- `status` (String) Overall connection status.
+- `updated_at` (String)
 
 <a id="nestedatt--collaborators"></a>
 ### Nested Schema for `collaborators`
@@ -133,33 +133,33 @@ Required:
 
 Required:
 
-- `context` (Attributes List) AWS accounts the connection covers, with the regions for each. (see [below for nested schema](#nestedatt--aws_config--context))
+- `context` (Attributes List) (see [below for nested schema](#nestedatt--aws_config--context))
 - `role_name` (String) Name of the IAM role CloudFlow assumes. Must be unique per AWS account.
 
 Optional:
 
-- `management_account` (String) ID of the AWS organization's management account.
-- `organization_root_id` (String) ID of the AWS organization root.
-- `permissions` (Attributes) IAM permissions granted to the role. Set at least one of `actions` or `aws_managed_policies`, or remove the block. (see [below for nested schema](#nestedatt--aws_config--permissions))
-- `scope_excluded_account_ids` (List of String) AWS account IDs excluded from the connection's scope.
-- `scope_explicit_account_ids` (List of String) AWS account IDs explicitly included in the connection's scope.
-- `scope_management_account_explicit_in_scope` (Boolean) Whether the management account is explicitly in scope. Defaults to `false`.
-- `scope_targeted_organizational_unit_ids` (List of String) IDs of the organizational units the connection targets.
+- `management_account` (String)
+- `organization_root_id` (String)
+- `permissions` (Attributes) IAM permissions granted to the CloudFlow role. (see [below for nested schema](#nestedatt--aws_config--permissions))
+- `scope_excluded_account_ids` (List of String)
+- `scope_explicit_account_ids` (List of String)
+- `scope_management_account_explicit_in_scope` (Boolean)
+- `scope_targeted_organizational_unit_ids` (List of String)
 
 <a id="nestedatt--aws_config--context"></a>
 ### Nested Schema for `aws_config.context`
 
 Required:
 
-- `account_id` (String) 12-digit AWS account ID.
+- `account_id` (String)
 
 Optional:
 
-- `regions` (List of String) AWS regions of the account in scope.
+- `regions` (List of String)
 
 Read-Only:
 
-- `status` (String) Deployment status of the account, as reported by the API.
+- `status` (String) Server-managed per-account deployment status.
 
 
 <a id="nestedatt--aws_config--permissions"></a>
@@ -167,8 +167,8 @@ Read-Only:
 
 Optional:
 
-- `actions` (Attributes List) Custom IAM actions granted to the role. (see [below for nested schema](#nestedatt--aws_config--permissions--actions))
-- `aws_managed_policies` (List of String) ARNs of AWS-managed policies attached to the role.
+- `actions` (Attributes List) Custom IAM actions. (see [below for nested schema](#nestedatt--aws_config--permissions--actions))
+- `aws_managed_policies` (List of String) AWS-managed policy ARNs attached to the role.
 
 <a id="nestedatt--aws_config--permissions--actions"></a>
 ### Nested Schema for `aws_config.permissions.actions`
@@ -179,7 +179,7 @@ Required:
 
 Read-Only:
 
-- `id` (String) Identifier of the action, as reported by the API when it returns one.
+- `id` (String) Server-returned row identifier. Not used for permission evaluation.
 
 
 
@@ -189,35 +189,32 @@ Read-Only:
 
 Required:
 
-- `level` (String) Scope of the connection: `organization`, `folder` or `project`. The matching `organization_id`, `folder_id` or `project_id` is required.
-- `service_account_name` (String) Name of the service account CloudFlow uses in the GCP project.
+- `level` (String) Possible values: `organization`, `folder`, `project`
+- `service_account_name` (String)
 
 Optional:
 
-- `custom_role` (Attributes) Custom GCP role granted to the service account. (see [below for nested schema](#nestedatt--gcp_config--custom_role))
-- `folder_id` (String) ID of the GCP folder. Required when `level` is `folder`.
-- `infra_manager_location` (String) Location of the Infrastructure Manager deployment.
-- `infra_manager_project` (String) GCP project that runs Infrastructure Manager for the deployment.
-- `infra_manager_service_account` (String) Service account Infrastructure Manager uses for the deployment.
-- `organization_id` (String) ID of the GCP organization. Required when `level` is `organization`.
-- `predefined_roles` (List of String) Predefined GCP roles granted to the service account, such as `roles/viewer`.
-- `project_id` (String) ID of the GCP project. Required when `level` is `project`. The project must be known to the DoiT customer.
+- `custom_role` (Attributes) (see [below for nested schema](#nestedatt--gcp_config--custom_role))
+- `folder_id` (String)
+- `infra_manager_location` (String)
+- `infra_manager_project` (String)
+- `infra_manager_service_account` (String)
+- `organization_id` (String)
+- `predefined_roles` (List of String)
+- `project_id` (String) ID of the GCP project. Required when `level` is `project`, and the project must be known to the DoiT customer.
 
 Read-Only:
 
-- `deployment_command` (String) Command that deploys the connection's resources in GCP, as generated by the API.
-- `status` (String) Status of the GCP configuration, as reported by the API.
+- `deployment_command` (String) Generated deployment command.
+- `status` (String) Server-managed GCP config status.
 
 <a id="nestedatt--gcp_config--custom_role"></a>
 ### Nested Schema for `gcp_config.custom_role`
 
-Required:
-
-- `role_id` (String) ID of the custom role.
-
 Optional:
 
-- `permissions` (List of String) Permissions of the custom role.
+- `permissions` (List of String)
+- `role_id` (String)
 
 
 

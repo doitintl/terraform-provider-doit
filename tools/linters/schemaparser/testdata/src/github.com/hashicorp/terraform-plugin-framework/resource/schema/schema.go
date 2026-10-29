@@ -15,7 +15,6 @@ type StringAttribute struct {
 	Required            bool
 	Optional            bool
 	Computed            bool
-	Default             interface{}
 	Description         string
 	MarkdownDescription string
 }

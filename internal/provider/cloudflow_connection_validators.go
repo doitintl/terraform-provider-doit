@@ -122,11 +122,15 @@ func (v cloudflowConnectionGcpConfigValidator) ValidateResource(ctx context.Cont
 	validateCloudflowConnectionGcpConfig(gcp, &resp.Diagnostics)
 }
 
-// validateCloudflowConnectionGcpConfig requires the ID that matches the level.
+// validateCloudflowConnectionGcpConfig requires the ID that matches the level, and a
+// role ID for a custom role. role_id cannot be declared Required in the schema, see Schema().
 func validateCloudflowConnectionGcpConfig(gcp resource_cloudflow_connection.GcpConfigValue, diags *diag.Diagnostics) {
 	if gcp.IsNull() || gcp.IsUnknown() {
 		return
 	}
+
+	validateCloudflowConnectionCustomRole(gcp.CustomRole, diags)
+
 	if gcp.Level.IsNull() || gcp.Level.IsUnknown() {
 		return
 	}
@@ -138,6 +142,23 @@ func validateCloudflowConnectionGcpConfig(gcp resource_cloudflow_connection.GcpC
 		cloudflowConnectionRequireGcpID(diags, level, "folder_id", gcp.FolderId)
 	case "project":
 		cloudflowConnectionRequireGcpID(diags, level, "project_id", gcp.ProjectId)
+	}
+}
+
+// validateCloudflowConnectionCustomRole requires role_id when a custom role is configured.
+func validateCloudflowConnectionCustomRole(customRole resource_cloudflow_connection.CustomRoleValue, diags *diag.Diagnostics) {
+	if customRole.IsNull() || customRole.IsUnknown() {
+		return
+	}
+	if customRole.RoleId.IsUnknown() {
+		return
+	}
+	if customRole.RoleId.IsNull() || customRole.RoleId.ValueString() == "" {
+		diags.AddAttributeError(
+			path.Root("gcp_config").AtName("custom_role").AtName("role_id"),
+			"Missing custom role ID",
+			"role_id is required when custom_role is set.",
+		)
 	}
 }
 
@@ -154,59 +175,4 @@ func cloudflowConnectionRequireGcpID(diags *diag.Diagnostics, level, name string
 			fmt.Sprintf("%s is required when gcp_config.level is %q.", name, level),
 		)
 	}
-}
-
-// cloudflowConnectionAwsConfigValidator rejects an empty permissions block. The
-// API returns an empty permissions object for a connection without permissions,
-// which the provider reads as no block, so an empty block would never match state.
-type cloudflowConnectionAwsConfigValidator struct{}
-
-var _ resource.ConfigValidator = cloudflowConnectionAwsConfigValidator{}
-
-func (v cloudflowConnectionAwsConfigValidator) Description(_ context.Context) string {
-	return "aws_config.permissions must grant at least one action or managed policy."
-}
-
-func (v cloudflowConnectionAwsConfigValidator) MarkdownDescription(ctx context.Context) string {
-	return v.Description(ctx)
-}
-
-func (v cloudflowConnectionAwsConfigValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var aws resource_cloudflow_connection.AwsConfigValue
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("aws_config"), &aws)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	validateCloudflowConnectionAwsConfig(aws, &resp.Diagnostics)
-}
-
-// validateCloudflowConnectionAwsConfig rejects an empty permissions block.
-func validateCloudflowConnectionAwsConfig(aws resource_cloudflow_connection.AwsConfigValue, diags *diag.Diagnostics) {
-	if aws.IsNull() || aws.IsUnknown() {
-		return
-	}
-	if aws.Permissions.IsNull() || aws.Permissions.IsUnknown() {
-		return
-	}
-
-	if cloudflowConnectionListIsEmpty(aws.Permissions.Actions) && cloudflowConnectionListIsEmpty(aws.Permissions.AwsManagedPolicies) {
-		diags.AddAttributeError(
-			path.Root("aws_config").AtName("permissions"),
-			"Empty permissions",
-			"permissions must set at least one non-empty actions or aws_managed_policies list. Remove the block to grant no permissions.",
-		)
-	}
-}
-
-// cloudflowConnectionListIsEmpty reports whether a configured list definitely has
-// no elements: null, or known and empty. Unknown lists are not empty.
-func cloudflowConnectionListIsEmpty(list types.List) bool {
-	if list.IsUnknown() {
-		return false
-	}
-	if list.IsNull() {
-		return true
-	}
-	return len(list.Elements()) == 0
 }

@@ -229,19 +229,21 @@ func TestMapCloudflowConnectionToModel_AWS(t *testing.T) {
 func TestMapCloudflowConnectionToModel_AWSMinimal(t *testing.T) {
 	state := mapCloudflowConnectionForTest(t, testCloudflowAwsMinimalJSON)
 
-	if !state.Description.IsNull() {
-		t.Errorf("description = %v, want null", state.Description)
+	// Clearable strings read as "" (what the clearing modifier proposes), never null.
+	if state.Description.IsNull() || state.Description.ValueString() != "" {
+		t.Errorf("description = %v, want an empty string", state.Description)
 	}
 	// An omitted enabled means enabled, which is the schema default.
 	if !state.Enabled.ValueBool() {
 		t.Errorf("enabled = false, want true")
 	}
 	aws := state.AwsConfig
-	if !aws.Permissions.IsNull() {
-		t.Errorf("permissions = %v, want null for an empty object", aws.Permissions)
+	// The API always returns the permissions object; it is always present, with empty lists.
+	if aws.Permissions.IsNull() || len(aws.Permissions.Actions.Elements()) != 0 || len(aws.Permissions.AwsManagedPolicies.Elements()) != 0 {
+		t.Errorf("permissions = %v, want an object with empty lists", aws.Permissions)
 	}
-	if !aws.ManagementAccount.IsNull() || !aws.OrganizationRootId.IsNull() {
-		t.Errorf("optional strings = %v %v, want null", aws.ManagementAccount, aws.OrganizationRootId)
+	if aws.ManagementAccount.ValueString() != "" || aws.ManagementAccount.IsNull() || aws.OrganizationRootId.ValueString() != "" || aws.OrganizationRootId.IsNull() {
+		t.Errorf("optional strings = %v %v, want empty strings", aws.ManagementAccount, aws.OrganizationRootId)
 	}
 	if aws.ScopeManagementAccountExplicitInScope.ValueBool() {
 		t.Errorf("scope_management_account_explicit_in_scope = true, want false")
@@ -291,9 +293,9 @@ func TestMapCloudflowConnectionToModel_GCP(t *testing.T) {
 	if gcp.Level.ValueString() != "project" || gcp.ProjectId.ValueString() != "my-project" || gcp.ServiceAccountName.ValueString() != "doit-cloudflow" {
 		t.Errorf("level/project/service account: %q %q %q", gcp.Level.ValueString(), gcp.ProjectId.ValueString(), gcp.ServiceAccountName.ValueString())
 	}
-	// "" ids are the API's spelling of "not set".
-	if !gcp.OrganizationId.IsNull() || !gcp.FolderId.IsNull() {
-		t.Errorf("organization_id/folder_id = %v %v, want null", gcp.OrganizationId, gcp.FolderId)
+	// "" ids are the API's spelling of "not set" and stay "".
+	if gcp.OrganizationId.IsNull() || gcp.OrganizationId.ValueString() != "" || gcp.FolderId.IsNull() || gcp.FolderId.ValueString() != "" {
+		t.Errorf("organization_id/folder_id = %v %v, want empty strings", gcp.OrganizationId, gcp.FolderId)
 	}
 	if gcp.InfraManagerProject.ValueString() != "infra-project" || gcp.InfraManagerLocation.ValueString() != "us-central1" || gcp.InfraManagerServiceAccount.ValueString() != "infra-sa" {
 		t.Errorf("infra manager: %q %q %q", gcp.InfraManagerProject.ValueString(), gcp.InfraManagerLocation.ValueString(), gcp.InfraManagerServiceAccount.ValueString())
@@ -312,16 +314,23 @@ func TestMapCloudflowConnectionToModel_GCPMinimal(t *testing.T) {
 	state := mapCloudflowConnectionForTest(t, testCloudflowGcpMinimalJSON)
 
 	gcp := state.GcpConfig
-	if !gcp.CustomRole.IsNull() {
-		t.Errorf("custom_role = %v, want null for the API's empty role", gcp.CustomRole)
+	// The API always returns the custom role, empty when none is set.
+	if gcp.CustomRole.IsNull() || gcp.CustomRole.RoleId.ValueString() != "" || len(gcp.CustomRole.Permissions.Elements()) != 0 {
+		t.Errorf("custom_role = %v, want an object with an empty role_id and permissions", gcp.CustomRole)
 	}
 	if gcp.PredefinedRoles.IsNull() || len(gcp.PredefinedRoles.Elements()) != 0 {
 		t.Errorf("predefined_roles = %v, want an empty list for the API's null", gcp.PredefinedRoles)
 	}
 	for name, v := range map[string]types.String{
-		"organization_id": gcp.OrganizationId, "folder_id": gcp.FolderId, "status": gcp.Status, "deployment_command": gcp.DeploymentCommand,
+		"organization_id": gcp.OrganizationId, "folder_id": gcp.FolderId,
 		"infra_manager_project": gcp.InfraManagerProject, "infra_manager_location": gcp.InfraManagerLocation, "infra_manager_service_account": gcp.InfraManagerServiceAccount,
 	} {
+		if v.IsNull() || v.ValueString() != "" {
+			t.Errorf("%s = %v, want an empty string", name, v)
+		}
+	}
+	// Computed-only values the API leaves empty are null.
+	for name, v := range map[string]types.String{"status": gcp.Status, "deployment_command": gcp.DeploymentCommand} {
 		if !v.IsNull() {
 			t.Errorf("%s = %v, want null", name, v)
 		}
@@ -588,6 +597,24 @@ func TestCloudflowConnectionToCreateRequest(t *testing.T) {
 	})
 }
 
+// On create the configuration of the kind that is not used is unknown in the plan
+// (it is Optional+Computed); it must not be sent.
+func TestCloudflowConnectionToCreateRequest_UnusedKindUnknown(t *testing.T) {
+	aws := mapCloudflowConnectionForTest(t, testCloudflowAwsMinimalJSON)
+	aws.GcpConfig = resource_cloudflow_connection.NewGcpConfigValueUnknown()
+	req, diags := aws.toCreateRequest(t.Context())
+	if diags.HasError() || req.GcpConfig != nil || req.AwsConfig == nil {
+		t.Errorf("aws request = aws %v gcp %v (%v)", req.AwsConfig, req.GcpConfig, diags)
+	}
+
+	gcp := mapCloudflowConnectionForTest(t, testCloudflowGcpMinimalJSON)
+	gcp.AwsConfig = resource_cloudflow_connection.NewAwsConfigValueUnknown()
+	req, diags = gcp.toCreateRequest(t.Context())
+	if diags.HasError() || req.AwsConfig != nil || req.GcpConfig == nil {
+		t.Errorf("gcp request = aws %v gcp %v (%v)", req.AwsConfig, req.GcpConfig, diags)
+	}
+}
+
 func TestCloudflowConnectionToUpdateRequest(t *testing.T) {
 	t.Run("sends the complete configuration", func(t *testing.T) {
 		plan := mapCloudflowConnectionForTest(t, testCloudflowAwsJSON)
@@ -701,11 +728,11 @@ func TestCloudflowConnectionSchema(t *testing.T) {
 	top := map[string]flags{
 		"connection_id": {computed: true},
 		"name":          {required: true},
-		"description":   {optional: true},
+		"description":   {optional: true, computed: true},
 		"enabled":       {optional: true, computed: true},
 		"collaborators": {required: true},
-		"gcp_config":    {optional: true},
-		"aws_config":    {optional: true},
+		"gcp_config":    {optional: true, computed: true},
+		"aws_config":    {optional: true, computed: true},
 		"status":        {computed: true},
 		"etag":          {computed: true},
 		"created_at":    {computed: true},
@@ -725,11 +752,21 @@ func TestCloudflowConnectionSchema(t *testing.T) {
 		t.Errorf("the identifier is connection_id; an id attribute must not exist")
 	}
 
-	// Nested Optional+Computed attributes must carry a Default, so unset values are
-	// stable ([] / false) and never "known after apply".
-	pathsWithDefault := [][]string{
+	// Values the API replaces as a whole are cleared by removing them from the configuration:
+	// each must carry a clearing plan modifier (Category A).
+	clearable := [][]string{
+		{"description"},
+		{"gcp_config", "organization_id"},
+		{"gcp_config", "folder_id"},
+		{"gcp_config", "project_id"},
+		{"gcp_config", "infra_manager_project"},
+		{"gcp_config", "infra_manager_location"},
+		{"gcp_config", "infra_manager_service_account"},
 		{"gcp_config", "predefined_roles"},
+		{"gcp_config", "custom_role", "role_id"},
 		{"gcp_config", "custom_role", "permissions"},
+		{"aws_config", "management_account"},
+		{"aws_config", "organization_root_id"},
 		{"aws_config", "scope_excluded_account_ids"},
 		{"aws_config", "scope_explicit_account_ids"},
 		{"aws_config", "scope_targeted_organizational_unit_ids"},
@@ -737,7 +774,7 @@ func TestCloudflowConnectionSchema(t *testing.T) {
 		{"aws_config", "permissions", "actions"},
 		{"aws_config", "permissions", "aws_managed_policies"},
 	}
-	for _, p := range pathsWithDefault {
+	for _, p := range clearable {
 		fieldPath := path.Root(p[0])
 		for _, name := range p[1:] {
 			fieldPath = fieldPath.AtName(name)
@@ -748,19 +785,44 @@ func TestCloudflowConnectionSchema(t *testing.T) {
 			continue
 		}
 		if !a.IsOptional() || !a.IsComputed() {
-			t.Errorf("%v: want Optional+Computed with a default", p)
+			t.Errorf("%v: want Optional+Computed", p)
 		}
-		hasDefault := false
+		modifiers := 0
 		switch v := a.(type) {
-		case schema.ListAttribute:
-			hasDefault = v.Default != nil
-		case schema.ListNestedAttribute:
-			hasDefault = v.Default != nil
+		case schema.StringAttribute:
+			modifiers = len(v.PlanModifiers)
 		case schema.BoolAttribute:
-			hasDefault = v.Default != nil
+			modifiers = len(v.PlanModifiers)
+		case schema.ListAttribute:
+			modifiers = len(v.PlanModifiers)
+		case schema.ListNestedAttribute:
+			modifiers = len(v.PlanModifiers)
 		}
-		if !hasDefault {
-			t.Errorf("%v: no Default", p)
+		if modifiers == 0 {
+			t.Errorf("%v: no clearing plan modifier", p)
+		}
+	}
+
+	// Attributes the spec marks optional but the API requires are declared Required.
+	required := [][]string{
+		{"collaborators"},
+		{"gcp_config", "level"},
+		{"gcp_config", "service_account_name"},
+		{"aws_config", "role_name"},
+		{"aws_config", "context"},
+	}
+	for _, p := range required {
+		fieldPath := path.Root(p[0])
+		for _, name := range p[1:] {
+			fieldPath = fieldPath.AtName(name)
+		}
+		a, diags := resp.Schema.AttributeAtPath(ctx, fieldPath)
+		if diags.HasError() {
+			t.Errorf("%v: %v", p, diags)
+			continue
+		}
+		if !a.IsRequired() {
+			t.Errorf("%v: want Required", p)
 		}
 	}
 }

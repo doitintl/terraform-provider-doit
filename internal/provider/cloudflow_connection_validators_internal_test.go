@@ -139,76 +139,41 @@ func TestValidateCloudflowConnectionGcpConfig(t *testing.T) {
 	}
 }
 
-func testAwsConfig(t *testing.T, permissions resource_cloudflow_connection.PermissionsValue) resource_cloudflow_connection.AwsConfigValue {
+func testCustomRole(t *testing.T, roleID attr.Value) resource_cloudflow_connection.CustomRoleValue {
 	t.Helper()
-	ctx := t.Context()
-	return resource_cloudflow_connection.NewAwsConfigValueMust(
-		resource_cloudflow_connection.AwsConfigValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"context":                    types.ListNull(resource_cloudflow_connection.ContextValue{}.Type(ctx)),
-			"management_account":         types.StringNull(),
-			"organization_root_id":       types.StringNull(),
-			"permissions":                permissions,
-			"role_name":                  types.StringValue("role"),
-			"scope_excluded_account_ids": types.ListNull(types.StringType),
-			"scope_explicit_account_ids": types.ListNull(types.StringType),
-			"scope_management_account_explicit_in_scope": types.BoolNull(),
-			"scope_targeted_organizational_unit_ids":     types.ListNull(types.StringType),
-		},
+	return resource_cloudflow_connection.NewCustomRoleValueMust(
+		resource_cloudflow_connection.CustomRoleValue{}.AttributeTypes(t.Context()),
+		map[string]attr.Value{"permissions": types.ListValueMust(types.StringType, []attr.Value{}), "role_id": roleID},
 	)
 }
 
-func testPermissions(t *testing.T, actions, policies types.List) resource_cloudflow_connection.PermissionsValue {
-	t.Helper()
-	return resource_cloudflow_connection.NewPermissionsValueMust(
-		resource_cloudflow_connection.PermissionsValue{}.AttributeTypes(t.Context()),
-		map[string]attr.Value{"actions": actions, "aws_managed_policies": policies},
-	)
-}
-
-func TestValidateCloudflowConnectionAwsConfig(t *testing.T) {
-	ctx := t.Context()
-	actionType := resource_cloudflow_connection.ActionsValue{}.Type(ctx)
-	nullActions := types.ListNull(actionType)
-	unknownActions := types.ListUnknown(actionType)
-	emptyActions := types.ListValueMust(actionType, []attr.Value{})
-	someActions := types.ListValueMust(actionType, []attr.Value{
-		resource_cloudflow_connection.NewActionsValueMust(
-			resource_cloudflow_connection.ActionsValue{}.AttributeTypes(ctx),
-			map[string]attr.Value{"id": types.StringNull(), "value": types.StringValue("s3:ListBucket")},
-		),
-	})
-	nullPolicies := types.ListNull(types.StringType)
-	unknownPolicies := types.ListUnknown(types.StringType)
-	emptyPolicies := types.ListValueMust(types.StringType, []attr.Value{})
-	somePolicies := types.ListValueMust(types.StringType, []attr.Value{types.StringValue("arn:p")})
-	somePoliciesWithUnknown := types.ListValueMust(types.StringType, []attr.Value{types.StringUnknown()})
-
+func TestValidateCloudflowConnectionCustomRole(t *testing.T) {
 	tests := []struct {
 		name    string
-		value   resource_cloudflow_connection.AwsConfigValue
+		value   resource_cloudflow_connection.CustomRoleValue
 		summary string
 	}{
-		{"null config", resource_cloudflow_connection.NewAwsConfigValueNull(), ""},
-		{"unknown config", resource_cloudflow_connection.NewAwsConfigValueUnknown(), ""},
-		{"no permissions block", testAwsConfig(t, resource_cloudflow_connection.NewPermissionsValueNull()), ""},
-		{"unknown permissions block", testAwsConfig(t, resource_cloudflow_connection.NewPermissionsValueUnknown()), ""},
-		{"actions only", testAwsConfig(t, testPermissions(t, someActions, nullPolicies)), ""},
-		{"policies only", testAwsConfig(t, testPermissions(t, nullActions, somePolicies)), ""},
-		{"both", testAwsConfig(t, testPermissions(t, someActions, somePolicies)), ""},
-		{"both unset", testAwsConfig(t, testPermissions(t, nullActions, nullPolicies)), "Empty permissions"},
-		{"both empty", testAwsConfig(t, testPermissions(t, emptyActions, emptyPolicies)), "Empty permissions"},
-		{"empty actions and unset policies", testAwsConfig(t, testPermissions(t, emptyActions, nullPolicies)), "Empty permissions"},
-		{"unknown actions", testAwsConfig(t, testPermissions(t, unknownActions, nullPolicies)), ""},
-		{"unknown policies", testAwsConfig(t, testPermissions(t, emptyActions, unknownPolicies)), ""},
-		{"policies with unknown element", testAwsConfig(t, testPermissions(t, nullActions, somePoliciesWithUnknown)), ""},
+		{"null custom role", resource_cloudflow_connection.NewCustomRoleValueNull(), ""},
+		{"unknown custom role", resource_cloudflow_connection.NewCustomRoleValueUnknown(), ""},
+		{"role id set", testCustomRole(t, types.StringValue("myRole")), ""},
+		{"role id unknown", testCustomRole(t, types.StringUnknown()), ""},
+		{"role id missing", testCustomRole(t, types.StringNull()), "Missing custom role ID"},
+		{"role id empty", testCustomRole(t, types.StringValue("")), "Missing custom role ID"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var diags diag.Diagnostics
-			validateCloudflowConnectionAwsConfig(tt.value, &diags)
-			assertSingleError(t, diags, tt.summary, "aws_config.permissions")
+			validateCloudflowConnectionCustomRole(tt.value, &diags)
+			assertSingleError(t, diags, tt.summary, "custom_role.role_id")
 		})
 	}
+
+	// It is part of the gcp_config validation, so a configured custom role without
+	// a role ID is reported there as well.
+	gcp := testGcpConfig(t, types.StringValue("project"), types.StringNull(), types.StringNull(), types.StringValue("p"))
+	gcp.CustomRole = testCustomRole(t, types.StringNull())
+	var diags diag.Diagnostics
+	validateCloudflowConnectionGcpConfig(gcp, &diags)
+	assertSingleError(t, diags, "Missing custom role ID", "custom_role.role_id")
 }

@@ -13,15 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -79,7 +75,6 @@ func (r *cloudflowConnectionResource) ConfigValidators(_ context.Context) []reso
 			path.MatchRoot("aws_config"),
 		),
 		cloudflowConnectionGcpConfigValidator{},
-		cloudflowConnectionAwsConfigValidator{},
 	}
 }
 
@@ -98,11 +93,6 @@ func (r *cloudflowConnectionResource) ModifyPlan(ctx context.Context, req resour
 func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_cloudflow_connection.CloudflowConnectionResourceSchema(ctx)
 
-	emptyStrings := listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{}))
-	emptyActions := listdefault.StaticValue(types.ListValueMust(resource_cloudflow_connection.ActionsValue{}.Type(ctx), []attr.Value{}))
-	notEmpty := stringvalidator.LengthAtLeast(1)
-	noEmptyItems := listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1))
-
 	// Stable computed fields keep their value across updates.
 	if a, ok := s.Attributes["connection_id"].(schema.StringAttribute); ok {
 		a.PlanModifiers = append(a.PlanModifiers, stringplanmodifier.UseStateForUnknown())
@@ -113,22 +103,15 @@ func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.Sch
 		s.Attributes["created_at"] = a
 	}
 
-	if a, ok := s.Attributes["name"].(schema.StringAttribute); ok {
-		a.Validators = append(a.Validators, notEmpty)
-		s.Attributes["name"] = a
-	}
-
-	// The description is user-authored. Removing it from config clears it (sent
-	// as an empty string, which the API echoes back and the mapper reads as null).
+	// The API replaces gcpConfig, awsConfig and collaborators as a whole, so a value
+	// removed from the configuration must be cleared (Category A) rather than kept.
 	if a, ok := s.Attributes["description"].(schema.StringAttribute); ok {
-		a.Computed = false
-		a.Validators = append(a.Validators, notEmpty)
+		a.PlanModifiers = append(a.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 		s.Attributes["description"] = a
 	}
 
-	// Collaborators are always declared explicitly: the API adds the caller as
-	// owner when none is listed, which would make an omitted or owner-less list
-	// differ from the plan. Exactly one owner is required.
+	// The API accepts a connection without collaborators (and without an owner) but then
+	// denies everyone access to it, so collaborators are required, with exactly one owner.
 	if a, ok := s.Attributes["collaborators"].(schema.ListNestedAttribute); ok {
 		a.Required = true
 		a.Optional = false
@@ -145,78 +128,64 @@ func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.Sch
 			b.Required = true
 			b.Optional = false
 			b.Computed = false
-			b.Validators = append(b.Validators, stringvalidator.OneOf("owner", "editor", "user"))
 			a.NestedObject.Attributes["role"] = b
 		}
 		s.Attributes["collaborators"] = a
 	}
 
-	// The configuration blocks are the source of truth: the API replaces them as
-	// a whole, so removing a value from config clears it. Optional lists default
-	// to [] (the API omits empty lists); optional strings are null when unset.
 	if a, ok := s.Attributes["gcp_config"].(schema.SingleNestedAttribute); ok {
-		a.Computed = false
+		// The API rejects a configuration without these (see CMP-55336), although the spec marks them optional.
 		if b, ok := a.Attributes["level"].(schema.StringAttribute); ok {
 			b.Required = true
 			b.Optional = false
 			b.Computed = false
-			b.Validators = append(b.Validators, stringvalidator.OneOf("organization", "folder", "project"))
 			a.Attributes["level"] = b
 		}
 		if b, ok := a.Attributes["service_account_name"].(schema.StringAttribute); ok {
 			b.Required = true
 			b.Optional = false
 			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.Validators = append(b.Validators, stringvalidator.LengthAtLeast(1))
 			a.Attributes["service_account_name"] = b
 		}
 		if b, ok := a.Attributes["organization_id"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["organization_id"] = b
 		}
 		if b, ok := a.Attributes["folder_id"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["folder_id"] = b
 		}
 		if b, ok := a.Attributes["project_id"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["project_id"] = b
 		}
 		if b, ok := a.Attributes["infra_manager_project"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["infra_manager_project"] = b
 		}
 		if b, ok := a.Attributes["infra_manager_location"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["infra_manager_location"] = b
 		}
 		if b, ok := a.Attributes["infra_manager_service_account"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["infra_manager_service_account"] = b
 		}
 		if b, ok := a.Attributes["predefined_roles"].(schema.ListAttribute); ok {
-			b.Default = emptyStrings
-			b.Validators = append(b.Validators, noEmptyItems)
+			b.PlanModifiers = append(b.PlanModifiers, useNullForUnknownListWhenConfigNull())
 			a.Attributes["predefined_roles"] = b
 		}
 		if b, ok := a.Attributes["custom_role"].(schema.SingleNestedAttribute); ok {
-			b.Computed = false
+			// Not Required: the API always returns the custom role, and a Required leaf under
+			// an Optional+Computed object that is always populated would plan as unknown on
+			// every run. The config validator requires it when custom_role is set.
 			if c, ok := b.Attributes["role_id"].(schema.StringAttribute); ok {
-				c.Required = true
-				c.Optional = false
-				c.Computed = false
-				c.Validators = append(c.Validators, notEmpty)
+				c.PlanModifiers = append(c.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 				b.Attributes["role_id"] = c
 			}
 			if c, ok := b.Attributes["permissions"].(schema.ListAttribute); ok {
-				c.Default = emptyStrings
-				c.Validators = append(c.Validators, noEmptyItems)
+				c.PlanModifiers = append(c.PlanModifiers, useNullForUnknownListWhenConfigNull())
 				b.Attributes["permissions"] = c
 			}
 			a.Attributes["custom_role"] = b
@@ -225,7 +194,6 @@ func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.Sch
 	}
 
 	if a, ok := s.Attributes["aws_config"].(schema.SingleNestedAttribute); ok {
-		a.Computed = false
 		if b, ok := a.Attributes["context"].(schema.ListNestedAttribute); ok {
 			b.Required = true
 			b.Optional = false
@@ -239,8 +207,7 @@ func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.Sch
 				b.NestedObject.Attributes["account_id"] = c
 			}
 			if c, ok := b.NestedObject.Attributes["regions"].(schema.ListAttribute); ok {
-				c.Default = emptyStrings
-				c.Validators = append(c.Validators, noEmptyItems)
+				c.PlanModifiers = append(c.PlanModifiers, useNullForUnknownListWhenConfigNull())
 				b.NestedObject.Attributes["regions"] = c
 			}
 			a.Attributes["context"] = b
@@ -249,51 +216,40 @@ func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.Sch
 			b.Required = true
 			b.Optional = false
 			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.Validators = append(b.Validators, stringvalidator.LengthAtLeast(1))
 			a.Attributes["role_name"] = b
 		}
 		if b, ok := a.Attributes["management_account"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["management_account"] = b
 		}
 		if b, ok := a.Attributes["organization_root_id"].(schema.StringAttribute); ok {
-			b.Computed = false
-			b.Validators = append(b.Validators, notEmpty)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownWhenConfigNull())
 			a.Attributes["organization_root_id"] = b
 		}
 		if b, ok := a.Attributes["scope_excluded_account_ids"].(schema.ListAttribute); ok {
-			b.Default = emptyStrings
-			b.Validators = append(b.Validators, noEmptyItems)
+			b.PlanModifiers = append(b.PlanModifiers, useNullForUnknownListWhenConfigNull())
 			a.Attributes["scope_excluded_account_ids"] = b
 		}
 		if b, ok := a.Attributes["scope_explicit_account_ids"].(schema.ListAttribute); ok {
-			b.Default = emptyStrings
-			b.Validators = append(b.Validators, noEmptyItems)
+			b.PlanModifiers = append(b.PlanModifiers, useNullForUnknownListWhenConfigNull())
 			a.Attributes["scope_explicit_account_ids"] = b
 		}
 		if b, ok := a.Attributes["scope_targeted_organizational_unit_ids"].(schema.ListAttribute); ok {
-			b.Default = emptyStrings
-			b.Validators = append(b.Validators, noEmptyItems)
+			b.PlanModifiers = append(b.PlanModifiers, useNullForUnknownListWhenConfigNull())
 			a.Attributes["scope_targeted_organizational_unit_ids"] = b
 		}
 		if b, ok := a.Attributes["scope_management_account_explicit_in_scope"].(schema.BoolAttribute); ok {
-			b.Default = booldefault.StaticBool(false)
+			b.PlanModifiers = append(b.PlanModifiers, useEmptyForUnknownBoolWhenConfigNull())
 			a.Attributes["scope_management_account_explicit_in_scope"] = b
 		}
 		if b, ok := a.Attributes["permissions"].(schema.SingleNestedAttribute); ok {
-			b.Computed = false
 			if c, ok := b.Attributes["actions"].(schema.ListNestedAttribute); ok {
-				c.Default = emptyActions
-				if d, ok := c.NestedObject.Attributes["value"].(schema.StringAttribute); ok {
-					d.Validators = append(d.Validators, notEmpty)
-					c.NestedObject.Attributes["value"] = d
-				}
+				c.PlanModifiers = append(c.PlanModifiers, useNullForUnknownListWhenConfigNull())
 				b.Attributes["actions"] = c
 			}
 			if c, ok := b.Attributes["aws_managed_policies"].(schema.ListAttribute); ok {
-				c.Default = emptyStrings
-				c.Validators = append(c.Validators, noEmptyItems)
+				c.PlanModifiers = append(c.PlanModifiers, useNullForUnknownListWhenConfigNull())
 				b.Attributes["aws_managed_policies"] = c
 			}
 			a.Attributes["permissions"] = b
@@ -301,11 +257,19 @@ func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.Sch
 		s.Attributes["aws_config"] = a
 	}
 
+	// Category B: the API always returns these objects (an empty permissions object, an empty
+	// custom role), so the object itself stays when its block is removed. Its values are
+	// cleared by the modifiers above.
+	acknowledgeNotClearable(s,
+		"gcp_config.custom_role",
+		"aws_config.permissions",
+	)
+
 	setCloudflowConnectionDescriptions(s.Attributes)
 
 	s.Description = "Manages a CloudFlow connection: a GCP or AWS configuration that CloudFlow workflows use to act on a cloud account.\n\n" +
 		"Set exactly one of `gcp_config` or `aws_config`; switching between them replaces the connection. " +
-		"Updates send the complete configuration, so anything removed from the configuration block is cleared.\n\n" +
+		"Updates send the complete configuration, so a value removed from it is cleared.\n\n" +
 		"~> **Note:** The user behind the API token must be a collaborator of the connection, " +
 		"otherwise the API denies access to it right after creating it. Declare that user as the `owner`."
 	s.MarkdownDescription = s.Description
@@ -320,102 +284,46 @@ func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.Sch
 	resp.Schema = s
 }
 
-// setCloudflowConnectionDescriptions replaces the generated, API-oriented
-// descriptions with ones written for Terraform users.
+// setCloudflowConnectionDescriptions replaces the generated descriptions where
+// they would mislead a Terraform user (the spec describes the API, not the resource).
 func setCloudflowConnectionDescriptions(attrs map[string]schema.Attribute) {
-	describe := func(a map[string]schema.Attribute, descriptions map[string]string) {
-		for name, description := range descriptions {
-			switch v := a[name].(type) {
-			case schema.StringAttribute:
-				v.Description, v.MarkdownDescription = description, description
-				a[name] = v
-			case schema.BoolAttribute:
-				v.Description, v.MarkdownDescription = description, description
-				a[name] = v
-			case schema.ListAttribute:
-				v.Description, v.MarkdownDescription = description, description
-				a[name] = v
-			case schema.ListNestedAttribute:
-				v.Description, v.MarkdownDescription = description, description
-				a[name] = v
-			case schema.SingleNestedAttribute:
-				v.Description, v.MarkdownDescription = description, description
-				a[name] = v
-			default:
-				panic(fmt.Sprintf("setCloudflowConnectionDescriptions: unsupported attribute %q (%T)", name, v))
-			}
-		}
+	if a, ok := attrs["connection_id"].(schema.StringAttribute); ok {
+		a.Description = "The ID of the connection."
+		a.MarkdownDescription = a.Description
+		attrs["connection_id"] = a
 	}
-
-	describe(attrs, map[string]string{
-		"connection_id": "The ID of the connection.",
-		"name":          "Display name of the connection.",
-		"description":   "Description of the connection. Remove it to clear it.",
-		"enabled":       "Whether the connection is enabled. Defaults to `true`. Set to `false` to disable it without deleting it.",
-		"collaborators": "Users with access to the connection. Exactly one must be the `owner`, and the user behind the API token must be listed. " +
-			"Roles: `owner` can update, delete and transfer the connection, `editor` can update it, `user` has read access.",
-		"status":     "Overall status of the connection, as reported by the API.",
-		"etag":       "Current version of the connection. The provider sends it with updates and deletes to detect changes made outside Terraform.",
-		"created_at": "When the connection was created (RFC 3339, UTC).",
-		"updated_at": "When the connection was last changed (RFC 3339, UTC).",
-		"gcp_config": "GCP configuration. Set exactly one of `gcp_config` or `aws_config`. Changing between them replaces the connection.",
-		"aws_config": "AWS configuration. Set exactly one of `gcp_config` or `aws_config`. Changing between them replaces the connection.",
-	})
-
-	if gcp, ok := attrs["gcp_config"].(schema.SingleNestedAttribute); ok {
-		describe(gcp.Attributes, map[string]string{
-			"level":                         "Scope of the connection: `organization`, `folder` or `project`. The matching `organization_id`, `folder_id` or `project_id` is required.",
-			"organization_id":               "ID of the GCP organization. Required when `level` is `organization`.",
-			"folder_id":                     "ID of the GCP folder. Required when `level` is `folder`.",
-			"project_id":                    "ID of the GCP project. Required when `level` is `project`. The project must be known to the DoiT customer.",
-			"service_account_name":          "Name of the service account CloudFlow uses in the GCP project.",
-			"predefined_roles":              "Predefined GCP roles granted to the service account, such as `roles/viewer`.",
-			"custom_role":                   "Custom GCP role granted to the service account.",
-			"infra_manager_project":         "GCP project that runs Infrastructure Manager for the deployment.",
-			"infra_manager_location":        "Location of the Infrastructure Manager deployment.",
-			"infra_manager_service_account": "Service account Infrastructure Manager uses for the deployment.",
-			"status":                        "Status of the GCP configuration, as reported by the API.",
-			"deployment_command":            "Command that deploys the connection's resources in GCP, as generated by the API.",
-		})
-		if customRole, ok := gcp.Attributes["custom_role"].(schema.SingleNestedAttribute); ok {
-			describe(customRole.Attributes, map[string]string{
-				"role_id":     "ID of the custom role.",
-				"permissions": "Permissions of the custom role.",
-			})
-		}
+	if a, ok := attrs["etag"].(schema.StringAttribute); ok {
+		a.Description = "Current version of the connection. The provider sends it with updates and deletes to detect changes made outside Terraform."
+		a.MarkdownDescription = a.Description
+		attrs["etag"] = a
 	}
-
-	if aws, ok := attrs["aws_config"].(schema.SingleNestedAttribute); ok {
-		describe(aws.Attributes, map[string]string{
-			"context":                                    "AWS accounts the connection covers, with the regions for each.",
-			"role_name":                                  "Name of the IAM role CloudFlow assumes. Must be unique per AWS account.",
-			"permissions":                                "IAM permissions granted to the role. Set at least one of `actions` or `aws_managed_policies`, or remove the block.",
-			"management_account":                         "ID of the AWS organization's management account.",
-			"organization_root_id":                       "ID of the AWS organization root.",
-			"scope_excluded_account_ids":                 "AWS account IDs excluded from the connection's scope.",
-			"scope_explicit_account_ids":                 "AWS account IDs explicitly included in the connection's scope.",
-			"scope_targeted_organizational_unit_ids":     "IDs of the organizational units the connection targets.",
-			"scope_management_account_explicit_in_scope": "Whether the management account is explicitly in scope. Defaults to `false`.",
-		})
-		if awsContext, ok := aws.Attributes["context"].(schema.ListNestedAttribute); ok {
-			describe(awsContext.NestedObject.Attributes, map[string]string{
-				"account_id": "12-digit AWS account ID.",
-				"regions":    "AWS regions of the account in scope.",
-				"status":     "Deployment status of the account, as reported by the API.",
-			})
+	if a, ok := attrs["collaborators"].(schema.ListNestedAttribute); ok {
+		a.Description = "Users with access to the connection. Exactly one must be the `owner`, and the user behind the API token must be listed. " +
+			"Roles: `owner` can update, delete and transfer the connection, `editor` can update it, `user` has read access."
+		a.MarkdownDescription = a.Description
+		attrs["collaborators"] = a
+	}
+	if a, ok := attrs["gcp_config"].(schema.SingleNestedAttribute); ok {
+		a.Description = "GCP configuration. Set exactly one of `gcp_config` or `aws_config`; switching between them replaces the connection. " +
+			"Removing a value from it clears the value."
+		a.MarkdownDescription = a.Description
+		if p, ok := a.Attributes["project_id"].(schema.StringAttribute); ok {
+			p.Description = "ID of the GCP project. Required when `level` is `project`, and the project must be known to the DoiT customer."
+			p.MarkdownDescription = p.Description
+			a.Attributes["project_id"] = p
 		}
-		if permissions, ok := aws.Attributes["permissions"].(schema.SingleNestedAttribute); ok {
-			describe(permissions.Attributes, map[string]string{
-				"actions":              "Custom IAM actions granted to the role.",
-				"aws_managed_policies": "ARNs of AWS-managed policies attached to the role.",
-			})
-			if actions, ok := permissions.Attributes["actions"].(schema.ListNestedAttribute); ok {
-				describe(actions.NestedObject.Attributes, map[string]string{
-					"value": "IAM action, for example `s3:ListBucket`.",
-					"id":    "Identifier of the action, as reported by the API when it returns one.",
-				})
-			}
+		attrs["gcp_config"] = a
+	}
+	if a, ok := attrs["aws_config"].(schema.SingleNestedAttribute); ok {
+		a.Description = "AWS configuration. Set exactly one of `gcp_config` or `aws_config`; switching between them replaces the connection. " +
+			"Removing a value from it clears the value."
+		a.MarkdownDescription = a.Description
+		if p, ok := a.Attributes["role_name"].(schema.StringAttribute); ok {
+			p.Description = "Name of the IAM role CloudFlow assumes. Must be unique per AWS account."
+			p.MarkdownDescription = p.Description
+			a.Attributes["role_name"] = p
 		}
+		attrs["aws_config"] = a
 	}
 }
 

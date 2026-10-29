@@ -97,16 +97,15 @@ func (r *cloudflowConnectionResource) populateState(ctx context.Context, state *
 
 // mapCloudflowConnectionToModel maps the API response to the Terraform model.
 //
-// The API echoes unset strings as "" and unset lists as nothing; both map to the
-// representation the schema uses for "not configured" (null strings, empty
-// lists), so configuration and state agree.
+// Clearable (Category A) strings map nil to "" and lists map nil to [], which is
+// what the plan modifiers propose when a value is removed from the configuration.
 func mapCloudflowConnectionToModel(ctx context.Context, data *cloudflowConnectionData, state *cloudflowConnectionResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := data.conn
 
 	state.ConnectionId = types.StringPointerValue(c.ConnectionId)
 	state.Name = types.StringPointerValue(c.Name)
-	state.Description = cloudflowConnectionStringOrNull(c.Description)
+	state.Description = cloudflowConnectionString(c.Description)
 	// enabled defaults to true in the schema; an omitted value means enabled.
 	state.Enabled = types.BoolValue(c.Enabled == nil || *c.Enabled)
 	state.Etag = types.StringPointerValue(c.Etag)
@@ -129,7 +128,16 @@ func mapCloudflowConnectionToModel(ctx context.Context, data *cloudflowConnectio
 	return diags
 }
 
-// cloudflowConnectionStringOrNull maps nil and "" to null.
+// cloudflowConnectionString maps nil to "", the value the clearing modifier proposes.
+func cloudflowConnectionString(s *string) types.String {
+	if s == nil {
+		return types.StringValue("")
+	}
+	return types.StringValue(*s)
+}
+
+// cloudflowConnectionStringOrNull maps nil and "" to null. It is used for
+// Computed-only values, where "" and absent mean the same.
 func cloudflowConnectionStringOrNull(s *string) types.String {
 	if s == nil || *s == "" {
 		return types.StringNull()
@@ -151,7 +159,7 @@ func cloudflowConnectionTime(t *time.Time) types.String {
 func cloudflowConnectionStringList(ctx context.Context, values *[]string) (types.List, diag.Diagnostics) {
 	items := []string{}
 	if values != nil {
-		items = *values
+		items = append(items, *values...)
 	}
 	return types.ListValueFrom(ctx, types.StringType, items)
 }
@@ -238,8 +246,8 @@ func buildCloudflowConnectionAwsConfig(ctx context.Context, c *models.CloudflowC
 		resource_cloudflow_connection.AwsConfigValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
 			"context":                    contextList,
-			"management_account":         cloudflowConnectionStringOrNull(aws.ManagementAccount),
-			"organization_root_id":       cloudflowConnectionStringOrNull(aws.OrganizationRootId),
+			"management_account":         cloudflowConnectionString(aws.ManagementAccount),
+			"organization_root_id":       cloudflowConnectionString(aws.OrganizationRootId),
 			"permissions":                permissions,
 			"role_name":                  types.StringPointerValue(aws.RoleName),
 			"scope_excluded_account_ids": excluded,
@@ -253,8 +261,8 @@ func buildCloudflowConnectionAwsConfig(ctx context.Context, c *models.CloudflowC
 }
 
 // buildCloudflowConnectionPermissions maps the permissions object. The API always
-// returns the object, empty when nothing is granted; an empty one maps to null so
-// that omitting the block in configuration stays stable.
+// returns it, empty when nothing is granted, so it is always present in state.
+// The managed policies come from the raw response body.
 func buildCloudflowConnectionPermissions(ctx context.Context, p *models.CloudflowConnectionAwsConfigAllOf1Permissions, managedPolicies []string) (resource_cloudflow_connection.PermissionsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -269,10 +277,6 @@ func buildCloudflowConnectionPermissions(ctx context.Context, p *models.Cloudflo
 			diags.Append(d...)
 			actions = append(actions, v)
 		}
-	}
-
-	if len(actions) == 0 && len(managedPolicies) == 0 {
-		return resource_cloudflow_connection.NewPermissionsValueNull(), diags
 	}
 
 	actionList, d := types.ListValueFrom(ctx, resource_cloudflow_connection.ActionsValue{}.Type(ctx), actions)
@@ -307,35 +311,37 @@ func buildCloudflowConnectionGcpConfig(ctx context.Context, c *models.CloudflowC
 	predefinedRoles, d := cloudflowConnectionStringList(ctx, gcp.PredefinedRoles)
 	diags.Append(d...)
 
-	// The API reports an unset custom role as {"roleId": ""}.
-	customRole := resource_cloudflow_connection.NewCustomRoleValueNull()
-	if cr := gcp.CustomRole; cr != nil && ((cr.RoleId != nil && *cr.RoleId != "") || (cr.Permissions != nil && len(*cr.Permissions) > 0)) {
-		permissions, permDiags := cloudflowConnectionStringList(ctx, cr.Permissions)
-		diags.Append(permDiags...)
-		var roleDiags diag.Diagnostics
-		customRole, roleDiags = resource_cloudflow_connection.NewCustomRoleValue(
-			resource_cloudflow_connection.CustomRoleValue{}.AttributeTypes(ctx),
-			map[string]attr.Value{
-				"permissions": permissions,
-				"role_id":     cloudflowConnectionStringOrNull(cr.RoleId),
-			},
-		)
-		diags.Append(roleDiags...)
+	// The API always returns the custom role, as {"roleId": ""} when none is set.
+	roleID := types.StringValue("")
+	var rolePermissions *[]string
+	if cr := gcp.CustomRole; cr != nil {
+		roleID = cloudflowConnectionString(cr.RoleId)
+		rolePermissions = cr.Permissions
 	}
+	customRolePermissions, d := cloudflowConnectionStringList(ctx, rolePermissions)
+	diags.Append(d...)
+	customRole, d := resource_cloudflow_connection.NewCustomRoleValue(
+		resource_cloudflow_connection.CustomRoleValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"permissions": customRolePermissions,
+			"role_id":     roleID,
+		},
+	)
+	diags.Append(d...)
 
 	value, d := resource_cloudflow_connection.NewGcpConfigValue(
 		resource_cloudflow_connection.GcpConfigValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
 			"custom_role":                   customRole,
 			"deployment_command":            cloudflowConnectionStringOrNull(gcp.DeploymentCommand),
-			"folder_id":                     cloudflowConnectionStringOrNull(gcp.FolderId),
-			"infra_manager_location":        cloudflowConnectionStringOrNull(gcp.InfraManagerLocation),
-			"infra_manager_project":         cloudflowConnectionStringOrNull(gcp.InfraManagerProject),
-			"infra_manager_service_account": cloudflowConnectionStringOrNull(gcp.InfraManagerServiceAccount),
+			"folder_id":                     cloudflowConnectionString(gcp.FolderId),
+			"infra_manager_location":        cloudflowConnectionString(gcp.InfraManagerLocation),
+			"infra_manager_project":         cloudflowConnectionString(gcp.InfraManagerProject),
+			"infra_manager_service_account": cloudflowConnectionString(gcp.InfraManagerServiceAccount),
 			"level":                         level,
-			"organization_id":               cloudflowConnectionStringOrNull(gcp.OrganizationId),
+			"organization_id":               cloudflowConnectionString(gcp.OrganizationId),
 			"predefined_roles":              predefinedRoles,
-			"project_id":                    cloudflowConnectionStringOrNull(gcp.ProjectId),
+			"project_id":                    cloudflowConnectionString(gcp.ProjectId),
 			"service_account_name":          types.StringPointerValue(gcp.ServiceAccountName),
 			"status":                        cloudflowConnectionStringOrNull(gcp.Status),
 		},
@@ -370,17 +376,23 @@ func overlayCloudflowConnectionComputedFields(ctx context.Context, data *cloudfl
 		plan.Status = resolved.Status //nolint:overlaycheck // guarded to avoid inconsistent result on Update
 	}
 
-	// Phase 3: Nested objects with Computed-only members.
-	// gcp_config and aws_config are Optional objects with Computed-only members;
-	// the sub-overlays touch only those members, never the configured values.
-	if !plan.GcpConfig.IsNull() && !plan.GcpConfig.IsUnknown() {
-		overlayCloudflowConnectionGcpConfig(&resolved.GcpConfig, &plan.GcpConfig) //nolint:overlaycheck // Optional object: sub-overlay only fills its Computed-only members
-	}
-	if !plan.AwsConfig.IsNull() && !plan.AwsConfig.IsUnknown() {
-		diags.Append(overlayCloudflowConnectionAwsConfig(ctx, &resolved.AwsConfig, &plan.AwsConfig)...) //nolint:overlaycheck // Optional object: sub-overlay only fills its Computed-only members
+	// Phase 3: Optional+Computed fields, resolved only when unknown.
+	if plan.Description.IsUnknown() {
+		plan.Description = resolved.Description
 	}
 
-	// name, description, enabled, collaborators: Required, Optional or defaulted — never touch.
+	if !plan.GcpConfig.IsNull() && !plan.GcpConfig.IsUnknown() {
+		overlayCloudflowConnectionGcpConfig(&resolved.GcpConfig, &plan.GcpConfig)
+	} else if plan.GcpConfig.IsUnknown() {
+		plan.GcpConfig = resolved.GcpConfig
+	}
+	if !plan.AwsConfig.IsNull() && !plan.AwsConfig.IsUnknown() {
+		diags.Append(overlayCloudflowConnectionAwsConfig(ctx, &resolved.AwsConfig, &plan.AwsConfig)...)
+	} else if plan.AwsConfig.IsUnknown() {
+		plan.AwsConfig = resolved.AwsConfig
+	}
+
+	// name, enabled and collaborators: Required or defaulted — never touch.
 
 	return diags
 }
@@ -389,11 +401,49 @@ func overlayCloudflowConnectionGcpConfig(resolved, plan *resource_cloudflow_conn
 	if resolved.IsNull() || resolved.IsUnknown() {
 		return
 	}
+
 	if plan.Status.IsUnknown() {
 		plan.Status = resolved.Status //nolint:overlaycheck // guarded to avoid inconsistent result on Update
 	}
 	if plan.DeploymentCommand.IsUnknown() {
 		plan.DeploymentCommand = resolved.DeploymentCommand //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+	}
+	if plan.OrganizationId.IsUnknown() {
+		plan.OrganizationId = resolved.OrganizationId
+	}
+	if plan.FolderId.IsUnknown() {
+		plan.FolderId = resolved.FolderId
+	}
+	if plan.ProjectId.IsUnknown() {
+		plan.ProjectId = resolved.ProjectId
+	}
+	if plan.InfraManagerProject.IsUnknown() {
+		plan.InfraManagerProject = resolved.InfraManagerProject
+	}
+	if plan.InfraManagerLocation.IsUnknown() {
+		plan.InfraManagerLocation = resolved.InfraManagerLocation
+	}
+	if plan.InfraManagerServiceAccount.IsUnknown() {
+		plan.InfraManagerServiceAccount = resolved.InfraManagerServiceAccount
+	}
+	if plan.PredefinedRoles.IsUnknown() {
+		plan.PredefinedRoles = resolved.PredefinedRoles
+	}
+
+	if !plan.CustomRole.IsNull() && !plan.CustomRole.IsUnknown() {
+		overlayCloudflowConnectionCustomRole(&resolved.CustomRole, &plan.CustomRole)
+	} else if plan.CustomRole.IsUnknown() {
+		plan.CustomRole = resolved.CustomRole
+	}
+
+}
+
+func overlayCloudflowConnectionCustomRole(resolved, plan *resource_cloudflow_connection.CustomRoleValue) {
+	if plan.RoleId.IsUnknown() {
+		plan.RoleId = resolved.RoleId
+	}
+	if plan.Permissions.IsUnknown() {
+		plan.Permissions = resolved.Permissions
 	}
 }
 
@@ -403,16 +453,40 @@ func overlayCloudflowConnectionAwsConfig(ctx context.Context, resolved, plan *re
 		return diags
 	}
 
+	if plan.ManagementAccount.IsUnknown() {
+		plan.ManagementAccount = resolved.ManagementAccount
+	}
+	if plan.OrganizationRootId.IsUnknown() {
+		plan.OrganizationRootId = resolved.OrganizationRootId
+	}
+	if plan.ScopeExcludedAccountIds.IsUnknown() {
+		plan.ScopeExcludedAccountIds = resolved.ScopeExcludedAccountIds
+	}
+	if plan.ScopeExplicitAccountIds.IsUnknown() {
+		plan.ScopeExplicitAccountIds = resolved.ScopeExplicitAccountIds
+	}
+	if plan.ScopeTargetedOrganizationalUnitIds.IsUnknown() {
+		plan.ScopeTargetedOrganizationalUnitIds = resolved.ScopeTargetedOrganizationalUnitIds
+	}
+	if plan.ScopeManagementAccountExplicitInScope.IsUnknown() {
+		plan.ScopeManagementAccountExplicitInScope = resolved.ScopeManagementAccountExplicitInScope
+	}
+
 	diags.Append(overlayListElements(ctx, &resolved.Context, &plan.Context, overlayCloudflowConnectionContext)...)
 
 	if !plan.Permissions.IsNull() && !plan.Permissions.IsUnknown() {
-		diags.Append(overlayCloudflowConnectionPermissions(ctx, &resolved.Permissions, &plan.Permissions)...) //nolint:overlaycheck // Optional object: sub-overlay only fills its Computed-only members
+		diags.Append(overlayCloudflowConnectionPermissions(ctx, &resolved.Permissions, &plan.Permissions)...)
+	} else if plan.Permissions.IsUnknown() {
+		plan.Permissions = resolved.Permissions
 	}
 
 	return diags
 }
 
 func overlayCloudflowConnectionContext(_ context.Context, resolved, plan *resource_cloudflow_connection.ContextValue) diag.Diagnostics {
+	if plan.Regions.IsUnknown() {
+		plan.Regions = resolved.Regions
+	}
 	if plan.Status.IsUnknown() {
 		plan.Status = resolved.Status //nolint:overlaycheck // guarded to avoid inconsistent result on Update
 	}
@@ -425,7 +499,14 @@ func overlayCloudflowConnectionPermissions(ctx context.Context, resolved, plan *
 		return diags
 	}
 
-	diags.Append(overlayListElements(ctx, &resolved.Actions, &plan.Actions, overlayCloudflowConnectionAction)...) //nolint:overlaycheck // the list has a Default, but its elements carry a Computed-only id
+	if plan.AwsManagedPolicies.IsUnknown() {
+		plan.AwsManagedPolicies = resolved.AwsManagedPolicies
+	}
+	if !plan.Actions.IsUnknown() {
+		diags.Append(overlayListElements(ctx, &resolved.Actions, &plan.Actions, overlayCloudflowConnectionAction)...)
+	} else {
+		plan.Actions = resolved.Actions
+	}
 	return diags
 }
 
@@ -454,9 +535,7 @@ func (plan *cloudflowConnectionResourceModel) toCreateRequest(ctx context.Contex
 		AwsConfig:     parts.awsConfig,
 		GcpConfig:     parts.gcpConfig,
 	}
-	if !plan.Description.IsNull() {
-		req.Description = new(plan.Description.ValueString())
-	}
+	req.Description = cloudflowConnectionOptionalString(plan.Description)
 
 	return req, diags
 }
@@ -472,7 +551,7 @@ func (plan *cloudflowConnectionResourceModel) toUpdateRequest(ctx context.Contex
 
 	req := models.UpdateCloudflowConnectionJSONRequestBody{
 		Name:          new(plan.Name.ValueString()),
-		Description:   new(plan.Description.ValueString()),
+		Description:   new(cloudflowConnectionStringOrEmpty(plan.Description)),
 		Enabled:       new(plan.Enabled.ValueBool()),
 		Collaborators: parts.collaborators,
 		AwsConfig:     parts.awsConfig,
@@ -497,13 +576,13 @@ func (plan *cloudflowConnectionResourceModel) toRequestParts(ctx context.Context
 	}
 	parts.collaborators = &reqCollaborators
 
-	if !plan.AwsConfig.IsNull() {
+	if !plan.AwsConfig.IsNull() && !plan.AwsConfig.IsUnknown() {
 		aws, d := cloudflowConnectionAwsConfigRequest(ctx, plan.AwsConfig)
 		diags.Append(d...)
 		parts.awsConfig = aws
 	}
 
-	if !plan.GcpConfig.IsNull() {
+	if !plan.GcpConfig.IsNull() && !plan.GcpConfig.IsUnknown() {
 		gcp, d := cloudflowConnectionGcpConfigRequest(ctx, plan.GcpConfig)
 		diags.Append(d...)
 		parts.gcpConfig = gcp
@@ -512,11 +591,21 @@ func (plan *cloudflowConnectionResourceModel) toRequestParts(ctx context.Context
 	return parts, diags
 }
 
+// cloudflowConnectionOptionalString returns nil for values that are not set: null,
+// unknown (not resolved yet on create) or "" (the cleared spelling).
 func cloudflowConnectionOptionalString(v types.String) *string {
-	if v.IsNull() || v.IsUnknown() {
+	if v.IsNull() || v.IsUnknown() || v.ValueString() == "" {
 		return nil
 	}
 	return new(v.ValueString())
+}
+
+// cloudflowConnectionStringOrEmpty returns the value, or "" for null and unknown.
+func cloudflowConnectionStringOrEmpty(v types.String) string {
+	if v.IsNull() || v.IsUnknown() {
+		return ""
+	}
+	return v.ValueString()
 }
 
 func cloudflowConnectionAwsConfigRequest(ctx context.Context, aws resource_cloudflow_connection.AwsConfigValue) (*models.CloudflowAWSConfigRequest, diag.Diagnostics) {
@@ -540,7 +629,7 @@ func cloudflowConnectionAwsConfigRequest(ctx context.Context, aws resource_cloud
 		Actions:            &[]models.CloudflowAWSActionRequest{},
 		AwsManagedPolicies: &[]string{},
 	}
-	if !aws.Permissions.IsNull() {
+	if !aws.Permissions.IsNull() && !aws.Permissions.IsUnknown() {
 		var actions []resource_cloudflow_connection.ActionsValue
 		diags.Append(aws.Permissions.Actions.ElementsAs(ctx, &actions, false)...)
 		reqActions := make([]models.CloudflowAWSActionRequest, 0, len(actions))
@@ -561,6 +650,12 @@ func cloudflowConnectionAwsConfigRequest(ctx context.Context, aws resource_cloud
 	targeted, d := cloudflowConnectionStrings(ctx, aws.ScopeTargetedOrganizationalUnitIds)
 	diags.Append(d...)
 
+	// Not resolved yet on create: the API default is false.
+	managementInScope := false
+	if !aws.ScopeManagementAccountExplicitInScope.IsUnknown() {
+		managementInScope = aws.ScopeManagementAccountExplicitInScope.ValueBool()
+	}
+
 	return &models.CloudflowAWSConfigRequest{
 		Context:                               &reqContext,
 		RoleName:                              new(aws.RoleName.ValueString()),
@@ -570,7 +665,7 @@ func cloudflowConnectionAwsConfigRequest(ctx context.Context, aws resource_cloud
 		ScopeExcludedAccountIds:               &excluded,
 		ScopeExplicitAccountIds:               &explicit,
 		ScopeTargetedOrganizationalUnitIds:    &targeted,
-		ScopeManagementAccountExplicitInScope: new(aws.ScopeManagementAccountExplicitInScope.ValueBool()),
+		ScopeManagementAccountExplicitInScope: &managementInScope,
 	}, diags
 }
 
@@ -592,11 +687,12 @@ func cloudflowConnectionGcpConfigRequest(ctx context.Context, gcp resource_cloud
 		PredefinedRoles:            &roles,
 	}
 
-	if !gcp.CustomRole.IsNull() {
+	// The API reports an unset custom role as {"roleId": ""}; only a role with an ID is sent.
+	if !gcp.CustomRole.IsNull() && !gcp.CustomRole.IsUnknown() && cloudflowConnectionStringOrEmpty(gcp.CustomRole.RoleId) != "" {
 		permissions, d := cloudflowConnectionStrings(ctx, gcp.CustomRole.Permissions)
 		diags.Append(d...)
 		req.CustomRole = &models.CloudflowGCPConfigRequestCustomRole{
-			RoleId:      new(gcp.CustomRole.RoleId.ValueString()),
+			RoleId:      new(cloudflowConnectionStringOrEmpty(gcp.CustomRole.RoleId)),
 			Permissions: &permissions,
 		}
 	}
