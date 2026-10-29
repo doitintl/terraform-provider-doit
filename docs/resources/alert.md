@@ -249,6 +249,7 @@ Possible values: `value`, `percentage-change`, `forecast`
 - `currency` (String) Currency code for monetary values.
 Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
 - `data_source` (String) Data source used to query data for the alert. Affects which dimensions and metrics are available.
+When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
 Possible values: `billing`, `billing-datahub`, `kubernetes-utilization`, `tokenomics`
 - `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 - `ignore_values_range` (Attributes) Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected. (see [below for nested schema](#nestedatt--config--ignore_values_range))

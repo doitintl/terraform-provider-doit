@@ -19,30 +19,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Defines values for AlertConfigDataSource.
-const (
-	AlertConfigDataSourceBilling               AlertConfigDataSource = "billing"
-	AlertConfigDataSourceBillingDatahub        AlertConfigDataSource = "billing-datahub"
-	AlertConfigDataSourceKubernetesUtilization AlertConfigDataSource = "kubernetes-utilization"
-	AlertConfigDataSourceTokenomics            AlertConfigDataSource = "tokenomics"
-)
-
-// Valid indicates whether the value is a known member of the AlertConfigDataSource enum.
-func (e AlertConfigDataSource) Valid() bool {
-	switch e {
-	case AlertConfigDataSourceBilling:
-		return true
-	case AlertConfigDataSourceBillingDatahub:
-		return true
-	case AlertConfigDataSourceKubernetesUtilization:
-		return true
-	case AlertConfigDataSourceTokenomics:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for AlertConfigTimeInterval.
 const (
 	AlertConfigTimeIntervalDay     AlertConfigTimeInterval = "day"
@@ -355,17 +331,98 @@ func (e AllocationValueExtractionSourceType) Valid() bool {
 	}
 }
 
+// Defines values for AnomalyCustomerFeedbackResolution.
+const (
+	AnomalyCustomerFeedbackResolutionANOMALYCONFIRMED AnomalyCustomerFeedbackResolution = "ANOMALY_CONFIRMED"
+	AnomalyCustomerFeedbackResolutionNOTANOMALY       AnomalyCustomerFeedbackResolution = "NOT_ANOMALY"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyCustomerFeedbackResolution enum.
+func (e AnomalyCustomerFeedbackResolution) Valid() bool {
+	switch e {
+	case AnomalyCustomerFeedbackResolutionANOMALYCONFIRMED:
+		return true
+	case AnomalyCustomerFeedbackResolutionNOTANOMALY:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnomalyCustomerFeedbackReviewStatus.
+const (
+	AnomalyCustomerFeedbackReviewStatusNEEDSREVIEW AnomalyCustomerFeedbackReviewStatus = "NEEDS_REVIEW"
+	AnomalyCustomerFeedbackReviewStatusRESOLVED    AnomalyCustomerFeedbackReviewStatus = "RESOLVED"
+	AnomalyCustomerFeedbackReviewStatusUNDERREVIEW AnomalyCustomerFeedbackReviewStatus = "UNDER_REVIEW"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyCustomerFeedbackReviewStatus enum.
+func (e AnomalyCustomerFeedbackReviewStatus) Valid() bool {
+	switch e {
+	case AnomalyCustomerFeedbackReviewStatusNEEDSREVIEW:
+		return true
+	case AnomalyCustomerFeedbackReviewStatusRESOLVED:
+		return true
+	case AnomalyCustomerFeedbackReviewStatusUNDERREVIEW:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnomalyCustomerFeedbackResolutionNoteReason.
+const (
+	AnomalyCustomerFeedbackResolutionNoteReasonANOMALOUSOTHER              AnomalyCustomerFeedbackResolutionNoteReason = "ANOMALOUS_OTHER"
+	AnomalyCustomerFeedbackResolutionNoteReasonEXPECTEDCOSTSPIKE           AnomalyCustomerFeedbackResolutionNoteReason = "EXPECTED_COST_SPIKE"
+	AnomalyCustomerFeedbackResolutionNoteReasonFAULTYANOMALYDETECTIONMODEL AnomalyCustomerFeedbackResolutionNoteReason = "FAULTY_ANOMALY_DETECTION_MODEL"
+	AnomalyCustomerFeedbackResolutionNoteReasonINCORRECTDATA               AnomalyCustomerFeedbackResolutionNoteReason = "INCORRECT_DATA"
+	AnomalyCustomerFeedbackResolutionNoteReasonLOWIMPACT                   AnomalyCustomerFeedbackResolutionNoteReason = "LOW_IMPACT"
+	AnomalyCustomerFeedbackResolutionNoteReasonMISCONFIGURATION            AnomalyCustomerFeedbackResolutionNoteReason = "MISCONFIGURATION"
+	AnomalyCustomerFeedbackResolutionNoteReasonNONANOMALOUSOTHER           AnomalyCustomerFeedbackResolutionNoteReason = "NON_ANOMALOUS_OTHER"
+	AnomalyCustomerFeedbackResolutionNoteReasonSECURITYBREACH              AnomalyCustomerFeedbackResolutionNoteReason = "SECURITY_BREACH"
+	AnomalyCustomerFeedbackResolutionNoteReasonUNINTENTIONALPROVISIONING   AnomalyCustomerFeedbackResolutionNoteReason = "UNINTENTIONAL_PROVISIONING"
+)
+
+// Valid indicates whether the value is a known member of the AnomalyCustomerFeedbackResolutionNoteReason enum.
+func (e AnomalyCustomerFeedbackResolutionNoteReason) Valid() bool {
+	switch e {
+	case AnomalyCustomerFeedbackResolutionNoteReasonANOMALOUSOTHER:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonEXPECTEDCOSTSPIKE:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonFAULTYANOMALYDETECTIONMODEL:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonINCORRECTDATA:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonLOWIMPACT:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonMISCONFIGURATION:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonNONANOMALOUSOTHER:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonSECURITYBREACH:
+		return true
+	case AnomalyCustomerFeedbackResolutionNoteReasonUNINTENTIONALPROVISIONING:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AnomalyItemDeactivationReason.
 const (
-	AnomalyItemDeactivationReasonExpired  AnomalyItemDeactivationReason = "expired"
-	AnomalyItemDeactivationReasonReverted AnomalyItemDeactivationReason = "reverted"
-	AnomalyItemDeactivationReasonUnknown  AnomalyItemDeactivationReason = "unknown"
+	AnomalyItemDeactivationReasonExpired     AnomalyItemDeactivationReason = "expired"
+	AnomalyItemDeactivationReasonLessThannil AnomalyItemDeactivationReason = "<nil>"
+	AnomalyItemDeactivationReasonReverted    AnomalyItemDeactivationReason = "reverted"
+	AnomalyItemDeactivationReasonUnknown     AnomalyItemDeactivationReason = "unknown"
 )
 
 // Valid indicates whether the value is a known member of the AnomalyItemDeactivationReason enum.
 func (e AnomalyItemDeactivationReason) Valid() bool {
 	switch e {
 	case AnomalyItemDeactivationReasonExpired:
+		return true
+	case AnomalyItemDeactivationReasonLessThannil:
 		return true
 	case AnomalyItemDeactivationReasonReverted:
 		return true
@@ -396,8 +453,9 @@ func (e AnomalyItemMonitorLevel) Valid() bool {
 
 // Defines values for AnomalyItemStatus.
 const (
-	AnomalyItemStatusActive   AnomalyItemStatus = "active"
-	AnomalyItemStatusInactive AnomalyItemStatus = "inactive"
+	AnomalyItemStatusActive      AnomalyItemStatus = "active"
+	AnomalyItemStatusInactive    AnomalyItemStatus = "inactive"
+	AnomalyItemStatusLessThannil AnomalyItemStatus = "<nil>"
 )
 
 // Valid indicates whether the value is a known member of the AnomalyItemStatus enum.
@@ -406,6 +464,8 @@ func (e AnomalyItemStatus) Valid() bool {
 	case AnomalyItemStatusActive:
 		return true
 	case AnomalyItemStatusInactive:
+		return true
+	case AnomalyItemStatusLessThannil:
 		return true
 	default:
 		return false
@@ -514,39 +574,39 @@ func (e BudgetAPIPublic) Valid() bool {
 	}
 }
 
-// Defines values for BudgetCreateUpdateRequestMetric.
+// Defines values for BudgetCreateRequestMetric.
 const (
-	BudgetCreateUpdateRequestMetricAmortizedCost BudgetCreateUpdateRequestMetric = "amortized_cost"
-	BudgetCreateUpdateRequestMetricCost          BudgetCreateUpdateRequestMetric = "cost"
+	BudgetCreateRequestMetricAmortizedCost BudgetCreateRequestMetric = "amortized_cost"
+	BudgetCreateRequestMetricCost          BudgetCreateRequestMetric = "cost"
 )
 
-// Valid indicates whether the value is a known member of the BudgetCreateUpdateRequestMetric enum.
-func (e BudgetCreateUpdateRequestMetric) Valid() bool {
+// Valid indicates whether the value is a known member of the BudgetCreateRequestMetric enum.
+func (e BudgetCreateRequestMetric) Valid() bool {
 	switch e {
-	case BudgetCreateUpdateRequestMetricAmortizedCost:
+	case BudgetCreateRequestMetricAmortizedCost:
 		return true
-	case BudgetCreateUpdateRequestMetricCost:
+	case BudgetCreateRequestMetricCost:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for BudgetCreateUpdateRequestPublic.
+// Defines values for BudgetCreateRequestPublic.
 const (
-	BudgetCreateUpdateRequestPublicEditor BudgetCreateUpdateRequestPublic = "editor"
-	BudgetCreateUpdateRequestPublicOwner  BudgetCreateUpdateRequestPublic = "owner"
-	BudgetCreateUpdateRequestPublicViewer BudgetCreateUpdateRequestPublic = "viewer"
+	BudgetCreateRequestPublicEditor BudgetCreateRequestPublic = "editor"
+	BudgetCreateRequestPublicOwner  BudgetCreateRequestPublic = "owner"
+	BudgetCreateRequestPublicViewer BudgetCreateRequestPublic = "viewer"
 )
 
-// Valid indicates whether the value is a known member of the BudgetCreateUpdateRequestPublic enum.
-func (e BudgetCreateUpdateRequestPublic) Valid() bool {
+// Valid indicates whether the value is a known member of the BudgetCreateRequestPublic enum.
+func (e BudgetCreateRequestPublic) Valid() bool {
 	switch e {
-	case BudgetCreateUpdateRequestPublicEditor:
+	case BudgetCreateRequestPublicEditor:
 		return true
-	case BudgetCreateUpdateRequestPublicOwner:
+	case BudgetCreateRequestPublicOwner:
 		return true
-	case BudgetCreateUpdateRequestPublicViewer:
+	case BudgetCreateRequestPublicViewer:
 		return true
 	default:
 		return false
@@ -613,6 +673,129 @@ func (e BudgetSuggestionStatus) Valid() bool {
 	case BudgetSuggestionStatusPending:
 		return true
 	case BudgetSuggestionStatusSkippedDraft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BudgetUpdateRequestMetric.
+const (
+	BudgetUpdateRequestMetricAmortizedCost BudgetUpdateRequestMetric = "amortized_cost"
+	BudgetUpdateRequestMetricCost          BudgetUpdateRequestMetric = "cost"
+)
+
+// Valid indicates whether the value is a known member of the BudgetUpdateRequestMetric enum.
+func (e BudgetUpdateRequestMetric) Valid() bool {
+	switch e {
+	case BudgetUpdateRequestMetricAmortizedCost:
+		return true
+	case BudgetUpdateRequestMetricCost:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BudgetUpdateRequestPublic.
+const (
+	BudgetUpdateRequestPublicEditor BudgetUpdateRequestPublic = "editor"
+	BudgetUpdateRequestPublicOwner  BudgetUpdateRequestPublic = "owner"
+	BudgetUpdateRequestPublicViewer BudgetUpdateRequestPublic = "viewer"
+)
+
+// Valid indicates whether the value is a known member of the BudgetUpdateRequestPublic enum.
+func (e BudgetUpdateRequestPublic) Valid() bool {
+	switch e {
+	case BudgetUpdateRequestPublicEditor:
+		return true
+	case BudgetUpdateRequestPublicOwner:
+		return true
+	case BudgetUpdateRequestPublicViewer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsAlertConfigDataSource.
+const (
+	CloudAnalyticsAlertConfigDataSourceBilling               CloudAnalyticsAlertConfigDataSource = "billing"
+	CloudAnalyticsAlertConfigDataSourceBillingDatahub        CloudAnalyticsAlertConfigDataSource = "billing-datahub"
+	CloudAnalyticsAlertConfigDataSourceKubernetesUtilization CloudAnalyticsAlertConfigDataSource = "kubernetes-utilization"
+	CloudAnalyticsAlertConfigDataSourceTokenomics            CloudAnalyticsAlertConfigDataSource = "tokenomics"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsAlertConfigDataSource enum.
+func (e CloudAnalyticsAlertConfigDataSource) Valid() bool {
+	switch e {
+	case CloudAnalyticsAlertConfigDataSourceBilling:
+		return true
+	case CloudAnalyticsAlertConfigDataSourceBillingDatahub:
+		return true
+	case CloudAnalyticsAlertConfigDataSourceKubernetesUtilization:
+		return true
+	case CloudAnalyticsAlertConfigDataSourceTokenomics:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsBudgetDataSource.
+const (
+	CloudAnalyticsBudgetDataSourceBilling        CloudAnalyticsBudgetDataSource = "billing"
+	CloudAnalyticsBudgetDataSourceBillingDatahub CloudAnalyticsBudgetDataSource = "billing-datahub"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsBudgetDataSource enum.
+func (e CloudAnalyticsBudgetDataSource) Valid() bool {
+	switch e {
+	case CloudAnalyticsBudgetDataSourceBilling:
+		return true
+	case CloudAnalyticsBudgetDataSourceBillingDatahub:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsBudgetDataSourceReadOnly.
+const (
+	CloudAnalyticsBudgetDataSourceReadOnlyBilling        CloudAnalyticsBudgetDataSourceReadOnly = "billing"
+	CloudAnalyticsBudgetDataSourceReadOnlyBillingDatahub CloudAnalyticsBudgetDataSourceReadOnly = "billing-datahub"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsBudgetDataSourceReadOnly enum.
+func (e CloudAnalyticsBudgetDataSourceReadOnly) Valid() bool {
+	switch e {
+	case CloudAnalyticsBudgetDataSourceReadOnlyBilling:
+		return true
+	case CloudAnalyticsBudgetDataSourceReadOnlyBillingDatahub:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsExternalConfigDataSource.
+const (
+	CloudAnalyticsExternalConfigDataSourceBilling               CloudAnalyticsExternalConfigDataSource = "billing"
+	CloudAnalyticsExternalConfigDataSourceBillingDatahub        CloudAnalyticsExternalConfigDataSource = "billing-datahub"
+	CloudAnalyticsExternalConfigDataSourceBqlens                CloudAnalyticsExternalConfigDataSource = "bqlens"
+	CloudAnalyticsExternalConfigDataSourceKubernetesUtilization CloudAnalyticsExternalConfigDataSource = "kubernetes-utilization"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsExternalConfigDataSource enum.
+func (e CloudAnalyticsExternalConfigDataSource) Valid() bool {
+	switch e {
+	case CloudAnalyticsExternalConfigDataSourceBilling:
+		return true
+	case CloudAnalyticsExternalConfigDataSourceBillingDatahub:
+		return true
+	case CloudAnalyticsExternalConfigDataSourceBqlens:
+		return true
+	case CloudAnalyticsExternalConfigDataSourceKubernetesUtilization:
 		return true
 	default:
 		return false
@@ -1441,6 +1624,93 @@ func (e CommitmentTerm) Valid() bool {
 	}
 }
 
+// Defines values for ComposerProvider.
+const (
+	ComposerProviderAws               ComposerProvider = "aws"
+	ComposerProviderAzure             ComposerProvider = "azure"
+	ComposerProviderAzureAd           ComposerProvider = "azure_ad"
+	ComposerProviderGcp               ComposerProvider = "gcp"
+	ComposerProviderGeneral           ComposerProvider = "general"
+	ComposerProviderGoogleCloudSource ComposerProvider = "google_cloud_source"
+	ComposerProviderGoogleWorkspace   ComposerProvider = "google_workspace"
+	ComposerProviderK8s               ComposerProvider = "k8s"
+	ComposerProviderOci               ComposerProvider = "oci"
+	ComposerProviderVmware            ComposerProvider = "vmware"
+)
+
+// Valid indicates whether the value is a known member of the ComposerProvider enum.
+func (e ComposerProvider) Valid() bool {
+	switch e {
+	case ComposerProviderAws:
+		return true
+	case ComposerProviderAzure:
+		return true
+	case ComposerProviderAzureAd:
+		return true
+	case ComposerProviderGcp:
+		return true
+	case ComposerProviderGeneral:
+		return true
+	case ComposerProviderGoogleCloudSource:
+		return true
+	case ComposerProviderGoogleWorkspace:
+		return true
+	case ComposerProviderK8s:
+		return true
+	case ComposerProviderOci:
+		return true
+	case ComposerProviderVmware:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerRecipeSeverity.
+const (
+	ComposerRecipeSeverityCritical ComposerRecipeSeverity = "critical"
+	ComposerRecipeSeverityHigh     ComposerRecipeSeverity = "high"
+	ComposerRecipeSeverityLow      ComposerRecipeSeverity = "low"
+	ComposerRecipeSeverityMedium   ComposerRecipeSeverity = "medium"
+)
+
+// Valid indicates whether the value is a known member of the ComposerRecipeSeverity enum.
+func (e ComposerRecipeSeverity) Valid() bool {
+	switch e {
+	case ComposerRecipeSeverityCritical:
+		return true
+	case ComposerRecipeSeverityHigh:
+		return true
+	case ComposerRecipeSeverityLow:
+		return true
+	case ComposerRecipeSeverityMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerRecipeStatus.
+const (
+	ComposerRecipeStatusActive    ComposerRecipeStatus = "active"
+	ComposerRecipeStatusDismissed ComposerRecipeStatus = "dismissed"
+	ComposerRecipeStatusResolved  ComposerRecipeStatus = "resolved"
+)
+
+// Valid indicates whether the value is a known member of the ComposerRecipeStatus enum.
+func (e ComposerRecipeStatus) Valid() bool {
+	switch e {
+	case ComposerRecipeStatusActive:
+		return true
+	case ComposerRecipeStatusDismissed:
+		return true
+	case ComposerRecipeStatusResolved:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Condition.
 const (
 	ConditionForecast         Condition = "forecast"
@@ -1456,6 +1726,63 @@ func (e Condition) Valid() bool {
 	case ConditionPercentageChange:
 		return true
 	case ConditionValue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CostAnomalyAllocationsMode.
+const (
+	CostAnomalyAllocationsModeAll     CostAnomalyAllocationsMode = "all"
+	CostAnomalyAllocationsModeExclude CostAnomalyAllocationsMode = "exclude"
+	CostAnomalyAllocationsModeInclude CostAnomalyAllocationsMode = "include"
+)
+
+// Valid indicates whether the value is a known member of the CostAnomalyAllocationsMode enum.
+func (e CostAnomalyAllocationsMode) Valid() bool {
+	switch e {
+	case CostAnomalyAllocationsModeAll:
+		return true
+	case CostAnomalyAllocationsModeExclude:
+		return true
+	case CostAnomalyAllocationsModeInclude:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CostAnomalySettingsMinSeverity.
+const (
+	CostAnomalySettingsMinSeverityCritical CostAnomalySettingsMinSeverity = "critical"
+	CostAnomalySettingsMinSeverityWarning  CostAnomalySettingsMinSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the CostAnomalySettingsMinSeverity enum.
+func (e CostAnomalySettingsMinSeverity) Valid() bool {
+	switch e {
+	case CostAnomalySettingsMinSeverityCritical:
+		return true
+	case CostAnomalySettingsMinSeverityWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CostAnomalyWhenCostGrowsMatch.
+const (
+	CostAnomalyWhenCostGrowsMatchAnd CostAnomalyWhenCostGrowsMatch = "and"
+	CostAnomalyWhenCostGrowsMatchOr  CostAnomalyWhenCostGrowsMatch = "or"
+)
+
+// Valid indicates whether the value is a known member of the CostAnomalyWhenCostGrowsMatch enum.
+func (e CostAnomalyWhenCostGrowsMatch) Valid() bool {
+	switch e {
+	case CostAnomalyWhenCostGrowsMatchAnd:
+		return true
+	case CostAnomalyWhenCostGrowsMatchOr:
 		return true
 	default:
 		return false
@@ -1873,30 +2200,6 @@ func (e ExternalConfigAggregation) Valid() bool {
 	case ExternalConfigAggregationTotal:
 		return true
 	case ExternalConfigAggregationTotalOverTotal:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ExternalConfigDataSource.
-const (
-	ExternalConfigDataSourceBilling               ExternalConfigDataSource = "billing"
-	ExternalConfigDataSourceBillingDatahub        ExternalConfigDataSource = "billing-datahub"
-	ExternalConfigDataSourceBqlens                ExternalConfigDataSource = "bqlens"
-	ExternalConfigDataSourceKubernetesUtilization ExternalConfigDataSource = "kubernetes-utilization"
-)
-
-// Valid indicates whether the value is a known member of the ExternalConfigDataSource enum.
-func (e ExternalConfigDataSource) Valid() bool {
-	switch e {
-	case ExternalConfigDataSourceBilling:
-		return true
-	case ExternalConfigDataSourceBillingDatahub:
-		return true
-	case ExternalConfigDataSourceBqlens:
-		return true
-	case ExternalConfigDataSourceKubernetesUtilization:
 		return true
 	default:
 		return false
@@ -2772,15 +3075,18 @@ func (e GcpStats30dByServiceService) Valid() bool {
 
 // Defines values for GetAnomaly200ResponseDeactivationReason.
 const (
-	GetAnomaly200ResponseDeactivationReasonExpired  GetAnomaly200ResponseDeactivationReason = "expired"
-	GetAnomaly200ResponseDeactivationReasonReverted GetAnomaly200ResponseDeactivationReason = "reverted"
-	GetAnomaly200ResponseDeactivationReasonUnknown  GetAnomaly200ResponseDeactivationReason = "unknown"
+	GetAnomaly200ResponseDeactivationReasonExpired     GetAnomaly200ResponseDeactivationReason = "expired"
+	GetAnomaly200ResponseDeactivationReasonLessThannil GetAnomaly200ResponseDeactivationReason = "<nil>"
+	GetAnomaly200ResponseDeactivationReasonReverted    GetAnomaly200ResponseDeactivationReason = "reverted"
+	GetAnomaly200ResponseDeactivationReasonUnknown     GetAnomaly200ResponseDeactivationReason = "unknown"
 )
 
 // Valid indicates whether the value is a known member of the GetAnomaly200ResponseDeactivationReason enum.
 func (e GetAnomaly200ResponseDeactivationReason) Valid() bool {
 	switch e {
 	case GetAnomaly200ResponseDeactivationReasonExpired:
+		return true
+	case GetAnomaly200ResponseDeactivationReasonLessThannil:
 		return true
 	case GetAnomaly200ResponseDeactivationReasonReverted:
 		return true
@@ -2811,8 +3117,9 @@ func (e GetAnomaly200ResponseMonitorLevel) Valid() bool {
 
 // Defines values for GetAnomaly200ResponseStatus.
 const (
-	GetAnomaly200ResponseStatusActive   GetAnomaly200ResponseStatus = "active"
-	GetAnomaly200ResponseStatusInactive GetAnomaly200ResponseStatus = "inactive"
+	GetAnomaly200ResponseStatusActive      GetAnomaly200ResponseStatus = "active"
+	GetAnomaly200ResponseStatusInactive    GetAnomaly200ResponseStatus = "inactive"
+	GetAnomaly200ResponseStatusLessThannil GetAnomaly200ResponseStatus = "<nil>"
 )
 
 // Valid indicates whether the value is a known member of the GetAnomaly200ResponseStatus enum.
@@ -2821,6 +3128,8 @@ func (e GetAnomaly200ResponseStatus) Valid() bool {
 	case GetAnomaly200ResponseStatusActive:
 		return true
 	case GetAnomaly200ResponseStatusInactive:
+		return true
+	case GetAnomaly200ResponseStatusLessThannil:
 		return true
 	default:
 		return false
@@ -2871,14 +3180,17 @@ func (e GetAsyncOperationResults200ResponseResultMlFeatures) Valid() bool {
 
 // Defines values for GetInvoice200ResponseStatus.
 const (
-	GetInvoice200ResponseStatusOPEN    GetInvoice200ResponseStatus = "OPEN"
-	GetInvoice200ResponseStatusPAID    GetInvoice200ResponseStatus = "PAID"
-	GetInvoice200ResponseStatusPASTDUE GetInvoice200ResponseStatus = "PAST DUE"
+	GetInvoice200ResponseStatusCANCELED GetInvoice200ResponseStatus = "CANCELED"
+	GetInvoice200ResponseStatusOPEN     GetInvoice200ResponseStatus = "OPEN"
+	GetInvoice200ResponseStatusPAID     GetInvoice200ResponseStatus = "PAID"
+	GetInvoice200ResponseStatusPASTDUE  GetInvoice200ResponseStatus = "PAST DUE"
 )
 
 // Valid indicates whether the value is a known member of the GetInvoice200ResponseStatus enum.
 func (e GetInvoice200ResponseStatus) Valid() bool {
 	switch e {
+	case GetInvoice200ResponseStatusCANCELED:
+		return true
 	case GetInvoice200ResponseStatusOPEN:
 		return true
 	case GetInvoice200ResponseStatusPAID:
@@ -3000,14 +3312,17 @@ func (e InvitedUserBodyStatus) Valid() bool {
 
 // Defines values for InvoiceListItemStatus.
 const (
-	InvoiceListItemStatusOPEN    InvoiceListItemStatus = "OPEN"
-	InvoiceListItemStatusPAID    InvoiceListItemStatus = "PAID"
-	InvoiceListItemStatusPASTDUE InvoiceListItemStatus = "PAST DUE"
+	InvoiceListItemStatusCANCELED InvoiceListItemStatus = "CANCELED"
+	InvoiceListItemStatusOPEN     InvoiceListItemStatus = "OPEN"
+	InvoiceListItemStatusPAID     InvoiceListItemStatus = "PAID"
+	InvoiceListItemStatusPASTDUE  InvoiceListItemStatus = "PAST DUE"
 )
 
 // Valid indicates whether the value is a known member of the InvoiceListItemStatus enum.
 func (e InvoiceListItemStatus) Valid() bool {
 	switch e {
+	case InvoiceListItemStatusCANCELED:
+		return true
 	case InvoiceListItemStatusOPEN:
 		return true
 	case InvoiceListItemStatusPAID:
@@ -3211,6 +3526,66 @@ func (e NotificationEventChannel) Valid() bool {
 	}
 }
 
+// Defines values for PatchCostAnomalyAllocationsMode.
+const (
+	PatchCostAnomalyAllocationsModeAll     PatchCostAnomalyAllocationsMode = "all"
+	PatchCostAnomalyAllocationsModeExclude PatchCostAnomalyAllocationsMode = "exclude"
+	PatchCostAnomalyAllocationsModeInclude PatchCostAnomalyAllocationsMode = "include"
+)
+
+// Valid indicates whether the value is a known member of the PatchCostAnomalyAllocationsMode enum.
+func (e PatchCostAnomalyAllocationsMode) Valid() bool {
+	switch e {
+	case PatchCostAnomalyAllocationsModeAll:
+		return true
+	case PatchCostAnomalyAllocationsModeExclude:
+		return true
+	case PatchCostAnomalyAllocationsModeInclude:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PatchCostAnomalySettingsMinSeverity.
+const (
+	PatchCostAnomalySettingsMinSeverityCritical PatchCostAnomalySettingsMinSeverity = "critical"
+	PatchCostAnomalySettingsMinSeverityWarning  PatchCostAnomalySettingsMinSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the PatchCostAnomalySettingsMinSeverity enum.
+func (e PatchCostAnomalySettingsMinSeverity) Valid() bool {
+	switch e {
+	case PatchCostAnomalySettingsMinSeverityCritical:
+		return true
+	case PatchCostAnomalySettingsMinSeverityWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PatchCostAnomalyWhenCostGrowsMatch.
+const (
+	PatchCostAnomalyWhenCostGrowsMatchAnd         PatchCostAnomalyWhenCostGrowsMatch = "and"
+	PatchCostAnomalyWhenCostGrowsMatchLessThannil PatchCostAnomalyWhenCostGrowsMatch = "<nil>"
+	PatchCostAnomalyWhenCostGrowsMatchOr          PatchCostAnomalyWhenCostGrowsMatch = "or"
+)
+
+// Valid indicates whether the value is a known member of the PatchCostAnomalyWhenCostGrowsMatch enum.
+func (e PatchCostAnomalyWhenCostGrowsMatch) Valid() bool {
+	switch e {
+	case PatchCostAnomalyWhenCostGrowsMatchAnd:
+		return true
+	case PatchCostAnomalyWhenCostGrowsMatchLessThannil:
+		return true
+	case PatchCostAnomalyWhenCostGrowsMatchOr:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReportType.
 const (
 	ReportTypeCustom ReportType = "custom"
@@ -3252,14 +3627,17 @@ func (e ResourcePermissionRole) Valid() bool {
 
 // Defines values for ResourcePermissionsResponsePublic.
 const (
-	ResourcePermissionsResponsePublicEditor ResourcePermissionsResponsePublic = "editor"
-	ResourcePermissionsResponsePublicViewer ResourcePermissionsResponsePublic = "viewer"
+	ResourcePermissionsResponsePublicEditor      ResourcePermissionsResponsePublic = "editor"
+	ResourcePermissionsResponsePublicLessThannil ResourcePermissionsResponsePublic = "<nil>"
+	ResourcePermissionsResponsePublicViewer      ResourcePermissionsResponsePublic = "viewer"
 )
 
 // Valid indicates whether the value is a known member of the ResourcePermissionsResponsePublic enum.
 func (e ResourcePermissionsResponsePublic) Valid() bool {
 	switch e {
 	case ResourcePermissionsResponsePublicEditor:
+		return true
+	case ResourcePermissionsResponsePublicLessThannil:
 		return true
 	case ResourcePermissionsResponsePublicViewer:
 		return true
@@ -3654,17 +4032,18 @@ func (e UpdateDatahubDatasetRequestBodyLogoName) Valid() bool {
 
 // Defines values for UpdateLabelRequestColor.
 const (
-	UpdateLabelRequestColorApricot    UpdateLabelRequestColor = "apricot"
-	UpdateLabelRequestColorBlue       UpdateLabelRequestColor = "blue"
-	UpdateLabelRequestColorLavender   UpdateLabelRequestColor = "lavender"
-	UpdateLabelRequestColorLime       UpdateLabelRequestColor = "lime"
-	UpdateLabelRequestColorMint       UpdateLabelRequestColor = "mint"
-	UpdateLabelRequestColorPurple     UpdateLabelRequestColor = "purple"
-	UpdateLabelRequestColorRosePink   UpdateLabelRequestColor = "rosePink"
-	UpdateLabelRequestColorSkyBlue    UpdateLabelRequestColor = "skyBlue"
-	UpdateLabelRequestColorSlateGrey  UpdateLabelRequestColor = "slateGrey"
-	UpdateLabelRequestColorSoftYellow UpdateLabelRequestColor = "softYellow"
-	UpdateLabelRequestColorTeal       UpdateLabelRequestColor = "teal"
+	UpdateLabelRequestColorApricot     UpdateLabelRequestColor = "apricot"
+	UpdateLabelRequestColorBlue        UpdateLabelRequestColor = "blue"
+	UpdateLabelRequestColorLavender    UpdateLabelRequestColor = "lavender"
+	UpdateLabelRequestColorLessThannil UpdateLabelRequestColor = "<nil>"
+	UpdateLabelRequestColorLime        UpdateLabelRequestColor = "lime"
+	UpdateLabelRequestColorMint        UpdateLabelRequestColor = "mint"
+	UpdateLabelRequestColorPurple      UpdateLabelRequestColor = "purple"
+	UpdateLabelRequestColorRosePink    UpdateLabelRequestColor = "rosePink"
+	UpdateLabelRequestColorSkyBlue     UpdateLabelRequestColor = "skyBlue"
+	UpdateLabelRequestColorSlateGrey   UpdateLabelRequestColor = "slateGrey"
+	UpdateLabelRequestColorSoftYellow  UpdateLabelRequestColor = "softYellow"
+	UpdateLabelRequestColorTeal        UpdateLabelRequestColor = "teal"
 )
 
 // Valid indicates whether the value is a known member of the UpdateLabelRequestColor enum.
@@ -3675,6 +4054,8 @@ func (e UpdateLabelRequestColor) Valid() bool {
 	case UpdateLabelRequestColorBlue:
 		return true
 	case UpdateLabelRequestColorLavender:
+		return true
+	case UpdateLabelRequestColorLessThannil:
 		return true
 	case UpdateLabelRequestColorLime:
 		return true
@@ -3699,14 +4080,17 @@ func (e UpdateLabelRequestColor) Valid() bool {
 
 // Defines values for UpdateResourcePermissionRequestBodyPublic.
 const (
-	UpdateResourcePermissionRequestBodyPublicEditor UpdateResourcePermissionRequestBodyPublic = "editor"
-	UpdateResourcePermissionRequestBodyPublicViewer UpdateResourcePermissionRequestBodyPublic = "viewer"
+	UpdateResourcePermissionRequestBodyPublicEditor      UpdateResourcePermissionRequestBodyPublic = "editor"
+	UpdateResourcePermissionRequestBodyPublicLessThannil UpdateResourcePermissionRequestBodyPublic = "<nil>"
+	UpdateResourcePermissionRequestBodyPublicViewer      UpdateResourcePermissionRequestBodyPublic = "viewer"
 )
 
 // Valid indicates whether the value is a known member of the UpdateResourcePermissionRequestBodyPublic enum.
 func (e UpdateResourcePermissionRequestBodyPublic) Valid() bool {
 	switch e {
 	case UpdateResourcePermissionRequestBodyPublicEditor:
+		return true
+	case UpdateResourcePermissionRequestBodyPublicLessThannil:
 		return true
 	case UpdateResourcePermissionRequestBodyPublicViewer:
 		return true
@@ -3949,6 +4333,21 @@ func (e UserListItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for UserNotificationEmailDestinationType.
+const (
+	UserNotificationEmailDestinationTypeEmail UserNotificationEmailDestinationType = "email"
+)
+
+// Valid indicates whether the value is a known member of the UserNotificationEmailDestinationType enum.
+func (e UserNotificationEmailDestinationType) Valid() bool {
+	switch e {
+	case UserNotificationEmailDestinationTypeEmail:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WidgetType.
 const (
 	WidgetTypeCustom WidgetType = "custom"
@@ -3994,6 +4393,90 @@ const (
 func (e WidgetKind) Valid() bool {
 	switch e {
 	case WidgetKindMonetaryMetric:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerRecipeSortBy.
+const (
+	ComposerRecipeSortByActiveResultsCount ComposerRecipeSortBy = "active_results_count"
+	ComposerRecipeSortByDetectionTime      ComposerRecipeSortBy = "detection_time"
+	ComposerRecipeSortBySeverity           ComposerRecipeSortBy = "severity"
+	ComposerRecipeSortByTitle              ComposerRecipeSortBy = "title"
+	ComposerRecipeSortByTotalResultsCount  ComposerRecipeSortBy = "total_results_count"
+)
+
+// Valid indicates whether the value is a known member of the ComposerRecipeSortBy enum.
+func (e ComposerRecipeSortBy) Valid() bool {
+	switch e {
+	case ComposerRecipeSortByActiveResultsCount:
+		return true
+	case ComposerRecipeSortByDetectionTime:
+		return true
+	case ComposerRecipeSortBySeverity:
+		return true
+	case ComposerRecipeSortByTitle:
+		return true
+	case ComposerRecipeSortByTotalResultsCount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerResultSortBy.
+const (
+	ComposerResultSortByAccountId                                           ComposerResultSortBy = "account_id"
+	ComposerResultSortByCostEstimationPotentialFreedCommitments             ComposerResultSortBy = "cost_estimation_potential_freed_commitments"
+	ComposerResultSortByCostEstimationPotentialIncreasedCommitmentsRequired ComposerResultSortBy = "cost_estimation_potential_increased_commitments_required"
+	ComposerResultSortByCostEstimationPotentialIncreasedCosts               ComposerResultSortBy = "cost_estimation_potential_increased_costs"
+	ComposerResultSortByCostEstimationPotentialSavings                      ComposerResultSortBy = "cost_estimation_potential_savings"
+	ComposerResultSortByDetectionTime                                       ComposerResultSortBy = "detection_time"
+	ComposerResultSortByRegion                                              ComposerResultSortBy = "region"
+	ComposerResultSortByResolvedTime                                        ComposerResultSortBy = "resolved_time"
+	ComposerResultSortByResourceClass                                       ComposerResultSortBy = "resource_class"
+)
+
+// Valid indicates whether the value is a known member of the ComposerResultSortBy enum.
+func (e ComposerResultSortBy) Valid() bool {
+	switch e {
+	case ComposerResultSortByAccountId:
+		return true
+	case ComposerResultSortByCostEstimationPotentialFreedCommitments:
+		return true
+	case ComposerResultSortByCostEstimationPotentialIncreasedCommitmentsRequired:
+		return true
+	case ComposerResultSortByCostEstimationPotentialIncreasedCosts:
+		return true
+	case ComposerResultSortByCostEstimationPotentialSavings:
+		return true
+	case ComposerResultSortByDetectionTime:
+		return true
+	case ComposerResultSortByRegion:
+		return true
+	case ComposerResultSortByResolvedTime:
+		return true
+	case ComposerResultSortByResourceClass:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ComposerSortOrder.
+const (
+	ComposerSortOrderAsc  ComposerSortOrder = "asc"
+	ComposerSortOrderDesc ComposerSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ComposerSortOrder enum.
+func (e ComposerSortOrder) Valid() bool {
+	switch e {
+	case ComposerSortOrderAsc:
+		return true
+	case ComposerSortOrderDesc:
 		return true
 	default:
 		return false
@@ -4272,20 +4755,20 @@ func (e ListCommitmentsParamsSortOrder) Valid() bool {
 
 // Defines values for ListDimensionsParamsSortBy.
 const (
-	ListDimensionsParamsSortByKey       ListDimensionsParamsSortBy = "key"
-	ListDimensionsParamsSortByLabel     ListDimensionsParamsSortBy = "label"
-	ListDimensionsParamsSortByTimestamp ListDimensionsParamsSortBy = "timestamp"
-	ListDimensionsParamsSortByType      ListDimensionsParamsSortBy = "type"
+	ListDimensionsParamsSortById    ListDimensionsParamsSortBy = "id"
+	ListDimensionsParamsSortByKey   ListDimensionsParamsSortBy = "key"
+	ListDimensionsParamsSortByLabel ListDimensionsParamsSortBy = "label"
+	ListDimensionsParamsSortByType  ListDimensionsParamsSortBy = "type"
 )
 
 // Valid indicates whether the value is a known member of the ListDimensionsParamsSortBy enum.
 func (e ListDimensionsParamsSortBy) Valid() bool {
 	switch e {
+	case ListDimensionsParamsSortById:
+		return true
 	case ListDimensionsParamsSortByKey:
 		return true
 	case ListDimensionsParamsSortByLabel:
-		return true
-	case ListDimensionsParamsSortByTimestamp:
 		return true
 	case ListDimensionsParamsSortByType:
 		return true
@@ -4359,6 +4842,7 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 
 // Defines values for GetAsyncOperationResultsParamsFileOutput.
 const (
+	GetAsyncOperationResultsParamsFileOutputCsv GetAsyncOperationResultsParamsFileOutput = "csv"
 	GetAsyncOperationResultsParamsFileOutputPdf GetAsyncOperationResultsParamsFileOutput = "pdf"
 	GetAsyncOperationResultsParamsFileOutputPng GetAsyncOperationResultsParamsFileOutput = "png"
 )
@@ -4366,6 +4850,8 @@ const (
 // Valid indicates whether the value is a known member of the GetAsyncOperationResultsParamsFileOutput enum.
 func (e GetAsyncOperationResultsParamsFileOutput) Valid() bool {
 	switch e {
+	case GetAsyncOperationResultsParamsFileOutputCsv:
+		return true
 	case GetAsyncOperationResultsParamsFileOutputPdf:
 		return true
 	case GetAsyncOperationResultsParamsFileOutputPng:
@@ -4567,6 +5053,108 @@ func (e ListServiceQuotasParamsCloudProvider) Valid() bool {
 	case ListServiceQuotasParamsCloudProviderAws:
 		return true
 	case ListServiceQuotasParamsCloudProviderGcp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipesParamsSortBy.
+const (
+	ListComposerRecipesParamsSortByActiveResultsCount ListComposerRecipesParamsSortBy = "active_results_count"
+	ListComposerRecipesParamsSortByDetectionTime      ListComposerRecipesParamsSortBy = "detection_time"
+	ListComposerRecipesParamsSortBySeverity           ListComposerRecipesParamsSortBy = "severity"
+	ListComposerRecipesParamsSortByTitle              ListComposerRecipesParamsSortBy = "title"
+	ListComposerRecipesParamsSortByTotalResultsCount  ListComposerRecipesParamsSortBy = "total_results_count"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipesParamsSortBy enum.
+func (e ListComposerRecipesParamsSortBy) Valid() bool {
+	switch e {
+	case ListComposerRecipesParamsSortByActiveResultsCount:
+		return true
+	case ListComposerRecipesParamsSortByDetectionTime:
+		return true
+	case ListComposerRecipesParamsSortBySeverity:
+		return true
+	case ListComposerRecipesParamsSortByTitle:
+		return true
+	case ListComposerRecipesParamsSortByTotalResultsCount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipesParamsSortOrder.
+const (
+	ListComposerRecipesParamsSortOrderAsc  ListComposerRecipesParamsSortOrder = "asc"
+	ListComposerRecipesParamsSortOrderDesc ListComposerRecipesParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipesParamsSortOrder enum.
+func (e ListComposerRecipesParamsSortOrder) Valid() bool {
+	switch e {
+	case ListComposerRecipesParamsSortOrderAsc:
+		return true
+	case ListComposerRecipesParamsSortOrderDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipeResultsParamsSortBy.
+const (
+	ListComposerRecipeResultsParamsSortByAccountId                                           ListComposerRecipeResultsParamsSortBy = "account_id"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialFreedCommitments             ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_freed_commitments"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCommitmentsRequired ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_increased_commitments_required"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCosts               ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_increased_costs"
+	ListComposerRecipeResultsParamsSortByCostEstimationPotentialSavings                      ListComposerRecipeResultsParamsSortBy = "cost_estimation_potential_savings"
+	ListComposerRecipeResultsParamsSortByDetectionTime                                       ListComposerRecipeResultsParamsSortBy = "detection_time"
+	ListComposerRecipeResultsParamsSortByRegion                                              ListComposerRecipeResultsParamsSortBy = "region"
+	ListComposerRecipeResultsParamsSortByResolvedTime                                        ListComposerRecipeResultsParamsSortBy = "resolved_time"
+	ListComposerRecipeResultsParamsSortByResourceClass                                       ListComposerRecipeResultsParamsSortBy = "resource_class"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipeResultsParamsSortBy enum.
+func (e ListComposerRecipeResultsParamsSortBy) Valid() bool {
+	switch e {
+	case ListComposerRecipeResultsParamsSortByAccountId:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialFreedCommitments:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCommitmentsRequired:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialIncreasedCosts:
+		return true
+	case ListComposerRecipeResultsParamsSortByCostEstimationPotentialSavings:
+		return true
+	case ListComposerRecipeResultsParamsSortByDetectionTime:
+		return true
+	case ListComposerRecipeResultsParamsSortByRegion:
+		return true
+	case ListComposerRecipeResultsParamsSortByResolvedTime:
+		return true
+	case ListComposerRecipeResultsParamsSortByResourceClass:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListComposerRecipeResultsParamsSortOrder.
+const (
+	ListComposerRecipeResultsParamsSortOrderAsc  ListComposerRecipeResultsParamsSortOrder = "asc"
+	ListComposerRecipeResultsParamsSortOrderDesc ListComposerRecipeResultsParamsSortOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListComposerRecipeResultsParamsSortOrder enum.
+func (e ListComposerRecipeResultsParamsSortOrder) Valid() bool {
+	switch e {
+	case ListComposerRecipeResultsParamsSortOrderAsc:
+		return true
+	case ListComposerRecipeResultsParamsSortOrderDesc:
 		return true
 	default:
 		return false
@@ -4804,7 +5392,7 @@ type AdvancedAnalysis struct {
 
 // Alert Configuration and runtime metadata of an alert.
 //
-// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
 type Alert struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
@@ -4840,7 +5428,8 @@ type AlertConfig struct {
 	Currency *Currency `json:"currency,omitempty"`
 
 	// DataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
-	DataSource *AlertConfigDataSource `json:"dataSource,omitempty"`
+	// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	DataSource *CloudAnalyticsAlertConfigDataSource `json:"dataSource,omitempty"`
 
 	// EvaluateForEach Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 	EvaluateForEach *string `json:"evaluateForEach,omitempty"`
@@ -4863,9 +5452,6 @@ type AlertConfig struct {
 	// Value The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
 	Value float64 `json:"value"`
 }
-
-// AlertConfigDataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
-type AlertConfigDataSource string
 
 // AlertConfigTimeInterval The period each evaluation looks at.
 type AlertConfigTimeInterval string
@@ -4920,7 +5506,7 @@ type AlertIgnoreValuesRange struct {
 
 // AlertListItem Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
 //
-// Example: {"config":{"condition":"value","currency":"USD","dataSource":"billing","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
+// Example: {"config":{"condition":"value","currency":"USD","evaluateForEach":"","metric":{"type":"basic","value":"cost"},"operator":"gt","scopes":[{"id":"attribution","type":"attribution","values":["PvqyGcdFcTHh7aLUdGdf"]}],"timeInterval":"month","value":500},"createTime":1678628817062,"id":"7jyrczd6CSh3M8TuQ6Qq","lastAlerted":null,"name":"fgfgh","recipients":["user1@example.com","user2@example.com"],"recipientsSlackChannels":[],"updateTime":1678628938891}
 type AlertListItem struct {
 	// Config Parameters that define when and how an alert is evaluated.
 	Config *AlertConfig `json:"config,omitempty"`
@@ -5293,6 +5879,38 @@ type AnomaliesResponseAnomalySummaryCountBySeverity struct {
 	Warning     int64 `json:"warning"`
 }
 
+// AnomalyCustomerFeedback Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.
+type AnomalyCustomerFeedback struct {
+	// Resolution Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.
+	Resolution *AnomalyCustomerFeedbackResolution `json:"resolution,omitempty"`
+
+	// ResolutionNote The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.
+	ResolutionNote *AnomalyCustomerFeedbackResolutionNote `json:"resolutionNote,omitempty"`
+
+	// ReviewStatus The anomaly's review state.
+	ReviewStatus AnomalyCustomerFeedbackReviewStatus `json:"reviewStatus"`
+
+	// UpdatedAt Time of the last review-feedback update. Absent when the anomaly was never reviewed.
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+
+	// UpdatedBy Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.
+	UpdatedBy *string `json:"updatedBy,omitempty"`
+}
+
+// AnomalyCustomerFeedbackResolution Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.
+type AnomalyCustomerFeedbackResolution string
+
+// AnomalyCustomerFeedbackReviewStatus The anomaly's review state.
+type AnomalyCustomerFeedbackReviewStatus string
+
+// AnomalyCustomerFeedbackResolutionNote The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.
+type AnomalyCustomerFeedbackResolutionNote struct {
+	Reason AnomalyCustomerFeedbackResolutionNoteReason `json:"reason"`
+}
+
+// AnomalyCustomerFeedbackResolutionNoteReason defines model for AnomalyCustomerFeedbackResolutionNote.Reason.
+type AnomalyCustomerFeedbackResolutionNoteReason string
+
 // AnomalyItem Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
 type AnomalyItem struct {
 	// Acknowledged Has the anomaly been acknowledged
@@ -5557,7 +6175,7 @@ type AsyncOperationResponseStatus string
 type AsyncRunInlineRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 }
 
@@ -5929,6 +6547,9 @@ type BudgetAPI struct {
 	Currency           Currency `json:"currency"`
 	CurrentUtilization *float64 `json:"currentUtilization,omitempty"`
 
+	// DataSource Data source used to evaluate the budget.
+	DataSource *CloudAnalyticsBudgetDataSourceReadOnly `json:"dataSource,omitempty"`
+
 	// Description Budget description.
 	Description *string `json:"description,omitempty"`
 
@@ -5984,13 +6605,8 @@ type BudgetAPI struct {
 // BudgetAPIPublic Public sharing access level for the budget.
 type BudgetAPIPublic string
 
-// BudgetCreateUpdateAlert Threshold settings for budget alerts.
-type BudgetCreateUpdateAlert struct {
-	Percentage *float64 `json:"percentage,omitempty"`
-}
-
-// BudgetCreateUpdateRequest Request body for creating or updating a budget.
-type BudgetCreateUpdateRequest struct {
+// BudgetCreateRequest Request body for creating a budget.
+type BudgetCreateRequest struct {
 	// Alerts List of up to three thresholds defined as a percentage of the amount.
 	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
 
@@ -6002,7 +6618,12 @@ type BudgetCreateUpdateRequest struct {
 	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
 
 	// Currency Currency code for monetary values.
-	Currency *Currency `json:"currency,omitempty"`
+	Currency Currency `json:"currency"`
+
+	// DataSource Data source used to evaluate the budget.
+	// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	// On update, omission preserves the saved data source.
+	DataSource *CloudAnalyticsBudgetDataSource `json:"dataSource,omitempty"`
 
 	// Description Budget description
 	Description *string `json:"description,omitempty"`
@@ -6015,11 +6636,11 @@ type BudgetCreateUpdateRequest struct {
 	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
 
 	// Metric Budget metric
-	Metric *BudgetCreateUpdateRequestMetric `json:"metric,omitempty"`
+	Metric *BudgetCreateRequestMetric `json:"metric,omitempty"`
 
 	// Name Budget Name.
-	Name   *string                          `json:"name,omitempty"`
-	Public *BudgetCreateUpdateRequestPublic `json:"public,omitempty"`
+	Name   string                     `json:"name"`
+	Public *BudgetCreateRequestPublic `json:"public,omitempty"`
 
 	// Recipients List of emails to notify when reaching alert threshold.
 	Recipients *[]string `json:"recipients,omitempty"`
@@ -6027,30 +6648,35 @@ type BudgetCreateUpdateRequest struct {
 	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
-	// Scopes The filters selected define the scope of the budget.
-	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	// Scopes The filters selected define the scope of the budget. At least one filter is required.
+	Scopes []ExternalConfigFilter `json:"scopes"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
 
 	// StartPeriod Budget start Date
-	StartPeriod *int64 `json:"startPeriod,omitempty"`
+	StartPeriod int64 `json:"startPeriod"`
 
 	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
 	TimeInterval *string `json:"timeInterval,omitempty"`
 
 	// Type budget type can be one of: ["fixed", "recurring"]
-	Type *string `json:"type,omitempty"`
+	Type string `json:"type"`
 
 	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
 	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
 }
 
-// BudgetCreateUpdateRequestMetric Budget metric
-type BudgetCreateUpdateRequestMetric string
+// BudgetCreateRequestMetric Budget metric
+type BudgetCreateRequestMetric string
 
-// BudgetCreateUpdateRequestPublic defines model for BudgetCreateUpdateRequest.Public.
-type BudgetCreateUpdateRequestPublic string
+// BudgetCreateRequestPublic defines model for BudgetCreateRequest.Public.
+type BudgetCreateRequestPublic string
+
+// BudgetCreateUpdateAlert Threshold settings for budget alerts.
+type BudgetCreateUpdateAlert struct {
+	Percentage *float64 `json:"percentage,omitempty"`
+}
 
 // BudgetListItem Summary information for a budget.
 type BudgetListItem struct {
@@ -6130,6 +6756,91 @@ type BudgetSuggestionScopeChipsItem struct {
 	Key    *string   `json:"key,omitempty"`
 	Values *[]string `json:"values,omitempty"`
 }
+
+// BudgetUpdateRequest Request body for updating a budget. Only the supplied fields change.
+type BudgetUpdateRequest struct {
+	// Alerts List of up to three thresholds defined as a percentage of the amount.
+	Alerts *[]BudgetCreateUpdateAlert `json:"alerts,omitempty"`
+
+	// Amount Budget period amount
+	// required: true(if usePrevSpend is false)
+	Amount *float64 `json:"amount,omitempty"`
+
+	// Collaborators List of permitted users to view/edit the report.
+	Collaborators *[]Collaborator `json:"collaborators,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
+
+	// DataSource Data source used to evaluate the budget.
+	// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	// On update, omission preserves the saved data source.
+	DataSource *CloudAnalyticsBudgetDataSource `json:"dataSource,omitempty"`
+
+	// Description Budget description
+	Description *string `json:"description,omitempty"`
+
+	// EndPeriod Fixed budget end date
+	// required: true(if budget type is fixed)
+	EndPeriod *int64 `json:"endPeriod,omitempty"`
+
+	// GrowthPerPeriod Periodical growth percentage in recurring budget
+	GrowthPerPeriod *float64 `json:"growthPerPeriod,omitempty"`
+
+	// Metric Budget metric
+	Metric *BudgetUpdateRequestMetric `json:"metric,omitempty"`
+
+	// Name Budget Name.
+	Name   *string                    `json:"name,omitempty"`
+	Public *BudgetUpdateRequestPublic `json:"public,omitempty"`
+
+	// Recipients List of emails to notify when reaching alert threshold.
+	Recipients *[]string `json:"recipients,omitempty"`
+
+	// RecipientsSlackChannels List of Slack channels to notify when reaching alert threshold.
+	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
+
+	// Scopes The filters selected define the scope of the budget. Omit to keep the existing scope.
+	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+
+	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
+	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
+
+	// StartPeriod Budget start Date
+	StartPeriod *int64 `json:"startPeriod,omitempty"`
+
+	// TimeInterval Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]
+	TimeInterval *string `json:"timeInterval,omitempty"`
+
+	// Type budget type can be one of: ["fixed", "recurring"]
+	Type *string `json:"type,omitempty"`
+
+	// UsePrevSpend Use the last period's spend as the target amount for recurring budgets
+	UsePrevSpend *bool `json:"usePrevSpend,omitempty"`
+}
+
+// BudgetUpdateRequestMetric Budget metric
+type BudgetUpdateRequestMetric string
+
+// BudgetUpdateRequestPublic defines model for BudgetUpdateRequest.Public.
+type BudgetUpdateRequestPublic string
+
+// CloudAnalyticsAlertConfigDataSource Data source used to query data for the alert. Affects which dimensions and metrics are available.
+// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+type CloudAnalyticsAlertConfigDataSource string
+
+// CloudAnalyticsBudgetDataSource Data source used to evaluate the budget.
+// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+// On update, omission preserves the saved data source.
+type CloudAnalyticsBudgetDataSource string
+
+// CloudAnalyticsBudgetDataSourceReadOnly Data source used to evaluate the budget.
+type CloudAnalyticsBudgetDataSourceReadOnly string
+
+// CloudAnalyticsExternalConfigDataSource Data source of the report.
+// When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+// On report update (PATCH), omission preserves the saved data source.
+type CloudAnalyticsExternalConfigDataSource string
 
 // CloudDiagramActivityItem An individual activity record within an activity group.
 type CloudDiagramActivityItem struct {
@@ -7142,7 +7853,7 @@ type CommitmentExternal struct {
 	// TotalCommitmentValue The total value of the commitment across all periods.
 	TotalCommitmentValue *float64 `json:"totalCommitmentValue,omitempty"`
 
-	// TotalCurrentAttainment The total current spend attainment across all periods.
+	// TotalCurrentAttainment The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
 	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
@@ -7209,7 +7920,7 @@ type CommitmentExternalListItem struct {
 	// TotalCommitmentValue The total value of the commitment across all periods.
 	TotalCommitmentValue *float64 `json:"totalCommitmentValue,omitempty"`
 
-	// TotalCurrentAttainment The total current spend attainment across all periods.
+	// TotalCurrentAttainment The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
 	TotalCurrentAttainment *float64 `json:"totalCurrentAttainment,omitempty"`
 
 	// TotalForecastValue The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
@@ -7227,6 +7938,9 @@ type CommitmentExternalListItemCloudProvider string
 
 // CommitmentPeriod A single period within a commitment.
 type CommitmentPeriod struct {
+	// CashAttainment This period's own attained spend, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments, excluding anything carried in from the previous period. Summed across periods it equals `totalCurrentAttainment`. To measure the period against its `commitmentValue` the way the console does, use `cashAttainment + rolloverFromPrevPeriod + shortfallRollover`; the period's remaining amount is `commitmentValue` minus that. Excess carried out to the next period is not deducted from this period.
+	CashAttainment *float64 `json:"cashAttainment,omitempty"`
+
 	// CommitmentValue The commitment value for this period.
 	CommitmentValue *float64 `json:"commitmentValue,omitempty"`
 
@@ -7246,6 +7960,12 @@ type CommitmentPeriod struct {
 
 	// MarketplaceSpend The marketplace spend within this period.
 	MarketplaceSpend *float64 `json:"marketplaceSpend,omitempty"`
+
+	// RolloverFromPrevPeriod The amount carried into this period from the previous period under the commitment's rollover terms. Positive for excess rollover, negative for shortfall rollover, 0 when nothing was carried (always 0 for the first period). amazon-web-services commitments no longer roll over, so this is 0 for them unless the commitment was last calculated before that change. Not included in `cashAttainment` or `totalCurrentAttainment`.
+	RolloverFromPrevPeriod *float64 `json:"rolloverFromPrevPeriod,omitempty"`
+
+	// ShortfallRollover The part of this period's shortfall carried forward to the next period under the commitment's shortfall rollover terms, where it appears as a negative `rolloverFromPrevPeriod`. 0 when nothing was carried forward, including while the period is still open and for the last period. The console counts this amount as met within this period. Not included in `cashAttainment` or `totalCurrentAttainment`.
+	ShortfallRollover *float64 `json:"shortfallRollover,omitempty"`
 
 	// StartDate The start date of the period.
 	//
@@ -7386,8 +8106,407 @@ type CommitmentPolicyId = string
 // CommitmentTerm Preferred or actual commitment term length for Savings Plans and related settings.
 type CommitmentTerm string
 
+// ComposerProvider Cloud provider or platform, using the Console's provider names.
+//
+// Example: aws
+type ComposerProvider string
+
+// ComposerRecipe A Composer recipe with findings in your cloud accounts. Counts and savings cover results from recently scanned accounts only.
+type ComposerRecipe struct {
+	// ActiveResultsCount Number of active results (not resolved and not snoozed). 0 when the recipe is dismissed.
+	//
+	// Example: 3
+	ActiveResultsCount int `json:"activeResultsCount"`
+
+	// AffectedResourceType Type of cloud resource the recipe's findings are on. Absent when unknown.
+	//
+	// Example: s3-bucket
+	AffectedResourceType *string `json:"affectedResourceType,omitempty"`
+
+	// Description Longer explanation of what the recipe detects. Fetched on a best-effort basis, so it can be absent even when the recipe has one.
+	//
+	// Example: S3 buckets should not grant public read access.
+	Description *string `json:"description,omitempty"`
+
+	// DetectionTime When the earliest of the recipe's results was first detected (RFC 3339, UTC). Absent when unavailable.
+	//
+	// Example: 2026-08-18T09:30:00Z
+	DetectionTime *time.Time `json:"detectionTime,omitempty"`
+
+	// EstimatedFixTimeMinutes Estimated time to fix one finding, in minutes. Absent when not estimated.
+	//
+	// Example: 15
+	EstimatedFixTimeMinutes *int `json:"estimatedFixTimeMinutes,omitempty"`
+
+	// Id Recipe ID. Use it as `recipeId` to list the recipe's results.
+	//
+	// Example: 42
+	Id int64 `json:"id"`
+
+	// IsDismissed Whether the recipe has been dismissed for your customer.
+	//
+	// Example: false
+	IsDismissed bool `json:"isDismissed"`
+
+	// Metadata Remediation guidance for the recipe. Always present; an empty object means no guidance is available. Each field is present only when the recipe has that content.
+	Metadata ComposerRecipeMetadata `json:"metadata"`
+
+	// Provider Cloud provider or platform, using the Console's provider names.
+	//
+	// Example: aws
+	Provider ComposerProvider `json:"provider"`
+
+	// ResolvedResultsCount Number of resolved results. 0 when the recipe is dismissed.
+	//
+	// Example: 2
+	ResolvedResultsCount int `json:"resolvedResultsCount"`
+
+	// Severity Severity of the recipe's results, set by the recipe's author.
+	//
+	// Example: critical
+	Severity ComposerRecipeSeverity `json:"severity"`
+
+	// SnoozedResultsCount Number of snoozed results. 0 when the recipe is dismissed.
+	//
+	// Example: 0
+	SnoozedResultsCount int `json:"snoozedResultsCount"`
+
+	// Status Recipe status, derived from its results and whether it is dismissed. Absent when unavailable.
+	//
+	// Example: active
+	Status *ComposerRecipeStatus `json:"status,omitempty"`
+
+	// Title Recipe title, as shown in the Console.
+	//
+	// Example: Publicly readable S3 bucket
+	Title string `json:"title"`
+
+	// TotalPotentialSavings Potential cost savings across the recipe's active results, as a daily amount in US dollars. A decimal string with 2 decimal places (8 for amounts below 0.01), unlike the numeric per-result `costEstimationPotentialSavings`. When no active result has an estimate, it is the total recorded on the recipe's resolved results instead. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated.
+	//
+	// Example: 120.00
+	TotalPotentialSavings *string `json:"totalPotentialSavings,omitempty"`
+
+	// TotalResultsCount Number of results in any status. 0 when the recipe is dismissed.
+	//
+	// Example: 5
+	TotalResultsCount int `json:"totalResultsCount"`
+}
+
+// ComposerRecipeSeverity Severity of the recipe's results, set by the recipe's author.
+//
+// Example: critical
+type ComposerRecipeSeverity string
+
+// ComposerRecipeStatus Recipe status, derived from its results and whether it is dismissed. Absent when unavailable.
+//
+// Example: active
+type ComposerRecipeStatus string
+
+// ComposerRecipeList One page of Composer recipes.
+type ComposerRecipeList struct {
+	// Items Recipes on this page.
+	Items []ComposerRecipe `json:"items"`
+
+	// PageToken Token for the next page. Absent on the last page.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of recipes across all pages.
+	//
+	// Example: 137
+	RowCount int64 `json:"rowCount"`
+}
+
+// ComposerRecipeMetadata Remediation guidance for the recipe. Always present; an empty object means no guidance is available. Each field is present only when the recipe has that content.
+type ComposerRecipeMetadata struct {
+	// Impacts Possible impact of applying the remediation.
+	//
+	// Example: Blocking public access may break static-site hosting.
+	Impacts *string `json:"impacts,omitempty"`
+
+	// ImportantPoints Points to consider before remediating.
+	//
+	// Example: ["Check bucket policies too."]
+	ImportantPoints *[]string `json:"importantPoints,omitempty"`
+
+	// ManualRemediation HTML describing how to remediate the finding manually.
+	//
+	// Example: <ol><li>Open the S3 console.</li></ol>
+	ManualRemediation *string `json:"manualRemediation,omitempty"`
+
+	// Reference Documentation URL for the finding.
+	//
+	// Example: https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+	Reference *string `json:"reference,omitempty"`
+}
+
+// ComposerRecipeResult One result of a Composer recipe — a finding on one affected resource.
+type ComposerRecipeResult struct {
+	// AccountId Cloud account the affected resource belongs to (for example, an AWS account ID or a Google Cloud project ID).
+	//
+	// Example: 123456789012
+	AccountId string `json:"accountId"`
+
+	// CostEstimationPotentialFreedCommitments Freed commitments — the daily amount in US dollars of commitment coverage (Savings Plans, Reserved Instances or CUDs) that acting on this result frees up for other usage. The Console **Freed commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 0
+	CostEstimationPotentialFreedCommitments *float64 `json:"costEstimationPotentialFreedCommitments,omitempty"`
+
+	// CostEstimationPotentialIncreasedCommitmentsRequired Avoidable commitments — the daily amount in US dollars of extra commitment or overlapping cost you avoid by timing the action, for example to a Reserved Instance's expiry. The Console **Avoidable commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 0
+	CostEstimationPotentialIncreasedCommitmentsRequired *float64 `json:"costEstimationPotentialIncreasedCommitmentsRequired,omitempty"`
+
+	// CostEstimationPotentialIncreasedCosts Cost avoidance — the daily amount in US dollars of a future charge (for example, extended-support fees) you prevent by acting on this result in time. The Console **Cost avoidance** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 0
+	CostEstimationPotentialIncreasedCosts *float64 `json:"costEstimationPotentialIncreasedCosts,omitempty"`
+
+	// CostEstimationPotentialSavings Potential cost savings — the daily amount in US dollars you would stop paying by acting on this result. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+	//
+	// Example: 120
+	CostEstimationPotentialSavings *float64 `json:"costEstimationPotentialSavings,omitempty"`
+
+	// DetectionTime When the result was first detected (RFC 3339, UTC).
+	//
+	// Example: 2026-08-18T09:30:00Z
+	DetectionTime time.Time `json:"detectionTime"`
+
+	// FirstFlowId ID of the Composer scan that first reported this result. Absent when unknown.
+	//
+	// Example: example-first-scan-id
+	FirstFlowId *string `json:"firstFlowId,omitempty"`
+
+	// Id Result ID.
+	//
+	// Example: 1001
+	Id int64 `json:"id"`
+
+	// IsActive Whether the result's account was scanned recently. It does not say whether the result is resolved or snoozed; use `solved` and `snoozed` for that, or the `status` filter.
+	//
+	// Example: true
+	IsActive bool `json:"isActive"`
+
+	// IssuedResourceId Identifier of the affected resource, as stored by Composer.
+	//
+	// Example: arn:aws:s3:::example-public-bucket
+	IssuedResourceId string `json:"issuedResourceId"`
+
+	// IssuedResourceName Name of the affected resource.
+	//
+	// Example: example-public-bucket
+	IssuedResourceName string `json:"issuedResourceName"`
+
+	// LastFlowId ID of the most recent Composer scan that reported this result. Absent when unknown.
+	//
+	// Example: example-latest-scan-id
+	LastFlowId *string `json:"lastFlowId,omitempty"`
+
+	// Provider Cloud provider or platform, using the Console's provider names.
+	//
+	// Example: aws
+	Provider ComposerProvider `json:"provider"`
+
+	// ProviderIdentifier Canonical cloud-provider identifier of the affected resource.
+	// - AWS: the resource's ARN when one is available, otherwise the stored identifier (for example, an EC2 instance ID).
+	// - Google Cloud: the API relative resource name (for example, `projects/my-project/zones/us-central1-a/instances/vm-1`), or the bucket name for Cloud Storage; otherwise the stored identifier.
+	// - Other providers: the provider-native identifier.
+	//
+	// `null` when no identifier is stored or it could not be resolved; resolving it never fails the request.
+	//
+	// Example: arn:aws:s3:::example-public-bucket
+	ProviderIdentifier nullable.Nullable[string] `json:"providerIdentifier"`
+
+	// Region Cloud region of the affected resource. Absent for global resources.
+	//
+	// Example: us-east-1
+	Region *string `json:"region,omitempty"`
+
+	// ResolvedTime When the result was resolved (RFC 3339, UTC). Absent while unresolved.
+	//
+	// Example: 2026-08-19T11:05:00Z
+	ResolvedTime *time.Time `json:"resolvedTime,omitempty"`
+
+	// ResourceClass Type of the affected resource. Absent when unknown.
+	//
+	// Example: s3-bucket
+	ResourceClass *string `json:"resourceClass,omitempty"`
+
+	// RuleId ID of the recipe the result belongs to. Equal to the `recipeId` path parameter.
+	//
+	// Example: 42
+	RuleId int64 `json:"ruleId"`
+
+	// Snoozed Whether the result is currently snoozed. Present only when `true`; absent means not snoozed.
+	//
+	// Example: true
+	Snoozed *bool `json:"snoozed,omitempty"`
+
+	// Solved Whether the result is resolved.
+	//
+	// Example: false
+	Solved bool `json:"solved"`
+
+	// Tags Cloud-provider tags on the affected resource, as key/value pairs. An empty object means the resource has no tags. `null` means the tags could not be resolved; resolving them never fails the request.
+	//
+	// Example: {"environment":"production","team":"platform"}
+	Tags nullable.Nullable[map[string]string] `json:"tags"`
+}
+
+// ComposerRecipeResultList One page of a Composer recipe's results.
+type ComposerRecipeResultList struct {
+	// Items Results on this page.
+	Items []ComposerRecipeResult `json:"items"`
+
+	// PageToken Token for the next page. Absent on the last page.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of results across all pages.
+	//
+	// Example: 5
+	RowCount int64 `json:"rowCount"`
+}
+
 // Condition Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 type Condition string
+
+// CostAnomalyAllocations Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET
+// /analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying
+// whether it exists elsewhere.
+//
+// `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
+// tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
+// id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
+// sort or drop entries. A duplicate id is rejected with `422`.
+type CostAnomalyAllocations struct {
+	// Ids Allocation ids, in the order sent. A read returns that same order. A duplicate id is rejected
+	// with `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.
+	//
+	//
+	// Example: ["alloc_abc","alloc_def"]
+	Ids []string `json:"ids"`
+
+	// Mode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+	// only the listed ids. `exclude` — all enabled allocations except the listed ids.
+	//
+	//
+	// Example: include
+	Mode CostAnomalyAllocationsMode `json:"mode"`
+}
+
+// CostAnomalyAllocationsMode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+// only the listed ids. `exclude` — all enabled allocations except the listed ids.
+//
+// Example: include
+type CostAnomalyAllocationsMode string
+
+// CostAnomalyRepeat Resend controls for an active cost anomaly. Omit the whole `repeat` object when neither control is
+// set. An empty object is rejected with `422`.
+type CostAnomalyRepeat struct {
+	// EveryHours Resend until the anomaly is inactive, every N hours (1–24).
+	//
+	//
+	// Example: 24
+	EveryHours *int `json:"everyHours,omitempty"`
+
+	// WhenCostGrows Resend when the anomaly's cost grows:
+	//
+	// - both `percentIncrease` and `minIncrease` present → `match` is
+	//   required (`or` or `and`)
+	// - exactly one of `percentIncrease` or `minIncrease` present → omit
+	//   `match` (percentage-only or value-only)
+	// - neither amount present → rejected with `422`
+	//
+	// `percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
+	// window is off.
+	WhenCostGrows *CostAnomalyWhenCostGrows `json:"whenCostGrows,omitempty"`
+}
+
+// CostAnomalySettings Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
+// optional resend controls.
+type CostAnomalySettings struct {
+	// Allocations Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET
+	// /analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying
+	// whether it exists elsewhere.
+	//
+	// `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
+	// tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
+	// id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
+	// sort or drop entries. A duplicate id is rejected with `422`.
+	Allocations CostAnomalyAllocations `json:"allocations"`
+
+	// MinExcessCost Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.
+	// `100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A
+	// negative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a
+	// whole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole
+	// dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+	// Responses return the amount as `"100.00"`. `0` is accepted.
+	MinExcessCost Money `json:"minExcessCost"`
+
+	// MinSeverity `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
+	// value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
+	// severity levels") and of warning both return `warning`. `critical` is stored and returned as
+	// `critical`.
+	//
+	//
+	// Example: warning
+	MinSeverity CostAnomalySettingsMinSeverity `json:"minSeverity"`
+
+	// Repeat Resend controls for an active cost anomaly. Omit the whole `repeat` object when neither control is
+	// set. An empty object is rejected with `422`.
+	Repeat *CostAnomalyRepeat `json:"repeat,omitempty"`
+}
+
+// CostAnomalySettingsMinSeverity `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
+// value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
+// severity levels") and of warning both return `warning`. `critical` is stored and returned as
+// `critical`.
+//
+// Example: warning
+type CostAnomalySettingsMinSeverity string
+
+// CostAnomalyWhenCostGrows Resend when the anomaly's cost grows:
+//
+//   - both `percentIncrease` and `minIncrease` present → `match` is
+//     required (`or` or `and`)
+//   - exactly one of `percentIncrease` or `minIncrease` present → omit
+//     `match` (percentage-only or value-only)
+//   - neither amount present → rejected with `422`
+//
+// `percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
+// window is off.
+type CostAnomalyWhenCostGrows struct {
+	// Match How to combine percent and dollar growth when both are set. Required when both amounts are present;
+	// omit when only one amount is present.
+	//
+	//
+	// Example: or
+	Match *CostAnomalyWhenCostGrowsMatch `json:"match,omitempty"`
+
+	// MinIncrease Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.
+	// `150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A
+	// negative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a
+	// whole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole
+	// dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+	// Responses return the amount as `"150.00"`.
+	MinIncrease *Money `json:"minIncrease,omitempty"`
+
+	// PercentIncrease Minimum percent cost increase that triggers a resend. `10` means 10 percent. Must be greater than 0.
+	//
+	//
+	// Example: 10
+	PercentIncrease *int `json:"percentIncrease,omitempty"`
+
+	// WithinHours Optional window in hours for the growth check (1–24).
+	//
+	// Example: 6
+	WithinHours *int `json:"withinHours,omitempty"`
+}
+
+// CostAnomalyWhenCostGrowsMatch How to combine percent and dollar growth when both are set. Required when both amounts are present;
+// omit when only one amount is present.
+//
+// Example: or
+type CostAnomalyWhenCostGrowsMatch string
 
 // CreateAccountRoleRequestBody defines model for CreateAccountRoleRequestBody.
 type CreateAccountRoleRequestBody struct {
@@ -7562,7 +8681,7 @@ type CreateLabelRequestColor string
 type CreateReportRequestBody struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -7677,6 +8796,22 @@ type CreateServiceAccountTokenResponse struct {
 //
 // Example: active
 type CreateServiceAccountTokenResponseState string
+
+// CreateUserNotificationRequest Fields of a new personal notification. No email address — the server copies the target user's email
+// as the destination. Unknown fields are rejected. `settings` must include `costAnomalies` and must
+// not include any other notification type.
+//
+// Example: {"name":"Anomaly alerts","settings":{"costAnomalies":{"allocations":{"ids":[],"mode":"all"},"minExcessCost":{"amount":"100.00","currency":"USD"},"minSeverity":"warning"}}}
+type CreateUserNotificationRequest struct {
+	// Name Display name for the new notification config.
+	//
+	// Example: Anomaly alerts
+	Name string `json:"name"`
+
+	// Settings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are
+	// rejected; omitting `costAnomalies` is rejected.
+	Settings UserNotificationSettings `json:"settings"`
+}
 
 // Currency Currency code for monetary values.
 type Currency string
@@ -7958,7 +9093,7 @@ type ExternalBudgetAlert struct {
 
 // ExternalConfig Report configuration.
 //
-// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 type ExternalConfig struct {
 	// AdvancedAnalysis Advanced analysis options. Each can be set independently.
 	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
@@ -7967,16 +9102,22 @@ type ExternalConfig struct {
 	Aggregation *ExternalConfigAggregation `json:"aggregation,omitempty"`
 
 	// Count The field to count distinct values of. Only applicable when aggregation is set to "count".
-	Count *ExternalConfigCount `json:"count,omitempty"`
+	// On PATCH, omit to preserve the existing field; send null to remove it.
+	// A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
+	Count nullable.Nullable[ExternalConfigCount] `json:"count,omitempty"`
 
 	// Currency Currency code for monetary values.
 	Currency *Currency `json:"currency,omitempty"`
 
-	// CustomTimeRange Required when the time range is set to "custom".
-	CustomTimeRange *ExternalConfigCustomTimeRange `json:"customTimeRange,omitempty"`
+	// CustomTimeRange Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+	// A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+	// Sending null while `timeRange.mode` stays "custom" is rejected.
+	CustomTimeRange nullable.Nullable[ExternalConfigCustomTimeRange] `json:"customTimeRange,omitempty"`
 
 	// DataSource Data source of the report.
-	DataSource *ExternalConfigDataSource `json:"dataSource,omitempty"`
+	// When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	// On report update (PATCH), omission preserves the saved data source.
+	DataSource *CloudAnalyticsExternalConfigDataSource `json:"dataSource,omitempty"`
 
 	// Dimensions See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).
 	Dimensions *[]Dimension `json:"dimensions,omitempty"`
@@ -8010,18 +9151,9 @@ type ExternalConfig struct {
 	// (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
 	// at most two of those three limit types — not all three. When `displayValues` is not
 	// `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
-	LimitAggregation *ExternalConfigLimitAggregation `json:"limitAggregation,omitempty"`
-
-	// LimitByChange Limit by change filter. A report may configure at most two of
-	// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
-	//
-	// Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
-	LimitByChange *ExternalLimitByChange `json:"limitByChange,omitempty"`
-
-	// MetricFilter Metric filter to limit report rows by metric value.
-	//
-	// Example: {"metric":{"type":"basic","value":"cost"},"operator":"gt","values":[50]}
-	MetricFilter *ExternalConfigMetricFilter `json:"metricFilter,omitempty"`
+	LimitAggregation *ExternalConfigLimitAggregation               `json:"limitAggregation,omitempty"`
+	LimitByChange    nullable.Nullable[ExternalLimitByChange]      `json:"limitByChange,omitempty"`
+	MetricFilter     nullable.Nullable[ExternalConfigMetricFilter] `json:"metricFilter,omitempty"`
 
 	// Metrics The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
 	Metrics *[]ExternalMetric `json:"metrics,omitempty"`
@@ -8031,10 +9163,19 @@ type ExternalConfig struct {
 	// Example: {"amount":1,"includeCurrent":false,"unit":"year"}
 	SecondaryTimeRange *TimeSettingsSecondary `json:"secondaryTimeRange,omitempty"`
 
-	// SortDimensions This option has no impact when reading reports via API.
+	// SortDimensions Orders the columns produced by `dimensions`, both in the console and in a rendered
+	// `fileOutput` export. It does not reorder the `rows` of a JSON result.
+	// `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+	// dimensions of a time series means chronologically. The default `desc` orders them by the
+	// metric instead, so a monthly report charts its priciest month first rather than in time
+	// order — set `a_to_z` for a time series you intend to export.
+	// A report with a forecast is always charted chronologically and ignores this field, and a
+	// comparative `displayValues` mode requires `a_to_z`.
 	SortDimensions *ExternalConfigSortDimensions `json:"sortDimensions,omitempty"`
 
-	// SortGroups This option has no impact when reading reports via API.
+	// SortGroups Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+	// export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+	// not reorder the `rows` of a JSON result.
 	SortGroups *ExternalConfigSortGroups `json:"sortGroups,omitempty"`
 
 	// Splits The splits to use in the report.
@@ -8054,9 +9195,6 @@ type ExternalConfig struct {
 // ExternalConfigAggregation How to aggregate data values in the report.
 type ExternalConfigAggregation string
 
-// ExternalConfigDataSource Data source of the report.
-type ExternalConfigDataSource string
-
 // ExternalConfigDisplayValues See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
 type ExternalConfigDisplayValues string
 
@@ -8066,16 +9204,27 @@ type ExternalConfigDisplayValues string
 // `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
 type ExternalConfigLimitAggregation string
 
-// ExternalConfigSortDimensions This option has no impact when reading reports via API.
+// ExternalConfigSortDimensions Orders the columns produced by `dimensions`, both in the console and in a rendered
+// `fileOutput` export. It does not reorder the `rows` of a JSON result.
+// `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+// dimensions of a time series means chronologically. The default `desc` orders them by the
+// metric instead, so a monthly report charts its priciest month first rather than in time
+// order — set `a_to_z` for a time series you intend to export.
+// A report with a forecast is always charted chronologically and ignores this field, and a
+// comparative `displayValues` mode requires `a_to_z`.
 type ExternalConfigSortDimensions string
 
-// ExternalConfigSortGroups This option has no impact when reading reports via API.
+// ExternalConfigSortGroups Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+// export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+// not reorder the `rows` of a JSON result.
 type ExternalConfigSortGroups string
 
 // ExternalConfigTimeInterval Time interval for grouping data in the report.
 type ExternalConfigTimeInterval string
 
 // ExternalConfigCount The field to count distinct values of. Only applicable when aggregation is set to "count".
+// On PATCH, omit to preserve the existing field; send null to remove it.
+// A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
 type ExternalConfigCount struct {
 	// Id The field identifier to count distinct values of.
 	Id string `json:"id"`
@@ -8087,7 +9236,9 @@ type ExternalConfigCount struct {
 // ExternalConfigCountType The metadata field type.
 type ExternalConfigCountType string
 
-// ExternalConfigCustomTimeRange Required when the time range is set to "custom".
+// ExternalConfigCustomTimeRange Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+// A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+// Sending null while `timeRange.mode` stays "custom" is rejected.
 type ExternalConfigCustomTimeRange struct {
 	// From The start timestamp of the time range in RFC3339 format.
 	//
@@ -8132,6 +9283,7 @@ type ExternalConfigFilter struct {
 type ExternalConfigFilterMode string
 
 // ExternalConfigMetricFilter Metric filter to limit report rows by metric value.
+// On PATCH, omit to preserve the existing filter; send null to remove it.
 //
 // Example: {"metric":{"type":"basic","value":"cost"},"operator":"gt","values":[50]}
 type ExternalConfigMetricFilter struct {
@@ -8241,8 +9393,18 @@ type ExternalForecastSettings struct {
 // ExternalForecastSettingsMode Forecast granularity mode.
 type ExternalForecastSettingsMode string
 
-// ExternalLimitByChange Limit by change filter. A report may configure at most two of
-// `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
+// ExternalLimitByChange Limit by change filter; a report may configure at most two of `metricFilter`,
+// `limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
+// a period-over-period delta between adjacent time buckets. With it, each row's
+// primary-range total is compared with its secondary-range total, so column dimensions
+// (`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
+// to those totals, while `group` gives every row its own change. A percentage change
+// is comparable while both periods hold the same number of buckets; an absolute change
+// is their plain difference and so scales with the bucket count. A row present in only
+// one range counts as zero there, so a percentage threshold cannot be met from zero. A
+// percentage-typed custom metric, or count aggregation, is rejected with
+// `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
+// On PATCH, omit to preserve the existing limit; send null to remove it.
 //
 // Example: {"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]}
 type ExternalLimitByChange struct {
@@ -8251,9 +9413,8 @@ type ExternalLimitByChange struct {
 	// IncludeIncompleteData When true, keeps rows whose deltas could not be evaluated.
 	IncludeIncompleteData bool `json:"includeIncompleteData"`
 
-	// Metric Metric selector used in reports and filters.
-	//
-	// Example: {"type":"basic","value":"cost"}
+	// Metric The metric the change is measured on. It must also be listed in the report's
+	// `config.metrics`; otherwise the request is rejected with a 400 and nothing is saved.
 	Metric ExternalMetric `json:"metric"`
 
 	// Operator Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
@@ -8312,7 +9473,7 @@ type ExternalRenderer string
 type ExternalReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description.
@@ -8397,7 +9558,7 @@ type ExternalSplitTargetType string
 type ExternalUpdateReport struct {
 	// Config Report configuration.
 	//
-	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dataSource":"billing","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
 	Config *ExternalConfig `json:"config,omitempty"`
 
 	// Description Report description
@@ -9082,6 +10243,9 @@ type GetAnomaly200Response struct {
 	// CostOfAnomaly The difference between the actual cost and the maximum cost in the normal range.
 	CostOfAnomaly float64 `json:"costOfAnomaly"`
 
+	// CustomerFeedback Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.
+	CustomerFeedback AnomalyCustomerFeedback `json:"customerFeedback"`
+
 	// DeactivationReason Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
 	DeactivationReason nullable.Nullable[GetAnomaly200ResponseDeactivationReason] `json:"deactivationReason,omitempty"`
 
@@ -9335,17 +10499,17 @@ type GetInvoice200Response struct {
 	// Platform Platform identifier for invoice source.
 	Platform *InvoicePlatform `json:"platform,omitempty"`
 
-	// Status Status of the invoice
+	// Status Status of the invoice. `CANCELED` takes precedence over the payment status.
 	Status *GetInvoice200ResponseStatus `json:"status,omitempty"`
 
 	// TotalAmount Total invoiced amount
 	TotalAmount *float64 `json:"totalAmount,omitempty"`
 
-	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
 	Url *string `json:"url,omitempty"`
 }
 
-// GetInvoice200ResponseStatus Status of the invoice
+// GetInvoice200ResponseStatus Status of the invoice. `CANCELED` takes precedence over the payment status.
 type GetInvoice200ResponseStatus string
 
 // GetKnownIssue200Response defines model for GetKnownIssue200Response.
@@ -9552,17 +10716,17 @@ type InvoiceListItem struct {
 	// Platform Platform identifier for invoice source.
 	Platform *InvoicePlatform `json:"platform,omitempty"`
 
-	// Status Status of the invoice
+	// Status Status of the invoice. `CANCELED` takes precedence over the payment status.
 	Status *InvoiceListItemStatus `json:"status,omitempty"`
 
 	// TotalAmount Total invoiced amount
 	TotalAmount *float64 `json:"totalAmount,omitempty"`
 
-	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+	// Url Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
 	Url *string `json:"url,omitempty"`
 }
 
-// InvoiceListItemStatus Status of the invoice
+// InvoiceListItemStatus Status of the invoice. `CANCELED` takes precedence over the payment status.
 type InvoiceListItemStatus string
 
 // InvoicePlatform Platform identifier for invoice source.
@@ -9963,6 +11127,90 @@ type Organization struct {
 
 	// Name The name of the organization
 	Name *string `json:"name,omitempty"`
+}
+
+// PatchCostAnomalyAllocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
+// the current list.
+type PatchCostAnomalyAllocations struct {
+	// Ids Replacement allocation ids when present, in the order sent. A read returns that same order. A
+	// duplicate id is rejected with `422`. Empty when `mode` is `all`. Non-empty when `mode` is
+	// `include` or `exclude`.
+	Ids *[]string `json:"ids,omitempty"`
+
+	// Mode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+	// only the listed ids. `exclude` — all enabled allocations except the listed ids.
+	Mode *PatchCostAnomalyAllocationsMode `json:"mode,omitempty"`
+}
+
+// PatchCostAnomalyAllocationsMode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+// only the listed ids. `exclude` — all enabled allocations except the listed ids.
+type PatchCostAnomalyAllocationsMode string
+
+// PatchCostAnomalyRepeat Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. To clear
+// every resend control, send `null` for `costAnomalies.repeat` itself.
+type PatchCostAnomalyRepeat struct {
+	// EveryHours Resend until the anomaly is inactive, every N hours (1–24). Send `null` to clear.
+	EveryHours nullable.Nullable[int] `json:"everyHours,omitempty"`
+
+	// WhenCostGrows Growth-based resend controls. Send `null` to clear this branch while leaving `everyHours`.
+	WhenCostGrows nullable.Nullable[PatchCostAnomalyWhenCostGrows] `json:"whenCostGrows,omitempty"`
+}
+
+// PatchCostAnomalySettings Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
+// resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
+// send a new value.
+type PatchCostAnomalySettings struct {
+	// Allocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
+	// the current list.
+	Allocations *PatchCostAnomalyAllocations `json:"allocations,omitempty"`
+
+	// MinExcessCost Minimum excess cost, as Money. Omit it to leave the current value; it cannot be cleared. `currency`
+	// must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with `422`.
+	// A fractional amount is rejected with `422` (`100.99` is not a whole number of dollars). `100` and
+	// `100.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
+	// exponents, a leading `+`, or underscores, are rejected with `422`. `0` is accepted.
+	MinExcessCost *Money `json:"minExcessCost,omitempty"`
+
+	// MinSeverity `warning` — warning and above. `critical` — critical only. A write of `all` is rejected with `422`.
+	MinSeverity *PatchCostAnomalySettingsMinSeverity `json:"minSeverity,omitempty"`
+
+	// Repeat Resend controls, or `null` to clear them all.
+	Repeat nullable.Nullable[PatchCostAnomalyRepeat] `json:"repeat,omitempty"`
+}
+
+// PatchCostAnomalySettingsMinSeverity `warning` — warning and above. `critical` — critical only. A write of `all` is rejected with `422`.
+type PatchCostAnomalySettingsMinSeverity string
+
+// PatchCostAnomalyWhenCostGrows Merge-patch for `whenCostGrows`. Omit a field to leave it; send `null` to clear `match`,
+// `percentIncrease`, `minIncrease`, or `withinHours`.
+type PatchCostAnomalyWhenCostGrows struct {
+	// Match How to combine percent and dollar growth when both are set. Send `null` to clear.
+	Match nullable.Nullable[PatchCostAnomalyWhenCostGrowsMatch] `json:"match,omitempty"`
+
+	// MinIncrease Minimum cost growth, as Money. Must be a positive whole number of dollars. Send `null` to clear.
+	// `currency` must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with
+	// `422`. A fractional amount is rejected with `422` (`150.99` is not a whole number of dollars). `150` and
+	// `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
+	// exponents, a leading `+`, or underscores, are rejected with `422`.
+	MinIncrease nullable.Nullable[Money] `json:"minIncrease,omitempty"`
+
+	// PercentIncrease Minimum percent cost increase that triggers a resend. Must be greater than 0. Send `null` to clear.
+	PercentIncrease nullable.Nullable[int] `json:"percentIncrease,omitempty"`
+
+	// WithinHours Optional window in hours (1–24). Send `null` to clear.
+	WithinHours nullable.Nullable[int] `json:"withinHours,omitempty"`
+}
+
+// PatchCostAnomalyWhenCostGrowsMatch How to combine percent and dollar growth when both are set. Send `null` to clear.
+type PatchCostAnomalyWhenCostGrowsMatch string
+
+// PatchUserNotificationSettings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies`
+// is accepted.
+type PatchUserNotificationSettings struct {
+	// CostAnomalies Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
+	// resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
+	// send a new value.
+	CostAnomalies *PatchCostAnomalySettings `json:"costAnomalies,omitempty"`
 }
 
 // PlatformAPI Platform metadata used by product listing endpoints.
@@ -10855,10 +12103,24 @@ type UpdateResourcePermissionRequestBody struct {
 	Permissions *[]ResourcePermission `json:"permissions,omitempty"`
 
 	// Public The type of permissions granted to all users in the organization for this resource.
+	//
+	// Allocations (single and group) always have at least `viewer` public access, so it cannot be cleared:
+	// - If `public` is omitted, the stored value is kept.
+	// - An empty string (`""`) is accepted for backward compatibility and is treated as `viewer`.
+	// - An explicit `null` is rejected with `400 Bad Request`.
+	//
+	// For Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).
 	Public nullable.Nullable[UpdateResourcePermissionRequestBodyPublic] `json:"public,omitempty"`
 }
 
 // UpdateResourcePermissionRequestBodyPublic The type of permissions granted to all users in the organization for this resource.
+//
+// Allocations (single and group) always have at least `viewer` public access, so it cannot be cleared:
+// - If `public` is omitted, the stored value is kept.
+// - An empty string (`""`) is accepted for backward compatibility and is treated as `viewer`.
+// - An explicit `null` is rejected with `400 Bad Request`.
+//
+// For Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).
 type UpdateResourcePermissionRequestBodyPublic string
 
 // UpdateRoleRequest Fields allowed when updating a custom role. At least one field is required.
@@ -10901,6 +12163,23 @@ type UpdateServiceAccountTokenRequest struct {
 //
 // Example: disabled
 type UpdateServiceAccountTokenRequestState string
+
+// UpdateUserNotificationRequest JSON Merge Patch (RFC 7396) for a personal notification. Omitted fields stay unchanged; nested
+// objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present.
+// Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`,
+// `percentIncrease`, and `minIncrease`.
+//
+// Example: {"settings":{"costAnomalies":{"minSeverity":"critical"}}}
+type UpdateUserNotificationRequest struct {
+	// Name Replacement display name when renaming the config.
+	//
+	// Example: Anomaly alerts (updated)
+	Name *string `json:"name,omitempty"`
+
+	// Settings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies`
+	// is accepted.
+	Settings *PatchUserNotificationSettings `json:"settings,omitempty"`
+}
 
 // UpdateUserRequest Fields allowed when updating an existing user.
 type UpdateUserRequest struct {
@@ -11040,6 +12319,79 @@ type UserListItemLanguage string
 // UserListItemStatus The status of the user (active or invited).
 type UserListItemStatus string
 
+// UserNotification Personal notification config for one user. Create and read return the full resource with the same
+// field names. Update and delete require `If-Match` against the strong `etag`.
+type UserNotification struct {
+	// CreateTime When the config was created. `null` only on a dry-run create.
+	//
+	// Example: 2026-10-01T08:00:00Z
+	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
+
+	// Destinations Server-managed destinations. Always one email entry with the target user's address.
+	//
+	//
+	// Example: [{"address":"jane.doe@example.com","type":"email"}]
+	Destinations *[]UserNotificationEmailDestination `json:"destinations,omitempty"`
+
+	// Etag Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run
+	// create.
+	//
+	//
+	// Example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+	Etag nullable.Nullable[string] `json:"etag,omitempty"`
+
+	// Id Server-assigned notification id. `null` only on a dry-run create.
+	//
+	// Example: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// Name Display name of the notification config.
+	//
+	// Example: Anomaly alerts
+	Name string `json:"name"`
+
+	// Settings Subscribed settings.
+	Settings UserNotificationSettings `json:"settings"`
+
+	// UpdateTime When the config was last changed. `null` only on a dry-run create.
+	//
+	// Example: 2026-10-01T08:00:00Z
+	UpdateTime nullable.Nullable[time.Time] `json:"updateTime,omitempty"`
+}
+
+// UserNotificationEmailDestination Server-copied email destination. The create/update body does not accept an email address; the server
+// copies the target user's email.
+type UserNotificationEmailDestination struct {
+	// Address Target user's email, copied by the server.
+	//
+	// Example: jane.doe@example.com
+	Address *openapi_types.Email `json:"address,omitempty"`
+
+	// Type Delivery channel. Personal delivery is email only.
+	Type UserNotificationEmailDestinationType `json:"type"`
+}
+
+// UserNotificationEmailDestinationType Delivery channel. Personal delivery is email only.
+type UserNotificationEmailDestinationType string
+
+// UserNotificationListResponse Unpaginated list of personal notification configs for one user.
+//
+// Example: {"items":[]}
+type UserNotificationListResponse struct {
+	// Items Notification configs for the user, ordered by `createTime` ascending, then by `id` ascending.
+	//
+	// Example: []
+	Items []UserNotification `json:"items"`
+}
+
+// UserNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are
+// rejected; omitting `costAnomalies` is rejected.
+type UserNotificationSettings struct {
+	// CostAnomalies Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
+	// optional resend controls.
+	CostAnomalies CostAnomalySettings `json:"costAnomalies"`
+}
+
 // ValidateResponse A response confirming caller's domain and email.
 type ValidateResponse struct {
 	Domain *string `json:"domain,omitempty"`
@@ -11059,9 +12411,6 @@ type Value0 = string
 
 // Value1 defines model for Value.1.
 type Value1 = float32
-
-// Value2 defines model for Value.2.
-type Value2 = int
 
 // Widget Widget metadata and its latest precomputed cached result.
 type Widget struct {
@@ -11185,6 +12534,30 @@ type BillingAccountId = string
 // BillingExplainerInvoiceMonth Example: 2026-06
 type BillingExplainerInvoiceMonth = string
 
+// ComposerMaxResults Example: 50
+type ComposerMaxResults = int
+
+// ComposerPageToken defines model for composerPageToken.
+type ComposerPageToken = string
+
+// ComposerRecipeFilter Example: severity:critical,high|provider:aws,gcp
+type ComposerRecipeFilter = string
+
+// ComposerRecipeId Example: 42
+type ComposerRecipeId = int64
+
+// ComposerRecipeSortBy defines model for composerRecipeSortBy.
+type ComposerRecipeSortBy string
+
+// ComposerResultFilter Example: status:active|region:us-east-1,us-west-2
+type ComposerResultFilter = string
+
+// ComposerResultSortBy defines model for composerResultSortBy.
+type ComposerResultSortBy string
+
+// ComposerSortOrder defines model for composerSortOrder.
+type ComposerSortOrder string
+
 // CustomerId defines model for customerId.
 type CustomerId = string
 
@@ -11283,6 +12656,9 @@ type N503 = Error
 
 // BadRequest RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type BadRequest = ProblemDetails
+
+// ComposerAllocationNotFound RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+type ComposerAllocationNotFound = ProblemDetails
 
 // Conflict RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type Conflict = ProblemDetails
@@ -11391,7 +12767,8 @@ type ListAnnotationsParams struct {
 	// Valid fields: **content**, **timestamp**, **labels**.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// SortBy A field by which the results will be sorted.
+	// SortBy A field by which the results will be sorted. timeCreated sorts by the response's createTime;
+	// timeModified sorts by updateTime.
 	SortBy *ListAnnotationsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
 	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
@@ -11474,7 +12851,7 @@ type ListDimensionsParams struct {
 	// The fields eligible for filtering are: type, label, key.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// SortBy A field by which the results will be sorted.
+	// SortBy A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.
 	SortBy *ListDimensionsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
 
 	// SortOrder Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
@@ -11567,7 +12944,7 @@ type CancelAsyncOperationParams struct {
 
 // GetAsyncOperationResultsParams defines parameters for GetAsyncOperationResults.
 type GetAsyncOperationResultsParams struct {
-	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file.
+	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file. `pdf` is the chart and data table as a document, `png` the chart image, and `csv` every row of the result as raw data, one line per row with the report's dimensions and metrics, never truncated.
 	FileOutput *GetAsyncOperationResultsParamsFileOutput `form:"fileOutput,omitempty" json:"fileOutput,omitempty"`
 }
 
@@ -11679,7 +13056,9 @@ type ListInvoicesParams struct {
 
 	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
-	Filter    *Filter    `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Filter Supported keys: platform (an invoice platform), dueDate (milliseconds since the POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value is applied per request. Cancelled invoices and credit memos are returned only with status:CANCELED, and every other request excludes them.
+	Filter *Filter `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// MinCreationTime Min value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created after or at this timestamp are returned.
 	MinCreationTime *int64 `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
@@ -11949,6 +13328,117 @@ type ListUsersParams struct {
 	// Email Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
 	Email *openapi_types.Email `form:"email,omitempty" json:"email,omitempty"`
 }
+
+// CreateUserNotificationParams defines parameters for CreateUserNotification.
+type CreateUserNotificationParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteUserNotificationParams defines parameters for DeleteUserNotification.
+type DeleteUserNotificationParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// UpdateUserNotificationParams defines parameters for UpdateUserNotification.
+type UpdateUserNotificationParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// ListComposerRecipesParams defines parameters for ListComposerRecipes.
+type ListComposerRecipesParams struct {
+	// MaxResults Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.
+	MaxResults *ComposerMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.
+	//
+	// The token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page.
+	PageToken *ComposerPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// SortBy Field to sort recipes by. Defaults to `severity`. Ties break by title (case-insensitive, ascending), then by `id` (ascending), whatever the `sortOrder`.
+	SortBy *ListComposerRecipesParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort direction for `sortBy`. Defaults to `desc`.
+	SortOrder *ListComposerRecipesParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// Filter Restricts the recipes returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `severity:critical,high|provider:aws,gcp` returns recipes whose severity is critical or high and whose provider is Amazon Web Services or Google Cloud Platform. Because `,` and `|` are separators, a value itself can't contain them. Only equality matching is supported. Omit `filter` to list every recipe that has results in your recently scanned accounts, including dismissed recipes.
+	//
+	// Keys:
+	// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+	// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+	// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. Matches recipes tagged with that pillar; `compliance` matches recipes tagged with at least one compliance standard (such as SOC2 or HIPAA).
+	// - `has_active_results`: exactly one of `true` or `false`.
+	// - `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches recipes with results on resources in any of those allocations, as resolved by Cloud Analytics; counts, savings and `rowCount` then cover only those resources. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.
+	//
+	// Errors:
+	// - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
+	// - A value outside the allowed list, a non-boolean `has_active_results`, more than one `has_active_results` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
+	// - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
+	Filter *ComposerRecipeFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// ListComposerRecipesParamsSortBy defines parameters for ListComposerRecipes.
+type ListComposerRecipesParamsSortBy string
+
+// ListComposerRecipesParamsSortOrder defines parameters for ListComposerRecipes.
+type ListComposerRecipesParamsSortOrder string
+
+// ListComposerRecipeResultsParams defines parameters for ListComposerRecipeResults.
+type ListComposerRecipeResultsParams struct {
+	// MaxResults Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.
+	MaxResults *ComposerMaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.
+	//
+	// The token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page.
+	PageToken *ComposerPageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+
+	// SortBy Field to sort results by. Defaults to `detection_time`. Ties break by `id` (ascending), whatever the `sortOrder`.
+	SortBy *ListComposerRecipeResultsParamsSortBy `form:"sortBy,omitempty" json:"sortBy,omitempty"`
+
+	// SortOrder Sort direction for `sortBy`. Defaults to `desc`.
+	SortOrder *ListComposerRecipeResultsParamsSortOrder `form:"sortOrder,omitempty" json:"sortOrder,omitempty"`
+
+	// Filter Restricts the results returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `region:us-east-1,us-west-2|status:active` returns active results in either region. Because `,` and `|` are separators, a value itself can't contain them. Matching is exact unless a key says otherwise. Omit `filter` to list the recipe's results from the most recent scan of each recently scanned account, in every status.
+	//
+	// Keys:
+	// - `account_id`: one or more cloud account IDs, matched exactly.
+	// - `region`: one or more cloud regions, matched exactly.
+	// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+	// - `related_resource_name`: one or more names of resources related to the result (for example, an attached IAM policy). Each value is matched as a substring anywhere in the result's related-resource details, not only against names.
+	// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+	// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default. `false` returns results from every scan and account, including resolved ones.
+	// - `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches results on resources in any of those allocations, as resolved by Cloud Analytics; `rowCount` then counts only those results. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.
+	//
+	// Errors:
+	// - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
+	// - A `status` outside the allowed list, a non-boolean `last_scan_only`, more than one `status` or `last_scan_only` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
+	// - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
+	Filter *ComposerResultFilter `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// ListComposerRecipeResultsParamsSortBy defines parameters for ListComposerRecipeResults.
+type ListComposerRecipeResultsParamsSortBy string
+
+// ListComposerRecipeResultsParamsSortOrder defines parameters for ListComposerRecipeResults.
+type ListComposerRecipeResultsParamsSortOrder string
 
 // ListAwsOrganizationsParams defines parameters for ListAwsOrganizations.
 type ListAwsOrganizationsParams struct {
@@ -12260,10 +13750,10 @@ type CreateAnnotationJSONRequestBody = CreateAnnotationRequest
 type UpdateAnnotationJSONRequestBody = UpdateAnnotationRequest
 
 // CreateBudgetJSONRequestBody defines body for CreateBudget for application/json ContentType.
-type CreateBudgetJSONRequestBody = BudgetCreateUpdateRequest
+type CreateBudgetJSONRequestBody = BudgetCreateRequest
 
 // UpdateBudgetJSONRequestBody defines body for UpdateBudget for application/json ContentType.
-type UpdateBudgetJSONRequestBody = BudgetCreateUpdateRequest
+type UpdateBudgetJSONRequestBody = BudgetUpdateRequest
 
 // CreateFolderJSONRequestBody defines body for CreateFolder for application/json ContentType.
 type CreateFolderJSONRequestBody = CreateFolderRequest
@@ -12354,6 +13844,12 @@ type InviteUserJSONRequestBody = InviteUserRequest
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UpdateUserRequest
+
+// CreateUserNotificationJSONRequestBody defines body for CreateUserNotification for application/json ContentType.
+type CreateUserNotificationJSONRequestBody = CreateUserNotificationRequest
+
+// UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody defines body for UpdateUserNotification for application/merge-patch+json ContentType.
+type UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody = UpdateUserNotificationRequest
 
 // UpdateResourcePermissionJSONRequestBody defines body for UpdateResourcePermission for application/json ContentType.
 type UpdateResourcePermissionJSONRequestBody = UpdateResourcePermissionRequestBody
@@ -12723,32 +14219,6 @@ func (t *Value) FromValue1(v Value1) error {
 
 // MergeValue1 performs a merge with any union data inside the Value, using the provided Value1
 func (t *Value) MergeValue1(v Value1) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsValue2 returns the union data inside the Value as a Value2
-func (t Value) AsValue2() (Value2, error) {
-	var body Value2
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromValue2 overwrites any union data inside the Value as the provided Value2
-func (t *Value) FromValue2(v Value2) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeValue2 performs a merge with any union data inside the Value, using the provided Value2
-func (t *Value) MergeValue2(v Value2) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -13513,6 +14983,7 @@ type ClientInterface interface {
 	// ListAnomalies List anomalies
 	//
 	// Returns a list of detected anomalies.
+	// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -13523,14 +14994,14 @@ type ClientInterface interface {
 
 	// GetAnomaly Retrieve an anomaly
 	//
-	// Returns the specified anomaly.
+	// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Corresponds with GET /anomalies/v1/{id} (the `GetAnomaly` operationId).
 	GetAnomaly(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetAnomalyExplanation Explain an anomaly
 	//
-	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
 	GetAnomalyExplanation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -13608,16 +15079,26 @@ type ClientInterface interface {
 	//
 	// Returns a list of all the current and historical invoices for your organization.
 	// Invoices are returned in reverse chronological order by default.
+	// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 	//
 	// Corresponds with GET /billing/v1/invoices (the `ListInvoices` operationId).
 	ListInvoices(ctx context.Context, params *ListInvoicesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInvoice Retrieve an invoice
 	//
-	// Returns the full details of an invoice specified by the invoice number.
+	// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 	//
 	// Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetInvoicePdf Download an invoice PDF
+	//
+	// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
+	// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+	// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+	//
+	// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+	GetInvoicePdf(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListCloudDiagramActivityGroups List activity groups for a layer
 	//
@@ -13859,21 +15340,21 @@ type ClientInterface interface {
 
 	// ListAccountTeam List account team
 	//
-	// Returns a list of all DoiT account managers assigned to your organization.
+	// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 	//
 	// Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 	ListAccountTeam(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCustomer Get customer
 	//
-	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 	//
 	// Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
 	GetCustomer(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateCustomerWithBody Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -13886,7 +15367,7 @@ type ClientInterface interface {
 
 	// UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -14227,6 +15708,153 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 	UpdateUser(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListUserNotifications List personal notifications for a user
+	//
+	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+	// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+	// ascending, then by `id` ascending.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+	ListUserNotifications(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateUserNotificationWithBody Create a personal notification for a user
+	//
+	// Creates a personal cost-anomaly notification config for the user. The request body has no email
+	// address; the server copies the target user's email onto the config as the sole destination.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+	// original response and does not create a second config. With `dryRun=true` the request goes through
+	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	//
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+	// config.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+	CreateUserNotificationWithBody(ctx context.Context, userId string, params *CreateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateUserNotification Create a personal notification for a user
+	//
+	// Creates a personal cost-anomaly notification config for the user. The request body has no email
+	// address; the server copies the target user's email onto the config as the sole destination.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+	// original response and does not create a second config. With `dryRun=true` the request goes through
+	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	//
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+	// config.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+	CreateUserNotification(ctx context.Context, userId string, params *CreateUserNotificationParams, body CreateUserNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteUserNotification Delete a personal notification
+	//
+	// Permanently deletes a personal notification config. Requires `usersManager` permission, the
+	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+	// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
+	// `404`.
+	//
+	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
+	// of that notification returns `404`.
+	//
+	// Corresponds with DELETE /iam/v1/users/{userId}/notifications/{id} (the `DeleteUserNotification` operationId).
+	DeleteUserNotification(ctx context.Context, userId string, id string, params *DeleteUserNotificationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetUserNotification Get a personal notification
+	//
+	// Returns one personal notification config. Requires `usersManager` permission. A notification id that
+	// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
+	// elsewhere.
+	//
+	// Corresponds with GET /iam/v1/users/{userId}/notifications/{id} (the `GetUserNotification` operationId).
+	GetUserNotification(ctx context.Context, userId string, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateUserNotificationWithBody Update a personal notification
+	//
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+	// same checks as a real update and returns the notification as it would look after the patch, without
+	// changing anything.
+	//
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+	// new state.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+	UpdateUserNotificationWithBody(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateUserNotificationWithApplicationMergePatchPlusJSONBody Update a personal notification
+	//
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+	// same checks as a real update and returns the notification as it would look after the patch, without
+	// changing anything.
+	//
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+	// new state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type.
+	//
+	// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+	UpdateUserNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, body UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListComposerRecipes List Composer recipes
+	//
+	// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+	//
+	// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+	// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+	// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+	// - `has_active_results`: exactly one of `true` or `false`.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+	//
+	// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+	ListComposerRecipes(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListComposerRecipeResults List Composer recipe results
+	//
+	// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+	//
+	// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `account_id`: one or more cloud account IDs, matched exactly.
+	// - `region`: one or more cloud regions, matched exactly.
+	// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+	// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+	// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+	// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to.
+	//
+	// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+	ListComposerRecipeResults(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListAwsOrganizations List AWS organizations
 	//
@@ -16023,6 +17651,7 @@ func (c *Client) GetWidget(ctx context.Context, widgetId string, params *GetWidg
 // ListAnomalies List anomalies
 //
 // Returns a list of detected anomalies.
+// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 // Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 // The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -16043,7 +17672,7 @@ func (c *Client) ListAnomalies(ctx context.Context, params *ListAnomaliesParams,
 
 // GetAnomaly Retrieve an anomaly
 //
-// Returns the specified anomaly.
+// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Corresponds with GET /anomalies/v1/{id} (the `GetAnomaly` operationId).
 func (c *Client) GetAnomaly(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -16060,7 +17689,7 @@ func (c *Client) GetAnomaly(ctx context.Context, id string, reqEditors ...Reques
 
 // GetAnomalyExplanation Explain an anomaly
 //
-// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Corresponds with GET /anomalies/v1/{id}/explanation (the `GetAnomalyExplanation` operationId).
 func (c *Client) GetAnomalyExplanation(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -16228,6 +17857,7 @@ func (c *Client) GetBillingExplainerPerPayer(ctx context.Context, invoiceMonth B
 //
 // Returns a list of all the current and historical invoices for your organization.
 // Invoices are returned in reverse chronological order by default.
+// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 //
 // Corresponds with GET /billing/v1/invoices (the `ListInvoices` operationId).
 func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -16244,11 +17874,30 @@ func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, r
 
 // GetInvoice Retrieve an invoice
 //
-// Returns the full details of an invoice specified by the invoice number.
+// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 //
 // Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInvoiceRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetInvoicePdf Download an invoice PDF
+//
+// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
+// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+//
+// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+func (c *Client) GetInvoicePdf(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInvoicePdfRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -16759,7 +18408,7 @@ func (c *Client) ListServiceQuotas(ctx context.Context, params *ListServiceQuota
 
 // ListAccountTeam List account team
 //
-// Returns a list of all DoiT account managers assigned to your organization.
+// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 //
 // Corresponds with GET /customers/v1/accountTeam (the `ListAccountTeam` operationId).
 func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -16776,7 +18425,7 @@ func (c *Client) ListAccountTeam(ctx context.Context, reqEditors ...RequestEdito
 
 // GetCustomer Get customer
 //
-// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 //
 // Corresponds with GET /customers/v1/customers/{customerId} (the `GetCustomer` operationId).
 func (c *Client) GetCustomer(ctx context.Context, customerId CustomerId, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -16793,7 +18442,7 @@ func (c *Client) GetCustomer(ctx context.Context, customerId CustomerId, reqEdit
 
 // UpdateCustomerWithBody Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -16816,7 +18465,7 @@ func (c *Client) UpdateCustomerWithBody(ctx context.Context, customerId Customer
 
 // UpdateCustomerWithApplicationMergePatchPlusJSONBody Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -17508,6 +19157,243 @@ func (c *Client) UpdateUserWithBody(ctx context.Context, id string, contentType 
 // Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 func (c *Client) UpdateUser(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateUserRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListUserNotifications List personal notifications for a user
+//
+// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+// ascending, then by `id` ascending.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+func (c *Client) ListUserNotifications(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListUserNotificationsRequest(c.Server, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateUserNotificationWithBody Create a personal notification for a user
+//
+// Creates a personal cost-anomaly notification config for the user. The request body has no email
+// address; the server copies the target user's email onto the config as the sole destination.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+// original response and does not create a second config. With `dryRun=true` the request goes through
+// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+//
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+// config.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+func (c *Client) CreateUserNotificationWithBody(ctx context.Context, userId string, params *CreateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateUserNotificationRequestWithBody(c.Server, userId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateUserNotification Create a personal notification for a user
+//
+// Creates a personal cost-anomaly notification config for the user. The request body has no email
+// address; the server copies the target user's email onto the config as the sole destination.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+// original response and does not create a second config. With `dryRun=true` the request goes through
+// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+//
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+// config.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+func (c *Client) CreateUserNotification(ctx context.Context, userId string, params *CreateUserNotificationParams, body CreateUserNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateUserNotificationRequest(c.Server, userId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteUserNotification Delete a personal notification
+//
+// Permanently deletes a personal notification config. Requires `usersManager` permission, the
+// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
+// `404`.
+//
+// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
+// of that notification returns `404`.
+//
+// Corresponds with DELETE /iam/v1/users/{userId}/notifications/{id} (the `DeleteUserNotification` operationId).
+func (c *Client) DeleteUserNotification(ctx context.Context, userId string, id string, params *DeleteUserNotificationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteUserNotificationRequest(c.Server, userId, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetUserNotification Get a personal notification
+//
+// Returns one personal notification config. Requires `usersManager` permission. A notification id that
+// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
+// elsewhere.
+//
+// Corresponds with GET /iam/v1/users/{userId}/notifications/{id} (the `GetUserNotification` operationId).
+func (c *Client) GetUserNotification(ctx context.Context, userId string, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetUserNotificationRequest(c.Server, userId, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateUserNotificationWithBody Update a personal notification
+//
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+// same checks as a real update and returns the notification as it would look after the patch, without
+// changing anything.
+//
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+// new state.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+func (c *Client) UpdateUserNotificationWithBody(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateUserNotificationRequestWithBody(c.Server, userId, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateUserNotificationWithApplicationMergePatchPlusJSONBody Update a personal notification
+//
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+// same checks as a real update and returns the notification as it would look after the patch, without
+// changing anything.
+//
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+// new state.
+//
+// Takes a body of the `application/merge-patch+json` content type.
+//
+// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+func (c *Client) UpdateUserNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, body UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateUserNotificationRequestWithApplicationMergePatchPlusJSONBody(c.Server, userId, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListComposerRecipes List Composer recipes
+//
+// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+//
+// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+// - `has_active_results`: exactly one of `true` or `false`.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+//
+// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+func (c *Client) ListComposerRecipes(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListComposerRecipesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListComposerRecipeResults List Composer recipe results
+//
+// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+//
+// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `account_id`: one or more cloud account IDs, matched exactly.
+// - `region`: one or more cloud regions, matched exactly.
+// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to.
+//
+// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+func (c *Client) ListComposerRecipeResults(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListComposerRecipeResultsRequest(c.Server, recipeId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -21763,6 +23649,40 @@ func NewGetInvoiceRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewGetInvoicePdfRequest constructs an http.Request for the GetInvoicePdf method
+func NewGetInvoicePdfRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/billing/v1/invoices/%s/pdf", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListCloudDiagramActivityGroupsRequest constructs an http.Request for the ListCloudDiagramActivityGroups method
 func NewListCloudDiagramActivityGroupsRequest(server string, params *ListCloudDiagramActivityGroupsParams) (*http.Request, error) {
 	var err error
@@ -24470,6 +26390,572 @@ func NewUpdateUserRequestWithBody(server string, id string, contentType string, 
 	return req, nil
 }
 
+// NewListUserNotificationsRequest constructs an http.Request for the ListUserNotifications method
+func NewListUserNotificationsRequest(server string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/users/%s/notifications", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateUserNotificationRequest calls the generic CreateUserNotification builder with application/json body
+func NewCreateUserNotificationRequest(server string, userId string, params *CreateUserNotificationParams, body CreateUserNotificationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateUserNotificationRequestWithBody(server, userId, params, "application/json", bodyReader)
+}
+
+// NewCreateUserNotificationRequestWithBody constructs an http.Request for the CreateUserNotification method, with any body, and a specified content type
+func NewCreateUserNotificationRequestWithBody(server string, userId string, params *CreateUserNotificationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/users/%s/notifications", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteUserNotificationRequest constructs an http.Request for the DeleteUserNotification method
+func NewDeleteUserNotificationRequest(server string, userId string, id string, params *DeleteUserNotificationParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/users/%s/notifications/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewGetUserNotificationRequest constructs an http.Request for the GetUserNotification method
+func NewGetUserNotificationRequest(server string, userId string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/users/%s/notifications/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateUserNotificationRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateUserNotification builder with application/merge-patch+json body
+func NewUpdateUserNotificationRequestWithApplicationMergePatchPlusJSONBody(server string, userId string, id string, params *UpdateUserNotificationParams, body UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateUserNotificationRequestWithBody(server, userId, id, params, "application/merge-patch+json", bodyReader)
+}
+
+// NewUpdateUserNotificationRequestWithBody constructs an http.Request for the UpdateUserNotification method, with any body, and a specified content type
+func NewUpdateUserNotificationRequestWithBody(server string, userId string, id string, params *UpdateUserNotificationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/iam/v1/users/%s/notifications/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewListComposerRecipesRequest constructs an http.Request for the ListComposerRecipes method
+func NewListComposerRecipesRequest(server string, params *ListComposerRecipesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/insights/v2/recipes")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortOrder", *params.SortOrder, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListComposerRecipeResultsRequest constructs an http.Request for the ListComposerRecipeResults method
+func NewListComposerRecipeResultsRequest(server string, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "recipeId", recipeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/insights/v2/recipes/%s/results", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortBy", *params.SortBy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SortOrder != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sortOrder", *params.SortOrder, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListAwsOrganizationsRequest constructs an http.Request for the ListAwsOrganizations method
 func NewListAwsOrganizationsRequest(server string, params *ListAwsOrganizationsParams) (*http.Request, error) {
 	var err error
@@ -26766,6 +29252,7 @@ type ClientWithResponsesInterface interface {
 	// ListAnomaliesWithResponse List anomalies
 	//
 	// Returns a list of detected anomalies.
+	// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	// Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 	// The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 	// The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -26778,7 +29265,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetAnomalyWithResponse Retrieve an anomaly
 	//
-	// Returns the specified anomaly.
+	// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -26787,7 +29274,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetAnomalyExplanationWithResponse Explain an anomaly
 	//
-	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+	// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -26875,6 +29362,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a list of all the current and historical invoices for your organization.
 	// Invoices are returned in reverse chronological order by default.
+	// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -26883,12 +29371,23 @@ type ClientWithResponsesInterface interface {
 
 	// GetInvoiceWithResponse Retrieve an invoice
 	//
-	// Returns the full details of an invoice specified by the invoice number.
+	// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 	GetInvoiceWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoiceResp, error)
+
+	// GetInvoicePdfWithResponse Download an invoice PDF
+	//
+	// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
+	// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+	// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+	GetInvoicePdfWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoicePdfResp, error)
 
 	// ListCloudDiagramActivityGroupsWithResponse List activity groups for a layer
 	//
@@ -27158,7 +29657,7 @@ type ClientWithResponsesInterface interface {
 
 	// ListAccountTeamWithResponse List account team
 	//
-	// Returns a list of all DoiT account managers assigned to your organization.
+	// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -27167,7 +29666,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetCustomerWithResponse Get customer
 	//
-	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+	// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -27176,7 +29675,7 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateCustomerWithBodyWithResponse Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -27189,7 +29688,7 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer
 	//
-	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+	// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 	//
 	// The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 	//
@@ -27560,6 +30059,163 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /iam/v1/users/{id} (the `UpdateUser` operationId).
 	UpdateUserWithResponse(ctx context.Context, id string, body UpdateUserJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserResp, error)
+
+	// ListUserNotificationsWithResponse List personal notifications for a user
+	//
+	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+	// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+	// ascending, then by `id` ascending.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+	ListUserNotificationsWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*ListUserNotificationsResp, error)
+
+	// CreateUserNotificationWithBodyWithResponse Create a personal notification for a user
+	//
+	// Creates a personal cost-anomaly notification config for the user. The request body has no email
+	// address; the server copies the target user's email onto the config as the sole destination.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+	// original response and does not create a second config. With `dryRun=true` the request goes through
+	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	//
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+	// config.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+	CreateUserNotificationWithBodyWithResponse(ctx context.Context, userId string, params *CreateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserNotificationResp, error)
+
+	// CreateUserNotificationWithResponse Create a personal notification for a user
+	//
+	// Creates a personal cost-anomaly notification config for the user. The request body has no email
+	// address; the server copies the target user's email onto the config as the sole destination.
+	//
+	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	//
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+	// original response and does not create a second config. With `dryRun=true` the request goes through
+	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	//
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+	// config.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+	CreateUserNotificationWithResponse(ctx context.Context, userId string, params *CreateUserNotificationParams, body CreateUserNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserNotificationResp, error)
+
+	// DeleteUserNotificationWithResponse Delete a personal notification
+	//
+	// Permanently deletes a personal notification config. Requires `usersManager` permission, the
+	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+	// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
+	// `404`.
+	//
+	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
+	// of that notification returns `404`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /iam/v1/users/{userId}/notifications/{id} (the `DeleteUserNotification` operationId).
+	DeleteUserNotificationWithResponse(ctx context.Context, userId string, id string, params *DeleteUserNotificationParams, reqEditors ...RequestEditorFn) (*DeleteUserNotificationResp, error)
+
+	// GetUserNotificationWithResponse Get a personal notification
+	//
+	// Returns one personal notification config. Requires `usersManager` permission. A notification id that
+	// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
+	// elsewhere.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /iam/v1/users/{userId}/notifications/{id} (the `GetUserNotification` operationId).
+	GetUserNotificationWithResponse(ctx context.Context, userId string, id string, reqEditors ...RequestEditorFn) (*GetUserNotificationResp, error)
+
+	// UpdateUserNotificationWithBodyWithResponse Update a personal notification
+	//
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+	// same checks as a real update and returns the notification as it would look after the patch, without
+	// changing anything.
+	//
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+	// new state.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+	UpdateUserNotificationWithBodyWithResponse(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserNotificationResp, error)
+
+	// UpdateUserNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update a personal notification
+	//
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+	// same checks as a real update and returns the notification as it would look after the patch, without
+	// changing anything.
+	//
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+	// new state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+	UpdateUserNotificationWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, body UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserNotificationResp, error)
+
+	// ListComposerRecipesWithResponse List Composer recipes
+	//
+	// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+	//
+	// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+	// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+	// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+	// - `has_active_results`: exactly one of `true` or `false`.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+	ListComposerRecipesWithResponse(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*ListComposerRecipesResp, error)
+
+	// ListComposerRecipeResultsWithResponse List Composer recipe results
+	//
+	// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+	//
+	// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+	//
+	// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+	// - `account_id`: one or more cloud account IDs, matched exactly.
+	// - `region`: one or more cloud regions, matched exactly.
+	// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+	// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+	// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+	// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+	// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+	//
+	// Requests are always served for the customer your API token belongs to.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+	ListComposerRecipeResultsWithResponse(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*ListComposerRecipeResultsResp, error)
 
 	// ListAwsOrganizationsWithResponse List AWS organizations
 	//
@@ -33018,6 +35674,129 @@ func (r GetInvoiceResp) ContentType() string {
 	return ""
 }
 
+// GetInvoicePdfResp200Headers the declared response headers of an HTTP 200 response for GetInvoicePdf
+type GetInvoicePdfResp200Headers struct {
+	CacheControl        *string
+	ContentDisposition  *string
+	ContentEncoding     *string
+	ContentLanguage     *string
+	RequestId           *string
+	Vary                *string
+	XContentTypeOptions *string
+}
+
+// GetInvoicePdfResp400Headers the declared response headers of an HTTP 400 response for GetInvoicePdf
+type GetInvoicePdfResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoicePdfResp401Headers the declared response headers of an HTTP 401 response for GetInvoicePdf
+type GetInvoicePdfResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetInvoicePdfResp403Headers the declared response headers of an HTTP 403 response for GetInvoicePdf
+type GetInvoicePdfResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoicePdfResp404Headers the declared response headers of an HTTP 404 response for GetInvoicePdf
+type GetInvoicePdfResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetInvoicePdfResp500Headers the declared response headers of an HTTP 500 response for GetInvoicePdf
+type GetInvoicePdfResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetInvoicePdfResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetInvoicePdfResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetInvoicePdfResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetInvoicePdfResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetInvoicePdfResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetInvoicePdfResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetInvoicePdfResp500Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetInvoicePdfResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetInvoicePdfResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInvoicePdfResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInvoicePdfResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetInvoicePdfResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListCloudDiagramActivityGroupsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -36838,6 +39617,1077 @@ func (r UpdateUserResp) ContentType() string {
 	return ""
 }
 
+// ListUserNotificationsResp200Headers the declared response headers of an HTTP 200 response for ListUserNotifications
+type ListUserNotificationsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp400Headers the declared response headers of an HTTP 400 response for ListUserNotifications
+type ListUserNotificationsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp401Headers the declared response headers of an HTTP 401 response for ListUserNotifications
+type ListUserNotificationsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListUserNotificationsResp403Headers the declared response headers of an HTTP 403 response for ListUserNotifications
+type ListUserNotificationsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp404Headers the declared response headers of an HTTP 404 response for ListUserNotifications
+type ListUserNotificationsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListUserNotificationsResp500Headers the declared response headers of an HTTP 500 response for ListUserNotifications
+type ListUserNotificationsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListUserNotificationsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *UserNotificationListResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListUserNotificationsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListUserNotificationsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListUserNotificationsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListUserNotificationsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListUserNotificationsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListUserNotificationsResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListUserNotificationsResp) GetJSON200() *UserNotificationListResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListUserNotificationsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListUserNotificationsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListUserNotificationsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListUserNotificationsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListUserNotificationsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateUserNotificationResp200Headers the declared response headers of an HTTP 200 response for CreateUserNotification
+type CreateUserNotificationResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// CreateUserNotificationResp201Headers the declared response headers of an HTTP 201 response for CreateUserNotification
+type CreateUserNotificationResp201Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	Location        *string
+	RequestId       *string
+}
+
+// CreateUserNotificationResp400Headers the declared response headers of an HTTP 400 response for CreateUserNotification
+type CreateUserNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateUserNotificationResp401Headers the declared response headers of an HTTP 401 response for CreateUserNotification
+type CreateUserNotificationResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// CreateUserNotificationResp403Headers the declared response headers of an HTTP 403 response for CreateUserNotification
+type CreateUserNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateUserNotificationResp404Headers the declared response headers of an HTTP 404 response for CreateUserNotification
+type CreateUserNotificationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateUserNotificationResp409Headers the declared response headers of an HTTP 409 response for CreateUserNotification
+type CreateUserNotificationResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateUserNotificationResp422Headers the declared response headers of an HTTP 422 response for CreateUserNotification
+type CreateUserNotificationResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateUserNotificationResp500Headers the declared response headers of an HTTP 500 response for CreateUserNotification
+type CreateUserNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type CreateUserNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *UserNotification
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *UserNotification
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateUserNotificationResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateUserNotificationResp201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateUserNotificationResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateUserNotificationResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateUserNotificationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *CreateUserNotificationResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateUserNotificationResp409Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateUserNotificationResp422Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateUserNotificationResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateUserNotificationResp) GetJSON200() *UserNotification {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateUserNotificationResp) GetJSON201() *UserNotification {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateUserNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateUserNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateUserNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateUserNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteUserNotificationResp204Headers the declared response headers of an HTTP 204 response for DeleteUserNotification
+type DeleteUserNotificationResp204Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// DeleteUserNotificationResp400Headers the declared response headers of an HTTP 400 response for DeleteUserNotification
+type DeleteUserNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteUserNotificationResp401Headers the declared response headers of an HTTP 401 response for DeleteUserNotification
+type DeleteUserNotificationResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// DeleteUserNotificationResp403Headers the declared response headers of an HTTP 403 response for DeleteUserNotification
+type DeleteUserNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteUserNotificationResp404Headers the declared response headers of an HTTP 404 response for DeleteUserNotification
+type DeleteUserNotificationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteUserNotificationResp409Headers the declared response headers of an HTTP 409 response for DeleteUserNotification
+type DeleteUserNotificationResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteUserNotificationResp412Headers the declared response headers of an HTTP 412 response for DeleteUserNotification
+type DeleteUserNotificationResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteUserNotificationResp422Headers the declared response headers of an HTTP 422 response for DeleteUserNotification
+type DeleteUserNotificationResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteUserNotificationResp428Headers the declared response headers of an HTTP 428 response for DeleteUserNotification
+type DeleteUserNotificationResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteUserNotificationResp500Headers the declared response headers of an HTTP 500 response for DeleteUserNotification
+type DeleteUserNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type DeleteUserNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteUserNotificationResp204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteUserNotificationResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *DeleteUserNotificationResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteUserNotificationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteUserNotificationResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DeleteUserNotificationResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *DeleteUserNotificationResp412Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *DeleteUserNotificationResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *DeleteUserNotificationResp428Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DeleteUserNotificationResp500Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteUserNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteUserNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteUserNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteUserNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetUserNotificationResp200Headers the declared response headers of an HTTP 200 response for GetUserNotification
+type GetUserNotificationResp200Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	RequestId       *string
+}
+
+// GetUserNotificationResp400Headers the declared response headers of an HTTP 400 response for GetUserNotification
+type GetUserNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetUserNotificationResp401Headers the declared response headers of an HTTP 401 response for GetUserNotification
+type GetUserNotificationResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// GetUserNotificationResp403Headers the declared response headers of an HTTP 403 response for GetUserNotification
+type GetUserNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetUserNotificationResp404Headers the declared response headers of an HTTP 404 response for GetUserNotification
+type GetUserNotificationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetUserNotificationResp500Headers the declared response headers of an HTTP 500 response for GetUserNotification
+type GetUserNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetUserNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *UserNotification
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetUserNotificationResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetUserNotificationResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetUserNotificationResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetUserNotificationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetUserNotificationResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetUserNotificationResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetUserNotificationResp) GetJSON200() *UserNotification {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetUserNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetUserNotificationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetUserNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetUserNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetUserNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetUserNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetUserNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateUserNotificationResp200Headers the declared response headers of an HTTP 200 response for UpdateUserNotification
+type UpdateUserNotificationResp200Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// UpdateUserNotificationResp400Headers the declared response headers of an HTTP 400 response for UpdateUserNotification
+type UpdateUserNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp401Headers the declared response headers of an HTTP 401 response for UpdateUserNotification
+type UpdateUserNotificationResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// UpdateUserNotificationResp403Headers the declared response headers of an HTTP 403 response for UpdateUserNotification
+type UpdateUserNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp404Headers the declared response headers of an HTTP 404 response for UpdateUserNotification
+type UpdateUserNotificationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp409Headers the declared response headers of an HTTP 409 response for UpdateUserNotification
+type UpdateUserNotificationResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp412Headers the declared response headers of an HTTP 412 response for UpdateUserNotification
+type UpdateUserNotificationResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp415Headers the declared response headers of an HTTP 415 response for UpdateUserNotification
+type UpdateUserNotificationResp415Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp422Headers the declared response headers of an HTTP 422 response for UpdateUserNotification
+type UpdateUserNotificationResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp428Headers the declared response headers of an HTTP 428 response for UpdateUserNotification
+type UpdateUserNotificationResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateUserNotificationResp500Headers the declared response headers of an HTTP 500 response for UpdateUserNotification
+type UpdateUserNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type UpdateUserNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *UserNotification
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON415 the response for an HTTP 415 `application/problem+json` response
+	ApplicationproblemJSON415 *UnsupportedMediaType
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateUserNotificationResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateUserNotificationResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *UpdateUserNotificationResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateUserNotificationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateUserNotificationResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateUserNotificationResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *UpdateUserNotificationResp412Headers
+	// Headers415 the parsed response headers for an HTTP 415 response
+	Headers415 *UpdateUserNotificationResp415Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateUserNotificationResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *UpdateUserNotificationResp428Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateUserNotificationResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateUserNotificationResp) GetJSON200() *UserNotification {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON415 returns the response for an HTTP 415 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON415() *UnsupportedMediaType {
+	return r.ApplicationproblemJSON415
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateUserNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateUserNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateUserNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateUserNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListComposerRecipesResp400Headers the declared response headers of an HTTP 400 response for ListComposerRecipes
+type ListComposerRecipesResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp401Headers the declared response headers of an HTTP 401 response for ListComposerRecipes
+type ListComposerRecipesResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListComposerRecipesResp403Headers the declared response headers of an HTTP 403 response for ListComposerRecipes
+type ListComposerRecipesResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp404Headers the declared response headers of an HTTP 404 response for ListComposerRecipes
+type ListComposerRecipesResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp500Headers the declared response headers of an HTTP 500 response for ListComposerRecipes
+type ListComposerRecipesResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipesResp503Headers the declared response headers of an HTTP 503 response for ListComposerRecipes
+type ListComposerRecipesResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListComposerRecipesResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ComposerRecipeList
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *ComposerAllocationNotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListComposerRecipesResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListComposerRecipesResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListComposerRecipesResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListComposerRecipesResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListComposerRecipesResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListComposerRecipesResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListComposerRecipesResp) GetJSON200() *ComposerRecipeList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON404() *ComposerAllocationNotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListComposerRecipesResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListComposerRecipesResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListComposerRecipesResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListComposerRecipesResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListComposerRecipesResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListComposerRecipeResultsResp400Headers the declared response headers of an HTTP 400 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp401Headers the declared response headers of an HTTP 401 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp401Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	WWWAuthenticate *string
+}
+
+// ListComposerRecipeResultsResp403Headers the declared response headers of an HTTP 403 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp404Headers the declared response headers of an HTTP 404 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp500Headers the declared response headers of an HTTP 500 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListComposerRecipeResultsResp503Headers the declared response headers of an HTTP 503 response for ListComposerRecipeResults
+type ListComposerRecipeResultsResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
+type ListComposerRecipeResultsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ComposerRecipeResultList
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthorized
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *ComposerAllocationNotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListComposerRecipeResultsResp400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListComposerRecipeResultsResp401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListComposerRecipeResultsResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListComposerRecipeResultsResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListComposerRecipeResultsResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListComposerRecipeResultsResp503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListComposerRecipeResultsResp) GetJSON200() *ComposerRecipeResultList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON401() *Unauthorized {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON404() *ComposerAllocationNotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListComposerRecipeResultsResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListComposerRecipeResultsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListComposerRecipeResultsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListComposerRecipeResultsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListComposerRecipeResultsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListAwsOrganizationsResp200Headers the declared response headers of an HTTP 200 response for ListAwsOrganizations
 type ListAwsOrganizationsResp200Headers struct {
 	ContentLanguage *string
@@ -40481,6 +44331,7 @@ func (c *ClientWithResponses) GetWidgetWithResponse(ctx context.Context, widgetI
 // ListAnomaliesWithResponse List anomalies
 //
 // Returns a list of detected anomalies.
+// Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 // Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 // The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
 // The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -40499,7 +44350,7 @@ func (c *ClientWithResponses) ListAnomaliesWithResponse(ctx context.Context, par
 
 // GetAnomalyWithResponse Retrieve an anomaly
 //
-// Returns the specified anomaly.
+// Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -40514,7 +44365,7 @@ func (c *ClientWithResponses) GetAnomalyWithResponse(ctx context.Context, id str
 
 // GetAnomalyExplanationWithResponse Explain an anomaly
 //
-// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.
+// Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -40656,6 +44507,7 @@ func (c *ClientWithResponses) GetBillingExplainerPerPayerWithResponse(ctx contex
 //
 // Returns a list of all the current and historical invoices for your organization.
 // Invoices are returned in reverse chronological order by default.
+// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -40670,7 +44522,7 @@ func (c *ClientWithResponses) ListInvoicesWithResponse(ctx context.Context, para
 
 // GetInvoiceWithResponse Retrieve an invoice
 //
-// Returns the full details of an invoice specified by the invoice number.
+// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -40681,6 +44533,23 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseGetInvoiceResp(rsp)
+}
+
+// GetInvoicePdfWithResponse Download an invoice PDF
+//
+// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
+// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /billing/v1/invoices/{id}/pdf (the `GetInvoicePdf` operationId).
+func (c *ClientWithResponses) GetInvoicePdfWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetInvoicePdfResp, error) {
+	rsp, err := c.GetInvoicePdf(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInvoicePdfResp(rsp)
 }
 
 // ListCloudDiagramActivityGroupsWithResponse List activity groups for a layer
@@ -41107,7 +44976,7 @@ func (c *ClientWithResponses) ListServiceQuotasWithResponse(ctx context.Context,
 
 // ListAccountTeamWithResponse List account team
 //
-// Returns a list of all DoiT account managers assigned to your organization.
+// Returns a list of all DoiT account managers assigned to your organization. Requires the `Settings` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -41122,7 +44991,7 @@ func (c *ClientWithResponses) ListAccountTeamWithResponse(ctx context.Context, r
 
 // GetCustomerWithResponse Get customer
 //
-// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+// Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -41137,7 +45006,7 @@ func (c *ClientWithResponses) GetCustomerWithResponse(ctx context.Context, custo
 
 // UpdateCustomerWithBodyWithResponse Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -41156,7 +45025,7 @@ func (c *ClientWithResponses) UpdateCustomerWithBodyWithResponse(ctx context.Con
 
 // UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse Update customer
 //
-// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+// Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission; updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
 //
 // The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer's active URL slug rather than leaving it unchanged.
 //
@@ -41742,6 +45611,217 @@ func (c *ClientWithResponses) UpdateUserWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseUpdateUserResp(rsp)
+}
+
+// ListUserNotificationsWithResponse List personal notifications for a user
+//
+// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+// ascending, then by `id` ascending.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
+func (c *ClientWithResponses) ListUserNotificationsWithResponse(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*ListUserNotificationsResp, error) {
+	rsp, err := c.ListUserNotifications(ctx, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListUserNotificationsResp(rsp)
+}
+
+// CreateUserNotificationWithBodyWithResponse Create a personal notification for a user
+//
+// Creates a personal cost-anomaly notification config for the user. The request body has no email
+// address; the server copies the target user's email onto the config as the sole destination.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+// original response and does not create a second config. With `dryRun=true` the request goes through
+// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+//
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+// config.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+func (c *ClientWithResponses) CreateUserNotificationWithBodyWithResponse(ctx context.Context, userId string, params *CreateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateUserNotificationResp, error) {
+	rsp, err := c.CreateUserNotificationWithBody(ctx, userId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateUserNotificationResp(rsp)
+}
+
+// CreateUserNotificationWithResponse Create a personal notification for a user
+//
+// Creates a personal cost-anomaly notification config for the user. The request body has no email
+// address; the server copies the target user's email onto the config as the sole destination.
+//
+// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+//
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+// original response and does not create a second config. With `dryRun=true` the request goes through
+// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+//
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+// config.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /iam/v1/users/{userId}/notifications (the `CreateUserNotification` operationId).
+func (c *ClientWithResponses) CreateUserNotificationWithResponse(ctx context.Context, userId string, params *CreateUserNotificationParams, body CreateUserNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateUserNotificationResp, error) {
+	rsp, err := c.CreateUserNotification(ctx, userId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateUserNotificationResp(rsp)
+}
+
+// DeleteUserNotificationWithResponse Delete a personal notification
+//
+// Permanently deletes a personal notification config. Requires `usersManager` permission, the
+// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
+// `404`.
+//
+// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
+// of that notification returns `404`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /iam/v1/users/{userId}/notifications/{id} (the `DeleteUserNotification` operationId).
+func (c *ClientWithResponses) DeleteUserNotificationWithResponse(ctx context.Context, userId string, id string, params *DeleteUserNotificationParams, reqEditors ...RequestEditorFn) (*DeleteUserNotificationResp, error) {
+	rsp, err := c.DeleteUserNotification(ctx, userId, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteUserNotificationResp(rsp)
+}
+
+// GetUserNotificationWithResponse Get a personal notification
+//
+// Returns one personal notification config. Requires `usersManager` permission. A notification id that
+// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
+// elsewhere.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /iam/v1/users/{userId}/notifications/{id} (the `GetUserNotification` operationId).
+func (c *ClientWithResponses) GetUserNotificationWithResponse(ctx context.Context, userId string, id string, reqEditors ...RequestEditorFn) (*GetUserNotificationResp, error) {
+	rsp, err := c.GetUserNotification(ctx, userId, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetUserNotificationResp(rsp)
+}
+
+// UpdateUserNotificationWithBodyWithResponse Update a personal notification
+//
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+// same checks as a real update and returns the notification as it would look after the patch, without
+// changing anything.
+//
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+// new state.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+func (c *ClientWithResponses) UpdateUserNotificationWithBodyWithResponse(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateUserNotificationResp, error) {
+	rsp, err := c.UpdateUserNotificationWithBody(ctx, userId, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateUserNotificationResp(rsp)
+}
+
+// UpdateUserNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update a personal notification
+//
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+// same checks as a real update and returns the notification as it would look after the patch, without
+// changing anything.
+//
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the
+// new state.
+//
+// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /iam/v1/users/{userId}/notifications/{id} (the `UpdateUserNotification` operationId).
+func (c *ClientWithResponses) UpdateUserNotificationWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, userId string, id string, params *UpdateUserNotificationParams, body UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateUserNotificationResp, error) {
+	rsp, err := c.UpdateUserNotificationWithApplicationMergePatchPlusJSONBody(ctx, userId, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateUserNotificationResp(rsp)
+}
+
+// ListComposerRecipesWithResponse List Composer recipes
+//
+// Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+//
+// Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+// - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+// - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+// - `has_active_results`: exactly one of `true` or `false`.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /insights/v2/recipes (the `ListComposerRecipes` operationId).
+func (c *ClientWithResponses) ListComposerRecipesWithResponse(ctx context.Context, params *ListComposerRecipesParams, reqEditors ...RequestEditorFn) (*ListComposerRecipesResp, error) {
+	rsp, err := c.ListComposerRecipes(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListComposerRecipesResp(rsp)
+}
+
+// ListComposerRecipeResultsWithResponse List Composer recipe results
+//
+// Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+//
+// By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+//
+// `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+// - `account_id`: one or more cloud account IDs, matched exactly.
+// - `region`: one or more cloud regions, matched exactly.
+// - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+// - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+// - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+// - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+// - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+//
+// Requests are always served for the customer your API token belongs to.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /insights/v2/recipes/{recipeId}/results (the `ListComposerRecipeResults` operationId).
+func (c *ClientWithResponses) ListComposerRecipeResultsWithResponse(ctx context.Context, recipeId ComposerRecipeId, params *ListComposerRecipeResultsParams, reqEditors ...RequestEditorFn) (*ListComposerRecipeResultsResp, error) {
+	rsp, err := c.ListComposerRecipeResults(ctx, recipeId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListComposerRecipeResultsResp(rsp)
 }
 
 // ListAwsOrganizationsWithResponse List AWS organizations
@@ -46672,6 +50752,207 @@ func ParseGetInvoiceResp(rsp *http.Response) (*GetInvoiceResp, error) {
 	return response, nil
 }
 
+// ParseGetInvoicePdfResp parses an HTTP response from a GetInvoicePdfWithResponse call
+func ParseGetInvoicePdfResp(rsp *http.Response) (*GetInvoicePdfResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInvoicePdfResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetInvoicePdfResp200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Content-Disposition"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Disposition", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentDisposition = &value
+		}
+		if values := rsp.Header.Values("Content-Encoding"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Encoding", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentEncoding = &value
+		}
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Vary"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Vary", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Vary = &value
+		}
+		if values := rsp.Header.Values("X-Content-Type-Options"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Content-Type-Options", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XContentTypeOptions = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetInvoicePdfResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetInvoicePdfResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetInvoicePdfResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetInvoicePdfResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetInvoicePdfResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListCloudDiagramActivityGroupsResp parses an HTTP response from a ListCloudDiagramActivityGroupsWithResponse call
 func ParseListCloudDiagramActivityGroupsResp(rsp *http.Response) (*ListCloudDiagramActivityGroupsResp, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -50184,6 +54465,1578 @@ func ParseUpdateUserResp(rsp *http.Response) (*UpdateUserResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListUserNotificationsResp parses an HTTP response from a ListUserNotificationsWithResponse call
+func ParseListUserNotificationsResp(rsp *http.Response) (*ListUserNotificationsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListUserNotificationsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserNotificationListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListUserNotificationsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListUserNotificationsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListUserNotificationsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListUserNotificationsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListUserNotificationsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListUserNotificationsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateUserNotificationResp parses an HTTP response from a CreateUserNotificationWithResponse call
+func ParseCreateUserNotificationResp(rsp *http.Response) (*CreateUserNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateUserNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest UserNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateUserNotificationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateUserNotificationResp201Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateUserNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateUserNotificationResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateUserNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers CreateUserNotificationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateUserNotificationResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateUserNotificationResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateUserNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteUserNotificationResp parses an HTTP response from a DeleteUserNotificationWithResponse call
+func ParseDeleteUserNotificationResp(rsp *http.Response) (*DeleteUserNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteUserNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteUserNotificationResp204Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteUserNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers DeleteUserNotificationResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteUserNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteUserNotificationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DeleteUserNotificationResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers DeleteUserNotificationResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 422:
+		var headers DeleteUserNotificationResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers DeleteUserNotificationResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 500:
+		var headers DeleteUserNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetUserNotificationResp parses an HTTP response from a GetUserNotificationWithResponse call
+func ParseGetUserNotificationResp(rsp *http.Response) (*GetUserNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetUserNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetUserNotificationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetUserNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetUserNotificationResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetUserNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetUserNotificationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetUserNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateUserNotificationResp parses an HTTP response from a UpdateUserNotificationWithResponse call
+func ParseUpdateUserNotificationResp(rsp *http.Response) (*UpdateUserNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateUserNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest UserNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 415:
+		var dest UnsupportedMediaType
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON415 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateUserNotificationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateUserNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers UpdateUserNotificationResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateUserNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateUserNotificationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateUserNotificationResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers UpdateUserNotificationResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 415:
+		var headers UpdateUserNotificationResp415Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers415 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateUserNotificationResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers UpdateUserNotificationResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateUserNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListComposerRecipesResp parses an HTTP response from a ListComposerRecipesWithResponse call
+func ParseListComposerRecipesResp(rsp *http.Response) (*ListComposerRecipesResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListComposerRecipesResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComposerRecipeList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ComposerAllocationNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListComposerRecipesResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListComposerRecipesResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListComposerRecipesResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListComposerRecipesResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListComposerRecipesResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListComposerRecipesResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListComposerRecipeResultsResp parses an HTTP response from a ListComposerRecipeResultsWithResponse call
+func ParseListComposerRecipeResultsResp(rsp *http.Response) (*ListComposerRecipeResultsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListComposerRecipeResultsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComposerRecipeResultList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthorized
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ComposerAllocationNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListComposerRecipeResultsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListComposerRecipeResultsResp401Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = &value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListComposerRecipeResultsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListComposerRecipeResultsResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListComposerRecipeResultsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListComposerRecipeResultsResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil

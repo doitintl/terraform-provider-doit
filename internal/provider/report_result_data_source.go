@@ -70,7 +70,7 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			" result_json. Use Terraform's jsondecode() to parse the results." +
 			"\n\nNote: Report results are dynamic — they change over time as new" +
 			" billing data is ingested. Every terraform plan will re-execute the" +
-			" report. Set file_output to pdf or png to receive a signed file_output_url." +
+			" report. Set file_output to pdf, png, or csv to receive a signed file_output_url." +
 			" The URL lasts up to 7 days. A failed render leaves the result available and the URL null." +
 			"\n\nThe result_json field contains the full result object, including the" +
 			" schema (column definitions: name, type, and optional unit, currency, aggregation, and id)," +
@@ -81,7 +81,7 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 			" `result_json`. Use Terraform's `jsondecode()` to parse the results." +
 			"\n\n~> **Note:** Report results are dynamic — they change over time as new" +
 			" billing data is ingested. Every `terraform plan` will re-execute the" +
-			" report. Set `file_output` to `pdf` or `png` to receive a signed `file_output_url`." +
+			" report. Set `file_output` to `pdf`, `png`, or `csv` to receive a signed `file_output_url`." +
 			"\n\nThe signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately." +
 			"\n\nThe `result_json` field contains the full result object including:" +
 			"\n\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
@@ -137,10 +137,10 @@ func (d *reportResultDataSource) Schema(ctx context.Context, _ datasource.Schema
 				},
 			},
 			"file_output": schema.StringAttribute{
-				Description:         "Optional file format to render from the report result: pdf or png.",
-				MarkdownDescription: "Optional file format to render from the report result: `pdf` or `png`.",
+				Description:         "Optional file format to render from the report result: pdf, png, or csv.",
+				MarkdownDescription: "Optional file format to render from the report result: `pdf`, `png`, or `csv`.",
 				Optional:            true,
-				Validators:          []validator.String{stringvalidator.OneOf("pdf", "png")},
+				Validators:          []validator.String{stringvalidator.OneOf("pdf", "png", "csv")},
 			},
 
 			// --- Outputs ---

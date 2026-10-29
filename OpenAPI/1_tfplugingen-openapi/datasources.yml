@@ -352,3 +352,23 @@ data_sources:
     read:
       path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens
       method: GET
+  user_notification:
+    read:
+      path: /iam/v1/users/{userId}/notifications/{id}
+      method: GET
+  user_notifications:
+    read:
+      path: /iam/v1/users/{userId}/notifications
+      method: GET
+  composer_recipes:
+    read:
+      path: /insights/v2/recipes
+      method: GET
+  composer_recipe_results:
+    read:
+      path: /insights/v2/recipes/{recipeId}/results
+      method: GET
+  invoice_pdf:
+    read:
+      path: /billing/v1/invoices/{id}/pdf
+      method: GET

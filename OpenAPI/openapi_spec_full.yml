@@ -65,6 +65,10 @@ tags:
       AWS accounts under a shared payer to T3 end customers.
   - name: Users
     description: Manage users who have access to the DoiT platform.
+  - name: Notifications
+    description: |
+      Personal notification configs for a user. Cost-anomaly configs are
+      supported.
   - name: Roles
     description: Manage user permissions and access levels in your organization.
   - name: Organizations
@@ -89,6 +93,8 @@ tags:
     description: Interact with Ava, DoiT's AI-powered cloud assistant.
   - name: Insights
     description: Manage cloud insights representing recommendations and findings for cloud resources.
+  - name: Composer Insights (Beta)
+    description: Beta. Read-only access to Composer recipes and their results. A recipe evaluates your cloud resources against a set of conditions; each result is a finding on one affected resource, and published recipes surface as proprietary Insights in the Console.
   - name: Cloud Connect
     description: Manage cloud provider connections and check feature availability for connected accounts.
   - name: Service Quotas
@@ -126,6 +132,8 @@ paths:
         verifies the request. Human channels (console, web) additionally require a Cloudflare Turnstile token
         and an accepted Terms of Service version; the emailed 6-digit verification code is then the consent act.
         Agents should present consentUrl to the organization's admin and poll getSignupRequest.
+        Existing accounts, customer domains and previous trials receive the same pending response as new
+        organizations. Eligibility is evaluated after mailbox verification or authenticated human consent.
       operationId: createSignupRequest
       security: []
       parameters:
@@ -164,10 +172,10 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/SignupProblem"
-        "409":
+        "403":
           description: >-
-            Conflict. code is one of email_already_registered, domain_already_registered (both carry signInUrl),
-            partner_domain_not_allowed, signup_already_pending (carries signupRequestId), trial_already_used.
+            Forbidden. code is trial_invites_disabled (new trial invitations are only available in production) or
+            signup_blocked (suspected Terms of Use violation; carries appealUrl, the page where the person can appeal).
           content:
             application/problem+json:
               schema:
@@ -179,7 +187,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SignupProblem"
         "503":
-          description: Signup temporarily unavailable (signup_disabled, validation_unavailable, verification_unavailable); retryable.
+          description: Signup temporarily unavailable (signup_disabled, limiter_unavailable, verification_unavailable); retryable.
           content:
             application/problem+json:
               schema:
@@ -192,10 +200,19 @@ paths:
         Returns the current state of a signup request. Poll at the returned pollAfterSeconds cadence; once
         status is completed the response carries customerId, consoleUrl and signInUrl. The response never
         includes the requester's email or the verification code.
+        A browser must send the Signup-Result-Token returned by verifySignupRequest to read results after
+        email verification. Without it, the request remains pending until its consent window expires.
+        Agents may read results after the matching authenticated human explicitly approves their request.
       operationId: getSignupRequest
       security: []
       parameters:
         - $ref: "#/components/parameters/signupRequestId"
+        - name: Signup-Result-Token
+          in: header
+          required: false
+          schema:
+            type: string
+            description: Request-bound result credential returned after successful email verification; valid for one hour.
       responses:
         "200":
           description: OK
@@ -236,7 +253,7 @@ paths:
               $ref: "#/components/schemas/SignupVerificationCode"
       responses:
         "200":
-          description: OK - the request is consented (or already past that point).
+          description: OK - the request is consented; resultToken authorizes subsequent polling. The code is consumed once.
           content:
             application/json:
               schema:
@@ -874,7 +891,9 @@ paths:
             type: string
         - name: sortBy
           in: query
-          description: A field by which the results will be sorted.
+          description: |-
+            A field by which the results will be sorted. timeCreated sorts by the response's createTime;
+            timeModified sorts by updateTime.
           schema:
             type: string
             enum:
@@ -1315,7 +1334,7 @@ paths:
   "/analytics/v1/settings/themes":
     get:
       tags:
-        - Settings
+        - Reports Settings
       summary: List custom themes
       description: Returns the list of custom color themes defined for your account.
       operationId: listCustomThemes
@@ -1342,7 +1361,7 @@ paths:
           $ref: "#/components/responses/404"
     post:
       tags:
-        - Settings
+        - Reports Settings
       summary: Create a custom theme
       description: Creates a new custom color theme. Requires Cloud Analytics Admin permission.
       operationId: createCustomTheme
@@ -1384,7 +1403,7 @@ paths:
   "/analytics/v1/settings/themes/{id}":
     get:
       tags:
-        - Settings
+        - Reports Settings
       summary: Retrieve a custom theme
       description: Returns a custom theme by the specified Id.
       operationId: getCustomTheme
@@ -1421,7 +1440,7 @@ paths:
           $ref: "#/components/responses/404"
     patch:
       tags:
-        - Settings
+        - Reports Settings
       summary: Update a custom theme
       description: Updates the custom theme specified by the Id. Requires Cloud Analytics Admin permission.
       operationId: updateCustomTheme
@@ -1456,7 +1475,7 @@ paths:
       x-codegen-request-body-name: Body
     delete:
       tags:
-        - Settings
+        - Reports Settings
       summary: Delete a custom theme
       description: Deletes the custom theme specified by the Id. Requires Cloud Analytics Admin permission.
       operationId: deleteCustomTheme
@@ -1487,7 +1506,7 @@ paths:
   "/analytics/v1/settings/active-theme":
     get:
       tags:
-        - Settings
+        - Reports Settings
       summary: Get the active theme
       description: |-
         Returns the theme currently active for the authenticated user.
@@ -1507,7 +1526,7 @@ paths:
           $ref: "#/components/responses/403"
     put:
       tags:
-        - Settings
+        - Reports Settings
       summary: Set the active theme
       description: |-
         Sets the theme active for the authenticated user. Send the reserved
@@ -1620,7 +1639,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BudgetCreateUpdateRequest"
+              $ref: "#/components/schemas/BudgetCreateRequest"
             example:
               name: monthly-cloud-budget
               amount: 100
@@ -1638,6 +1657,7 @@ paths:
               collaborators:
                 - role: owner
                   email: placeholder@example.com
+        required: true
       responses:
         "201":
           description: Created - New budget created.
@@ -1742,7 +1762,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BudgetCreateUpdateRequest"
+              $ref: "#/components/schemas/BudgetUpdateRequest"
         required: false
       responses:
         "200":
@@ -2128,14 +2148,16 @@ paths:
             type: string
         - name: sortBy
           in: query
-          description: A field by which the results will be sorted.
+          description: A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.
           schema:
             type: string
+            default: id
+            description: Sort by `id`, `type`, or `label`. `key` is an alias for `id`.
             enum:
+              - id
               - type
               - label
               - key
-              - timestamp
         - $ref: "#/components/parameters/sortOrder"
       responses:
         "200":
@@ -2298,6 +2320,8 @@ paths:
         it.
 
         Fields that are not populated will use their default values if needed.
+
+        When `config.dataSource` is omitted, see `CloudAnalyticsExternalConfigDataSource` for the resolved default.
       operationId: query
       requestBody:
         content:
@@ -2309,7 +2333,6 @@ paths:
                   $ref: "#/components/schemas/ExternalConfig"
             example:
               config:
-                dataSource: billing
                 metrics:
                   - type: basic
                     value: cost
@@ -2822,11 +2845,15 @@ paths:
             operation predates file output support and has no stored render
             input; a transient rendering failure instead returns 200 with
             `result` and no `fileOutput`, so retry the request for the file.
+            `pdf` is the chart and data table as a document, `png` the chart
+            image, and `csv` every row of the result as raw data, one line per
+            row with the report's dimensions and metrics, never truncated.
           schema:
             type: string
             enum:
               - pdf
               - png
+              - csv
             example: pdf
       responses:
         "200":
@@ -3332,10 +3359,19 @@ paths:
                     $ref: "#/components/schemas/ResourcePermission"
                 public:
                   type: string
-                  description: The type of permissions granted to all users in the organization for this resource.
+                  description: |-
+                    The type of permissions granted to all users in the organization for this resource.
+
+                    Allocations (single and group) always have at least `viewer` public access, so it cannot be cleared:
+                    - If `public` is omitted, the stored value is kept.
+                    - An empty string (`""`) is accepted for backward compatibility and is treated as `viewer`.
+                    - An explicit `null` is rejected with `400 Bad Request`.
+
+                    For Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).
                   enum:
                     - editor
                     - viewer
+                    - null
                   nullable: true
       responses:
         "200":
@@ -3359,7 +3395,7 @@ paths:
       tags:
         - Contracts
       summary: List contracts
-      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires contractsReadOnly, contractsViewer, or a write-capable role (without contractsReadOnly). User API tokens must include the matching permission in their scope.
+      description: Lists the contracts held by the specified customer. Callable by a T1/T2 PartnerOps principal for its own tenant or any descendant tenant. Read access requires contractsReadOnly or contractsViewer, plus the billing:contracts or channelops entitlement. User API tokens must include the matching permission in their scope.
       operationId: listContracts
       parameters:
         - name: customerID
@@ -3385,7 +3421,7 @@ paths:
       tags:
         - Contracts
       summary: Create contract
-      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires a role without contractsReadOnly; user API tokens must include the matching permission in their scope.
+      description: Creates a draft contract for the specified customer. Requires the caller to be the direct parent (T1 for a T2-level contract, T2 for a T3-level contract). Write access requires contractsViewer without contractsReadOnly, plus the billing:contracts or channelops entitlement; user API tokens must include the matching permission in their scope.
       operationId: createContract
       parameters:
         - name: customerID
@@ -3567,6 +3603,7 @@ paths:
       summary: List anomalies
       description: |-
         Returns a list of detected anomalies.
+        Requires the `governance:costAnomalies` entitlement and the `AnomaliesViewer` permission.
         Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
         The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
         The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
@@ -3651,7 +3688,9 @@ paths:
       tags:
         - Anomalies
       summary: Retrieve an anomaly
-      description: Returns the specified anomaly.
+      description: >-
+        Returns the specified anomaly. Requires the `governance:costAnomalies` entitlement
+        and the `AnomaliesViewer` permission.
       operationId: getAnomaly
       parameters:
         - name: id
@@ -3681,6 +3720,7 @@ paths:
                   - monitorLevel
                   - notifications
                   - initialNotifications
+                  - customerFeedback
                 type: object
                 properties:
                   attribution:
@@ -3777,6 +3817,7 @@ paths:
                       - reverted
                       - expired
                       - unknown
+                      - null
                   timeFrame:
                     type: string
                     description: "Timeframe: Daily or Hourly"
@@ -3798,6 +3839,7 @@ paths:
                     enum:
                       - active
                       - inactive
+                      - null
                   acknowledged:
                     description: "Has the anomaly been acknowledged"
                     type: boolean
@@ -3810,6 +3852,8 @@ paths:
                     description: "Email of the user who first acknowledged the anomaly"
                     type: string
                     nullable: true
+                  customerFeedback:
+                    $ref: "#/components/schemas/AnomalyCustomerFeedback"
                   notifications:
                     $ref: "#/components/schemas/NotificationEventArray"
                   initialNotifications:
@@ -3849,7 +3893,7 @@ paths:
         `EXPECTED_COST_SPIKE` or `ANOMALOUS_OTHER` for `ANOMALY_CONFIRMED`, and
         `FAULTY_ANOMALY_DETECTION_MODEL`, `INCORRECT_DATA`, `LOW_IMPACT` or
         `NON_ANOMALOUS_OTHER` for `NOT_ANOMALY`. Requires the `AnomaliesManager` permission
-        and DoiT API access (`platform:externalApi`).
+        and the `governance:costAnomalies` and `governance:costAnomalies:acknowledgement` entitlements.
       operationId: patchAnomaly
       parameters:
         - name: id
@@ -3885,7 +3929,8 @@ paths:
         facts and evidence references it was generated from. The explanation itself is
         AI-generated; it is always returned separately from the deterministic `facts`, and is
         marked as such in the `explanation` object. Generation is ephemeral: no conversation is
-        persisted on your behalf.
+        persisted on your behalf. Requires the `governance:costAnomalies` entitlement and the
+        `AnomaliesViewer` permission.
       operationId: getAnomalyExplanation
       parameters:
         - name: id
@@ -4990,6 +5035,7 @@ paths:
       description: |-
         Returns a list of all the current and historical invoices for your organization.
         Invoices are returned in reverse chronological order by default.
+        Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
       operationId: listInvoices
       parameters:
         - name: maxResults
@@ -5002,6 +5048,11 @@ paths:
         - $ref: "#/components/parameters/pageToken"
         - name: filter
           in: query
+          description: >-
+            Supported keys: platform (an invoice platform), dueDate (milliseconds since the
+            POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value
+            is applied per request. Cancelled invoices and credit memos are returned only with
+            status:CANCELED, and every other request excludes them.
           schema:
             $ref: "#/components/schemas/Filter"
         - name: minCreationTime
@@ -5056,7 +5107,9 @@ paths:
       tags:
         - Invoices
       summary: Retrieve an invoice
-      description: Returns the full details of an invoice specified by the invoice number.
+      description: >-
+        Returns the full details of an invoice specified by the invoice number. A cancelled
+        invoice or credit memo is returned with status `CANCELED`.
       operationId: getInvoice
       parameters:
         - name: id
@@ -5093,11 +5146,12 @@ paths:
                     format: int64
                   status:
                     type: string
-                    description: Status of the invoice
+                    description: Status of the invoice. `CANCELED` takes precedence over the payment status.
                     enum:
                       - OPEN
                       - PAST DUE
                       - PAID
+                      - CANCELED
                   totalAmount:
                     type: number
                     description: Total invoiced amount
@@ -5110,12 +5164,91 @@ paths:
                     $ref: "#/components/schemas/Currency"
                   url:
                     type: string
-                    description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+                    description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
                   lineItems:
                     type: array
                     description: Invoice line items.
                     items:
                       $ref: "#/components/schemas/ListItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/billing/v1/invoices/{id}/pdf":
+    get:
+      tags:
+        - Invoices
+      summary: Download an invoice PDF
+      description: >-
+        Returns the PDF document for the invoice specified by the invoice
+        number, including a cancelled invoice or credit memo. The response body
+        is the PDF bytes.
+
+        The PDF is returned decompressed by default. It is only gzip-compressed
+        when the request advertises `Accept-Encoding: gzip`, in which case the
+        response carries `Content-Encoding: gzip` with a `Content-Length` for the
+        compressed bytes and must be decoded as a standard `Content-Encoding:
+        gzip` body. HTTP clients whose stack negotiates the encoding
+        automatically also decode it automatically; a client that sets the header
+        by hand may instead receive the raw gzip bytes (for example `curl` decodes
+        only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to
+        always receive the decompressed PDF. A very large invoice may exceed the
+        decompressed-response size limit and respond with `500`; request it with
+        `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
+
+        A `404` is returned both when no invoice with the given number exists for
+        the authenticated tenant and when the invoice exists but has no PDF
+        document available.
+      operationId: getInvoicePdf
+      parameters:
+        - name: id
+          in: path
+          description: Invoice number.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK - The invoice PDF document.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            Content-Disposition:
+              description: Attachment disposition carrying the suggested filename, `<id>.pdf`.
+              schema:
+                type: string
+            Content-Encoding:
+              description: >-
+                Set to `gzip` when the PDF is returned gzip-compressed
+                (negotiated via `Accept-Encoding: gzip`, used for large
+                invoices). Absent when the body is the decompressed PDF.
+              schema:
+                type: string
+            Cache-Control:
+              description: Always `private, no-store`; invoice PDFs must not be cached by shared or browser caches.
+              schema:
+                type: string
+            Vary:
+              description: Always `Accept-Encoding`; the response body is content-negotiated on `Accept-Encoding`.
+              schema:
+                type: string
+            X-Content-Type-Options:
+              description: Always `nosniff`.
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -5404,7 +5537,7 @@ paths:
       summary: List contract templates
       description: >-
         Lists contract templates owned by the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: listContractTemplates
       responses:
         "200":
@@ -5427,7 +5560,7 @@ paths:
       summary: Create contract template
       description: >-
         Creates a contract template for the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: createContractTemplate
       requestBody:
         required: true
@@ -5459,7 +5592,7 @@ paths:
       summary: Get contract template
       description: >-
         Returns a single contract template owned by the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: getContractTemplate
       parameters:
         - name: templateID
@@ -5488,7 +5621,7 @@ paths:
       summary: Update contract template
       description: >-
         Updates a contract template owned by the authenticated tenant (from the bearer token).
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: updateContractTemplate
       parameters:
         - name: templateID
@@ -5528,7 +5661,7 @@ paths:
       description: >-
         Soft-deletes (archives) a contract template owned by the authenticated tenant
         (from the bearer token). Instantiated contracts are unaffected.
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: archiveContractTemplate
       parameters:
         - name: templateID
@@ -5563,7 +5696,7 @@ paths:
         child customers, creating a draft contract for each. Drafts have no billing effect until
         each one is completed and activated. The template must not be archived, and the current
         date must fall within its eligibility window.
-        Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+        Requires ContractTemplatesAdmin and the `channelops:contracts:templates` entitlement.
       operationId: assignContractTemplate
       parameters:
         - name: templateID
@@ -5602,7 +5735,9 @@ paths:
       tags:
         - AccountTeam
       summary: List account team
-      description: Returns a list of all DoiT account managers assigned to your organization.
+      description: >-
+        Returns a list of all DoiT account managers assigned to your organization. Requires
+        the `Settings` permission.
       operationId: listAccountTeam
       responses:
         "200":
@@ -5632,7 +5767,7 @@ paths:
         `{customerId}`. `{customerId}` must match the customer resolved from the bearer
         token; a token scoped to a different customer gets `403`, even if that customer
         would otherwise be reachable through a reseller/MTS relationship. Requires the
-        `Settings` permission and DoiT API access (`platform:externalApi`).
+        `Settings` permission.
       operationId: getCustomer
       parameters:
         - $ref: "#/components/parameters/customerId"
@@ -5662,7 +5797,7 @@ paths:
         by `{customerId}`. `{customerId}` must match the customer resolved from the bearer
         token; a token scoped to a different customer gets `403`, even if that customer
         would otherwise be reachable through a reseller/MTS relationship. Requires
-        the `Settings` permission and DoiT API access (`platform:externalApi`); updating
+        the `Settings` permission; updating
         `allowedInviteDomains` additionally requires the `UsersManager` permission.
 
 
@@ -5733,7 +5868,7 @@ paths:
         end customer each is currently mapped to. `{customerId}` (the reseller itself) means
         the account has not yet been reassigned to an end customer. Each payer's own
         management account is included alongside its member accounts. Requires the
-        `SharedPayersAdmin` permission and DoiT API access (`platform:externalApi`). User API
+        `SharedPayersAdmin` permission and the AWS integration (`pdi:aws`) entitlement. User API
         tokens must include the permission in their scope.
       operationId: listSharedPayerAccountMappings
       parameters:
@@ -5766,7 +5901,7 @@ paths:
       description: >-
         Lists the reseller's linked shared-payer management (payer) accounts that have
         completed onboarding, for use in an account picker. Requires the `SharedPayersAdmin`
-        permission and DoiT API access (`platform:externalApi`). User API tokens must include
+        permission and the AWS integration (`pdi:aws`) entitlement. User API tokens must include
         the permission in their scope.
       operationId: listSharedPayerManagementAccounts
       parameters:
@@ -5794,7 +5929,7 @@ paths:
       description: >-
         Lists every shared payer linked to the reseller, including ones still mid-onboarding,
         with per-payer counts of linked and mapped accounts. Requires the `SharedPayersAdmin`
-        permission and DoiT API access (`platform:externalApi`). User API tokens must include
+        permission and the AWS integration (`pdi:aws`) entitlement. User API tokens must include
         the permission in their scope.
       operationId: listSharedPayers
       parameters:
@@ -5822,8 +5957,8 @@ paths:
       description: >-
         Reassigns one AWS account under a linked shared payer - a member account or the
         payer's own management account - to the reseller itself or to a T3 end customer
-        within its hierarchy. Requires the `SharedPayersAdmin` permission and DoiT API access
-        (`platform:externalApi`). User API tokens must include the permission in their scope.
+        within its hierarchy. Requires the `SharedPayersAdmin` permission and the AWS integration
+        (`pdi:aws`) entitlement. User API tokens must include the permission in their scope.
       operationId: reassignSharedPayerAccount
       parameters:
         - $ref: "#/components/parameters/customerId"
@@ -6264,6 +6399,507 @@ paths:
                 $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/500"
+  /iam/v1/users/{userId}/notifications:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: |
+          The unique ID of the user (including invited users). Must belong to the tenant resolved from the
+          bearer token and optional `X-Tenant-Id`.
+        schema:
+          type: string
+          minLength: 1
+    get:
+      operationId: listUserNotifications
+      tags:
+        - Notifications
+      summary: List personal notifications for a user
+      description: |
+        Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
+        array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
+        ascending, then by `id` ascending.
+
+        Requires `usersManager` permission. The user id must belong to the resolved tenant.
+      responses:
+        "200":
+          description: OK - Personal notification configs returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotificationListResponse"
+              example:
+                items:
+                  - id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                    destinations:
+                      - type: email
+                        address: jane.doe@example.com
+                    settings:
+                      costAnomalies:
+                        minSeverity: warning
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                        repeat:
+                          everyHours: 24
+                          whenCostGrows:
+                            match: or
+                            percentIncrease: 10
+                            minIncrease:
+                              amount: "150.00"
+                              currency: USD
+                            withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      operationId: createUserNotification
+      tags:
+        - Notifications
+      summary: Create a personal notification for a user
+      description: |
+        Creates a personal cost-anomaly notification config for the user. The request body has no email
+        address; the server copies the target user's email onto the config as the sole destination.
+
+        Requires `usersManager` permission. The user id must belong to the resolved tenant.
+
+        Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
+        original response and does not create a second config. With `dryRun=true` the request goes through
+        the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
+        (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+
+        Reads are immediately consistent. After a `201`, a GET of that notification returns the created
+        config.
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        required: true
+        description: |
+          Personal cost-anomaly notification to create. No email address — the server copies the target user's
+          email as the destination.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserNotificationRequest"
+            example:
+              name: Anomaly alerts
+              settings:
+                costAnomalies:
+                  minSeverity: warning
+                  minExcessCost:
+                    amount: "100.00"
+                    currency: USD
+                  allocations:
+                    mode: include
+                    ids:
+                      - alloc_abc
+                      - alloc_def
+                  repeat:
+                    everyHours: 24
+                    whenCostGrows:
+                      match: or
+                      percentIncrease: 10
+                      minIncrease:
+                        amount: "150.00"
+                        currency: USD
+                      withinHours: 6
+      responses:
+        "200":
+          description: |
+            OK - Dry run only (`dryRun=true`). Every check of a real create passed and nothing was created;
+            `id`, `createTime`, `updateTime`, and `etag` are `null`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              example:
+                id: null
+                name: Anomaly alerts
+                createTime: null
+                updateTime: null
+                etag: null
+                destinations:
+                  - type: email
+                    address: jane.doe@example.com
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "201":
+          description: Created - Personal notification created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            Location:
+              description: URL of the created personal notification.
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              example:
+                id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                name: Anomaly alerts
+                createTime: "2026-10-01T08:00:00Z"
+                updateTime: "2026-10-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                destinations:
+                  - type: email
+                    address: jane.doe@example.com
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /iam/v1/users/{userId}/notifications/{id}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: |
+          The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional
+          `X-Tenant-Id`.
+        schema:
+          type: string
+          minLength: 1
+      - name: id
+        in: path
+        required: true
+        description: The unique ID of the notification config returned by create or list.
+        schema:
+          type: string
+          minLength: 1
+    get:
+      operationId: getUserNotification
+      tags:
+        - Notifications
+      summary: Get a personal notification
+      description: |
+        Returns one personal notification config. Requires `usersManager` permission. A notification id that
+        does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
+        elsewhere.
+      responses:
+        "200":
+          description: OK - Personal notification returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              example:
+                id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                name: Anomaly alerts
+                createTime: "2026-10-01T08:00:00Z"
+                updateTime: "2026-10-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                destinations:
+                  - type: email
+                    address: jane.doe@example.com
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      operationId: updateUserNotification
+      tags:
+        - Notifications
+      summary: Update a personal notification
+      description: |
+        Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
+        Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
+        `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
+        example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
+        `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+        same checks as a real update and returns the notification as it would look after the patch, without
+        changing anything.
+
+        Reads are immediately consistent. After a completed update, a GET of that notification returns the
+        new state.
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        required: true
+        description: |
+          JSON Merge Patch document (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged;
+          nested arrays are replaced when present. Send `null` to clear optional members such as `repeat`.
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserNotificationRequest"
+            examples:
+              changeSeverity:
+                value:
+                  settings:
+                    costAnomalies:
+                      minSeverity: critical
+              clearRepeat:
+                value:
+                  settings:
+                    costAnomalies:
+                      repeat: null
+      responses:
+        "200":
+          description: |
+            OK - Notification updated. The `updated` example is a completed patch: `updateTime` and `etag`
+            change. The `dryRun` example is the preview when `dryRun=true`: the merged settings, with the
+            current `updateTime` and `etag` left unchanged.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotification"
+              examples:
+                updated:
+                  summary: Completed update
+                  value:
+                    id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-12T09:30:00Z"
+                    etag: 9b2e4d6f8a0c1e3b5d7f9a1c3e5b7d9f1a3c5e7a9b1d3f5a7c9e1b3d5f7a9c1e
+                    destinations:
+                      - type: email
+                        address: jane.doe@example.com
+                    settings:
+                      costAnomalies:
+                        minSeverity: critical
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                        repeat:
+                          everyHours: 24
+                          whenCostGrows:
+                            match: or
+                            percentIncrease: 10
+                            minIncrease:
+                              amount: "150.00"
+                              currency: USD
+                            withinHours: 6
+                dryRun:
+                  summary: Dry-run preview
+                  description: |
+                    Merged result with the current `etag` and `updateTime`. Nothing was stored. The response
+                    includes `X-Dry-Run: true`.
+                  value:
+                    id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                    destinations:
+                      - type: email
+                        address: jane.doe@example.com
+                    settings:
+                      costAnomalies:
+                        minSeverity: critical
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                        repeat:
+                          everyHours: 24
+                          whenCostGrows:
+                            match: or
+                            percentIncrease: 10
+                            minIncrease:
+                              amount: "150.00"
+                              currency: USD
+                            withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      operationId: deleteUserNotification
+      tags:
+        - Notifications
+      summary: Delete a personal notification
+      description: |
+        Permanently deletes a personal notification config. Requires `usersManager` permission, the
+        `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
+        same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
+        `404`.
+
+        Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
+        of that notification returns `404`.
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      responses:
+        "204":
+          description: No Content - Notification deleted, or validated when `dryRun=true`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /iam/v1/roles:
     get:
       tags:
@@ -8883,6 +9519,159 @@ paths:
           $ref: "#/components/responses/404"
         "500":
           $ref: "#/components/responses/500"
+  /insights/v2/recipes:
+    get:
+      tags:
+        - Composer Insights (Beta)
+      summary: List Composer recipes
+      description: |-
+        Returns the Composer recipes that have results in your recently scanned cloud accounts, with counts of those results by status and their estimated savings. Recipes with no such results are not listed. Dismissed recipes are listed with `status: dismissed` and every count set to 0.
+
+        Recipes are sorted by `severity`, descending, by default. Ties break by title (case-insensitive), then by `id`.
+
+        `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `severity:critical,high|provider:aws,gcp`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+        - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+        - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+        - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. `compliance` matches recipes tagged with at least one compliance standard.
+        - `has_active_results`: exactly one of `true` or `false`.
+        - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Lists only recipes with results on resources in any of those allocations; counts, savings and `rowCount` then cover only those resources. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+
+        Requests are always served for the customer your API token belongs to. To list the results of one recipe, use its `id` with `GET /insights/v2/recipes/{recipeId}/results`.
+      operationId: listComposerRecipes
+      parameters:
+        - $ref: "#/components/parameters/composerMaxResults"
+        - $ref: "#/components/parameters/composerPageToken"
+        - $ref: "#/components/parameters/composerRecipeSortBy"
+        - $ref: "#/components/parameters/composerSortOrder"
+        - $ref: "#/components/parameters/composerRecipeFilter"
+      responses:
+        "200":
+          description: OK - A page of recipes matching the request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComposerRecipeList"
+              example:
+                items:
+                  - id: 42
+                    title: Publicly readable S3 bucket
+                    description: S3 buckets should not grant public read access.
+                    provider: aws
+                    severity: critical
+                    affectedResourceType: s3-bucket
+                    activeResultsCount: 3
+                    totalResultsCount: 5
+                    resolvedResultsCount: 2
+                    snoozedResultsCount: 0
+                    status: active
+                    isDismissed: false
+                    detectionTime: "2026-08-18T09:30:00Z"
+                    estimatedFixTimeMinutes: 15
+                    totalPotentialSavings: "120.00"
+                    metadata:
+                      impacts: Blocking public access may break static-site hosting.
+                      importantPoints:
+                        - Check bucket policies too.
+                      reference: https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+                      manualRemediation: "<ol><li>Open the S3 console.</li></ol>"
+                pageToken: example-next-page-token
+                rowCount: 137
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ComposerAllocationNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  "/insights/v2/recipes/{recipeId}/results":
+    get:
+      tags:
+        - Composer Insights (Beta)
+      summary: List Composer recipe results
+      description: |-
+        Returns the results of one Composer recipe: one finding per affected resource, with the resource's account, region, tags and cost metrics. An unknown recipe, one your customer isn't entitled to, and a dismissed recipe all return `200` with an empty `items` list and `rowCount: 0`.
+
+        By default (`last_scan_only:true`) only results reported by the most recent scan of each recently scanned account are returned. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default; add `last_scan_only:false` to include them and results from earlier scans. `rowCount` can therefore be lower than the recipe's `totalResultsCount`. Results are sorted by `detection_time`, descending, by default. Ties break by `id`.
+
+        `filter` is one string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND), for example `region:us-east-1,us-west-2|status:active`. Because `,` and `|` are separators, a value itself can't contain them. Supported keys:
+        - `account_id`: one or more cloud account IDs, matched exactly.
+        - `region`: one or more cloud regions, matched exactly.
+        - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+        - `related_resource_name`: one or more names of related resources (for example an attached IAM policy), each matched as a substring anywhere in the result's related-resource details.
+        - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+        - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan, and so rarely includes resolved results. `false` returns results from every scan and account, including resolved ones.
+        - `allocation`: up to 10 distinct allocation IDs from `GET /analytics/v1/allocations`. Returns only results on resources in any of those allocations. An allocation you can't view returns `404`; if access can't be checked, the request returns `503` rather than unfiltered data.
+
+        Requests are always served for the customer your API token belongs to.
+      operationId: listComposerRecipeResults
+      parameters:
+        - $ref: "#/components/parameters/composerRecipeId"
+        - $ref: "#/components/parameters/composerMaxResults"
+        - $ref: "#/components/parameters/composerPageToken"
+        - $ref: "#/components/parameters/composerResultSortBy"
+        - $ref: "#/components/parameters/composerSortOrder"
+        - $ref: "#/components/parameters/composerResultFilter"
+      responses:
+        "200":
+          description: OK - A page of the recipe's results matching the request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComposerRecipeResultList"
+              example:
+                items:
+                  - id: 1001
+                    ruleId: 42
+                    issuedResourceId: arn:aws:s3:::example-public-bucket
+                    providerIdentifier: arn:aws:s3:::example-public-bucket
+                    tags:
+                      environment: production
+                      team: platform
+                    issuedResourceName: example-public-bucket
+                    accountId: "123456789012"
+                    region: us-east-1
+                    provider: aws
+                    resourceClass: s3-bucket
+                    detectionTime: "2026-08-18T09:30:00Z"
+                    solved: false
+                    isActive: true
+                    lastFlowId: example-latest-scan-id
+                    firstFlowId: example-first-scan-id
+                    costEstimationPotentialSavings: 120
+                  - id: 1002
+                    ruleId: 42
+                    issuedResourceId: arn:aws:s3:::example-logs-bucket
+                    providerIdentifier: arn:aws:s3:::example-logs-bucket
+                    tags: {}
+                    issuedResourceName: example-logs-bucket
+                    accountId: "123456789012"
+                    region: eu-west-1
+                    provider: aws
+                    resourceClass: s3-bucket
+                    detectionTime: "2026-08-02T14:12:00Z"
+                    solved: false
+                    snoozed: true
+                    isActive: true
+                    lastFlowId: example-latest-scan-id
+                    firstFlowId: example-earlier-scan-id
+                rowCount: 2
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ComposerAllocationNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   "/core/v1/cloudconnect/supportedFeatures/{accountID}":
     get:
       tags:
@@ -11210,7 +11999,7 @@ paths:
       tags:
         - Customer Groups
       summary: Delete a customer group
-      description: Deletes a customer group owned by the authenticated tenant. Groups with assigned users cannot be deleted. Requires the UsersManager permission.
+      description: Deletes a customer group owned by the authenticated tenant. Groups with assigned users or user groups cannot be deleted. Requires the UsersManager permission.
       operationId: deleteCustomerGroup
       responses:
         "204":
@@ -11316,6 +12105,107 @@ paths:
       summary: Unassign a user from a customer group
       description: Unassigns a user from a customer group owned by the authenticated tenant. Requires the UsersManager permission.
       operationId: unassignCustomerGroupUser
+      responses:
+        "204":
+          description: Unassigned
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups/{customerGroupId}/user-groups:
+    parameters:
+      - $ref: "#/components/parameters/customerGroupId"
+      - $ref: "#/components/parameters/tenantId"
+    get:
+      tags:
+        - Customer Groups
+      summary: List user groups assigned to a customer group
+      description: Returns the user groups assigned to a customer group owned by the authenticated tenant, sorted by user-group ID. Requires the UsersManager permission.
+      operationId: listCustomerGroupUserGroups
+      responses:
+        "200":
+          description: OK
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerGroupUserGroupsResponse"
+              example:
+                customerGroupId: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                userGroups:
+                  - userGroupId: ug_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /rbac/v1/customer-groups/{customerGroupId}/user-groups/{userGroupId}:
+    parameters:
+      - $ref: "#/components/parameters/customerGroupId"
+      - $ref: "#/components/parameters/customerGroupUserGroupId"
+      - $ref: "#/components/parameters/tenantId"
+    put:
+      tags:
+        - Customer Groups
+      summary: Assign a user group to a customer group
+      description: Assigns a user group owned by the authenticated tenant to a customer group owned by that tenant. Membership changes in the user group apply without reassigning it. Requires the UsersManager permission.
+      operationId: assignCustomerGroupUserGroup
+      responses:
+        "204":
+          description: Assigned
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Customer Groups
+      summary: Unassign a user group from a customer group
+      description: Unassigns a user group from a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: unassignCustomerGroupUserGroup
       responses:
         "204":
           description: Unassigned
@@ -12222,7 +13112,67 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 components:
+  x-doit-doc-anchors:
+    caBudgetDataSourceDescription: &caBudgetDataSourceDescription |-
+      Data source used to evaluate the budget.
+      When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+      On update, omission preserves the saved data source.
+    caAlertConfigDataSourceDescription: &caAlertConfigDataSourceDescription |-
+      Data source used to query data for the alert. Affects which dimensions and metrics are available.
+      When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+    caExternalConfigDataSourceDescription: &caExternalConfigDataSourceDescription |-
+      Data source of the report.
+      When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+      On report update (PATCH), omission preserves the saved data source.
   schemas:
+    CloudAnalyticsBillingDataSource:
+      type: string
+      enum:
+        - billing
+        - billing-datahub
+      x-enumDescriptions:
+        billing: Standard Cloud Analytics billing data only.
+        billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+    CloudAnalyticsBudgetDataSource:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsBillingDataSource"
+        - description: *caBudgetDataSourceDescription
+    CloudAnalyticsBudgetDataSourceReadOnly:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsBillingDataSource"
+        - description: Data source used to evaluate the budget.
+    CloudAnalyticsAlertDataSource:
+      type: string
+      enum:
+        - billing
+        - billing-datahub
+        - kubernetes-utilization
+        - tokenomics
+      x-enumDescriptions:
+        billing: Standard Cloud Analytics billing data only.
+        billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        kubernetes-utilization: Kubernetes utilization data.
+        tokenomics: Tokenomics data; requires the customer to have Tokenomics enabled.
+    CloudAnalyticsAlertConfigDataSource:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsAlertDataSource"
+        - description: *caAlertConfigDataSourceDescription
+    CloudAnalyticsReportDataSource:
+      type: string
+      enum:
+        - billing
+        - bqlens
+        - billing-datahub
+        - kubernetes-utilization
+      x-enumDescriptions:
+        billing: Standard Cloud Analytics billing data only.
+        billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        bqlens: BigQuery Lens data.
+        kubernetes-utilization: Kubernetes utilization data.
+    CloudAnalyticsExternalConfigDataSource:
+      allOf:
+        - $ref: "#/components/schemas/CloudAnalyticsReportDataSource"
+        - description: *caExternalConfigDataSourceDescription
     CommitmentPolicy:
       type: object
       description: |-
@@ -13380,6 +14330,437 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ServiceAccount"
+    CostAnomalyAllocations:
+      type: object
+      additionalProperties: false
+      description: |
+        Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET
+        /analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying
+        whether it exists elsewhere.
+
+        `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
+        tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
+        id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
+        sort or drop entries. A duplicate id is rejected with `422`.
+      required:
+        - mode
+        - ids
+      properties:
+        mode:
+          type: string
+          enum:
+            - all
+            - include
+            - exclude
+          description: |
+            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+            only the listed ids. `exclude` — all enabled allocations except the listed ids.
+          example: include
+        ids:
+          type: array
+          description: |
+            Allocation ids, in the order sent. A read returns that same order. A duplicate id is rejected
+            with `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.
+          items:
+            type: string
+            minLength: 1
+          example:
+            - alloc_abc
+            - alloc_def
+    CostAnomalyWhenCostGrows:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: |
+        Resend when the anomaly's cost grows:
+
+        - both `percentIncrease` and `minIncrease` present → `match` is
+          required (`or` or `and`)
+        - exactly one of `percentIncrease` or `minIncrease` present → omit
+          `match` (percentage-only or value-only)
+        - neither amount present → rejected with `422`
+
+        `percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
+        window is off.
+      properties:
+        match:
+          type: string
+          enum:
+            - or
+            - and
+          description: |
+            How to combine percent and dollar growth when both are set. Required when both amounts are present;
+            omit when only one amount is present.
+          example: or
+        percentIncrease:
+          type: integer
+          minimum: 1
+          description: |
+            Minimum percent cost increase that triggers a resend. `10` means 10 percent. Must be greater than 0.
+          example: 10
+        minIncrease:
+          description: |
+            Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.
+            `150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A
+            negative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a
+            whole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole
+            dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+            Responses return the amount as `"150.00"`.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+        withinHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: Optional window in hours for the growth check (1–24).
+          example: 6
+    CostAnomalyRepeat:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: |
+        Resend controls for an active cost anomaly. Omit the whole `repeat` object when neither control is
+        set. An empty object is rejected with `422`.
+      properties:
+        everyHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: |
+            Resend until the anomaly is inactive, every N hours (1–24).
+          example: 24
+        whenCostGrows:
+          $ref: "#/components/schemas/CostAnomalyWhenCostGrows"
+    CostAnomalySettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
+        optional resend controls.
+      required:
+        - minSeverity
+        - minExcessCost
+        - allocations
+      properties:
+        minSeverity:
+          type: string
+          enum:
+            - warning
+            - critical
+          description: |
+            `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
+            value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
+            severity levels") and of warning both return `warning`. `critical` is stored and returned as
+            `critical`.
+          example: warning
+        minExcessCost:
+          description: |
+            Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.
+            `100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A
+            negative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a
+            whole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole
+            dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+            Responses return the amount as `"100.00"`. `0` is accepted.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+        allocations:
+          $ref: "#/components/schemas/CostAnomalyAllocations"
+        repeat:
+          $ref: "#/components/schemas/CostAnomalyRepeat"
+    UserNotificationSettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are
+        rejected; omitting `costAnomalies` is rejected.
+      required:
+        - costAnomalies
+      properties:
+        costAnomalies:
+          $ref: "#/components/schemas/CostAnomalySettings"
+    UserNotificationEmailDestination:
+      type: object
+      additionalProperties: false
+      description: |
+        Server-copied email destination. The create/update body does not accept an email address; the server
+        copies the target user's email.
+      required:
+        - type
+        - address
+      properties:
+        type:
+          type: string
+          description: Delivery channel. Personal delivery is email only.
+          enum:
+            - email
+        address:
+          type: string
+          format: email
+          readOnly: true
+          x-doit-pii: true
+          x-terraform-computed: true
+          description: Target user's email, copied by the server.
+          example: jane.doe@example.com
+    UserNotification:
+      type: object
+      additionalProperties: false
+      description: |
+        Personal notification config for one user. Create and read return the full resource with the same
+        field names. Update and delete require `If-Match` against the strong `etag`.
+      required:
+        - id
+        - name
+        - createTime
+        - updateTime
+        - etag
+        - destinations
+        - settings
+      properties:
+        id:
+          type: string
+          readOnly: true
+          x-terraform-computed: true
+          description: Server-assigned notification id. `null` only on a dry-run create.
+          nullable: true
+          example: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name of the notification config.
+          example: Anomaly alerts
+        createTime:
+          type: string
+          format: date-time
+          readOnly: true
+          x-terraform-computed: true
+          description: When the config was created. `null` only on a dry-run create.
+          nullable: true
+          example: "2026-10-01T08:00:00Z"
+        updateTime:
+          type: string
+          format: date-time
+          readOnly: true
+          x-terraform-computed: true
+          description: When the config was last changed. `null` only on a dry-run create.
+          nullable: true
+          example: "2026-10-01T08:00:00Z"
+        etag:
+          type: string
+          readOnly: true
+          x-terraform-computed: true
+          description: |
+            Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run
+            create.
+          nullable: true
+          example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        destinations:
+          type: array
+          readOnly: true
+          x-terraform-computed: true
+          minItems: 1
+          maxItems: 1
+          description: |
+            Server-managed destinations. Always one email entry with the target user's address.
+          items:
+            $ref: "#/components/schemas/UserNotificationEmailDestination"
+          example:
+            - type: email
+              address: jane.doe@example.com
+        settings:
+          description: Subscribed settings.
+          allOf:
+            - $ref: "#/components/schemas/UserNotificationSettings"
+    UserNotificationListResponse:
+      type: object
+      additionalProperties: false
+      description: Unpaginated list of personal notification configs for one user.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          description: Notification configs for the user, ordered by `createTime` ascending, then by `id` ascending.
+          items:
+            $ref: "#/components/schemas/UserNotification"
+          example: []
+      example:
+        items: []
+    CreateUserNotificationRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Fields of a new personal notification. No email address — the server copies the target user's email
+        as the destination. Unknown fields are rejected. `settings` must include `costAnomalies` and must
+        not include any other notification type.
+      required:
+        - name
+        - settings
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display name for the new notification config.
+          example: Anomaly alerts
+        settings:
+          $ref: "#/components/schemas/UserNotificationSettings"
+      example:
+        name: Anomaly alerts
+        settings:
+          costAnomalies:
+            minSeverity: warning
+            minExcessCost:
+              amount: "100.00"
+              currency: USD
+            allocations:
+              mode: all
+              ids: []
+    PatchCostAnomalyWhenCostGrows:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `whenCostGrows`. Omit a field to leave it; send `null` to clear `match`,
+        `percentIncrease`, `minIncrease`, or `withinHours`.
+      properties:
+        match:
+          type: string
+          enum:
+            - or
+            - and
+            - null
+          description: |
+            How to combine percent and dollar growth when both are set. Send `null` to clear.
+          nullable: true
+        percentIncrease:
+          type: integer
+          minimum: 1
+          description: |
+            Minimum percent cost increase that triggers a resend. Must be greater than 0. Send `null` to clear.
+          nullable: true
+        minIncrease:
+          description: |
+            Minimum cost growth, as Money. Must be a positive whole number of dollars. Send `null` to clear.
+            `currency` must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with
+            `422`. A fractional amount is rejected with `422` (`150.99` is not a whole number of dollars). `150` and
+            `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
+            exponents, a leading `+`, or underscores, are rejected with `422`.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          nullable: true
+        withinHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: Optional window in hours (1–24). Send `null` to clear.
+          nullable: true
+    PatchCostAnomalyRepeat:
+      type: object
+      additionalProperties: false
+      properties:
+        everyHours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: |
+            Resend until the anomaly is inactive, every N hours (1–24). Send `null` to clear.
+          nullable: true
+        whenCostGrows:
+          allOf:
+            - $ref: "#/components/schemas/PatchCostAnomalyWhenCostGrows"
+          description: |
+            Growth-based resend controls. Send `null` to clear this branch while leaving `everyHours`.
+          nullable: true
+      description: |
+        Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. To clear
+        every resend control, send `null` for `costAnomalies.repeat` itself.
+    PatchCostAnomalyAllocations:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
+        the current list.
+      properties:
+        mode:
+          type: string
+          enum:
+            - all
+            - include
+            - exclude
+          description: |
+            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
+            only the listed ids. `exclude` — all enabled allocations except the listed ids.
+        ids:
+          type: array
+          description: |
+            Replacement allocation ids when present, in the order sent. A read returns that same order. A
+            duplicate id is rejected with `422`. Empty when `mode` is `all`. Non-empty when `mode` is
+            `include` or `exclude`.
+          items:
+            type: string
+            minLength: 1
+    PatchCostAnomalySettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
+        resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
+        send a new value.
+      properties:
+        minSeverity:
+          type: string
+          enum:
+            - warning
+            - critical
+          description: |
+            `warning` — warning and above. `critical` — critical only. A write of `all` is rejected with `422`.
+        minExcessCost:
+          description: |
+            Minimum excess cost, as Money. Omit it to leave the current value; it cannot be cleared. `currency`
+            must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with `422`.
+            A fractional amount is rejected with `422` (`100.99` is not a whole number of dollars). `100` and
+            `100.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
+            exponents, a leading `+`, or underscores, are rejected with `422`. `0` is accepted.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+        allocations:
+          $ref: "#/components/schemas/PatchCostAnomalyAllocations"
+        repeat:
+          description: Resend controls, or `null` to clear them all.
+          allOf:
+            - $ref: "#/components/schemas/PatchCostAnomalyRepeat"
+          nullable: true
+    PatchUserNotificationSettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies`
+        is accepted.
+      properties:
+        costAnomalies:
+          $ref: "#/components/schemas/PatchCostAnomalySettings"
+    UpdateUserNotificationRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: |
+        JSON Merge Patch (RFC 7396) for a personal notification. Omitted fields stay unchanged; nested
+        objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present.
+        Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`,
+        `percentIncrease`, and `minIncrease`.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Replacement display name when renaming the config.
+          example: Anomaly alerts (updated)
+        settings:
+          $ref: "#/components/schemas/PatchUserNotificationSettings"
+      example:
+        settings:
+          costAnomalies:
+            minSeverity: critical
     CreateServiceAccountRequest:
       type: object
       description: Fields of a new service account.
@@ -13575,6 +14956,34 @@ components:
           description: Users assigned to the customer group, sorted by user ID.
           items:
             $ref: "#/components/schemas/CustomerGroupUser"
+    CustomerGroupUserGroup:
+      type: object
+      additionalProperties: false
+      required:
+        - userGroupId
+      properties:
+        userGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: User group assigned to the customer group.
+    CustomerGroupUserGroupsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - customerGroupId
+        - userGroups
+      properties:
+        customerGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer group the assignments belong to.
+        userGroups:
+          type: array
+          description: User groups assigned to the customer group, sorted by user-group ID.
+          items:
+            $ref: "#/components/schemas/CustomerGroupUserGroup"
     GeographicAccessScope:
       oneOf:
         - $ref: "#/components/schemas/UnassignedGeographicAccessScope"
@@ -13865,7 +15274,7 @@ components:
         lastExecutionStatus:
           type: string
           nullable: true
-          enum: [pending, running, complete, pending-approval, failed, sleeping, stopped]
+          enum: [pending, running, complete, pending-approval, failed, sleeping, stopped, null]
         nextRun:
           type: string
           format: date-time
@@ -15036,14 +16445,6 @@ components:
         comment:
           type: string
           description: An optional free-text comment providing additional context.
-    IssueStatus:
-      type: string
-      description: The lifecycle status of an issue.
-      enum:
-        - open
-        - in_progress
-        - resolved
-        - ignored
     ResultsError:
       type: object
       description: Error details for a failed insight in a batch operation.
@@ -15107,6 +16508,316 @@ components:
       required:
         - userId
         - lastChangedAt
+    ComposerRecipe:
+      type: object
+      description: A Composer recipe with findings in your cloud accounts. Counts and savings cover results from recently scanned accounts only.
+      required:
+        - id
+        - title
+        - provider
+        - severity
+        - activeResultsCount
+        - totalResultsCount
+        - resolvedResultsCount
+        - snoozedResultsCount
+        - isDismissed
+        - metadata
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Recipe ID. Use it as `recipeId` to list the recipe's results.
+          example: 42
+        title:
+          type: string
+          description: Recipe title, as shown in the Console.
+          example: Publicly readable S3 bucket
+        description:
+          type: string
+          description: Longer explanation of what the recipe detects. Fetched on a best-effort basis, so it can be absent even when the recipe has one.
+          example: S3 buckets should not grant public read access.
+        provider:
+          $ref: "#/components/schemas/ComposerProvider"
+        severity:
+          type: string
+          description: Severity of the recipe's results, set by the recipe's author.
+          enum:
+            - critical
+            - high
+            - medium
+            - low
+          x-enumDescriptions:
+            critical: Shown as Critical in the Console; the highest level.
+            high: Shown as High in the Console.
+            medium: Shown as Medium in the Console.
+            low: Shown as Low in the Console; the lowest level.
+          example: critical
+        affectedResourceType:
+          type: string
+          description: Type of cloud resource the recipe's findings are on. Absent when unknown.
+          example: s3-bucket
+        activeResultsCount:
+          type: integer
+          minimum: 0
+          description: Number of active results (not resolved and not snoozed). 0 when the recipe is dismissed.
+          example: 3
+        totalResultsCount:
+          type: integer
+          minimum: 0
+          description: Number of results in any status. 0 when the recipe is dismissed.
+          example: 5
+        resolvedResultsCount:
+          type: integer
+          minimum: 0
+          description: Number of resolved results. 0 when the recipe is dismissed.
+          example: 2
+        snoozedResultsCount:
+          type: integer
+          minimum: 0
+          description: Number of snoozed results. 0 when the recipe is dismissed.
+          example: 0
+        status:
+          type: string
+          description: Recipe status, derived from its results and whether it is dismissed. Absent when unavailable.
+          enum:
+            - active
+            - resolved
+            - dismissed
+          x-enumDescriptions:
+            active: The recipe has at least one active result.
+            resolved: The recipe has no active results; every result is resolved or snoozed.
+            dismissed: The recipe has been dismissed for your customer.
+          example: active
+        isDismissed:
+          type: boolean
+          description: Whether the recipe has been dismissed for your customer.
+          example: false
+        detectionTime:
+          type: string
+          format: date-time
+          description: When the earliest of the recipe's results was first detected (RFC 3339, UTC). Absent when unavailable.
+          example: "2026-08-18T09:30:00Z"
+        estimatedFixTimeMinutes:
+          type: integer
+          minimum: 0
+          description: Estimated time to fix one finding, in minutes. Absent when not estimated.
+          example: 15
+        totalPotentialSavings:
+          type: string
+          description: Potential cost savings across the recipe's active results, as a daily amount in US dollars. A decimal string with 2 decimal places (8 for amounts below 0.01), unlike the numeric per-result `costEstimationPotentialSavings`. When no active result has an estimate, it is the total recorded on the recipe's resolved results instead. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated.
+          example: "120.00"
+        metadata:
+          $ref: "#/components/schemas/ComposerRecipeMetadata"
+    ComposerProvider:
+      type: string
+      description: Cloud provider or platform, using the Console's provider names.
+      enum:
+        - aws
+        - azure
+        - azure_ad
+        - gcp
+        - general
+        - google_cloud_source
+        - google_workspace
+        - k8s
+        - oci
+        - vmware
+      x-enumDescriptions:
+        aws: Shown as Amazon Web Services in the Console.
+        azure: Shown as Azure in the Console.
+        azure_ad: Shown as Azure Active Directory in the Console.
+        gcp: Shown as Google Cloud Platform in the Console.
+        general: Shown as General in the Console; not tied to one cloud provider.
+        google_cloud_source: Shown as Google Cloud Source in the Console.
+        google_workspace: Shown as Google Workspace in the Console.
+        k8s: Shown as Kubernetes in the Console.
+        oci: Shown as Oracle Cloud in the Console.
+        vmware: Shown as VMware in the Console.
+      example: aws
+    ComposerRecipeMetadata:
+      type: object
+      description: Remediation guidance for the recipe. Always present; an empty object means no guidance is available. Each field is present only when the recipe has that content.
+      properties:
+        impacts:
+          type: string
+          description: Possible impact of applying the remediation.
+          example: Blocking public access may break static-site hosting.
+        importantPoints:
+          type: array
+          description: Points to consider before remediating.
+          items:
+            type: string
+          example:
+            - Check bucket policies too.
+        reference:
+          type: string
+          format: uri
+          description: Documentation URL for the finding.
+          example: https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+        manualRemediation:
+          type: string
+          description: HTML describing how to remediate the finding manually.
+          example: "<ol><li>Open the S3 console.</li></ol>"
+    ComposerRecipeList:
+      type: object
+      description: One page of Composer recipes.
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          description: Recipes on this page.
+          items:
+            $ref: "#/components/schemas/ComposerRecipe"
+        pageToken:
+          type: string
+          description: Token for the next page. Absent on the last page.
+        rowCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total number of recipes across all pages.
+          example: 137
+    ComposerRecipeResult:
+      type: object
+      description: One result of a Composer recipe — a finding on one affected resource.
+      required:
+        - id
+        - ruleId
+        - issuedResourceId
+        - providerIdentifier
+        - tags
+        - issuedResourceName
+        - accountId
+        - provider
+        - detectionTime
+        - solved
+        - isActive
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Result ID.
+          example: 1001
+        ruleId:
+          type: integer
+          format: int64
+          description: ID of the recipe the result belongs to. Equal to the `recipeId` path parameter.
+          example: 42
+        issuedResourceId:
+          type: string
+          description: Identifier of the affected resource, as stored by Composer.
+          example: arn:aws:s3:::example-public-bucket
+        providerIdentifier:
+          type: string
+          nullable: true
+          description: |-
+            Canonical cloud-provider identifier of the affected resource.
+            - AWS: the resource's ARN when one is available, otherwise the stored identifier (for example, an EC2 instance ID).
+            - Google Cloud: the API relative resource name (for example, `projects/my-project/zones/us-central1-a/instances/vm-1`), or the bucket name for Cloud Storage; otherwise the stored identifier.
+            - Other providers: the provider-native identifier.
+
+            `null` when no identifier is stored or it could not be resolved; resolving it never fails the request.
+          example: arn:aws:s3:::example-public-bucket
+        tags:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: Cloud-provider tags on the affected resource, as key/value pairs. An empty object means the resource has no tags. `null` means the tags could not be resolved; resolving them never fails the request.
+          example:
+            environment: production
+            team: platform
+        issuedResourceName:
+          type: string
+          description: Name of the affected resource.
+          example: example-public-bucket
+        accountId:
+          type: string
+          description: Cloud account the affected resource belongs to (for example, an AWS account ID or a Google Cloud project ID).
+          example: "123456789012"
+        region:
+          type: string
+          description: Cloud region of the affected resource. Absent for global resources.
+          example: us-east-1
+        provider:
+          $ref: "#/components/schemas/ComposerProvider"
+        resourceClass:
+          type: string
+          description: Type of the affected resource. Absent when unknown.
+          example: s3-bucket
+        detectionTime:
+          type: string
+          format: date-time
+          description: When the result was first detected (RFC 3339, UTC).
+          example: "2026-08-18T09:30:00Z"
+        resolvedTime:
+          type: string
+          format: date-time
+          description: When the result was resolved (RFC 3339, UTC). Absent while unresolved.
+          example: "2026-08-19T11:05:00Z"
+        solved:
+          type: boolean
+          description: Whether the result is resolved.
+          example: false
+        snoozed:
+          type: boolean
+          description: Whether the result is currently snoozed. Present only when `true`; absent means not snoozed.
+          example: true
+        isActive:
+          type: boolean
+          description: Whether the result's account was scanned recently. It does not say whether the result is resolved or snoozed; use `solved` and `snoozed` for that, or the `status` filter.
+          example: true
+        lastFlowId:
+          type: string
+          description: ID of the most recent Composer scan that reported this result. Absent when unknown.
+          example: example-latest-scan-id
+        firstFlowId:
+          type: string
+          description: ID of the Composer scan that first reported this result. Absent when unknown.
+          example: example-first-scan-id
+        costEstimationPotentialSavings:
+          type: number
+          format: double
+          description: Potential cost savings — the daily amount in US dollars you would stop paying by acting on this result. The Console **Cost savings** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+          example: 120
+        costEstimationPotentialIncreasedCosts:
+          type: number
+          format: double
+          description: Cost avoidance — the daily amount in US dollars of a future charge (for example, extended-support fees) you prevent by acting on this result in time. The Console **Cost avoidance** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+          example: 0
+        costEstimationPotentialFreedCommitments:
+          type: number
+          format: double
+          description: Freed commitments — the daily amount in US dollars of commitment coverage (Savings Plans, Reserved Instances or CUDs) that acting on this result frees up for other usage. The Console **Freed commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+          example: 0
+        costEstimationPotentialIncreasedCommitmentsRequired:
+          type: number
+          format: double
+          description: Avoidable commitments — the daily amount in US dollars of extra commitment or overlapping cost you avoid by timing the action, for example to a Reserved Instance's expiry. The Console **Avoidable commitments** column is this daily US-dollar amount × 365, converted to your organization's currency. Absent when not estimated, and always absent on resolved results.
+          example: 0
+    ComposerRecipeResultList:
+      type: object
+      description: One page of a Composer recipe's results.
+      required:
+        - items
+        - rowCount
+      properties:
+        items:
+          type: array
+          description: Results on this page.
+          items:
+            $ref: "#/components/schemas/ComposerRecipeResult"
+        pageToken:
+          type: string
+          description: Token for the next page. Absent on the last page.
+        rowCount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total number of results across all pages.
+          example: 5
 
     AccountManagerListItem:
       type: object
@@ -15587,7 +17298,6 @@ components:
               values:
                 - PvqyGcdFcTHh7aLUdGdf
           timeInterval: month
-          dataSource: billing
           value: 500
     AlertListItem:
       description: >-
@@ -15613,19 +17323,7 @@ components:
         ignoreValuesRange:
           $ref: "#/components/schemas/AlertIgnoreValuesRange"
         dataSource:
-          type: string
-          description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
-          default: billing
-          enum:
-            - billing
-            - billing-datahub
-            - kubernetes-utilization
-            - tokenomics
-          x-enumDescriptions:
-            billing: Standard Cloud Analytics billing data only.
-            billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
-            kubernetes-utilization: Kubernetes utilization data.
-            tokenomics: Tokenomics data; requires the customer to have Tokenomics enabled.
+          $ref: "#/components/schemas/CloudAnalyticsAlertConfigDataSource"
         scopes:
           type: array
           description: >-
@@ -15751,9 +17449,9 @@ components:
         ignoreValuesRange:
           $ref: "#/components/schemas/AlertIgnoreValuesRange"
         dataSource:
-          type: string
-          enum: [billing, billing-datahub, kubernetes-utilization, tokenomics]
-          description: Omission preserves the saved data source. Tokenomics requires customer enablement.
+          allOf:
+            - $ref: "#/components/schemas/CloudAnalyticsAlertDataSource"
+            - description: Omission preserves the saved data source. Tokenomics requires customer enablement.
         scopes:
           type: array
           description: >-
@@ -16612,6 +18310,7 @@ components:
             - reverted
             - expired
             - unknown
+            - null
         timeFrame:
           type: string
           description: "Timeframe: Daily or Hourly"
@@ -16632,6 +18331,7 @@ components:
           enum:
             - active
             - inactive
+            - null
         acknowledged:
           description: "Has the anomaly been acknowledged"
           type: boolean
@@ -16679,6 +18379,54 @@ components:
       description: Array of SKU entries contributing to an anomaly.
       items:
         $ref: "#/components/schemas/AnomalySKU"
+    AnomalyCustomerFeedback:
+      type: object
+      description: >-
+        Current review status of the anomaly, as set in the console or through `patchAnomaly`.
+        Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.
+      required:
+        - reviewStatus
+      properties:
+        reviewStatus:
+          type: string
+          description: The anomaly's review state.
+          enum:
+            - NEEDS_REVIEW
+            - UNDER_REVIEW
+            - RESOLVED
+        resolution:
+          type: string
+          description: Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.
+          enum:
+            - ANOMALY_CONFIRMED
+            - NOT_ANOMALY
+        resolutionNote:
+          type: object
+          description: >-
+            The feedback reason given when the anomaly was resolved. Present only when `reviewStatus`
+            is `RESOLVED` and a reason was given. The resolution comment is not included.
+          required:
+            - reason
+          properties:
+            reason:
+              type: string
+              enum:
+                - FAULTY_ANOMALY_DETECTION_MODEL
+                - INCORRECT_DATA
+                - EXPECTED_COST_SPIKE
+                - LOW_IMPACT
+                - NON_ANOMALOUS_OTHER
+                - SECURITY_BREACH
+                - MISCONFIGURATION
+                - UNINTENTIONAL_PROVISIONING
+                - ANOMALOUS_OTHER
+        updatedAt:
+          type: string
+          format: date-time
+          description: Time of the last review-feedback update. Absent when the anomaly was never reviewed.
+        updatedBy:
+          type: string
+          description: Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.
     AnomalyStatusUpdate:
       type: object
       required:
@@ -17007,6 +18755,7 @@ components:
             - purple
             - rosePink
             - slateGrey
+            - null
           description: The color of the label.
           nullable: true
     AssignObjectsToLabelRequest:
@@ -17162,103 +18911,6 @@ components:
             Identifier of the theme to activate. Send the reserved sentinel
             `"default"` to clear the active theme and fall back to the built-in
             default.
-    Budget:
-      required:
-        - currency
-        - name
-        - scopes
-        - startPeriod
-        - timeInterval
-        - type
-      type: object
-      description: Budget configuration used to track spend.
-      properties:
-        alerts:
-          type: array
-          description: Up to three thresholds defined as a percentage of amount.
-          items:
-            $ref: "#/components/schemas/ExternalBudgetAlert"
-        amount:
-          type: number
-          description: |-
-            Budget period amount
-            required: true(if usePrevSpend is false)
-          format: double
-        collaborators:
-          type: array
-          description: List of permitted users to view/edit the report.
-          items:
-            $ref: "#/components/schemas/Collaborator"
-        currency:
-          $ref: "#/components/schemas/Currency"
-        description:
-          type: string
-          description: Budget description.
-          default: '""'
-        endPeriod:
-          type: integer
-          description: |-
-            Fixed budget end date
-            required: true(if budget type is fixed), in milliseconds since the epoch.
-          format: int64
-        growthPerPeriod:
-          type: number
-          description: Periodical growth percentage in recurring budget.
-          format: double
-          default: 0
-        id:
-          type: string
-          description: |-
-            budget ID, identifying the report
-            in:path
-        metric:
-          type: string
-          description: Budget metric
-          enum:
-            - cost
-            - amortized_cost
-          default: "cost"
-        name:
-          type: string
-          description: Budget Name
-        public:
-          description: Public sharing access level for the budget.
-          type: string
-          enum:
-            - owner
-            - editor
-            - viewer
-        recipients:
-          type: array
-          description: List of emails to notify when reaching alert threshold
-          items:
-            type: string
-        recipientsSlackChannels:
-          type: array
-          description: List of slack channels to notify when reaching alert threshold.
-          items:
-            $ref: "#/components/schemas/SlackChannel"
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
-        startPeriod:
-          type: integer
-          description: Budget start Date, in milliseconds since the epoch.
-          format: int64
-        timeInterval:
-          type: string
-          description: 'Recurring budget interval can be one of: ["day", "week", "month",
-            "quarter", "year"]'
-        type:
-          type: string
-          description: 'budget type can be one of: ["fixed", "recurring"]'
-        usePrevSpend:
-          type: boolean
-          description: Use the last period's spend as the target amount for recurring
-            budgets.
-          default: false
     BudgetAPI:
       required:
         - currency
@@ -17301,6 +18953,8 @@ components:
         currentUtilization:
           type: number
           format: double
+        dataSource:
+          $ref: "#/components/schemas/CloudAnalyticsBudgetDataSourceReadOnly"
         description:
           type: string
           description: Budget description.
@@ -17452,9 +19106,15 @@ components:
         percentage:
           type: number
           format: double
-    BudgetCreateUpdateRequest:
+    BudgetCreateRequest:
       type: object
-      description: Request body for creating or updating a budget.
+      description: Request body for creating a budget.
+      required:
+        - name
+        - scopes
+        - currency
+        - type
+        - startPeriod
       properties:
         alerts:
           type: array
@@ -17480,6 +19140,8 @@ components:
             $ref: "#/components/schemas/Collaborator"
         currency:
           $ref: "#/components/schemas/Currency"
+        dataSource:
+          $ref: "#/components/schemas/CloudAnalyticsBudgetDataSource"
         description:
           type: string
           description: Budget description
@@ -17505,6 +19167,7 @@ components:
         name:
           type: string
           description: Budget Name.
+          minLength: 1
         public:
           type: string
           enum:
@@ -17523,7 +19186,101 @@ components:
             $ref: "#/components/schemas/SlackChannel"
         scopes:
           type: array
-          description: The filters selected define the scope of the budget.
+          description: The filters selected define the scope of the budget. At least one filter is required.
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ExternalConfigFilter"
+        startPeriod:
+          type: integer
+          description: Budget start Date
+          format: int64
+        timeInterval:
+          type: string
+          description: 'Recurring budget interval can be one of: ["day", "week", "month",
+            "quarter", "year"]'
+        type:
+          type: string
+          description: 'budget type can be one of: ["fixed", "recurring"]'
+        usePrevSpend:
+          type: boolean
+          description: Use the last period's spend as the target amount for recurring
+            budgets
+          default: false
+    BudgetUpdateRequest:
+      type: object
+      description: Request body for updating a budget. Only the supplied fields change.
+      properties:
+        alerts:
+          type: array
+          description: List of up to three thresholds defined as a percentage of the amount.
+          items:
+            $ref: "#/components/schemas/BudgetCreateUpdateAlert"
+        amount:
+          type: number
+          description: |-
+            Budget period amount
+            required: true(if usePrevSpend is false)
+          format: double
+        seasonalAmounts:
+          type: array
+          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          items:
+            type: number
+            format: double
+        collaborators:
+          type: array
+          description: List of permitted users to view/edit the report.
+          items:
+            $ref: "#/components/schemas/Collaborator"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        dataSource:
+          $ref: "#/components/schemas/CloudAnalyticsBudgetDataSource"
+        description:
+          type: string
+          description: Budget description
+          default: ""
+        endPeriod:
+          type: integer
+          description: |-
+            Fixed budget end date
+            required: true(if budget type is fixed)
+          format: int64
+        growthPerPeriod:
+          type: number
+          description: Periodical growth percentage in recurring budget
+          format: double
+          default: 0
+        metric:
+          type: string
+          description: Budget metric
+          enum:
+            - cost
+            - amortized_cost
+          default: "cost"
+        name:
+          type: string
+          description: Budget Name.
+          minLength: 1
+        public:
+          type: string
+          enum:
+            - owner
+            - editor
+            - viewer
+        recipients:
+          type: array
+          description: List of emails to notify when reaching alert threshold.
+          items:
+            type: string
+        recipientsSlackChannels:
+          type: array
+          description: List of Slack channels to notify when reaching alert threshold.
+          items:
+            $ref: "#/components/schemas/SlackChannel"
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget. Omit to keep the existing scope.
           items:
             $ref: "#/components/schemas/ExternalConfigFilter"
         startPeriod:
@@ -17640,20 +19397,6 @@ components:
             - owner
             - editor
             - viewer
-    CollectionRef:
-      description: Reference to a Firestore collection.
-      type: object
-      properties:
-        ID:
-          type: string
-          description: The collection identifier.
-        Parent:
-          type: object
-          description: The root collection.
-        Path:
-          type: string
-          description: 'The full resource path of the collection:
-            "projects/P/databases/D/documents..."'
     Condition:
       type: string
       description: >-
@@ -17804,20 +19547,6 @@ components:
         allocation_rule: Reference another allocation rule by ID.
         gke: Google Kubernetes Engine cost-allocation dimensions.
         gke_label: GKE workload labels.
-    DocumentRef:
-      description: Reference to a Firestore document.
-      type: object
-      properties:
-        ID:
-          type: string
-          description: ID of the document. The last component of the resource path.
-        Parent:
-          $ref: "#/components/schemas/CollectionRef"
-        Path:
-          type: string
-          description: >-
-            The full resource path of the document. A document "doc-1" in
-            collection "coll-1" would be: "projects/P/databases/D/documents/coll-1/doc-1".
     SignupRequestCreate:
       type: object
       required: [email, companyName]
@@ -17941,6 +19670,11 @@ components:
           description: >-
             Returned once, by the verifySignupRequest call that performed the verification. Redeem it with
             createSignupSession after the request is completed.
+        resultToken:
+          type: string
+          description: >-
+            Returned only by successful verifySignupRequest. Send as Signup-Result-Token when polling this
+            request to read its result. Valid for one hour; never returned by create, replay, resend or GET.
         verification:
           $ref: "#/components/schemas/SignupVerification"
         expiresAt:
@@ -18006,6 +19740,10 @@ components:
           type: string
           format: uri
           description: Where an existing DoiT user or customer should sign in instead.
+        appealUrl:
+          type: string
+          format: uri
+          description: Where a blocked signup (code signup_blocked) can ask DoiT to review the decision.
     Error:
       type: object
       description: Standard error response structure.
@@ -18061,7 +19799,9 @@ components:
           items:
             $ref: "#/components/schemas/ExternalMetric"
         metricFilter:
-          $ref: "#/components/schemas/ExternalConfigMetricFilter"
+          allOf:
+            - $ref: "#/components/schemas/ExternalConfigMetricFilter"
+          nullable: true
         limitAggregation:
           type: string
           description: |-
@@ -18075,7 +19815,9 @@ components:
             - all
           default: none
         limitByChange:
-          $ref: "#/components/schemas/ExternalLimitByChange"
+          allOf:
+            - $ref: "#/components/schemas/ExternalLimitByChange"
+          nullable: true
         aggregation:
           description: How to aggregate data values in the report.
           type: string
@@ -18156,7 +19898,10 @@ components:
             - asc
             - desc
             - a_to_z
-          description: This option has no impact when reading reports via API.
+          description: |-
+            Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+            export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+            not reorder the `rows` of a JSON result.
         sortDimensions:
           type: string
           default: desc
@@ -18164,15 +19909,17 @@ components:
             - asc
             - desc
             - a_to_z
-          description: This option has no impact when reading reports via API.
+          description: |-
+            Orders the columns produced by `dimensions`, both in the console and in a rendered
+            `fileOutput` export. It does not reorder the `rows` of a JSON result.
+            `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+            dimensions of a time series means chronologically. The default `desc` orders them by the
+            metric instead, so a monthly report charts its priciest month first rather than in time
+            order — set `a_to_z` for a time series you intend to export.
+            A report with a forecast is always charted chronologically and ignores this field, and a
+            comparative `displayValues` mode requires `a_to_z`.
         dataSource:
-          type: string
-          description: Data source of the report.
-          enum:
-            - billing
-            - bqlens
-            - billing-datahub
-            - kubernetes-utilization
+          $ref: "#/components/schemas/CloudAnalyticsExternalConfigDataSource"
         splits:
           type: array
           description: The splits to use in the report.
@@ -18181,8 +19928,12 @@ components:
         displaySettings:
           $ref: "#/components/schemas/ExternalDisplaySettings"
         customTimeRange:
-          description: Required when the time range is set to "custom".
+          description: |-
+            Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+            A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+            Sending null while `timeRange.mode` stays "custom" is rejected.
           type: object
+          nullable: true
           properties:
             from:
               type: string
@@ -18196,8 +19947,11 @@ components:
               example: "2024-03-12T23:00:00Z"
         count:
           type: object
+          nullable: true
           description: |-
             The field to count distinct values of. Only applicable when aggregation is set to "count".
+            On PATCH, omit to preserve the existing field; send null to remove it.
+            A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
           required:
             - id
             - type
@@ -18240,6 +19994,7 @@ components:
           operator: gte
           values:
             - 50
+          includeIncompleteData: false
         aggregation: total
         advancedAnalysis:
           forecast: false
@@ -18289,7 +20044,6 @@ components:
         currency: USD
         sortGroups: a_to_z
         sortDimensions: a_to_z
-        dataSource: billing
     ExternalDisplaySettings:
       type: object
       description: Display settings for the report.
@@ -18387,7 +20141,9 @@ components:
         values:
           - google-cloud
     ExternalConfigMetricFilter:
-      description: Metric filter to limit report rows by metric value.
+      description: |-
+        Metric filter to limit report rows by metric value.
+        On PATCH, omit to preserve the existing filter; send null to remove it.
       type: object
       required:
         - metric
@@ -18436,8 +20192,18 @@ components:
           - 50
     ExternalLimitByChange:
       description: |-
-        Limit by change filter. A report may configure at most two of
-        `metricFilter`, `limitByChange`, and rank `group` limits — not all three.
+        Limit by change filter; a report may configure at most two of `metricFilter`,
+        `limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
+        a period-over-period delta between adjacent time buckets. With it, each row's
+        primary-range total is compared with its secondary-range total, so column dimensions
+        (`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
+        to those totals, while `group` gives every row its own change. A percentage change
+        is comparable while both periods hold the same number of buckets; an absolute change
+        is their plain difference and so scales with the bucket count. A row present in only
+        one range counts as zero there, so a percentage threshold cannot be met from zero. A
+        percentage-typed custom metric, or count aggregation, is rejected with
+        `LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
+        On PATCH, omit to preserve the existing limit; send null to remove it.
       type: object
       required:
         - metric
@@ -18447,7 +20213,11 @@ components:
         - includeIncompleteData
       properties:
         metric:
-          $ref: "#/components/schemas/ExternalMetric"
+          allOf:
+            - $ref: "#/components/schemas/ExternalMetric"
+          description: |-
+            The metric the change is measured on. It must also be listed in the report's
+            `config.metrics`; otherwise the request is rejected with a 400 and nothing is saved.
         changeType:
           type: string
           enum:
@@ -18873,6 +20643,7 @@ components:
           enum:
             - editor
             - viewer
+            - null
           nullable: true
     ResourcePermission:
       type: object
@@ -18933,11 +20704,12 @@ components:
           format: int64
         status:
           type: string
-          description: Status of the invoice
+          description: Status of the invoice. `CANCELED` takes precedence over the payment status.
           enum:
             - OPEN
             - PAST DUE
             - PAID
+            - CANCELED
         totalAmount:
           type: number
           description: Total invoiced amount
@@ -18950,7 +20722,7 @@ components:
           $ref: "#/components/schemas/Currency"
         url:
           type: string
-          description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+          description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).
     InvoicePlatform:
       type: string
       description: Platform identifier for invoice source.
@@ -19059,9 +20831,6 @@ components:
     MetricType:
       type: string
       description: Identifier for metric type (e.g., basic, custom, extended).
-    ObjectType:
-      type: string
-      description: Generic object type identifier.
     PlatformAPI:
       type: object
       description: Platform metadata used by product listing endpoints.
@@ -19663,7 +21432,6 @@ components:
       oneOf:
         - type: string
         - type: number
-        - type: integer
     AssetItem:
       type: object
       description: Summary information about a single asset.
@@ -20185,39 +21953,6 @@ components:
           type: string
           description: Resource owner (only present if requester doesn't have access)
 
-    BlockingResources:
-      type: object
-      description: Map of resources that block deletion operations.
-      properties:
-        alerts:
-          type: array
-          description: List of alerts using this resource.
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-        attributionGroups:
-          type: array
-          description: List of attribution groups using this resource (only applicable for attribution deletion).
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-        attributions:
-          type: array
-          description: List of attributions using this resource (only applicable for attribution deletion).
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-        budgets:
-          type: array
-          description: List of budgets using this resource.
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-        reports:
-          type: array
-          description: List of reports using this resource.
-          items:
-            $ref: "#/components/schemas/ResourceReference"
-      example:
-        budgets:
-          - id: "budget-id"
-            name: "Example Budget"
     Role:
       type: object
       description: Definition and permissions assigned to a role.
@@ -22025,7 +23760,7 @@ components:
         totalCurrentAttainment:
           type: number
           format: double
-          description: The total current spend attainment across all periods.
+          description: The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
         totalMarketplaceSpend:
           type: number
           format: double
@@ -22103,7 +23838,7 @@ components:
         totalCurrentAttainment:
           type: number
           format: double
-          description: The total current spend attainment across all periods.
+          description: The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
         totalMarketplaceSpend:
           type: number
           format: double
@@ -22159,6 +23894,18 @@ components:
           type: number
           format: double
           description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+        cashAttainment:
+          type: number
+          format: double
+          description: This period's own attained spend, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments, excluding anything carried in from the previous period. Summed across periods it equals `totalCurrentAttainment`. To measure the period against its `commitmentValue` the way the console does, use `cashAttainment + rolloverFromPrevPeriod + shortfallRollover`; the period's remaining amount is `commitmentValue` minus that. Excess carried out to the next period is not deducted from this period.
+        rolloverFromPrevPeriod:
+          type: number
+          format: double
+          description: The amount carried into this period from the previous period under the commitment's rollover terms. Positive for excess rollover, negative for shortfall rollover, 0 when nothing was carried (always 0 for the first period). amazon-web-services commitments no longer roll over, so this is 0 for them unless the commitment was last calculated before that change. Not included in `cashAttainment` or `totalCurrentAttainment`.
+        shortfallRollover:
+          type: number
+          format: double
+          description: The part of this period's shortfall carried forward to the next period under the commitment's shortfall rollover terms, where it appears as a negative `rolloverFromPrevPeriod`. 0 when nothing was carried forward, including while the period is still open and for the last period. The console counts this amount as met within this period. Not included in `cashAttainment` or `totalCurrentAttainment`.
     CloudFlowRefineRequest:
       type: object
       required:
@@ -24350,108 +26097,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-    TicketResponseExtAPI:
-      description: Creates a new service or support request.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/TicketResponseExtAPI"
-    TicketsList:
-      description: Lists all historical requests the user has access to.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/TicketsList"
-    anomaliesResponse:
-      description: Lists all cloud cost anomalies.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              Report:
-                $ref: "#/components/schemas/AnomaliesResponse"
-    anomalyResponse:
-      description: Returns cloud cost anomaly details based on anomalyId.
-      content:
-        application/json:
-          schema:
-            required:
-              - attribution
-              - allocations
-              - billingAccount
-              - costOfAnomaly
-              - platform
-              - scope
-              - serviceName
-              - severityLevel
-              - startTime
-              - timeFrame
-              - top3SKUs
-              - monitorLevel
-            type: object
-            properties:
-              attribution:
-                type: string
-                deprecated: true
-                description: >-
-                  Deprecated: use 'allocations' instead. Name of the anomaly's primary allocation. Can be empty
-                  even when `allocations` is not, so it may differ from the first entry of `allocations`.
-              allocations:
-                type: array
-                description: >-
-                  Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer
-                  exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
-                items:
-                  type: object
-                  required:
-                    - id
-                    - name
-                  properties:
-                    id:
-                      type: string
-                      description: Allocation ID. Use it with the Allocations API to read the allocation.
-                    name:
-                      type: string
-                      description: Allocation name.
-              billingAccount:
-                type: string
-                description: Billing account ID
-              costOfAnomaly:
-                type: number
-                description: Excess cost over and above the expected normal cost
-                format: double
-              platform:
-                type: string
-                description: Cloud Provider name
-              scope:
-                type: string
-                description: "Scope: Project or Account"
-              serviceName:
-                type: string
-                description: Service name
-              severityLevel:
-                type: string
-                description: "Severity level: `information`, `warning`, or `critical`."
-              startTime:
-                type: integer
-                description: Usage start time of the anomaly
-                format: int64
-              timeFrame:
-                type: string
-                description: "Timeframe: Daily or Hourly"
-              top3SKUs:
-                $ref: "#/components/schemas/AnomalySKUArray"
-              monitorLevel:
-                type: string
-                description: >-
-                  Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service
-                  (`service`).
-                enum:
-                  - service
-                  - sku
-              resourceData:
-                $ref: "#/components/schemas/AnomalyResourceArray"
     BadRequest:
       description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
       headers:
@@ -24748,6 +26393,25 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: rate_limited
             retryable: true
+    ComposerAllocationNotFound:
+      description: An `allocation` filter value doesn't exist or you can't view it.
+      headers:
+        Request-Id:
+          $ref: "#/components/headers/RequestId"
+        Content-Language:
+          $ref: "#/components/headers/ContentLanguage"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: https://developer.doit.com/errors/composer-api.allocation_not_found
+            title: Allocation not found
+            status: 404
+            detail: One or more allocations in the filter were not found.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: composer-api.allocation_not_found
+            retryable: false
   parameters:
     policyId:
       name: policyId
@@ -24927,6 +26591,15 @@ components:
         type: string
         minLength: 1
         maxLength: 200
+    customerGroupUserGroupId:
+      name: userGroupId
+      in: path
+      required: true
+      description: Stable ID of a user group owned by the authenticated tenant.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
     serviceAccountId:
       name: id
       in: path
@@ -25076,6 +26749,143 @@ components:
         type: string
         pattern: ^\d{12}$
         example: "987654321098"
+    composerRecipeId:
+      name: recipeId
+      in: path
+      required: true
+      description: ID of the Composer recipe whose results to list. Get recipe IDs from `GET /insights/v2/recipes`.
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+        example: 42
+    composerMaxResults:
+      name: maxResults
+      in: query
+      required: false
+      description: Maximum number of items to return on one page, from 1 to 500. Defaults to 50. A value outside that range returns `400 validation_failed`.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+        example: 50
+    composerPageToken:
+      name: pageToken
+      in: query
+      required: false
+      description: |-
+        Continuation token from the `pageToken` of the previous response. Omit it on the first request; a response without `pageToken` is the last page.
+
+        The token records the position, the sort and the `allocation` filter IDs. Changing `sortBy`, `sortOrder` or the allocation IDs while paginating returns `400 pagination_token_invalid`. Keep the other `filter` keys and `maxResults` unchanged while paginating. Tokens expire 5 minutes after they are issued; an expired token returns `400 pagination_token_expired`. In both cases, restart from the first page.
+      schema:
+        type: string
+    composerRecipeSortBy:
+      name: sortBy
+      in: query
+      required: false
+      description: Field to sort recipes by. Defaults to `severity`. Ties break by title (case-insensitive, ascending), then by `id` (ascending), whatever the `sortOrder`.
+      schema:
+        type: string
+        enum:
+          - severity
+          - title
+          - detection_time
+          - active_results_count
+          - total_results_count
+        default: severity
+        x-enumDescriptions:
+          severity: Sort by severity, from critical to low when descending.
+          title: Sort alphabetically by title, ignoring case.
+          detection_time: Sort by when the recipe's earliest result was detected. Recipes without a detection time sort last when descending and first when ascending.
+          active_results_count: Sort by the number of active results.
+          total_results_count: Sort by the number of results in any status.
+    composerResultSortBy:
+      name: sortBy
+      in: query
+      required: false
+      description: Field to sort results by. Defaults to `detection_time`. Ties break by `id` (ascending), whatever the `sortOrder`.
+      schema:
+        type: string
+        enum:
+          - detection_time
+          - resolved_time
+          - account_id
+          - region
+          - resource_class
+          - cost_estimation_potential_savings
+          - cost_estimation_potential_increased_costs
+          - cost_estimation_potential_freed_commitments
+          - cost_estimation_potential_increased_commitments_required
+        default: detection_time
+        x-enumDescriptions:
+          detection_time: Sort by when the result was first detected.
+          resolved_time: Sort by when the result was resolved.
+          account_id: Sort by cloud account ID.
+          region: Sort by cloud region.
+          resource_class: Sort by the affected resource's type.
+          cost_estimation_potential_savings: Sort by potential cost savings. Results without an estimate sort last when descending and first when ascending.
+          cost_estimation_potential_increased_costs: Sort by cost avoidance. Results without an estimate sort last when descending and first when ascending.
+          cost_estimation_potential_freed_commitments: Sort by freed commitments. Results without an estimate sort last when descending and first when ascending.
+          cost_estimation_potential_increased_commitments_required: Sort by avoidable commitments. Results without an estimate sort last when descending and first when ascending.
+    composerSortOrder:
+      name: sortOrder
+      in: query
+      required: false
+      description: Sort direction for `sortBy`. Defaults to `desc`.
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+        x-enumDescriptions:
+          asc: Smallest, earliest or lowest first (for `severity`, low first).
+          desc: Largest, latest or highest first (for `severity`, critical first). Default.
+    composerRecipeFilter:
+      name: filter
+      in: query
+      required: false
+      description: |-
+        Restricts the recipes returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `severity:critical,high|provider:aws,gcp` returns recipes whose severity is critical or high and whose provider is Amazon Web Services or Google Cloud Platform. Because `,` and `|` are separators, a value itself can't contain them. Only equality matching is supported. Omit `filter` to list every recipe that has results in your recently scanned accounts, including dismissed recipes.
+
+        Keys:
+        - `provider`: one or more of `aws`, `azure`, `azure_ad`, `gcp`, `general`, `google_cloud_source`, `google_workspace`, `k8s`, `oci`, `vmware`.
+        - `severity`: one or more of `critical`, `high`, `medium`, `low`.
+        - `pillar`: one or more of `cost`, `operations`, `performance`, `security`, `compliance`. Matches recipes tagged with that pillar; `compliance` matches recipes tagged with at least one compliance standard (such as SOC2 or HIPAA).
+        - `has_active_results`: exactly one of `true` or `false`.
+        - `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches recipes with results on resources in any of those allocations, as resolved by Cloud Analytics; counts, savings and `rowCount` then cover only those resources. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.
+
+        Errors:
+        - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
+        - A value outside the allowed list, a non-boolean `has_active_results`, more than one `has_active_results` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
+        - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
+      schema:
+        type: string
+        example: severity:critical,high|provider:aws,gcp
+    composerResultFilter:
+      name: filter
+      in: query
+      required: false
+      description: |-
+        Restricts the results returned. One string of `key:value` clauses: `,` separates alternative values for one key (OR) and `|` separates keys (AND). For example, `region:us-east-1,us-west-2|status:active` returns active results in either region. Because `,` and `|` are separators, a value itself can't contain them. Matching is exact unless a key says otherwise. Omit `filter` to list the recipe's results from the most recent scan of each recently scanned account, in every status.
+
+        Keys:
+        - `account_id`: one or more cloud account IDs, matched exactly.
+        - `region`: one or more cloud regions, matched exactly.
+        - `issued_resource_name`: one or more names of the affected resource, matched exactly.
+        - `related_resource_name`: one or more names of resources related to the result (for example, an attached IAM policy). Each value is matched as a substring anywhere in the result's related-resource details, not only against names.
+        - `status`: exactly one of `active` (not resolved and not snoozed), `snoozed`, `resolved` or `all`. Omitting it is the same as `all`. Combine `resolved` with `last_scan_only:false`; with the default it usually returns nothing.
+        - `last_scan_only`: exactly one of `true` or `false`. Defaults to `true`, which returns only results reported by each recently scanned account's most recent scan. A resolved result keeps the ID of the last scan that reported it, so resolved results rarely appear by default. `false` returns results from every scan and account, including resolved ones.
+        - `allocation`: up to 10 distinct allocation IDs (duplicates are ignored); get allocation IDs from `GET /analytics/v1/allocations`. Matches results on resources in any of those allocations, as resolved by Cloud Analytics; `rowCount` then counts only those results. You must be able to view every listed allocation. Service-account API keys can use public allocations only. If allocation access can't be checked, the request returns `503` with `Retry-After` and never falls back to unfiltered data.
+
+        Errors:
+        - An unknown key returns `400 filter_key_not_supported` when it's the only problem, otherwise `400 validation_failed`.
+        - A `status` outside the allowed list, a non-boolean `last_scan_only`, more than one `status` or `last_scan_only` value, more than 10 distinct allocation IDs, an invalid allocation ID (blank, longer than 256 characters, or containing `/`, whitespace or control characters), a malformed expression or an unsupported operator returns `400 validation_failed`.
+        - An allocation that doesn't exist or that you can't view returns `404 composer-api.allocation_not_found`.
+      schema:
+        type: string
+        example: status:active|region:us-east-1,us-west-2
   securitySchemes:
     api_key:
       type: apiKey

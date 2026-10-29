@@ -17,7 +17,9 @@
 							"description": "Identifier of the theme to activate. Send the reserved sentinel\n`\"default\"` to clear the active theme and fall back to the built-in\ndefault."
 						}
 					}
-				]
+				],
+				"description": "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+				"markdown_description": "Configure presentation settings for Cloud Analytics reports, including custom color themes."
 			}
 		},
 		{
@@ -74,10 +76,7 @@
 									"name": "data_source",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"default": {
-											"static": "billing"
-										},
-										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available.",
+										"description": "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.",
 										"validators": [
 											{
 												"custom": {
@@ -1321,7 +1320,7 @@
 					{
 						"name": "currency",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Currency code for monetary values.",
 							"validators": [
 								{
@@ -1332,6 +1331,25 @@
 											}
 										],
 										"schema_definition": "stringvalidator.OneOf(\n\"USD\",\n\"ILS\",\n\"EUR\",\n\"AUD\",\n\"CAD\",\n\"GBP\",\n\"DKK\",\n\"NOK\",\n\"SEK\",\n\"BRL\",\n\"SGD\",\n\"MXN\",\n\"CHF\",\n\"MYR\",\n\"TWD\",\n\"EGP\",\n\"ZAR\",\n\"JPY\",\n\"IDR\",\n\"AED\",\n\"THB\",\n\"COP\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "data_source",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Data source used to evaluate the budget.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn update, omission preserves the saved data source.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"billing-datahub\",\n)"
 									}
 								}
 							]
@@ -1389,8 +1407,20 @@
 					{
 						"name": "name",
 						"string": {
-							"computed_optional_required": "computed_optional",
-							"description": "Budget Name."
+							"computed_optional_required": "required",
+							"description": "Budget Name.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
 						}
 					},
 					{
@@ -1472,7 +1502,7 @@
 					{
 						"name": "scopes",
 						"list_nested": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"nested_object": {
 								"attributes": [
 									{
@@ -1559,7 +1589,19 @@
 									}
 								]
 							},
-							"description": "The filters selected define the scope of the budget."
+							"description": "The filters selected define the scope of the budget. At least one filter is required.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+											}
+										],
+										"schema_definition": "listvalidator.SizeAtLeast(1)"
+									}
+								}
+							]
 						}
 					},
 					{
@@ -1575,7 +1617,7 @@
 					{
 						"name": "start_period",
 						"int64": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "Budget start Date"
 						}
 					},
@@ -1589,7 +1631,7 @@
 					{
 						"name": "type",
 						"string": {
-							"computed_optional_required": "computed_optional",
+							"computed_optional_required": "required",
 							"description": "budget type can be one of: [\"fixed\", \"recurring\"]"
 						}
 					},
@@ -1839,7 +1881,9 @@
 							"description": "The time when the custom theme was last updated."
 						}
 					}
-				]
+				],
+				"description": "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+				"markdown_description": "Configure presentation settings for Cloud Analytics reports, including custom color themes."
 			}
 		},
 		{
@@ -2368,7 +2412,7 @@
 												}
 											}
 										],
-										"description": "The field to count distinct values of. Only applicable when aggregation is set to \"count\"."
+										"description": "The field to count distinct values of. Only applicable when aggregation is set to \"count\".\nOn PATCH, omit to preserve the existing field; send null to remove it.\nA PATCH that sets `aggregation` to a value other than \"count\" without sending `count` removes it."
 									}
 								},
 								{
@@ -2410,14 +2454,14 @@
 												}
 											}
 										],
-										"description": "Required when the time range is set to \"custom\"."
+										"description": "Required when the time range is set to \"custom\". On PATCH, omit to preserve the existing range; send null to remove it.\nA PATCH that sets `timeRange` to a mode other than \"custom\" without sending `customTimeRange` removes it.\nSending null while `timeRange.mode` stays \"custom\" is rejected."
 									}
 								},
 								{
 									"name": "data_source",
 									"string": {
 										"computed_optional_required": "computed_optional",
-										"description": "Data source of the report.",
+										"description": "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.",
 										"validators": [
 											{
 												"custom": {
@@ -2994,7 +3038,7 @@
 															}
 														}
 													],
-													"description": "Metric selector used in reports and filters."
+													"description": "The metric the change is measured on. It must also be listed in the report's\n`config.metrics`; otherwise the request is rejected with a 400 and nothing is saved."
 												}
 											},
 											{
@@ -3027,7 +3071,7 @@
 												}
 											}
 										],
-										"description": "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and rank `group` limits — not all three."
+										"description": "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.\nOn PATCH, omit to preserve the existing limit; send null to remove it."
 									}
 								},
 								{
@@ -3121,7 +3165,7 @@
 												}
 											}
 										],
-										"description": "Metric filter to limit report rows by metric value."
+										"description": "Metric filter to limit report rows by metric value.\nOn PATCH, omit to preserve the existing filter; send null to remove it."
 									}
 								},
 								{
@@ -3233,7 +3277,7 @@
 										"default": {
 											"static": "desc"
 										},
-										"description": "This option has no impact when reading reports via API.",
+										"description": "Orders the columns produced by `dimensions`, both in the console and in a rendered\n`fileOutput` export. It does not reorder the `rows` of a JSON result.\n`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`\ndimensions of a time series means chronologically. The default `desc` orders them by the\nmetric instead, so a monthly report charts its priciest month first rather than in time\norder — set `a_to_z` for a time series you intend to export.\nA report with a forecast is always charted chronologically and ignores this field, and a\ncomparative `displayValues` mode requires `a_to_z`.",
 										"validators": [
 											{
 												"custom": {
@@ -3255,7 +3299,7 @@
 										"default": {
 											"static": "asc"
 										},
-										"description": "This option has no impact when reading reports via API.",
+										"description": "Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`\nexport. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does\nnot reorder the `rows` of a JSON result.",
 										"validators": [
 											{
 												"custom": {
@@ -3887,7 +3931,7 @@
 						"name": "public",
 						"string": {
 							"computed_optional_required": "computed_optional",
-							"description": "The type of permissions granted to all users in the organization for this resource.",
+							"description": "The type of permissions granted to all users in the organization for this resource.\n\nAllocations (single and group) always have at least `viewer` public access, so it cannot be cleared:\n- If `public` is omitted, the stored value is kept.\n- An empty string (`\"\"`) is accepted for backward compatibility and is treated as `viewer`.\n- An explicit `null` is rejected with `400 Bad Request`.\n\nFor Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).",
 							"validators": [
 								{
 									"custom": {
@@ -4267,6 +4311,381 @@
 				],
 				"description": "Manage users who have access to the DoiT platform.",
 				"markdown_description": "Manage users who have access to the DoiT platform."
+			}
+		},
+		{
+			"name": "user_notification",
+			"schema": {
+				"attributes": [
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Display name for the new notification config.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 200)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "settings",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "cost_anomalies",
+									"single_nested": {
+										"computed_optional_required": "required",
+										"attributes": [
+											{
+												"name": "allocations",
+												"single_nested": {
+													"computed_optional_required": "required",
+													"attributes": [
+														{
+															"name": "ids",
+															"list": {
+																"computed_optional_required": "required",
+																"element_type": {
+																	"string": {}
+																},
+																"description": "Allocation ids, in the order sent. A read returns that same order. A duplicate id is rejected\nwith `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.\n"
+															}
+														},
+														{
+															"name": "mode",
+															"string": {
+																"computed_optional_required": "required",
+																"description": "`all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —\nonly the listed ids. `exclude` — all enabled allocations except the listed ids.\n",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.OneOf(\n\"all\",\n\"include\",\n\"exclude\",\n)"
+																		}
+																	}
+																]
+															}
+														}
+													],
+													"description": "Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET\n/analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying\nwhether it exists elsewhere.\n\n`mode: all` means every allocation with anomaly detection enabled, including anomalies that are not\ntied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one\nid. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not\nsort or drop entries. A duplicate id is rejected with `422`.\n"
+												}
+											},
+											{
+												"name": "min_excess_cost",
+												"single_nested": {
+													"computed_optional_required": "required",
+													"attributes": [
+														{
+															"name": "amount",
+															"string": {
+																"computed_optional_required": "required",
+																"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "regexp"
+																				},
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^-?(0|[1-9]\\\\d*)(\\\\.\\\\d+)?$\"), \"\")"
+																		}
+																	}
+																]
+															}
+														},
+														{
+															"name": "currency",
+															"string": {
+																"computed_optional_required": "required",
+																"description": "ISO 4217 currency code.",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "regexp"
+																				},
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																				}
+																			],
+																			"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Z]{3}$\"), \"\")"
+																		}
+																	}
+																]
+															}
+														}
+													],
+													"description": "Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.\n`100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a\nwhole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"100.00\"`. `0` is accepted.\n"
+												}
+											},
+											{
+												"name": "min_severity",
+												"string": {
+													"computed_optional_required": "required",
+													"description": "`warning` — warning and above. `critical` — critical only. There is no `information` or `all`\nvalue; a write of `all` is rejected with `422`. A read of a missing stored severity (console \"All\nseverity levels\") and of warning both return `warning`. `critical` is stored and returned as\n`critical`.\n",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																	}
+																],
+																"schema_definition": "stringvalidator.OneOf(\n\"warning\",\n\"critical\",\n)"
+															}
+														}
+													]
+												}
+											},
+											{
+												"name": "repeat",
+												"single_nested": {
+													"computed_optional_required": "computed_optional",
+													"attributes": [
+														{
+															"name": "every_hours",
+															"int64": {
+																"computed_optional_required": "computed_optional",
+																"description": "Resend until the anomaly is inactive, every N hours (1–24).\n",
+																"validators": [
+																	{
+																		"custom": {
+																			"imports": [
+																				{
+																					"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																				}
+																			],
+																			"schema_definition": "int64validator.Between(1, 24)"
+																		}
+																	}
+																]
+															}
+														},
+														{
+															"name": "when_cost_grows",
+															"single_nested": {
+																"computed_optional_required": "computed_optional",
+																"attributes": [
+																	{
+																		"name": "match",
+																		"string": {
+																			"computed_optional_required": "computed_optional",
+																			"description": "How to combine percent and dollar growth when both are set. Required when both amounts are present;\nomit when only one amount is present.\n",
+																			"validators": [
+																				{
+																					"custom": {
+																						"imports": [
+																							{
+																								"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																							}
+																						],
+																						"schema_definition": "stringvalidator.OneOf(\n\"or\",\n\"and\",\n)"
+																					}
+																				}
+																			]
+																		}
+																	},
+																	{
+																		"name": "min_increase",
+																		"single_nested": {
+																			"computed_optional_required": "computed_optional",
+																			"attributes": [
+																				{
+																					"name": "amount",
+																					"string": {
+																						"computed_optional_required": "required",
+																						"description": "Decimal monetary amount at ISO 4217 minor-unit precision (string).",
+																						"validators": [
+																							{
+																								"custom": {
+																									"imports": [
+																										{
+																											"path": "regexp"
+																										},
+																										{
+																											"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																										}
+																									],
+																									"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^-?(0|[1-9]\\\\d*)(\\\\.\\\\d+)?$\"), \"\")"
+																								}
+																							}
+																						]
+																					}
+																				},
+																				{
+																					"name": "currency",
+																					"string": {
+																						"computed_optional_required": "required",
+																						"description": "ISO 4217 currency code.",
+																						"validators": [
+																							{
+																								"custom": {
+																									"imports": [
+																										{
+																											"path": "regexp"
+																										},
+																										{
+																											"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																										}
+																									],
+																									"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[A-Z]{3}$\"), \"\")"
+																								}
+																							}
+																						]
+																					}
+																				}
+																			],
+																			"description": "Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.\n`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a\nwhole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"150.00\"`.\n"
+																		}
+																	},
+																	{
+																		"name": "percent_increase",
+																		"int64": {
+																			"computed_optional_required": "computed_optional",
+																			"description": "Minimum percent cost increase that triggers a resend. `10` means 10 percent. Must be greater than 0.\n",
+																			"validators": [
+																				{
+																					"custom": {
+																						"imports": [
+																							{
+																								"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																							}
+																						],
+																						"schema_definition": "int64validator.AtLeast(1)"
+																					}
+																				}
+																			]
+																		}
+																	},
+																	{
+																		"name": "within_hours",
+																		"int64": {
+																			"computed_optional_required": "computed_optional",
+																			"description": "Optional window in hours for the growth check (1–24).",
+																			"validators": [
+																				{
+																					"custom": {
+																						"imports": [
+																							{
+																								"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																							}
+																						],
+																						"schema_definition": "int64validator.Between(1, 24)"
+																					}
+																				}
+																			]
+																		}
+																	}
+																],
+																"description": "Resend when the anomaly's cost grows:\n\n- both `percentIncrease` and `minIncrease` present → `match` is\n  required (`or` or `and`)\n- exactly one of `percentIncrease` or `minIncrease` present → omit\n  `match` (percentage-only or value-only)\n- neither amount present → rejected with `422`\n\n`percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time\nwindow is off.\n"
+															}
+														}
+													],
+													"description": "Resend controls for an active cost anomaly. Omit the whole `repeat` object when neither control is\nset. An empty object is rejected with `422`.\n"
+												}
+											}
+										],
+										"description": "Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and\noptional resend controls.\n"
+									}
+								}
+							],
+							"description": "Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are\nrejected; omitting `costAnomalies` is rejected.\n"
+						}
+					},
+					{
+						"name": "create_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the config was created. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "destinations",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "address",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Target user's email, copied by the server."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Delivery channel. Personal delivery is email only."
+										}
+									}
+								]
+							},
+							"description": "Server-managed destinations. Always one email entry with the target user's address.\n"
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run\ncreate.\n"
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned notification id. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "update_time",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "When the config was last changed. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "user_id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional\n`X-Tenant-Id`.\n",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					}
+				],
+				"description": "Personal notification configs for a user. Cost-anomaly configs are\nsupported.\n",
+				"markdown_description": "Personal notification configs for a user. Cost-anomaly configs are\nsupported.\n"
 			}
 		}
 	],

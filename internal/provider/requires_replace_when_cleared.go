@@ -37,8 +37,10 @@ import (
 //	    if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
 //	        return // create or destroy — nothing to compare
 //	    }
-//	    requiresReplaceWhenCleared[resource_report.CountValue](ctx, req, resp, path.Root("config").AtName("count"))
+//	    requiresReplaceWhenCleared[resource_x.SomeValue](ctx, req, resp, path.Root("config").AtName("some_attr"))
 //	}
+//
+//nolint:unused // Retained as the standard Category C helper for clearableattr (see .agents/skills/implement-resource/SKILL.md).
 func requiresReplaceWhenCleared[T attr.Value](ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse, p path.Path) {
 	var stateVal T
 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, p, &stateVal)...)

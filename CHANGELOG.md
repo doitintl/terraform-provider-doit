@@ -4,12 +4,59 @@
 
 ### ENHANCEMENTS
 
-- **data-source/doit_anomaly, data-source/doit_anomalies**: Add `initial_notifications` attribute
+- **data-source/doit_invoice, data-source/doit_invoices, data-source/doit_invoice_pdf**: Canceled invoices and credit memos are now supported. `status` can be `CANCELED`, which takes precedence over the payment status. `doit_invoices` returns canceled invoices only with `filter = "status:CANCELED"`; `doit_invoice` and `doit_invoice_pdf` can fetch them by ID
+
+- **resource/doit_budget, data-source/doit_budget**: New `data_source` attribute (`billing` or `billing-datahub`). Omitted on create, the API resolves it to `billing-datahub` when the customer has DataHub metrics configured and to `billing` otherwise; omitted on update, the saved value is kept. Existing budgets pick up their current data source on the next refresh
+
+- **resource/doit_alert, resource/doit_report**: When `data_source` is omitted on create, the API now resolves it to `billing-datahub` for customers with DataHub metrics (otherwise `billing`). `doit_alert` no longer has a plan-time default of `billing`, so the value is shown as known after apply. Existing alerts and reports are unaffected and keep their saved data source; set `data_source` explicitly to pin it
+
+- **resource/doit_budget**: `name`, `currency`, `type`, `start_period` and `scopes` are now declared `Required` in the schema, and `name` and `scopes` reject empty values, following the upstream split of the budget create and update request schemas. The API has always rejected a create without them, so new budgets are unaffected and Terraform now reports it at validation time. A configuration that omitted one of them for an existing budget (for example after `terraform import`, or after removing it from the config following creation) used to keep the value from state silently; it must now set the attribute explicitly, using the value shown in `terraform state show`. Create and update requests use their own request types
+
+- **data-source/doit_annotations**: The `sort_by` documentation now states that `timeCreated` sorts by `create_time` and `timeModified` by `update_time`. No behavior change
 
 ### BUG FIXES
 
+- **resource/doit_budget**: The `scoped_to_allocation` example scoped the budget to every allocation, including group allocations, which budgets reject. It now uses the first single allocation
+
+- **resource/doit_sharing**: Group allocations can now be shared. Previously the provider sent `public = ""`, which the API rejected for group allocations ([#317](https://github.com/doitintl/terraform-provider-doit/issues/317)). Requires the upstream API change from CMP-51363, which is already deployed
+- **resource/doit_sharing, data-source/doit_sharing**: Allocations always have at least `viewer` public access. `public` can now be set to `viewer` or `editor` on allocations (it was rejected before) and omitting it no longer causes a permanent `viewer -> null` diff on single allocations. Removing `public` from the configuration keeps the current value, because allocation public access cannot be cleared ([#317](https://github.com/doitintl/terraform-provider-doit/issues/317))
+
+## v1.11.0 (2026-10-09)
+
+### BREAKING CHANGES
+
+- **data-source/doit_dimensions**: Remove `timestamp` from `sort_by` allowed values following upstream API change
+
+### FEATURES
+
+- **resource/doit_allocation, data-source/doit_allocation**: Add time-bound allocations via `validity_periods` on single rules and group rules, with plan-time validation of date format, ordering and overlap ([#391](https://github.com/doitintl/terraform-provider-doit/pull/391))
+- **resource/doit_allocation, data-source/doit_allocation**: Add dynamic value extraction via `value_extraction` on group allocation rules, with plan-time validation of `on_missing` and `fallback` ([#391](https://github.com/doitintl/terraform-provider-doit/pull/391))
+
+### ENHANCEMENTS
+
+- **data-source/doit_dimensions**: Add `id` to `sort_by` allowed values, document `key` as an alias for `id`, and set row count to unknown when inputs are unknown
+- **data-source/doit_anomaly, data-source/doit_anomalies**: Add `initial_notifications` attribute
+- **data-source/doit_report_result, data-source/doit_report_query**: Support and document `forecast_settings` in report execution and chart exports with `forecastRows` ([#386](https://github.com/doitintl/terraform-provider-doit/issues/386))
+- **data-source/doit_report, data-source/doit_report_query, resource/doit_report**: Clarify `sort_dimensions` and `sort_groups` descriptions regarding series ordering on the x-axis in chart exports ([#387](https://github.com/doitintl/terraform-provider-doit/issues/387))
+
+### BUG FIXES
+
+- **resource/doit_allocation**: Allocations defined inline in a group (rules with `action = "create"` or `"update"`) are now deleted when the group is destroyed or the rule is removed, instead of being left behind as unmanaged allocations; `select` rules are never deleted ([#383](https://github.com/doitintl/terraform-provider-doit/issues/383), [#389](https://github.com/doitintl/terraform-provider-doit/pull/389))
 - **resource/doit_alert**: No longer warn that `config.scopes[*].type = "attribution"` is deprecated in favor of `allocation_rule`; the alerts API rejects `allocation_rule`, so following the warning broke the alert ([#384](https://github.com/doitintl/terraform-provider-doit/issues/384))
 - **data-source/doit_dimension**: No longer warn that `type = "attribution"` is deprecated in favor of `allocation_rule`; the dimensions API returns "Dimension not found" for `allocation_rule`, so following the warning broke the lookup ([#384](https://github.com/doitintl/terraform-provider-doit/issues/384))
+
+### DOCUMENTATION
+
+- Update examples with those from the latest blog post ([#388](https://github.com/doitintl/terraform-provider-doit/pull/388))
+
+### INTERNAL
+
+- Upgraded Go to 1.27.2
+- Upgraded dependencies: `golang.org/x/net` 0.60.0, `github.com/mattn/go-colorable` 0.1.16, `google.golang.org/genproto/googleapis/rpc`
+- Upgraded CI workflow actions: `mikepenz/action-junit-report` v6.6.1
+- Add acceptance tests for roles held by invited users ([#393](https://github.com/doitintl/terraform-provider-doit/pull/393)) and for omitted budget collaborators ([#398](https://github.com/doitintl/terraform-provider-doit/pull/398))
+- Relax the `time` provider version constraint in Go tests to minor releases ([#399](https://github.com/doitintl/terraform-provider-doit/pull/399))
+- Sync OpenAPI spec from upstream, no provider changes ([#400](https://github.com/doitintl/terraform-provider-doit/pull/400))
 
 ## v1.10.0 (2026-10-02)
 

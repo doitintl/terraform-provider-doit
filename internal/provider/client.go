@@ -293,12 +293,17 @@ func (c *DCIRetryClient) Do(req *http.Request) (*http.Response, error) {
 			return nil, fmt.Errorf("temporary server error: %d", resp.StatusCode)
 
 		case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent,
-			http.StatusNotFound, // 404 - INTENTIONALLY passed through for Terraform resource semantics
-			http.StatusTooEarly: // 425 - INTENTIONALLY passed through, see below
+			http.StatusNotFound,           // 404 - INTENTIONALLY passed through for Terraform resource semantics
+			http.StatusPreconditionFailed, // 412 - INTENTIONALLY passed through, see below
+			http.StatusTooEarly:           // 425 - INTENTIONALLY passed through, see below
 			// These codes don't need retry - return response for downstream handling
 			// Note: 404 is NOT an error here. Resource handlers interpret it contextually:
 			// - Read: externally deleted → remove from state
 			// - Delete: already gone → success
+			//
+			// 412 means the If-Match ETag is stale. Resources that send If-Match
+			// refetch the current ETag and retry their delete once, so they need
+			// the status; every other caller reports it as an error.
 			//
 			// 425 is likewise not an error: the async report results endpoint
 			// returns it while an operation's result is still being written.

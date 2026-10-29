@@ -288,6 +288,7 @@ func TestAwaitAsyncReport_SucceedsAfterPolling(t *testing.T) {
 func TestAwaitAsyncReport_FileOutput(t *testing.T) {
 	pdf := models.GetAsyncOperationResultsParamsFileOutputPdf
 	png := models.GetAsyncOperationResultsParamsFileOutputPng
+	csv := models.GetAsyncOperationResultsParamsFileOutputCsv
 	for _, tc := range []struct {
 		name      string
 		format    *models.GetAsyncOperationResultsParamsFileOutput
@@ -312,6 +313,13 @@ func TestAwaitAsyncReport_FileOutput(t *testing.T) {
 			body:      `{"result":{"rows":[],"cacheHit":false},"fileOutput":"https://storage.example/op.png?sig=def"}`,
 			wantQuery: "fileOutput=png",
 			wantURL:   "https://storage.example/op.png?sig=def",
+		},
+		{
+			name:      "csv",
+			format:    &csv,
+			body:      `{"result":{"rows":[],"cacheHit":false},"fileOutput":"https://storage.example/op.csv?sig=ghi"}`,
+			wantQuery: "fileOutput=csv",
+			wantURL:   "https://storage.example/op.csv?sig=ghi",
 		},
 		{
 			name:      "render failed but result remains",
@@ -415,6 +423,61 @@ func TestAwaitAsyncReport_DetailsValueAliases(t *testing.T) {
 		}
 		if got := fixedCloud["test-manual"]; got != "Test Manual Display" {
 			t.Errorf("marshaled alias for test-manual = %v, want %q", got, "Test Manual Display")
+		}
+	})
+}
+
+// TestAwaitAsyncReport_ForecastRows verifies that when the results
+// endpoint returns forecastRows, awaitAsyncReport populates
+// ForecastRows on the result, and json.Marshal serializes forecastRows into the JSON output.
+func TestAwaitAsyncReport_ForecastRows(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		resultsPayload := `{"id":"rpt-1","reportName":"Forecast Report","result":{` +
+			`"schema":[{"name":"year","type":"datetime"},{"name":"month","type":"datetime"},{"name":"cost","type":"float"}],` +
+			`"rows":[["2026","01",100.0]],` +
+			`"forecastRows":[["2026","02",110.0],["2026","03",115.0]],` +
+			`"cacheHit":false` +
+			`}}`
+
+		srv := newAsyncTestServer(t, &asyncTestServer{
+			pollStatuses: []string{"succeeded"},
+			resultsBody:  resultsPayload,
+		})
+		client := newAsyncTestClient(t, srv.Server)
+
+		results, diags := awaitAsyncReport(t.Context(), client, "report results", "op-1", nil)
+		if diags.HasError() {
+			t.Fatalf("unexpected diagnostics: %v", diags.Errors())
+		}
+		if results.Result == nil {
+			t.Fatal("expected non-nil result")
+		}
+		if results.Result.ForecastRows == nil {
+			t.Fatal("expected non-nil ForecastRows")
+		}
+		if len(*results.Result.ForecastRows) != 2 {
+			t.Fatalf("expected 2 forecast rows, got %d", len(*results.Result.ForecastRows))
+		}
+
+		// Verify json.Marshal matches what is exposed in result_json
+		b, err := json.Marshal(results.Result)
+		if err != nil {
+			t.Fatalf("json.Marshal failed: %v", err)
+		}
+		var parsed map[string]any
+		if err := json.Unmarshal(b, &parsed); err != nil {
+			t.Fatalf("json.Unmarshal failed: %v", err)
+		}
+		forecastRaw, ok := parsed["forecastRows"]
+		if !ok {
+			t.Fatalf("forecastRows missing from marshaled result_json: %s", string(b))
+		}
+		forecastList, ok := forecastRaw.([]any)
+		if !ok {
+			t.Fatalf("forecastRows is not a list: %T", forecastRaw)
+		}
+		if len(forecastList) != 2 {
+			t.Fatalf("expected 2 marshaled forecast rows, got %d", len(forecastList))
 		}
 	})
 }

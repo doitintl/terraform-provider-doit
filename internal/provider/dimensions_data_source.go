@@ -73,9 +73,10 @@ func (d *dimensionsDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	ctx, cancel := context.WithTimeout(ctx, readTimeout)
 	defer cancel()
 
-	// If any filter/pagination input is unknown, return unknown list
+	// If any filter/pagination input is unknown, return unknown list and row count
 	if data.Filter.IsUnknown() || data.SortBy.IsUnknown() || data.SortOrder.IsUnknown() || data.MaxResults.IsUnknown() || data.PageToken.IsUnknown() {
 		data.Dimensions = types.ListUnknown(datasource_dimensions.DimensionsValue{}.Type(ctx))
+		data.RowCount = types.Int64Unknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}

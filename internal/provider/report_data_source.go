@@ -186,12 +186,12 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 
 	// Nested Object: Count (id + type). Default null; populate when present.
 	configMap["count"] = datasource_report.NewCountValueNull()
-	if config.Count != nil {
+	if count := nullableToPointer(config.Count); count != nil {
 		countVal, countDiags := datasource_report.NewCountValue(
 			datasource_report.CountValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
-				"id":   types.StringValue(config.Count.Id),
-				"type": types.StringValue(string(config.Count.Type)),
+				"id":   types.StringValue(count.Id),
+				"type": types.StringValue(string(count.Type)),
 			})
 		diags.Append(countDiags...)
 		configMap["count"] = countVal
@@ -306,16 +306,16 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	// Nested Object: CustomTimeRange
 	configMap["custom_time_range"] = datasource_report.NewCustomTimeRangeValueNull()
 
-	if config.CustomTimeRange != nil {
+	if ctr := nullableToPointer(config.CustomTimeRange); ctr != nil {
 		ctrMap := map[string]attr.Value{
 			"from": types.StringNull(),
 			"to":   types.StringNull(),
 		}
-		if config.CustomTimeRange.From != nil {
-			ctrMap["from"] = types.StringValue(config.CustomTimeRange.From.Format(time.RFC3339))
+		if ctr.From != nil {
+			ctrMap["from"] = types.StringValue(ctr.From.Format(time.RFC3339))
 		}
-		if config.CustomTimeRange.To != nil {
-			ctrMap["to"] = types.StringValue(config.CustomTimeRange.To.Format(time.RFC3339))
+		if ctr.To != nil {
+			ctrMap["to"] = types.StringValue(ctr.To.Format(time.RFC3339))
 		}
 		ctrVal, ctrDiags := datasource_report.NewCustomTimeRangeValue(datasource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
 		diags.Append(ctrDiags...)
@@ -449,26 +449,26 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	}
 
 	// Nested Object: MetricFilter
-	if config.MetricFilter != nil {
+	if mf := nullableToPointer(config.MetricFilter); mf != nil {
 		mfMap := map[string]attr.Value{
-			"operator": types.StringValue(string(config.MetricFilter.Operator)),
+			"operator": types.StringValue(string(mf.Operator)),
 			// operand has the effective server default "single_value"; mirror the
 			// resource mapper and normalize a nil API response to that default.
 			"operand": types.StringValue("single_value"),
 		}
-		if config.MetricFilter.Operand != nil {
-			mfMap["operand"] = types.StringValue(string(*config.MetricFilter.Operand))
+		if mf.Operand != nil {
+			mfMap["operand"] = types.StringValue(string(*mf.Operand))
 		}
 
-		metricFilterMetricVal, mfMetricDiags := ds.externalMetricToValue(ctx, &config.MetricFilter.Metric)
+		metricFilterMetricVal, mfMetricDiags := ds.externalMetricToValue(ctx, &mf.Metric)
 		diags.Append(mfMetricDiags...)
 		if diags.HasError() {
 			log.Println("Error creating metric value mfMap")
 			return diags
 		}
 		mfMap["metric"] = metricFilterMetricVal
-		if config.MetricFilter.Values != nil {
-			mfValues, mfValueDiags := types.ListValueFrom(ctx, types.Float64Type, config.MetricFilter.Values)
+		if mf.Values != nil {
+			mfValues, mfValueDiags := types.ListValueFrom(ctx, types.Float64Type, mf.Values)
 			diags.Append(mfValueDiags...)
 			if diags.HasError() {
 				log.Println("Error creating metric filter values mfMap")
@@ -492,23 +492,23 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 	}
 
 	// Nested Object: LimitByChange
-	if config.LimitByChange != nil {
-		lbcMetricVal, lbcMetricDiags := ds.externalMetricToValue(ctx, &config.LimitByChange.Metric)
+	if lbc := nullableToPointer(config.LimitByChange); lbc != nil {
+		lbcMetricVal, lbcMetricDiags := ds.externalMetricToValue(ctx, &lbc.Metric)
 		diags.Append(lbcMetricDiags...)
 		if diags.HasError() {
 			log.Println("Error creating limit_by_change metric value")
 			return diags
 		}
-		lbcValues, lbcValuesDiags := types.ListValueFrom(ctx, types.Float64Type, config.LimitByChange.Values)
+		lbcValues, lbcValuesDiags := types.ListValueFrom(ctx, types.Float64Type, lbc.Values)
 		diags.Append(lbcValuesDiags...)
 		if diags.HasError() {
 			log.Println("Error creating limit_by_change values")
 			return diags
 		}
 		lbcMap := map[string]attr.Value{
-			"change_type":             types.StringValue(string(config.LimitByChange.ChangeType)),
-			"operator":                types.StringValue(string(config.LimitByChange.Operator)),
-			"include_incomplete_data": types.BoolValue(config.LimitByChange.IncludeIncompleteData),
+			"change_type":             types.StringValue(string(lbc.ChangeType)),
+			"operator":                types.StringValue(string(lbc.Operator)),
+			"include_incomplete_data": types.BoolValue(lbc.IncludeIncompleteData),
 			"metric":                  lbcMetricVal,
 			"values":                  lbcValues,
 		}

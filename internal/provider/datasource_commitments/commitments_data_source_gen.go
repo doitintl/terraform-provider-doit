@@ -56,6 +56,11 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 						"periods": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
+									"cash_attainment": schema.Float64Attribute{
+										Computed:            true,
+										Description:         "This period's own attained spend, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments, excluding anything carried in from the previous period. Summed across periods it equals `totalCurrentAttainment`. To measure the period against its `commitmentValue` the way the console does, use `cashAttainment + rolloverFromPrevPeriod + shortfallRollover`; the period's remaining amount is `commitmentValue` minus that. Excess carried out to the next period is not deducted from this period.",
+										MarkdownDescription: "This period's own attained spend, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments, excluding anything carried in from the previous period. Summed across periods it equals `totalCurrentAttainment`. To measure the period against its `commitmentValue` the way the console does, use `cashAttainment + rolloverFromPrevPeriod + shortfallRollover`; the period's remaining amount is `commitmentValue` minus that. Excess carried out to the next period is not deducted from this period.",
+									},
 									"commitment_value": schema.Float64Attribute{
 										Computed:            true,
 										Description:         "The commitment value for this period.",
@@ -86,6 +91,16 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 										Description:         "The marketplace spend within this period.",
 										MarkdownDescription: "The marketplace spend within this period.",
 									},
+									"rollover_from_prev_period": schema.Float64Attribute{
+										Computed:            true,
+										Description:         "The amount carried into this period from the previous period under the commitment's rollover terms. Positive for excess rollover, negative for shortfall rollover, 0 when nothing was carried (always 0 for the first period). amazon-web-services commitments no longer roll over, so this is 0 for them unless the commitment was last calculated before that change. Not included in `cashAttainment` or `totalCurrentAttainment`.",
+										MarkdownDescription: "The amount carried into this period from the previous period under the commitment's rollover terms. Positive for excess rollover, negative for shortfall rollover, 0 when nothing was carried (always 0 for the first period). amazon-web-services commitments no longer roll over, so this is 0 for them unless the commitment was last calculated before that change. Not included in `cashAttainment` or `totalCurrentAttainment`.",
+									},
+									"shortfall_rollover": schema.Float64Attribute{
+										Computed:            true,
+										Description:         "The part of this period's shortfall carried forward to the next period under the commitment's shortfall rollover terms, where it appears as a negative `rolloverFromPrevPeriod`. 0 when nothing was carried forward, including while the period is still open and for the last period. The console counts this amount as met within this period. Not included in `cashAttainment` or `totalCurrentAttainment`.",
+										MarkdownDescription: "The part of this period's shortfall carried forward to the next period under the commitment's shortfall rollover terms, where it appears as a negative `rolloverFromPrevPeriod`. 0 when nothing was carried forward, including while the period is still open and for the last period. The console counts this amount as met within this period. Not included in `cashAttainment` or `totalCurrentAttainment`.",
+									},
 									"start_date": schema.StringAttribute{
 										Computed:            true,
 										Description:         "The start date of the period.",
@@ -114,8 +129,8 @@ func CommitmentsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"total_current_attainment": schema.Float64Attribute{
 							Computed:            true,
-							Description:         "The total current spend attainment across all periods.",
-							MarkdownDescription: "The total current spend attainment across all periods.",
+							Description:         "The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.",
+							MarkdownDescription: "The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.",
 						},
 						"total_forecast_value": schema.Float64Attribute{
 							Computed:            true,
@@ -1247,6 +1262,24 @@ func (t PeriodsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 
 	attributes := in.Attributes()
 
+	cashAttainmentAttribute, ok := attributes["cash_attainment"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cash_attainment is missing from object`)
+
+		return nil, diags
+	}
+
+	cashAttainmentVal, ok := cashAttainmentAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cash_attainment expected to be basetypes.Float64Value, was: %T`, cashAttainmentAttribute))
+	}
+
 	commitmentValueAttribute, ok := attributes["commitment_value"]
 
 	if !ok {
@@ -1355,6 +1388,42 @@ func (t PeriodsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`marketplace_spend expected to be basetypes.Float64Value, was: %T`, marketplaceSpendAttribute))
 	}
 
+	rolloverFromPrevPeriodAttribute, ok := attributes["rollover_from_prev_period"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rollover_from_prev_period is missing from object`)
+
+		return nil, diags
+	}
+
+	rolloverFromPrevPeriodVal, ok := rolloverFromPrevPeriodAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rollover_from_prev_period expected to be basetypes.Float64Value, was: %T`, rolloverFromPrevPeriodAttribute))
+	}
+
+	shortfallRolloverAttribute, ok := attributes["shortfall_rollover"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`shortfall_rollover is missing from object`)
+
+		return nil, diags
+	}
+
+	shortfallRolloverVal, ok := shortfallRolloverAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`shortfall_rollover expected to be basetypes.Float64Value, was: %T`, shortfallRolloverAttribute))
+	}
+
 	startDateAttribute, ok := attributes["start_date"]
 
 	if !ok {
@@ -1378,12 +1447,15 @@ func (t PeriodsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 	}
 
 	return PeriodsValue{
+		CashAttainment:             cashAttainmentVal,
 		CommitmentValue:            commitmentValueVal,
 		EndDate:                    endDateVal,
 		ForecastValue:              forecastValueVal,
 		MarketplaceLimitAmount:     marketplaceLimitAmountVal,
 		MarketplaceLimitPercentage: marketplaceLimitPercentageVal,
 		MarketplaceSpend:           marketplaceSpendVal,
+		RolloverFromPrevPeriod:     rolloverFromPrevPeriodVal,
+		ShortfallRollover:          shortfallRolloverVal,
 		StartDate:                  startDateVal,
 		state:                      attr.ValueStateKnown,
 	}, diags
@@ -1452,6 +1524,24 @@ func NewPeriodsValue(attributeTypes map[string]attr.Type, attributes map[string]
 		return NewPeriodsValueUnknown(), diags
 	}
 
+	cashAttainmentAttribute, ok := attributes["cash_attainment"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cash_attainment is missing from object`)
+
+		return NewPeriodsValueUnknown(), diags
+	}
+
+	cashAttainmentVal, ok := cashAttainmentAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cash_attainment expected to be basetypes.Float64Value, was: %T`, cashAttainmentAttribute))
+	}
+
 	commitmentValueAttribute, ok := attributes["commitment_value"]
 
 	if !ok {
@@ -1560,6 +1650,42 @@ func NewPeriodsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`marketplace_spend expected to be basetypes.Float64Value, was: %T`, marketplaceSpendAttribute))
 	}
 
+	rolloverFromPrevPeriodAttribute, ok := attributes["rollover_from_prev_period"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`rollover_from_prev_period is missing from object`)
+
+		return NewPeriodsValueUnknown(), diags
+	}
+
+	rolloverFromPrevPeriodVal, ok := rolloverFromPrevPeriodAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`rollover_from_prev_period expected to be basetypes.Float64Value, was: %T`, rolloverFromPrevPeriodAttribute))
+	}
+
+	shortfallRolloverAttribute, ok := attributes["shortfall_rollover"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`shortfall_rollover is missing from object`)
+
+		return NewPeriodsValueUnknown(), diags
+	}
+
+	shortfallRolloverVal, ok := shortfallRolloverAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`shortfall_rollover expected to be basetypes.Float64Value, was: %T`, shortfallRolloverAttribute))
+	}
+
 	startDateAttribute, ok := attributes["start_date"]
 
 	if !ok {
@@ -1583,12 +1709,15 @@ func NewPeriodsValue(attributeTypes map[string]attr.Type, attributes map[string]
 	}
 
 	return PeriodsValue{
+		CashAttainment:             cashAttainmentVal,
 		CommitmentValue:            commitmentValueVal,
 		EndDate:                    endDateVal,
 		ForecastValue:              forecastValueVal,
 		MarketplaceLimitAmount:     marketplaceLimitAmountVal,
 		MarketplaceLimitPercentage: marketplaceLimitPercentageVal,
 		MarketplaceSpend:           marketplaceSpendVal,
+		RolloverFromPrevPeriod:     rolloverFromPrevPeriodVal,
+		ShortfallRollover:          shortfallRolloverVal,
 		StartDate:                  startDateVal,
 		state:                      attr.ValueStateKnown,
 	}, diags
@@ -1662,35 +1791,49 @@ func (t PeriodsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = PeriodsValue{}
 
 type PeriodsValue struct {
+	CashAttainment             basetypes.Float64Value `tfsdk:"cash_attainment"`
 	CommitmentValue            basetypes.Float64Value `tfsdk:"commitment_value"`
 	EndDate                    basetypes.StringValue  `tfsdk:"end_date"`
 	ForecastValue              basetypes.Float64Value `tfsdk:"forecast_value"`
 	MarketplaceLimitAmount     basetypes.Float64Value `tfsdk:"marketplace_limit_amount"`
 	MarketplaceLimitPercentage basetypes.Float64Value `tfsdk:"marketplace_limit_percentage"`
 	MarketplaceSpend           basetypes.Float64Value `tfsdk:"marketplace_spend"`
+	RolloverFromPrevPeriod     basetypes.Float64Value `tfsdk:"rollover_from_prev_period"`
+	ShortfallRollover          basetypes.Float64Value `tfsdk:"shortfall_rollover"`
 	StartDate                  basetypes.StringValue  `tfsdk:"start_date"`
 	state                      attr.ValueState
 }
 
 func (v PeriodsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 7)
+	attrTypes := make(map[string]tftypes.Type, 10)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["cash_attainment"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["commitment_value"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["end_date"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["forecast_value"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["marketplace_limit_amount"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["marketplace_limit_percentage"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["marketplace_spend"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["rollover_from_prev_period"] = basetypes.Float64Type{}.TerraformType(ctx)
+	attrTypes["shortfall_rollover"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["start_date"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 7)
+		vals := make(map[string]tftypes.Value, 10)
+
+		val, err = v.CashAttainment.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cash_attainment"] = val
 
 		val, err = v.CommitmentValue.ToTerraformValue(ctx)
 
@@ -1740,6 +1883,22 @@ func (v PeriodsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 		vals["marketplace_spend"] = val
 
+		val, err = v.RolloverFromPrevPeriod.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["rollover_from_prev_period"] = val
+
+		val, err = v.ShortfallRollover.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["shortfall_rollover"] = val
+
 		val, err = v.StartDate.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -1778,12 +1937,15 @@ func (v PeriodsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	var diags diag.Diagnostics
 
 	attributeTypes := map[string]attr.Type{
+		"cash_attainment":              basetypes.Float64Type{},
 		"commitment_value":             basetypes.Float64Type{},
 		"end_date":                     basetypes.StringType{},
 		"forecast_value":               basetypes.Float64Type{},
 		"marketplace_limit_amount":     basetypes.Float64Type{},
 		"marketplace_limit_percentage": basetypes.Float64Type{},
 		"marketplace_spend":            basetypes.Float64Type{},
+		"rollover_from_prev_period":    basetypes.Float64Type{},
+		"shortfall_rollover":           basetypes.Float64Type{},
 		"start_date":                   basetypes.StringType{},
 	}
 
@@ -1798,12 +1960,15 @@ func (v PeriodsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
+			"cash_attainment":              v.CashAttainment,
 			"commitment_value":             v.CommitmentValue,
 			"end_date":                     v.EndDate,
 			"forecast_value":               v.ForecastValue,
 			"marketplace_limit_amount":     v.MarketplaceLimitAmount,
 			"marketplace_limit_percentage": v.MarketplaceLimitPercentage,
 			"marketplace_spend":            v.MarketplaceSpend,
+			"rollover_from_prev_period":    v.RolloverFromPrevPeriod,
+			"shortfall_rollover":           v.ShortfallRollover,
 			"start_date":                   v.StartDate,
 		})
 
@@ -1823,6 +1988,10 @@ func (v PeriodsValue) Equal(o attr.Value) bool {
 
 	if v.state != attr.ValueStateKnown {
 		return true
+	}
+
+	if !v.CashAttainment.Equal(other.CashAttainment) {
+		return false
 	}
 
 	if !v.CommitmentValue.Equal(other.CommitmentValue) {
@@ -1849,6 +2018,14 @@ func (v PeriodsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.RolloverFromPrevPeriod.Equal(other.RolloverFromPrevPeriod) {
+		return false
+	}
+
+	if !v.ShortfallRollover.Equal(other.ShortfallRollover) {
+		return false
+	}
+
 	if !v.StartDate.Equal(other.StartDate) {
 		return false
 	}
@@ -1866,12 +2043,15 @@ func (v PeriodsValue) Type(ctx context.Context) attr.Type {
 
 func (v PeriodsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"cash_attainment":              basetypes.Float64Type{},
 		"commitment_value":             basetypes.Float64Type{},
 		"end_date":                     basetypes.StringType{},
 		"forecast_value":               basetypes.Float64Type{},
 		"marketplace_limit_amount":     basetypes.Float64Type{},
 		"marketplace_limit_percentage": basetypes.Float64Type{},
 		"marketplace_spend":            basetypes.Float64Type{},
+		"rollover_from_prev_period":    basetypes.Float64Type{},
+		"shortfall_rollover":           basetypes.Float64Type{},
 		"start_date":                   basetypes.StringType{},
 	}
 }
