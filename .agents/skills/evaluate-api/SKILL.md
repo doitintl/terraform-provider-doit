@@ -88,7 +88,7 @@ When both a 3.1 PR and its 3.0.1 omni projection exist, report a difference betw
 - **What the generator reads:** types, `required`, `nullable`, enums, `format` (including `password` and `set`), `default`, composition, parameter names and locations, declared status codes.
 - **Documented behaviour:** ETag wording, validation rules, ordering, normalization.
 
-Extension keys (`x-terraform-*`, `x-doit-*`), `readOnly`, `writeOnly` and examples are not read by the generator, so a difference there is not drift.
+Extension keys (`x-terraform-*`, `x-doit-*`) and examples are not read by any stage, so a difference there is not drift. `readOnly` and `writeOnly` are not read by the Terraform schema mapper, but `oapi-codegen` uses them: a required property with either flag is generated as a pointer with `omitempty` (`*string`, where the plain required property is `string`), which the hand-written code depends on (`ServiceAccount.customerId`, `internal/provider/service_account.go`). A difference in them between a 3.1 spec and its projection is drift when it changes a generated Go type, so compare the model stage's output (the last command above) before dismissing it.
 
 For such a PR:
 
@@ -231,7 +231,7 @@ Some rows below are generator failures. Others are standards policy (DoiT API De
 | A field that only admits `null` (a placeholder for a future shape) | Fails: `invalid schema type 'null'` (no null case in `BuildResourceAttribute`/`BuildDataSourceAttribute`), with the consequences above. Through the 3.0.1 projection it instead becomes a nullable empty object, an attribute the API always rejects. | **BLOCKER.** Ask for it to be left out until it has a shape; adding an optional field later is not breaking for the provider, while retyping a shipped one breaks configs and state. |
 | Constraints on array items (`items: {minimum: …}`) | Dropped. | Note. Only the server enforces them. |
 | `number` without `format: double`/`float` | Maps to a big-float Number with no validators. | Note. |
-| Secret string without `format: password` | `format: password` is what marks the attribute sensitive. `writeOnly` and `x-terraform-*` are not read. | Finding. |
+| Secret string without `format: password` | `format: password` is what marks the attribute sensitive. The Terraform schema mapper does not read `writeOnly` or `x-terraform-*` (`oapi-codegen` uses `writeOnly` for the Go type only). | Finding. |
 
 ## Step 5: CRUD Operation Support
 
