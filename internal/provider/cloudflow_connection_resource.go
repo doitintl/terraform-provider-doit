@@ -585,6 +585,11 @@ func cloudflowConnectionInUseHint(statusText string) string {
 // token's user is not a collaborator of the connection; the write has succeeded
 // by then, so the failure is reported as a warning instead of failing the apply.
 func (r *cloudflowConnectionResource) readAfterWrite(ctx context.Context, id string, fallback *cloudflowConnectionData) (*cloudflowConnectionData, diag.Diagnostics) {
+	// The ID is known, so a write response without one must not null connection_id.
+	if fallback.conn.ConnectionId == nil {
+		fallback.conn.ConnectionId = &id
+	}
+
 	fetched, found, diags := r.fetchConnection(ctx, id)
 	if diags.HasError() {
 		var warnings diag.Diagnostics

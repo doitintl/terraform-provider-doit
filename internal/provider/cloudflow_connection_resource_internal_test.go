@@ -552,3 +552,26 @@ func TestCloudflowConnectionModifyPlanMarksServerFieldsUnknownOnChange(t *testin
 		})
 	}
 }
+
+// The write response is the fallback state when the follow-up GET fails; a missing ID in
+// it must not turn into a null connection_id.
+func TestCloudflowConnectionReadAfterWriteKeepsID(t *testing.T) {
+	srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, 403, `{"code":"forbidden"}`)
+	}))
+	r := &cloudflowConnectionResource{client: newTestAPIClient(t, srv)}
+
+	var conn models.CloudflowConnection
+	if err := json.Unmarshal([]byte(testCloudflowGcpMinimalJSON), &conn); err != nil {
+		t.Fatal(err)
+	}
+	conn.ConnectionId = nil
+
+	data, diags := r.readAfterWrite(t.Context(), "conn-1", newCloudflowConnectionData(&conn, nil))
+	if diags.HasError() {
+		t.Fatalf("readAfterWrite: %v", diags)
+	}
+	if data.conn.ConnectionId == nil || *data.conn.ConnectionId != "conn-1" {
+		t.Errorf("connection ID = %v, want conn-1", data.conn.ConnectionId)
+	}
+}
