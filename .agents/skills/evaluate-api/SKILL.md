@@ -61,6 +61,8 @@ A contract that exists only as a `doiteng/api-specs` PR has not reached omni yet
 gh release download <service>-<version>-pr.<n> -R doiteng/api-specs -p '<service>-v<major>.yaml'
 ```
 
+A single-service asset contains only that service's paths, and the pipeline fails for every mapped path the spec lacks (`failed to extract 'alert.create': path '/analytics/v1/alerts' not found in OpenAPI spec`). So reduce `resources.yml`, `datasources.yml` and `extra_paths.yml` to the endpoint under test first. The cleanup at the end of this step restores them.
+
 What was checked on a 3.1 spec (`mock-1.0.4`): `type: [X, "null"]`, nullable arrays and objects, `oneOf: [$ref, {type: "null"}]`, `$ref` with siblings and array `examples` give the same Terraform schema and the same `nullable.Nullable[T]` Go types as `nullable: true`. Known limits:
 
 - **Pruner bug** ([#426](https://github.com/doitintl/terraform-provider-doit/issues/426)): `extract-inline-schemas` prunes a schema that is referenced only through a component header or component request body, and generation then fails with `component #/components/schemas/<X> does not exist`. The DoiT shared components (`RequestID` header) trigger it, so most 3.1 specs fail until #426 is fixed. The issue has a patch you can apply in a scratch checkout.
