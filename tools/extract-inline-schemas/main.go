@@ -139,10 +139,11 @@ func main() {
 			}
 		}
 
-		// Pruning drops whole subtrees; inline aliases first so no retained
-		// alias is left pointing at an anchor defined in a removed one.
-		inlineAliases(findMapValue(doc, "paths"))
-		inlineAliases(findMapValue(doc, "components"))
+		// Pruning drops whole subtrees; inline aliases across the whole
+		// document first (in source order, so an alias whose target holds
+		// further aliases copies an already-resolved target) so no retained
+		// alias is left pointing at an anchor defined in a removed subtree.
+		inlineAliases(doc)
 
 		pathsRemoved, methodsPruned := prunePaths(pathsNode, used)
 		fmt.Printf("Pruned %d paths and %d methods\n", pathsRemoved, methodsPruned)

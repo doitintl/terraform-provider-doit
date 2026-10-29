@@ -1294,8 +1294,7 @@ func pruneSpec(t *testing.T, spec string) *yaml.Node {
 		t.Fatal(err)
 	}
 	doc := root.Content[0]
-	inlineAliases(findMapValue(doc, "paths"))
-	inlineAliases(findMapValue(doc, "components"))
+	inlineAliases(doc)
 	pathsNode := findMapValue(doc, "paths")
 	schemasNode := findMapValue(doc, "components", "schemas")
 	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
@@ -1447,5 +1446,127 @@ components:
 		if got := findMapValue(doc, want...); got == nil || got.Value != path {
 			t.Errorf("%v = %v, want %q", want, got, path)
 		}
+	}
+}
+
+// TestPrune_AliasOutsidePathsAndComponents covers a retained alias in another
+// top-level section whose anchor lives in a pruned component.
+func TestPrune_AliasOutsidePathsAndComponents(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &desc shared text
+      schema: {type: string}
+  schemas: {}
+info:
+  title: t
+  version: v1
+  description: *desc
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+`)
+	assertReloads(t, doc)
+	if got := findMapValue(doc, "info", "description"); got == nil || got.Value != "shared text" {
+		t.Errorf("info.description = %v, want %q", got, "shared text")
+	}
+}
+
+// TestPrune_NestedAliases covers an alias whose target itself contains an
+// alias, in both component/path orders.
+func TestPrune_NestedAliases(t *testing.T) {
+	for name, spec := range map[string]string{
+		"components before paths": `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &inner shared text
+      schema: {type: string}
+  schemas:
+    Unused:
+      type: object
+      properties:
+        p: &outer
+          type: string
+          description: *inner
+    Kept:
+      type: object
+      properties:
+        q: *outer
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kept"
+`,
+		"paths before components": `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kept"
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &inner shared text
+      schema: {type: string}
+  schemas:
+    Unused:
+      type: object
+      properties:
+        p: &outer
+          type: string
+          description: *inner
+    Kept:
+      type: object
+      properties:
+        q: *outer
+`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			doc := pruneSpec(t, spec)
+			assertReloads(t, doc)
+			got := findMapValue(doc, "components", "schemas", "Kept", "properties", "q", "description")
+			if got == nil || got.Value != "shared text" {
+				t.Errorf("Kept.q.description = %v, want %q", got, "shared text")
+			}
+		})
+	}
+}
+
+func assertReloads(t *testing.T, doc *yaml.Node) {
+	t.Helper()
+	out, err := yaml.Marshal(doc)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var reloaded yaml.Node
+	if err := yaml.Unmarshal(out, &reloaded); err != nil {
+		t.Fatalf("emitted YAML does not reload: %v\n%s", err, out)
 	}
 }
