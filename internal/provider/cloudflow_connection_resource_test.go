@@ -742,6 +742,10 @@ func TestAccCloudflowConnection_Validation(t *testing.T) {
 		{"email with display name", config(`collaborators = [{ email = "Jane <jane@example.com>", role = "owner" }]`, aws), `plain\s+email\s+address`},
 		{"email with a trailing comma", config(`collaborators = [{ email = "owner@example.com,", role = "owner" }]`, aws), `plain\s+email\s+address`},
 		{"email with consecutive dots", config(`collaborators = [{ email = "owner..name@example.com", role = "owner" }]`, aws), `plain\s+email\s+address`},
+		// A null element is rejected by the required nested attributes, so it never reaches the request builders.
+		{"null collaborator alone", config(`collaborators = [null]`, aws), `Missing\s+Configuration\s+for\s+Required\s+Attribute`},
+		{"null collaborator beside an owner", config(`collaborators = [`+owner+`, null]`, aws), `Missing\s+Configuration\s+for\s+Required\s+Attribute`},
+		{"null aws context element", withOwner(`aws_config = { role_name = "r", context = [null] }`), `Missing\s+Configuration\s+for\s+Required\s+Attribute`},
 		{"invalid role", config(`collaborators = [{ email = "a@example.com", role = "admin" }]`, aws), `owner.*editor.*user`},
 		{"gcp level without matching id", withOwner(`gcp_config = { level = "folder", project_id = "p", service_account_name = "sa" }`), `folder_id\s+is\s+required`},
 		{"gcp empty id for the level", withOwner(`gcp_config = { level = "project", project_id = "", service_account_name = "sa" }`), `project_id\s+is\s+required`},
