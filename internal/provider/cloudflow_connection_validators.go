@@ -41,7 +41,7 @@ func (v cloudflowConnectionCollaboratorsValidator) ValidateList(ctx context.Cont
 	}
 
 	owners := 0
-	// undecided is set when an element's role or email is not known yet, or the role is not
+	// undecided is set when an element or its role is not known yet, or the role is not
 	// one the role attribute accepts: the owner count cannot be judged then, and the
 	// attribute's own validators report an invalid or missing value (they only run
 	// once this validator passes).
@@ -52,6 +52,20 @@ func (v cloudflowConnectionCollaboratorsValidator) ValidateList(ctx context.Cont
 			undecided = true
 			continue
 		}
+
+		// Known emails are checked whatever else is unknown: the owner count does not depend on them.
+		if !element.Email.IsUnknown() && !element.Email.IsNull() {
+			email := strings.ToLower(element.Email.ValueString())
+			if _, dup := seen[email]; dup {
+				resp.Diagnostics.AddAttributeError(
+					req.Path,
+					"Duplicate collaborator",
+					fmt.Sprintf("The email address %q is listed more than once. Each collaborator must appear once.", element.Email.ValueString()),
+				)
+			}
+			seen[email] = struct{}{}
+		}
+
 		if element.Role.IsUnknown() {
 			undecided = true
 			continue
@@ -63,23 +77,6 @@ func (v cloudflowConnectionCollaboratorsValidator) ValidateList(ctx context.Cont
 		default:
 			undecided = true
 		}
-		if element.Email.IsUnknown() {
-			undecided = true
-			continue
-		}
-		if element.Email.IsNull() {
-			continue
-		}
-
-		email := strings.ToLower(element.Email.ValueString())
-		if _, dup := seen[email]; dup {
-			resp.Diagnostics.AddAttributeError(
-				req.Path,
-				"Duplicate collaborator",
-				fmt.Sprintf("The email address %q is listed more than once. Each collaborator must appear once.", element.Email.ValueString()),
-			)
-		}
-		seen[email] = struct{}{}
 	}
 
 	if owners > 1 {
@@ -168,7 +165,7 @@ func cloudflowConnectionRequireGcpID(diags *diag.Diagnostics, level, name string
 	if value.IsUnknown() {
 		return
 	}
-	if value.IsNull() {
+	if value.IsNull() || value.ValueString() == "" {
 		diags.AddAttributeError(
 			path.Root("gcp_config").AtName(name),
 			"Missing GCP ID",

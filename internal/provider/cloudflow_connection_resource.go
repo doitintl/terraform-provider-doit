@@ -28,8 +28,15 @@ var (
 	_ resource.ResourceWithModifyPlan       = (*cloudflowConnectionResource)(nil)
 )
 
+const (
+	emailAtext = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+"
+	emailLabel = "[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
+)
+
 var (
-	cloudflowConnectionEmailPattern     = regexp.MustCompile(`^[^@\s<>"]+@[^@\s<>"]+\.[^@\s<>"]+$`)
+	// A plain address (dot-atom local part, dotted domain): no display name, list of
+	// addresses, empty dot-separated parts or whitespace. The API accepts anything.
+	cloudflowConnectionEmailPattern     = regexp.MustCompile("^" + emailAtext + `(?:\.` + emailAtext + ")*@" + emailLabel + `(?:\.` + emailLabel + ")+$")
 	cloudflowConnectionAccountIDPattern = regexp.MustCompile(`^[0-9]{12}$`)
 )
 

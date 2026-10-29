@@ -59,6 +59,12 @@ func TestCloudflowConnectionCollaboratorsValidator(t *testing.T) {
 		{"two owners with unknown before", testCollaboratorList(t, unknownElement, owner, owner2), "Too many owners"},
 		{"duplicate with unknown before", testCollaboratorList(t, unknownElement, owner, editorSameMail), "Duplicate collaborator"},
 		{"duplicate with unknown after", testCollaboratorList(t, owner, editorSameMail, unknownElement), "Duplicate collaborator"},
+		// Known emails are checked whatever else is unknown.
+		{"duplicate email with unknown role", testCollaboratorList(t, owner, testCollaborator(t, types.StringValue("OWNER@example.com"), types.StringUnknown())), "Duplicate collaborator"},
+		{"duplicate email with unknown role first", testCollaboratorList(t, testCollaborator(t, types.StringValue("owner@example.com"), types.StringUnknown()), owner), "Duplicate collaborator"},
+		// An unknown email does not affect the owner count: known non-owner roles are definitely ownerless.
+		{"unknown email with only known non-owners", testCollaboratorList(t, editor, testCollaborator(t, types.StringUnknown(), types.StringValue("user"))), "Missing owner"},
+		{"only unknown emails, known editors", testCollaboratorList(t, testCollaborator(t, types.StringUnknown(), types.StringValue("editor"))), "Missing owner"},
 		// An owner whose email is unknown still counts as the owner.
 		{"owner with unknown email", testCollaboratorList(t, unknownEmailOwner, editor), ""},
 		{"two owners one with unknown email", testCollaboratorList(t, unknownEmailOwner, owner), "Too many owners"},
@@ -127,6 +133,10 @@ func TestValidateCloudflowConnectionGcpConfig(t *testing.T) {
 		{"project with unknown project id", testGcpConfig(t, level("project"), null, null, unknown), "", ""},
 		{"folder with unknown folder id", testGcpConfig(t, level("folder"), null, unknown, null), "", ""},
 		{"organization with unknown organization id", testGcpConfig(t, level("organization"), unknown, null, null), "", ""},
+		// An empty ID is as good as a missing one: it is not sent.
+		{"project with empty project id", testGcpConfig(t, level("project"), null, null, types.StringValue("")), "Missing GCP ID", "gcp_config.project_id"},
+		{"folder with empty folder id", testGcpConfig(t, level("folder"), null, types.StringValue(""), null), "Missing GCP ID", "gcp_config.folder_id"},
+		{"organization with empty organization id", testGcpConfig(t, level("organization"), types.StringValue(""), null, null), "Missing GCP ID", "gcp_config.organization_id"},
 		{"unrecognised level is left to the enum validator", testGcpConfig(t, level("bogus"), null, null, null), "", ""},
 	}
 

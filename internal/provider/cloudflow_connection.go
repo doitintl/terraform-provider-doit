@@ -630,13 +630,16 @@ func cloudflowConnectionAwsConfigRequest(ctx context.Context, aws resource_cloud
 		AwsManagedPolicies: &[]string{},
 	}
 	if !aws.Permissions.IsNull() && !aws.Permissions.IsUnknown() {
-		var actions []resource_cloudflow_connection.ActionsValue
-		diags.Append(aws.Permissions.Actions.ElementsAs(ctx, &actions, false)...)
-		reqActions := make([]models.CloudflowAWSActionRequest, 0, len(actions))
-		for _, a := range actions {
-			reqActions = append(reqActions, models.CloudflowAWSActionRequest{Value: a.Value.ValueString()})
+		// The list the user leaves out is unknown on create and sent as empty.
+		if !aws.Permissions.Actions.IsUnknown() && !aws.Permissions.Actions.IsNull() {
+			var actions []resource_cloudflow_connection.ActionsValue
+			diags.Append(aws.Permissions.Actions.ElementsAs(ctx, &actions, false)...)
+			reqActions := make([]models.CloudflowAWSActionRequest, 0, len(actions))
+			for _, a := range actions {
+				reqActions = append(reqActions, models.CloudflowAWSActionRequest{Value: a.Value.ValueString()})
+			}
+			permissions.Actions = &reqActions
 		}
-		permissions.Actions = &reqActions
 
 		policies, d := cloudflowConnectionStrings(ctx, aws.Permissions.AwsManagedPolicies)
 		diags.Append(d...)

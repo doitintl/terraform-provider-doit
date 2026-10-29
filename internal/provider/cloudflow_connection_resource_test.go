@@ -312,6 +312,49 @@ func TestAccCloudflowConnection_AWS_Minimal(t *testing.T) {
 	})
 }
 
+// Either permissions list can be set without the other; the one left out is empty.
+func TestAccCloudflowConnection_AWS_PartialPermissions(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-cf")
+	account := testAccCloudflowAWSAccountID()
+	role := acctest.RandomWithPrefix("tfacc-role")
+	onlyPolicies := testAccCloudflowAWSConfig(rName, account, role, `
+    permissions = { aws_managed_policies = ["arn:aws:iam::aws:policy/ReadOnlyAccess"] }`)
+	onlyActions := testAccCloudflowAWSConfig(rName, account, role, `
+    permissions = { actions = [{ value = "s3:ListBucket" }] }`)
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckCloudflowConnectionDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: onlyPolicies,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("permissions").AtMapKey("aws_managed_policies"), knownvalue.ListSizeExact(1)),
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("permissions").AtMapKey("actions"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			testAccCloudflowConnectionDriftCheck(onlyPolicies),
+			// Swapping to the other list clears the first one.
+			{
+				Config: onlyActions,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(testAccCloudflowConnectionAddr, plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("permissions").AtMapKey("aws_managed_policies"), knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("permissions").AtMapKey("actions"), knownvalue.ListSizeExact(1)),
+				},
+			},
+			testAccCloudflowConnectionDriftCheck(onlyActions),
+			testAccCloudflowConnectionImportStep(),
+		},
+	})
+}
+
 // Explicit empty lists are the same as omitted ones.
 func TestAccCloudflowConnection_AWS_EmptyLists(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-cf")
@@ -697,8 +740,11 @@ func TestAccCloudflowConnection_Validation(t *testing.T) {
 		{"duplicate collaborator", config(`collaborators = [`+owner+`, { email = "`+testUser()+`", role = "editor" }]`, aws), `Duplicate collaborator`},
 		{"invalid email", config(`collaborators = [{ email = "not-an-email", role = "owner" }]`, aws), `plain\s+email\s+address`},
 		{"email with display name", config(`collaborators = [{ email = "Jane <jane@example.com>", role = "owner" }]`, aws), `plain\s+email\s+address`},
+		{"email with a trailing comma", config(`collaborators = [{ email = "owner@example.com,", role = "owner" }]`, aws), `plain\s+email\s+address`},
+		{"email with consecutive dots", config(`collaborators = [{ email = "owner..name@example.com", role = "owner" }]`, aws), `plain\s+email\s+address`},
 		{"invalid role", config(`collaborators = [{ email = "a@example.com", role = "admin" }]`, aws), `owner.*editor.*user`},
 		{"gcp level without matching id", withOwner(`gcp_config = { level = "folder", project_id = "p", service_account_name = "sa" }`), `folder_id\s+is\s+required`},
+		{"gcp empty id for the level", withOwner(`gcp_config = { level = "project", project_id = "", service_account_name = "sa" }`), `project_id\s+is\s+required`},
 		{"gcp organization without id", withOwner(`gcp_config = { level = "organization", service_account_name = "sa" }`), `organization_id\s+is\s+required`},
 		{"gcp invalid level", withOwner(`gcp_config = { level = "region", project_id = "p", service_account_name = "sa" }`), `owner|organization|folder|project`},
 		{"gcp without service account", withOwner(`gcp_config = { level = "project", project_id = "p" }`), `service_account_name`},

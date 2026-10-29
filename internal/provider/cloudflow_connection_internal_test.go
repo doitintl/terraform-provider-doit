@@ -615,6 +615,45 @@ func TestCloudflowConnectionToCreateRequest_UnusedKindUnknown(t *testing.T) {
 	}
 }
 
+// On create, the permissions list the user leaves out is unknown in the plan (Optional+Computed).
+// Configuring only one of actions and aws_managed_policies must still build a request.
+func TestCloudflowConnectionToCreateRequest_PartialPermissions(t *testing.T) {
+	ctx := t.Context()
+	actionType := resource_cloudflow_connection.ActionsValue{}.Type(ctx)
+	policies := types.ListValueMust(types.StringType, []attr.Value{types.StringValue("arn:aws:iam::aws:policy/ReadOnlyAccess")})
+	actions := types.ListValueMust(actionType, []attr.Value{
+		resource_cloudflow_connection.NewActionsValueMust(
+			resource_cloudflow_connection.ActionsValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{"id": types.StringUnknown(), "value": types.StringValue("s3:ListBucket")},
+		),
+	})
+
+	tests := []struct {
+		name        string
+		actions     types.List
+		policies    types.List
+		wantRequest string
+	}{
+		{"only policies configured", types.ListUnknown(actionType), policies, `{"awsManagedPolicies": ["arn:aws:iam::aws:policy/ReadOnlyAccess"], "actions": []}`},
+		{"only actions configured", actions, types.ListUnknown(types.StringType), `{"awsManagedPolicies": [], "actions": [{"value": "s3:ListBucket"}]}`},
+		{"neither resolved yet", types.ListUnknown(actionType), types.ListUnknown(types.StringType), `{"awsManagedPolicies": [], "actions": []}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plan := mapCloudflowConnectionForTest(t, testCloudflowAwsMinimalJSON)
+			plan.AwsConfig.Permissions = resource_cloudflow_connection.NewPermissionsValueMust(
+				resource_cloudflow_connection.PermissionsValue{}.AttributeTypes(ctx),
+				map[string]attr.Value{"actions": tt.actions, "aws_managed_policies": tt.policies},
+			)
+			req, diags := plan.toCreateRequest(ctx)
+			if diags.HasError() {
+				t.Fatalf("diagnostics: %v", diags)
+			}
+			assertJSONEqual(t, req.AwsConfig.Permissions, tt.wantRequest)
+		})
+	}
+}
+
 func TestCloudflowConnectionToUpdateRequest(t *testing.T) {
 	t.Run("sends the complete configuration", func(t *testing.T) {
 		plan := mapCloudflowConnectionForTest(t, testCloudflowAwsJSON)
@@ -823,6 +862,49 @@ func TestCloudflowConnectionSchema(t *testing.T) {
 		}
 		if !a.IsRequired() {
 			t.Errorf("%v: want Required", p)
+		}
+	}
+}
+
+func TestCloudflowConnectionEmailPattern(t *testing.T) {
+	valid := []string{
+		"owner@example.com",
+		"hannes.h+tf-cicd-tests@doit.com",
+		"first.last@sub.example.co.uk",
+		"o'brien@example.com",
+		"user_name-1@example-domain.io",
+	}
+	invalid := []string{
+		"",
+		"owner",
+		"owner@",
+		"@example.com",
+		"owner@example",                 // no dot in the domain
+		"owner@example.com,",            // trailing comma
+		"owner@example.com;other@x.com", // two addresses
+		"owner..name@example.com",       // consecutive dots
+		".owner@example.com",            // leading dot
+		"owner.@example.com",            // trailing dot
+		"owner@.example.com",            // leading dot in the domain
+		"owner@example..com",            // consecutive dots in the domain
+		"owner@-example.com",            // label starting with a hyphen
+		"owner@example.com-",            // label ending with a hyphen
+		"Jane <jane@example.com>",       // display name
+		"<jane@example.com>",            // angle address
+		"owner @example.com",            // whitespace
+		"own er@example.com",            // whitespace
+		"owner@exa mple.com",            // whitespace
+		"\"owner\"@example.com",         // quoted local part
+		"owner@example.com ",            // trailing whitespace
+	}
+	for _, in := range valid {
+		if !cloudflowConnectionEmailPattern.MatchString(in) {
+			t.Errorf("%q rejected, want accepted", in)
+		}
+	}
+	for _, in := range invalid {
+		if cloudflowConnectionEmailPattern.MatchString(in) {
+			t.Errorf("%q accepted, want rejected", in)
 		}
 	}
 }
