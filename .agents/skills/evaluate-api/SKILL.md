@@ -48,14 +48,24 @@ The correct output for any of these situations is: **the API contract must chang
 
 ## Step 1: Run the Code Generation Pipeline (Test Only)
 
-**Get the spec.** The pipeline consumes the OpenAPI 3.0.1 spec in `doiteng/omni`:
+**Get the spec.** Normally the pipeline consumes the OpenAPI 3.0.1 spec in `doiteng/omni`:
 
 ```bash
 make sync-spec PR=<omni-pr>   # or REF=<branch>; replaces OpenAPI/openapi_spec_full.yml
 make apply-pr PR=<omni-pr>    # alternative: apply only the PR's diff to the synced spec
 ```
 
-A contract that exists only as a `doiteng/api-specs` PR is OpenAPI 3.1, and the pipeline cannot consume it yet. `tools/extract-inline-schemas` reads `type` as a single string, and the hand-written code relies on 3.0 `nullable: true`.
+A contract that exists only as a `doiteng/api-specs` PR has not reached omni yet. Every spec PR publishes its own spec as a pre-release asset, and you can run the pipeline on it directly: copy it to `OpenAPI/openapi_spec_full.yml`. Services whose spec is OpenAPI 3.1 need no conversion to 3.0.1.
+
+```bash
+gh release download <service>-<version>-pr.<n> -R doiteng/api-specs -p '<service>-v<major>.yaml'
+```
+
+What was checked on a 3.1 spec (`mock-1.0.4`): `type: [X, "null"]`, nullable arrays and objects, `oneOf: [$ref, {type: "null"}]`, `$ref` with siblings and array `examples` give the same Terraform schema and the same `nullable.Nullable[T]` Go types as `nullable: true`. Known limits:
+
+- **Pruner bug** ([#426](https://github.com/doitintl/terraform-provider-doit/issues/426)): `extract-inline-schemas` prunes a schema that is referenced only through a component header or component request body, and generation then fails with `component #/components/schemas/<X> does not exist`. The DoiT shared components (`RequestID` header) trigger it, so most 3.1 specs fail until #426 is fixed. The issue has a patch you can apply in a scratch checkout.
+- **Not yet exercised:** `const`, `prefixItems`, `if`/`then`/`else`, numeric `exclusiveMinimum` and a standalone `type: "null"`. For these, what the generator does is known only from its source.
+- **Mixed specs:** a 3.1 spec must not also use `nullable: true`. In 3.1 mode `oapi-codegen` ignores it, so the field silently loses `nullable.Nullable[T]`, which the hand-written code relies on.
 
 When both a 3.1 PR and its 3.0.1 omni projection exist, report a difference between them only if it changes one of two things:
 - **What the generator reads:** types, `required`, `nullable`, enums, `format` (including `password` and `set`), `default`, composition, parameter names and locations, declared status codes.
@@ -75,7 +85,7 @@ For such a PR:
    ```
 
 2. Evaluate the rest by reading the spec against the steps below.
-3. Run the pipeline once the 3.0.1 projection reaches omni.
+3. Run the pipeline on the PR's spec asset, as above (mind the pruner bug). It does not need to wait for the 3.0.1 projection to reach omni.
 
 If the spec for the endpoint is present, run the full code generation pipeline **as a test** — not an actual implementation:
 
@@ -194,7 +204,7 @@ Some rows below are generator failures. Others are standards policy (DoiT API De
 | Two `allOf` members defining the same property | Keeps the later definition whole (no deep merge) and logs a warning. | Note. This is fine when the later definition is complete. Check that it repeats the type and every constraint that should survive. |
 | `properties` next to an `allOf` of two or more members | Dropped. `applyMergedAllOf` replaces the schema with the merged members and keeps only `description` and `example`. | **BLOCKER** for those attributes. Ask for them to move into a member. |
 | A schema with `items` or `additionalProperties` but no `type` and no `properties`, e.g. `{additionalProperties: true}`, `{additionalProperties: {type: string}}`, `{items: {type: string}}` | Fails with `no 'type' array …`. Without `type`, only `properties` implies `object`, and nothing implies `array` (`retrieveType`). | **BLOCKER.** Ask for `type: object` or `type: array`. Once typed, the next rows apply. |
-| `if`/`then`/`else`, `not`, `dependentRequired` | Not carried into the 3.0.1 projection. | Finding. Ask for the rule in prose, enforced with 422. |
+| `if`/`then`/`else`, `not`, `dependentRequired` | Never read by the generator, and not carried into the 3.0.1 projection. | Finding. Ask for the rule in prose, enforced with 422. |
 | `type: object` without `properties`, with or without `additionalProperties: true` | Becomes a `jsontypes.Normalized` attribute (`IsFreeformObject`): practitioners write raw JSON, which is syntax-checked and compared semantically, but nothing about its contents is typed or validated. | Finding. Ask whether the shape is really open. |
 | `type: object` with `additionalProperties: <schema>` | Becomes a map attribute (`IsMap`). | Fine. |
 | Named `properties` next to an `additionalProperties` schema | Still a map: `IsMap` wins, and the map is built from the `additionalProperties` schema alone, so the named properties do not become attributes. They can only appear as map entries, and only if their values fit the map's value type. | Note. Ask whether the named keys need their own types; if so, nest the open part under its own property. |
