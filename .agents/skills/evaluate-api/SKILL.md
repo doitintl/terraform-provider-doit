@@ -63,9 +63,23 @@ gh release download <service>-<version>-pr.<n> -R doiteng/api-specs -p '<service
 
 A single-service asset contains only that service's paths, and the pipeline fails for every mapped path the spec lacks (`failed to extract 'alert.create': path '/analytics/v1/alerts' not found in OpenAPI spec`). So reduce `resources.yml`, `datasources.yml` and `extra_paths.yml` to the endpoint under test first. The cleanup at the end of this step restores them.
 
+**Data-source-only evaluation.** The generator rejects a config with no entries (`at least one object is required in either 'resources' or 'data_sources'`, `internal/config/parse.go`), and `make generate` runs the resources and the data-sources configuration separately. If the reduced `resources.yml` has no entries, `make generate` stops at that step and never reaches the data source. Run the stages by hand and skip the resources ones:
+
+```bash
+go run ./tools/extract-inline-schemas -input OpenAPI/openapi_spec_full.yml -output OpenAPI/openapi_spec_processed.yml \
+  -datasources OpenAPI/1_tfplugingen-openapi/datasources.yml -resources OpenAPI/1_tfplugingen-openapi/resources.yml \
+  -extra-paths OpenAPI/extra_paths.yml
+(cd OpenAPI/1_tfplugingen-openapi && go run github.com/doitintl/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi generate \
+  -config datasources.yml --output ../2_tfplugingen-framework/output_datasources.json ../openapi_spec_processed.yml)
+(cd OpenAPI/2_tfplugingen-framework && go run github.com/doitintl/terraform-plugin-codegen-framework/cmd/tfplugingen-framework generate \
+  data-sources --input output_datasources.json --output ../../internal/provider)
+```
+
+Leave `output_resources.json` alone; it is the previous run's output. A resource-only evaluation runs the same three commands with `resources.yml`, `output_resources.json` and `generate resources`.
+
 What was checked on a 3.1 spec (`mock-1.0.4`): `type: [X, "null"]`, nullable arrays and objects, `oneOf: [$ref, {type: "null"}]`, `$ref` with siblings and array `examples` give the same Terraform schema and the same `nullable.Nullable[T]` Go types as `nullable: true`. Known limits:
 
-- **Fixed in [#427](https://github.com/doitintl/terraform-provider-doit/pull/427):** `extract-inline-schemas` used to prune a schema referenced only through a component header or component request body, which failed generation for most 3.1 specs (the DoiT shared `RequestID` header triggers it). On a checkout older than #427, update first. Other component kinds (`examples`, `links`, `callbacks`) are still not followed.
+- **Fixed in [#427](https://github.com/doitintl/terraform-provider-doit/pull/427):** `extract-inline-schemas` used to prune a schema referenced only through a component header or component request body, which failed generation for most 3.1 specs (the DoiT shared `RequestID` header triggers it). On a checkout older than #427, update first. The pruner now follows `$ref`s through every other components section too (`examples`, `links`, `callbacks`, ...), so none of them is a pipeline incompatibility.
 - **Not yet exercised:** `const`, `prefixItems`, `if`/`then`/`else`, numeric `exclusiveMinimum` and a standalone `type: "null"`. For these, what the generator does is known only from its source.
 - **Mixed specs:** a 3.1 spec must not also use `nullable: true`. In 3.1 mode `oapi-codegen` ignores it, so the field silently loses `nullable.Nullable[T]`, which the hand-written code relies on.
 
@@ -180,7 +194,7 @@ A path and a query parameter with the same original name fail generation in both
 | Item path parameter is not `{id}` (`/notifications/{notificationId}`) while the response has `id` | **BLOCKER** — the resource gets a stray Optional+Computed `notification_id` that the response never fills, and the data source takes `notification_id` as input instead of `id`. Upstream renames it to `{id}` (standards §7.5, `doit-ids-item-path-param-id`). |
 | A parent is named `{id}` (`/users/{id}/notifications/{notificationId}`) | **BLOCKER** — the parent and the child collapse into one `id` attribute: Required from the path, overwritten with the child ID on read, and the apply fails. Parents are `{<parent>Id}`; only the item is `{id}`. |
 | Item key is a pair, e.g. `/subscriptions/{type}/{id}`: the item is `{id}`, with a sibling `{type}` or natural-key parameter next to it | Not a generator problem. Both become attributes (Required on a data source), and `{type}` merges with a response `type` of the same name. Ask whether `id` is unique without `type`. If it is not, the resource cannot be fetched by `id` alone (standards §13.3), import needs a composite `type/id` ID in hand-written `ImportState`, and the standards' path grammar (§5.1) expects a resource segment between two parameters. |
-| Query parameter on the read operation (`fields`, `view`, `region`, `dryRun`, …) | Not a finding by itself. Whether a value sits in the query or the body is a wire detail; the read parameter becomes an ordinary attribute (Optional+Computed, Required on a data source if `required: true`). The question is what it does: a filter or input that the read result depends on (`region`) is a fine data-source input; a response-shaping parameter (`fields`, `view`) is dead weight, because the attribute never reflects what the user set. For dead weight, add `schema: ignores: [<name>]` to that entry in `OpenAPI/1_tfplugingen-openapi/resources.yml` or `datasources.yml` (one line). Do not ask the API team to remove it. |
+| Query parameter on the read operation (`fields`, `view`, `region`, `dryRun`, …) | Not a finding by itself. Whether a value sits in the query or the body is a wire detail; the read parameter becomes an ordinary attribute (Optional+Computed, Required on a data source if `required: true`). The question is what it does: a filter or input that the read result depends on (`region`) is a fine data-source input; a response-shaping parameter (`fields`, `view`) is dead weight, because the attribute never reflects what the user set. For dead weight, add `ignores: [<name>]` under that entry's `schema:` key in `OpenAPI/1_tfplugingen-openapi/resources.yml` or `datasources.yml` (one line). Do not ask the API team to remove it. |
 | `dryRun` on a read-like POST data source | Generates a `dry_run` Optional+Computed attribute. Add `ignores: [dryRun]`. On create, update and delete operations `dryRun` never shows up, because only the read operation's parameters are mapped (headers such as `Idempotency-Key` are never mapped either), and the provider does not send `dryRun`. |
 | A singleton sub-resource of an item (`/reports/{id}/config`) | Fine — `{id}` is still the item. |
 
