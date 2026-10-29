@@ -772,7 +772,7 @@ func TestCollectReachableResponses(t *testing.T) {
         $ref: "#/components/responses/400"
 `)
 
-	reachable := collectReachableResponses(paths)
+	reachable := collectReachableResponses(nil, paths)
 
 	if !reachable["400"] {
 		t.Error("400 should be reachable")
@@ -790,7 +790,7 @@ func TestCollectReachableResponses(t *testing.T) {
 }
 
 func TestCollectReachableResponses_NilPaths(t *testing.T) {
-	reachable := collectReachableResponses(nil)
+	reachable := collectReachableResponses(nil, nil)
 	if len(reachable) != 0 {
 		t.Errorf("expected empty reachable set, got %d", len(reachable))
 	}
@@ -1071,4 +1071,65 @@ func reachableFromSpec(t *testing.T, spec string) map[string]bool {
 	}
 	doc := root.Content[0]
 	return collectReachableSchemas(doc, findMapValue(doc, "paths"), findMapValue(doc, "components", "schemas"))
+}
+
+func TestPruneSequence_ResponseReferencedThroughCallback(t *testing.T) {
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    post:
+      callbacks:
+        onEvent:
+          $ref: "#/components/callbacks/Event"
+      responses:
+        "201":
+          description: Created
+components:
+  schemas:
+    AckBody:
+      type: object
+    Unused:
+      type: object
+  responses:
+    Ack:
+      description: Ack
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AckBody"
+    Unused:
+      description: Unused
+  callbacks:
+    Event:
+      "{$request.body#/url}":
+        post:
+          responses:
+            "200":
+              $ref: "#/components/responses/Ack"
+`
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(spec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+	pathsNode := findMapValue(doc, "paths")
+	schemasNode := findMapValue(doc, "components", "schemas")
+	responsesNode := findMapValue(doc, "components", "responses")
+
+	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
+	pruneResponses(responsesNode, collectReachableResponses(doc, pathsNode))
+
+	if getMappingValue(schemasNode, "AckBody") == nil {
+		t.Error("AckBody schema should be kept")
+	}
+	if getMappingValue(responsesNode, "Ack") == nil {
+		t.Error("Ack response is referenced through a callback and must not be pruned (dangling $ref)")
+	}
+	if getMappingValue(responsesNode, "Unused") != nil {
+		t.Error("Unused response should be pruned")
+	}
 }

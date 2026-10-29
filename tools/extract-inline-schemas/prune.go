@@ -171,6 +171,14 @@ func prunePaths(pathsNode *yaml.Node, used map[pathMethod]bool) (pathsRemoved, m
 // component sections. Returns the set of schema names that are transitively
 // reachable.
 func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[string]bool {
+	schemas, _ := collectReachable(docRoot, pathsNode, schemasNode)
+	return schemas
+}
+
+// collectReachable is the shared traversal behind collectReachableSchemas and
+// collectReachableResponses. It returns the reachable schema names and the
+// reachable components/responses names.
+func collectReachable(docRoot, pathsNode, schemasNode *yaml.Node) (map[string]bool, map[string]bool) {
 	reachable := make(map[string]bool)
 	var schemaQueue []string
 	var responseQueue []string
@@ -282,7 +290,7 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 		}
 	}
 
-	return reachable
+	return reachable, visitedResponses
 }
 
 // collectRefsFromNode recursively walks a YAML node tree and appends any
@@ -390,21 +398,16 @@ func pruneSchemas(schemasNode *yaml.Node, reachable map[string]bool) int {
 	return removed
 }
 
-// collectReachableResponses scans the retained paths and returns the set of
-// response names referenced via $ref "#/components/responses/...".
-func collectReachableResponses(pathsNode *yaml.Node) map[string]bool {
-	reachable := make(map[string]bool)
-	if pathsNode == nil {
-		return reachable
+// collectReachableResponses returns the set of response names reachable from
+// the retained paths, including responses referenced only through other
+// components (callbacks, other responses, ...).
+func collectReachableResponses(docRoot, pathsNode *yaml.Node) map[string]bool {
+	var schemasNode *yaml.Node
+	if docRoot != nil {
+		schemasNode = findMapValue(docRoot, "components", "schemas")
 	}
-
-	var schemaQueue, responseQueue, paramQueue []string
-	collectRefsFromNode(pathsNode, &schemaQueue, &responseQueue, &paramQueue)
-
-	for _, name := range responseQueue {
-		reachable[name] = true
-	}
-	return reachable
+	_, responses := collectReachable(docRoot, pathsNode, schemasNode)
+	return responses
 }
 
 // pruneResponses removes response entries from components/responses that are
