@@ -497,3 +497,22 @@ func pruneComponentKind(kindNode *yaml.Node, reachable map[string]bool) int {
 	kindNode.Content = newContent
 	return removed
 }
+
+// inlineAliases replaces every YAML alias under node with a copy of the node
+// it refers to, so removing a pruned component that defines an anchor cannot
+// leave a retained alias without a target.
+func inlineAliases(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+	for i, child := range node.Content {
+		if child.Kind == yaml.AliasNode && child.Alias != nil {
+			target := deepCopyNode(child.Alias)
+			target.Anchor = ""
+			inlineAliases(target)
+			node.Content[i] = target
+			continue
+		}
+		inlineAliases(child)
+	}
+}

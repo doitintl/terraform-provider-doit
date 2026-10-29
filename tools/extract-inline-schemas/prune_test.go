@@ -1294,6 +1294,8 @@ func pruneSpec(t *testing.T, spec string) *yaml.Node {
 		t.Fatal(err)
 	}
 	doc := root.Content[0]
+	inlineAliases(findMapValue(doc, "paths"))
+	inlineAliases(findMapValue(doc, "components"))
 	pathsNode := findMapValue(doc, "paths")
 	schemasNode := findMapValue(doc, "components", "schemas")
 	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
@@ -1384,5 +1386,66 @@ components:
 `)
 	if findMapValue(doc, "components", "schemas", "Outer") == nil {
 		t.Error("schema Outer was pruned although #/components/schemas/Outer/properties/inner is referenced")
+	}
+}
+
+// --- YAML anchors ---
+
+// TestPrune_AliasToPrunedAnchor checks the emitted YAML still loads, with the
+// aliased value intact, when a retained node aliases an anchor defined inside a
+// pruned component.
+func TestPrune_AliasToPrunedAnchor(t *testing.T) {
+	root := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Kept"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kept"
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &desc shared text
+      schema: {type: string}
+    Kept:
+      name: kept
+      in: query
+      description: *desc
+      schema: {type: string}
+  schemas:
+    Unused:
+      type: object
+      description: &sdesc shared schema text
+    Kept:
+      type: object
+      description: *sdesc
+`)
+
+	out, err := yaml.Marshal(root)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var reloaded yaml.Node
+	if err := yaml.Unmarshal(out, &reloaded); err != nil {
+		t.Fatalf("emitted YAML does not reload: %v\n%s", err, out)
+	}
+	doc := reloaded.Content[0]
+	for path, want := range map[string][]string{
+		"shared text":        {"components", "parameters", "Kept", "description"},
+		"shared schema text": {"components", "schemas", "Kept", "description"},
+	} {
+		if got := findMapValue(doc, want...); got == nil || got.Value != path {
+			t.Errorf("%v = %v, want %q", want, got, path)
+		}
 	}
 }
