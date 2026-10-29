@@ -153,6 +153,20 @@ func TestSchemaParserOverrides(t *testing.T) {
 			})
 		}
 
+		// Pattern 3c: attr.Default assigned in an override is a schema default.
+		t.Run("currency_default_assigned", func(t *testing.T) {
+			info, ok := schema.Attrs["currency"]
+			if !ok {
+				t.Fatal("attribute \"currency\" not found in merged schema")
+			}
+			if !info.HasDefault || info.DefaultValue != "USD" {
+				t.Errorf("currency: HasDefault=%v DefaultValue=%v, want true and \"USD\"", info.HasDefault, info.DefaultValue)
+			}
+			if info.Class != schemaparser.OptionalComputed {
+				t.Errorf("currency: got class %s, want Optional+Computed (default must not change the class)", info.Class)
+			}
+		})
+
 		// Pattern 2: Deletion — update_time should be gone.
 		t.Run("update_time_deleted", func(t *testing.T) {
 			if _, ok := schema.Attrs["update_time"]; ok {

@@ -6,6 +6,7 @@ import (
 	"example_gen"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 )
 
 type exampleResource struct{}
@@ -35,6 +36,12 @@ func (r *exampleResource) Schema(ctx context.Context, req schemaRequest, resp *s
 	if attr, ok := s.Attributes["name"].(schema.StringAttribute); ok {
 		_ = attr // just PlanModifiers, no Required/Optional/Computed changes
 		s.Attributes["name"] = attr
+	}
+
+	// Pattern 3c: Modify-in-place — attach a Default without changing classification.
+	if attr, ok := s.Attributes["currency"].(schema.StringAttribute); ok {
+		attr.Default = stringdefault.StaticString("USD")
+		s.Attributes["currency"] = attr
 	}
 
 	// Pattern 4: Add a new field not in the generated schema.

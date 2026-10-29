@@ -710,9 +710,12 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 	hasRequired := false
 	hasOptional := false
 	hasComputed := false
+	hasDefaultAssign := false
 	reqVal := false
 	optVal := false
 	compVal := false
+	var defaultVal any
+	defaultSet := false
 
 	if exists {
 		// Pre-populate from existing classification.
@@ -777,11 +780,20 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 		case "PlanModifiers":
 			// attr.PlanModifiers = append(attr.PlanModifiers, xxx())
 			modifiers = append(modifiers, extractModifierNames(bodyAssign.Rhs[0])...)
+		case "Default":
+			// attr.Default = xxxdefault.StaticXxx(...) — same meaning as a Default
+			// field in the attribute literal. Assigning nil removes the default.
+			hasDefaultAssign = true
+			defaultSet = !isNilLiteral(bodyAssign.Rhs[0])
+			defaultVal = nil
+			if defaultSet {
+				defaultVal = extractStaticDefault(bodyAssign.Rhs[0])
+			}
 		}
 	}
 
 	// Only update if any classification flags or modifiers were found.
-	if !hasRequired && !hasOptional && !hasComputed && len(modifiers) == 0 {
+	if !hasRequired && !hasOptional && !hasComputed && !hasDefaultAssign && len(modifiers) == 0 {
 		return
 	}
 
@@ -793,6 +805,10 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 		info.DefaultValue = existing.DefaultValue
 		info.NestedAttrs = existing.NestedAttrs
 		info.PlanModifiers = existing.PlanModifiers
+	}
+	if hasDefaultAssign {
+		info.HasDefault = defaultSet
+		info.DefaultValue = defaultVal
 	}
 	// Merge newly detected modifiers.
 	info.PlanModifiers = appendUnique(info.PlanModifiers, modifiers...)

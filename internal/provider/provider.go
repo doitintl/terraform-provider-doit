@@ -378,6 +378,7 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewServiceAccountResource,
 		NewServiceAccountTokenResource,
 		NewUserNotificationResource,
+		NewCloudflowConnectionResource,
 		NewRoleResource,
 	}
 }
