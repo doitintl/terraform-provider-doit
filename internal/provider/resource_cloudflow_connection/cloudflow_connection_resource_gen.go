@@ -188,6 +188,11 @@ func CloudflowConnectionResourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "When false, the connection is created in a disabled state.",
 				Default:             booldefault.StaticBool(true),
 			},
+			"etag": schema.StringAttribute{
+				Computed:            true,
+				Description:         "Current version of the connection. Send it unchanged in `If-Match` to update or delete.",
+				MarkdownDescription: "Current version of the connection. Send it unchanged in `If-Match` to update or delete.",
+			},
 			"gcp_config": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
 					"custom_role": schema.SingleNestedAttribute{
@@ -303,6 +308,7 @@ type CloudflowConnectionModel struct {
 	CreatedAt     types.String   `tfsdk:"created_at"`
 	Description   types.String   `tfsdk:"description"`
 	Enabled       types.Bool     `tfsdk:"enabled"`
+	Etag          types.String   `tfsdk:"etag"`
 	GcpConfig     GcpConfigValue `tfsdk:"gcp_config"`
 	Name          types.String   `tfsdk:"name"`
 	Status        types.String   `tfsdk:"status"`

@@ -9956,7 +9956,12 @@ paths:
       description: |-
         Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
         Returns `400 invalid_connection_config` when both or neither are present.
+
+        When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+        already listed), so a connection created without `collaborators` stays manageable by its creator.
       operationId: createCloudflowConnection
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
       requestBody:
         required: true
         content:
@@ -10043,6 +10048,7 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/ifMatchRequired"
       requestBody:
         required: true
         content:
@@ -10080,6 +10086,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
         "500":
           $ref: "#/components/responses/500"
     delete:
@@ -10094,6 +10104,7 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/ifMatchRequired"
       responses:
         "204":
           description: No Content — connection deleted.
@@ -10120,6 +10131,10 @@ paths:
                     type: integer
                   code:
                     type: string
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
         "500":
           $ref: "#/components/responses/500"
   # ============================================================
@@ -15246,6 +15261,9 @@ components:
         updatedAt:
           type: string
           format: date-time
+        etag:
+          type: string
+          description: Current version of the connection. Send it unchanged in `If-Match` to update or delete.
     CloudflowTemplate:
       type: object
       description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.

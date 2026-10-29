@@ -7859,6 +7859,9 @@ type CloudflowConnection struct {
 	// Enabled false when the connection is disabled.
 	Enabled *bool `json:"enabled,omitempty"`
 
+	// Etag Current version of the connection. Send it unchanged in `If-Match` to update or delete.
+	Etag *string `json:"etag,omitempty"`
+
 	// GcpConfig GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
 	GcpConfig *struct {
 		CustomRole *CloudflowGCPConfigRequestCustomRole `json:"customRole,omitempty"`
@@ -13417,6 +13420,24 @@ type ListCloudDiagramLayerSnapshotsParams struct {
 	Sort *string `form:"sort,omitempty" json:"sort,omitempty"`
 }
 
+// CreateCloudflowConnectionParams defines parameters for CreateCloudflowConnection.
+type CreateCloudflowConnectionParams struct {
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteCloudflowConnectionParams defines parameters for DeleteCloudflowConnection.
+type DeleteCloudflowConnectionParams struct {
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+}
+
+// UpdateCloudflowConnectionParams defines parameters for UpdateCloudflowConnection.
+type UpdateCloudflowConnectionParams struct {
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+}
+
 // ListKnownIssuesParams defines parameters for ListKnownIssues.
 type ListKnownIssuesParams struct {
 	// MaxResults The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
@@ -15449,27 +15470,33 @@ type ClientInterface interface {
 	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 	// Returns `400 invalid_connection_config` when both or neither are present.
 	//
+	// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+	// already listed), so a connection created without `collaborators` stays manageable by its creator.
+	//
 	// Takes any type of body and a specified content type.
 	//
 	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-	CreateCloudflowConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateCloudflowConnectionWithBody(ctx context.Context, params *CreateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateCloudflowConnection Create a connection
 	//
 	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 	// Returns `400 invalid_connection_config` when both or neither are present.
 	//
+	// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+	// already listed), so a connection created without `collaborators` stays manageable by its creator.
+	//
 	// Takes a body of the `application/json` content type.
 	//
 	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-	CreateCloudflowConnection(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateCloudflowConnection(ctx context.Context, params *CreateCloudflowConnectionParams, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteCloudflowConnection Delete a connection
 	//
 	// Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
 	//
 	// Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
-	DeleteCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteCloudflowConnection(ctx context.Context, connectionId string, params *DeleteCloudflowConnectionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCloudflowConnection Retrieve a connection
 	//
@@ -15486,7 +15513,7 @@ type ClientInterface interface {
 	// Takes any type of body and a specified content type.
 	//
 	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-	UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateCloudflowConnection Update a connection
 	//
@@ -15496,7 +15523,7 @@ type ClientInterface interface {
 	// Takes a body of the `application/json` content type.
 	//
 	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-	UpdateCloudflowConnection(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateCloudflowConnection(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateAccountRoleWithBody Create or update an AWS account role
 	//
@@ -18454,11 +18481,14 @@ func (c *Client) ListCloudDiagramLayerSnapshots(ctx context.Context, id string, 
 // Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 // Returns `400 invalid_connection_config` when both or neither are present.
 //
+// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+// already listed), so a connection created without `collaborators` stays manageable by its creator.
+//
 // Takes any type of body and a specified content type.
 //
 // Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-func (c *Client) CreateCloudflowConnectionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateCloudflowConnectionRequestWithBody(c.Server, contentType, body)
+func (c *Client) CreateCloudflowConnectionWithBody(ctx context.Context, params *CreateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCloudflowConnectionRequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -18474,11 +18504,14 @@ func (c *Client) CreateCloudflowConnectionWithBody(ctx context.Context, contentT
 // Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 // Returns `400 invalid_connection_config` when both or neither are present.
 //
+// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+// already listed), so a connection created without `collaborators` stays manageable by its creator.
+//
 // Takes a body of the `application/json` content type.
 //
 // Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-func (c *Client) CreateCloudflowConnection(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateCloudflowConnectionRequest(c.Server, body)
+func (c *Client) CreateCloudflowConnection(ctx context.Context, params *CreateCloudflowConnectionParams, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCloudflowConnectionRequest(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -18494,8 +18527,8 @@ func (c *Client) CreateCloudflowConnection(ctx context.Context, body CreateCloud
 // Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
 //
 // Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
-func (c *Client) DeleteCloudflowConnection(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteCloudflowConnectionRequest(c.Server, connectionId)
+func (c *Client) DeleteCloudflowConnection(ctx context.Context, connectionId string, params *DeleteCloudflowConnectionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCloudflowConnectionRequest(c.Server, connectionId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -18531,8 +18564,8 @@ func (c *Client) GetCloudflowConnection(ctx context.Context, connectionId string
 // Takes any type of body and a specified content type.
 //
 // Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-func (c *Client) UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateCloudflowConnectionRequestWithBody(c.Server, connectionId, contentType, body)
+func (c *Client) UpdateCloudflowConnectionWithBody(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCloudflowConnectionRequestWithBody(c.Server, connectionId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -18551,8 +18584,8 @@ func (c *Client) UpdateCloudflowConnectionWithBody(ctx context.Context, connecti
 // Takes a body of the `application/json` content type.
 //
 // Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-func (c *Client) UpdateCloudflowConnection(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateCloudflowConnectionRequest(c.Server, connectionId, body)
+func (c *Client) UpdateCloudflowConnection(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCloudflowConnectionRequest(c.Server, connectionId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -24901,18 +24934,18 @@ func NewListCloudDiagramLayerSnapshotsRequest(server string, id string, params *
 }
 
 // NewCreateCloudflowConnectionRequest calls the generic CreateCloudflowConnection builder with application/json body
-func NewCreateCloudflowConnectionRequest(server string, body CreateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
+func NewCreateCloudflowConnectionRequest(server string, params *CreateCloudflowConnectionParams, body CreateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateCloudflowConnectionRequestWithBody(server, "application/json", bodyReader)
+	return NewCreateCloudflowConnectionRequestWithBody(server, params, "application/json", bodyReader)
 }
 
 // NewCreateCloudflowConnectionRequestWithBody constructs an http.Request for the CreateCloudflowConnection method, with any body, and a specified content type
-func NewCreateCloudflowConnectionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateCloudflowConnectionRequestWithBody(server string, params *CreateCloudflowConnectionParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -24937,11 +24970,24 @@ func NewCreateCloudflowConnectionRequestWithBody(server string, contentType stri
 
 	req.Header.Add("Content-Type", contentType)
 
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
 	return req, nil
 }
 
 // NewDeleteCloudflowConnectionRequest constructs an http.Request for the DeleteCloudflowConnection method
-func NewDeleteCloudflowConnectionRequest(server string, connectionId string) (*http.Request, error) {
+func NewDeleteCloudflowConnectionRequest(server string, connectionId string, params *DeleteCloudflowConnectionParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -24969,6 +25015,19 @@ func NewDeleteCloudflowConnectionRequest(server string, connectionId string) (*h
 	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
 	}
 
 	return req, nil
@@ -25009,18 +25068,18 @@ func NewGetCloudflowConnectionRequest(server string, connectionId string) (*http
 }
 
 // NewUpdateCloudflowConnectionRequest calls the generic UpdateCloudflowConnection builder with application/json body
-func NewUpdateCloudflowConnectionRequest(server string, connectionId string, body UpdateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
+func NewUpdateCloudflowConnectionRequest(server string, connectionId string, params *UpdateCloudflowConnectionParams, body UpdateCloudflowConnectionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateCloudflowConnectionRequestWithBody(server, connectionId, "application/json", bodyReader)
+	return NewUpdateCloudflowConnectionRequestWithBody(server, connectionId, params, "application/json", bodyReader)
 }
 
 // NewUpdateCloudflowConnectionRequestWithBody constructs an http.Request for the UpdateCloudflowConnection method, with any body, and a specified content type
-func NewUpdateCloudflowConnectionRequestWithBody(server string, connectionId string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUpdateCloudflowConnectionRequestWithBody(server string, connectionId string, params *UpdateCloudflowConnectionParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -25051,6 +25110,19 @@ func NewUpdateCloudflowConnectionRequestWithBody(server string, connectionId str
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+	}
 
 	return req, nil
 }
@@ -29973,20 +30045,26 @@ type ClientWithResponsesInterface interface {
 	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 	// Returns `400 invalid_connection_config` when both or neither are present.
 	//
+	// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+	// already listed), so a connection created without `collaborators` stays manageable by its creator.
+	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-	CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
+	CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, params *CreateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
 
 	// CreateCloudflowConnectionWithResponse Create a connection
 	//
 	// Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 	// Returns `400 invalid_connection_config` when both or neither are present.
 	//
+	// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+	// already listed), so a connection created without `collaborators` stays manageable by its creator.
+	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-	CreateCloudflowConnectionWithResponse(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
+	CreateCloudflowConnectionWithResponse(ctx context.Context, params *CreateCloudflowConnectionParams, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error)
 
 	// DeleteCloudflowConnectionWithResponse Delete a connection
 	//
@@ -29995,7 +30073,7 @@ type ClientWithResponsesInterface interface {
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
-	DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error)
+	DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, params *DeleteCloudflowConnectionParams, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error)
 
 	// GetCloudflowConnectionWithResponse Retrieve a connection
 	//
@@ -30014,7 +30092,7 @@ type ClientWithResponsesInterface interface {
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-	UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
+	UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
 
 	// UpdateCloudflowConnectionWithResponse Update a connection
 	//
@@ -30024,7 +30102,7 @@ type ClientWithResponsesInterface interface {
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-	UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
+	UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error)
 
 	// CreateAccountRoleWithBodyWithResponse Create or update an AWS account role
 	//
@@ -37021,6 +37099,18 @@ func (r CreateCloudflowConnectionResp) ContentType() string {
 	return ""
 }
 
+// DeleteCloudflowConnectionResp412Headers the declared response headers of an HTTP 412 response for DeleteCloudflowConnection
+type DeleteCloudflowConnectionResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCloudflowConnectionResp428Headers the declared response headers of an HTTP 428 response for DeleteCloudflowConnection
+type DeleteCloudflowConnectionResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
 type DeleteCloudflowConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -37034,8 +37124,16 @@ type DeleteCloudflowConnectionResp struct {
 	JSON404 *N404
 	// JSON409 the response for an HTTP 409 `application/json` response
 	JSON409 *DeleteCloudflowConnection409Response
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *N500
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *DeleteCloudflowConnectionResp412Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *DeleteCloudflowConnectionResp428Headers
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response
@@ -37061,6 +37159,16 @@ func (r DeleteCloudflowConnectionResp) GetJSON404() *N404 {
 // GetJSON409 returns the response for an HTTP 409 `application/json` response
 func (r DeleteCloudflowConnectionResp) GetJSON409() *DeleteCloudflowConnection409Response {
 	return r.JSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r DeleteCloudflowConnectionResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r DeleteCloudflowConnectionResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
 }
 
 // GetJSON500 returns the response for an HTTP 500 `application/json` response
@@ -37173,6 +37281,18 @@ func (r GetCloudflowConnectionResp) ContentType() string {
 	return ""
 }
 
+// UpdateCloudflowConnectionResp412Headers the declared response headers of an HTTP 412 response for UpdateCloudflowConnection
+type UpdateCloudflowConnectionResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCloudflowConnectionResp428Headers the declared response headers of an HTTP 428 response for UpdateCloudflowConnection
+type UpdateCloudflowConnectionResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
 type UpdateCloudflowConnectionResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -37186,8 +37306,16 @@ type UpdateCloudflowConnectionResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *N500
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *UpdateCloudflowConnectionResp412Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *UpdateCloudflowConnectionResp428Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -37213,6 +37341,16 @@ func (r UpdateCloudflowConnectionResp) GetJSON403() *N403 {
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r UpdateCloudflowConnectionResp) GetJSON404() *N404 {
 	return r.JSON404
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r UpdateCloudflowConnectionResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r UpdateCloudflowConnectionResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
 }
 
 // GetJSON500 returns the response for an HTTP 500 `application/json` response
@@ -45503,11 +45641,14 @@ func (c *ClientWithResponses) ListCloudDiagramLayerSnapshotsWithResponse(ctx con
 // Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 // Returns `400 invalid_connection_config` when both or neither are present.
 //
+// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+// already listed), so a connection created without `collaborators` stays manageable by its creator.
+//
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
 // Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-func (c *ClientWithResponses) CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
-	rsp, err := c.CreateCloudflowConnectionWithBody(ctx, contentType, body, reqEditors...)
+func (c *ClientWithResponses) CreateCloudflowConnectionWithBodyWithResponse(ctx context.Context, params *CreateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
+	rsp, err := c.CreateCloudflowConnectionWithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -45519,11 +45660,14 @@ func (c *ClientWithResponses) CreateCloudflowConnectionWithBodyWithResponse(ctx 
 // Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
 // Returns `400 invalid_connection_config` when both or neither are present.
 //
+// When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+// already listed), so a connection created without `collaborators` stays manageable by its creator.
+//
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
 // Corresponds with POST /cloudflow/v1/connections (the `CreateCloudflowConnection` operationId).
-func (c *ClientWithResponses) CreateCloudflowConnectionWithResponse(ctx context.Context, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
-	rsp, err := c.CreateCloudflowConnection(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateCloudflowConnectionWithResponse(ctx context.Context, params *CreateCloudflowConnectionParams, body CreateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCloudflowConnectionResp, error) {
+	rsp, err := c.CreateCloudflowConnection(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -45537,8 +45681,8 @@ func (c *ClientWithResponses) CreateCloudflowConnectionWithResponse(ctx context.
 // Returns a wrapper object for the known response body format(s).
 //
 // Corresponds with DELETE /cloudflow/v1/connections/{connectionId} (the `DeleteCloudflowConnection` operationId).
-func (c *ClientWithResponses) DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error) {
-	rsp, err := c.DeleteCloudflowConnection(ctx, connectionId, reqEditors...)
+func (c *ClientWithResponses) DeleteCloudflowConnectionWithResponse(ctx context.Context, connectionId string, params *DeleteCloudflowConnectionParams, reqEditors ...RequestEditorFn) (*DeleteCloudflowConnectionResp, error) {
+	rsp, err := c.DeleteCloudflowConnection(ctx, connectionId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -45568,8 +45712,8 @@ func (c *ClientWithResponses) GetCloudflowConnectionWithResponse(ctx context.Con
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
 // Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-func (c *ClientWithResponses) UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
-	rsp, err := c.UpdateCloudflowConnectionWithBody(ctx, connectionId, contentType, body, reqEditors...)
+func (c *ClientWithResponses) UpdateCloudflowConnectionWithBodyWithResponse(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
+	rsp, err := c.UpdateCloudflowConnectionWithBody(ctx, connectionId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -45584,8 +45728,8 @@ func (c *ClientWithResponses) UpdateCloudflowConnectionWithBodyWithResponse(ctx 
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
 // Corresponds with PATCH /cloudflow/v1/connections/{connectionId} (the `UpdateCloudflowConnection` operationId).
-func (c *ClientWithResponses) UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
-	rsp, err := c.UpdateCloudflowConnection(ctx, connectionId, body, reqEditors...)
+func (c *ClientWithResponses) UpdateCloudflowConnectionWithResponse(ctx context.Context, connectionId string, params *UpdateCloudflowConnectionParams, body UpdateCloudflowConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCloudflowConnectionResp, error) {
+	rsp, err := c.UpdateCloudflowConnection(ctx, connectionId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -52347,6 +52491,20 @@ func ParseDeleteCloudflowConnectionResp(rsp *http.Response) (*DeleteCloudflowCon
 		}
 		response.JSON409 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -52354,6 +52512,43 @@ func ParseDeleteCloudflowConnectionResp(rsp *http.Response) (*DeleteCloudflowCon
 		}
 		response.JSON500 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 412:
+		var headers DeleteCloudflowConnectionResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 428:
+		var headers DeleteCloudflowConnectionResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
 	}
 
 	return response, nil
@@ -52469,6 +52664,20 @@ func ParseUpdateCloudflowConnectionResp(rsp *http.Response) (*UpdateCloudflowCon
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
 		var dest N500
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -52476,6 +52685,43 @@ func ParseUpdateCloudflowConnectionResp(rsp *http.Response) (*UpdateCloudflowCon
 		}
 		response.JSON500 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 412:
+		var headers UpdateCloudflowConnectionResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 428:
+		var headers UpdateCloudflowConnectionResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
 	}
 
 	return response, nil

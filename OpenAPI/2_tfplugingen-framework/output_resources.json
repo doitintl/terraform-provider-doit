@@ -2089,6 +2089,13 @@
 						}
 					},
 					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Current version of the connection. Send it unchanged in `If-Match` to update or delete."
+						}
+					},
+					{
 						"name": "status",
 						"string": {
 							"computed_optional_required": "computed",
