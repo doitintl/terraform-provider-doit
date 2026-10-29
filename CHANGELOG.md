@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### FEATURES
+
+- **resource/doit_cloudflow_connection**: New resource to manage CloudFlow connections to GCP projects, folders and organizations, and to AWS accounts ([#22](https://github.com/doitintl/terraform-provider-doit/issues/22)). The identifier is `connection_id`. The user behind the API token must be listed as the `owner`: the API denies access to a connection it just created otherwise
+
 ### ENHANCEMENTS
 
 - **data-source/doit_invoice, data-source/doit_invoices, data-source/doit_invoice_pdf**: Canceled invoices and credit memos are now supported. `status` can be `CANCELED`, which takes precedence over the payment status. `doit_invoices` returns canceled invoices only with `filter = "status:CANCELED"`; `doit_invoice` and `doit_invoice_pdf` can fetch them by ID
