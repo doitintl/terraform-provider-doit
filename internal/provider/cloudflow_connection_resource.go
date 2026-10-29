@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -95,6 +96,15 @@ func (r *cloudflowConnectionResource) ModifyPlan(ctx context.Context, req resour
 
 	requiresReplaceWhenCleared[resource_cloudflow_connection.GcpConfigValue](ctx, req, resp, path.Root("gcp_config"))
 	requiresReplaceWhenCleared[resource_cloudflow_connection.AwsConfigValue](ctx, req, resp, path.Root("aws_config"))
+
+	// Every update changes these on the server. The framework marks them unknown
+	// before the clearing plan modifiers run, so an update that only clears a value
+	// would otherwise keep the old ETag in the plan and in state.
+	if !req.Plan.Raw.Equal(req.State.Raw) {
+		for _, name := range []string{"etag", "updated_at", "status"} {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root(name), types.StringUnknown())...)
+		}
+	}
 }
 
 func (r *cloudflowConnectionResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {

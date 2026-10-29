@@ -486,3 +486,50 @@ func TestCloudflowConnectionResourceRead(t *testing.T) {
 		}
 	})
 }
+
+// Every update changes updated_at, etag and status on the server, including one that
+// only clears a value: the plan modifiers that clear it run after the framework has
+// decided which computed values to mark unknown.
+func TestCloudflowConnectionModifyPlanMarksServerFieldsUnknownOnChange(t *testing.T) {
+	ctx := t.Context()
+	r := &cloudflowConnectionResource{}
+
+	state := mapCloudflowConnectionForTest(t, cloudflowMinimalWith("e1", "AWS minimal"))
+	state.Description = types.StringValue("to be cleared")
+
+	tests := []struct {
+		name        string
+		edit        func(*cloudflowConnectionResourceModel)
+		wantUnknown bool
+	}{
+		{"no change", func(*cloudflowConnectionResourceModel) {}, false},
+		{"description cleared", func(m *cloudflowConnectionResourceModel) { m.Description = types.StringValue("") }, true},
+		{"name changed", func(m *cloudflowConnectionResourceModel) { m.Name = types.StringValue("renamed") }, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plan := state
+			tt.edit(&plan)
+
+			resp := &resource.ModifyPlanResponse{Plan: cloudflowTestPlan(ctx, t, r, plan)}
+			r.ModifyPlan(ctx, resource.ModifyPlanRequest{
+				Config: tfsdk.Config{Schema: resp.Plan.Schema, Raw: resp.Plan.Raw},
+				Plan:   cloudflowTestPlan(ctx, t, r, plan),
+				State:  cloudflowTestState(ctx, t, r, state),
+			}, resp)
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("ModifyPlan: %v", resp.Diagnostics)
+			}
+
+			var got cloudflowConnectionResourceModel
+			if diags := resp.Plan.Get(ctx, &got); diags.HasError() {
+				t.Fatalf("get plan: %v", diags)
+			}
+			for name, v := range map[string]interface{ IsUnknown() bool }{"etag": got.Etag, "updated_at": got.UpdatedAt, "status": got.Status} {
+				if v.IsUnknown() != tt.wantUnknown {
+					t.Errorf("%s unknown = %v, want %v", name, v.IsUnknown(), tt.wantUnknown)
+				}
+			}
+		})
+	}
+}
