@@ -223,16 +223,17 @@ func TestCloudflowConnectionResourceCreate_FreshIdempotencyKeys(t *testing.T) {
 
 func TestCloudflowConnectionResourceUpdate(t *testing.T) {
 	tests := []struct {
-		name        string
-		stateEtag   string
-		currentEtag string // the etag the server accepts; GET returns it until the PATCH succeeds
-		patchFinal  int    // status once the etag matches
-		wantPatches int32
-		wantGets    int32 // includes the follow-up GET after a successful PATCH
-		wantError   bool
+		name         string
+		stateEtag    string
+		currentEtag  string // the etag the server accepts; GET returns it until the PATCH succeeds
+		patchFinal   int    // status once the etag matches
+		wantPatches  int32
+		wantGets     int32 // includes the follow-up GET after a successful PATCH
+		wantError    bool
+		wantConflict bool
 	}{
 		{name: "etag from state", stateEtag: "e1", currentEtag: "e1", patchFinal: 200, wantPatches: 1, wantGets: 1},
-		{name: "stale etag retried once with a fresh one", stateEtag: "old", currentEtag: "e2", patchFinal: 200, wantPatches: 2, wantGets: 2},
+		{name: "stale etag is a conflict, not retried", stateEtag: "old", currentEtag: "e2", patchFinal: 200, wantPatches: 1, wantGets: 0, wantError: true, wantConflict: true},
 		{name: "no etag in state fetched first", stateEtag: "", currentEtag: "e3", patchFinal: 200, wantPatches: 1, wantGets: 2},
 		{name: "validation error carries status and body", stateEtag: "e1", currentEtag: "e1", patchFinal: 400, wantPatches: 1, wantGets: 0, wantError: true},
 		{name: "forbidden carries status and body", stateEtag: "e1", currentEtag: "e1", patchFinal: 403, wantPatches: 1, wantGets: 0, wantError: true},
@@ -307,6 +308,12 @@ func TestCloudflowConnectionResourceUpdate(t *testing.T) {
 				}
 				if got := gets.Load(); got != tt.wantGets {
 					t.Errorf("GET calls = %d, want %d", got, tt.wantGets)
+				}
+				if tt.wantConflict {
+					if got := resp.Diagnostics.Errors()[0].Summary(); got != "CloudFlow Connection Changed Outside Terraform" {
+						t.Errorf("error summary = %q, want the conflict error", got)
+					}
+					return
 				}
 				if tt.wantError {
 					detail := resp.Diagnostics.Errors()[0].Detail()

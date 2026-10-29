@@ -592,8 +592,8 @@ func (r *cloudflowConnectionResource) readAfterWrite(ctx context.Context, id str
 	return fetched, diags
 }
 
-// updateConnection sends the update with the given ETag. When the API reports a
-// stale ETag (412), it fetches the current one and retries once.
+// updateConnection sends the update with the given ETag. A stale ETag (412) is an
+// error: the connection changed since it was last read.
 func (r *cloudflowConnectionResource) updateConnection(ctx context.Context, id, etag string, body models.UpdateCloudflowConnectionJSONRequestBody) (*models.UpdateCloudflowConnectionResp, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -616,21 +616,15 @@ func (r *cloudflowConnectionResource) updateConnection(ctx context.Context, id, 
 		return nil, diags
 	}
 
+	// The update replaces the whole configuration, so it must not be retried with a
+	// fresh ETag: that would overwrite whatever changed the connection since the plan.
 	if updateResp.StatusCode() == 412 {
-		current, found, d := r.currentEtag(ctx, id)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-		if !found {
-			diags.AddError("Error Updating CloudFlow Connection", fmt.Sprintf("The CloudFlow connection %s no longer exists.", id))
-			return nil, diags
-		}
-		updateResp, err = r.client.UpdateCloudflowConnectionWithResponse(ctx, id, &models.UpdateCloudflowConnectionParams{IfMatch: current}, body)
-		if err != nil {
-			diags.AddError("Error Updating CloudFlow Connection", "Could not update CloudFlow connection on retry: "+err.Error())
-			return nil, diags
-		}
+		diags.AddError(
+			"CloudFlow Connection Changed Outside Terraform",
+			fmt.Sprintf("The CloudFlow connection %s was modified after Terraform last read it, so the update was not applied. "+
+				"Run terraform plan again to review the current state before applying.", id),
+		)
+		return nil, diags
 	}
 
 	return updateResp, diags
