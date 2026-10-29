@@ -16,8 +16,13 @@ Access your current and historical billing documents.
 data "doit_invoices" "all" {}
 
 # Filter by status
-data "doit_invoices" "unpaid" {
-  filter = "status:[outstanding]"
+data "doit_invoices" "open" {
+  filter = "status:OPEN"
+}
+
+# Canceled invoices and credit memos are only returned when filtering for them
+data "doit_invoices" "canceled" {
+  filter = "status:CANCELED"
 }
 
 # Output invoice totals
@@ -42,7 +47,7 @@ output "invoice_summary" {
 
 ### Optional
 
-- `filter` (String) An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+- `filter` (String) Supported keys: platform (an invoice platform), dueDate (milliseconds since the POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value is applied per request. Cancelled invoices and credit memos are returned only with status:CANCELED, and every other request excludes them.
 - `max_creation_time` (Number) Max value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created before or at this timestamp are returned.
 - `max_results` (Number) The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
 - `min_creation_time` (Number) Min value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created after or at this timestamp are returned.
@@ -73,6 +78,6 @@ Read-Only:
 - `id` (String) Invoice number, identifying the invoice.
 - `invoice_date` (Number) The time when this invoice was issued, in milliseconds since the epoch.
 - `platform` (String) Platform identifier for invoice source.
-- `status` (String) Status of the invoice
+- `status` (String) Status of the invoice. `CANCELED` takes precedence over the payment status.
 - `total_amount` (Number) Total invoiced amount
 - `url` (String) Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).

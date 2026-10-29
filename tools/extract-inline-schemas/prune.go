@@ -166,26 +166,67 @@ func prunePaths(pathsNode *yaml.Node, used map[pathMethod]bool) (pathsRemoved, m
 // collectReachableSchemas performs a BFS traversal starting from the
 // remaining paths' request/response bodies, parameters, and any schemas they
 // reference via $ref. It also follows $ref chains through components/responses
-// and components/parameters using the provided docRoot to locate sibling
+// and components/parameters, plus any other component kind (headers,
+// requestBodies, ...), using the provided docRoot to locate sibling
 // component sections. Returns the set of schema names that are transitively
 // reachable.
 func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[string]bool {
+	return collectReachable(docRoot, pathsNode, schemasNode).schemas
+}
+
+// reachableSet holds everything the traversal in collectReachable visited:
+// schema names plus, per components section, the entry names reached.
+type reachableSet struct {
+	schemas    map[string]bool
+	responses  map[string]bool
+	parameters map[string]bool
+	other      map[componentRef]bool
+}
+
+// byKind returns the reachable entry names of a components section other than
+// schemas.
+func (r reachableSet) byKind(kind string) map[string]bool {
+	switch kind {
+	case "responses":
+		return r.responses
+	case "parameters":
+		return r.parameters
+	}
+	names := make(map[string]bool)
+	for ref := range r.other {
+		if ref.kind == kind {
+			names[ref.name] = true
+		}
+	}
+	return names
+}
+
+// collectReachable is the shared traversal behind collectReachableSchemas and
+// collectReachableResponses and collectReachableComponents. It returns the
+// reachable schema names and the reachable entries of every other components
+// section.
+func collectReachable(docRoot, pathsNode, schemasNode *yaml.Node) reachableSet {
 	reachable := make(map[string]bool)
 	var schemaQueue []string
 	var responseQueue []string
 	var paramQueue []string
+	// Every other component kind (headers, requestBodies, ...) that can
+	// carry a schema $ref.
+	var otherQueue []componentRef
 
 	// Collect initial refs from paths
 	if pathsNode != nil && pathsNode.Kind == yaml.MappingNode {
 		collectRefsFromNode(pathsNode, &schemaQueue, &responseQueue, &paramQueue)
+		collectOtherRefs(pathsNode, &otherQueue)
 	}
 
-	// Track visited responses/params to avoid infinite loops
+	// Track visited components to avoid infinite loops
 	visitedResponses := make(map[string]bool)
 	visitedParams := make(map[string]bool)
+	visitedOther := make(map[componentRef]bool)
 
-	// BFS: resolve transitive refs through schemas, responses, and parameters
-	for len(schemaQueue) > 0 || len(responseQueue) > 0 || len(paramQueue) > 0 {
+	// BFS: resolve transitive refs through schemas, responses, parameters, and other components
+	for len(schemaQueue) > 0 || len(responseQueue) > 0 || len(paramQueue) > 0 || len(otherQueue) > 0 {
 		// Process schema refs
 		if len(schemaQueue) > 0 {
 			name := schemaQueue[0]
@@ -201,6 +242,29 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 				schemaNode := getMappingValue(schemasNode, name)
 				if schemaNode != nil {
 					collectRefsFromNode(schemaNode, &schemaQueue, &responseQueue, &paramQueue)
+					collectOtherRefs(schemaNode, &otherQueue)
+				}
+			}
+			continue
+		}
+
+		// Process refs into any other components section (headers,
+		// requestBodies, ...), which can in turn $ref schemas.
+		if len(otherQueue) > 0 {
+			ref := otherQueue[0]
+			otherQueue = otherQueue[1:]
+
+			if visitedOther[ref] {
+				continue
+			}
+			visitedOther[ref] = true
+
+			if docRoot != nil {
+				if kindNode := findMapValue(docRoot, "components", ref.kind); kindNode != nil {
+					if node := getMappingValue(kindNode, ref.name); node != nil {
+						collectRefsFromNode(node, &schemaQueue, &responseQueue, &paramQueue)
+						collectOtherRefs(node, &otherQueue)
+					}
 				}
 			}
 			continue
@@ -222,6 +286,7 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 					responseNode := getMappingValue(responsesNode, name)
 					if responseNode != nil {
 						collectRefsFromNode(responseNode, &schemaQueue, &responseQueue, &paramQueue)
+						collectOtherRefs(responseNode, &otherQueue)
 					}
 				}
 			}
@@ -244,6 +309,7 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 					paramNode := getMappingValue(paramsNode, name)
 					if paramNode != nil {
 						collectRefsFromNode(paramNode, &schemaQueue, &responseQueue, &paramQueue)
+						collectOtherRefs(paramNode, &otherQueue)
 					}
 				}
 			}
@@ -251,7 +317,12 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 		}
 	}
 
-	return reachable
+	return reachableSet{
+		schemas:    reachable,
+		responses:  visitedResponses,
+		parameters: visitedParams,
+		other:      visitedOther,
+	}
 }
 
 // collectRefsFromNode recursively walks a YAML node tree and appends any
@@ -274,13 +345,13 @@ func collectRefsFromNode(node *yaml.Node, schemaQueue, responseQueue, paramQueue
 				ref := value.Value
 				switch {
 				case strings.HasPrefix(ref, "#/components/schemas/"):
-					name := ref[len("#/components/schemas/"):]
+					name := componentName(ref[len("#/components/schemas/"):])
 					*schemaQueue = append(*schemaQueue, name)
 				case strings.HasPrefix(ref, "#/components/responses/"):
-					name := ref[len("#/components/responses/"):]
+					name := componentName(ref[len("#/components/responses/"):])
 					*responseQueue = append(*responseQueue, name)
 				case strings.HasPrefix(ref, "#/components/parameters/"):
-					name := ref[len("#/components/parameters/"):]
+					name := componentName(ref[len("#/components/parameters/"):])
 					*paramQueue = append(*paramQueue, name)
 				}
 			} else {
@@ -290,6 +361,57 @@ func collectRefsFromNode(node *yaml.Node, schemaQueue, responseQueue, paramQueue
 	case yaml.SequenceNode:
 		for _, child := range node.Content {
 			collectRefsFromNode(child, schemaQueue, responseQueue, paramQueue)
+		}
+	}
+}
+
+// componentName returns the owning component entry of a $ref remainder that
+// may point inside it (e.g. "Id/schema" or "Outer/properties/inner" → "Id",
+// "Outer"), so pruning keeps the entry such a reference targets.
+func componentName(rest string) string {
+	name, _, _ := strings.Cut(rest, "/")
+	return name
+}
+
+// componentRef names an entry of a components section other than schemas,
+// responses and parameters (e.g. headers, requestBodies).
+type componentRef struct{ kind, name string }
+
+// collectOtherRefs recursively walks a YAML node tree and appends every
+// "#/components/<kind>/<name>" $ref whose kind is not schemas, responses or
+// parameters (those are handled by collectRefsFromNode), so the schemas such
+// components reference are kept.
+func collectOtherRefs(node *yaml.Node, queue *[]componentRef) {
+	if node == nil {
+		return
+	}
+
+	switch node.Kind {
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			value := node.Content[i+1]
+
+			if node.Content[i].Value == "$ref" && value.Kind == yaml.ScalarNode {
+				rest, ok := strings.CutPrefix(value.Value, "#/components/")
+				if !ok {
+					continue
+				}
+				kind, name, ok := strings.Cut(rest, "/")
+				if !ok {
+					continue
+				}
+				switch kind {
+				case "schemas", "responses", "parameters":
+				default:
+					*queue = append(*queue, componentRef{kind: kind, name: componentName(name)})
+				}
+			} else {
+				collectOtherRefs(value, queue)
+			}
+		}
+	case yaml.SequenceNode:
+		for _, child := range node.Content {
+			collectOtherRefs(child, queue)
 		}
 	}
 }
@@ -316,41 +438,81 @@ func pruneSchemas(schemasNode *yaml.Node, reachable map[string]bool) int {
 	return removed
 }
 
-// collectReachableResponses scans the retained paths and returns the set of
-// response names referenced via $ref "#/components/responses/...".
-func collectReachableResponses(pathsNode *yaml.Node) map[string]bool {
-	reachable := make(map[string]bool)
-	if pathsNode == nil {
-		return reachable
+// collectReachableResponses returns the set of response names reachable from
+// the retained paths, including responses referenced only through other
+// components (callbacks, other responses, ...).
+func collectReachableResponses(docRoot, pathsNode *yaml.Node) map[string]bool {
+	var schemasNode *yaml.Node
+	if docRoot != nil {
+		schemasNode = findMapValue(docRoot, "components", "schemas")
 	}
+	return collectReachable(docRoot, pathsNode, schemasNode).responses
+}
 
-	var schemaQueue, responseQueue, paramQueue []string
-	collectRefsFromNode(pathsNode, &schemaQueue, &responseQueue, &paramQueue)
+// prunableComponentKinds are the components sections whose entries are only
+// ever used through a "$ref", so an entry no retained path reaches can be
+// dropped. securitySchemes are deliberately absent: operations select them by
+// name in "security", not through a "$ref".
+var prunableComponentKinds = []string{"parameters", "headers", "requestBodies", "examples", "links", "callbacks"}
 
-	for _, name := range responseQueue {
-		reachable[name] = true
+// collectReachableComponents returns, for every prunable components section,
+// the entry names reachable from the retained paths.
+func collectReachableComponents(docRoot, pathsNode *yaml.Node) map[string]map[string]bool {
+	var schemasNode *yaml.Node
+	if docRoot != nil {
+		schemasNode = findMapValue(docRoot, "components", "schemas")
 	}
-	return reachable
+	reachable := collectReachable(docRoot, pathsNode, schemasNode)
+	byKind := make(map[string]map[string]bool, len(prunableComponentKinds))
+	for _, kind := range prunableComponentKinds {
+		byKind[kind] = reachable.byKind(kind)
+	}
+	return byKind
 }
 
 // pruneResponses removes response entries from components/responses that are
 // not in the reachable set. Returns the number of responses removed.
 func pruneResponses(responsesNode *yaml.Node, reachable map[string]bool) int {
-	if responsesNode.Kind != yaml.MappingNode {
+	return pruneComponentKind(responsesNode, reachable)
+}
+
+// pruneComponentKind removes entries from a components section (parameters,
+// headers, ...) that are not in the reachable set. Returns the number removed.
+func pruneComponentKind(kindNode *yaml.Node, reachable map[string]bool) int {
+	if kindNode.Kind != yaml.MappingNode {
 		return 0
 	}
 
 	removed := 0
 	var newContent []*yaml.Node
-	for i := 0; i < len(responsesNode.Content)-1; i += 2 {
-		name := responsesNode.Content[i].Value
+	for i := 0; i < len(kindNode.Content)-1; i += 2 {
+		name := kindNode.Content[i].Value
 		if reachable[name] {
-			newContent = append(newContent, responsesNode.Content[i], responsesNode.Content[i+1])
+			newContent = append(newContent, kindNode.Content[i], kindNode.Content[i+1])
 		} else {
 			removed++
 		}
 	}
 
-	responsesNode.Content = newContent
+	kindNode.Content = newContent
 	return removed
+}
+
+// inlineAliases replaces every YAML alias under node with a copy of the node
+// it refers to, so removing a pruned component that defines an anchor cannot
+// leave a retained alias without a target.
+func inlineAliases(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+	for i, child := range node.Content {
+		if child.Kind == yaml.AliasNode && child.Alias != nil {
+			target := deepCopyNode(child.Alias)
+			target.Anchor = ""
+			inlineAliases(target)
+			node.Content[i] = target
+			continue
+		}
+		inlineAliases(child)
+	}
 }

@@ -48,6 +48,23 @@ func TestAccInvoicePdfDataSource_Basic(t *testing.T) {
 		t.Skip("TEST_INVOICE_ID environment variable not set")
 	}
 
+	testAccInvoicePdfDataSourceDownload(t, invoiceID)
+}
+
+func TestAccInvoicePdfDataSource_Canceled(t *testing.T) {
+	invoiceID := os.Getenv("TEST_INVOICE_ID_CANCELED")
+	if invoiceID == "" {
+		t.Skip("TEST_INVOICE_ID_CANCELED environment variable not set")
+	}
+
+	testAccInvoicePdfDataSourceDownload(t, invoiceID)
+}
+
+// testAccInvoicePdfDataSourceDownload downloads the PDF for invoiceID, verifies
+// its contents and the written file, and checks for drift on re-apply.
+func testAccInvoicePdfDataSourceDownload(t *testing.T, invoiceID string) {
+	t.Helper()
+
 	tempDir := t.TempDir()
 	outputPath := filepath.Join(tempDir, invoiceID+".pdf")
 	config := testAccInvoicePdfDataSourceConfig(invoiceID) + fmt.Sprintf(`

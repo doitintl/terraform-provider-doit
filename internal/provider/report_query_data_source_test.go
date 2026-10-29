@@ -65,6 +65,18 @@ func TestAccReportQueryDataSource_FileOutput(t *testing.T) {
 	})
 }
 
+// parseDownloadedCSV parses a CSV export from the API. Exports start with a
+// UTF-8 byte-order mark so Excel detects the encoding; it is stripped so the
+// first header cell compares equal to its column name.
+func parseDownloadedCSV(content []byte) ([][]string, error) {
+	content = bytes.TrimPrefix(content, []byte("\xEF\xBB\xBF"))
+	records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("downloaded file is not valid CSV: %w", err)
+	}
+	return records, nil
+}
+
 func TestAccReportQueryDataSource_FileOutputCSV(t *testing.T) {
 	filename := t.TempDir() + "/query.csv"
 	config := strings.Replace(testAccReportQueryDataSourceConfig(),
@@ -99,9 +111,9 @@ resource "local_sensitive_file" "query_csv" {
 				if err != nil {
 					return err
 				}
-				records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+				records, err := parseDownloadedCSV(content)
 				if err != nil {
-					return fmt.Errorf("downloaded file is not valid CSV: %w", err)
+					return err
 				}
 				if len(records) < 2 {
 					return fmt.Errorf("downloaded CSV has %d rows, want header plus at least one data row", len(records))
