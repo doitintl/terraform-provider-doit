@@ -139,6 +139,12 @@ func main() {
 			}
 		}
 
+		// Pruning drops whole subtrees; inline aliases across the whole
+		// document first (in source order, so an alias whose target holds
+		// further aliases copies an already-resolved target) so no retained
+		// alias is left pointing at an anchor defined in a removed subtree.
+		inlineAliases(doc)
+
 		pathsRemoved, methodsPruned := prunePaths(pathsNode, used)
 		fmt.Printf("Pruned %d paths and %d methods\n", pathsRemoved, methodsPruned)
 
@@ -155,6 +161,19 @@ func main() {
 				responsesRemoved := pruneResponses(responsesNode, reachableResponses)
 				if responsesRemoved > 0 {
 					fmt.Printf("Pruned %d unreachable responses\n", responsesRemoved)
+				}
+			}
+
+			// Parameters, headers, requestBodies, ... that no retained path
+			// reaches would otherwise keep a $ref to a pruned schema.
+			reachableComponents := collectReachableComponents(doc, pathsNode)
+			for _, kind := range prunableComponentKinds {
+				kindNode := findMapValue(doc, "components", kind)
+				if kindNode == nil {
+					continue
+				}
+				if removed := pruneComponentKind(kindNode, reachableComponents[kind]); removed > 0 {
+					fmt.Printf("Pruned %d unreachable %s\n", removed, kind)
 				}
 			}
 		}
