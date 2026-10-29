@@ -2,7 +2,6 @@ package provider_test
 
 import (
 	"bytes"
-	"encoding/csv"
 	"fmt"
 	"os"
 	"regexp"
@@ -138,9 +137,9 @@ resource "local_sensitive_file" "report_csv" {
 				if err != nil {
 					return err
 				}
-				records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+				records, err := parseDownloadedCSV(content)
 				if err != nil {
-					return fmt.Errorf("downloaded file is not valid CSV: %w", err)
+					return err
 				}
 				if len(records) < 1 {
 					return fmt.Errorf("downloaded CSV has no rows")

@@ -3219,14 +3219,17 @@ func (e GetAsyncOperationResults200ResponseResultMlFeatures) Valid() bool {
 
 // Defines values for GetInvoice200ResponseStatus.
 const (
-	GetInvoice200ResponseStatusOPEN    GetInvoice200ResponseStatus = "OPEN"
-	GetInvoice200ResponseStatusPAID    GetInvoice200ResponseStatus = "PAID"
-	GetInvoice200ResponseStatusPASTDUE GetInvoice200ResponseStatus = "PAST DUE"
+	GetInvoice200ResponseStatusCANCELED GetInvoice200ResponseStatus = "CANCELED"
+	GetInvoice200ResponseStatusOPEN     GetInvoice200ResponseStatus = "OPEN"
+	GetInvoice200ResponseStatusPAID     GetInvoice200ResponseStatus = "PAID"
+	GetInvoice200ResponseStatusPASTDUE  GetInvoice200ResponseStatus = "PAST DUE"
 )
 
 // Valid indicates whether the value is a known member of the GetInvoice200ResponseStatus enum.
 func (e GetInvoice200ResponseStatus) Valid() bool {
 	switch e {
+	case GetInvoice200ResponseStatusCANCELED:
+		return true
 	case GetInvoice200ResponseStatusOPEN:
 		return true
 	case GetInvoice200ResponseStatusPAID:
@@ -3348,14 +3351,17 @@ func (e InvitedUserBodyStatus) Valid() bool {
 
 // Defines values for InvoiceListItemStatus.
 const (
-	InvoiceListItemStatusOPEN    InvoiceListItemStatus = "OPEN"
-	InvoiceListItemStatusPAID    InvoiceListItemStatus = "PAID"
-	InvoiceListItemStatusPASTDUE InvoiceListItemStatus = "PAST DUE"
+	InvoiceListItemStatusCANCELED InvoiceListItemStatus = "CANCELED"
+	InvoiceListItemStatusOPEN     InvoiceListItemStatus = "OPEN"
+	InvoiceListItemStatusPAID     InvoiceListItemStatus = "PAID"
+	InvoiceListItemStatusPASTDUE  InvoiceListItemStatus = "PAST DUE"
 )
 
 // Valid indicates whether the value is a known member of the InvoiceListItemStatus enum.
 func (e InvoiceListItemStatus) Valid() bool {
 	switch e {
+	case InvoiceListItemStatusCANCELED:
+		return true
 	case InvoiceListItemStatusOPEN:
 		return true
 	case InvoiceListItemStatusPAID:
@@ -10684,7 +10690,7 @@ type GetInvoice200Response struct {
 	// Platform Platform identifier for invoice source.
 	Platform *InvoicePlatform `json:"platform,omitempty"`
 
-	// Status Status of the invoice
+	// Status Status of the invoice. `CANCELED` takes precedence over the payment status.
 	Status *GetInvoice200ResponseStatus `json:"status,omitempty"`
 
 	// TotalAmount Total invoiced amount
@@ -10694,7 +10700,7 @@ type GetInvoice200Response struct {
 	Url *string `json:"url,omitempty"`
 }
 
-// GetInvoice200ResponseStatus Status of the invoice
+// GetInvoice200ResponseStatus Status of the invoice. `CANCELED` takes precedence over the payment status.
 type GetInvoice200ResponseStatus string
 
 // GetKnownIssue200Response defines model for GetKnownIssue200Response.
@@ -10901,7 +10907,7 @@ type InvoiceListItem struct {
 	// Platform Platform identifier for invoice source.
 	Platform *InvoicePlatform `json:"platform,omitempty"`
 
-	// Status Status of the invoice
+	// Status Status of the invoice. `CANCELED` takes precedence over the payment status.
 	Status *InvoiceListItemStatus `json:"status,omitempty"`
 
 	// TotalAmount Total invoiced amount
@@ -10911,7 +10917,7 @@ type InvoiceListItem struct {
 	Url *string `json:"url,omitempty"`
 }
 
-// InvoiceListItemStatus Status of the invoice
+// InvoiceListItemStatus Status of the invoice. `CANCELED` takes precedence over the payment status.
 type InvoiceListItemStatus string
 
 // InvoicePlatform Platform identifier for invoice source.
@@ -13247,7 +13253,9 @@ type ListInvoicesParams struct {
 
 	// PageToken Page token, returned by a previous call, to request the next page of results
 	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
-	Filter    *Filter    `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Filter Supported keys: platform (an invoice platform), dueDate (milliseconds since the POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value is applied per request. Cancelled invoices and credit memos are returned only with status:CANCELED, and every other request excludes them.
+	Filter *Filter `form:"filter,omitempty" json:"filter,omitempty"`
 
 	// MinCreationTime Min value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created after or at this timestamp are returned.
 	MinCreationTime *int64 `form:"minCreationTime,omitempty" json:"minCreationTime,omitempty"`
@@ -15267,20 +15275,21 @@ type ClientInterface interface {
 	//
 	// Returns a list of all the current and historical invoices for your organization.
 	// Invoices are returned in reverse chronological order by default.
+	// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 	//
 	// Corresponds with GET /billing/v1/invoices (the `ListInvoices` operationId).
 	ListInvoices(ctx context.Context, params *ListInvoicesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInvoice Retrieve an invoice
 	//
-	// Returns the full details of an invoice specified by the invoice number.
+	// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 	//
 	// Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 	GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetInvoicePdf Download an invoice PDF
 	//
-	// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+	// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
 	// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
 	// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
 	//
@@ -18081,6 +18090,7 @@ func (c *Client) GetBillingExplainerPerPayer(ctx context.Context, invoiceMonth B
 //
 // Returns a list of all the current and historical invoices for your organization.
 // Invoices are returned in reverse chronological order by default.
+// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 //
 // Corresponds with GET /billing/v1/invoices (the `ListInvoices` operationId).
 func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -18097,7 +18107,7 @@ func (c *Client) ListInvoices(ctx context.Context, params *ListInvoicesParams, r
 
 // GetInvoice Retrieve an invoice
 //
-// Returns the full details of an invoice specified by the invoice number.
+// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 //
 // Corresponds with GET /billing/v1/invoices/{id} (the `GetInvoice` operationId).
 func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -18114,7 +18124,7 @@ func (c *Client) GetInvoice(ctx context.Context, id string, reqEditors ...Reques
 
 // GetInvoicePdf Download an invoice PDF
 //
-// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
 // The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
 // A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
 //
@@ -29767,6 +29777,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a list of all the current and historical invoices for your organization.
 	// Invoices are returned in reverse chronological order by default.
+	// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -29775,7 +29786,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetInvoiceWithResponse Retrieve an invoice
 	//
-	// Returns the full details of an invoice specified by the invoice number.
+	// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -29784,7 +29795,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetInvoicePdfWithResponse Download an invoice PDF
 	//
-	// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+	// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
 	// The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
 	// A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
 	//
@@ -45182,6 +45193,7 @@ func (c *ClientWithResponses) GetBillingExplainerPerPayerWithResponse(ctx contex
 //
 // Returns a list of all the current and historical invoices for your organization.
 // Invoices are returned in reverse chronological order by default.
+// Cancelled invoices and credit memos are excluded unless you filter by `status:CANCELED`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -45196,7 +45208,7 @@ func (c *ClientWithResponses) ListInvoicesWithResponse(ctx context.Context, para
 
 // GetInvoiceWithResponse Retrieve an invoice
 //
-// Returns the full details of an invoice specified by the invoice number.
+// Returns the full details of an invoice specified by the invoice number. A cancelled invoice or credit memo is returned with status `CANCELED`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -45211,7 +45223,7 @@ func (c *ClientWithResponses) GetInvoiceWithResponse(ctx context.Context, id str
 
 // GetInvoicePdfWithResponse Download an invoice PDF
 //
-// Returns the PDF document for the invoice specified by the invoice number. The response body is the PDF bytes.
+// Returns the PDF document for the invoice specified by the invoice number, including a cancelled invoice or credit memo. The response body is the PDF bytes.
 // The PDF is returned decompressed by default. It is only gzip-compressed when the request advertises `Accept-Encoding: gzip`, in which case the response carries `Content-Encoding: gzip` with a `Content-Length` for the compressed bytes and must be decoded as a standard `Content-Encoding: gzip` body. HTTP clients whose stack negotiates the encoding automatically also decode it automatically; a client that sets the header by hand may instead receive the raw gzip bytes (for example `curl` decodes only with `--compressed`). Omit `Accept-Encoding` (or send `identity`) to always receive the decompressed PDF. A very large invoice may exceed the decompressed-response size limit and respond with `500`; request it with `Accept-Encoding: gzip` to stream the compressed bytes without that limit.
 // A `404` is returned both when no invoice with the given number exists for the authenticated tenant and when the invoice exists but has no PDF document available.
 //

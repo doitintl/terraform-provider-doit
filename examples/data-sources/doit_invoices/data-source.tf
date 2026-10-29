@@ -2,8 +2,13 @@
 data "doit_invoices" "all" {}
 
 # Filter by status
-data "doit_invoices" "unpaid" {
-  filter = "status:[outstanding]"
+data "doit_invoices" "open" {
+  filter = "status:OPEN"
+}
+
+# Canceled invoices and credit memos are only returned when filtering for them
+data "doit_invoices" "canceled" {
+  filter = "status:CANCELED"
 }
 
 # Output invoice totals

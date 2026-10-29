@@ -138,6 +138,8 @@ Check for newer versions of all GitHub Actions used in `.github/workflows/`:
 
 **Format:** `uses: owner/action@<full-sha> # <version-tag>`
 
+**Do not re-sync `release.yml` from HashiCorp's scaffolding or revert its permissions.** It intentionally diverges from upstream: `permissions: {}` at the workflow level with `contents: write` granted only on the `goreleaser` job (Aikido flags workflow-level write permissions). Keep this layout when editing the file, and put any new permission on the job that needs it.
+
 ---
 
 ## Step 5: Update Pre-commit Hooks
@@ -171,6 +173,8 @@ diff .goreleaser.yml /tmp/goreleaser-upstream.yml
 ```
 
 If there are meaningful differences (not just whitespace), update `.goreleaser.yml` to match upstream. Report any discrepancies to the user — some divergences may be intentional (e.g., custom `ldflags`).
+
+The same applies to `.github/workflows/release.yml` if you compare it against the scaffolding's version: its job-level `permissions` block is an intentional divergence (see Step 4) and must not be overwritten.
 
 ---
 
