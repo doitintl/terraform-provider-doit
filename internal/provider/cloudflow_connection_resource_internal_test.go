@@ -467,6 +467,25 @@ func TestCloudflowConnectionResourceRead(t *testing.T) {
 		}
 	})
 
+	// A body without an ID would map to a null connection_id, which Read treats as a deletion.
+	t.Run("a 200 without a connection ID is an error, not a removal", func(t *testing.T) {
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			writeJSON(w, 200, `{"name":"no id"}`)
+		}))
+		ctx := t.Context()
+		r := &cloudflowConnectionResource{client: newTestAPIClient(t, srv)}
+		prior := mapCloudflowConnectionForTest(t, testCloudflowGcpMinimalJSON)
+
+		resp := &resource.ReadResponse{State: cloudflowTestState(ctx, t, r, prior)}
+		r.Read(ctx, resource.ReadRequest{State: cloudflowTestState(ctx, t, r, prior)}, resp)
+		if !resp.Diagnostics.HasError() {
+			t.Fatal("expected an error")
+		}
+		if resp.State.Raw.IsNull() {
+			t.Errorf("state was removed")
+		}
+	})
+
 	t.Run("an unexpected status is an error with status and body", func(t *testing.T) {
 		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, 403, `{"code":"forbidden","detail":"no access"}`)

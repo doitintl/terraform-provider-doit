@@ -75,6 +75,13 @@ func (r *cloudflowConnectionResource) fetchConnection(ctx context.Context, id st
 		}
 	}
 
+	// A body without an ID would map to a null connection_id, which Read treats as a deletion.
+	if getResp.JSON200.ConnectionId == nil {
+		return nil, false, diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error Reading CloudFlow Connection", fmt.Sprintf("Response for CloudFlow connection %s has no connection ID, body: %s", id, string(getResp.Body))),
+		}
+	}
+
 	return newCloudflowConnectionData(getResp.JSON200, getResp.Body), true, nil
 }
 
