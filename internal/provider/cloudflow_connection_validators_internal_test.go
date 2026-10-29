@@ -64,7 +64,11 @@ func TestCloudflowConnectionCollaboratorsValidator(t *testing.T) {
 		{"two owners one with unknown email", testCollaboratorList(t, unknownEmailOwner, owner), "Too many owners"},
 		// Null members are reported by the required-attribute checks, not here.
 		{"null email", testCollaboratorList(t, owner, nullEmail), ""},
-		{"null role only", testCollaboratorList(t, nullRole), "Missing owner"},
+		// A missing or unrecognised role is reported by the role attribute itself.
+		{"null role only", testCollaboratorList(t, nullRole), ""},
+		{"unrecognised role only", testCollaboratorList(t, testCollaborator(t, types.StringValue("a@example.com"), types.StringValue("admin"))), ""},
+		{"unrecognised role beside an owner", testCollaboratorList(t, owner, testCollaborator(t, types.StringValue("a@example.com"), types.StringValue("admin"))), ""},
+		{"unrecognised role beside two owners", testCollaboratorList(t, owner, owner2, testCollaborator(t, types.StringValue("a@example.com"), types.StringValue("admin"))), "Too many owners"},
 	}
 
 	for _, tt := range tests {

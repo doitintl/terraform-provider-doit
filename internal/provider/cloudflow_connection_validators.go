@@ -41,22 +41,30 @@ func (v cloudflowConnectionCollaboratorsValidator) ValidateList(ctx context.Cont
 	}
 
 	owners := 0
-	hasUnknown := false
+	// undecided is set when an element's role or email is not known yet, or the role is not
+	// one the role attribute accepts: the owner count cannot be judged then, and the
+	// attribute's own validators report an invalid or missing value (they only run
+	// once this validator passes).
+	undecided := false
 	seen := make(map[string]struct{}, len(elements))
 	for _, element := range elements {
 		if element.IsUnknown() {
-			hasUnknown = true
+			undecided = true
 			continue
 		}
 		if element.Role.IsUnknown() {
-			hasUnknown = true
+			undecided = true
 			continue
 		}
-		if element.Role.ValueString() == "owner" {
+		switch element.Role.ValueString() {
+		case "owner":
 			owners++
+		case "editor", "user":
+		default:
+			undecided = true
 		}
 		if element.Email.IsUnknown() {
-			hasUnknown = true
+			undecided = true
 			continue
 		}
 		if element.Email.IsNull() {
@@ -81,7 +89,7 @@ func (v cloudflowConnectionCollaboratorsValidator) ValidateList(ctx context.Cont
 			fmt.Sprintf("A connection has exactly one owner, but %d collaborators have the role \"owner\".", owners),
 		)
 	}
-	if owners == 0 && !hasUnknown {
+	if owners == 0 && !undecided {
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
 			"Missing owner",
