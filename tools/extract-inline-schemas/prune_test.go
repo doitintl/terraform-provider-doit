@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -1132,4 +1133,153 @@ components:
 	if getMappingValue(responsesNode, "Unused") != nil {
 		t.Error("Unused response should be pruned")
 	}
+}
+
+// --- pruneComponentKind / collectReachableComponents ---
+
+const unmappedParameterSpec = `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /a/{id}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Body"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Rate:
+              $ref: "#/components/headers/Rate"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/A"
+  /b:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Region"
+      requestBody:
+        $ref: "#/components/requestBodies/OtherBody"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Other:
+              $ref: "#/components/headers/Other"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/B"
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: key
+      in: header
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    Region:
+      name: region
+      in: query
+      schema:
+        $ref: "#/components/schemas/Region"
+  requestBodies:
+    Body:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/A"
+    OtherBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OtherPayload"
+  headers:
+    Rate:
+      schema:
+        type: integer
+    Other:
+      schema:
+        $ref: "#/components/schemas/OtherHeader"
+  schemas:
+    A:
+      type: object
+    B:
+      type: object
+    Region:
+      type: string
+      enum: [us, eu]
+    OtherPayload:
+      type: object
+    OtherHeader:
+      type: string
+`
+
+func TestPruneComponentKinds_UnmappedOperation(t *testing.T) {
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(unmappedParameterSpec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+
+	// Retain only /a/{id}, as an unmapped /b would be pruned by prunePaths.
+	pathsNode := findMapValue(doc, "paths")
+	prunePaths(pathsNode, map[pathMethod]bool{{path: "/a/{id}", method: "get"}: true})
+	schemasNode := findMapValue(doc, "components", "schemas")
+	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
+
+	reachable := collectReachableComponents(doc, pathsNode)
+	removed := map[string]int{}
+	for _, kind := range prunableComponentKinds {
+		if kindNode := findMapValue(doc, "components", kind); kindNode != nil {
+			removed[kind] = pruneComponentKind(kindNode, reachable[kind])
+		}
+	}
+
+	for kind, want := range map[string]int{"parameters": 1, "requestBodies": 1, "headers": 1} {
+		if removed[kind] != want {
+			t.Errorf("removed %s = %d, want %d", kind, removed[kind], want)
+		}
+	}
+	for _, name := range []string{"Id", "Region"} {
+		got := getMappingValue(findMapValue(doc, "components", "parameters"), name) != nil
+		if got != (name == "Id") {
+			t.Errorf("parameter %s present = %v", name, got)
+		}
+	}
+	if findMapValue(doc, "components", "securitySchemes", "apiKey") == nil {
+		t.Error("securitySchemes entry was pruned")
+	}
+
+	// No $ref left in the document may dangle.
+	var check func(n *yaml.Node)
+	check = func(n *yaml.Node) {
+		if n.Kind == yaml.MappingNode {
+			for i := 0; i < len(n.Content)-1; i += 2 {
+				if n.Content[i].Value == "$ref" {
+					rest := strings.TrimPrefix(n.Content[i+1].Value, "#/")
+					if findMapValue(doc, strings.Split(rest, "/")...) == nil {
+						t.Errorf("dangling $ref %q", n.Content[i+1].Value)
+					}
+					continue
+				}
+				check(n.Content[i+1])
+			}
+			return
+		}
+		for _, c := range n.Content {
+			check(c)
+		}
+	}
+	check(doc)
 }

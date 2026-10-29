@@ -157,6 +157,19 @@ func main() {
 					fmt.Printf("Pruned %d unreachable responses\n", responsesRemoved)
 				}
 			}
+
+			// Parameters, headers, requestBodies, ... that no retained path
+			// reaches would otherwise keep a $ref to a pruned schema.
+			reachableComponents := collectReachableComponents(doc, pathsNode)
+			for _, kind := range prunableComponentKinds {
+				kindNode := findMapValue(doc, "components", kind)
+				if kindNode == nil {
+					continue
+				}
+				if removed := pruneComponentKind(kindNode, reachableComponents[kind]); removed > 0 {
+					fmt.Printf("Pruned %d unreachable %s\n", removed, kind)
+				}
+			}
 		}
 	}
 

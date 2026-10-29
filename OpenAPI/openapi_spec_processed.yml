@@ -17041,14 +17041,6 @@ components:
         type: string
         pattern: ^[A-Za-z0-9_-]{1,64}$
         example: balanced
-    signupRequestId:
-      name: signupRequestId
-      in: path
-      required: true
-      description: Public signup request id (sr_ prefix).
-      schema:
-        type: string
-        pattern: "^sr_[0-9a-f]{32}$"
     gcp_service:
       in: query
       name: gcp_service
@@ -17111,15 +17103,6 @@ components:
       example: monthly spend
       schema:
         type: string
-    includeRevoked:
-      name: includeRevoked
-      in: query
-      required: false
-      description: >-
-        If `true`, includes end-customer mappings that have been revoked. Defaults to `false` (revoked mappings are excluded).
-      schema:
-        type: boolean
-        default: false
     reportId:
       name: id
       in: path
@@ -17163,60 +17146,6 @@ components:
         Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.
       schema:
         type: string
-    targetCustomerId:
-      name: targetCustomerId
-      in: path
-      required: true
-      description: Customer ID within the authenticated tenant's hierarchy whose geographic scope is managed.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 200
-    geographicAccessUserId:
-      name: userId
-      in: path
-      required: true
-      description: Unique user ID returned by GET /iam/v1/users that belongs to the target customer.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 200
-    customRegionId:
-      name: customRegionId
-      in: path
-      required: true
-      description: Stable service-generated custom-region ID.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 200
-    customerGroupId:
-      name: customerGroupId
-      in: path
-      required: true
-      description: Stable service-generated customer-group ID.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 200
-    customerGroupUserId:
-      name: userId
-      in: path
-      required: true
-      description: User ID to assign to or unassign from the customer group.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 200
-    customerGroupUserGroupId:
-      name: userGroupId
-      in: path
-      required: true
-      description: Stable ID of a user group owned by the authenticated tenant.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 200
     serviceAccountId:
       name: id
       in: path
@@ -17313,32 +17242,6 @@ components:
         minimum: 1
         maximum: 500
         default: 50
-    service:
-      in: query
-      name: service
-      required: false
-      description: Filter planned purchases by PerfectScale for Commitments commitment type. Omit to return all commitment types that have planned purchases for the AWS organization.
-      schema:
-        type: string
-        enum:
-          - compute
-          - database
-        x-enumDescriptions:
-          compute: Compute commitment type (Savings Plans).
-          database: Database commitment type (Savings Plans).
-    serviceId:
-      in: path
-      name: serviceId
-      required: true
-      description: Commitment type whose recommendation to retrieve. Must be an onboarded commitment type for the AWS organization (`compute` or `database`).
-      schema:
-        type: string
-        enum:
-          - compute
-          - database
-        x-enumDescriptions:
-          compute: Compute commitment type (Savings Plans).
-          database: Database commitment type (Savings Plans).
     eligibleSpendGranularity:
       in: query
       name: granularity
@@ -17357,15 +17260,6 @@ components:
           day: One point per day (typically last 21 days).
           week: One point per week (typically last 16 weeks).
           month: One point per month (typically last 6 months).
-    memberAccountId:
-      in: path
-      name: memberAccountId
-      required: true
-      description: AWS member account ID (12-digit AWS account number).
-      schema:
-        type: string
-        pattern: ^\d{12}$
-        example: "987654321098"
     composerRecipeId:
       name: recipeId
       in: path
