@@ -166,7 +166,8 @@ func prunePaths(pathsNode *yaml.Node, used map[pathMethod]bool) (pathsRemoved, m
 // collectReachableSchemas performs a BFS traversal starting from the
 // remaining paths' request/response bodies, parameters, and any schemas they
 // reference via $ref. It also follows $ref chains through components/responses
-// and components/parameters using the provided docRoot to locate sibling
+// and components/parameters, plus any other component kind (headers,
+// requestBodies, ...), using the provided docRoot to locate sibling
 // component sections. Returns the set of schema names that are transitively
 // reachable.
 func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[string]bool {
@@ -174,18 +175,23 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 	var schemaQueue []string
 	var responseQueue []string
 	var paramQueue []string
+	// Every other component kind (headers, requestBodies, ...) that can
+	// carry a schema $ref.
+	var otherQueue []componentRef
 
 	// Collect initial refs from paths
 	if pathsNode != nil && pathsNode.Kind == yaml.MappingNode {
 		collectRefsFromNode(pathsNode, &schemaQueue, &responseQueue, &paramQueue)
+		collectOtherRefs(pathsNode, &otherQueue)
 	}
 
-	// Track visited responses/params to avoid infinite loops
+	// Track visited components to avoid infinite loops
 	visitedResponses := make(map[string]bool)
 	visitedParams := make(map[string]bool)
+	visitedOther := make(map[componentRef]bool)
 
-	// BFS: resolve transitive refs through schemas, responses, and parameters
-	for len(schemaQueue) > 0 || len(responseQueue) > 0 || len(paramQueue) > 0 {
+	// BFS: resolve transitive refs through schemas, responses, parameters, and other components
+	for len(schemaQueue) > 0 || len(responseQueue) > 0 || len(paramQueue) > 0 || len(otherQueue) > 0 {
 		// Process schema refs
 		if len(schemaQueue) > 0 {
 			name := schemaQueue[0]
@@ -201,6 +207,29 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 				schemaNode := getMappingValue(schemasNode, name)
 				if schemaNode != nil {
 					collectRefsFromNode(schemaNode, &schemaQueue, &responseQueue, &paramQueue)
+					collectOtherRefs(schemaNode, &otherQueue)
+				}
+			}
+			continue
+		}
+
+		// Process refs into any other components section (headers,
+		// requestBodies, ...), which can in turn $ref schemas.
+		if len(otherQueue) > 0 {
+			ref := otherQueue[0]
+			otherQueue = otherQueue[1:]
+
+			if visitedOther[ref] {
+				continue
+			}
+			visitedOther[ref] = true
+
+			if docRoot != nil {
+				if kindNode := findMapValue(docRoot, "components", ref.kind); kindNode != nil {
+					if node := getMappingValue(kindNode, ref.name); node != nil {
+						collectRefsFromNode(node, &schemaQueue, &responseQueue, &paramQueue)
+						collectOtherRefs(node, &otherQueue)
+					}
 				}
 			}
 			continue
@@ -222,6 +251,7 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 					responseNode := getMappingValue(responsesNode, name)
 					if responseNode != nil {
 						collectRefsFromNode(responseNode, &schemaQueue, &responseQueue, &paramQueue)
+						collectOtherRefs(responseNode, &otherQueue)
 					}
 				}
 			}
@@ -244,6 +274,7 @@ func collectReachableSchemas(docRoot, pathsNode, schemasNode *yaml.Node) map[str
 					paramNode := getMappingValue(paramsNode, name)
 					if paramNode != nil {
 						collectRefsFromNode(paramNode, &schemaQueue, &responseQueue, &paramQueue)
+						collectOtherRefs(paramNode, &otherQueue)
 					}
 				}
 			}
@@ -290,6 +321,49 @@ func collectRefsFromNode(node *yaml.Node, schemaQueue, responseQueue, paramQueue
 	case yaml.SequenceNode:
 		for _, child := range node.Content {
 			collectRefsFromNode(child, schemaQueue, responseQueue, paramQueue)
+		}
+	}
+}
+
+// componentRef names an entry of a components section other than schemas,
+// responses and parameters (e.g. headers, requestBodies).
+type componentRef struct{ kind, name string }
+
+// collectOtherRefs recursively walks a YAML node tree and appends every
+// "#/components/<kind>/<name>" $ref whose kind is not schemas, responses or
+// parameters (those are handled by collectRefsFromNode), so the schemas such
+// components reference are kept.
+func collectOtherRefs(node *yaml.Node, queue *[]componentRef) {
+	if node == nil {
+		return
+	}
+
+	switch node.Kind {
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			value := node.Content[i+1]
+
+			if node.Content[i].Value == "$ref" && value.Kind == yaml.ScalarNode {
+				rest, ok := strings.CutPrefix(value.Value, "#/components/")
+				if !ok {
+					continue
+				}
+				kind, name, ok := strings.Cut(rest, "/")
+				if !ok {
+					continue
+				}
+				switch kind {
+				case "schemas", "responses", "parameters":
+				default:
+					*queue = append(*queue, componentRef{kind: kind, name: name})
+				}
+			} else {
+				collectOtherRefs(value, queue)
+			}
+		}
+	case yaml.SequenceNode:
+		for _, child := range node.Content {
+			collectOtherRefs(child, queue)
 		}
 	}
 }

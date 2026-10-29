@@ -878,3 +878,197 @@ func TestCollectRefsFromNode_MixedRefs(t *testing.T) {
 		t.Errorf("responseQueue length = %d, want 2", len(responseQueue))
 	}
 }
+
+func TestCollectReachableSchemas_HeaderRef(t *testing.T) {
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    post:
+      responses:
+        "201":
+          description: Created
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+components:
+  schemas:
+    Thing:
+      type: object
+    RequestID:
+      type: string
+    Unused:
+      type: object
+  headers:
+    RequestID:
+      description: Request id
+      schema:
+        $ref: "#/components/schemas/RequestID"
+`
+	reachable := reachableFromSpec(t, spec)
+
+	if !reachable["Thing"] {
+		t.Error("Thing should be reachable directly")
+	}
+	if !reachable["RequestID"] {
+		t.Error("RequestID should be reachable via components/headers/RequestID")
+	}
+	if reachable["Unused"] {
+		t.Error("Unused should not be reachable")
+	}
+}
+
+func TestCollectReachableSchemas_RequestBodyRef(t *testing.T) {
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/ThingBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+components:
+  schemas:
+    Thing:
+      type: object
+    ThingInput:
+      type: object
+    Unused:
+      type: object
+  requestBodies:
+    ThingBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingInput"
+`
+	reachable := reachableFromSpec(t, spec)
+
+	if !reachable["ThingInput"] {
+		t.Error("ThingInput should be reachable via components/requestBodies/ThingBody")
+	}
+	if reachable["Unused"] {
+		t.Error("Unused should not be reachable")
+	}
+}
+
+func TestCollectReachableSchemas_OtherComponentChain(t *testing.T) {
+	// response -> header -> header (cycle) -> schema, plus a schema that
+	// reaches a requestBody which refs another schema.
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    get:
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+components:
+  schemas:
+    Deep:
+      type: object
+    Other:
+      type: object
+    Unused:
+      type: object
+  responses:
+    Ok:
+      description: OK
+      headers:
+        A:
+          $ref: "#/components/headers/A"
+  headers:
+    A:
+      description: a
+      schema:
+        $ref: "#/components/schemas/Deep"
+      examples:
+        loop:
+          $ref: "#/components/headers/B"
+    B:
+      description: b
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Other"
+      examples:
+        loop:
+          $ref: "#/components/headers/A"
+`
+	reachable := reachableFromSpec(t, spec)
+
+	for _, name := range []string{"Deep", "Other"} {
+		if !reachable[name] {
+			t.Errorf("%s should be reachable through the headers chain", name)
+		}
+	}
+	if reachable["Unused"] {
+		t.Error("Unused should not be reachable")
+	}
+}
+
+func TestCollectOtherRefs(t *testing.T) {
+	node := mustParseYAML(t, `
+a:
+  $ref: "#/components/headers/H"
+b:
+  - $ref: "#/components/requestBodies/R"
+  - $ref: "#/components/examples/E"
+c:
+  $ref: "#/components/schemas/S"
+d:
+  $ref: "#/components/responses/Resp"
+e:
+  $ref: "#/components/parameters/P"
+f:
+  $ref: "other.yaml#/components/headers/X"
+g:
+  $ref: "#/components/headers"
+`)
+
+	var got []componentRef
+	collectOtherRefs(node, &got)
+
+	want := []componentRef{
+		{"headers", "H"},
+		{"requestBodies", "R"},
+		{"examples", "E"},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("ref %d = %v, want %v", i, got[i], want[i])
+		}
+	}
+}
+
+func reachableFromSpec(t *testing.T, spec string) map[string]bool {
+	t.Helper()
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(spec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+	return collectReachableSchemas(doc, findMapValue(doc, "paths"), findMapValue(doc, "components", "schemas"))
+}
