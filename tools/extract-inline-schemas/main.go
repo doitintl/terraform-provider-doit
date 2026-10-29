@@ -151,7 +151,7 @@ func main() {
 			// from any retained path, to avoid dangling $ref errors.
 			responsesNode := findMapValue(doc, "components", "responses")
 			if responsesNode != nil {
-				reachableResponses := collectReachableResponses(pathsNode)
+				reachableResponses := collectReachableResponses(doc, pathsNode)
 				responsesRemoved := pruneResponses(responsesNode, reachableResponses)
 				if responsesRemoved > 0 {
 					fmt.Printf("Pruned %d unreachable responses\n", responsesRemoved)
