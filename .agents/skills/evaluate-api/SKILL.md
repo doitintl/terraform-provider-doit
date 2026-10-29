@@ -73,9 +73,12 @@ go run ./tools/extract-inline-schemas -input OpenAPI/openapi_spec_full.yml -outp
   -config datasources.yml --output ../2_tfplugingen-framework/output_datasources.json ../openapi_spec_processed.yml)
 (cd OpenAPI/2_tfplugingen-framework && go run github.com/doitintl/terraform-plugin-codegen-framework/cmd/tfplugingen-framework generate \
   data-sources --input output_datasources.json --output ../../internal/provider)
+(cd internal/provider/models && go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config models.yml ../../../OpenAPI/openapi_spec_processed.yml)
 ```
 
-Leave `output_resources.json` alone; it is the previous run's output. A resource-only evaluation runs the same three commands with `resources.yml`, `output_resources.json` and `generate resources`.
+The last command is `make generate`'s model stage (`oapi-codegen`, `nullable-type: true`). It reads the processed spec, not a generator config, so it is the same for resources and data sources, and it is where an unsupported schema or the missing `nullable.Nullable[T]` shows up in the Go types. Do not skip it. Leave `output_resources.json` alone; it is the previous run's output. A resource-only evaluation runs the first, second and last command unchanged and swaps `datasources.yml`, `output_datasources.json` and `generate data-sources` for the resources ones.
+
+Reduce the configs only for a single-service asset. On the full omni spec, a reduced configuration leaves every `components.parameters` entry in the processed spec but prunes the schemas they reference, so `oapi-codegen` fails with `map key "GcpRegion" not found`. There, keep the full configuration and add the endpoint to it.
 
 What was checked on a 3.1 spec (`mock-1.0.4`): `type: [X, "null"]`, nullable arrays and objects, `oneOf: [$ref, {type: "null"}]`, `$ref` with siblings and array `examples` give the same Terraform schema and the same `nullable.Nullable[T]` Go types as `nullable: true`. Known limits:
 
