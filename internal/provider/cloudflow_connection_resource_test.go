@@ -170,6 +170,7 @@ func TestAccCloudflowConnection_AWS_Lifecycle(t *testing.T) {
     organization_root_id                       = "r-ab12"
     scope_explicit_account_ids                 = [%[2]q, %[4]q]
     scope_excluded_account_ids                 = ["222222222222"]
+    scope_targeted_organizational_unit_ids     = ["ou-ab12-cdef3456", "ou-ab12-fedcba98"]
     scope_management_account_explicit_in_scope = true
   }
 `, rName, account, role, secondAccount, testAccCloudflowOwner()))
@@ -246,6 +247,7 @@ func TestAccCloudflowConnection_AWS_Lifecycle(t *testing.T) {
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("management_account"), knownvalue.StringExact("111111111111")),
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("organization_root_id"), knownvalue.StringExact("r-ab12")),
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("scope_excluded_account_ids"), knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("222222222222")})),
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("scope_targeted_organizational_unit_ids"), knownvalue.ListExact([]knownvalue.Check{knownvalue.StringExact("ou-ab12-cdef3456"), knownvalue.StringExact("ou-ab12-fedcba98")})),
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("scope_management_account_explicit_in_scope"), knownvalue.Bool(true)),
 				},
 			},
@@ -269,6 +271,7 @@ func TestAccCloudflowConnection_AWS_Lifecycle(t *testing.T) {
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("organization_root_id"), knownvalue.StringExact("")),
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("scope_explicit_account_ids"), knownvalue.ListExact([]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("scope_excluded_account_ids"), knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("scope_targeted_organizational_unit_ids"), knownvalue.ListExact([]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("aws_config").AtMapKey("scope_management_account_explicit_in_scope"), knownvalue.Bool(false)),
 				},
 			},
@@ -529,6 +532,7 @@ func TestAccCloudflowConnection_GCP_InfraManager(t *testing.T) {
     infra_manager_location        = "us-central1"
     infra_manager_service_account = "tfacc-infra"
 `, testProject()))
+	cleared := testAccCloudflowGCPConfig(rName, testProject(), testAccCloudflowGCPServiceAccount(), "")
 
 	resource.ParallelTest(t, resource.TestCase{
 		CheckDestroy:             testAccCheckCloudflowConnectionDestroy(t),
@@ -546,6 +550,21 @@ func TestAccCloudflowConnection_GCP_InfraManager(t *testing.T) {
 			},
 			testAccCloudflowConnectionDriftCheck(cfg),
 			testAccCloudflowConnectionImportStep(),
+			// Removing the infra manager settings clears them.
+			{
+				Config: cleared,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(testAccCloudflowConnectionAddr, plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("gcp_config").AtMapKey("infra_manager_project"), knownvalue.StringExact("")),
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("gcp_config").AtMapKey("infra_manager_location"), knownvalue.StringExact("")),
+					statecheck.ExpectKnownValue(testAccCloudflowConnectionAddr, tfjsonpath.New("gcp_config").AtMapKey("infra_manager_service_account"), knownvalue.StringExact("")),
+				},
+			},
+			testAccCloudflowConnectionDriftCheck(cleared),
 		},
 	})
 }
