@@ -345,13 +345,13 @@ func collectRefsFromNode(node *yaml.Node, schemaQueue, responseQueue, paramQueue
 				ref := value.Value
 				switch {
 				case strings.HasPrefix(ref, "#/components/schemas/"):
-					name := ref[len("#/components/schemas/"):]
+					name := componentName(ref[len("#/components/schemas/"):])
 					*schemaQueue = append(*schemaQueue, name)
 				case strings.HasPrefix(ref, "#/components/responses/"):
-					name := ref[len("#/components/responses/"):]
+					name := componentName(ref[len("#/components/responses/"):])
 					*responseQueue = append(*responseQueue, name)
 				case strings.HasPrefix(ref, "#/components/parameters/"):
-					name := ref[len("#/components/parameters/"):]
+					name := componentName(ref[len("#/components/parameters/"):])
 					*paramQueue = append(*paramQueue, name)
 				}
 			} else {
@@ -363,6 +363,14 @@ func collectRefsFromNode(node *yaml.Node, schemaQueue, responseQueue, paramQueue
 			collectRefsFromNode(child, schemaQueue, responseQueue, paramQueue)
 		}
 	}
+}
+
+// componentName returns the owning component entry of a $ref remainder that
+// may point inside it (e.g. "Id/schema" or "Outer/properties/inner" → "Id",
+// "Outer"), so pruning keeps the entry such a reference targets.
+func componentName(rest string) string {
+	name, _, _ := strings.Cut(rest, "/")
+	return name
 }
 
 // componentRef names an entry of a components section other than schemas,
@@ -395,7 +403,7 @@ func collectOtherRefs(node *yaml.Node, queue *[]componentRef) {
 				switch kind {
 				case "schemas", "responses", "parameters":
 				default:
-					*queue = append(*queue, componentRef{kind: kind, name: name})
+					*queue = append(*queue, componentRef{kind: kind, name: componentName(name)})
 				}
 			} else {
 				collectOtherRefs(value, queue)

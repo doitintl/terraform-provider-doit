@@ -1283,3 +1283,106 @@ func TestPruneComponentKinds_UnmappedOperation(t *testing.T) {
 	}
 	check(doc)
 }
+
+// --- nested component references ---
+
+// pruneSpec runs the same pruning sequence as main's Phase 5 on spec.
+func pruneSpec(t *testing.T, spec string) *yaml.Node {
+	t.Helper()
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(spec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+	pathsNode := findMapValue(doc, "paths")
+	schemasNode := findMapValue(doc, "components", "schemas")
+	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
+	reachable := collectReachableComponents(doc, pathsNode)
+	for _, kind := range prunableComponentKinds {
+		if kindNode := findMapValue(doc, "components", kind); kindNode != nil {
+			pruneComponentKind(kindNode, reachable[kind])
+		}
+	}
+	return doc
+}
+
+func TestPrune_NestedRefIntoParameter(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/parameters/Id/schema"
+components:
+  parameters:
+    Id:
+      name: id
+      in: query
+      schema:
+        type: string
+  schemas: {}
+`)
+	if findMapValue(doc, "components", "parameters", "Id") == nil {
+		t.Error("parameter Id was pruned although #/components/parameters/Id/schema is referenced")
+	}
+}
+
+func TestPrune_NestedRefIntoHeader(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/headers/Rate/schema"
+components:
+  headers:
+    Rate:
+      schema:
+        type: integer
+  schemas: {}
+`)
+	if findMapValue(doc, "components", "headers", "Rate") == nil {
+		t.Error("header Rate was pruned although #/components/headers/Rate/schema is referenced")
+	}
+}
+
+func TestPrune_NestedRefIntoSchema(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Outer/properties/inner"
+components:
+  schemas:
+    Outer:
+      type: object
+      properties:
+        inner:
+          type: string
+`)
+	if findMapValue(doc, "components", "schemas", "Outer") == nil {
+		t.Error("schema Outer was pruned although #/components/schemas/Outer/properties/inner is referenced")
+	}
+}
