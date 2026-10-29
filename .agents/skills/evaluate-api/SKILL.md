@@ -65,7 +65,7 @@ A single-service asset contains only that service's paths, and the pipeline fail
 
 What was checked on a 3.1 spec (`mock-1.0.4`): `type: [X, "null"]`, nullable arrays and objects, `oneOf: [$ref, {type: "null"}]`, `$ref` with siblings and array `examples` give the same Terraform schema and the same `nullable.Nullable[T]` Go types as `nullable: true`. Known limits:
 
-- **Pruner bug** ([#426](https://github.com/doitintl/terraform-provider-doit/issues/426)): `extract-inline-schemas` prunes a schema that is referenced only through a component header or component request body, and generation then fails with `component #/components/schemas/<X> does not exist`. The DoiT shared components (`RequestID` header) trigger it, so most 3.1 specs fail until #426 is fixed. The issue has a patch you can apply in a scratch checkout.
+- **Fixed in [#427](https://github.com/doitintl/terraform-provider-doit/pull/427):** `extract-inline-schemas` used to prune a schema referenced only through a component header or component request body, which failed generation for most 3.1 specs (the DoiT shared `RequestID` header triggers it). On a checkout older than #427, update first. Other component kinds (`examples`, `links`, `callbacks`) are still not followed.
 - **Not yet exercised:** `const`, `prefixItems`, `if`/`then`/`else`, numeric `exclusiveMinimum` and a standalone `type: "null"`. For these, what the generator does is known only from its source.
 - **Mixed specs:** a 3.1 spec must not also use `nullable: true`. In 3.1 mode `oapi-codegen` ignores it, so the field silently loses `nullable.Nullable[T]`, which the hand-written code relies on.
 
@@ -87,7 +87,7 @@ For such a PR:
    ```
 
 2. Evaluate the rest by reading the spec against the steps below.
-3. Run the pipeline on the PR's spec asset, as above (mind the pruner bug). It does not need to wait for the 3.0.1 projection to reach omni.
+3. Run the pipeline on the PR's spec asset, as above. It does not need to wait for the 3.0.1 projection to reach omni.
 
 If the spec for the endpoint is present, run the full code generation pipeline **as a test** — not an actual implementation:
 
