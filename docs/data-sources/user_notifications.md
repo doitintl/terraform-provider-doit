@@ -3,12 +3,12 @@
 page_title: "doit_user_notifications Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Personal notification configs for a user, and organization-wide cost anomaly notifications.
+  Personal notification configs for a user. Cost-anomaly configs are supported.
 ---
 
 # doit_user_notifications (Data Source)
 
-Personal notification configs for a user, and organization-wide cost anomaly notifications.
+Personal notification configs for a user. Cost-anomaly configs are supported.
 
 ## Example Usage
 
