@@ -81,8 +81,8 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 									"mode": schema.StringAttribute{
 										Computed:            true,
-										Description:         "`all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —\nonly the listed ids. `exclude` — all enabled allocations except the listed ids.\n",
-										MarkdownDescription: "`all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —\nonly the listed ids. `exclude` — all enabled allocations except the listed ids.\n",
+										Description:         "`all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be sent with a non-empty `ids`. `include` and `exclude` cannot be sent with an empty `ids`.",
+										MarkdownDescription: "`all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be sent with a non-empty `ids`. `include` and `exclude` cannot be sent with an empty `ids`.",
 									},
 								},
 								CustomType: AllocationsType{
@@ -91,8 +91,8 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET\n/analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying\nwhether it exists elsewhere.\n\n`mode: all` means every allocation with anomaly detection enabled, including anomalies that are not\ntied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one\nid. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not\nsort or drop entries. A duplicate id is rejected with `422`.\n",
-								MarkdownDescription: "Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET\n/analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying\nwhether it exists elsewhere.\n\n`mode: all` means every allocation with anomaly detection enabled, including anomalies that are not\ntied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one\nid. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not\nsort or drop entries. A duplicate id is rejected with `422`.\n",
+								Description:         "Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET\n/analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying\nwhether it exists elsewhere.\n\n`mode: all` means every allocation with anomaly detection enabled, including anomalies that are not\ntied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one\nid. `mode: all` with a non-empty `ids`, and `include` or `exclude` with an empty `ids`, are rejected\nwith `422`. `ids` are an ordered list: the server stores and returns them in the order sent, and it does\nnot sort or drop entries. A duplicate id is rejected with `422`.\n",
+								MarkdownDescription: "Allocation scope for cost-anomaly notifications. `ids` are allocation ids from `GET\n/analytics/v1/allocations`. An id outside the caller's tenant is rejected with `422` without saying\nwhether it exists elsewhere.\n\n`mode: all` means every allocation with anomaly detection enabled, including anomalies that are not\ntied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one\nid. `mode: all` with a non-empty `ids`, and `include` or `exclude` with an empty `ids`, are rejected\nwith `422`. `ids` are an ordered list: the server stores and returns them in the order sent, and it does\nnot sort or drop entries. A duplicate id is rejected with `422`.\n",
 							},
 							"min_excess_cost": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
@@ -113,13 +113,13 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Computed:            true,
-								Description:         "Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.\n`100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a\nwhole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"100.00\"`. `0` is accepted.\n",
-								MarkdownDescription: "Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.\n`100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a\nwhole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"100.00\"`. `0` is accepted.\n",
+								Description:         "Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.\n`100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a\nwhole number of dollars). `100` and `100.00` are both accepted. `0` and `0.00` are accepted. Amounts\nabove 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores,\nare rejected with `422`. Responses return the amount as `\"100.00\"`.\n",
+								MarkdownDescription: "Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.\n`100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a\nwhole number of dollars). `100` and `100.00` are both accepted. `0` and `0.00` are accepted. Amounts\nabove 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores,\nare rejected with `422`. Responses return the amount as `\"100.00\"`.\n",
 							},
 							"min_severity": schema.StringAttribute{
 								Computed:            true,
-								Description:         "`warning` — warning and above. `critical` — critical only. There is no `information` or `all`\nvalue; a write of `all` is rejected with `422`. A read of a missing stored severity (console \"All\nseverity levels\") and of warning both return `warning`. `critical` is stored and returned as\n`critical`.\n",
-								MarkdownDescription: "`warning` — warning and above. `critical` — critical only. There is no `information` or `all`\nvalue; a write of `all` is rejected with `422`. A read of a missing stored severity (console \"All\nseverity levels\") and of warning both return `warning`. `critical` is stored and returned as\n`critical`.\n",
+								Description:         "`warning` — warning and above. `critical` — critical only. There is no `information` or `all` value; a write of `all` is rejected with `422`. Clients may send only `warning` or `critical`. Responses return only `warning` or `critical`. A missing or empty stored severity (console \"All severity levels\") is returned as `warning`. `critical` is stored and returned as `critical`.",
+								MarkdownDescription: "`warning` — warning and above. `critical` — critical only. There is no `information` or `all` value; a write of `all` is rejected with `422`. Clients may send only `warning` or `critical`. Responses return only `warning` or `critical`. A missing or empty stored severity (console \"All severity levels\") is returned as `warning`. `critical` is stored and returned as `critical`.",
 							},
 							"repeat": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
@@ -132,8 +132,8 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 										Attributes: map[string]schema.Attribute{
 											"match": schema.StringAttribute{
 												Computed:            true,
-												Description:         "How to combine percent and dollar growth when both are set. Required when both amounts are present;\nomit when only one amount is present.\n",
-												MarkdownDescription: "How to combine percent and dollar growth when both are set. Required when both amounts are present;\nomit when only one amount is present.\n",
+												Description:         "How to combine percent and dollar growth when both are set. Required when both amounts are present; omit when only one amount is present.",
+												MarkdownDescription: "How to combine percent and dollar growth when both are set. Required when both amounts are present; omit when only one amount is present.",
 											},
 											"min_increase": schema.SingleNestedAttribute{
 												Attributes: map[string]schema.Attribute{
@@ -154,8 +154,8 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 													},
 												},
 												Computed:            true,
-												Description:         "Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.\n`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a\nwhole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"150.00\"`.\n",
-												MarkdownDescription: "Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.\n`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A\nnegative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a\nwhole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole\ndollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.\nResponses return the amount as `\"150.00\"`.\n",
+												Description:         "Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.\n`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. `0`,\n`0.00`, and a negative amount are rejected with `422`. A fractional amount is rejected with `422`\n(`150.99` is not a whole number of dollars). `150` and `150.00` are both accepted. Amounts above\n1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are\nrejected with `422`. Responses return the amount as `\"150.00\"`.\n",
+												MarkdownDescription: "Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.\n`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. `0`,\n`0.00`, and a negative amount are rejected with `422`. A fractional amount is rejected with `422`\n(`150.99` is not a whole number of dollars). `150` and `150.00` are both accepted. Amounts above\n1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are\nrejected with `422`. Responses return the amount as `\"150.00\"`.\n",
 											},
 											"percent_increase": schema.Int64Attribute{
 												Computed:            true,
@@ -174,8 +174,8 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 										},
 										Computed:            true,
-										Description:         "Resend when the anomaly's cost grows:\n\n- both `percentIncrease` and `minIncrease` present → `match` is\n  required (`or` or `and`)\n- exactly one of `percentIncrease` or `minIncrease` present → omit\n  `match` (percentage-only or value-only)\n- neither amount present → rejected with `422`\n\n`percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time\nwindow is off.\n",
-										MarkdownDescription: "Resend when the anomaly's cost grows:\n\n- both `percentIncrease` and `minIncrease` present → `match` is\n  required (`or` or `and`)\n- exactly one of `percentIncrease` or `minIncrease` present → omit\n  `match` (percentage-only or value-only)\n- neither amount present → rejected with `422`\n\n`percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time\nwindow is off.\n",
+										Description:         "Resend when the anomaly's cost grows. At least one of `percentIncrease` or `minIncrease` is required.\nAn object with only `withinHours`, only `match`, or neither amount is rejected with `422`.\n\n- both `percentIncrease` and `minIncrease` present → `match` is\n  required (`or` or `and`)\n- exactly one of `percentIncrease` or `minIncrease` present → omit\n  `match` (percentage-only or value-only)\n- neither amount present → rejected with `422`\n\n`percentIncrease` is an integer percent (`10` means 10 percent) and must be at least 1. Omit\n`withinHours` when the time window is off.",
+										MarkdownDescription: "Resend when the anomaly's cost grows. At least one of `percentIncrease` or `minIncrease` is required.\nAn object with only `withinHours`, only `match`, or neither amount is rejected with `422`.\n\n- both `percentIncrease` and `minIncrease` present → `match` is\n  required (`or` or `and`)\n- exactly one of `percentIncrease` or `minIncrease` present → omit\n  `match` (percentage-only or value-only)\n- neither amount present → rejected with `422`\n\n`percentIncrease` is an integer percent (`10` means 10 percent) and must be at least 1. Omit\n`withinHours` when the time window is off.",
 									},
 								},
 								CustomType: RepeatType{
@@ -221,8 +221,8 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 		},
-		Description:         "Personal notification configs for a user. Cost-anomaly configs are\nsupported.\n",
-		MarkdownDescription: "Personal notification configs for a user. Cost-anomaly configs are\nsupported.\n",
+		Description:         "Personal notification configs for a user, and organization-wide cost anomaly notifications.",
+		MarkdownDescription: "Personal notification configs for a user, and organization-wide cost anomaly notifications.",
 	}
 }
 

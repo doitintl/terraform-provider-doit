@@ -8542,8 +8542,9 @@ type Condition string
 //
 // `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
 // tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
-// id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
-// sort or drop entries. A duplicate id is rejected with `422`.
+// id. `mode: all` with a non-empty `ids`, and `include` or `exclude` with an empty `ids`, are rejected
+// with `422`. `ids` are an ordered list: the server stores and returns them in the order sent, and it does
+// not sort or drop entries. A duplicate id is rejected with `422`.
 type CostAnomalyAllocations struct {
 	// Ids Allocation ids, in the order sent. A read returns that same order. A duplicate id is rejected
 	// with `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.
@@ -8552,16 +8553,13 @@ type CostAnomalyAllocations struct {
 	// Example: ["alloc_abc","alloc_def"]
 	Ids []string `json:"ids"`
 
-	// Mode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-	// only the listed ids. `exclude` — all enabled allocations except the listed ids.
-	//
+	// Mode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be sent with a non-empty `ids`. `include` and `exclude` cannot be sent with an empty `ids`.
 	//
 	// Example: include
 	Mode CostAnomalyAllocationsMode `json:"mode"`
 }
 
-// CostAnomalyAllocationsMode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-// only the listed ids. `exclude` — all enabled allocations except the listed ids.
+// CostAnomalyAllocationsMode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be sent with a non-empty `ids`. `include` and `exclude` cannot be sent with an empty `ids`.
 //
 // Example: include
 type CostAnomalyAllocationsMode string
@@ -8575,7 +8573,8 @@ type CostAnomalyRepeat struct {
 	// Example: 24
 	EveryHours *int `json:"everyHours,omitempty"`
 
-	// WhenCostGrows Resend when the anomaly's cost grows:
+	// WhenCostGrows Resend when the anomaly's cost grows. At least one of `percentIncrease` or `minIncrease` is required.
+	// An object with only `withinHours`, only `match`, or neither amount is rejected with `422`.
 	//
 	// - both `percentIncrease` and `minIncrease` present → `match` is
 	//   required (`or` or `and`)
@@ -8583,8 +8582,8 @@ type CostAnomalyRepeat struct {
 	//   `match` (percentage-only or value-only)
 	// - neither amount present → rejected with `422`
 	//
-	// `percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
-	// window is off.
+	// `percentIncrease` is an integer percent (`10` means 10 percent) and must be at least 1. Omit
+	// `withinHours` when the time window is off.
 	WhenCostGrows *CostAnomalyWhenCostGrows `json:"whenCostGrows,omitempty"`
 }
 
@@ -8597,23 +8596,20 @@ type CostAnomalySettings struct {
 	//
 	// `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
 	// tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
-	// id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
-	// sort or drop entries. A duplicate id is rejected with `422`.
+	// id. `mode: all` with a non-empty `ids`, and `include` or `exclude` with an empty `ids`, are rejected
+	// with `422`. `ids` are an ordered list: the server stores and returns them in the order sent, and it does
+	// not sort or drop entries. A duplicate id is rejected with `422`.
 	Allocations CostAnomalyAllocations `json:"allocations"`
 
 	// MinExcessCost Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.
 	// `100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A
 	// negative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a
-	// whole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole
-	// dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
-	// Responses return the amount as `"100.00"`. `0` is accepted.
+	// whole number of dollars). `100` and `100.00` are both accepted. `0` and `0.00` are accepted. Amounts
+	// above 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores,
+	// are rejected with `422`. Responses return the amount as `"100.00"`.
 	MinExcessCost Money `json:"minExcessCost"`
 
-	// MinSeverity `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
-	// value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
-	// severity levels") and of warning both return `warning`. `critical` is stored and returned as
-	// `critical`.
-	//
+	// MinSeverity `warning` — warning and above. `critical` — critical only. There is no `information` or `all` value; a write of `all` is rejected with `422`. Clients may send only `warning` or `critical`. Responses return only `warning` or `critical`. A missing or empty stored severity (console "All severity levels") is returned as `warning`. `critical` is stored and returned as `critical`.
 	//
 	// Example: warning
 	MinSeverity CostAnomalySettingsMinSeverity `json:"minSeverity"`
@@ -8623,15 +8619,13 @@ type CostAnomalySettings struct {
 	Repeat *CostAnomalyRepeat `json:"repeat,omitempty"`
 }
 
-// CostAnomalySettingsMinSeverity `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
-// value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
-// severity levels") and of warning both return `warning`. `critical` is stored and returned as
-// `critical`.
+// CostAnomalySettingsMinSeverity `warning` — warning and above. `critical` — critical only. There is no `information` or `all` value; a write of `all` is rejected with `422`. Clients may send only `warning` or `critical`. Responses return only `warning` or `critical`. A missing or empty stored severity (console "All severity levels") is returned as `warning`. `critical` is stored and returned as `critical`.
 //
 // Example: warning
 type CostAnomalySettingsMinSeverity string
 
-// CostAnomalyWhenCostGrows Resend when the anomaly's cost grows:
+// CostAnomalyWhenCostGrows Resend when the anomaly's cost grows. At least one of `percentIncrease` or `minIncrease` is required.
+// An object with only `withinHours`, only `match`, or neither amount is rejected with `422`.
 //
 //   - both `percentIncrease` and `minIncrease` present → `match` is
 //     required (`or` or `and`)
@@ -8639,22 +8633,20 @@ type CostAnomalySettingsMinSeverity string
 //     `match` (percentage-only or value-only)
 //   - neither amount present → rejected with `422`
 //
-// `percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
-// window is off.
+// `percentIncrease` is an integer percent (`10` means 10 percent) and must be at least 1. Omit
+// `withinHours` when the time window is off.
 type CostAnomalyWhenCostGrows struct {
-	// Match How to combine percent and dollar growth when both are set. Required when both amounts are present;
-	// omit when only one amount is present.
-	//
+	// Match How to combine percent and dollar growth when both are set. Required when both amounts are present; omit when only one amount is present.
 	//
 	// Example: or
 	Match *CostAnomalyWhenCostGrowsMatch `json:"match,omitempty"`
 
 	// MinIncrease Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.
-	// `150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A
-	// negative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a
-	// whole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole
-	// dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
-	// Responses return the amount as `"150.00"`.
+	// `150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. `0`,
+	// `0.00`, and a negative amount are rejected with `422`. A fractional amount is rejected with `422`
+	// (`150.99` is not a whole number of dollars). `150` and `150.00` are both accepted. Amounts above
+	// 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are
+	// rejected with `422`. Responses return the amount as `"150.00"`.
 	MinIncrease *Money `json:"minIncrease,omitempty"`
 
 	// PercentIncrease Minimum percent cost increase that triggers a resend. `10` means 10 percent. Must be greater than 0.
@@ -8669,8 +8661,7 @@ type CostAnomalyWhenCostGrows struct {
 	WithinHours *int `json:"withinHours,omitempty"`
 }
 
-// CostAnomalyWhenCostGrowsMatch How to combine percent and dollar growth when both are set. Required when both amounts are present;
-// omit when only one amount is present.
+// CostAnomalyWhenCostGrowsMatch How to combine percent and dollar growth when both are set. Required when both amounts are present; omit when only one amount is present.
 //
 // Example: or
 type CostAnomalyWhenCostGrowsMatch string
@@ -8771,6 +8762,30 @@ type CreateCustomThemeRequest struct {
 	//
 	// Example: #1A73E8
 	PrimaryColor HexColor `json:"primaryColor"`
+}
+
+// CreateCustomerNotificationRequest Fields of a new organization notification. Unknown fields are
+// rejected. `settings` must include `costAnomalies` and must not include
+// any other notification type. `destinations` must include `emails`,
+// `slackChannels`, and `teamsChannels`, with at least one non-empty
+// array.
+//
+// Example: {"destinations":{"emails":["finops@example.com"],"slackChannels":[],"teamsChannels":[]},"name":"Anomaly alerts","settings":{"costAnomalies":{"allocations":{"ids":[],"mode":"all"},"minExcessCost":{"amount":"100.00","currency":"USD"},"minSeverity":"warning"}}}
+type CreateCustomerNotificationRequest struct {
+	// Destinations Delivery targets for this config. Must include `emails`,
+	// `slackChannels`, and `teamsChannels`, with at least one non-empty
+	// array.
+	Destinations CustomerNotificationDestinations `json:"destinations"`
+
+	// Name Display name of the notification (max 200 characters). The stored name is trimmed.
+	//
+	// Example: Anomaly alerts
+	Name string `json:"name"`
+
+	// Settings Subscribed notification settings. Only `costAnomalies` is accepted.
+	// Settings for any other type are rejected; omitting `costAnomalies` is
+	// rejected.
+	Settings CustomerNotificationSettings `json:"settings"`
 }
 
 // CreateDatahubDataset201Response defines model for CreateDatahubDataset201Response.
@@ -9055,6 +9070,73 @@ type Customer struct {
 type CustomerContact struct {
 	// Emails Point-of-contact email addresses for the customer.
 	Emails *[]openapi_types.Email `json:"emails,omitempty"`
+}
+
+// CustomerNotification Organization-wide notification config. Create and read return the full
+// resource with the same field names. Update and delete require
+// `If-Match` against the strong `etag`.
+type CustomerNotification struct {
+	// CreateTime When the config was created. `null` only on a dry-run create.
+	//
+	// Example: 2026-10-01T08:00:00Z
+	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
+
+	// Destinations Delivery targets. Always includes `emails`, `slackChannels`, and
+	// `teamsChannels`. Unused lists are empty arrays.
+	Destinations CustomerNotificationDestinations `json:"destinations"`
+
+	// Etag Current strong ETag as bare SHA-256 hex. The `ETag` response header
+	// and `If-Match` wrap this value in double quotes. Send that quoted
+	// form unchanged on update or delete. `null` only on a dry-run create.
+	//
+	//
+	// Example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+	Etag nullable.Nullable[string] `json:"etag,omitempty"`
+
+	// Id Server-assigned notification id. `null` only on a dry-run create.
+	//
+	// Example: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// Name Display name of the notification (max 200 characters). The stored name is trimmed.
+	//
+	// Example: Anomaly alerts
+	Name string `json:"name"`
+
+	// Settings Subscribed notification settings. Only `costAnomalies` is accepted; any other notification type is rejected.
+	Settings CustomerNotificationSettings `json:"settings"`
+
+	// UpdateTime When the config was last changed. `null` only on a dry-run create.
+	//
+	// Example: 2026-10-01T08:00:00Z
+	UpdateTime nullable.Nullable[time.Time] `json:"updateTime,omitempty"`
+}
+
+// CustomerNotificationDestinations Delivery targets for an organization notification. All three arrays are always present on read. An unused destination is an empty array, never omitted and never `null`. On create, and on a patch that includes `destinations`, all three arrays are required and at least one must be non-empty. An object whose three arrays are all empty is rejected with `422`. Each array is kept in the order sent; a later read returns that same order. Emails are trimmed and stored lowercase. Channel ids are trimmed and otherwise unchanged. A duplicate value inside one array is rejected with `422` (emails compared after lowercase; channel ids compared exactly after trim).
+type CustomerNotificationDestinations struct {
+	// Emails Email addresses that receive the notification, in the order sent. The array is required; an empty array means email is unused. Omitting the array is rejected. At least one of `emails`, `slackChannels`, or `teamsChannels` must be non-empty. Addresses are stored and returned lowercase. A duplicate or an invalid email is `422`.
+	//
+	// Example: ["finops@example.com"]
+	Emails []openapi_types.Email `json:"emails"`
+
+	// SlackChannels Slack channel ids for Slack channels that receive the notification, in the order sent. The array is required; an empty array means Slack is unused. Omitting the array is rejected. At least one of `emails`, `slackChannels`, or `teamsChannels` must be non-empty. Accepts a public channel, a shared channel, or a private channel the caller is a member of when the DoiT app is also in that channel. A service account cannot add a private channel and receives the same `422` as an id outside the tenant. The caller supplies the id; this API does not look channels up. A duplicate or an id outside the tenant is `422` without saying whether it exists elsewhere. After a channel is accepted, get and list keep returning that id even if the channel is later deleted, archived, or disconnected. That does not mean delivery still works.
+	//
+	// Example: ["C0123ABCD"]
+	SlackChannels []string `json:"slackChannels"`
+
+	// TeamsChannels Microsoft Teams conversation ids for Microsoft Teams channels that receive the notification, in the order sent. The array is required; an empty array means Teams is unused. Omitting the array is rejected. At least one of `emails`, `slackChannels`, or `teamsChannels` must be non-empty. A duplicate or an id outside the tenant is `422` without saying whether it exists elsewhere. A Teams id is also `422` when the tenant has no Teams entitlement. After a channel is accepted, get and list keep returning that id even if the channel is later deleted, archived, or disconnected, or the tenant loses Teams entitlement. That does not mean delivery still works.
+	//
+	// Example: ["19:abc@thread.tacv2"]
+	TeamsChannels []string `json:"teamsChannels"`
+}
+
+// CustomerNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted.
+// Settings for any other type are rejected; omitting `costAnomalies` is
+// rejected.
+type CustomerNotificationSettings struct {
+	// CostAnomalies Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
+	// optional resend controls.
+	CostAnomalies CostAnomalySettings `json:"costAnomalies"`
 }
 
 // CustomerSettings Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
@@ -11324,24 +11406,26 @@ type Organization struct {
 }
 
 // PatchCostAnomalyAllocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
-// the current list.
+// the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` /
+// `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same
+// rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
 type PatchCostAnomalyAllocations struct {
 	// Ids Replacement allocation ids when present, in the order sent. A read returns that same order. A
 	// duplicate id is rejected with `422`. Empty when `mode` is `all`. Non-empty when `mode` is
 	// `include` or `exclude`.
 	Ids *[]string `json:"ids,omitempty"`
 
-	// Mode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-	// only the listed ids. `exclude` — all enabled allocations except the listed ids.
+	// Mode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be paired with a non-empty `ids`. `include` and `exclude` cannot be paired with an empty `ids`.
 	Mode *PatchCostAnomalyAllocationsMode `json:"mode,omitempty"`
 }
 
-// PatchCostAnomalyAllocationsMode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-// only the listed ids. `exclude` — all enabled allocations except the listed ids.
+// PatchCostAnomalyAllocationsMode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be paired with a non-empty `ids`. `include` and `exclude` cannot be paired with an empty `ids`.
 type PatchCostAnomalyAllocationsMode string
 
-// PatchCostAnomalyRepeat Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. To clear
-// every resend control, send `null` for `costAnomalies.repeat` itself.
+// PatchCostAnomalyRepeat Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. Nulling the
+// last remaining control, for example `everyHours: null` when that is the only stored field, leaves
+// `repeat: {}`. An empty `repeat` is rejected with `422`. To clear every resend control, send `null` for
+// `costAnomalies.repeat` itself.
 type PatchCostAnomalyRepeat struct {
 	// EveryHours Resend until the anomaly is inactive, every N hours (1–24). Send `null` to clear.
 	EveryHours nullable.Nullable[int] `json:"everyHours,omitempty"`
@@ -11355,37 +11439,41 @@ type PatchCostAnomalyRepeat struct {
 // send a new value.
 type PatchCostAnomalySettings struct {
 	// Allocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
-	// the current list.
+	// the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` /
+	// `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same
+	// rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
 	Allocations *PatchCostAnomalyAllocations `json:"allocations,omitempty"`
 
 	// MinExcessCost Minimum excess cost, as Money. Omit it to leave the current value; it cannot be cleared. `currency`
 	// must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with `422`.
 	// A fractional amount is rejected with `422` (`100.99` is not a whole number of dollars). `100` and
-	// `100.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
-	// exponents, a leading `+`, or underscores, are rejected with `422`. `0` is accepted.
+	// `100.00` are both accepted. `0` and `0.00` are accepted. Amounts above 1,000,000,000 whole dollars,
+	// and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
 	MinExcessCost *Money `json:"minExcessCost,omitempty"`
 
-	// MinSeverity `warning` — warning and above. `critical` — critical only. A write of `all` is rejected with `422`.
+	// MinSeverity `warning` — warning and above. `critical` — critical only. Clients may send only `warning` or `critical`. A write of `all` is rejected with `422`.
 	MinSeverity *PatchCostAnomalySettingsMinSeverity `json:"minSeverity,omitempty"`
 
 	// Repeat Resend controls, or `null` to clear them all.
 	Repeat nullable.Nullable[PatchCostAnomalyRepeat] `json:"repeat,omitempty"`
 }
 
-// PatchCostAnomalySettingsMinSeverity `warning` — warning and above. `critical` — critical only. A write of `all` is rejected with `422`.
+// PatchCostAnomalySettingsMinSeverity `warning` — warning and above. `critical` — critical only. Clients may send only `warning` or `critical`. A write of `all` is rejected with `422`.
 type PatchCostAnomalySettingsMinSeverity string
 
 // PatchCostAnomalyWhenCostGrows Merge-patch for `whenCostGrows`. Omit a field to leave it; send `null` to clear `match`,
-// `percentIncrease`, `minIncrease`, or `withinHours`.
+// `percentIncrease`, `minIncrease`, or `withinHours`. After the merge, `percentIncrease` and/or
+// `minIncrease` must still be set, and both amounts still require `match`. A merged object with only
+// `withinHours`, only `match`, or neither amount is rejected with `422`.
 type PatchCostAnomalyWhenCostGrows struct {
 	// Match How to combine percent and dollar growth when both are set. Send `null` to clear.
 	Match nullable.Nullable[PatchCostAnomalyWhenCostGrowsMatch] `json:"match,omitempty"`
 
 	// MinIncrease Minimum cost growth, as Money. Must be a positive whole number of dollars. Send `null` to clear.
-	// `currency` must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with
-	// `422`. A fractional amount is rejected with `422` (`150.99` is not a whole number of dollars). `150` and
-	// `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
-	// exponents, a leading `+`, or underscores, are rejected with `422`.
+	// `currency` must be `USD`; any other currency is rejected with `422`. `0`, `0.00`, and a negative
+	// amount are rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a whole
+	// number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars,
+	// and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
 	MinIncrease nullable.Nullable[Money] `json:"minIncrease,omitempty"`
 
 	// PercentIncrease Minimum percent cost increase that triggers a resend. Must be greater than 0. Send `null` to clear.
@@ -11397,6 +11485,15 @@ type PatchCostAnomalyWhenCostGrows struct {
 
 // PatchCostAnomalyWhenCostGrowsMatch How to combine percent and dollar growth when both are set. Send `null` to clear.
 type PatchCostAnomalyWhenCostGrowsMatch string
+
+// PatchCustomerNotificationSettings Merge-patch for `settings`. Omit `costAnomalies` to leave settings
+// unchanged. Only `costAnomalies` is accepted.
+type PatchCustomerNotificationSettings struct {
+	// CostAnomalies Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
+	// resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
+	// send a new value.
+	CostAnomalies *PatchCostAnomalySettings `json:"costAnomalies,omitempty"`
+}
 
 // PatchUserNotificationSettings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies`
 // is accepted.
@@ -12212,6 +12309,29 @@ type UpdateCustomThemeRequest struct {
 	//
 	// Example: #1A73E8
 	PrimaryColor *HexColor `json:"primaryColor,omitempty"`
+}
+
+// UpdateCustomerNotificationRequest JSON Merge Patch (RFC 7396) for an organization notification. Omitted
+// fields stay unchanged; nested objects are deep-merged; nested arrays
+// (for example `allocations.ids`) are replaced when present. When
+// `destinations` is present it replaces the whole destinations object.
+// Send `null` to clear optional members such as `repeat`,
+// `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
+//
+// Example: {"settings":{"costAnomalies":{"minSeverity":"critical"}}}
+type UpdateCustomerNotificationRequest struct {
+	// Destinations Replacement destinations when present. Replaces the whole object;
+	// all three arrays are required and at least one must be non-empty.
+	Destinations *CustomerNotificationDestinations `json:"destinations,omitempty"`
+
+	// Name Display name of the notification (max 200 characters). The stored name is trimmed.
+	//
+	// Example: Anomaly alerts (updated)
+	Name *string `json:"name,omitempty"`
+
+	// Settings Merge-patch for `settings`. Omit `costAnomalies` to leave settings
+	// unchanged. Only `costAnomalies` is accepted.
+	Settings *PatchCustomerNotificationSettings `json:"settings,omitempty"`
 }
 
 // UpdateDatahubDataset200Response defines model for UpdateDatahubDataset200Response.
@@ -13475,6 +13595,39 @@ type ListServiceQuotasParams struct {
 // ListServiceQuotasParamsCloudProvider defines parameters for ListServiceQuotas.
 type ListServiceQuotasParamsCloudProvider string
 
+// CreateCustomerNotificationParams defines parameters for CreateCustomerNotification.
+type CreateCustomerNotificationParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteCustomerNotificationParams defines parameters for DeleteCustomerNotification.
+type DeleteCustomerNotificationParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// UpdateCustomerNotificationParams defines parameters for UpdateCustomerNotification.
+type UpdateCustomerNotificationParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
 // CreateRoleParams defines parameters for CreateRole.
 type CreateRoleParams struct {
 	// IdempotencyKey Caller-chosen key (1-255 characters) that makes retries safe; the same key with the same body returns the original response.
@@ -14038,6 +14191,12 @@ type UpdateAwsFeatureJSONRequestBody = UpdateAwsFeatureRequestBody
 
 // UpdateCustomerApplicationMergePatchPlusJSONRequestBody defines body for UpdateCustomer for application/merge-patch+json ContentType.
 type UpdateCustomerApplicationMergePatchPlusJSONRequestBody = CustomerUpdate
+
+// CreateCustomerNotificationJSONRequestBody defines body for CreateCustomerNotification for application/json ContentType.
+type CreateCustomerNotificationJSONRequestBody = CreateCustomerNotificationRequest
+
+// UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody defines body for UpdateCustomerNotification for application/merge-patch+json ContentType.
+type UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody = UpdateCustomerNotificationRequest
 
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
@@ -15654,6 +15813,67 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 	UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCustomerNotificationWithBody Create an organization cost anomaly notification
+	//
+	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Requires the `settings` (Manage settings) permission.
+	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+	CreateCustomerNotificationWithBody(ctx context.Context, params *CreateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCustomerNotification Create an organization cost anomaly notification
+	//
+	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Requires the `settings` (Manage settings) permission.
+	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+	CreateCustomerNotification(ctx context.Context, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteCustomerNotification Delete an organization cost anomaly notification
+	//
+	// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
+	//
+	// Corresponds with DELETE /customers/v1/notifications/{id} (the `DeleteCustomerNotification` operationId).
+	DeleteCustomerNotification(ctx context.Context, id string, params *DeleteCustomerNotificationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCustomerNotification Get an organization cost anomaly notification
+	//
+	// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+	//
+	// Corresponds with GET /customers/v1/notifications/{id} (the `GetCustomerNotification` operationId).
+	GetCustomerNotification(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomerNotificationWithBody Update an organization cost anomaly notification
+	//
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+	UpdateCustomerNotificationWithBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody Update an organization cost anomaly notification
+	//
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type.
+	//
+	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+	UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDatahubDatasets List datasets
 	//
@@ -18856,6 +19076,127 @@ func (c *Client) UpdateCustomerWithBody(ctx context.Context, customerId Customer
 // Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 func (c *Client) UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(c.Server, customerId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCustomerNotificationWithBody Create an organization cost anomaly notification
+//
+// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Requires the `settings` (Manage settings) permission.
+// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+func (c *Client) CreateCustomerNotificationWithBody(ctx context.Context, params *CreateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomerNotificationRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCustomerNotification Create an organization cost anomaly notification
+//
+// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Requires the `settings` (Manage settings) permission.
+// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+func (c *Client) CreateCustomerNotification(ctx context.Context, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomerNotificationRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteCustomerNotification Delete an organization cost anomaly notification
+//
+// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
+//
+// Corresponds with DELETE /customers/v1/notifications/{id} (the `DeleteCustomerNotification` operationId).
+func (c *Client) DeleteCustomerNotification(ctx context.Context, id string, params *DeleteCustomerNotificationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCustomerNotificationRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCustomerNotification Get an organization cost anomaly notification
+//
+// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+//
+// Corresponds with GET /customers/v1/notifications/{id} (the `GetCustomerNotification` operationId).
+func (c *Client) GetCustomerNotification(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomerNotificationRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCustomerNotificationWithBody Update an organization cost anomaly notification
+//
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+func (c *Client) UpdateCustomerNotificationWithBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerNotificationRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody Update an organization cost anomaly notification
+//
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+//
+// Takes a body of the `application/merge-patch+json` content type.
+//
+// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+func (c *Client) UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerNotificationRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -25650,6 +25991,299 @@ func NewUpdateCustomerRequestWithBody(server string, customerId CustomerId, cont
 	return req, nil
 }
 
+// NewCreateCustomerNotificationRequest calls the generic CreateCustomerNotification builder with application/json body
+func NewCreateCustomerNotificationRequest(server string, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateCustomerNotificationRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateCustomerNotificationRequestWithBody constructs an http.Request for the CreateCustomerNotification method, with any body, and a specified content type
+func NewCreateCustomerNotificationRequestWithBody(server string, params *CreateCustomerNotificationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/notifications")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteCustomerNotificationRequest constructs an http.Request for the DeleteCustomerNotification method
+func NewDeleteCustomerNotificationRequest(server string, id string, params *DeleteCustomerNotificationParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/notifications/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewGetCustomerNotificationRequest constructs an http.Request for the GetCustomerNotification method
+func NewGetCustomerNotificationRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/notifications/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateCustomerNotificationRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateCustomerNotification builder with application/merge-patch+json body
+func NewUpdateCustomerNotificationRequestWithApplicationMergePatchPlusJSONBody(server string, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCustomerNotificationRequestWithBody(server, id, params, "application/merge-patch+json", bodyReader)
+}
+
+// NewUpdateCustomerNotificationRequestWithBody constructs an http.Request for the UpdateCustomerNotification method, with any body, and a specified content type
+func NewUpdateCustomerNotificationRequestWithBody(server string, id string, params *UpdateCustomerNotificationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/notifications/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
 // NewListDatahubDatasetsRequest constructs an http.Request for the ListDatahubDatasets method
 func NewListDatahubDatasetsRequest(server string) (*http.Request, error) {
 	var err error
@@ -30249,6 +30883,71 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 	UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
+
+	// CreateCustomerNotificationWithBodyWithResponse Create an organization cost anomaly notification
+	//
+	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Requires the `settings` (Manage settings) permission.
+	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+	CreateCustomerNotificationWithBodyWithResponse(ctx context.Context, params *CreateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomerNotificationResp, error)
+
+	// CreateCustomerNotificationWithResponse Create an organization cost anomaly notification
+	//
+	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Requires the `settings` (Manage settings) permission.
+	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+	CreateCustomerNotificationWithResponse(ctx context.Context, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomerNotificationResp, error)
+
+	// DeleteCustomerNotificationWithResponse Delete an organization cost anomaly notification
+	//
+	// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /customers/v1/notifications/{id} (the `DeleteCustomerNotification` operationId).
+	DeleteCustomerNotificationWithResponse(ctx context.Context, id string, params *DeleteCustomerNotificationParams, reqEditors ...RequestEditorFn) (*DeleteCustomerNotificationResp, error)
+
+	// GetCustomerNotificationWithResponse Get an organization cost anomaly notification
+	//
+	// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /customers/v1/notifications/{id} (the `GetCustomerNotification` operationId).
+	GetCustomerNotificationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomerNotificationResp, error)
+
+	// UpdateCustomerNotificationWithBodyWithResponse Update an organization cost anomaly notification
+	//
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+	UpdateCustomerNotificationWithBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerNotificationResp, error)
+
+	// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update an organization cost anomaly notification
+	//
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+	UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerNotificationResp, error)
 
 	// ListDatahubDatasetsWithResponse List datasets
 	//
@@ -38181,6 +38880,635 @@ func (r UpdateCustomerResp) ContentType() string {
 	return ""
 }
 
+// CreateCustomerNotificationResp200Headers the declared response headers of an HTTP 200 response for CreateCustomerNotification
+type CreateCustomerNotificationResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// CreateCustomerNotificationResp201Headers the declared response headers of an HTTP 201 response for CreateCustomerNotification
+type CreateCustomerNotificationResp201Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	Location        *string
+	RequestId       *string
+}
+
+// CreateCustomerNotificationResp400Headers the declared response headers of an HTTP 400 response for CreateCustomerNotification
+type CreateCustomerNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateCustomerNotificationResp403Headers the declared response headers of an HTTP 403 response for CreateCustomerNotification
+type CreateCustomerNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateCustomerNotificationResp409Headers the declared response headers of an HTTP 409 response for CreateCustomerNotification
+type CreateCustomerNotificationResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateCustomerNotificationResp422Headers the declared response headers of an HTTP 422 response for CreateCustomerNotification
+type CreateCustomerNotificationResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateCustomerNotificationResp500Headers the declared response headers of an HTTP 500 response for CreateCustomerNotification
+type CreateCustomerNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type CreateCustomerNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerNotification
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *CustomerNotification
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *ProblemDetails
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateCustomerNotificationResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateCustomerNotificationResp201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateCustomerNotificationResp400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateCustomerNotificationResp403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateCustomerNotificationResp409Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateCustomerNotificationResp422Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateCustomerNotificationResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateCustomerNotificationResp) GetJSON200() *CustomerNotification {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateCustomerNotificationResp) GetJSON201() *CustomerNotification {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateCustomerNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CreateCustomerNotificationResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateCustomerNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateCustomerNotificationResp) GetApplicationproblemJSON409() *ProblemDetails {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateCustomerNotificationResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateCustomerNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateCustomerNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateCustomerNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateCustomerNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateCustomerNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteCustomerNotificationResp204Headers the declared response headers of an HTTP 204 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp204Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// DeleteCustomerNotificationResp400Headers the declared response headers of an HTTP 400 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerNotificationResp403Headers the declared response headers of an HTTP 403 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerNotificationResp404Headers the declared response headers of an HTTP 404 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerNotificationResp409Headers the declared response headers of an HTTP 409 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerNotificationResp412Headers the declared response headers of an HTTP 412 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerNotificationResp422Headers the declared response headers of an HTTP 422 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerNotificationResp428Headers the declared response headers of an HTTP 428 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerNotificationResp500Headers the declared response headers of an HTTP 500 response for DeleteCustomerNotification
+type DeleteCustomerNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type DeleteCustomerNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *ProblemDetails
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteCustomerNotificationResp204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteCustomerNotificationResp400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteCustomerNotificationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteCustomerNotificationResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DeleteCustomerNotificationResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *DeleteCustomerNotificationResp412Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *DeleteCustomerNotificationResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *DeleteCustomerNotificationResp428Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DeleteCustomerNotificationResp500Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DeleteCustomerNotificationResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON409() *ProblemDetails {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DeleteCustomerNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteCustomerNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteCustomerNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteCustomerNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteCustomerNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetCustomerNotificationResp200Headers the declared response headers of an HTTP 200 response for GetCustomerNotification
+type GetCustomerNotificationResp200Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	RequestId       *string
+}
+
+// GetCustomerNotificationResp400Headers the declared response headers of an HTTP 400 response for GetCustomerNotification
+type GetCustomerNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCustomerNotificationResp403Headers the declared response headers of an HTTP 403 response for GetCustomerNotification
+type GetCustomerNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCustomerNotificationResp404Headers the declared response headers of an HTTP 404 response for GetCustomerNotification
+type GetCustomerNotificationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// GetCustomerNotificationResp500Headers the declared response headers of an HTTP 500 response for GetCustomerNotification
+type GetCustomerNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetCustomerNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerNotification
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetCustomerNotificationResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetCustomerNotificationResp400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetCustomerNotificationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetCustomerNotificationResp404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetCustomerNotificationResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCustomerNotificationResp) GetJSON200() *CustomerNotification {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetCustomerNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetCustomerNotificationResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetCustomerNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetCustomerNotificationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetCustomerNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCustomerNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCustomerNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCustomerNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCustomerNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateCustomerNotificationResp200Headers the declared response headers of an HTTP 200 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp200Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// UpdateCustomerNotificationResp400Headers the declared response headers of an HTTP 400 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp403Headers the declared response headers of an HTTP 403 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp404Headers the declared response headers of an HTTP 404 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp404Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp409Headers the declared response headers of an HTTP 409 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp412Headers the declared response headers of an HTTP 412 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp415Headers the declared response headers of an HTTP 415 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp415Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp422Headers the declared response headers of an HTTP 422 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp428Headers the declared response headers of an HTTP 428 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerNotificationResp500Headers the declared response headers of an HTTP 500 response for UpdateCustomerNotification
+type UpdateCustomerNotificationResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type UpdateCustomerNotificationResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerNotification
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *ProblemDetails
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON415 the response for an HTTP 415 `application/problem+json` response
+	ApplicationproblemJSON415 *UnsupportedMediaType
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateCustomerNotificationResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateCustomerNotificationResp400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateCustomerNotificationResp403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateCustomerNotificationResp404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateCustomerNotificationResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *UpdateCustomerNotificationResp412Headers
+	// Headers415 the parsed response headers for an HTTP 415 response
+	Headers415 *UpdateCustomerNotificationResp415Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateCustomerNotificationResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *UpdateCustomerNotificationResp428Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateCustomerNotificationResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateCustomerNotificationResp) GetJSON200() *CustomerNotification {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateCustomerNotificationResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON409() *ProblemDetails {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON415 returns the response for an HTTP 415 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON415() *UnsupportedMediaType {
+	return r.ApplicationproblemJSON415
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateCustomerNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateCustomerNotificationResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCustomerNotificationResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCustomerNotificationResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateCustomerNotificationResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListDatahubDatasetsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -45966,6 +47294,107 @@ func (c *ClientWithResponses) UpdateCustomerWithApplicationMergePatchPlusJSONBod
 	return ParseUpdateCustomerResp(rsp)
 }
 
+// CreateCustomerNotificationWithBodyWithResponse Create an organization cost anomaly notification
+//
+// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Requires the `settings` (Manage settings) permission.
+// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+func (c *ClientWithResponses) CreateCustomerNotificationWithBodyWithResponse(ctx context.Context, params *CreateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomerNotificationResp, error) {
+	rsp, err := c.CreateCustomerNotificationWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomerNotificationResp(rsp)
+}
+
+// CreateCustomerNotificationWithResponse Create an organization cost anomaly notification
+//
+// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Requires the `settings` (Manage settings) permission.
+// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
+func (c *ClientWithResponses) CreateCustomerNotificationWithResponse(ctx context.Context, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomerNotificationResp, error) {
+	rsp, err := c.CreateCustomerNotification(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomerNotificationResp(rsp)
+}
+
+// DeleteCustomerNotificationWithResponse Delete an organization cost anomaly notification
+//
+// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /customers/v1/notifications/{id} (the `DeleteCustomerNotification` operationId).
+func (c *ClientWithResponses) DeleteCustomerNotificationWithResponse(ctx context.Context, id string, params *DeleteCustomerNotificationParams, reqEditors ...RequestEditorFn) (*DeleteCustomerNotificationResp, error) {
+	rsp, err := c.DeleteCustomerNotification(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteCustomerNotificationResp(rsp)
+}
+
+// GetCustomerNotificationWithResponse Get an organization cost anomaly notification
+//
+// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /customers/v1/notifications/{id} (the `GetCustomerNotification` operationId).
+func (c *ClientWithResponses) GetCustomerNotificationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomerNotificationResp, error) {
+	rsp, err := c.GetCustomerNotification(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomerNotificationResp(rsp)
+}
+
+// UpdateCustomerNotificationWithBodyWithResponse Update an organization cost anomaly notification
+//
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+func (c *ClientWithResponses) UpdateCustomerNotificationWithBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerNotificationResp, error) {
+	rsp, err := c.UpdateCustomerNotificationWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerNotificationResp(rsp)
+}
+
+// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update an organization cost anomaly notification
+//
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+//
+// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
+func (c *ClientWithResponses) UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerNotificationResp, error) {
+	rsp, err := c.UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerNotificationResp(rsp)
+}
+
 // ListDatahubDatasetsWithResponse List datasets
 //
 // Returns a list of all DataHub datasets for the customer.
@@ -53357,6 +54786,911 @@ func ParseUpdateCustomerResp(rsp *http.Response) (*UpdateCustomerResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseCreateCustomerNotificationResp parses an HTTP response from a CreateCustomerNotificationWithResponse call
+func ParseCreateCustomerNotificationResp(rsp *http.Response) (*CreateCustomerNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateCustomerNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CustomerNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateCustomerNotificationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateCustomerNotificationResp201Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateCustomerNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateCustomerNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateCustomerNotificationResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateCustomerNotificationResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateCustomerNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteCustomerNotificationResp parses an HTTP response from a DeleteCustomerNotificationWithResponse call
+func ParseDeleteCustomerNotificationResp(rsp *http.Response) (*DeleteCustomerNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteCustomerNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteCustomerNotificationResp204Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteCustomerNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteCustomerNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteCustomerNotificationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DeleteCustomerNotificationResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers DeleteCustomerNotificationResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 422:
+		var headers DeleteCustomerNotificationResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers DeleteCustomerNotificationResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 500:
+		var headers DeleteCustomerNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetCustomerNotificationResp parses an HTTP response from a GetCustomerNotificationWithResponse call
+func ParseGetCustomerNotificationResp(rsp *http.Response) (*GetCustomerNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCustomerNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetCustomerNotificationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetCustomerNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetCustomerNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetCustomerNotificationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetCustomerNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCustomerNotificationResp parses an HTTP response from a UpdateCustomerNotificationWithResponse call
+func ParseUpdateCustomerNotificationResp(rsp *http.Response) (*UpdateCustomerNotificationResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCustomerNotificationResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerNotification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 415:
+		var dest UnsupportedMediaType
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON415 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateCustomerNotificationResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateCustomerNotificationResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateCustomerNotificationResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateCustomerNotificationResp404Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateCustomerNotificationResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers UpdateCustomerNotificationResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 415:
+		var headers UpdateCustomerNotificationResp415Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers415 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateCustomerNotificationResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers UpdateCustomerNotificationResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateCustomerNotificationResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil

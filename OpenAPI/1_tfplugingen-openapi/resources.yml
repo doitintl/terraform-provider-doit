@@ -253,6 +253,19 @@ resources:
     delete:
       path: /iam/v1/users/{userId}/notifications/{id}
       method: DELETE
+  customer_notification:
+    create:
+      path: /customers/v1/notifications
+      method: POST
+    read:
+      path: /customers/v1/notifications/{id}
+      method: GET
+    update:
+      path: /customers/v1/notifications/{id}
+      method: PATCH
+    delete:
+      path: /customers/v1/notifications/{id}
+      method: DELETE
   role:
     create:
       path: /iam/v1/roles
