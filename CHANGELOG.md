@@ -4,6 +4,8 @@
 
 ### FEATURES
 
+- **resource/doit_customer_notification**: New resource to manage organization-wide cost-anomaly notifications, delivered by email, Slack and Microsoft Teams. Slack channel IDs and Teams conversation IDs are supplied by you, because the API cannot look them up yet. The API lowercases emails; the configured spelling is kept in state. Requires the `settings` (Manage settings) permission
+
 - **resource/doit_cloudflow_connection**: New resource to manage CloudFlow connections to GCP projects, folders and organizations, and to AWS accounts ([#22](https://github.com/doitintl/terraform-provider-doit/issues/22)). The identifier is `connection_id`. The user behind the API token must be listed as the `owner`: the API denies access to a connection it just created otherwise
 
 ### ENHANCEMENTS

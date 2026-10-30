@@ -9,7 +9,6 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -109,7 +108,7 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 
 	// The generated descriptions are written for API clients (dry runs,
 	// If-Match, camelCase names); describe the Terraform behavior instead.
-	setUserNotificationDescriptions(s.Attributes, map[string]string{
+	setCostAnomalyDescriptions(s.Attributes, map[string]string{
 		"id":          "The ID of the notification.",
 		"name":        "Display name of the notification (1–200 characters).",
 		"create_time": "When the notification was created (RFC 3339, UTC).",
@@ -121,9 +120,9 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 	if settings, ok := s.Attributes["settings"].(schema.SingleNestedAttribute); ok {
 		if costAnomalies, ok := settings.Attributes["cost_anomalies"].(schema.SingleNestedAttribute); ok {
 			if minExcessCost, ok := costAnomalies.Attributes["min_excess_cost"].(schema.SingleNestedAttribute); ok {
-				appendUserNotificationMoneyValidators(minExcessCost.Attributes, false)
-				setUserNotificationDescriptions(minExcessCost.Attributes, map[string]string{
-					"amount": userNotificationAmountDescription + " Must be between `0` and `1000000000`.",
+				appendCostAnomalyMoneyValidators(minExcessCost.Attributes, false)
+				setCostAnomalyDescriptions(minExcessCost.Attributes, map[string]string{
+					"amount": costAnomalyAmountDescription + " Must be between `0` and `1000000000`.",
 				})
 				costAnomalies.Attributes["min_excess_cost"] = minExcessCost
 			}
@@ -153,13 +152,13 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 					}
 					if minIncrease, ok := whenCostGrows.Attributes["min_increase"].(schema.SingleNestedAttribute); ok {
 						minIncrease.Computed = false
-						appendUserNotificationMoneyValidators(minIncrease.Attributes, true)
-						setUserNotificationDescriptions(minIncrease.Attributes, map[string]string{
-							"amount": userNotificationAmountDescription + " Must be between `1` and `1000000000`.",
+						appendCostAnomalyMoneyValidators(minIncrease.Attributes, true)
+						setCostAnomalyDescriptions(minIncrease.Attributes, map[string]string{
+							"amount": costAnomalyAmountDescription + " Must be between `1` and `1000000000`.",
 						})
 						whenCostGrows.Attributes["min_increase"] = minIncrease
 					}
-					setUserNotificationDescriptions(whenCostGrows.Attributes, map[string]string{
+					setCostAnomalyDescriptions(whenCostGrows.Attributes, map[string]string{
 						"match":            "How to combine `percent_increase` and `min_increase`: `or` resends when either is reached, `and` when both are. Required when both are set.",
 						"percent_increase": "Minimum cost increase in percent (`10` means 10%) that triggers a resend.",
 						"min_increase":     "Minimum cost increase that triggers a resend.",
@@ -167,27 +166,27 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 					})
 					repeat.Attributes["when_cost_grows"] = whenCostGrows
 				}
-				setUserNotificationDescriptions(repeat.Attributes, map[string]string{
+				setCostAnomalyDescriptions(repeat.Attributes, map[string]string{
 					"when_cost_grows": "Resend when the anomaly's cost grows. Set `percent_increase`, `min_increase`, or both.",
 				})
 				costAnomalies.Attributes["repeat"] = repeat
 			}
 
 			if allocations, ok := costAnomalies.Attributes["allocations"].(schema.SingleNestedAttribute); ok {
-				setUserNotificationDescriptions(allocations.Attributes, map[string]string{
+				setCostAnomalyDescriptions(allocations.Attributes, map[string]string{
 					"ids": "IDs of custom single allocations, kept in the configured order. Must be `[]` when `mode` is `all`, and non-empty without duplicates for `include` and `exclude`. Preset and group allocations are rejected.",
 				})
 				costAnomalies.Attributes["allocations"] = allocations
 			}
 
-			setUserNotificationDescriptions(costAnomalies.Attributes, map[string]string{
+			setCostAnomalyDescriptions(costAnomalies.Attributes, map[string]string{
 				"min_severity":    "Minimum anomaly severity: `warning` notifies about warning and critical anomalies, `critical` only about critical ones.",
 				"allocations":     "Allocations whose anomalies trigger the notification.",
 				"min_excess_cost": "Minimum excess cost of an anomaly (not total spend) that triggers the notification.",
 				"repeat":          "Resend controls while an anomaly is active. Set `every_hours`, `when_cost_grows`, or both; remove the block to turn resending off.",
 			})
 			settings.Attributes["cost_anomalies"] = costAnomalies
-			setUserNotificationDescriptions(settings.Attributes, map[string]string{
+			setCostAnomalyDescriptions(settings.Attributes, map[string]string{
 				"cost_anomalies": "Cost-anomaly notification settings.",
 			})
 		}
@@ -207,51 +206,6 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 	})
 
 	resp.Schema = s
-}
-
-const userNotificationAmountDescription = "Amount in whole US dollars, such as `100` or `100.00`. " +
-	"The API returns amounts with two decimals; state keeps the configured spelling while the value is unchanged, " +
-	"but an imported notification has the two-decimal spelling."
-
-// setUserNotificationDescriptions replaces the descriptions of the named attributes.
-func setUserNotificationDescriptions(attributes map[string]schema.Attribute, descriptions map[string]string) {
-	for name, description := range descriptions {
-		switch a := attributes[name].(type) {
-		case schema.StringAttribute:
-			a.Description, a.MarkdownDescription = description, description
-			attributes[name] = a
-		case schema.Int64Attribute:
-			a.Description, a.MarkdownDescription = description, description
-			attributes[name] = a
-		case schema.ListAttribute:
-			a.Description, a.MarkdownDescription = description, description
-			attributes[name] = a
-		case schema.SingleNestedAttribute:
-			a.Description, a.MarkdownDescription = description, description
-			attributes[name] = a
-		default:
-			panic(fmt.Sprintf("setUserNotificationDescriptions: unsupported attribute %q (%T)", name, a))
-		}
-	}
-}
-
-// appendUserNotificationMoneyValidators tightens the generated Money checks to
-// what the API accepts: whole US dollars up to 1,000,000,000, and above zero
-// when positive is set.
-func appendUserNotificationMoneyValidators(attributes map[string]schema.Attribute, positive bool) {
-	if amount, ok := attributes["amount"].(schema.StringAttribute); ok {
-		amount.Validators = append(amount.Validators,
-			stringvalidator.RegexMatches(userNotificationAmountPattern, userNotificationAmountMessage),
-			userNotificationAmountRangeValidator{positive: positive},
-		)
-		attributes["amount"] = amount
-	}
-	if currency, ok := attributes["currency"].(schema.StringAttribute); ok {
-		currency.Validators = append(currency.Validators, stringvalidator.OneOf("USD"))
-		currency.Description = "Currency code. Must be `USD`."
-		currency.MarkdownDescription = currency.Description
-		attributes["currency"] = currency
-	}
 }
 
 func (r *userNotificationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

@@ -143,9 +143,7 @@ Optional:
 Required:
 
 - `ids` (List of String) IDs of custom single allocations, kept in the configured order. Must be `[]` when `mode` is `all`, and non-empty without duplicates for `include` and `exclude`. Preset and group allocations are rejected.
-- `mode` (String) `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-only the listed ids. `exclude` — all enabled allocations except the listed ids.
-
+- `mode` (String) `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be sent with a non-empty `ids`. `include` and `exclude` cannot be sent with an empty `ids`.
 Possible values: `all`, `include`, `exclude`
 
 

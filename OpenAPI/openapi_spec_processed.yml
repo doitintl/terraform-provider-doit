@@ -65,9 +65,8 @@ tags:
   - name: Users
     description: Manage users who have access to the DoiT platform.
   - name: Notifications
-    description: |
-      Personal notification configs for a user. Cost-anomaly configs are
-      supported.
+    description: >-
+      Personal notification configs for a user, and organization-wide cost anomaly notifications.
   - name: Roles
     description: Manage user permissions and access levels in your organization.
   - name: Organizations
@@ -3246,6 +3245,477 @@ paths:
           $ref: "#/components/responses/401"
         "403":
           $ref: "#/components/responses/403"
+  /customers/v1/notifications:
+    post:
+      operationId: createCustomerNotification
+      tags:
+        - Notifications
+      summary: Create an organization cost anomaly notification
+      description: >-
+        Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+
+        Requires the `settings` (Manage settings) permission.
+
+        The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+
+        Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        required: true
+        description: |
+          Organization cost-anomaly notification to create. Unknown fields are
+          rejected. `settings` must include `costAnomalies` and must not include
+          any other notification type. `destinations` must include `emails`,
+          `slackChannels`, and `teamsChannels`, with at least one non-empty
+          array.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerNotificationRequest"
+            example:
+              name: Anomaly alerts
+              destinations:
+                emails:
+                  - finops@example.com
+                slackChannels:
+                  - C0123ABCD
+                teamsChannels:
+                  - "19:abc@thread.tacv2"
+              settings:
+                costAnomalies:
+                  minSeverity: warning
+                  minExcessCost:
+                    amount: "100.00"
+                    currency: USD
+                  allocations:
+                    mode: include
+                    ids:
+                      - alloc_abc
+                      - alloc_def
+                  repeat:
+                    everyHours: 24
+                    whenCostGrows:
+                      match: or
+                      percentIncrease: 10
+                      minIncrease:
+                        amount: "150.00"
+                        currency: USD
+                      withinHours: 6
+      responses:
+        "200":
+          description: |
+            OK - Dry run only (`dryRun=true`). Every check of a real create passed
+            and nothing was created; `id`, `createTime`, `updateTime`, and `etag`
+            are `null`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerNotification"
+              example:
+                id: null
+                name: Anomaly alerts
+                createTime: null
+                updateTime: null
+                etag: null
+                destinations:
+                  emails:
+                    - finops@example.com
+                  slackChannels:
+                    - C0123ABCD
+                  teamsChannels:
+                    - "19:abc@thread.tacv2"
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "201":
+          description: Created - Organization notification created.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            Location:
+              description: URL of the created organization notification.
+              schema:
+                type: string
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerNotification"
+              example:
+                id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                name: Anomaly alerts
+                createTime: "2026-10-01T08:00:00Z"
+                updateTime: "2026-10-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                destinations:
+                  emails:
+                    - finops@example.com
+                  slackChannels:
+                    - C0123ABCD
+                  teamsChannels:
+                    - "19:abc@thread.tacv2"
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+                    repeat:
+                      everyHours: 24
+                      whenCostGrows:
+                        match: or
+                        percentIncrease: 10
+                        minIncrease:
+                          amount: "150.00"
+                          currency: USD
+                        withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: |
+            Conflict - another request with this Idempotency-Key is in progress.
+            Retry the same request. This is not an already-exists conflict.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              example:
+                type: https://developer.doit.com/errors/idempotency_request_in_progress
+                title: Idempotency request in progress
+                status: 409
+                detail: a request with this Idempotency-Key is already in progress, retry shortly
+                code: idempotency_request_in_progress
+                retryable: true
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /customers/v1/notifications/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: |
+          The unique ID of the notification config returned by create or list.
+          An id that is not a cost-anomaly config for this tenant returns `404`.
+        schema:
+          type: string
+          minLength: 1
+    get:
+      operationId: getCustomerNotification
+      tags:
+        - Notifications
+      summary: Get an organization cost anomaly notification
+      description: >-
+        Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+      responses:
+        "200":
+          description: OK - Organization notification returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerNotification"
+              example:
+                id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                name: Anomaly alerts
+                createTime: "2026-10-01T08:00:00Z"
+                updateTime: "2026-10-01T08:00:00Z"
+                etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                destinations:
+                  emails:
+                    - finops@example.com
+                  slackChannels:
+                    - C0123ABCD
+                  teamsChannels: []
+                settings:
+                  costAnomalies:
+                    minSeverity: warning
+                    minExcessCost:
+                      amount: "100.00"
+                      currency: USD
+                    allocations:
+                      mode: include
+                      ids:
+                        - alloc_abc
+                        - alloc_def
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      operationId: updateCustomerNotification
+      tags:
+        - Notifications
+      summary: Update an organization cost anomaly notification
+      description: >-
+        Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+
+        Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+
+        Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      requestBody:
+        required: true
+        description: |
+          JSON Merge Patch document (RFC 7396). Omitted fields stay unchanged;
+          nested objects are deep-merged; nested arrays are replaced when
+          present. Send `null` to clear optional members such as `repeat`.
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerNotificationRequest"
+            examples:
+              severity:
+                summary: Raise the minimum severity
+                value:
+                  settings:
+                    costAnomalies:
+                      minSeverity: critical
+              clearRepeat:
+                summary: Clear resend controls
+                value:
+                  settings:
+                    costAnomalies:
+                      repeat: null
+              destinations:
+                summary: Replace destinations
+                value:
+                  destinations:
+                    emails:
+                      - finops@example.com
+                    slackChannels:
+                      - C0123ABCD
+                    teamsChannels: []
+      responses:
+        "200":
+          description: |
+            OK - Notification updated. The `updated` example is a completed
+            patch: `updateTime` and `etag` change. The `dryRun` example is the
+            preview when `dryRun=true`: the merged settings, with the current
+            `updateTime` and `etag` left unchanged.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerNotification"
+              examples:
+                updated:
+                  summary: Completed update
+                  value:
+                    id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-12T09:30:00Z"
+                    etag: 9b2e4d6f8a0c1e3b5d7f9a1c3e5b7d9f1a3c5e7a9b1d3f5a7c9e1b3d5f7a9c1e
+                    destinations:
+                      emails:
+                        - finops@example.com
+                      slackChannels:
+                        - C0123ABCD
+                      teamsChannels: []
+                    settings:
+                      costAnomalies:
+                        minSeverity: critical
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                dryRun:
+                  summary: Dry-run preview
+                  description: |
+                    Merged result with the current `etag` and `updateTime`.
+                    Nothing was stored. The response includes `X-Dry-Run: true`.
+                  value:
+                    id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                    destinations:
+                      emails:
+                        - finops@example.com
+                      slackChannels:
+                        - C0123ABCD
+                      teamsChannels: []
+                    settings:
+                      costAnomalies:
+                        minSeverity: critical
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |
+            Conflict - another request with this Idempotency-Key is in progress.
+            Retry the same request. This is not an already-exists conflict.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              example:
+                type: https://developer.doit.com/errors/idempotency_request_in_progress
+                title: Idempotency request in progress
+                status: 409
+                detail: a request with this Idempotency-Key is already in progress, retry shortly
+                code: idempotency_request_in_progress
+                retryable: true
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      operationId: deleteCustomerNotification
+      tags:
+        - Notifications
+      summary: Delete an organization cost anomaly notification
+      description: >-
+        Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+
+        Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
+      parameters:
+        - $ref: "#/components/parameters/ifMatchRequired"
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
+        - $ref: "#/components/parameters/dryRun"
+      responses:
+        "204":
+          description: No Content - Notification deleted, or validated when `dryRun=true`.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+            X-Dry-Run:
+              $ref: "#/components/headers/XDryRun"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |
+            Conflict - another request with this Idempotency-Key is in progress.
+            Retry the same request. This is not an already-exists conflict.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              example:
+                type: https://developer.doit.com/errors/idempotency_request_in_progress
+                title: Idempotency request in progress
+                status: 409
+                detail: a request with this Idempotency-Key is already in progress, retry shortly
+                code: idempotency_request_in_progress
+                retryable: true
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /customers/v1/customers/{customerId}:
     get:
       tags:
@@ -11391,8 +11861,9 @@ components:
 
         `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
         tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
-        id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
-        sort or drop entries. A duplicate id is rejected with `422`.
+        id. `mode: all` with a non-empty `ids`, and `include` or `exclude` with an empty `ids`, are rejected
+        with `422`. `ids` are an ordered list: the server stores and returns them in the order sent, and it does
+        not sort or drop entries. A duplicate id is rejected with `422`.
       required:
         - mode
         - ids
@@ -11403,9 +11874,12 @@ components:
             - all
             - include
             - exclude
-          description: |
-            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-            only the listed ids. `exclude` — all enabled allocations except the listed ids.
+          x-enumDescriptions:
+            all: Include all enabled allocations, including anomalies that are not tied to an allocation. Send an empty `ids`.
+            include: Include specific allocations. Requires at least one id.
+            exclude: Exclude specific allocations. Requires at least one id.
+          description: >-
+            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be sent with a non-empty `ids`. `include` and `exclude` cannot be sent with an empty `ids`.
           example: include
         ids:
           type: array
@@ -11451,20 +11925,20 @@ components:
           enum:
             - warning
             - critical
-          description: |
-            `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
-            value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
-            severity levels") and of warning both return `warning`. `critical` is stored and returned as
-            `critical`.
+          x-enumDescriptions:
+            warning: Warning and above. A missing stored severity (Console "All severity levels") is also returned as `warning`.
+            critical: Critical.
+          description: >-
+            `warning` — warning and above. `critical` — critical only. There is no `information` or `all` value; a write of `all` is rejected with `422`. Clients may send only `warning` or `critical`. Responses return only `warning` or `critical`. A missing or empty stored severity (console "All severity levels") is returned as `warning`. `critical` is stored and returned as `critical`.
           example: warning
         minExcessCost:
           description: |
             Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.
             `100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A
             negative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a
-            whole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole
-            dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
-            Responses return the amount as `"100.00"`. `0` is accepted.
+            whole number of dollars). `100` and `100.00` are both accepted. `0` and `0.00` are accepted. Amounts
+            above 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores,
+            are rejected with `422`. Responses return the amount as `"100.00"`.
           allOf:
             - $ref: "#/components/schemas/Money"
         allocations:
@@ -11475,8 +11949,9 @@ components:
       type: object
       additionalProperties: false
       minProperties: 1
-      description: |
-        Resend when the anomaly's cost grows:
+      description: |-
+        Resend when the anomaly's cost grows. At least one of `percentIncrease` or `minIncrease` is required.
+        An object with only `withinHours`, only `match`, or neither amount is rejected with `422`.
 
         - both `percentIncrease` and `minIncrease` present → `match` is
           required (`or` or `and`)
@@ -11484,17 +11959,19 @@ components:
           `match` (percentage-only or value-only)
         - neither amount present → rejected with `422`
 
-        `percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
-        window is off.
+        `percentIncrease` is an integer percent (`10` means 10 percent) and must be at least 1. Omit
+        `withinHours` when the time window is off.
       properties:
         match:
           type: string
           enum:
             - or
             - and
-          description: |
-            How to combine percent and dollar growth when both are set. Required when both amounts are present;
-            omit when only one amount is present.
+          x-enumDescriptions:
+            or: Resend when either the percent increase or the dollar increase is reached.
+            and: Resend only when both are reached.
+          description: >-
+            How to combine percent and dollar growth when both are set. Required when both amounts are present; omit when only one amount is present.
           example: or
         percentIncrease:
           type: integer
@@ -11505,11 +11982,11 @@ components:
         minIncrease:
           description: |
             Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.
-            `150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A
-            negative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a
-            whole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole
-            dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
-            Responses return the amount as `"150.00"`.
+            `150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. `0`,
+            `0.00`, and a negative amount are rejected with `422`. A fractional amount is rejected with `422`
+            (`150.99` is not a whole number of dollars). `150` and `150.00` are both accepted. Amounts above
+            1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are
+            rejected with `422`. Responses return the amount as `"150.00"`.
           allOf:
             - $ref: "#/components/schemas/Money"
         withinHours:
@@ -11640,6 +12117,52 @@ components:
           $ref: "#/components/schemas/HexColor"
         colors:
           $ref: "#/components/schemas/ThemeColors"
+    CreateCustomerNotificationRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Fields of a new organization notification. Unknown fields are
+        rejected. `settings` must include `costAnomalies` and must not include
+        any other notification type. `destinations` must include `emails`,
+        `slackChannels`, and `teamsChannels`, with at least one non-empty
+        array.
+      required:
+        - name
+        - destinations
+        - settings
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: >-
+            Display name of the notification (max 200 characters). The stored name is trimmed.
+          example: Anomaly alerts
+        destinations:
+          description: |
+            Delivery targets for this config. Must include `emails`,
+            `slackChannels`, and `teamsChannels`, with at least one non-empty
+            array.
+          allOf:
+            - $ref: "#/components/schemas/CustomerNotificationDestinations"
+        settings:
+          $ref: "#/components/schemas/CustomerNotificationSettings"
+      example:
+        name: Anomaly alerts
+        destinations:
+          emails:
+            - finops@example.com
+          slackChannels: []
+          teamsChannels: []
+        settings:
+          costAnomalies:
+            minSeverity: warning
+            minExcessCost:
+              amount: "100.00"
+              currency: USD
+            allocations:
+              mode: all
+              ids: []
     CreateDatahubDataset201Response:
       type: object
       properties:
@@ -12040,6 +12563,127 @@ components:
             format: email
           x-doit-pii: true
           x-doit-confidentiality: customer-data
+    CustomerNotification:
+      type: object
+      additionalProperties: false
+      description: |
+        Organization-wide notification config. Create and read return the full
+        resource with the same field names. Update and delete require
+        `If-Match` against the strong `etag`.
+      required:
+        - id
+        - name
+        - createTime
+        - updateTime
+        - etag
+        - destinations
+        - settings
+      properties:
+        id:
+          type: string
+          readOnly: true
+          x-terraform-computed: true
+          description: Server-assigned notification id. `null` only on a dry-run create.
+          nullable: true
+          example: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: >-
+            Display name of the notification (max 200 characters). The stored name is trimmed.
+          example: Anomaly alerts
+        createTime:
+          type: string
+          format: date-time
+          readOnly: true
+          x-terraform-computed: true
+          description: When the config was created. `null` only on a dry-run create.
+          nullable: true
+          example: "2026-10-01T08:00:00Z"
+        updateTime:
+          type: string
+          format: date-time
+          readOnly: true
+          x-terraform-computed: true
+          description: When the config was last changed. `null` only on a dry-run create.
+          nullable: true
+          example: "2026-10-01T08:00:00Z"
+        etag:
+          type: string
+          readOnly: true
+          x-terraform-computed: true
+          description: |
+            Current strong ETag as bare SHA-256 hex. The `ETag` response header
+            and `If-Match` wrap this value in double quotes. Send that quoted
+            form unchanged on update or delete. `null` only on a dry-run create.
+          nullable: true
+          example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+        destinations:
+          description: |
+            Delivery targets. Always includes `emails`, `slackChannels`, and
+            `teamsChannels`. Unused lists are empty arrays.
+          allOf:
+            - $ref: "#/components/schemas/CustomerNotificationDestinations"
+        settings:
+          description: >-
+            Subscribed notification settings. Only `costAnomalies` is accepted; any other notification type is rejected.
+          allOf:
+            - $ref: "#/components/schemas/CustomerNotificationSettings"
+    CustomerNotificationDestinations:
+      type: object
+      additionalProperties: false
+      description: >-
+        Delivery targets for an organization notification. All three arrays are always present on read. An unused destination is an empty array, never omitted and never `null`. On create, and on a patch that includes `destinations`, all three arrays are required and at least one must be non-empty. An object whose three arrays are all empty is rejected with `422`. Each array is kept in the order sent; a later read returns that same order. Emails are trimmed and stored lowercase. Channel ids are trimmed and otherwise unchanged. A duplicate value inside one array is rejected with `422` (emails compared after lowercase; channel ids compared exactly after trim).
+      required:
+        - emails
+        - slackChannels
+        - teamsChannels
+      properties:
+        emails:
+          type: array
+          minItems: 0
+          description: >-
+            Email addresses that receive the notification, in the order sent. The array is required; an empty array means email is unused. Omitting the array is rejected. At least one of `emails`, `slackChannels`, or `teamsChannels` must be non-empty. Addresses are stored and returned lowercase. A duplicate or an invalid email is `422`.
+          items:
+            type: string
+            format: email
+            minLength: 1
+            x-doit-pii: true
+          example:
+            - finops@example.com
+        slackChannels:
+          type: array
+          minItems: 0
+          description: >-
+            Slack channel ids for Slack channels that receive the notification, in the order sent. The array is required; an empty array means Slack is unused. Omitting the array is rejected. At least one of `emails`, `slackChannels`, or `teamsChannels` must be non-empty. Accepts a public channel, a shared channel, or a private channel the caller is a member of when the DoiT app is also in that channel. A service account cannot add a private channel and receives the same `422` as an id outside the tenant. The caller supplies the id; this API does not look channels up. A duplicate or an id outside the tenant is `422` without saying whether it exists elsewhere. After a channel is accepted, get and list keep returning that id even if the channel is later deleted, archived, or disconnected. That does not mean delivery still works.
+          items:
+            type: string
+            minLength: 1
+          example:
+            - C0123ABCD
+        teamsChannels:
+          type: array
+          minItems: 0
+          description: >-
+            Microsoft Teams conversation ids for Microsoft Teams channels that receive the notification, in the order sent. The array is required; an empty array means Teams is unused. Omitting the array is rejected. At least one of `emails`, `slackChannels`, or `teamsChannels` must be non-empty. A duplicate or an id outside the tenant is `422` without saying whether it exists elsewhere. A Teams id is also `422` when the tenant has no Teams entitlement. After a channel is accepted, get and list keep returning that id even if the channel is later deleted, archived, or disconnected, or the tenant loses Teams entitlement. That does not mean delivery still works.
+          items:
+            type: string
+            minLength: 1
+          example:
+            - "19:abc@thread.tacv2"
+    CustomerNotificationSettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Subscribed notification settings. Only `costAnomalies` is accepted.
+        Settings for any other type are rejected; omitting `costAnomalies` is
+        rejected.
+      required:
+        - costAnomalies
+      properties:
+        costAnomalies:
+          $ref: "#/components/schemas/CostAnomalySettings"
     CustomerSettings:
       type: object
       description: >-
@@ -15215,7 +15859,9 @@ components:
       additionalProperties: false
       description: |
         Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
-        the current list.
+        the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` /
+        `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same
+        rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
       properties:
         mode:
           type: string
@@ -15223,9 +15869,12 @@ components:
             - all
             - include
             - exclude
-          description: |
-            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-            only the listed ids. `exclude` — all enabled allocations except the listed ids.
+          x-enumDescriptions:
+            all: Include all enabled allocations, including anomalies that are not tied to an allocation. Send an empty `ids`.
+            include: Include specific allocations. Requires at least one id.
+            exclude: Exclude specific allocations. Requires at least one id.
+          description: >-
+            `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be paired with a non-empty `ids`. `include` and `exclude` cannot be paired with an empty `ids`.
         ids:
           type: array
           description: |
@@ -15238,6 +15887,11 @@ components:
     PatchCostAnomalyRepeat:
       type: object
       additionalProperties: false
+      description: |
+        Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. Nulling the
+        last remaining control, for example `everyHours: null` when that is the only stored field, leaves
+        `repeat: {}`. An empty `repeat` is rejected with `422`. To clear every resend control, send `null` for
+        `costAnomalies.repeat` itself.
       properties:
         everyHours:
           type: integer
@@ -15252,9 +15906,6 @@ components:
           description: |
             Growth-based resend controls. Send `null` to clear this branch while leaving `everyHours`.
           nullable: true
-      description: |
-        Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. To clear
-        every resend control, send `null` for `costAnomalies.repeat` itself.
     PatchCostAnomalySettings:
       type: object
       additionalProperties: false
@@ -15268,15 +15919,18 @@ components:
           enum:
             - warning
             - critical
-          description: |
-            `warning` — warning and above. `critical` — critical only. A write of `all` is rejected with `422`.
+          x-enumDescriptions:
+            warning: Warning and above. A missing stored severity (Console "All severity levels") is also returned as `warning`.
+            critical: Critical.
+          description: >-
+            `warning` — warning and above. `critical` — critical only. Clients may send only `warning` or `critical`. A write of `all` is rejected with `422`.
         minExcessCost:
           description: |
             Minimum excess cost, as Money. Omit it to leave the current value; it cannot be cleared. `currency`
             must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with `422`.
             A fractional amount is rejected with `422` (`100.99` is not a whole number of dollars). `100` and
-            `100.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
-            exponents, a leading `+`, or underscores, are rejected with `422`. `0` is accepted.
+            `100.00` are both accepted. `0` and `0.00` are accepted. Amounts above 1,000,000,000 whole dollars,
+            and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
           allOf:
             - $ref: "#/components/schemas/Money"
         allocations:
@@ -15291,7 +15945,9 @@ components:
       additionalProperties: false
       description: |
         Merge-patch for `whenCostGrows`. Omit a field to leave it; send `null` to clear `match`,
-        `percentIncrease`, `minIncrease`, or `withinHours`.
+        `percentIncrease`, `minIncrease`, or `withinHours`. After the merge, `percentIncrease` and/or
+        `minIncrease` must still be set, and both amounts still require `match`. A merged object with only
+        `withinHours`, only `match`, or neither amount is rejected with `422`.
       properties:
         match:
           type: string
@@ -15299,7 +15955,10 @@ components:
             - or
             - and
             - null
-          description: |
+          x-enumDescriptions:
+            or: Resend when either the percent increase or the dollar increase is reached.
+            and: Resend only when both are reached.
+          description: >-
             How to combine percent and dollar growth when both are set. Send `null` to clear.
           nullable: true
         percentIncrease:
@@ -15311,10 +15970,10 @@ components:
         minIncrease:
           description: |
             Minimum cost growth, as Money. Must be a positive whole number of dollars. Send `null` to clear.
-            `currency` must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with
-            `422`. A fractional amount is rejected with `422` (`150.99` is not a whole number of dollars). `150` and
-            `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`,
-            exponents, a leading `+`, or underscores, are rejected with `422`.
+            `currency` must be `USD`; any other currency is rejected with `422`. `0`, `0.00`, and a negative
+            amount are rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a whole
+            number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars,
+            and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
           allOf:
             - $ref: "#/components/schemas/Money"
           nullable: true
@@ -15324,6 +15983,15 @@ components:
           maximum: 24
           description: Optional window in hours (1–24). Send `null` to clear.
           nullable: true
+    PatchCustomerNotificationSettings:
+      type: object
+      additionalProperties: false
+      description: |
+        Merge-patch for `settings`. Omit `costAnomalies` to leave settings
+        unchanged. Only `costAnomalies` is accepted.
+      properties:
+        costAnomalies:
+          $ref: "#/components/schemas/PatchCostAnomalySettings"
     PatchUserNotificationSettings:
       type: object
       additionalProperties: false
@@ -16422,6 +17090,37 @@ components:
           $ref: "#/components/schemas/HexColor"
         colors:
           $ref: "#/components/schemas/ThemeColors"
+    UpdateCustomerNotificationRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: |
+        JSON Merge Patch (RFC 7396) for an organization notification. Omitted
+        fields stay unchanged; nested objects are deep-merged; nested arrays
+        (for example `allocations.ids`) are replaced when present. When
+        `destinations` is present it replaces the whole destinations object.
+        Send `null` to clear optional members such as `repeat`,
+        `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: >-
+            Display name of the notification (max 200 characters). The stored name is trimmed.
+          example: Anomaly alerts (updated)
+        destinations:
+          description: |
+            Replacement destinations when present. Replaces the whole object;
+            all three arrays are required and at least one must be non-empty.
+          allOf:
+            - $ref: "#/components/schemas/CustomerNotificationDestinations"
+        settings:
+          $ref: "#/components/schemas/PatchCustomerNotificationSettings"
+      example:
+        settings:
+          costAnomalies:
+            minSeverity: critical
     UpdateDatahubDataset200Response:
       type: object
       properties:

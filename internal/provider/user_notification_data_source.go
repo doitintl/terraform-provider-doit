@@ -43,6 +43,12 @@ func (d *userNotificationDataSource) Configure(_ context.Context, req datasource
 
 func (d *userNotificationDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_user_notification.UserNotificationDataSourceSchema(ctx)
+
+	// The spec text for these endpoints also mentions organization-wide
+	// notifications, which are a separate resource (doit_customer_notification).
+	s.Description = "Personal notification configs for a user. Cost-anomaly configs are supported."
+	s.MarkdownDescription = s.Description
+
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s
 }
