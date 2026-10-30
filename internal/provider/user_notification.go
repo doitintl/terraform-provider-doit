@@ -3,8 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"math/big"
-	"regexp"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
@@ -14,13 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/oapi-codegen/nullable"
 )
-
-// userNotificationAmountPattern is a whole number of dollars, optionally with
-// zero cents. The API rejects fractional amounts and more than two decimals,
-// and echoes accepted amounts with two decimals ("100" → "100.00").
-var userNotificationAmountPattern = regexp.MustCompile(`^(0|[1-9][0-9]*)(\.0{1,2})?$`)
-
-const userNotificationAmountMessage = "must be a whole number of US dollars, such as `100` or `100.00`"
 
 type userNotificationResourceModel struct {
 	resource_user_notification.UserNotificationModel
@@ -131,7 +122,7 @@ func buildUserNotificationSettings(ctx context.Context, ca *models.CostAnomalySe
 	minExcessCost, d := resource_user_notification.NewMinExcessCostValue(
 		resource_user_notification.MinExcessCostValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"amount":   preserveUserNotificationAmount(prior.MinExcessCost.Amount, ca.MinExcessCost.Amount),
+			"amount":   preserveCostAnomalyAmount(prior.MinExcessCost.Amount, ca.MinExcessCost.Amount),
 			"currency": types.StringValue(ca.MinExcessCost.Currency),
 		},
 	)
@@ -178,7 +169,7 @@ func buildUserNotificationRepeat(ctx context.Context, repeat *models.CostAnomaly
 			minIncrease, d = resource_user_notification.NewMinIncreaseValue(
 				resource_user_notification.MinIncreaseValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"amount":   preserveUserNotificationAmount(prior.WhenCostGrows.MinIncrease.Amount, wcg.MinIncrease.Amount),
+					"amount":   preserveCostAnomalyAmount(prior.WhenCostGrows.MinIncrease.Amount, wcg.MinIncrease.Amount),
 					"currency": types.StringValue(wcg.MinIncrease.Currency),
 				},
 			)
@@ -220,28 +211,6 @@ func intPointerToInt64(v *int) types.Int64 {
 		return types.Int64Null()
 	}
 	return types.Int64Value(int64(*v))
-}
-
-// preserveUserNotificationAmount keeps the amount in state when it has the same
-// value as the API's. The API always answers with two decimals ("100" →
-// "100.00"), so taking its spelling would drift from a config that omits them.
-func preserveUserNotificationAmount(prior types.String, apiAmount string) types.String {
-	if !prior.IsUnknown() && !prior.IsNull() && userNotificationAmountsEqual(prior.ValueString(), apiAmount) {
-		return prior
-	}
-	return types.StringValue(apiAmount)
-}
-
-func userNotificationAmountsEqual(a, b string) bool {
-	ra, ok := new(big.Rat).SetString(a)
-	if !ok {
-		return false
-	}
-	rb, ok := new(big.Rat).SetString(b)
-	if !ok {
-		return false
-	}
-	return ra.Cmp(rb) == 0
 }
 
 // overlayUserNotificationComputedFields applies the plan-first overlay for Create/Update.

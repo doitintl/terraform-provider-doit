@@ -3,14 +3,12 @@
 page_title: "doit_user_notifications Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Personal notification configs for a user. Cost-anomaly configs are
-  supported.
+  Personal notification configs for a user, and organization-wide cost anomaly notifications.
 ---
 
 # doit_user_notifications (Data Source)
 
-Personal notification configs for a user. Cost-anomaly configs are
-supported.
+Personal notification configs for a user, and organization-wide cost anomaly notifications.
 
 ## Example Usage
 
@@ -144,18 +142,16 @@ whether it exists elsewhere.
 
 `mode: all` means every allocation with anomaly detection enabled, including anomalies that are not
 tied to an allocation, and it carries an empty `ids`. `include` and `exclude` require at least one
-id. `ids` are an ordered list: the server stores and returns them in the order sent, and it does not
-sort or drop entries. A duplicate id is rejected with `422`. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--allocations))
+id. `mode: all` with a non-empty `ids`, and `include` or `exclude` with an empty `ids`, are rejected
+with `422`. `ids` are an ordered list: the server stores and returns them in the order sent, and it does
+not sort or drop entries. A duplicate id is rejected with `422`. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--allocations))
 - `min_excess_cost` (Attributes) Minimum excess cost, as Money. Notify when excess cost is above this amount, not total spend.
 `100.00` USD means $100. `currency` must be `USD`; any other currency is rejected with `422`. A
 negative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a
-whole number of dollars). `100` and `100.00` are both accepted. Amounts above 1,000,000,000 whole
-dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
-Responses return the amount as `"100.00"`. `0` is accepted. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--min_excess_cost))
-- `min_severity` (String) `warning` — warning and above. `critical` — critical only. There is no `information` or `all`
-value; a write of `all` is rejected with `422`. A read of a missing stored severity (console "All
-severity levels") and of warning both return `warning`. `critical` is stored and returned as
-`critical`.
+whole number of dollars). `100` and `100.00` are both accepted. `0` and `0.00` are accepted. Amounts
+above 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores,
+are rejected with `422`. Responses return the amount as `"100.00"`. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--min_excess_cost))
+- `min_severity` (String) `warning` — warning and above. `critical` — critical only. There is no `information` or `all` value; a write of `all` is rejected with `422`. Clients may send only `warning` or `critical`. Responses return only `warning` or `critical`. A missing or empty stored severity (console "All severity levels") is returned as `warning`. `critical` is stored and returned as `critical`.
 - `repeat` (Attributes) Resend controls for an active cost anomaly. Omit the whole `repeat` object when neither control is
 set. An empty object is rejected with `422`. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--repeat))
 
@@ -166,8 +162,7 @@ Read-Only:
 
 - `ids` (List of String) Allocation ids, in the order sent. A read returns that same order. A duplicate id is rejected
 with `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.
-- `mode` (String) `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` —
-only the listed ids. `exclude` — all enabled allocations except the listed ids.
+- `mode` (String) `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be sent with a non-empty `ids`. `include` and `exclude` cannot be sent with an empty `ids`.
 
 
 <a id="nestedatt--items--settings--cost_anomalies--min_excess_cost"></a>
@@ -185,7 +180,8 @@ Read-Only:
 Read-Only:
 
 - `every_hours` (Number) Resend until the anomaly is inactive, every N hours (1–24).
-- `when_cost_grows` (Attributes) Resend when the anomaly's cost grows:
+- `when_cost_grows` (Attributes) Resend when the anomaly's cost grows. At least one of `percentIncrease` or `minIncrease` is required.
+An object with only `withinHours`, only `match`, or neither amount is rejected with `422`.
 
 - both `percentIncrease` and `minIncrease` present → `match` is
   required (`or` or `and`)
@@ -193,22 +189,21 @@ Read-Only:
   `match` (percentage-only or value-only)
 - neither amount present → rejected with `422`
 
-`percentIncrease` is an integer percent (`10` means 10 percent). Omit `withinHours` when the time
-window is off. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--repeat--when_cost_grows))
+`percentIncrease` is an integer percent (`10` means 10 percent) and must be at least 1. Omit
+`withinHours` when the time window is off. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--repeat--when_cost_grows))
 
 <a id="nestedatt--items--settings--cost_anomalies--repeat--when_cost_grows"></a>
 ### Nested Schema for `items.settings.cost_anomalies.repeat.when_cost_grows`
 
 Read-Only:
 
-- `match` (String) How to combine percent and dollar growth when both are set. Required when both amounts are present;
-omit when only one amount is present.
+- `match` (String) How to combine percent and dollar growth when both are set. Required when both amounts are present; omit when only one amount is present.
 - `min_increase` (Attributes) Minimum cost growth that triggers a resend, as Money. Must be a positive whole number of dollars.
-`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. A
-negative amount is rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a
-whole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole
-dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
-Responses return the amount as `"150.00"`. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--repeat--when_cost_grows--min_increase))
+`150.00` USD means $150. `currency` must be `USD`; any other currency is rejected with `422`. `0`,
+`0.00`, and a negative amount are rejected with `422`. A fractional amount is rejected with `422`
+(`150.99` is not a whole number of dollars). `150` and `150.00` are both accepted. Amounts above
+1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are
+rejected with `422`. Responses return the amount as `"150.00"`. (see [below for nested schema](#nestedatt--items--settings--cost_anomalies--repeat--when_cost_grows--min_increase))
 - `percent_increase` (Number) Minimum percent cost increase that triggers a resend. `10` means 10 percent. Must be greater than 0.
 - `within_hours` (Number) Optional window in hours for the growth check (1–24).
 
