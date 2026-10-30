@@ -17861,9 +17861,9 @@
 									},
 									{
 										"name": "id",
-										"int64": {
+										"string": {
 											"computed_optional_required": "computed",
-											"description": "Comment ID."
+											"description": "Comment ID, an integer or a string. Treat it as an opaque identifier."
 										}
 									},
 									{

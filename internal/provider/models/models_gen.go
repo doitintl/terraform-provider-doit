@@ -7750,8 +7750,8 @@ type CommentExtAPI struct {
 	// Created The time when this comment was created, in milliseconds since the epoch.
 	Created *int64 `json:"created,omitempty"`
 
-	// Id Comment ID.
-	Id *int64 `json:"id,omitempty"`
+	// Id Comment ID, an integer or a string. Treat it as an opaque identifier.
+	Id *CommentExtAPI_Id `json:"id,omitempty"`
 
 	// Public Whether the comment is public. Always present in new responses,
 	// including false for private internal notes. GET reports Zendesk
@@ -7759,6 +7759,17 @@ type CommentExtAPI struct {
 	// comment. Missing metadata in legacy responses or snapshots means
 	// unknown and must not be interpreted as false.
 	Public bool `json:"public"`
+}
+
+// CommentExtAPIId0 defines model for CommentExtAPI.Id.0.
+type CommentExtAPIId0 = int64
+
+// CommentExtAPIId1 defines model for CommentExtAPI.Id.1.
+type CommentExtAPIId1 = string
+
+// CommentExtAPI_Id Comment ID, an integer or a string. Treat it as an opaque identifier.
+type CommentExtAPI_Id struct {
+	union json.RawMessage
 }
 
 // CommentExtAPIAttachmentsItem defines model for CommentExtAPIAttachmentsItem.
@@ -14119,6 +14130,68 @@ func (t CloudDiagramsGetRequest_Template) MarshalJSON() ([]byte, error) {
 }
 
 func (t *CloudDiagramsGetRequest_Template) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCommentExtAPIId0 returns the union data inside the CommentExtAPI_Id as a CommentExtAPIId0
+func (t CommentExtAPI_Id) AsCommentExtAPIId0() (CommentExtAPIId0, error) {
+	var body CommentExtAPIId0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCommentExtAPIId0 overwrites any union data inside the CommentExtAPI_Id as the provided CommentExtAPIId0
+func (t *CommentExtAPI_Id) FromCommentExtAPIId0(v CommentExtAPIId0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCommentExtAPIId0 performs a merge with any union data inside the CommentExtAPI_Id, using the provided CommentExtAPIId0
+func (t *CommentExtAPI_Id) MergeCommentExtAPIId0(v CommentExtAPIId0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCommentExtAPIId1 returns the union data inside the CommentExtAPI_Id as a CommentExtAPIId1
+func (t CommentExtAPI_Id) AsCommentExtAPIId1() (CommentExtAPIId1, error) {
+	var body CommentExtAPIId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCommentExtAPIId1 overwrites any union data inside the CommentExtAPI_Id as the provided CommentExtAPIId1
+func (t *CommentExtAPI_Id) FromCommentExtAPIId1(v CommentExtAPIId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCommentExtAPIId1 performs a merge with any union data inside the CommentExtAPI_Id, using the provided CommentExtAPIId1
+func (t *CommentExtAPI_Id) MergeCommentExtAPIId1(v CommentExtAPIId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CommentExtAPI_Id) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *CommentExtAPI_Id) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
