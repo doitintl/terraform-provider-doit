@@ -54,6 +54,10 @@ func testCheckSupportRequestCommentsAttributes(dataSourceName string) resource.T
 		}
 
 		if count > 0 {
+			if _, ok := rs.Primary.Attributes["comments.0.id"]; !ok {
+				return fmt.Errorf("comments.0.id is not set")
+			}
+
 			val, ok := rs.Primary.Attributes["comments.0.public"]
 			if !ok {
 				return fmt.Errorf("comments.0.public is not set")

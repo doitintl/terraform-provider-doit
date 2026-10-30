@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	ds "github.com/doitintl/terraform-provider-doit/internal/provider/datasource_support_request_comments"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -114,10 +115,16 @@ func (d *supportRequestCommentsDataSource) Read(ctx context.Context, req datasou
 				return
 			}
 
+			commentId, idDiags := commentIdToString(c.Id)
+			resp.Diagnostics.Append(idDiags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
 			commentVal, diags := ds.NewCommentsValue(
 				ds.CommentsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
-					"id":          types.Int64PointerValue(c.Id),
+					"id":          commentId,
 					"author":      types.StringPointerValue(c.Author),
 					"body":        types.StringPointerValue(c.Body),
 					"created":     types.Int64PointerValue(c.Created),
@@ -178,4 +185,26 @@ func mapAttachments(ctx context.Context, attachments *[]models.CommentExtAPIAtta
 	list, d := types.ListValueFrom(ctx, elemType, attachVals)
 	diags.Append(d...)
 	return list, diags
+}
+
+// commentIdToString renders the comment ID, which the API returns as either an
+// integer (Zendesk) or a string (new ticketing system), as a string. Integers
+// use their decimal form. The ID is opaque and must not be interpreted.
+func commentIdToString(id *models.CommentExtAPI_Id) (types.String, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if id == nil {
+		return types.StringNull(), diags
+	}
+	if n, err := id.AsCommentExtAPIId0(); err == nil {
+		return types.StringValue(strconv.FormatInt(n, 10)), diags
+	}
+	if s, err := id.AsCommentExtAPIId1(); err == nil {
+		return types.StringValue(s), diags
+	}
+	raw, _ := id.MarshalJSON()
+	diags.AddError(
+		"Unexpected comment ID type",
+		fmt.Sprintf("Comment ID must be an integer or a string, got: %s", string(raw)),
+	)
+	return types.StringNull(), diags
 }

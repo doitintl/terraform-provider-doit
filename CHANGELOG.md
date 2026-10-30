@@ -6,6 +6,10 @@
 
 - **resource/doit_cloudflow_connection**: New resource to manage CloudFlow connections to GCP projects, folders and organizations, and to AWS accounts ([#22](https://github.com/doitintl/terraform-provider-doit/issues/22)). The identifier is `connection_id`. The user behind the API token must be listed as the `owner`: the API denies access to a connection it just created otherwise
 
+### BREAKING CHANGES
+
+- **data-source/doit_support_request_comments**: `comments[].id` is now a string instead of a number. The API returns either an integer (Zendesk tickets) or a string (new ticketing system), so the ID is exposed as an opaque string; integer IDs keep their decimal form (`"12345"`). Configurations that compare it numerically or pass it to a number-typed variable must be adjusted
+
 ### ENHANCEMENTS
 
 - **data-source/doit_invoice, data-source/doit_invoices, data-source/doit_invoice_pdf**: Canceled invoices and credit memos are now supported. `status` can be `CANCELED`, which takes precedence over the payment status. `doit_invoices` returns canceled invoices only with `filter = "status:CANCELED"`; `doit_invoice` and `doit_invoice_pdf` can fetch them by ID

@@ -61,7 +61,7 @@ their verified email address; service-account callers use
 `sa:<serviceAccountId>`.
 - `body` (String) The text content of the comment.
 - `created` (Number) The time when this comment was created, in milliseconds since the epoch.
-- `id` (Number) Comment ID.
+- `id` (String) Comment ID, an integer or a string. Treat it as an opaque identifier.
 - `public` (Boolean) Whether the comment is public. Always present in new responses,
 including false for private internal notes. GET reports Zendesk
 visibility; POST reports the effective visibility of the created
