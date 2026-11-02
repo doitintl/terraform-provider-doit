@@ -120,6 +120,8 @@ tags:
       admin verifies the request. Agents create a request and hand the returned consentUrl to the admin;
       the admin verifies by entering the emailed code (or signing the request on the console), after which
       the tenant is provisioned and the request reports its customer id.
+  - name: Attribute Workloads (Beta)
+    description: Kubernetes workload cost data measured by the Attribute sensor.
 
 paths:
   /signup/v1/requests:
@@ -10537,7 +10539,12 @@ paths:
       description: |-
         Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
         Returns `400 invalid_connection_config` when both or neither are present.
+
+        When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
+        already listed), so a connection created without `collaborators` stays manageable by its creator.
       operationId: createCloudflowConnection
+      parameters:
+        - $ref: "#/components/parameters/idempotencyKeyRequired"
       requestBody:
         required: true
         content:
@@ -10624,6 +10631,7 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/ifMatchRequired"
       requestBody:
         required: true
         content:
@@ -10661,6 +10669,10 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
         "500":
           $ref: "#/components/responses/500"
     delete:
@@ -10675,6 +10687,7 @@ paths:
           required: true
           schema:
             type: string
+        - $ref: "#/components/parameters/ifMatchRequired"
       responses:
         "204":
           description: No Content — connection deleted.
@@ -10701,6 +10714,10 @@ paths:
                     type: integer
                   code:
                     type: string
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
         "500":
           $ref: "#/components/responses/500"
   # ============================================================
@@ -13692,6 +13709,765 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  "/attribute/v1/workloads/{dimension}/table":
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: queryAttributeWorkloadsTable
+      summary: List Kubernetes workload costs by dimension
+      description: |-
+        Returns one page of rows of Kubernetes workload cost, grouped by `dimension`, for a date
+        range. Each row has its cost, its change against the previous period of the same length,
+        and the related values for that dimension (for example the clusters and accounts of a
+        namespace). Use this for granular rows ("top 10 workloads by cost", "which namespaces grew").
+        Use `queryAttributeWorkloadsStats` for totals and the total row count, and
+        `queryAttributeWorkloadsOverTime` for a time series. Rows of the `workload` dimension carry a
+        `workloadId`: pass it to the `/attribute/v1/workloads/w/*` operations to see that one
+        workload's cloud resources.
+
+        The request body holds the filters; this operation only reads data. Build filter values
+        with `listAttributeWorkloadsFilterValues`.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsDimension"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsTableLimit"
+        - $ref: "#/components/parameters/attributeWorkloadsTableOffset"
+        - $ref: "#/components/parameters/attributeWorkloadsTableSort"
+        - $ref: "#/components/parameters/attributeWorkloadsTableGranularity"
+        - $ref: "#/components/parameters/attributeWorkloadsSignal"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadsQuery"
+      responses:
+        "200":
+          description: OK - One page of rows, sorted by `sort`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsTable"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  "/attribute/v1/workloads/{dimension}/stats":
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: queryAttributeWorkloadsStats
+      summary: Get Kubernetes workload cost totals
+      description: |-
+        Returns aggregated totals for a date range: the total cost, the number of workloads, the
+        number of distinct `dimension` values (the row count of `queryAttributeWorkloadsTable` for
+        the same request), and the percent change of the total cost against the previous period of
+        the same length. Use this for "how much did workloads cost" or "how many namespaces", and
+        to know how many pages the table has. Use `queryAttributeWorkloadsTable` for the rows.
+
+        The request body holds the filters; this operation only reads data.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsDimension"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsSignal"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadsQuery"
+      responses:
+        "200":
+          description: OK - Totals for the date range.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsStats"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  "/attribute/v1/workloads/{dimension}/over-time":
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: queryAttributeWorkloadsOverTime
+      summary: Get Kubernetes workload cost over time
+      description: |-
+        Returns a cost time series grouped by `dimension`: the top `limit` values by cost, each as
+        its own series, plus one "Others" series that sums the rest. Use this for trends and charts
+        ("daily cost of the top 5 namespaces last month"). Use `queryAttributeWorkloadsTable` for
+        rows with totals per value, and `queryAttributeWorkloadsStats` for one total.
+
+        The request body holds the filters; this operation only reads data.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsDimension"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsSeriesLimit"
+        - $ref: "#/components/parameters/attributeWorkloadsOverTimeGranularity"
+        - $ref: "#/components/parameters/attributeWorkloadsForceHourly"
+        - $ref: "#/components/parameters/attributeWorkloadsSignal"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadsQuery"
+      responses:
+        "200":
+          description: OK - One point per series per time bucket.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsOverTime"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/w/details:
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: getAttributeWorkloadDetails
+      summary: Get one workload's identity
+      description: |-
+        Decodes a `workloadId` into the workload's name, type, namespace, cluster and account. It
+        reads no cost data and takes no date range. Use it to show which workload a `workloadId`
+        names. Get a `workloadId` from a `workload` row of `queryAttributeWorkloadsTable`. An ID that
+        does not decode returns 404.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadIdRequest"
+      responses:
+        "200":
+          description: OK - The workload's key fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadDetails"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/w/resources/table:
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: queryAttributeWorkloadResourcesTable
+      summary: List one workload's cloud resources
+      description: |-
+        Returns one page of the cloud resources one workload used in a date range, one row per
+        resource, with the workload's cost on it, the change against the previous period, and
+        `accountability`: the workload's percent of the resource's total cost. Use this for "which
+        resources drive the cost of workload X". It is the `resource` dimension of
+        `queryAttributeWorkloadsTable`, limited to the workload in `workloadId`. Use
+        `queryAttributeWorkloadResourcesStats` for totals and the row count, and
+        `queryAttributeWorkloadResourcesOverTime` for a time series.
+
+        Get `workloadId` from a `workload` row of `queryAttributeWorkloadsTable`. An ID that does not
+        decode returns 404. The request body holds the filters; this operation only reads data.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsTableLimit"
+        - $ref: "#/components/parameters/attributeWorkloadsTableOffset"
+        - $ref: "#/components/parameters/attributeWorkloadResourcesTableSort"
+        - $ref: "#/components/parameters/attributeWorkloadsTableGranularity"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadResourcesQuery"
+      responses:
+        "200":
+          description: OK - One page of resource rows, sorted by `sort`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsTable"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/w/resources/stats:
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: queryAttributeWorkloadResourcesStats
+      summary: Get one workload's cost totals
+      description: |-
+        Returns aggregated totals for one workload in a date range: its total cost, the number of
+        cloud resources it used (`dimensionRowCount`, the row count of
+        `queryAttributeWorkloadResourcesTable`), and the percent change of the total against the
+        previous period of the same length. Use `queryAttributeWorkloadResourcesTable` for the
+        resource rows.
+
+        Get `workloadId` from a `workload` row of `queryAttributeWorkloadsTable`. An ID that does not
+        decode returns 404. The request body holds the filters; this operation only reads data.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadResourcesQuery"
+      responses:
+        "200":
+          description: OK - Totals for the workload in the date range.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsStats"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/w/resources/over-time:
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: queryAttributeWorkloadResourcesOverTime
+      summary: Get one workload's resource cost over time
+      description: |-
+        Returns a cost time series of one workload, split by cloud resource: the top `limit`
+        resources by cost, each as its own series, plus one "Others" series that sums the rest. Use
+        this for the trend of one workload's cost. Use `queryAttributeWorkloadResourcesTable` for
+        rows and `queryAttributeWorkloadResourcesStats` for totals.
+
+        Get `workloadId` from a `workload` row of `queryAttributeWorkloadsTable`. An ID that does not
+        decode returns 404. The request body holds the filters; this operation only reads data.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsSeriesLimit"
+        - $ref: "#/components/parameters/attributeWorkloadsOverTimeGranularity"
+        - $ref: "#/components/parameters/attributeWorkloadsForceHourly"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadResourcesQuery"
+      responses:
+        "200":
+          description: OK - One point per series per time bucket.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsOverTime"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/w/resources/non-network-types:
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: listAttributeWorkloadNonNetworkResourceTypes
+      summary: List one workload's non-network resource types
+      description: |-
+        Returns the names of the resource types (billed services) that one workload used in a date
+        range and that are not network cost, highest cost first, at most 50. It returns no cost
+        amounts, for any customer. Use it to tell a freemium customer, who sees network cost only,
+        which other cost types the workload has. For costs, use
+        `queryAttributeWorkloadResourcesTable`.
+
+        Get `workloadId` from a `workload` row of `queryAttributeWorkloadsTable`. An ID that does not
+        decode returns 404. This operation only reads data.
+
+        Freemium customers (no paid Attribute plan) can only ask for the last 60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadIdRequest"
+      responses:
+        "200":
+          description: OK - Resource type names, highest cost first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadNonNetworkResourceTypes"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/cloud-providers:
+    post:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: listAttributeWorkloadsCloudProviders
+      summary: List the cloud providers that billed workload resources
+      description: |-
+        Returns the distinct cloud providers that billed the resources matched by the filters in a
+        date range (`resourceCloudProvider`, the cloud of the billed resource, not of the cluster).
+        Send `workloadId` to limit it to one workload. Use it to know which clouds a selection
+        spans, for example before asking for `hour` granularity: Azure data is daily only. For the
+        cloud of the clusters, use `listAttributeWorkloadsFilterValues` with
+        `platformCloudProvider`.
+
+        The request body holds the filters; this operation only reads data. A `workloadId` that does
+        not decode returns 404.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsCloudProvidersLimit"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttributeWorkloadsCloudProvidersQuery"
+      responses:
+        "200":
+          description: OK - Distinct cloud provider values.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsValues"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/signals:
+    get:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: getAttributeWorkloadsSignals
+      summary: Get workloads that need attention
+      description: |-
+        Returns three lists of workloads that need attention, grouped by workload name and type.
+        Each list has every workload that meets its rules, ranked:
+
+        - `spike`: cost grew a lot against the week before.
+        - `new`: workloads first seen in the last two weeks with real cost.
+        - `network`: network cost grew a lot against the week before (the same rules as `spike`,
+          applied to network cost).
+
+        The windows are fixed UTC days and do not depend on any date range: the current window is
+        today minus 8 days to today minus 2 days, and the previous window is the 7 days before it.
+        `window` and `thresholds` in the response give the exact dates and rules. Use this for
+        "what changed" or "what should I look at". To get the matching rows or totals over your own
+        date range, pass `signal=spike|new|network` to `queryAttributeWorkloadsTable`,
+        `queryAttributeWorkloadsStats` or `queryAttributeWorkloadsOverTime`.
+
+        Freemium customers (no paid Attribute plan) see network cost only, so all three lists use
+        network cost for them.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK - The three signal lists, their windows and thresholds.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsSignals"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  /attribute/v1/workloads/cost-data-status:
+    get:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: getAttributeWorkloadsCostDataStatus
+      summary: Check whether workload cost data exists
+      description: |-
+        Returns `hasWorkloadData`: whether the customer has any Kubernetes workload cost data yet.
+        Call it first when other operations return empty results, to tell "no data in this date
+        range or filter" from "no workload data at all" (for example, the Attribute sensor is not
+        installed yet or its first data has not arrived).
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK - Whether workload cost data exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsCostDataStatus"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  "/attribute/v1/workloads/filters/{field}":
+    get:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: listAttributeWorkloadsFilterValues
+      summary: List the values of a workload filter field
+      description: |-
+        Returns the distinct values of one filter field in a date range, sorted case-insensitively,
+        one page at a time. Use it to find the exact values to put in `filterConditions` (for
+        example the real namespace names before filtering on `namespace`), or to answer "which
+        clusters / accounts / resource types are there". The list is limited by the date range only:
+        other filters do not narrow it.
+
+        Paging: send `limit`; when the response has `nextCursor`, send it back as `after` for the
+        next page. No `nextCursor` means the last page.
+
+        Freemium customers (no paid Attribute plan) see network cost only, and only for the last
+        60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsFilterField"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesLimit"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesAfter"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesSearch"
+      responses:
+        "200":
+          description: OK - One page of distinct values.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsPaginatedValues"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  "/attribute/v1/workloads/filters/{field}/keys":
+    get:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: listAttributeWorkloadsResourceTagKeys
+      summary: List resource tag keys
+      description: |-
+        Returns the distinct tag (label) keys found on cloud resources in a date range, sorted
+        case-insensitively, one page at a time. Use `listAttributeWorkloadsResourceTagValues` to get
+        the values of one key. The list covers every resource with tags in the date range, also
+        resources no workload uses, and includes billing metadata labels such as `aws/currency`.
+        Tags cannot be used in `filterConditions` yet: these lists are for information only.
+
+        Paging: send `limit`; when the response has `nextCursor`, send it back as `after` for the
+        next page. No `nextCursor` means the last page.
+
+        Freemium customers (no paid Attribute plan) can only ask for the last 60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsTagField"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesLimit"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesAfter"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesSearch"
+      responses:
+        "200":
+          description: OK - One page of tag keys.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsPaginatedValues"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+  "/attribute/v1/workloads/filters/{field}/values":
+    get:
+      tags:
+        - Attribute Workloads (Beta)
+      operationId: listAttributeWorkloadsResourceTagValues
+      summary: List the values of one resource tag key
+      description: |-
+        Returns the distinct values of one resource tag (label) key in a date range, sorted
+        case-insensitively, one page at a time. Get the keys from
+        `listAttributeWorkloadsResourceTagKeys`. The list covers every resource with that tag in the
+        date range, also resources no workload uses. Tags cannot be used in `filterConditions` yet:
+        these lists are for information only.
+
+        Paging: send `limit`; when the response has `nextCursor`, send it back as `after` for the
+        next page. No `nextCursor` means the last page.
+
+        Freemium customers (no paid Attribute plan) can only ask for the last 60 days.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeWorkloadsTagField"
+        - $ref: "#/components/parameters/attributeWorkloadsTagKey"
+        - $ref: "#/components/parameters/attributeWorkloadsFrom"
+        - $ref: "#/components/parameters/attributeWorkloadsTo"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesLimit"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesAfter"
+        - $ref: "#/components/parameters/attributeWorkloadsValuesSearch"
+      responses:
+        "200":
+          description: OK - One page of tag values.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeWorkloadsPaginatedValues"
+        "400":
+          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeWorkloadsConflict"
+        "500":
+          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
 components:
   x-doit-doc-anchors:
     caBudgetDataSourceDescription: &caBudgetDataSourceDescription |-
@@ -15988,6 +16764,29 @@ components:
           type: string
         infraManagerServiceAccount:
           type: string
+    CloudflowAWSActionRequest:
+      type: object
+      description: A custom IAM action granted to the CloudFlow role.
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: IAM action, for example `s3:ListBucket`.
+    CloudflowAWSPermissionsRequest:
+      type: object
+      description: IAM permissions granted to the CloudFlow role.
+      properties:
+        awsManagedPolicies:
+          type: array
+          description: AWS-managed policy ARNs attached to the role.
+          items:
+            type: string
+        actions:
+          type: array
+          description: Custom IAM actions.
+          items:
+            $ref: "#/components/schemas/CloudflowAWSActionRequest"
     CloudflowAWSConfigRequest:
       type: object
       description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
@@ -16006,7 +16805,7 @@ components:
         roleName:
           type: string
         permissions:
-          type: object
+          $ref: "#/components/schemas/CloudflowAWSPermissionsRequest"
         managementAccount:
           type: string
         organizationRootId:
@@ -16068,6 +16867,21 @@ components:
                       status:
                         type: string
                         description: Server-managed per-account deployment status.
+                permissions:
+                  type: object
+                  description: Response extends request schema with server-assigned action identifiers.
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                            description: IAM action, for example `s3:ListBucket`.
+                          id:
+                            type: string
+                            description: Server-returned row identifier. Not used for permission evaluation.
         collaborators:
           type: array
           items:
@@ -16084,6 +16898,9 @@ components:
         updatedAt:
           type: string
           format: date-time
+        etag:
+          type: string
+          description: Current version of the connection. Send it unchanged in `If-Match` to update or delete.
     CloudflowTemplate:
       type: object
       description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.
@@ -26874,6 +27691,654 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResellerAccountWithTenants"
+    AttributeWorkloadsFilterField:
+      type: string
+      description: |-
+        A field to filter on. Get its values from `listAttributeWorkloadsFilterValues`.
+
+        - `name`: workload name. `type`: workload type. `namespace`: Kubernetes namespace.
+        - `platform_name`, `platform_type`, `platform_region`: the cluster's name, type and region.
+        - `accountId`: the cloud account of the cluster.
+        - `platformCloudProvider`: the cloud the cluster runs on.
+        - `resourceName`: the billed resource's ID. `resourceType`: the billed service.
+          `resourceRegion`: the resource's region.
+        - `resourceAccountId`, `resourceAccountName`: the cloud account (or project) that holds
+          the resource.
+        - `resourceCloudProvider`: the cloud that billed the resource.
+        - `costDescription`: the billing SKU description.
+      enum:
+        - accountId
+        - costDescription
+        - name
+        - namespace
+        - platform_name
+        - platform_region
+        - platform_type
+        - platformCloudProvider
+        - resourceAccountId
+        - resourceAccountName
+        - resourceCloudProvider
+        - resourceName
+        - resourceRegion
+        - resourceType
+        - type
+    AttributeWorkloadsFilterCondition:
+      type: object
+      description: One condition on one field.
+      required:
+        - var
+        - operator
+        - values
+      properties:
+        var:
+          type: object
+          required:
+            - field
+          properties:
+            field:
+              $ref: "#/components/schemas/AttributeWorkloadsFilterField"
+        operator:
+          type: string
+          description: |-
+            `in` / `not_in`: the field equals / does not equal one of `values` (exact match).
+            `contains` / `not_contains`: the field contains / does not contain one of `values` as a
+            substring. `exists` / `not_exists`: the field has / has no value; send `values: []`.
+          enum:
+            - in
+            - not_in
+            - contains
+            - not_contains
+            - exists
+            - not_exists
+        values:
+          type: array
+          description: The values to compare with. Send an empty array for `exists` and `not_exists`.
+          items:
+            type: string
+    AttributeWorkloadsFilterConditionGroup:
+      description: A nested group of conditions, joined with AND or with OR. Groups cannot nest further.
+      oneOf:
+        - type: object
+          title: All of
+          additionalProperties: false
+          required:
+            - and
+          properties:
+            and:
+              type: array
+              items:
+                $ref: "#/components/schemas/AttributeWorkloadsFilterCondition"
+        - type: object
+          title: Any of
+          additionalProperties: false
+          required:
+            - or
+          properties:
+            or:
+              type: array
+              items:
+                $ref: "#/components/schemas/AttributeWorkloadsFilterCondition"
+    AttributeWorkloadsFilterConditions:
+      description: |-
+        The filters, as an object with exactly one key: `and` (every item must match) or `or` (at
+        least one item must match). Each item is a condition or a group of conditions. Send
+        `{"and": []}` for no filter.
+      oneOf:
+        - type: object
+          title: All of
+          additionalProperties: false
+          required:
+            - and
+          properties:
+            and:
+              type: array
+              items:
+                anyOf:
+                  - $ref: "#/components/schemas/AttributeWorkloadsFilterCondition"
+                  - $ref: "#/components/schemas/AttributeWorkloadsFilterConditionGroup"
+        - type: object
+          title: Any of
+          additionalProperties: false
+          required:
+            - or
+          properties:
+            or:
+              type: array
+              items:
+                anyOf:
+                  - $ref: "#/components/schemas/AttributeWorkloadsFilterCondition"
+                  - $ref: "#/components/schemas/AttributeWorkloadsFilterConditionGroup"
+      example:
+        and:
+          - var:
+              field: namespace
+            operator: in
+            values:
+              - checkout
+          - or:
+              - var:
+                  field: platformCloudProvider
+                operator: in
+                values:
+                  - AWS
+              - var:
+                  field: resourceType
+                operator: contains
+                values:
+                  - Storage
+    AttributeWorkloadsQuery:
+      type: object
+      required:
+        - filterConditions
+      properties:
+        filterConditions:
+          $ref: "#/components/schemas/AttributeWorkloadsFilterConditions"
+      example:
+        filterConditions:
+          and: []
+    AttributeWorkloadIdRequest:
+      type: object
+      required:
+        - workloadId
+      properties:
+        workloadId:
+          $ref: "#/components/schemas/AttributeWorkloadId"
+    AttributeWorkloadResourcesQuery:
+      type: object
+      required:
+        - workloadId
+        - filterConditions
+      properties:
+        workloadId:
+          $ref: "#/components/schemas/AttributeWorkloadId"
+        filterConditions:
+          $ref: "#/components/schemas/AttributeWorkloadsFilterConditions"
+    AttributeWorkloadsCloudProvidersQuery:
+      type: object
+      required:
+        - filterConditions
+      properties:
+        workloadId:
+          $ref: "#/components/schemas/AttributeWorkloadId"
+        filterConditions:
+          $ref: "#/components/schemas/AttributeWorkloadsFilterConditions"
+      example:
+        filterConditions:
+          and: []
+    AttributeWorkloadId:
+      type: string
+      minLength: 1
+      description: |-
+        Opaque ID of one workload. Copy it unchanged from the `workloadId` of a `workload` row of
+        `queryAttributeWorkloadsTable`; do not build or change it. An ID that does not decode
+        returns 404.
+    AttributeWorkloadsPlatform:
+      type: object
+      description: The cluster the workload runs on.
+      nullable: true
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: Cluster name.
+        type:
+          type: string
+          nullable: true
+          description: Cluster type.
+        region:
+          type: string
+          nullable: true
+          description: Cluster region.
+    AttributeWorkloadsCostByTime:
+      type: array
+      nullable: true
+      description: The row's cost per time bucket. Set only when the request has `granularity`.
+      items:
+        type: object
+        required:
+          - time
+        properties:
+          time:
+            type: string
+            description: Start of the bucket, ISO 8601 (UTC).
+          cost:
+            type: number
+            nullable: true
+    AttributeWorkloadsRow:
+      type: object
+      description: |-
+        One row of a table. Which fields are set depends on the dimension: the fields of the
+        dimension itself are scalars, and related values of a grouped dimension are lists. Fields
+        that do not apply are absent or null.
+      required:
+        - cost
+        - label
+      properties:
+        label:
+          type: string
+          description: Display name of the row, built from the dimension's fields. `--` when the value is empty.
+        workloadId:
+          type: string
+          description: |-
+            `workload` dimension only. Opaque ID of the workload; pass it unchanged to the
+            `/attribute/v1/workloads/w/*` operations.
+        name:
+          type: string
+          nullable: true
+          description: Workload name.
+        type:
+          type: string
+          nullable: true
+          description: Workload type.
+        namespace:
+          type: string
+          nullable: true
+          description: Kubernetes namespace.
+        platform:
+          $ref: "#/components/schemas/AttributeWorkloadsPlatform"
+        accountId:
+          type: string
+          nullable: true
+          description: The cloud account of the cluster.
+        platformCloudProvider:
+          type: string
+          nullable: true
+          description: The cloud the cluster runs on.
+        resourceName:
+          type: string
+          nullable: true
+          description: The billed resource's ID (`resource` dimension).
+        resourceType:
+          type: string
+          nullable: true
+          description: The billed service.
+        resourceRegion:
+          type: string
+          nullable: true
+          description: The resource's region.
+        resourceAccountId:
+          type: string
+          nullable: true
+          description: The cloud account (or project) that holds the resource.
+        resourceAccountName:
+          type: string
+          nullable: true
+          description: The name of that account (or project).
+        resourceCloudProvider:
+          type: string
+          nullable: true
+          description: The cloud that billed the resource.
+        costDescription:
+          type: string
+          nullable: true
+          description: The billing SKU description.
+        cost:
+          type: number
+          description: Cost in the date range.
+        change:
+          type: number
+          nullable: true
+          description: |-
+            Percent change of `cost` against the previous period of the same length. Null when the
+            previous cost is 0.
+        dollarChange:
+          type: number
+          nullable: true
+          description: |-
+            `cost` minus the cost of the previous period of the same length. Null when the previous
+            cost is 0.
+        costBeforeChange:
+          type: number
+          nullable: true
+          description: Cost of the previous period, when returned.
+        accountability:
+          type: number
+          nullable: true
+          description: |-
+            `queryAttributeWorkloadResourcesTable` only. The workload's percent (0 to 100) of the
+            resource's total cost in the date range. Null when the resource has no ID.
+        costByTime:
+          $ref: "#/components/schemas/AttributeWorkloadsCostByTime"
+        types:
+          type: array
+          nullable: true
+          description: Workload types in this row.
+          items:
+            type: string
+        platforms:
+          type: array
+          nullable: true
+          description: Cluster names in this row.
+          items:
+            type: string
+        regions:
+          type: array
+          nullable: true
+          description: Cluster regions in this row.
+          items:
+            type: string
+        accountIds:
+          type: array
+          nullable: true
+          description: Cloud accounts of the clusters in this row.
+          items:
+            type: string
+        resources:
+          type: array
+          nullable: true
+          description: Resource types (billed services) in this row.
+          items:
+            type: string
+        resourceAccounts:
+          type: array
+          nullable: true
+          description: Cloud accounts that hold the resources in this row.
+          items:
+            type: string
+        platformCloudProviders:
+          type: array
+          nullable: true
+          description: Clouds of the clusters in this row.
+          items:
+            type: string
+    AttributeWorkloadsTable:
+      type: object
+      required:
+        - workloads
+      properties:
+        workloads:
+          type: array
+          description: |-
+            The rows of this page. There is no total row count here: use `dimensionRowCount` from
+            the matching stats operation. A page shorter than `limit` is the last page.
+          items:
+            $ref: "#/components/schemas/AttributeWorkloadsRow"
+    AttributeWorkloadsStats:
+      type: object
+      properties:
+        totalCost:
+          type: number
+          nullable: true
+          description: Total cost in the date range.
+        count:
+          type: number
+          nullable: true
+          description: Number of workloads with cost in the date range.
+        dimensionRowCount:
+          type: number
+          nullable: true
+          description: |-
+            Number of distinct values of the dimension (for the `w/resources` operation: number of
+            resources). Equals the total row count of the matching table operation.
+        change:
+          type: number
+          nullable: true
+          description: |-
+            Percent change of `totalCost` against the previous period of the same length. Null
+            when the previous total is 0.
+    AttributeWorkloadsOverTime:
+      type: object
+      required:
+        - overTime
+      properties:
+        overTime:
+          type: array
+          description: One point per series per time bucket.
+          items:
+            type: object
+            required:
+              - time
+              - cost
+              - value
+            properties:
+              time:
+                type: string
+                description: Start of the time bucket, ISO 8601 (UTC).
+              cost:
+                type: number
+                description: Cost of the series in this bucket.
+              value:
+                type: string
+                description: Series name (the dimension value), or the "Others" series that sums the rest.
+    AttributeWorkloadDetails:
+      type: object
+      required:
+        - workloadId
+        - name
+        - type
+        - namespace
+        - accountId
+        - platform
+      properties:
+        workloadId:
+          type: string
+        name:
+          type: string
+          description: Workload name.
+        type:
+          type: string
+          description: Workload type.
+        namespace:
+          type: string
+          description: Kubernetes namespace. Empty when the workload has none.
+        accountId:
+          type: string
+          description: The cloud account of the cluster.
+        platform:
+          type: object
+          required:
+            - name
+            - type
+            - region
+          properties:
+            name:
+              type: string
+            type:
+              type: string
+            region:
+              type: string
+        platformCloudProvider:
+          type: string
+          description: The cloud the cluster runs on. Absent when the ID does not carry it.
+    AttributeWorkloadNonNetworkResourceTypes:
+      type: object
+      required:
+        - resourceTypes
+      properties:
+        resourceTypes:
+          type: array
+          maxItems: 50
+          description: Resource type names, highest cost first.
+          items:
+            type: string
+    AttributeWorkloadsValues:
+      type: object
+      required:
+        - values
+      properties:
+        values:
+          type: array
+          items:
+            type: string
+    AttributeWorkloadsPaginatedValues:
+      type: object
+      required:
+        - values
+      properties:
+        values:
+          type: array
+          description: One page of distinct values, sorted case-insensitively.
+          items:
+            type: string
+        nextCursor:
+          type: string
+          description: Present when there are more values. Send it as `after` to get the next page.
+    AttributeWorkloadsSignalWindow:
+      type: object
+      description: The windows the signals use, as inclusive `YYYY-MM-DD` UTC days.
+      required:
+        - from
+        - to
+        - previousFrom
+        - previousTo
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        previousFrom:
+          type: string
+          format: date
+        previousTo:
+          type: string
+          format: date
+    AttributeWorkloadsSignalSpike:
+      type: object
+      required:
+        - name
+        - type
+        - workloadCount
+        - cost
+        - previousCost
+        - dollarChange
+        - change
+      properties:
+        name:
+          type: string
+          description: Workload name.
+        type:
+          type: string
+          nullable: true
+          description: Workload type.
+        workloadCount:
+          type: number
+          description: Number of workloads with this name and type in the signal (one per cluster or namespace).
+        cost:
+          type: number
+          description: Cost in the current window.
+        previousCost:
+          type: number
+          description: Cost in the previous window.
+        dollarChange:
+          type: number
+          description: "`cost` minus `previousCost`."
+        change:
+          type: number
+          description: Percent change from `previousCost` to `cost`.
+    AttributeWorkloadsSignalNew:
+      type: object
+      required:
+        - name
+        - type
+        - workloadCount
+        - cost
+        - firstSeen
+      properties:
+        name:
+          type: string
+          description: Workload name.
+        type:
+          type: string
+          nullable: true
+          description: Workload type.
+        workloadCount:
+          type: number
+          description: Number of workloads with this name and type in the signal.
+        cost:
+          type: number
+          description: Cost in the current window.
+        firstSeen:
+          type: string
+          format: date
+          description: First UTC day with cost.
+    AttributeWorkloadsSignals:
+      type: object
+      required:
+        - window
+        - spike
+        - new
+        - network
+        - newAvailableFrom
+        - thresholds
+      properties:
+        window:
+          $ref: "#/components/schemas/AttributeWorkloadsSignalWindow"
+        spike:
+          type: array
+          description: Workloads whose cost grew the most against the previous window.
+          items:
+            $ref: "#/components/schemas/AttributeWorkloadsSignalSpike"
+        new:
+          type: array
+          description: Workloads first seen recently with real cost. Empty while `newAvailableFrom` is set.
+          items:
+            $ref: "#/components/schemas/AttributeWorkloadsSignalNew"
+        network:
+          type: array
+          description: |-
+            Workloads whose network cost grew the most against the previous window. Same fields as
+            `spike`, with network cost values.
+          items:
+            $ref: "#/components/schemas/AttributeWorkloadsSignalSpike"
+        newAvailableFrom:
+          type: string
+          format: date
+          nullable: true
+          description: |-
+            Set when the customer's cost history is still too short for the `new` signal: the first
+            UTC day `new` can have entries. Null once there is enough history, or when there is no
+            cost at all.
+        thresholds:
+          type: object
+          description: The rules used for the three lists.
+          required:
+            - windowDays
+            - firstSeenDays
+            - spike
+            - new
+            - network
+          properties:
+            windowDays:
+              type: number
+              description: Length of the current and of the previous window, in days.
+            firstSeenDays:
+              type: number
+              description: A workload is new when its first day with cost is at most this many days back.
+            spike:
+              $ref: "#/components/schemas/AttributeWorkloadsSignalSpikeThresholds"
+            new:
+              type: object
+              required:
+                - minCost
+              properties:
+                minCost:
+                  type: number
+            network:
+              $ref: "#/components/schemas/AttributeWorkloadsSignalSpikeThresholds"
+    AttributeWorkloadsSignalSpikeThresholds:
+      type: object
+      description: Rules for a growth list (`spike` on cost, `network` on network cost).
+      required:
+        - minPreviousCost
+        - minDollarChange
+        - minChangePercent
+      properties:
+        minPreviousCost:
+          type: number
+        minDollarChange:
+          type: number
+        minChangePercent:
+          type: number
+    AttributeWorkloadsCostDataStatus:
+      type: object
+      required:
+        - hasWorkloadData
+      properties:
+        hasWorkloadData:
+          type: boolean
+          description: True when the customer has at least one row of workload cost data.
   responses:
     "400":
       description: >-
@@ -27290,6 +28755,84 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: composer-api.allocation_not_found
             retryable: false
+    AttributeWorkloadsBadRequest:
+      description: |-
+        Bad Request - The query string, path or body does not match the operation's schema, for
+        example a missing `from`, a `limit` out of range, a `field` or `dimension` outside its enum,
+        or `filterConditions` that is missing or malformed. Code: `invalid_request`; `details` lists
+        each problem with its `field`. Another 4xx from the token check has code `token_rejected`.
+        Fix the request; retrying it unchanged fails again.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    AttributeWorkloadsUnauthorized:
+      description: |-
+        Unauthorized - The `Authorization: Bearer <token>` header is missing, the token is not
+        valid, or the person behind the token has no email address. Code: `unauthorized`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    AttributeWorkloadsForbidden:
+      description: |-
+        Forbidden - The caller cannot read this data. `code` gives the reason:
+
+        - `forbidden`: the token cannot act on the selected customer (`X-Tenant-Id`), or the
+          Attribute service refused the request, for example a freemium customer asked for a `from`
+          earlier than today minus 60 days (`detail` is `Feature not available`).
+        - `api_access_not_enabled`: the customer does not have DoiT API access.
+        - `unsupported_token`: this kind of token cannot call this API.
+        - `not_entitled`: the customer has no Attribute plan.
+        - `no_permission`: the user or service account has no Attribute role.
+        - `missing_customer`: the token does not resolve to a customer.
+        - `organization_mismatch`: `organizationId` was sent and is not the customer of the token.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    AttributeWorkloadsNotFound:
+      description: |-
+        Not Found - `route_not_found` when the path or HTTP method is not one of the Attribute
+        Workloads operations. `not_found` when the `workloadId` does not decode: copy it unchanged
+        from a `workload` row of `queryAttributeWorkloadsTable`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    AttributeWorkloadsConflict:
+      description: |-
+        Conflict - The customer is not set up in Attribute yet (`attribute_customer_not_provisioned`)
+        or its Attribute setup needs a fix by DoiT (`attribute_tenant_reconciliation_required`).
+        Retrying does not help; contact DoiT support.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    AttributeWorkloadsInternalServerError:
+      description: Internal Server Error - Unexpected error in the Attribute service (`upstream_error`). Retry with backoff.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    AttributeWorkloadsBadGateway:
+      description: |-
+        Bad Gateway - A service behind the gateway did not answer: token check (`auth_unavailable`)
+        or the Attribute service (`upstream_unavailable`), or the Attribute service refused the
+        gateway (`upstream_error`). Retry with backoff.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    AttributeWorkloadsServiceUnavailable:
+      description: |-
+        Service Unavailable - The Attribute integration is turned off (`integration_disabled`), the
+        token check is unavailable (`auth_unavailable`), or the permission check is unavailable
+        (`authorization_unavailable`). Retry later.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
   parameters:
     policyId:
       name: policyId
@@ -27764,6 +29307,232 @@ components:
       schema:
         type: string
         example: status:active|region:us-east-1,us-west-2
+    attributeWorkloadsDimension:
+      name: dimension
+      in: path
+      required: true
+      description: |-
+        What one row (or one series) stands for:
+
+        - `workload`: one Kubernetes workload on one cluster. Only these rows carry `workloadId`,
+          the input of the `/attribute/v1/workloads/w/*` operations.
+        - `workloadName`: all workloads with the same name, across clusters.
+        - `workloadType`: one workload type.
+        - `namespace`: one Kubernetes namespace.
+        - `platform`: one cluster (name, type, region, account and cloud).
+        - `accountId`: one cloud account that hosts clusters.
+        - `resource`: one billed cloud resource used by workloads.
+        - `resourceType`: one billed service.
+        - `costDescription`: one billing SKU description.
+        - `platformCloudProvider`: one cloud that clusters run on.
+      schema:
+        type: string
+        enum:
+          - workload
+          - workloadName
+          - workloadType
+          - namespace
+          - platform
+          - accountId
+          - resource
+          - resourceType
+          - costDescription
+          - platformCloudProvider
+    attributeWorkloadsFrom:
+      name: from
+      in: query
+      required: true
+      description: |-
+        First day of the date range (UTC), inclusive, as `YYYY-MM-DD`. The `change` fields compare
+        with the period of the same length right before this day. Freemium customers (no paid
+        Attribute plan) can only read the last 60 days: a `from` earlier than today minus 60 days
+        (UTC) returns 403.
+      schema:
+        type: string
+        format: date
+        example: "2026-09-01"
+    attributeWorkloadsTo:
+      name: to
+      in: query
+      required: true
+      description: Last day of the date range (UTC), inclusive, as `YYYY-MM-DD`. Must be on or after `from`.
+      schema:
+        type: string
+        format: date
+        example: "2026-09-30"
+    attributeWorkloadsSignal:
+      name: signal
+      in: query
+      required: false
+      description: |-
+        Keeps only the workloads of one "needs attention" list from `getAttributeWorkloadsSignals`:
+        `spike`, `new` or `network`. The lists use their own fixed windows, not `from` and `to`;
+        `from` and `to` still decide which cost is shown. When the list is empty, no rows match.
+        Omit it to read all workloads.
+      schema:
+        type: string
+        enum:
+          - spike
+          - new
+          - network
+    attributeWorkloadsTableLimit:
+      name: limit
+      in: query
+      required: false
+      description: |-
+        Rows per page. Default 10. The server sets no maximum, so ask only for what you need
+        (100 or less keeps the response small).
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+    attributeWorkloadsTableOffset:
+      name: offset
+      in: query
+      required: false
+      description: |-
+        Number of rows to skip. Default 0. For the next page, send `offset` plus `limit`. A page with
+        fewer than `limit` rows is the last page.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    attributeWorkloadsTableSort:
+      name: sort
+      in: query
+      required: false
+      description: |-
+        Sort order, as a JSON object `{"field": "<field>", "order": "asc" | "desc"}` (URL-encode it).
+        Default `{"field":"cost","order":"desc"}`. `field` is one of: `cost`, `change` (percent),
+        `dollarChange`, `name`, `type`, `namespace`, `platform_name`, `platform_region`, `accountId`,
+        `platformCloudProvider`, `resourceName`, `resourceType`, `resourceRegion`,
+        `resourceAccountId`, `resourceAccountName`, `resourceCloudProvider`, `costDescription`.
+        Sort by a field that the chosen dimension returns.
+      schema:
+        type: string
+        example: '{"field":"cost","order":"desc"}'
+    attributeWorkloadResourcesTableSort:
+      name: sort
+      in: query
+      required: false
+      description: |-
+        Sort order, as a JSON object `{"field": "<field>", "order": "asc" | "desc"}` (URL-encode it).
+        Default `{"field":"cost","order":"desc"}`. `field` is one of: `cost`, `accountability`,
+        `change` (percent), `dollarChange`, `resourceName`, `resourceType`, `resourceRegion`,
+        `resourceAccountId`, `resourceAccountName`, `resourceCloudProvider`.
+      schema:
+        type: string
+        example: '{"field":"accountability","order":"desc"}'
+    attributeWorkloadsTableGranularity:
+      name: granularity
+      in: query
+      required: false
+      description: |-
+        When set, each row also has `costByTime`: its cost per `hour`, `day`, `week` or `month`.
+        Omit it when you do not need a breakdown by time. Use `hour` only for ranges of a few days;
+        Azure data has one point per day even with `hour`.
+      schema:
+        type: string
+        enum:
+          - hour
+          - day
+          - week
+          - month
+    attributeWorkloadsOverTimeGranularity:
+      name: granularity
+      in: query
+      required: false
+      description: |-
+        Size of each time bucket. Default `day`. Use `hour` only for ranges of a few days; Azure
+        data has one point per day even with `hour`.
+      schema:
+        type: string
+        enum:
+          - hour
+          - day
+          - week
+          - month
+        default: day
+    attributeWorkloadsForceHourly:
+      name: forceHourly
+      in: query
+      required: false
+      description: When `true`, uses `hour` buckets whatever `granularity` says. Default `false`.
+      schema:
+        type: boolean
+        default: false
+    attributeWorkloadsSeriesLimit:
+      name: limit
+      in: query
+      required: false
+      description: |-
+        Number of series to return, the highest cost first. Default 10. The cost of all other values
+        is summed into one more "Others" series.
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+    attributeWorkloadsCloudProvidersLimit:
+      name: limit
+      in: query
+      required: true
+      description: Maximum number of values to return, from 1 to 1000.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        example: 50
+    attributeWorkloadsFilterField:
+      name: field
+      in: path
+      required: true
+      description: |-
+        The filter field to list values for. It is the same field name used in
+        `filterConditions[].var.field`.
+      schema:
+        $ref: "#/components/schemas/AttributeWorkloadsFilterField"
+    attributeWorkloadsTagField:
+      name: field
+      in: path
+      required: true
+      description: The tag source. Only `resourceTags` (tags of the billed cloud resources) is supported.
+      schema:
+        type: string
+        enum:
+          - resourceTags
+    attributeWorkloadsTagKey:
+      name: tagKey
+      in: query
+      required: true
+      description: The tag key to list values for, exactly as `listAttributeWorkloadsResourceTagKeys` returns it.
+      schema:
+        type: string
+        minLength: 1
+        example: team
+    attributeWorkloadsValuesLimit:
+      name: limit
+      in: query
+      required: true
+      description: Values per page, from 1 to 1000.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        example: 100
+    attributeWorkloadsValuesAfter:
+      name: after
+      in: query
+      required: false
+      description: The `nextCursor` of the previous page. Omit it for the first page.
+      schema:
+        type: string
+    attributeWorkloadsValuesSearch:
+      name: search
+      in: query
+      required: false
+      description: Returns only the values that contain this text, ignoring case.
+      schema:
+        type: string
   securitySchemes:
     api_key:
       type: apiKey
