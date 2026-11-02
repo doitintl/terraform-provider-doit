@@ -4,7 +4,7 @@ Repo-local [Agent Skills](https://agentskills.io) for working on this provider. 
 
 | Skill | Use when |
 |-------|----------|
-| `evaluate-api` | Assessing a DoIT API endpoint for provider compatibility |
+| `evaluate-api` | Assessing a DoiT API endpoint or api-specs PR for provider compatibility |
 | `github-workflow` | Branching, PRs, and CI conventions |
 | `go-conventions` | Writing Go in this repo |
 | `implement-datasource` | Adding a data source |

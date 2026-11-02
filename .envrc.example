@@ -8,7 +8,6 @@ export DOIT_HOST="https://api.doit.com"
 export TEST_USER="your-email@example.com"
 export TEST_USER_2="second-user@example.com"
 export TEST_ATTRIBUTION="your-attribution-id"
-# Must be a project known to your DoiT customer (doit_cloudflow_connection GCP tests create connections for it).
 export TEST_PROJECT="your-project-id"
 export TEST_CUSTOMER_ID="your-customer-id"
 

@@ -13,16 +13,13 @@ Add the data source definition to `OpenAPI/1_tfplugingen-openapi/datasources.yml
 
 ```yaml
 data_sources:
-  - name: my_resource
-    schema:
-      attributes:
-        overrides:
-          - name: id
-            data_source:
-              attribute_type:
-                name: string
-                optional: false # Make ID required input
+  my_resource:
+    read:
+      path: /service/v1/my-resources/{id}
+      method: GET
 ```
+
+The read operation's path parameters become the data source's required inputs, so an `{id}` item path gives the data source a required `id` that merges with the response `id`. A resource-named parameter (`{myResourceId}`) would make `my_resource_id` the input instead; that is an upstream finding (see [evaluate-api](../evaluate-api/SKILL.md), Step 3).
 
 ## Step 2: Generate Code
 

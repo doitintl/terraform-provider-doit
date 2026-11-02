@@ -10537,12 +10537,7 @@ paths:
       description: |-
         Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
         Returns `400 invalid_connection_config` when both or neither are present.
-
-        When `collaborators` lists no owner, the caller is added as the owner (or promoted to owner when
-        already listed), so a connection created without `collaborators` stays manageable by its creator.
       operationId: createCloudflowConnection
-      parameters:
-        - $ref: "#/components/parameters/idempotencyKeyRequired"
       requestBody:
         required: true
         content:
@@ -10629,7 +10624,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: "#/components/parameters/ifMatchRequired"
       requestBody:
         required: true
         content:
@@ -10667,10 +10661,6 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
-        "412":
-          $ref: "#/components/responses/PreconditionFailed"
-        "428":
-          $ref: "#/components/responses/PreconditionRequired"
         "500":
           $ref: "#/components/responses/500"
     delete:
@@ -10685,7 +10675,6 @@ paths:
           required: true
           schema:
             type: string
-        - $ref: "#/components/parameters/ifMatchRequired"
       responses:
         "204":
           description: No Content — connection deleted.
@@ -10712,10 +10701,6 @@ paths:
                     type: integer
                   code:
                     type: string
-        "412":
-          $ref: "#/components/responses/PreconditionFailed"
-        "428":
-          $ref: "#/components/responses/PreconditionRequired"
         "500":
           $ref: "#/components/responses/500"
   # ============================================================
@@ -16003,29 +15988,6 @@ components:
           type: string
         infraManagerServiceAccount:
           type: string
-    CloudflowAWSActionRequest:
-      type: object
-      description: A custom IAM action granted to the CloudFlow role.
-      required:
-        - value
-      properties:
-        value:
-          type: string
-          description: IAM action, for example `s3:ListBucket`.
-    CloudflowAWSPermissionsRequest:
-      type: object
-      description: IAM permissions granted to the CloudFlow role.
-      properties:
-        awsManagedPolicies:
-          type: array
-          description: AWS-managed policy ARNs attached to the role.
-          items:
-            type: string
-        actions:
-          type: array
-          description: Custom IAM actions.
-          items:
-            $ref: "#/components/schemas/CloudflowAWSActionRequest"
     CloudflowAWSConfigRequest:
       type: object
       description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
@@ -16044,7 +16006,7 @@ components:
         roleName:
           type: string
         permissions:
-          $ref: "#/components/schemas/CloudflowAWSPermissionsRequest"
+          type: object
         managementAccount:
           type: string
         organizationRootId:
@@ -16106,21 +16068,6 @@ components:
                       status:
                         type: string
                         description: Server-managed per-account deployment status.
-                permissions:
-                  type: object
-                  description: Response extends request schema with server-assigned action identifiers.
-                  properties:
-                    actions:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          value:
-                            type: string
-                            description: IAM action, for example `s3:ListBucket`.
-                          id:
-                            type: string
-                            description: Server-returned row identifier. Not used for permission evaluation.
         collaborators:
           type: array
           items:
@@ -16137,9 +16084,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-        etag:
-          type: string
-          description: Current version of the connection. Send it unchanged in `If-Match` to update or delete.
     CloudflowTemplate:
       type: object
       description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.
@@ -22767,9 +22711,11 @@ components:
         - public
       properties:
         id:
-          type: integer
-          description: Comment ID.
-          format: int64
+          oneOf:
+            - type: integer
+              format: int64
+            - type: string
+          description: Comment ID, an integer or a string. Treat it as an opaque identifier.
         body:
           type: string
           description: The text content of the comment.

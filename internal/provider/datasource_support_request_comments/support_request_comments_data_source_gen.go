@@ -59,10 +59,10 @@ func SupportRequestCommentsDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "The time when this comment was created, in milliseconds since the epoch.",
 							MarkdownDescription: "The time when this comment was created, in milliseconds since the epoch.",
 						},
-						"id": schema.Int64Attribute{
+						"id": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Comment ID.",
-							MarkdownDescription: "Comment ID.",
+							Description:         "Comment ID, an integer or a string. Treat it as an opaque identifier.",
+							MarkdownDescription: "Comment ID, an integer or a string. Treat it as an opaque identifier.",
 						},
 						"public": schema.BoolAttribute{
 							Computed:            true,
@@ -209,12 +209,12 @@ func (t CommentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 		return nil, diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.Int64Value)
+	idVal, ok := idAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`id expected to be basetypes.Int64Value, was: %T`, idAttribute))
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
 	publicAttribute, ok := attributes["public"]
@@ -395,12 +395,12 @@ func NewCommentsValue(attributeTypes map[string]attr.Type, attributes map[string
 		return NewCommentsValueUnknown(), diags
 	}
 
-	idVal, ok := idAttribute.(basetypes.Int64Value)
+	idVal, ok := idAttribute.(basetypes.StringValue)
 
 	if !ok {
 		diags.AddError(
 			"Attribute Wrong Type",
-			fmt.Sprintf(`id expected to be basetypes.Int64Value, was: %T`, idAttribute))
+			fmt.Sprintf(`id expected to be basetypes.StringValue, was: %T`, idAttribute))
 	}
 
 	publicAttribute, ok := attributes["public"]
@@ -508,7 +508,7 @@ type CommentsValue struct {
 	Author      basetypes.StringValue `tfsdk:"author"`
 	Body        basetypes.StringValue `tfsdk:"body"`
 	Created     basetypes.Int64Value  `tfsdk:"created"`
-	Id          basetypes.Int64Value  `tfsdk:"id"`
+	Id          basetypes.StringValue `tfsdk:"id"`
 	Public      basetypes.BoolValue   `tfsdk:"public"`
 	state       attr.ValueState
 }
@@ -525,7 +525,7 @@ func (v CommentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 	attrTypes["author"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["body"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["created"] = basetypes.Int64Type{}.TerraformType(ctx)
-	attrTypes["id"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["public"] = basetypes.BoolType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
@@ -624,7 +624,7 @@ func (v CommentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 		"author":  basetypes.StringType{},
 		"body":    basetypes.StringType{},
 		"created": basetypes.Int64Type{},
-		"id":      basetypes.Int64Type{},
+		"id":      basetypes.StringType{},
 		"public":  basetypes.BoolType{},
 	}
 
@@ -708,7 +708,7 @@ func (v CommentsValue) AttributeTypes(ctx context.Context) map[string]attr.Type 
 		"author":  basetypes.StringType{},
 		"body":    basetypes.StringType{},
 		"created": basetypes.Int64Type{},
-		"id":      basetypes.Int64Type{},
+		"id":      basetypes.StringType{},
 		"public":  basetypes.BoolType{},
 	}
 }
