@@ -3,13 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -163,55 +161,6 @@ func validateUserNotificationWhenCostGrows(whenCostGrows resource_user_notificat
 			wcgPath.AtName("match"),
 			"Missing Match",
 			"`match` (`\"or\"` or `\"and\"`) is required when both `percent_increase` and `min_increase` are set.",
-		)
-	}
-}
-
-// userNotificationMaxAmount is the largest amount the API accepts, in US dollars.
-var userNotificationMaxAmount = big.NewRat(1_000_000_000, 1)
-
-// userNotificationAmountRangeValidator enforces the API's bounds on a Money
-// amount. Malformed amounts are left to the pattern validator.
-type userNotificationAmountRangeValidator struct {
-	// positive rejects zero (min_increase); min_excess_cost accepts it.
-	positive bool
-}
-
-var _ validator.String = userNotificationAmountRangeValidator{}
-
-func (v userNotificationAmountRangeValidator) Description(_ context.Context) string {
-	if v.positive {
-		return "amount must be greater than 0 and at most 1000000000 US dollars"
-	}
-	return "amount must be at most 1000000000 US dollars"
-}
-
-func (v userNotificationAmountRangeValidator) MarkdownDescription(ctx context.Context) string {
-	return v.Description(ctx)
-}
-
-func (v userNotificationAmountRangeValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
-	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
-		return
-	}
-
-	amount, ok := new(big.Rat).SetString(req.ConfigValue.ValueString())
-	if !ok {
-		return
-	}
-
-	if amount.Cmp(userNotificationMaxAmount) > 0 {
-		resp.Diagnostics.AddAttributeError(
-			req.Path,
-			"Invalid Amount",
-			fmt.Sprintf("Attribute %s must be at most 1000000000 US dollars, got: %s", req.Path, req.ConfigValue.ValueString()),
-		)
-	}
-	if v.positive && amount.Sign() <= 0 {
-		resp.Diagnostics.AddAttributeError(
-			req.Path,
-			"Invalid Amount",
-			fmt.Sprintf("Attribute %s must be greater than 0, got: %s", req.Path, req.ConfigValue.ValueString()),
 		)
 	}
 }

@@ -206,8 +206,8 @@ func TestUserNotificationAmountsEqual(t *testing.T) {
 		{"100", "", false},
 	}
 	for _, tt := range tests {
-		if got := userNotificationAmountsEqual(tt.a, tt.b); got != tt.want {
-			t.Errorf("userNotificationAmountsEqual(%q, %q) = %v, want %v", tt.a, tt.b, got, tt.want)
+		if got := costAnomalyAmountsEqual(tt.a, tt.b); got != tt.want {
+			t.Errorf("costAnomalyAmountsEqual(%q, %q) = %v, want %v", tt.a, tt.b, got, tt.want)
 		}
 	}
 }
@@ -231,7 +231,7 @@ func TestUserNotificationAmountPattern(t *testing.T) {
 		{"", false},
 	}
 	for _, tt := range tests {
-		if got := userNotificationAmountPattern.MatchString(tt.value); got != tt.valid {
+		if got := costAnomalyAmountPattern.MatchString(tt.value); got != tt.valid {
 			t.Errorf("pattern match for %q = %v, want %v", tt.value, got, tt.valid)
 		}
 	}
@@ -719,7 +719,7 @@ func TestUserNotificationAmountRangeValidator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := path.Root("settings").AtName("cost_anomalies").AtName("min_excess_cost").AtName("amount")
 			resp := &validator.StringResponse{}
-			userNotificationAmountRangeValidator{positive: tt.positive}.ValidateString(t.Context(), validator.StringRequest{Path: p, ConfigValue: tt.value}, resp)
+			costAnomalyAmountRangeValidator{positive: tt.positive}.ValidateString(t.Context(), validator.StringRequest{Path: p, ConfigValue: tt.value}, resp)
 
 			if tt.wantErr == "" {
 				if resp.Diagnostics.HasError() {
