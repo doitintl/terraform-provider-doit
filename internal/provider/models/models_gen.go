@@ -8910,6 +8910,18 @@ type CustomerNotificationDestinations struct {
 	TeamsChannels []string `json:"teamsChannels"`
 }
 
+// CustomerNotificationListResponse Unpaginated list of organization-wide notification configs.
+//
+// Example: {"items":[]}
+type CustomerNotificationListResponse struct {
+	// Items Cost-anomaly notification configs for the tenant, ordered by
+	// `createTime` ascending, then by `id` ascending.
+	//
+	//
+	// Example: []
+	Items []CustomerNotification `json:"items"`
+}
+
 // CustomerNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted.
 // Settings for any other type are rejected; omitting `costAnomalies` is
 // rejected.
@@ -15549,6 +15561,14 @@ type ClientInterface interface {
 	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 	UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListCustomerNotifications List organization cost anomaly notifications
+	//
+	// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+	// Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
+	//
+	// Corresponds with GET /customers/v1/notifications (the `ListCustomerNotifications` operationId).
+	ListCustomerNotifications(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateCustomerNotificationWithBody Create an organization cost anomaly notification
 	//
 	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
@@ -18691,6 +18711,24 @@ func (c *Client) UpdateCustomerWithBody(ctx context.Context, customerId Customer
 // Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 func (c *Client) UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateCustomerRequestWithApplicationMergePatchPlusJSONBody(c.Server, customerId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCustomerNotifications List organization cost anomaly notifications
+//
+// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+// Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
+//
+// Corresponds with GET /customers/v1/notifications (the `ListCustomerNotifications` operationId).
+func (c *Client) ListCustomerNotifications(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCustomerNotificationsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -25412,6 +25450,33 @@ func NewUpdateCustomerRequestWithBody(server string, customerId CustomerId, cont
 	return req, nil
 }
 
+// NewListCustomerNotificationsRequest constructs an http.Request for the ListCustomerNotifications method
+func NewListCustomerNotificationsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/notifications")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateCustomerNotificationRequest calls the generic CreateCustomerNotification builder with application/json body
 func NewCreateCustomerNotificationRequest(server string, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -30240,6 +30305,16 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 	UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
+
+	// ListCustomerNotificationsWithResponse List organization cost anomaly notifications
+	//
+	// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+	// Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /customers/v1/notifications (the `ListCustomerNotifications` operationId).
+	ListCustomerNotificationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCustomerNotificationsResp, error)
 
 	// CreateCustomerNotificationWithBodyWithResponse Create an organization cost anomaly notification
 	//
@@ -37874,6 +37949,107 @@ func (r UpdateCustomerResp) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r UpdateCustomerResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListCustomerNotificationsResp200Headers the declared response headers of an HTTP 200 response for ListCustomerNotifications
+type ListCustomerNotificationsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCustomerNotificationsResp400Headers the declared response headers of an HTTP 400 response for ListCustomerNotifications
+type ListCustomerNotificationsResp400Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCustomerNotificationsResp403Headers the declared response headers of an HTTP 403 response for ListCustomerNotifications
+type ListCustomerNotificationsResp403Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// ListCustomerNotificationsResp500Headers the declared response headers of an HTTP 500 response for ListCustomerNotifications
+type ListCustomerNotificationsResp500Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListCustomerNotificationsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerNotificationListResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *BadRequest
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationproblemJSON500 *InternalServerError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListCustomerNotificationsResp200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListCustomerNotificationsResp400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListCustomerNotificationsResp403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListCustomerNotificationsResp500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCustomerNotificationsResp) GetJSON200() *CustomerNotificationListResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListCustomerNotificationsResp) GetApplicationproblemJSON400() *BadRequest {
+	return r.ApplicationproblemJSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListCustomerNotificationsResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListCustomerNotificationsResp) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListCustomerNotificationsResp) GetApplicationproblemJSON500() *InternalServerError {
+	return r.ApplicationproblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCustomerNotificationsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCustomerNotificationsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCustomerNotificationsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCustomerNotificationsResp) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -46194,6 +46370,22 @@ func (c *ClientWithResponses) UpdateCustomerWithApplicationMergePatchPlusJSONBod
 	return ParseUpdateCustomerResp(rsp)
 }
 
+// ListCustomerNotificationsWithResponse List organization cost anomaly notifications
+//
+// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+// Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /customers/v1/notifications (the `ListCustomerNotifications` operationId).
+func (c *ClientWithResponses) ListCustomerNotificationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCustomerNotificationsResp, error) {
+	rsp, err := c.ListCustomerNotifications(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCustomerNotificationsResp(rsp)
+}
+
 // CreateCustomerNotificationWithBodyWithResponse Create an organization cost anomaly notification
 //
 // Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
@@ -53344,6 +53536,131 @@ func ParseUpdateCustomerResp(rsp *http.Response) (*UpdateCustomerResp, error) {
 		}
 		response.JSON500 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseListCustomerNotificationsResp parses an HTTP response from a ListCustomerNotificationsWithResponse call
+func ParseListCustomerNotificationsResp(rsp *http.Response) (*ListCustomerNotificationsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCustomerNotificationsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerNotificationListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest BadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalServerError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListCustomerNotificationsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListCustomerNotificationsResp400Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListCustomerNotificationsResp403Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListCustomerNotificationsResp500Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil

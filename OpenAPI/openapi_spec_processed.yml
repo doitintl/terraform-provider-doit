@@ -3246,6 +3246,69 @@ paths:
         "403":
           $ref: "#/components/responses/403"
   /customers/v1/notifications:
+    get:
+      operationId: listCustomerNotifications
+      tags:
+        - Notifications
+      summary: List organization cost anomaly notifications
+      description: >-
+        Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+
+        Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
+      responses:
+        "200":
+          description: OK - Organization notification configs returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerNotificationListResponse"
+              example:
+                items:
+                  - id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Anomaly alerts
+                    createTime: "2026-10-01T08:00:00Z"
+                    updateTime: "2026-10-01T08:00:00Z"
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                    destinations:
+                      emails:
+                        - finops@example.com
+                      slackChannels:
+                        - C0123ABCD
+                      teamsChannels:
+                        - "19:abc@thread.tacv2"
+                    settings:
+                      costAnomalies:
+                        minSeverity: warning
+                        minExcessCost:
+                          amount: "100.00"
+                          currency: USD
+                        allocations:
+                          mode: include
+                          ids:
+                            - alloc_abc
+                            - alloc_def
+                        repeat:
+                          everyHours: 24
+                          whenCostGrows:
+                            match: or
+                            percentIncrease: 10
+                            minIncrease:
+                              amount: "150.00"
+                              currency: USD
+                            withinHours: 6
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       operationId: createCustomerNotification
       tags:
@@ -12274,6 +12337,23 @@ components:
             minLength: 1
           example:
             - "19:abc@thread.tacv2"
+    CustomerNotificationListResponse:
+      type: object
+      additionalProperties: false
+      description: Unpaginated list of organization-wide notification configs.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          description: |
+            Cost-anomaly notification configs for the tenant, ordered by
+            `createTime` ascending, then by `id` ascending.
+          items:
+            $ref: "#/components/schemas/CustomerNotification"
+          example: []
+      example:
+        items: []
     CustomerNotificationSettings:
       type: object
       additionalProperties: false
