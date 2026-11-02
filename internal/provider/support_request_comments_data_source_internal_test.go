@@ -130,8 +130,8 @@ func TestSupportRequestCommentsDataSource_Read_PublicMapping(t *testing.T) {
 
 	// Verify public: true comment
 	c1 := comments[0]
-	if c1.Id.ValueInt64() != 1001 {
-		t.Errorf("comment[0].Id = %d, want 1001", c1.Id.ValueInt64())
+	if c1.Id.ValueString() != "1001" {
+		t.Errorf("comment[0].Id = %q, want %q", c1.Id.ValueString(), "1001")
 	}
 	if c1.Author.ValueString() != "requester@example.com" {
 		t.Errorf("comment[0].Author = %q, want requester@example.com", c1.Author.ValueString())
@@ -162,8 +162,8 @@ func TestSupportRequestCommentsDataSource_Read_PublicMapping(t *testing.T) {
 
 	// Verify public: false comment (internal note)
 	c2 := comments[1]
-	if c2.Id.ValueInt64() != 1002 {
-		t.Errorf("comment[1].Id = %d, want 1002", c2.Id.ValueInt64())
+	if c2.Id.ValueString() != "1002" {
+		t.Errorf("comment[1].Id = %q, want %q", c2.Id.ValueString(), "1002")
 	}
 	if c2.Author.ValueString() != "agent@example.com" {
 		t.Errorf("comment[1].Author = %q, want agent@example.com", c2.Author.ValueString())
@@ -319,5 +319,108 @@ func TestSupportRequestCommentsDataSource_ApiError(t *testing.T) {
 	}
 	if !foundSummary {
 		t.Errorf("expected error summary 'Error reading support request comments', got: %v", diags)
+	}
+}
+
+func TestCommentIdToString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		json    string // empty means a nil ID
+		want    string
+		null    bool
+		wantErr bool
+	}{
+		{name: "integer", json: `1001`, want: "1001"},
+		{name: "large integer", json: `9007199254740993`, want: "9007199254740993"},
+		{name: "string", json: `"cmt_abc123"`, want: "cmt_abc123"},
+		{name: "numeric string stays a string", json: `"007"`, want: "007"},
+		{name: "nil", null: true},
+		{name: "boolean", json: `true`, wantErr: true},
+		{name: "object", json: `{"a":1}`, wantErr: true},
+		{name: "fractional number", json: `1.5`, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var id *models.CommentExtAPI_Id
+			if tt.json != "" {
+				id = &models.CommentExtAPI_Id{}
+				if err := id.UnmarshalJSON([]byte(tt.json)); err != nil {
+					t.Fatalf("UnmarshalJSON: %v", err)
+				}
+			}
+
+			got, diags := commentIdToString(id)
+			if diags.HasError() != tt.wantErr {
+				t.Fatalf("HasError = %v, want %v: %v", diags.HasError(), tt.wantErr, diags)
+			}
+			if tt.wantErr || tt.null {
+				if !got.IsNull() {
+					t.Errorf("got %v, want null", got)
+				}
+				return
+			}
+			if got.ValueString() != tt.want {
+				t.Errorf("got %q, want %q", got.ValueString(), tt.want)
+			}
+		})
+	}
+}
+
+func TestSupportRequestCommentsDataSource_Read_MixedIdTypes(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"comments":[
+			{"id": 1001, "public": true},
+			{"id": "cmt_abc123", "public": true},
+			{"public": false}
+		]}`)
+	}))
+
+	overrides := map[string]tftypes.Value{
+		"ticket_id": tftypes.NewValue(tftypes.Number, new(big.Float).SetInt64(123)),
+	}
+	data, _, diags := readSupportRequestCommentsHelper(t, server, overrides)
+	if diags.HasError() {
+		t.Fatalf("Read() returned unexpected diagnostics: %v", diags)
+	}
+
+	var comments []ds.CommentsValue
+	if d := data.Comments.ElementsAs(t.Context(), &comments, false); d.HasError() {
+		t.Fatalf("failed to deserialize comments: %v", d)
+	}
+	if len(comments) != 3 {
+		t.Fatalf("expected 3 comments, got %d", len(comments))
+	}
+	if got := comments[0].Id.ValueString(); got != "1001" {
+		t.Errorf("comment[0].Id = %q, want %q", got, "1001")
+	}
+	if got := comments[1].Id.ValueString(); got != "cmt_abc123" {
+		t.Errorf("comment[1].Id = %q, want %q", got, "cmt_abc123")
+	}
+	if !comments[2].Id.IsNull() {
+		t.Errorf("comment[2].Id = %v, want null", comments[2].Id)
+	}
+}
+
+func TestSupportRequestCommentsDataSource_Read_MalformedCommentId(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"comments":[{"id": true, "public": true}]}`)
+	}))
+
+	overrides := map[string]tftypes.Value{
+		"ticket_id": tftypes.NewValue(tftypes.Number, new(big.Float).SetInt64(123)),
+	}
+	_, _, diags := readSupportRequestCommentsHelper(t, server, overrides)
+	if !diags.HasError() {
+		t.Fatal("expected an error diagnostic for a boolean comment ID")
 	}
 }

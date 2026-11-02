@@ -10260,9 +10260,11 @@ components:
         - public
       properties:
         id:
-          type: integer
-          description: Comment ID.
-          format: int64
+          oneOf:
+            - type: integer
+              format: int64
+            - type: string
+          description: Comment ID, an integer or a string. Treat it as an opaque identifier.
         body:
           type: string
           description: The text content of the comment.
