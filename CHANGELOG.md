@@ -10,6 +10,8 @@
 
 - **resource/doit_customer_notification**: New resource to manage organization-wide cost-anomaly notifications, delivered by email, Slack and Microsoft Teams. Slack channel IDs and Teams conversation IDs are supplied by you, because the API cannot look them up yet. The API lowercases emails; the configured spelling is kept in state. Requires the `settings` (Manage settings) permission
 
+- **data-source/doit_customer_notification, data-source/doit_customer_notifications**: New data sources to read one organization-wide cost-anomaly notification by ID, or list all of them (not paginated). Emails are returned as the API stores them, in lowercase. Require the `settings` (Manage settings) permission
+
 ### ENHANCEMENTS
 
 - **data-source/doit_invoice, data-source/doit_invoices, data-source/doit_invoice_pdf**: Canceled invoices and credit memos are now supported. `status` can be `CANCELED`, which takes precedence over the payment status. `doit_invoices` returns canceled invoices only with `filter = "status:CANCELED"`; `doit_invoice` and `doit_invoice_pdf` can fetch them by ID

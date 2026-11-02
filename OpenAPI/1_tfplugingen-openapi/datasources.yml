@@ -356,6 +356,14 @@ data_sources:
     read:
       path: /iam/v1/users/{userId}/notifications
       method: GET
+  customer_notification:
+    read:
+      path: /customers/v1/notifications/{id}
+      method: GET
+  customer_notifications:
+    read:
+      path: /customers/v1/notifications
+      method: GET
   composer_recipes:
     read:
       path: /insights/v2/recipes
