@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/oapi-codegen/nullable"
 )
 
 // These tests drive the async polling helper against a fake operations API.
@@ -37,17 +39,18 @@ type asyncTestServer struct {
 	mu sync.Mutex
 
 	// script
-	pollStatuses  []string // consumed one per poll; last value repeats
-	pollRetryHdr  string   // Retry-After sent on non-terminal polls
-	failureError  *models.AsyncOperationError
-	resultsStatus []int  // consumed one per results call; last value repeats
-	resultsBody   string // if set, returned on http.StatusOK from results endpoint
-	submitStatus  int
-	submitEmpty   int           // number of initial submits answered with a 202 carrying no operation ID
-	submitDelay   time.Duration // how long the submit handler withholds its response
-	cancelStatus  int           // status returned by the cancel endpoint
-	cancelOpState string        // operation status reported in the cancel response body
-	pollNotFound  bool          // poll returns 404
+	pollStatuses   []string // consumed one per poll; last value repeats
+	pollRetryHdr   string   // Retry-After sent on non-terminal polls
+	failureError   *models.AsyncOperationError
+	resultsStatus  []int  // consumed one per results call; last value repeats
+	resultsBody    string // if set, returned on http.StatusOK from results endpoint
+	resultsErrBody string // if set, returned (as problem+json) on a non-OK results status
+	submitStatus   int
+	submitEmpty    int           // number of initial submits answered with a 202 carrying no operation ID
+	submitDelay    time.Duration // how long the submit handler withholds its response
+	cancelStatus   int           // status returned by the cancel endpoint
+	cancelOpState  string        // operation status reported in the cancel response body
+	pollNotFound   bool          // poll returns 404
 
 	// observations
 	submitKeys    []string
@@ -178,6 +181,13 @@ func newAsyncTestServer(t *testing.T, s *asyncTestServer) *asyncTestServer {
 		s.resultQueries = append(s.resultQueries, r.URL.RawQuery)
 		status := s.resultsStatus[min(s.resultCount-1, len(s.resultsStatus)-1)]
 
+		if status != http.StatusOK && s.resultsErrBody != "" {
+			w.Header().Set("Content-Type", "application/problem+json")
+			w.WriteHeader(status)
+			_, _ = w.Write([]byte(s.resultsErrBody))
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		switch status {
@@ -272,10 +282,11 @@ func TestAwaitAsyncReport_SucceedsAfterPolling(t *testing.T) {
 		if diags.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", diags.Errors())
 		}
-		if results.Result == nil || results.Result.Rows == nil {
+		rows := nullableToPointer(results.Result.Rows)
+		if rows == nil {
 			t.Fatal("expected rows in result")
 		}
-		if got := len(*results.Result.Rows); got != 2 {
+		if got := len(*rows); got != 2 {
 			t.Errorf("rows = %d, want 2", got)
 		}
 		// Three non-terminal polls, each followed by a 5s Retry-After wait.
@@ -363,6 +374,172 @@ func TestAwaitAsyncReport_FileOutput(t *testing.T) {
 // TestAwaitAsyncReport_DetailsValueAliases verifies that when the results
 // endpoint returns details with valueAliases, awaitAsyncReport populates
 // Details on the result, and json.Marshal serializes details into the JSON output.
+// problem413Body is the problem+json the API sends when a result exceeds its
+// inline size limit.
+const problem413Body = `{"type":"https://developer.doit.com/errors/result_too_large",` +
+	`"title":"Result Too Large","status":413,` +
+	`"detail":"The result of this operation is too large to return inline",` +
+	`"code":"result_too_large","retryable":false}`
+
+// TestAwaitAsyncReport_Results413 pins that an oversized result fails fast with
+// remediation advice and is never retried: the same request would 413 again.
+func TestAwaitAsyncReport_Results413(t *testing.T) {
+	csv := models.GetAsyncOperationResultsParamsFileOutputCsv
+	for _, tc := range []struct {
+		name       string
+		fileOutput *models.GetAsyncOperationResultsParamsFileOutput
+		wantHints  []string
+	}{
+		{
+			name:       "without file output suggests it",
+			fileOutput: nil,
+			wantHints:  []string{"too large", "Set file_output", "result_too_large"},
+		},
+		{
+			name:       "with file output says the render failed",
+			fileOutput: &csv,
+			wantHints:  []string{"too large", "did not succeed", "result_too_large"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				srv := newAsyncTestServer(t, &asyncTestServer{
+					pollStatuses:   []string{"succeeded"},
+					resultsStatus:  []int{http.StatusRequestEntityTooLarge},
+					resultsErrBody: problem413Body,
+				})
+				client := newAsyncTestClient(t, srv.Server)
+
+				// The deadline is a tripwire, not part of the assertion: the retry
+				// client has no elapsed-time limit, so without it a regression that
+				// retries 413 would spin until the package timeout.
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+				defer cancel()
+
+				start := time.Now()
+				_, diags := awaitAsyncReport(ctx, client, "query", "op-1", tc.fileOutput)
+				elapsed := time.Since(start)
+
+				if !diags.HasError() {
+					t.Fatal("expected an error")
+				}
+				detail := diags.Errors()[0].Detail()
+				for _, want := range tc.wantHints {
+					if !strings.Contains(detail, want) {
+						t.Errorf("detail = %q, want it to contain %q", detail, want)
+					}
+				}
+				if _, _, _, results, _ := srv.snapshot(); results != 1 {
+					t.Errorf("results calls = %d, want 1 (413 must not be retried)", results)
+				}
+				if elapsed != 0 {
+					t.Errorf("virtual elapsed = %v, want 0", elapsed)
+				}
+			})
+		})
+	}
+}
+
+// TestAwaitAsyncReport_FileOutputClearsRows covers the response shapes of a
+// request with fileOutput set: a rendered file clears result.rows, while a
+// transient render failure returns the full inline result without a file.
+func TestAwaitAsyncReport_FileOutputClearsRows(t *testing.T) {
+	csv := models.GetAsyncOperationResultsParamsFileOutputCsv
+	for _, tc := range []struct {
+		name         string
+		body         string
+		wantRowsNil  bool
+		wantURL      bool
+		wantRowCount types.Int64
+		wantJSONRows string
+	}{
+		{
+			name:         "rendered file: rows null",
+			body:         `{"result":{"schema":[{"name":"cost","type":"float"}],"rows":null,"cacheHit":false},"fileOutput":"https://storage.example/op.csv?sig=abc"}`,
+			wantRowsNil:  true,
+			wantURL:      true,
+			wantRowCount: types.Int64Null(),
+			wantJSONRows: `"rows":null`,
+		},
+		{
+			name:         "rendered file: rows omitted",
+			body:         `{"result":{"schema":[{"name":"cost","type":"float"}],"cacheHit":false},"fileOutput":"https://storage.example/op.csv?sig=abc"}`,
+			wantRowsNil:  true,
+			wantURL:      true,
+			wantRowCount: types.Int64Null(),
+		},
+		{
+			name:         "render failed: full inline result",
+			body:         `{"result":{"schema":[{"name":"cost","type":"float"}],"rows":[["a",1],["b",2]],"cacheHit":false}}`,
+			wantRowsNil:  false,
+			wantURL:      false,
+			wantRowCount: types.Int64Value(2),
+			wantJSONRows: `"rows":[["a",1],["b",2]]`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				srv := newAsyncTestServer(t, &asyncTestServer{
+					pollStatuses: []string{"succeeded"},
+					resultsBody:  tc.body,
+				})
+				client := newAsyncTestClient(t, srv.Server)
+
+				results, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", &csv)
+				if diags.HasError() {
+					t.Fatalf("unexpected diagnostics: %v", diags.Errors())
+				}
+				if got := nullableToPointer(results.Result.Rows) == nil; got != tc.wantRowsNil {
+					t.Errorf("rows nil = %v, want %v", got, tc.wantRowsNil)
+				}
+				if got := results.FileOutput != nil; got != tc.wantURL {
+					t.Errorf("file output present = %v, want %v", got, tc.wantURL)
+				}
+				if got := rowCountFromResult(results); !got.Equal(tc.wantRowCount) {
+					t.Errorf("row_count = %v, want %v", got, tc.wantRowCount)
+				}
+				if tc.wantJSONRows != "" {
+					b, err := json.Marshal(results.Result)
+					if err != nil {
+						t.Fatalf("marshal: %v", err)
+					}
+					if !strings.Contains(string(b), tc.wantJSONRows) {
+						t.Errorf("result_json = %s, want it to contain %s", b, tc.wantJSONRows)
+					}
+				}
+			})
+		})
+	}
+}
+
+func TestRowCountFromResult(t *testing.T) {
+	url := "https://storage.example/op.csv"
+	rows := [][]nullable.Nullable[models.Value]{{}, {}, {}}
+	for _, tc := range []struct {
+		name string
+		in   *models.GetAsyncOperationResults200Response
+		want types.Int64
+	}{
+		{"rows present", &models.GetAsyncOperationResults200Response{
+			Result: &models.GetAsyncOperationResults200ResponseResult{Rows: valueToNullable(rows)}}, types.Int64Value(3)},
+		{"rows empty", &models.GetAsyncOperationResults200Response{
+			Result: &models.GetAsyncOperationResults200ResponseResult{Rows: valueToNullable([][]nullable.Nullable[models.Value]{})}}, types.Int64Value(0)},
+		{"rows absent, no file", &models.GetAsyncOperationResults200Response{
+			Result: &models.GetAsyncOperationResults200ResponseResult{}}, types.Int64Value(0)},
+		{"rows absent, file rendered", &models.GetAsyncOperationResults200Response{
+			Result: &models.GetAsyncOperationResults200ResponseResult{}, FileOutput: &url}, types.Int64Null()},
+		{"explicit null rows, file rendered", &models.GetAsyncOperationResults200Response{
+			Result: &models.GetAsyncOperationResults200ResponseResult{Rows: nullable.NewNullNullable[[][]nullable.Nullable[models.Value]]()}, FileOutput: &url}, types.Int64Null()},
+		{"no result", &models.GetAsyncOperationResults200Response{}, types.Int64Value(0)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := rowCountFromResult(tc.in); !got.Equal(tc.want) {
+				t.Errorf("row_count = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestAwaitAsyncReport_DetailsValueAliases(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		resultsPayload := `{"id":"rpt-1","reportName":"Test Report","result":{` +

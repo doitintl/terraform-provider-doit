@@ -17,7 +17,7 @@ The report is executed and the results are returned as a JSON string in `result_
 
 ~> **Note:** Report results are dynamic — they change over time as new billing data is ingested. Every `terraform plan` will re-execute the report. Set `file_output` to `pdf`, `png`, or `csv` to receive a signed `file_output_url`.
 
-The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately.
+The signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. When a file is rendered, the API clears `rows` from `result_json` (the rows are in the file) and `row_count` is null. Use `file_output = "csv"` for results too large to return inline; without it, an oversized result fails with a "too large" error. The download example stores the URL and file contents in Terraform state, so protect that state appropriately.
 
 The `result_json` field contains the full result object including:
 
@@ -142,7 +142,7 @@ resource "local_sensitive_file" "report_pdf" {
 ### Optional
 
 - `end_date` (String) An optional parameter to override the report time settings. Must be provided together with `start_date`. Format: `yyyy-mm-dd`.
-- `file_output` (String) Optional file format to render from the report result: `pdf`, `png`, or `csv`.
+- `file_output` (String) Optional file format to render from the report result: `pdf`, `png`, or `csv`. When a file is rendered, the API clears `rows` from `result_json` (the rows are in the file) and `row_count` is null. Use `file_output = "csv"` for results too large to return inline; without it, an oversized result fails with a "too large" error.
 - `start_date` (String) An optional parameter to override the report time settings. Must be provided together with `end_date`. Format: `yyyy-mm-dd`.
 - `time_range` (String) An optional parameter to override the report time settings. Value should be represented in the ISO 8601 duration format `P[n]Y[n]M[n]D` (e.g., `P7D` for 7 days, `P1M` for 1 month).
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
@@ -162,7 +162,7 @@ Structure of the decoded JSON object:
 - `secondaryRows`: Array of secondary time range row arrays (if applicable).
 - `cacheHit`: Boolean indicating if the result was served from cache.
 - `details`: Optional metadata about the result, such as `valueAliases` (display aliases for values that appear in `rows`, keyed by dimension ID like `fixed:cloud_provider` and then by stored value).
-- `row_count` (Number) The number of data rows in the result.
+- `row_count` (Number) The number of data rows in the result. Null when `file_output` was rendered, because the rows are then in the file instead of inline.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

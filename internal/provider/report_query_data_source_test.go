@@ -41,7 +41,7 @@ func TestAccReportQueryDataSource(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("row_count"),
-						knownvalue.NotNull()),
+						positiveInt64()),
 				},
 			},
 		},
@@ -60,6 +60,8 @@ func TestAccReportQueryDataSource_FileOutput(t *testing.T) {
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("file_output_url"), knownvalue.StringRegexp(regexp.MustCompile(`^https://`))),
 				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+				// The rows are in the file, so the inline row count is unknown.
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
 		}},
 	})
@@ -105,6 +107,8 @@ resource "local_sensitive_file" "query_csv" {
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
 				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+				// The rows are in the CSV file, so the inline row count is unknown.
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
 			Check: func(_ *terraform.State) error {
 				content, err := os.ReadFile(filename)
@@ -582,10 +586,11 @@ func TestAccReportQueryDataSource_ForecastFileOutput(t *testing.T) {
 						"data.doit_report_query.test",
 						tfjsonpath.New("result_json"),
 						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
+					// Only rows move to the file; forecastRows stay inline.
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("row_count"),
-						knownvalue.NotNull()),
+						knownvalue.Null()),
 				},
 				Check: func(_ *terraform.State) error {
 					content, err := os.ReadFile(filename)
@@ -1264,4 +1269,15 @@ output "dataset_alias" {
   value = lookup(local.cloud_aliases, %q, "")
 }
 `, dataset)
+}
+
+// positiveInt64 passes for a known int64 greater than zero. A bare NotNull
+// cannot tell a real row count from the zero fallback used when rows are absent.
+func positiveInt64() knownvalue.Check {
+	return knownvalue.Int64Func(func(v int64) error {
+		if v <= 0 {
+			return fmt.Errorf("expected a positive value, got %d", v)
+		}
+		return nil
+	})
 }

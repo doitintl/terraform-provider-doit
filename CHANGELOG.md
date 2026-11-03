@@ -6,6 +6,8 @@
 
 - **data-source/doit_support_request_comments**: `comments[].id` is now a string instead of a number. The API returns either an integer (Zendesk tickets) or a string (new ticketing system), so the ID is exposed as an opaque string; integer IDs keep their decimal form (`"12345"`). Configurations that compare it numerically or pass it to a number-typed variable must be adjusted
 
+- **data-source/doit_report_query, data-source/doit_report_result**: When `file_output` is set and the file is rendered, the API now clears `rows` from `result_json` (the rows are in the file) and `row_count` is null instead of the row count. `schema`, `forecastRows`, `secondaryRows` and `cacheHit` are unchanged. If rendering fails, `result_json` still contains every row and `file_output_url` is null. Configurations that read `jsondecode(result_json).rows` or `row_count` together with `file_output` must read the file instead, or drop `file_output`
+
 ### FEATURES
 
 - **resource/doit_customer_notification**: New resource to manage organization-wide cost-anomaly notifications, delivered by email, Slack and Microsoft Teams. Slack channel IDs and Teams conversation IDs are supplied by you, because the API cannot look them up yet. The API lowercases emails; the configured spelling is kept in state. Requires the `settings` (Manage settings) permission
@@ -13,6 +15,8 @@
 - **data-source/doit_customer_notification, data-source/doit_customer_notifications**: New data sources to read one organization-wide cost-anomaly notification by ID, or list all of them (not paginated). Emails are returned as the API stores them, in lowercase. Require the `settings` (Manage settings) permission
 
 ### ENHANCEMENTS
+
+- **data-source/doit_report_query, data-source/doit_report_result**: A result too large for the API to return inline (over 30 MiB) now fails with an explanatory error suggesting `file_output = "csv"`, filters, fewer dimensions or a smaller time range, instead of an opaque HTTP 500. `file_output` is also now a working way around the limit
 
 - **data-source/doit_invoice, data-source/doit_invoices, data-source/doit_invoice_pdf**: Canceled invoices and credit memos are now supported. `status` can be `CANCELED`, which takes precedence over the payment status. `doit_invoices` returns canceled invoices only with `filter = "status:CANCELED"`; `doit_invoice` and `doit_invoice_pdf` can fetch them by ID
 

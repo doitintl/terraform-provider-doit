@@ -46,11 +46,11 @@ func TestAccReportResultDataSource(t *testing.T) {
 						"data.doit_report_result.test",
 						tfjsonpath.New("cache_hit"),
 						knownvalue.NotNull()),
-					// Verify row_count is known
+					// Verify row_count is a real count, not the zero fallback
 					statecheck.ExpectKnownValue(
 						"data.doit_report_result.test",
 						tfjsonpath.New("row_count"),
-						knownvalue.NotNull()),
+						positiveInt64()),
 				},
 			},
 		},
@@ -87,6 +87,8 @@ resource "local_sensitive_file" "report_pdf" {
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+				// The rows are in the file, so the inline row count is unknown.
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
 			Check: func(_ *terraform.State) error {
 				content, err := os.ReadFile(filename)
@@ -131,6 +133,8 @@ resource "local_sensitive_file" "report_csv" {
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+				// The rows are in the file, so the inline row count is unknown.
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
 			Check: func(_ *terraform.State) error {
 				content, err := os.ReadFile(filename)
@@ -658,6 +662,8 @@ func TestAccReportResultDataSource_ForecastFileOutput(t *testing.T) {
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
+				// The rows are in the file, so the inline row count is unknown.
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
 			Check: func(_ *terraform.State) error {
 				content, err := os.ReadFile(filename)
