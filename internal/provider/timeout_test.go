@@ -297,6 +297,45 @@ func TestDCIRetryClient_CloudflareTimeoutIsPermanent(t *testing.T) {
 	})
 }
 
+// TestDCIRetryClient_PreconditionFailedPassesThrough verifies that a 412 reaches
+// the caller as a response, neither retried nor turned into an error. Resources
+// that send If-Match (service accounts, user notifications) refetch the ETag and
+// retry their delete on 412, which they can only do if they see the status.
+func TestDCIRetryClient_PreconditionFailedPassesThrough(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var requestCount atomic.Int64
+		server := countingServer(t, &requestCount, func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/problem+json")
+			w.WriteHeader(http.StatusPreconditionFailed)
+			_, _ = w.Write([]byte(`{"code":"precondition_failed","status":412}`))
+		})
+
+		client := newTestRetryClient(server, DefaultRequestTimeout, constantBackOff(retryMaxInterval))
+
+		// A deadline the expected path never reaches, so a regression that starts
+		// retrying fails here instead of spinning virtual time indefinitely.
+		ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+		defer cancel()
+
+		start := time.Now()
+		resp, err := doGet(ctx, t, client, server.URL)
+		elapsed := time.Since(start)
+
+		if err != nil {
+			t.Fatalf("expected the 412 response to pass through, got error: %v", err)
+		}
+		if resp.StatusCode != http.StatusPreconditionFailed {
+			t.Errorf("status = %d, want 412", resp.StatusCode)
+		}
+		if elapsed != 0 {
+			t.Errorf("elapsed = %v, want 0 — a 412 must not be retried", elapsed)
+		}
+		if count := requestCount.Load(); count != 1 {
+			t.Errorf("attempts = %d, want 1 (412 must not be retried)", count)
+		}
+	})
+}
+
 // TestDCIRetryClient_429NoRetryAfter_Retries covers the DoiT API's actual
 // observed behavior: 429 responses carry no Retry-After header, so the retry
 // falls back to the exponential policy. This is therefore the production retry

@@ -99,8 +99,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						},
 						Optional:            true,
 						Computed:            true,
-						Description:         "The field to count distinct values of. Only applicable when aggregation is set to \"count\".",
-						MarkdownDescription: "The field to count distinct values of. Only applicable when aggregation is set to \"count\".",
+						Description:         "The field to count distinct values of. Only applicable when aggregation is set to \"count\".\nOn PATCH, omit to preserve the existing field; send null to remove it.\nA PATCH that sets `aggregation` to a value other than \"count\" without sending `count` removes it.",
+						MarkdownDescription: "The field to count distinct values of. Only applicable when aggregation is set to \"count\".\nOn PATCH, omit to preserve the existing field; send null to remove it.\nA PATCH that sets `aggregation` to a value other than \"count\" without sending `count` removes it.",
 					},
 					"currency": schema.StringAttribute{
 						Optional:            true,
@@ -156,14 +156,14 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						},
 						Optional:            true,
 						Computed:            true,
-						Description:         "Required when the time range is set to \"custom\".",
-						MarkdownDescription: "Required when the time range is set to \"custom\".",
+						Description:         "Required when the time range is set to \"custom\". On PATCH, omit to preserve the existing range; send null to remove it.\nA PATCH that sets `timeRange` to a mode other than \"custom\" without sending `customTimeRange` removes it.\nSending null while `timeRange.mode` stays \"custom\" is rejected.",
+						MarkdownDescription: "Required when the time range is set to \"custom\". On PATCH, omit to preserve the existing range; send null to remove it.\nA PATCH that sets `timeRange` to a mode other than \"custom\" without sending `customTimeRange` removes it.\nSending null while `timeRange.mode` stays \"custom\" is rejected.",
 					},
 					"data_source": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
-						MarkdownDescription: "Data source of the report.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
+						Description:         "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
+						MarkdownDescription: "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"billing",
@@ -679,8 +679,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									},
 								},
 								Required:            true,
-								Description:         "Metric selector used in reports and filters.",
-								MarkdownDescription: "Metric selector used in reports and filters.",
+								Description:         "The metric the change is measured on. It must also be listed in the report's\n`config.metrics`; otherwise the request is rejected with a 400 and nothing is saved.",
+								MarkdownDescription: "The metric the change is measured on. It must also be listed in the report's\n`config.metrics`; otherwise the request is rejected with a 400 and nothing is saved.",
 							},
 							"operator": schema.StringAttribute{
 								Required:            true,
@@ -711,8 +711,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						},
 						Optional:            true,
 						Computed:            true,
-						Description:         "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and rank `group` limits — not all three.",
-						MarkdownDescription: "Limit by change filter. A report may configure at most two of\n`metricFilter`, `limitByChange`, and rank `group` limits — not all three.",
+						Description:         "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.\nOn PATCH, omit to preserve the existing limit; send null to remove it.",
+						MarkdownDescription: "Limit by change filter; a report may configure at most two of `metricFilter`,\n`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is\na period-over-period delta between adjacent time buckets. With it, each row's\nprimary-range total is compared with its secondary-range total, so column dimensions\n(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets\nto those totals, while `group` gives every row its own change. A percentage change\nis comparable while both periods hold the same number of buckets; an absolute change\nis their plain difference and so scales with the bucket count. A row present in only\none range counts as zero there, so a percentage threshold cannot be met from zero. A\npercentage-typed custom metric, or count aggregation, is rejected with\n`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.\nOn PATCH, omit to preserve the existing limit; send null to remove it.",
 					},
 					"metric_filter": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
@@ -787,8 +787,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 						},
 						Optional:            true,
 						Computed:            true,
-						Description:         "Metric filter to limit report rows by metric value.",
-						MarkdownDescription: "Metric filter to limit report rows by metric value.",
+						Description:         "Metric filter to limit report rows by metric value.\nOn PATCH, omit to preserve the existing filter; send null to remove it.",
+						MarkdownDescription: "Metric filter to limit report rows by metric value.\nOn PATCH, omit to preserve the existing filter; send null to remove it.",
 					},
 					"metrics": schema.ListNestedAttribute{
 						NestedObject: schema.NestedAttributeObject{
@@ -889,8 +889,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"sort_dimensions": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
-						MarkdownDescription: "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
+						Description:         "Orders the columns produced by `dimensions`, both in the console and in a rendered\n`fileOutput` export. It does not reorder the `rows` of a JSON result.\n`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`\ndimensions of a time series means chronologically. The default `desc` orders them by the\nmetric instead, so a monthly report charts its priciest month first rather than in time\norder — set `a_to_z` for a time series you intend to export.\nA report with a forecast is always charted chronologically and ignores this field, and a\ncomparative `displayValues` mode requires `a_to_z`.\nPossible values: `asc`, `desc`, `a_to_z`",
+						MarkdownDescription: "Orders the columns produced by `dimensions`, both in the console and in a rendered\n`fileOutput` export. It does not reorder the `rows` of a JSON result.\n`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`\ndimensions of a time series means chronologically. The default `desc` orders them by the\nmetric instead, so a monthly report charts its priciest month first rather than in time\norder — set `a_to_z` for a time series you intend to export.\nA report with a forecast is always charted chronologically and ignores this field, and a\ncomparative `displayValues` mode requires `a_to_z`.\nPossible values: `asc`, `desc`, `a_to_z`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"asc",
@@ -903,8 +903,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"sort_groups": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
-						MarkdownDescription: "This option has no impact when reading reports via API.\nPossible values: `asc`, `desc`, `a_to_z`",
+						Description:         "Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`\nexport. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does\nnot reorder the `rows` of a JSON result.\nPossible values: `asc`, `desc`, `a_to_z`",
+						MarkdownDescription: "Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`\nexport. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does\nnot reorder the `rows` of a JSON result.\nPossible values: `asc`, `desc`, `a_to_z`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"asc",

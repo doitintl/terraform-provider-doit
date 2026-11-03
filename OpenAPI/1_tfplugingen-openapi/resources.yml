@@ -227,6 +227,19 @@ resources:
     delete:
       path: /iam/v1/service-accounts/{serviceAccountId}/api-tokens/{id}
       method: DELETE
+  user_notification:
+    create:
+      path: /iam/v1/users/{userId}/notifications
+      method: POST
+    read:
+      path: /iam/v1/users/{userId}/notifications/{id}
+      method: GET
+    update:
+      path: /iam/v1/users/{userId}/notifications/{id}
+      method: PATCH
+    delete:
+      path: /iam/v1/users/{userId}/notifications/{id}
+      method: DELETE
   role:
     create:
       path: /iam/v1/roles

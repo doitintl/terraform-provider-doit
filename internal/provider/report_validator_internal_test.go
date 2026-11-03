@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -1423,6 +1424,929 @@ func TestReportCumulativeComparison_PartialUnknownStillReportsDefiniteErrors(t *
 			}
 			if got := withPath.Path(); !got.Equal(test.wantPath) {
 				t.Errorf("path = %s, want %s", got, test.wantPath)
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestToExternalConfig_ClearableNestedAttributes
+// ---------------------------------------------------------------------------
+
+// TestToExternalConfig_ClearableNestedAttributes verifies that toExternalConfig
+// populates nullable.Nullable fields with SetNull() when count, custom_time_range,
+// limit_by_change, and metric_filter are null on ConfigValue, and with Set(...)
+// when they are populated.
+func TestToExternalConfig_ClearableNestedAttributes(t *testing.T) {
+	ctx := t.Context()
+
+	t.Run("all null sends explicit JSON null", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), cfgMap)
+		if diags.HasError() {
+			t.Fatalf("NewConfigValue: %v", diags)
+		}
+
+		ext, extDiags := toExternalConfig(ctx, cfgVal)
+		if extDiags.HasError() {
+			t.Fatalf("toExternalConfig: %v", extDiags)
+		}
+
+		if !ext.Count.IsSpecified() || !ext.Count.IsNull() {
+			t.Errorf("expected Count to be specified and null, got specified=%v null=%v", ext.Count.IsSpecified(), ext.Count.IsNull())
+		}
+		if !ext.CustomTimeRange.IsSpecified() || !ext.CustomTimeRange.IsNull() {
+			t.Errorf("expected CustomTimeRange to be specified and null, got specified=%v null=%v", ext.CustomTimeRange.IsSpecified(), ext.CustomTimeRange.IsNull())
+		}
+		if !ext.LimitByChange.IsSpecified() || !ext.LimitByChange.IsNull() {
+			t.Errorf("expected LimitByChange to be specified and null, got specified=%v null=%v", ext.LimitByChange.IsSpecified(), ext.LimitByChange.IsNull())
+		}
+		if !ext.MetricFilter.IsSpecified() || !ext.MetricFilter.IsNull() {
+			t.Errorf("expected MetricFilter to be specified and null, got specified=%v null=%v", ext.MetricFilter.IsSpecified(), ext.MetricFilter.IsNull())
+		}
+	})
+
+	t.Run("all populated sends non-null values", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["count"] = resource_report.NewCountValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"id":   types.StringValue("service_description"),
+			"type": types.StringValue("fixed"),
+		})
+		cfgMap["custom_time_range"] = resource_report.NewCustomTimeRangeValueMust(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"from": types.StringValue("2025-01-01T00:00:00Z"),
+			"to":   types.StringValue("2025-02-01T00:00:00Z"),
+		})
+		metricObj := resource_report.NewMetricValueMust(resource_report.MetricValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"type":  types.StringValue("basic"),
+			"value": types.StringValue("cost"),
+		})
+		cfgMap["limit_by_change"] = resource_report.NewLimitByChangeValueMust(resource_report.LimitByChangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"change_type":             types.StringValue("percentage"),
+			"include_incomplete_data": types.BoolValue(false),
+			"metric":                  metricObj,
+			"operator":                types.StringValue("gte"),
+			"values":                  types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(50)}),
+		})
+		cfgMap["metric_filter"] = resource_report.NewMetricFilterValueMust(resource_report.MetricFilterValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"metric":   metricObj,
+			"operand":  types.StringNull(),
+			"operator": types.StringValue("gt"),
+			"values":   types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(100)}),
+		})
+
+		cfgVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), cfgMap)
+		if diags.HasError() {
+			t.Fatalf("NewConfigValue: %v", diags)
+		}
+
+		ext, extDiags := toExternalConfig(ctx, cfgVal)
+		if extDiags.HasError() {
+			t.Fatalf("toExternalConfig: %v", extDiags)
+		}
+
+		if !ext.Count.IsSpecified() || ext.Count.IsNull() {
+			t.Errorf("expected Count to be specified and non-null, got specified=%v null=%v", ext.Count.IsSpecified(), ext.Count.IsNull())
+		}
+		if !ext.CustomTimeRange.IsSpecified() || ext.CustomTimeRange.IsNull() {
+			t.Errorf("expected CustomTimeRange to be specified and non-null, got specified=%v null=%v", ext.CustomTimeRange.IsSpecified(), ext.CustomTimeRange.IsNull())
+		}
+		if !ext.LimitByChange.IsSpecified() || ext.LimitByChange.IsNull() {
+			t.Errorf("expected LimitByChange to be specified and non-null, got specified=%v null=%v", ext.LimitByChange.IsSpecified(), ext.LimitByChange.IsNull())
+		}
+		if !ext.MetricFilter.IsSpecified() || ext.MetricFilter.IsNull() {
+			t.Errorf("expected MetricFilter to be specified and non-null, got specified=%v null=%v", ext.MetricFilter.IsSpecified(), ext.MetricFilter.IsNull())
+		}
+	})
+}
+
+// ---------------------------------------------------------------------------
+// TestReportCustomTimeRangeModeValidator
+// ---------------------------------------------------------------------------
+
+func TestReportCustomTimeRangeModeValidator(t *testing.T) {
+	ctx := t.Context()
+
+	knownCTR := resource_report.NewCustomTimeRangeValueMust(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"from": types.StringValue("2025-01-01T00:00:00Z"),
+		"to":   types.StringValue("2025-02-01T00:00:00Z"),
+	})
+	nullCTR := resource_report.NewCustomTimeRangeValueNull()
+	unknownCTR := resource_report.NewCustomTimeRangeValueUnknown()
+
+	makeTimeRange := func(mode types.String) resource_report.TimeRangeValue {
+		return resource_report.NewTimeRangeValueMust(resource_report.TimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"amount":          types.Int64Value(1),
+			"include_current": types.BoolValue(true),
+			"mode":            mode,
+			"unit":            types.StringValue("month"),
+		})
+	}
+	trCustom := makeTimeRange(types.StringValue("custom"))
+	trLast := makeTimeRange(types.StringValue("last"))
+	trCurrent := makeTimeRange(types.StringValue("current"))
+	trUnknownMode := makeTimeRange(types.StringUnknown())
+	trNullMode := makeTimeRange(types.StringNull())
+	nullTR := resource_report.NewTimeRangeValueNull()
+	unknownTR := resource_report.NewTimeRangeValueUnknown()
+
+	ctrPath := path.Root("config").AtName("custom_time_range")
+
+	tests := []struct {
+		name        string
+		ctr         resource_report.CustomTimeRangeValue
+		tr          resource_report.TimeRangeValue
+		priorTR     *resource_report.TimeRangeValue
+		wantCount   int
+		wantSummary string
+		wantPath    path.Path
+	}{
+		{
+			name:      "both custom_time_range and time_range are null",
+			ctr:       nullCTR,
+			tr:        nullTR,
+			wantCount: 0,
+		},
+		{
+			name:      "valid custom_time_range with time_range.mode = custom",
+			ctr:       knownCTR,
+			tr:        trCustom,
+			wantCount: 0,
+		},
+		{
+			name:      "valid time_range.mode = last without custom_time_range",
+			ctr:       nullCTR,
+			tr:        trLast,
+			wantCount: 0,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range is null",
+			ctr:         knownCTR,
+			tr:          nullTR,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range.mode is last",
+			ctr:         knownCTR,
+			tr:          trLast,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range.mode is current",
+			ctr:         knownCTR,
+			tr:          trCurrent,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid custom_time_range set when time_range.mode is null",
+			ctr:         knownCTR,
+			tr:          trNullMode,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:        "invalid time_range.mode = custom when custom_time_range is null",
+			ctr:         nullCTR,
+			tr:          trCustom,
+			wantCount:   1,
+			wantSummary: "Missing Custom Time Range",
+			wantPath:    ctrPath,
+		},
+		{
+			name:      "unknown custom_time_range defers validation when mode is last",
+			ctr:       unknownCTR,
+			tr:        trLast,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown custom_time_range defers validation when mode is custom",
+			ctr:       unknownCTR,
+			tr:        trCustom,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown time_range defers validation when custom_time_range is set",
+			ctr:       knownCTR,
+			tr:        unknownTR,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown time_range.mode defers validation when custom_time_range is set",
+			ctr:       knownCTR,
+			tr:        trUnknownMode,
+			wantCount: 0,
+		},
+		{
+			name:      "unknown time_range.mode defers validation when custom_time_range is null",
+			ctr:       nullCTR,
+			tr:        trUnknownMode,
+			wantCount: 0,
+		},
+		{
+			name:        "update inherits priorState time_range.mode = custom and rejects cleared custom_time_range",
+			ctr:         nullCTR,
+			tr:          nullTR,
+			priorTR:     &trCustom,
+			wantCount:   1,
+			wantSummary: "Missing Custom Time Range",
+			wantPath:    ctrPath,
+		},
+		{
+			name:      "update inherits priorState time_range.mode = custom and allows kept custom_time_range",
+			ctr:       knownCTR,
+			tr:        nullTR,
+			priorTR:   &trCustom,
+			wantCount: 0,
+		},
+		{
+			name:        "update inherits priorState time_range.mode = last and rejects added custom_time_range",
+			ctr:         knownCTR,
+			tr:          nullTR,
+			priorTR:     &trLast,
+			wantCount:   1,
+			wantSummary: "Invalid Custom Time Range Configuration",
+			wantPath:    ctrPath,
+		},
+		{
+			name:      "update inherits priorState time_range.mode = last and allows null custom_time_range",
+			ctr:       nullCTR,
+			tr:        nullTR,
+			priorTR:   &trLast,
+			wantCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+			cfgMap["layout"] = types.StringValue("table")
+			cfgMap["custom_time_range"] = tt.ctr
+			cfgMap["time_range"] = tt.tr
+			config := buildReportConfigWithMap(ctx, t, cfgMap)
+
+			var priorState attributeGetter
+			if tt.priorTR != nil {
+				priorMap := validCumulativeComparisonConfigMap(ctx, t)
+				priorMap["layout"] = types.StringValue("table")
+				priorMap["time_range"] = *tt.priorTR
+				priorCfg := buildReportConfigWithMap(ctx, t, priorMap)
+				priorState = tfsdk.State(priorCfg)
+			}
+
+			var diagnostics diag.Diagnostics
+			validateReportCustomTimeRangeMode(ctx, config, priorState, &diagnostics)
+
+			if len(diagnostics) != tt.wantCount {
+				t.Fatalf("diagnostic count = %d, want %d: %v", len(diagnostics), tt.wantCount, diagnostics)
+			}
+			if tt.wantCount == 0 {
+				return
+			}
+			diagnostic := diagnostics[0]
+			if diagnostic.Severity() != diag.SeverityError {
+				t.Errorf("severity = %s, want error", diagnostic.Severity())
+			}
+			if diagnostic.Summary() != tt.wantSummary {
+				t.Errorf("summary = %q, want %q", diagnostic.Summary(), tt.wantSummary)
+			}
+			withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+			if !ok {
+				t.Fatalf("diagnostic %T has no path", diagnostic)
+			}
+			if got := withPath.Path(); !got.Equal(tt.wantPath) {
+				t.Errorf("path = %s, want %s", got, tt.wantPath)
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestReportCountAggregationValidator_PriorStateInheritance
+// ---------------------------------------------------------------------------
+
+func TestReportCountAggregationValidator_PriorStateInheritance(t *testing.T) {
+	ctx := t.Context()
+
+	knownCount := resource_report.NewCountValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+	nullCount := resource_report.NewCountValueNull()
+	unknownCount := resource_report.NewCountValueUnknown()
+
+	countPath := path.Root("config").AtName("count")
+
+	tests := []struct {
+		name        string
+		count       resource_report.CountValue
+		agg         types.String
+		priorAgg    *types.String
+		wantCount   int
+		wantSummary string
+		wantPath    path.Path
+	}{
+		{
+			name:        "update with omitted aggregation inherits priorState aggregation=count and rejects cleared count",
+			count:       nullCount,
+			agg:         types.StringNull(),
+			priorAgg:    new(types.StringValue("count")),
+			wantCount:   1,
+			wantSummary: "Missing Count Configuration",
+			wantPath:    countPath,
+		},
+		{
+			name:      "update with omitted aggregation inherits priorState aggregation=count and allows kept count",
+			count:     knownCount,
+			agg:       types.StringNull(),
+			priorAgg:  new(types.StringValue("count")),
+			wantCount: 0,
+		},
+		{
+			name:        "update with omitted aggregation inherits priorState aggregation=total and rejects added count",
+			count:       knownCount,
+			agg:         types.StringNull(),
+			priorAgg:    new(types.StringValue("total")),
+			wantCount:   1,
+			wantSummary: "Invalid Count Configuration",
+			wantPath:    countPath,
+		},
+		{
+			name:      "update with omitted aggregation inherits priorState aggregation=total and allows null count",
+			count:     nullCount,
+			agg:       types.StringNull(),
+			priorAgg:  new(types.StringValue("total")),
+			wantCount: 0,
+		},
+		{
+			name:      "update with unknown aggregation defers validation even if priorState had aggregation=count",
+			count:     nullCount,
+			agg:       types.StringUnknown(),
+			priorAgg:  new(types.StringValue("count")),
+			wantCount: 0,
+		},
+		{
+			name:      "update with unknown count defers validation",
+			count:     unknownCount,
+			agg:       types.StringNull(),
+			priorAgg:  new(types.StringValue("count")),
+			wantCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+			cfgMap["layout"] = types.StringValue("table")
+			cfgMap["count"] = tt.count
+			cfgMap["aggregation"] = tt.agg
+			config := buildReportConfigWithMap(ctx, t, cfgMap)
+
+			var priorState attributeGetter
+			if tt.priorAgg != nil {
+				priorMap := validCumulativeComparisonConfigMap(ctx, t)
+				priorMap["layout"] = types.StringValue("table")
+				priorMap["aggregation"] = *tt.priorAgg
+				priorCfg := buildReportConfigWithMap(ctx, t, priorMap)
+				priorState = tfsdk.State(priorCfg)
+			}
+
+			var diagnostics diag.Diagnostics
+			validateReportCountAggregation(ctx, config, priorState, &diagnostics)
+
+			if len(diagnostics) != tt.wantCount {
+				t.Fatalf("diagnostic count = %d, want %d: %v", len(diagnostics), tt.wantCount, diagnostics)
+			}
+			if tt.wantCount == 0 {
+				return
+			}
+			diagnostic := diagnostics[0]
+			if diagnostic.Severity() != diag.SeverityError {
+				t.Errorf("severity = %s, want error", diagnostic.Severity())
+			}
+			if diagnostic.Summary() != tt.wantSummary {
+				t.Errorf("summary = %q, want %q", diagnostic.Summary(), tt.wantSummary)
+			}
+			withPath, ok := diagnostic.(diag.DiagnosticWithPath)
+			if !ok {
+				t.Fatalf("diagnostic %T has no path", diagnostic)
+			}
+			if got := withPath.Path(); !got.Equal(tt.wantPath) {
+				t.Errorf("path = %s, want %s", got, tt.wantPath)
+			}
+		})
+	}
+}
+
+func buildReportConfigWithConfigValue(ctx context.Context, t *testing.T, configVal resource_report.ConfigValue) tfsdk.Config {
+	t.Helper()
+	schema := resource_report.ReportResourceSchema(ctx)
+	schemaType := schema.Type().TerraformType(ctx)
+	objType, ok := schemaType.(tftypes.Object)
+	if !ok {
+		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
+	}
+
+	attrValues := make(map[string]tftypes.Value, len(objType.AttributeTypes))
+	for name, attrType := range objType.AttributeTypes {
+		attrValues[name] = tftypes.NewValue(attrType, nil)
+	}
+	attrValues["name"] = tftypes.NewValue(tftypes.String, "test-report")
+
+	configTFVal, err := configVal.ToTerraformValue(ctx)
+	if err != nil {
+		t.Fatalf("Config ToTerraformValue: %v", err)
+	}
+	attrValues["config"] = configTFVal
+
+	return tfsdk.Config{
+		Schema: schema,
+		Raw:    tftypes.NewValue(schemaType, attrValues),
+	}
+}
+
+// TestReportResource_ModifyPlan_NameOnlyConfigPreservesWrapper verifies that
+// omitting the top-level `config` wrapper (or leaving it unknown) on an existing
+// or imported report with count aggregation or custom time mode does not
+// falsely trigger "Missing Count Configuration" or "Missing Custom Time Range".
+// The top-level `config` wrapper is Category B (preserved on omission, not cleared).
+func TestReportResource_ModifyPlan_NameOnlyConfigPreservesWrapper(t *testing.T) {
+	ctx := t.Context()
+
+	knownCount := resource_report.NewCountValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+	knownCTR := resource_report.NewCustomTimeRangeValueMust(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"from": types.StringValue("2025-01-01T00:00:00Z"),
+		"to":   types.StringValue("2025-02-01T00:00:00Z"),
+	})
+	trCustom := resource_report.NewTimeRangeValueMust(resource_report.TimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"amount":          types.Int64Null(),
+		"include_current": types.BoolNull(),
+		"mode":            types.StringValue("custom"),
+		"unit":            types.StringNull(),
+	})
+
+	countStateMap := validCumulativeComparisonConfigMap(ctx, t)
+	countStateMap["layout"] = types.StringValue("table")
+	countStateMap["aggregation"] = types.StringValue("count")
+	countStateMap["count"] = knownCount
+	countStateMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	customTimeStateMap := validCumulativeComparisonConfigMap(ctx, t)
+	customTimeStateMap["layout"] = types.StringValue("table")
+	customTimeStateMap["time_range"] = trCustom
+	customTimeStateMap["custom_time_range"] = knownCTR
+	customTimeStateMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	tests := []struct {
+		name      string
+		stateMap  map[string]attr.Value
+		configVal resource_report.ConfigValue
+	}{
+		{
+			name:      "name-only config (null wrapper) with count aggregation in prior state",
+			stateMap:  countStateMap,
+			configVal: resource_report.NewConfigValueNull(),
+		},
+		{
+			name:      "unknown config wrapper with count aggregation in prior state",
+			stateMap:  countStateMap,
+			configVal: resource_report.NewConfigValueUnknown(),
+		},
+		{
+			name:      "name-only config (null wrapper) with custom time range mode in prior state",
+			stateMap:  customTimeStateMap,
+			configVal: resource_report.NewConfigValueNull(),
+		},
+		{
+			name:      "unknown config wrapper with custom time range mode in prior state",
+			stateMap:  customTimeStateMap,
+			configVal: resource_report.NewConfigValueUnknown(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stateCfg := buildReportConfigWithMap(ctx, t, tt.stateMap)
+			configCfg := buildReportConfigWithConfigValue(ctx, t, tt.configVal)
+
+			// ValidateResource (ConfigValidators phase)
+			for _, v := range (&reportResource{}).ConfigValidators(ctx) {
+				valResp := &resource.ValidateConfigResponse{}
+				v.ValidateResource(ctx, resource.ValidateConfigRequest{Config: configCfg}, valResp)
+				if valResp.Diagnostics.HasError() {
+					t.Fatalf("ConfigValidator %T returned unexpected error: %v", v, valResp.Diagnostics)
+				}
+			}
+
+			// ModifyPlan phase (plan preserves state config when wrapper is omitted)
+			mpReq := resource.ModifyPlanRequest{
+				State:  tfsdk.State(stateCfg),
+				Config: configCfg,
+				Plan:   tfsdk.Plan(stateCfg),
+			}
+			mpResp := &resource.ModifyPlanResponse{}
+			(&reportResource{}).ModifyPlan(ctx, mpReq, mpResp)
+			if mpResp.Diagnostics.HasError() {
+				t.Fatalf("ModifyPlan returned unexpected error: %v", mpResp.Diagnostics)
+			}
+		})
+	}
+}
+
+// TestReportCustomTimeRangeModeValidator_TwoPhaseCreateAndUpdate exercises both
+// validation phases (ValidateResource followed by ModifyPlan) to verify that an
+// existing custom-mode report that keeps custom_time_range while omitting
+// time_range (or time_range.mode) is not rejected during ValidateResource before
+// ModifyPlan can inherit the stored mode from prior state, while creates and
+// invalid updates are still rejected in ModifyPlan.
+func TestReportCustomTimeRangeModeValidator_TwoPhaseCreateAndUpdate(t *testing.T) {
+	ctx := t.Context()
+
+	knownCTR := resource_report.NewCustomTimeRangeValueMust(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"from": types.StringValue("2025-01-01T00:00:00Z"),
+		"to":   types.StringValue("2025-02-01T00:00:00Z"),
+	})
+	nullCTR := resource_report.NewCustomTimeRangeValueNull()
+
+	makeTimeRange := func(mode types.String) resource_report.TimeRangeValue {
+		return resource_report.NewTimeRangeValueMust(resource_report.TimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"amount":          types.Int64Null(),
+			"include_current": types.BoolNull(),
+			"mode":            mode,
+			"unit":            types.StringNull(),
+		})
+	}
+	trCustom := makeTimeRange(types.StringValue("custom"))
+	trLast := makeTimeRange(types.StringValue("last"))
+	trNullMode := makeTimeRange(types.StringNull())
+	nullTR := resource_report.NewTimeRangeValueNull()
+
+	schema := resource_report.ReportResourceSchema(ctx)
+	nullState := tfsdk.State{Schema: schema, Raw: tftypes.NewValue(schema.Type().TerraformType(ctx), nil)}
+
+	runTwoPhase := func(t *testing.T, state tfsdk.State, cfgMap map[string]attr.Value) diag.Diagnostics {
+		t.Helper()
+		configCfg := buildReportConfigWithMap(ctx, t, cfgMap)
+
+		valResp := &resource.ValidateConfigResponse{}
+		reportCustomTimeRangeModeValidator{}.ValidateResource(ctx, resource.ValidateConfigRequest{Config: configCfg}, valResp)
+		if valResp.Diagnostics.HasError() {
+			return valResp.Diagnostics
+		}
+
+		mpReq := resource.ModifyPlanRequest{
+			State:  state,
+			Config: configCfg,
+			Plan:   tfsdk.Plan(configCfg),
+		}
+		mpResp := &resource.ModifyPlanResponse{}
+		(&reportResource{}).ModifyPlan(ctx, mpReq, mpResp)
+		return mpResp.Diagnostics
+	}
+
+	t.Run("create with custom_time_range and omitted time_range fails in ModifyPlan", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["custom_time_range"] = knownCTR
+		cfgMap["time_range"] = nullTR
+
+		diags := runTwoPhase(t, nullState, cfgMap)
+		if !diags.HasError() {
+			t.Fatal("expected error on create when custom_time_range is set without time_range, got none")
+		}
+		if diags.Errors()[0].Summary() != "Invalid Custom Time Range Configuration" {
+			t.Fatalf("unexpected error summary: %q", diags.Errors()[0].Summary())
+		}
+	})
+
+	t.Run("create with custom_time_range and omitted time_range.mode fails in ModifyPlan", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["custom_time_range"] = knownCTR
+		cfgMap["time_range"] = trNullMode
+
+		diags := runTwoPhase(t, nullState, cfgMap)
+		if !diags.HasError() {
+			t.Fatal("expected error on create when custom_time_range is set with null time_range.mode, got none")
+		}
+		if diags.Errors()[0].Summary() != "Invalid Custom Time Range Configuration" {
+			t.Fatalf("unexpected error summary: %q", diags.Errors()[0].Summary())
+		}
+	})
+
+	t.Run("update keeping custom_time_range while omitting time_range succeeds via prior state", func(t *testing.T) {
+		stateMap := validCumulativeComparisonConfigMap(ctx, t)
+		stateMap["layout"] = types.StringValue("table")
+		stateMap["custom_time_range"] = knownCTR
+		stateMap["time_range"] = trCustom
+		state := tfsdk.State(buildReportConfigWithMap(ctx, t, stateMap))
+
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["custom_time_range"] = knownCTR
+		cfgMap["time_range"] = nullTR
+
+		diags := runTwoPhase(t, state, cfgMap)
+		if diags.HasError() {
+			t.Fatalf("expected no error when updating custom-mode report with omitted time_range, got: %v", diags)
+		}
+	})
+
+	t.Run("update keeping custom_time_range while omitting time_range.mode succeeds via prior state", func(t *testing.T) {
+		stateMap := validCumulativeComparisonConfigMap(ctx, t)
+		stateMap["layout"] = types.StringValue("table")
+		stateMap["custom_time_range"] = knownCTR
+		stateMap["time_range"] = trCustom
+		state := tfsdk.State(buildReportConfigWithMap(ctx, t, stateMap))
+
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["custom_time_range"] = knownCTR
+		cfgMap["time_range"] = trNullMode
+
+		diags := runTwoPhase(t, state, cfgMap)
+		if diags.HasError() {
+			t.Fatalf("expected no error when updating custom-mode report with omitted time_range.mode, got: %v", diags)
+		}
+	})
+
+	t.Run("update adding custom_time_range while omitting time_range on last-mode report fails in ModifyPlan", func(t *testing.T) {
+		stateMap := validCumulativeComparisonConfigMap(ctx, t)
+		stateMap["layout"] = types.StringValue("table")
+		stateMap["custom_time_range"] = nullCTR
+		stateMap["time_range"] = trLast
+		state := tfsdk.State(buildReportConfigWithMap(ctx, t, stateMap))
+
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["custom_time_range"] = knownCTR
+		cfgMap["time_range"] = nullTR
+
+		diags := runTwoPhase(t, state, cfgMap)
+		if !diags.HasError() {
+			t.Fatal("expected error when adding custom_time_range to last-mode report with omitted time_range, got none")
+		}
+		if diags.Errors()[0].Summary() != "Invalid Custom Time Range Configuration" {
+			t.Fatalf("unexpected error summary: %q", diags.Errors()[0].Summary())
+		}
+	})
+
+	t.Run("data source with custom_time_range and omitted time_range fails in ValidateConfig", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["custom_time_range"] = knownCTR
+		cfgMap["time_range"] = nullTR
+		configCfg := buildReportConfigWithMap(ctx, t, cfgMap)
+
+		dsResp := &datasource.ValidateConfigResponse{}
+		(&reportQueryDataSource{}).ValidateConfig(ctx, datasource.ValidateConfigRequest{Config: configCfg}, dsResp)
+		if !dsResp.Diagnostics.HasError() {
+			t.Fatal("expected data source ValidateConfig error when custom_time_range is set without time_range, got none")
+		}
+		if dsResp.Diagnostics.Errors()[0].Summary() != "Invalid Custom Time Range Configuration" {
+			t.Fatalf("unexpected error summary: %q", dsResp.Diagnostics.Errors()[0].Summary())
+		}
+	})
+}
+
+// TestReportCountAggregationValidator_TwoPhaseCreateAndUpdate exercises both
+// validation phases (ValidateResource followed by ModifyPlan) for count and
+// aggregation so that an existing count-mode report that keeps count while
+// omitting aggregation succeeds across both phases.
+func TestReportCountAggregationValidator_TwoPhaseCreateAndUpdate(t *testing.T) {
+	ctx := t.Context()
+
+	knownCount := resource_report.NewCountValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+	nullCount := resource_report.NewCountValueNull()
+
+	schema := resource_report.ReportResourceSchema(ctx)
+	nullState := tfsdk.State{Schema: schema, Raw: tftypes.NewValue(schema.Type().TerraformType(ctx), nil)}
+
+	runTwoPhase := func(t *testing.T, state tfsdk.State, cfgMap map[string]attr.Value) diag.Diagnostics {
+		t.Helper()
+		configCfg := buildReportConfigWithMap(ctx, t, cfgMap)
+
+		valResp := &resource.ValidateConfigResponse{}
+		reportCountAggregationValidator{}.ValidateResource(ctx, resource.ValidateConfigRequest{Config: configCfg}, valResp)
+		if valResp.Diagnostics.HasError() {
+			return valResp.Diagnostics
+		}
+
+		mpReq := resource.ModifyPlanRequest{
+			State:  state,
+			Config: configCfg,
+			Plan:   tfsdk.Plan(configCfg),
+		}
+		mpResp := &resource.ModifyPlanResponse{}
+		(&reportResource{}).ModifyPlan(ctx, mpReq, mpResp)
+		return mpResp.Diagnostics
+	}
+
+	t.Run("create with count and omitted aggregation fails in ModifyPlan", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["count"] = knownCount
+		cfgMap["aggregation"] = types.StringNull()
+
+		diags := runTwoPhase(t, nullState, cfgMap)
+		if !diags.HasError() {
+			t.Fatal("expected error on create when count is set without aggregation, got none")
+		}
+		if diags.Errors()[0].Summary() != "Invalid Count Configuration" {
+			t.Fatalf("unexpected error summary: %q", diags.Errors()[0].Summary())
+		}
+	})
+
+	t.Run("update keeping count while omitting aggregation succeeds via prior state", func(t *testing.T) {
+		stateMap := validCumulativeComparisonConfigMap(ctx, t)
+		stateMap["layout"] = types.StringValue("table")
+		stateMap["count"] = knownCount
+		stateMap["aggregation"] = types.StringValue("count")
+		state := tfsdk.State(buildReportConfigWithMap(ctx, t, stateMap))
+
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["count"] = knownCount
+		cfgMap["aggregation"] = types.StringNull()
+
+		diags := runTwoPhase(t, state, cfgMap)
+		if diags.HasError() {
+			t.Fatalf("expected no error when updating count-mode report with omitted aggregation, got: %v", diags)
+		}
+	})
+
+	t.Run("update adding count while omitting aggregation on total-mode report fails in ModifyPlan", func(t *testing.T) {
+		stateMap := validCumulativeComparisonConfigMap(ctx, t)
+		stateMap["layout"] = types.StringValue("table")
+		stateMap["count"] = nullCount
+		stateMap["aggregation"] = types.StringValue("total")
+		state := tfsdk.State(buildReportConfigWithMap(ctx, t, stateMap))
+
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["count"] = knownCount
+		cfgMap["aggregation"] = types.StringNull()
+
+		diags := runTwoPhase(t, state, cfgMap)
+		if !diags.HasError() {
+			t.Fatal("expected error when adding count to total-mode report with omitted aggregation, got none")
+		}
+		if diags.Errors()[0].Summary() != "Invalid Count Configuration" {
+			t.Fatalf("unexpected error summary: %q", diags.Errors()[0].Summary())
+		}
+	})
+
+	t.Run("data source with count and omitted aggregation fails in ValidateConfig", func(t *testing.T) {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["layout"] = types.StringValue("table")
+		cfgMap["count"] = knownCount
+		cfgMap["aggregation"] = types.StringNull()
+		configCfg := buildReportConfigWithMap(ctx, t, cfgMap)
+
+		dsResp := &datasource.ValidateConfigResponse{}
+		(&reportQueryDataSource{}).ValidateConfig(ctx, datasource.ValidateConfigRequest{Config: configCfg}, dsResp)
+		if !dsResp.Diagnostics.HasError() {
+			t.Fatal("expected data source ValidateConfig error when count is set without aggregation, got none")
+		}
+		if dsResp.Diagnostics.Errors()[0].Summary() != "Invalid Count Configuration" {
+			t.Fatalf("unexpected error summary: %q", dsResp.Diagnostics.Errors()[0].Summary())
+		}
+	})
+}
+
+// TestUseNullModifiers_PreserveWhenConfigWrapperNull verifies that when the
+// top-level `config` block is omitted (Null) or Unknown in req.Config, the
+// Category A child plan modifiers (count, custom_time_range, limit_by_change,
+// metric_filter) do not overwrite the preserved prior-state plan value with Null.
+func TestUseNullModifiers_PreserveWhenConfigWrapperNull(t *testing.T) {
+	ctx := t.Context()
+
+	knownCount := types.ObjectValueMust(resource_report.CountValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"id":   types.StringValue("service_description"),
+		"type": types.StringValue("fixed"),
+	})
+	nullCount := types.ObjectNull(resource_report.CountValue{}.AttributeTypes(ctx))
+
+	knownCTR := types.ObjectValueMust(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"from": types.StringValue("2025-01-01T00:00:00Z"),
+		"to":   types.StringValue("2025-02-01T00:00:00Z"),
+	})
+	nullCTR := types.ObjectNull(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx))
+
+	metricObj := resource_report.NewMetricValueMust(resource_report.MetricValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"type":  types.StringValue("basic"),
+		"value": types.StringValue("cost"),
+	})
+	knownLBC := types.ObjectValueMust(resource_report.LimitByChangeValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"change_type":             types.StringValue("percentage"),
+		"include_incomplete_data": types.BoolValue(false),
+		"metric":                  metricObj,
+		"operator":                types.StringValue("gte"),
+		"values":                  types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(50)}),
+	})
+	nullLBC := types.ObjectNull(resource_report.LimitByChangeValue{}.AttributeTypes(ctx))
+
+	knownMF := types.ObjectValueMust(resource_report.MetricFilterValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"metric":   metricObj,
+		"operand":  types.StringNull(),
+		"operator": types.StringValue("gt"),
+		"values":   types.ListValueMust(types.Float64Type, []attr.Value{types.Float64Value(100)}),
+	})
+	nullMF := types.ObjectNull(resource_report.MetricFilterValue{}.AttributeTypes(ctx))
+
+	modifiers := []struct {
+		name     string
+		mod      planmodifier.Object
+		knownObj types.Object
+		nullObj  types.Object
+	}{
+		{"count", useNullForCount(), knownCount, nullCount},
+		{"custom_time_range", useNullForCustomTimeRange(), knownCTR, nullCTR},
+		{"limit_by_change", useNullForLimitByChange(), knownLBC, nullLBC},
+		{"metric_filter", useNullForMetricFilter(), knownMF, nullMF},
+	}
+
+	nullWrapperCfg := buildReportConfigWithConfigValue(ctx, t, resource_report.NewConfigValueNull())
+	unknownWrapperCfg := buildReportConfigWithConfigValue(ctx, t, resource_report.NewConfigValueUnknown())
+	presentWrapperCfg := buildReportConfigWithMap(ctx, t, validCumulativeComparisonConfigMap(ctx, t))
+	errorWrapperCfg := tfsdk.Config{
+		Schema: resource_report.ReportResourceSchema(ctx),
+		Raw: tftypes.NewValue(
+			tftypes.Object{AttributeTypes: map[string]tftypes.Type{"config": tftypes.String}},
+			map[string]tftypes.Value{
+				"config": tftypes.NewValue(tftypes.String, "invalid-config-type"),
+			},
+		),
+	}
+
+	for _, tc := range modifiers {
+		t.Run(tc.name+"/preserves_when_config_wrapper_is_null", func(t *testing.T) {
+			req := planmodifier.ObjectRequest{
+				Config:      nullWrapperCfg,
+				ConfigValue: tc.nullObj,
+				StateValue:  tc.knownObj,
+				PlanValue:   tc.knownObj,
+			}
+			resp := &planmodifier.ObjectResponse{PlanValue: tc.knownObj}
+			tc.mod.PlanModifyObject(ctx, req, resp)
+			if resp.PlanValue.IsNull() {
+				t.Fatalf("expected %s plan modifier to preserve PlanValue when top-level config is null, but got null", tc.name)
+			}
+		})
+
+		t.Run(tc.name+"/preserves_when_config_wrapper_is_unknown", func(t *testing.T) {
+			req := planmodifier.ObjectRequest{
+				Config:      unknownWrapperCfg,
+				ConfigValue: tc.nullObj,
+				StateValue:  tc.knownObj,
+				PlanValue:   tc.knownObj,
+			}
+			resp := &planmodifier.ObjectResponse{PlanValue: tc.knownObj}
+			tc.mod.PlanModifyObject(ctx, req, resp)
+			if resp.PlanValue.IsNull() {
+				t.Fatalf("expected %s plan modifier to preserve PlanValue when top-level config is unknown, but got null", tc.name)
+			}
+		})
+
+		t.Run(tc.name+"/clears_when_config_wrapper_is_present_and_child_is_null", func(t *testing.T) {
+			req := planmodifier.ObjectRequest{
+				Config:      presentWrapperCfg,
+				ConfigValue: tc.nullObj,
+				StateValue:  tc.knownObj,
+				PlanValue:   tc.knownObj,
+			}
+			resp := &planmodifier.ObjectResponse{PlanValue: tc.knownObj}
+			tc.mod.PlanModifyObject(ctx, req, resp)
+			if !resp.PlanValue.IsNull() {
+				t.Fatalf("expected %s plan modifier to set PlanValue to null when config is present and child is omitted", tc.name)
+			}
+		})
+
+		t.Run(tc.name+"/propagates_diagnostics_when_get_attribute_fails", func(t *testing.T) {
+			req := planmodifier.ObjectRequest{
+				Config:      errorWrapperCfg,
+				ConfigValue: tc.nullObj,
+				StateValue:  tc.knownObj,
+				PlanValue:   tc.knownObj,
+			}
+			resp := &planmodifier.ObjectResponse{PlanValue: tc.knownObj}
+			tc.mod.PlanModifyObject(ctx, req, resp)
+			if !resp.Diagnostics.HasError() {
+				t.Fatalf("expected %s plan modifier to propagate GetAttribute error diagnostics, got none", tc.name)
+			}
+			if resp.PlanValue.IsNull() {
+				t.Fatalf("expected %s plan modifier not to clear PlanValue when GetAttribute errors", tc.name)
 			}
 		})
 	}

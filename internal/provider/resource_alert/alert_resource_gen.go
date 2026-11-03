@@ -74,8 +74,8 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 					"data_source": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nPossible values: `billing`, `billing-datahub`, `kubernetes-utilization`, `tokenomics`",
-						MarkdownDescription: "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nPossible values: `billing`, `billing-datahub`, `kubernetes-utilization`, `tokenomics`",
+						Description:         "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nPossible values: `billing`, `billing-datahub`, `kubernetes-utilization`, `tokenomics`",
+						MarkdownDescription: "Data source used to query data for the alert. Affects which dimensions and metrics are available.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nPossible values: `billing`, `billing-datahub`, `kubernetes-utilization`, `tokenomics`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"billing",
@@ -84,7 +84,6 @@ func AlertResourceSchema(ctx context.Context) schema.Schema {
 								"tokenomics",
 							),
 						},
-						Default: stringdefault.StaticString("billing"),
 					},
 					"evaluate_for_each": schema.StringAttribute{
 						Optional:            true,

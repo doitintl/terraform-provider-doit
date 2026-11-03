@@ -73,14 +73,14 @@ func DimensionsDataSourceSchema(ctx context.Context) schema.Schema {
 			"sort_by": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "A field by which the results will be sorted.\nPossible values: `type`, `label`, `key`, `timestamp`",
-				MarkdownDescription: "A field by which the results will be sorted.\nPossible values: `type`, `label`, `key`, `timestamp`",
+				Description:         "A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.\nPossible values: `id`, `type`, `label`, `key`",
+				MarkdownDescription: "A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.\nPossible values: `id`, `type`, `label`, `key`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
+						"id",
 						"type",
 						"label",
 						"key",
-						"timestamp",
 					),
 				},
 			},

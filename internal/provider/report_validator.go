@@ -324,7 +324,45 @@ func (v reportCountAggregationValidator) MarkdownDescription(_ context.Context) 
 }
 
 func (v reportCountAggregationValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	validateReportCountAggregation(ctx, req.Config, &resp.Diagnostics)
+	// Defer when aggregation is omitted in config so ModifyPlan can inherit the
+	// stored aggregation on update (or reject on create).
+	var aggregation types.String
+	d := req.Config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() || aggregation.IsNull() {
+		return
+	}
+	validateReportCountAggregation(ctx, req.Config, nil, &resp.Diagnostics)
+}
+
+// reportCustomTimeRangeModeValidator enforces the two-way coupling between
+// config.custom_time_range and config.time_range.mode:
+//   - custom_time_range is only valid when time_range.mode is "custom"; and
+//   - time_range.mode = "custom" requires a custom_time_range block.
+//
+// The API rejects either mismatch with a 400, so surface both at plan time.
+type reportCustomTimeRangeModeValidator struct{}
+
+var _ resource.ConfigValidator = reportCustomTimeRangeModeValidator{}
+
+func (v reportCustomTimeRangeModeValidator) Description(_ context.Context) string {
+	return "Validates that custom_time_range is set if and only if time_range.mode is \"custom\""
+}
+
+func (v reportCustomTimeRangeModeValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `custom_time_range` is set if and only if `time_range.mode` is `\"custom\"`"
+}
+
+func (v reportCustomTimeRangeModeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	// Defer when time_range or time_range.mode is omitted in config so ModifyPlan
+	// can inherit the stored mode on update (or reject on create).
+	var timeRange resource_report.TimeRangeValue
+	d := req.Config.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() || timeRange.IsNull() || timeRange.Mode.IsNull() {
+		return
+	}
+	validateReportCustomTimeRangeMode(ctx, req.Config, nil, &resp.Diagnostics)
 }
 
 // reportCustomTimeRangeUnitValidator rejects time_range.unit alongside
@@ -387,21 +425,39 @@ func validateReportCustomTimeRangeUnit(ctx context.Context, config tfsdk.Config,
 // resource and the report_query data source, which build the same ExternalConfig
 // from an identical schema. It enforces the count/aggregation coupling in both
 // directions (the API rejects either mismatch with a 400; verified: an omitted
-// aggregation does NOT default to "count"). Unknown values (e.g. cross-resource
-// references) are deferred, since they may resolve to a valid combination.
-func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
+// aggregation does NOT default to "count").
+//
+// priorState, when non-nil, supplies aggregation when the config omits it on
+// update (aggregation is Optional+Computed and not clearable in place, so the
+// API retains the stored value). Unknown values (e.g. cross-resource references)
+// are deferred, since they may resolve to a valid combination.
+func validateReportCountAggregation(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
 	var count resource_report.CountValue
-	d := config.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("count"), &count)
 	diags.Append(d...)
 	if d.HasError() {
 		return
 	}
 
 	var aggregation types.String
-	d = config.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
 	diags.Append(d...)
 	if d.HasError() {
 		return
+	}
+	if aggregation.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
 	}
 
 	// Defer while either value is unknown — it may resolve to a valid combination.
@@ -435,6 +491,92 @@ func validateReportCountAggregation(ctx context.Context, config tfsdk.Config, di
 			"Missing Count Configuration",
 			"`aggregation = \"count\"` requires a `count` block specifying the field to count "+
 				"(e.g. count = { id = \"service_description\", type = \"fixed\" }).",
+		)
+	}
+}
+
+// validateReportCustomTimeRangeMode is the shared body used by both the report
+// resource and the report_query data source. It enforces the two-way coupling
+// between config.custom_time_range and config.time_range.mode.
+//
+// priorState, when non-nil, supplies time_range when the config omits it on
+// update (time_range is Optional+Computed and not clearable in place, so the
+// API retains the stored value). Unknown values are deferred.
+func validateReportCustomTimeRangeMode(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
+	var customTimeRange resource_report.CustomTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("custom_time_range"), &customTimeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var timeRange resource_report.TimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if timeRange.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+	}
+
+	if customTimeRange.IsUnknown() || timeRange.IsUnknown() {
+		return
+	}
+
+	mode := timeRange.Mode
+	if mode.IsNull() && priorState != nil {
+		var priorTimeRange resource_report.TimeRangeValue
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &priorTimeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		if priorTimeRange.IsUnknown() {
+			return
+		}
+		if !priorTimeRange.IsNull() {
+			mode = priorTimeRange.Mode
+		}
+	}
+	if mode.IsUnknown() {
+		return
+	}
+
+	if !customTimeRange.IsNull() {
+		if mode.ValueString() == "custom" {
+			return
+		}
+		detail := "`custom_time_range` is only applicable when `time_range.mode = \"custom\"`. " +
+			"Either set `time_range.mode = \"custom\"` or remove the `custom_time_range` block."
+		if !mode.IsNull() {
+			detail = fmt.Sprintf("`custom_time_range` is only applicable when `time_range.mode = \"custom\"`, but `time_range.mode` is %q. "+
+				"Either set `time_range.mode = \"custom\"` or remove the `custom_time_range` block.", mode.ValueString())
+		}
+		diags.AddAttributeError(
+			path.Root("config").AtName("custom_time_range"),
+			"Invalid Custom Time Range Configuration",
+			detail,
+		)
+		return
+	}
+
+	if mode.ValueString() == "custom" {
+		diags.AddAttributeError(
+			path.Root("config").AtName("custom_time_range"),
+			"Missing Custom Time Range",
+			"`time_range.mode = \"custom\"` requires a `custom_time_range` block specifying `from` and `to`.",
 		)
 	}
 }
@@ -702,4 +844,226 @@ func validateReportCumulativeMetrics(metrics types.List, diags *diag.Diagnostics
 			fmt.Sprintf("`layout = \"cumulative_comparison\"` requires exactly one metric, but %d metrics were configured.", numMetrics),
 		)
 	}
+}
+
+// reportLimitByChangeValidator validates config.limit_by_change against the rest
+// of the report config:
+//   - with secondary_time_range set, aggregation must not be "count" (the API
+//     rejects it with LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY), and
+//   - limit_by_change.metric must also be listed in config.metrics.
+//
+// A percentage-typed custom metric is also rejected with a secondary range, but
+// the unit type lives in the custom metric document rather than the config, so
+// that case is left to the API.
+//
+// A ConfigValidator rather than an attribute validator because attribute
+// validators do not run on attributes inside a SingleNestedAttribute with a
+// CustomType.
+type reportLimitByChangeValidator struct{}
+
+var _ resource.ConfigValidator = reportLimitByChangeValidator{}
+
+func (v reportLimitByChangeValidator) Description(_ context.Context) string {
+	return "Validates that limit_by_change is not combined with count aggregation and a secondary time range, and that its metric is listed in metrics"
+}
+
+func (v reportLimitByChangeValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `limit_by_change` is not combined with `count` aggregation and a secondary time range, and that its metric is listed in `metrics`"
+}
+
+func (v reportLimitByChangeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportLimitByChange(ctx, req.Config, &resp.Diagnostics)
+}
+
+// reportLimitByChangeDataSourceValidator applies the same rules to the
+// report_query data source, whose config reuses the report resource types.
+type reportLimitByChangeDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportLimitByChangeDataSourceValidator{}
+
+func (v reportLimitByChangeDataSourceValidator) Description(ctx context.Context) string {
+	return reportLimitByChangeValidator{}.Description(ctx)
+}
+
+func (v reportLimitByChangeDataSourceValidator) MarkdownDescription(ctx context.Context) string {
+	return reportLimitByChangeValidator{}.MarkdownDescription(ctx)
+}
+
+func (v reportLimitByChangeDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportLimitByChange(ctx, req.Config, &resp.Diagnostics)
+}
+
+// validateReportLimitByChange is shared by the report resource (ConfigValidators
+// and ModifyPlan) and the report_query data source. The two checks are
+// independent: each defers on its own unknown inputs so that one unresolved
+// attribute never hides the other's definite error.
+func validateReportLimitByChange(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+	validateReportLimitByChangeCountSecondary(ctx, getter, nil, diags)
+	validateReportLimitByChangeMetricListed(ctx, getter, nil, diags)
+}
+
+// validateReportLimitByChangeCountSecondary rejects aggregation = "count" when
+// both limit_by_change and secondary_time_range are set.
+//
+// priorState, when non-nil, supplies the value of aggregation and
+// secondary_time_range for attributes the config omits. Both are
+// Optional+Computed and the API keeps the stored value when an update omits them,
+// so the stored value is what the update would run with. (The plan cannot be used
+// for this: it marks an omitted nested attribute as unknown.)
+func validateReportLimitByChangeCountSecondary(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var limitByChange resource_report.LimitByChangeValue
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var secondary resource_report.SecondaryTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if secondary.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+	}
+
+	var aggregation types.String
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if aggregation.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("aggregation"), &aggregation)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+	}
+
+	if limitByChange.IsNull() || limitByChange.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if aggregation.IsNull() || aggregation.IsUnknown() {
+		return
+	}
+
+	if aggregation.ValueString() != "count" {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("limit_by_change"),
+		"Invalid Limit By Change Configuration",
+		"`limit_by_change` cannot be combined with `aggregation = \"count\"` when `secondary_time_range` is set: "+
+			"a change between two ranges needs one summable number per range, which count aggregation does not provide "+
+			"(the API rejects this with LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY). "+
+			"Use a different aggregation, or remove `secondary_time_range` or `limit_by_change`. "+
+			"If `secondary_time_range` is not in your configuration, it is kept from the existing report.",
+	)
+}
+
+// validateReportLimitByChangeMetricListed rejects a limit_by_change.metric that
+// does not match (type and value) any entry of config.metrics.
+//
+// priorState, when non-nil, supplies metrics when the config omits it: the API keeps
+// the stored list on update, so that is the list limit_by_change is checked against.
+// Without it (create, or a forced replacement), or when the stored list is empty, an
+// omitted list is deferred, because the API may default it.
+func validateReportLimitByChangeMetricListed(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var limitByChange resource_report.LimitByChangeValue
+	d := getter.GetAttribute(ctx, path.Root("config").AtName("limit_by_change"), &limitByChange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var metrics types.List
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if metrics.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("metrics"), &metrics)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		if metrics.IsNull() || metrics.IsUnknown() {
+			return
+		}
+		// The provider keeps an empty list in state when metrics was never configured
+		// (see useEmptyForUnconfiguredMetricsMirror), so an empty stored list says nothing
+		// about the metrics the API holds.
+		if len(metrics.Elements()) == 0 {
+			return
+		}
+	}
+
+	if limitByChange.IsNull() || limitByChange.IsUnknown() {
+		return
+	}
+	// A null metrics list may be defaulted by the API, so only a configured or stored list is checked.
+	if metrics.IsNull() || metrics.IsUnknown() {
+		return
+	}
+
+	metric := limitByChange.Metric
+	if metric.IsNull() || metric.IsUnknown() {
+		return
+	}
+	if metric.MetricType.IsNull() || metric.MetricType.IsUnknown() {
+		return
+	}
+	if metric.Value.IsNull() || metric.Value.IsUnknown() {
+		return
+	}
+
+	var configured []resource_report.MetricsValue
+	d = metrics.ElementsAs(ctx, &configured, false)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	hasUnknown := false
+	for _, entry := range configured {
+		if entry.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		// A known component that differs is a definite non-match, whatever the other component resolves to.
+		if knownStringDiffers(entry.MetricsType, metric.MetricType.ValueString()) {
+			continue
+		}
+		if knownStringDiffers(entry.Value, metric.Value.ValueString()) {
+			continue
+		}
+		if entry.MetricsType.IsUnknown() || entry.Value.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		return
+	}
+
+	// An entry whose unresolved components could still match defers the error.
+	if hasUnknown {
+		return
+	}
+
+	diags.AddAttributeError(
+		path.Root("config").AtName("limit_by_change").AtName("metric"),
+		"Invalid Limit By Change Metric",
+		fmt.Sprintf("`limit_by_change.metric` (type %q, value %q) must also be listed in `metrics`; the API rejects the report otherwise. "+
+			"Add it to `metrics` or use one of the configured metrics in `limit_by_change.metric`.",
+			metric.MetricType.ValueString(), metric.Value.ValueString()),
+	)
 }

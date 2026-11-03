@@ -140,8 +140,9 @@ func TestAccCommitmentsDataSource_AutoPagination(t *testing.T) {
 
 // TestAccCommitmentsDataSource_NewAttributes verifies the new commitment-level and
 // period-level attributes (total_forecast_value, total_marketplace_spend,
-// forecast_value, marketplace_limit_amount, marketplace_spend) are present and
-// accessible in the list items.
+// cash_attainment, forecast_value, marketplace_limit_amount, marketplace_spend,
+// rollover_from_prev_period, shortfall_rollover) are present and accessible in the
+// list items.
 func TestAccCommitmentsDataSource_NewAttributes(t *testing.T) {
 	commitmentCount := getCommitmentCount(t)
 	if commitmentCount < 1 {
@@ -200,6 +201,13 @@ output "first_commitment_total_marketplace_spend" {
 }
 
 # Exercise new period-level attributes
+output "first_period_cash_attainment" {
+  value = (
+    length(data.doit_commitments.all.commitments) > 0 &&
+    length(data.doit_commitments.all.commitments[0].periods) > 0
+  ) ? data.doit_commitments.all.commitments[0].periods[0].cash_attainment : null
+}
+
 output "first_period_forecast_value" {
   value = (
     length(data.doit_commitments.all.commitments) > 0 &&
@@ -219,6 +227,20 @@ output "first_period_marketplace_limit_amount" {
     length(data.doit_commitments.all.commitments) > 0 &&
     length(data.doit_commitments.all.commitments[0].periods) > 0
   ) ? data.doit_commitments.all.commitments[0].periods[0].marketplace_limit_amount : null
+}
+
+output "first_period_rollover_from_prev_period" {
+  value = (
+    length(data.doit_commitments.all.commitments) > 0 &&
+    length(data.doit_commitments.all.commitments[0].periods) > 0
+  ) ? data.doit_commitments.all.commitments[0].periods[0].rollover_from_prev_period : null
+}
+
+output "first_period_shortfall_rollover" {
+  value = (
+    length(data.doit_commitments.all.commitments) > 0 &&
+    length(data.doit_commitments.all.commitments[0].periods) > 0
+  ) ? data.doit_commitments.all.commitments[0].periods[0].shortfall_rollover : null
 }
 `
 }

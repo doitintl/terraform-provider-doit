@@ -18,6 +18,8 @@ func ActiveThemeDataSourceSchema(ctx context.Context) schema.Schema {
 				MarkdownDescription: "Identifier of the active theme. The reserved sentinel `\"default\"` is\nreturned when the user is using the built-in default (no custom or\npreset theme stored).",
 			},
 		},
+		Description:         "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+		MarkdownDescription: "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
 	}
 }
 

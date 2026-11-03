@@ -20,6 +20,12 @@ data "doit_dimensions" "gcp" {
   filter = "type:google-cloud"
 }
 
+# List dimensions with sorting
+data "doit_dimensions" "sorted" {
+  sort_by    = "id"
+  sort_order = "desc"
+}
+
 # Output dimension IDs
 output "all_dimension_ids" {
   value = [for d in data.doit_dimensions.all.dimensions : d.id]
@@ -50,8 +56,8 @@ output "dimension_count" {
 The fields eligible for filtering are: type, label, key.
 - `max_results` (Number) The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
 - `page_token` (String) Page token, returned by a previous call, to request the next page of results
-- `sort_by` (String) A field by which the results will be sorted.
-Possible values: `type`, `label`, `key`, `timestamp`
+- `sort_by` (String) A field by which the results will be sorted. `key` is an alias for the dimension `id`. Defaults to `id` in descending order.
+Possible values: `id`, `type`, `label`, `key`
 - `sort_order` (String) Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
 Possible values: `asc`, `desc`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))

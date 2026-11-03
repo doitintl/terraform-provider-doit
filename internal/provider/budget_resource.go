@@ -91,17 +91,6 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		}
 	}
 
-	// The generated schema marks scopes Optional because it is derived from
-	// BudgetCreateUpdateRequest, the body for both POST and PATCH, where scopes
-	// is mandatory only on create. budgetScopeRequiredValidator enforces it, so
-	// say so here — otherwise the docs read as though it can be omitted.
-	// Upstream is splitting that schema in CMP-51650.
-	if attr, ok := s.Attributes["scopes"].(schema.ListNestedAttribute); ok {
-		attr.Description += " Required: a budget has to define the spend it tracks."
-		attr.MarkdownDescription = attr.Description
-		s.Attributes["scopes"] = attr
-	}
-
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.
 	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
@@ -119,13 +108,10 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	// Category B: API defaults, state-retained values, or legacy fields — not clearable.
 	acknowledgeNotClearable(s,
 		"seasonal_amounts", // optional list, API returns empty list
-		"currency",         // API defaults to org currency
-		"type",             // API defaults budget type
 		"time_interval",    // omitting on update retains the prior value
 		"amount",           // API-computed for use_prev_spend budgets
 		"public",           // API defaults to false
-		"start_period",     // omitting on update retains the prior value
-		"name",             // API auto-generates name when omitted
+		"data_source",      // API resolves default (billing-datahub with DataHub metrics, else billing)
 		"end_period",       // API rejects clearing (endPeriod=0/null)
 		"recipients",       // API auto-assigns creator's email on create
 
@@ -175,7 +161,6 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		budgetTypeEndPeriodValidator{},
 		budgetAlertsLengthValidator{},
 		budgetRecipientsMinLengthValidator{},
-		budgetScopeRequiredValidator{},
 		budgetCollaboratorsOwnerValidator{},
 		budgetSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
@@ -188,16 +173,6 @@ func (r *budgetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	// state. On create, the backend has no prior values to use.
 	if req.Plan.Raw.Type() == nil || req.Plan.Raw.IsNull() || (req.State.Raw.Type() != nil && !req.State.Raw.IsNull()) {
 		return
-	}
-
-	var startPeriod types.Int64
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("start_period"), &startPeriod)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	if startPeriod.IsNull() {
-		resp.Diagnostics.AddAttributeError(path.Root("start_period"), "Missing Required Attribute",
-			"Attribute start_period is required when creating a budget.")
 	}
 
 	var budgetType, timeInterval types.String
@@ -246,7 +221,7 @@ func (r *budgetResource) Create(ctx context.Context, req resource.CreateRequest,
 	defer cancel()
 
 	// Convert model to API budget type
-	budget, diags := plan.toUpdateRequest(ctx)
+	budget, diags := plan.toCreateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

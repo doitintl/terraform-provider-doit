@@ -21,6 +21,8 @@ func ActiveThemeResourceSchema(ctx context.Context) schema.Schema {
 				Default:             stringdefault.StaticString("default"),
 			},
 		},
+		Description:         "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
+		MarkdownDescription: "Configure presentation settings for Cloud Analytics reports, including custom color themes.",
 	}
 }
 

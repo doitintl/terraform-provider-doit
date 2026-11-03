@@ -16,6 +16,7 @@ import (
 	"maps"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -138,6 +139,12 @@ func main() {
 			}
 		}
 
+		// Pruning drops whole subtrees; inline aliases across the whole
+		// document first (in source order, so an alias whose target holds
+		// further aliases copies an already-resolved target) so no retained
+		// alias is left pointing at an anchor defined in a removed subtree.
+		inlineAliases(doc)
+
 		pathsRemoved, methodsPruned := prunePaths(pathsNode, used)
 		fmt.Printf("Pruned %d paths and %d methods\n", pathsRemoved, methodsPruned)
 
@@ -150,10 +157,23 @@ func main() {
 			// from any retained path, to avoid dangling $ref errors.
 			responsesNode := findMapValue(doc, "components", "responses")
 			if responsesNode != nil {
-				reachableResponses := collectReachableResponses(pathsNode)
+				reachableResponses := collectReachableResponses(doc, pathsNode)
 				responsesRemoved := pruneResponses(responsesNode, reachableResponses)
 				if responsesRemoved > 0 {
 					fmt.Printf("Pruned %d unreachable responses\n", responsesRemoved)
+				}
+			}
+
+			// Parameters, headers, requestBodies, ... that no retained path
+			// reaches would otherwise keep a $ref to a pruned schema.
+			reachableComponents := collectReachableComponents(doc, pathsNode)
+			for _, kind := range prunableComponentKinds {
+				kindNode := findMapValue(doc, "components", kind)
+				if kindNode == nil {
+					continue
+				}
+				if removed := pruneComponentKind(kindNode, reachableComponents[kind]); removed > 0 {
+					fmt.Printf("Pruned %d unreachable %s\n", removed, kind)
 				}
 			}
 		}
@@ -734,10 +754,21 @@ func flattenAllOf(allOfNode *yaml.Node, schemasNode *yaml.Node, contextName stri
 	// Build the merged result.
 	result := &yaml.Node{Kind: yaml.MappingNode}
 
-	// Set type: object
+	// Use the sub-schemas' type when they agree on one (e.g. a string enum
+	// $ref plus a description-only sub-schema); otherwise default to object.
+	resultType := "object"
+	var seenTypes []string
+	for _, r := range resolved {
+		if t := getScalarValue(r, "type"); t != "" && !slices.Contains(seenTypes, t) {
+			seenTypes = append(seenTypes, t)
+		}
+	}
+	if len(seenTypes) == 1 {
+		resultType = seenTypes[0]
+	}
 	result.Content = append(result.Content,
 		&yaml.Node{Kind: yaml.ScalarNode, Value: "type", Tag: "!!str"},
-		&yaml.Node{Kind: yaml.ScalarNode, Value: "object", Tag: "!!str"},
+		&yaml.Node{Kind: yaml.ScalarNode, Value: resultType, Tag: "!!str"},
 	)
 
 	// Merge required arrays.

@@ -77,6 +77,68 @@ data "doit_sharing" "test" {
 `, name)
 }
 
+// TestAccSharingDataSource_Allocation verifies the data source reports the public
+// access of an allocation, which always has at least viewer access.
+func TestAccSharingDataSource_Allocation(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-sharing-ds-alloc")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck: func() {
+			testAccPreCheckFunc(t)()
+			if testProject() == "" {
+				t.Skip("TEST_PROJECT must be set for this test")
+			}
+		},
+		TerraformVersionChecks: testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSharingDataSourceAllocationConfig(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"data.doit_sharing.test", "resource_type", "allocations"),
+					resource.TestCheckResourceAttr(
+						"data.doit_sharing.test", "public", "viewer"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccSharingDataSourceAllocationConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccSharingDataSourceAllocationConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_allocation" "test" {
+  name        = %q
+  description = "allocation for sharing data source test"
+  rule = {
+    formula = "A"
+    components = [
+      {
+        key    = "project_id"
+        mode   = "is"
+        type   = "fixed"
+        values = [%q]
+      }
+    ]
+  }
+}
+
+data "doit_sharing" "test" {
+  resource_type = "allocations"
+  resource_id   = doit_allocation.test.id
+}
+`, name, testProject())
+}
+
 func TestAccSharingDataSource_NotFound(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,

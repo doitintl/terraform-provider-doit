@@ -29,8 +29,8 @@ func TestBudgetPeriodValidatorsAttached(t *testing.T) {
 	if !ok {
 		t.Fatal("time_interval must be a StringAttribute")
 	}
-	if !start.IsOptional() || !start.IsComputed() || !interval.IsOptional() || !interval.IsComputed() {
-		t.Fatal("period attributes must remain Optional+Computed")
+	if !start.IsRequired() || !interval.IsOptional() || !interval.IsComputed() {
+		t.Fatal("start_period must be Required and time_interval Optional+Computed")
 	}
 	var startValidator validator.Int64
 	for _, candidate := range start.Validators {
@@ -137,14 +137,12 @@ func TestBudgetPeriodModifyPlan(t *testing.T) {
 		wantPath    string
 		wantSummary string
 	}{
-		{"missing start", types.Int64Null(), types.StringValue("fixed"), types.StringNull(), false, false, "start_period", "Missing Required Attribute"},
 		{"unknown start", types.Int64Unknown(), types.StringValue("fixed"), types.StringNull(), false, false, "", ""},
 		{"known start", types.Int64Value(budgetMinStartPeriodMs), types.StringValue("fixed"), types.StringNull(), false, false, "", ""},
 		{"missing recurring interval", types.Int64Value(budgetMinStartPeriodMs), types.StringValue("recurring"), types.StringNull(), false, false, "time_interval", "Missing Required Attribute"},
 		{"unknown recurring interval", types.Int64Value(budgetMinStartPeriodMs), types.StringValue("recurring"), types.StringUnknown(), false, false, "", ""},
 		{"known recurring interval", types.Int64Value(budgetMinStartPeriodMs), types.StringValue("recurring"), types.StringValue("day"), false, false, "", ""},
 		{"unknown budget type", types.Int64Value(budgetMinStartPeriodMs), types.StringUnknown(), types.StringNull(), false, false, "", ""},
-		{"unknown budget type does not hide missing start", types.Int64Null(), types.StringUnknown(), types.StringNull(), false, false, "start_period", "Missing Required Attribute"},
 		{"fixed explicit month", types.Int64Value(budgetMinStartPeriodMs), types.StringValue("fixed"), types.StringValue("month"), false, false, "", ""},
 		{"fixed other interval", types.Int64Value(budgetMinStartPeriodMs), types.StringValue("fixed"), types.StringValue("week"), false, false, "time_interval", "Invalid Budget Time Interval"},
 		{"update omitted fields", types.Int64Null(), types.StringValue("recurring"), types.StringNull(), true, false, "", ""},
@@ -178,11 +176,13 @@ func TestBudgetPeriodModifyPlan(t *testing.T) {
 	}
 }
 
-func TestBudgetPeriodModifyPlanBothRequiredFieldsMissing(t *testing.T) {
+// start_period is Required in the schema, so ModifyPlan no longer reports it;
+// a missing recurring time_interval is still its job.
+func TestBudgetPeriodModifyPlanMissingRecurringInterval(t *testing.T) {
 	ctx := t.Context()
 	config := buildBudgetValidatorConfig(ctx, t, map[string]attr.Value{
 		"type":          types.StringValue("recurring"),
-		"start_period":  types.Int64Null(),
+		"start_period":  types.Int64Value(budgetMinStartPeriodMs),
 		"time_interval": types.StringNull(),
 	})
 	resp := &resource.ModifyPlanResponse{}
@@ -191,10 +191,5 @@ func TestBudgetPeriodModifyPlanBothRequiredFieldsMissing(t *testing.T) {
 		State:  tfsdk.State{Schema: config.Schema, Raw: tftypes.NewValue(config.Raw.Type(), nil)},
 		Plan:   tfsdk.Plan(config),
 	}, resp)
-	if len(resp.Diagnostics) != 2 {
-		t.Fatalf("diagnostic count = %d, want 2: %v", len(resp.Diagnostics), resp.Diagnostics)
-	}
-	for i, attribute := range []string{"start_period", "time_interval"} {
-		assertBudgetValidatorDiagnostics(t, resp.Diagnostics[i:i+1], true, "Missing Required Attribute", path.Root(attribute))
-	}
+	assertBudgetValidatorDiagnostics(t, resp.Diagnostics, true, "Missing Required Attribute", path.Root("time_interval"))
 }

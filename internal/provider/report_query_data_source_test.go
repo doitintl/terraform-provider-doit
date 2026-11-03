@@ -1,9 +1,12 @@
 package provider_test
 
 import (
+	"bytes"
+	"encoding/csv"
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -62,9 +65,73 @@ func TestAccReportQueryDataSource_FileOutput(t *testing.T) {
 	})
 }
 
-func TestAccReportQueryDataSource_InvalidFileOutput(t *testing.T) {
+// parseDownloadedCSV parses a CSV export from the API. Exports start with a
+// UTF-8 byte-order mark so Excel detects the encoding; it is stripped so the
+// first header cell compares equal to its column name.
+func parseDownloadedCSV(content []byte) ([][]string, error) {
+	content = bytes.TrimPrefix(content, []byte("\xEF\xBB\xBF"))
+	records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("downloaded file is not valid CSV: %w", err)
+	}
+	return records, nil
+}
+
+func TestAccReportQueryDataSource_FileOutputCSV(t *testing.T) {
+	filename := t.TempDir() + "/query.csv"
 	config := strings.Replace(testAccReportQueryDataSourceConfig(),
 		"data \"doit_report_query\" \"test\" {", "data \"doit_report_query\" \"test\" {\n    file_output = \"csv\"", 1)
+	config += fmt.Sprintf(`
+data "http" "query_csv" {
+    url = data.doit_report_query.test.file_output_url
+}
+
+resource "local_sensitive_file" "query_csv" {
+    filename       = %q
+    content_base64 = data.http.query_csv.response_body_base64
+}
+`, filename)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config: config,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
+				statecheck.ExpectKnownValue("data.doit_report_query.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+			},
+			Check: func(_ *terraform.State) error {
+				content, err := os.ReadFile(filename)
+				if err != nil {
+					return err
+				}
+				records, err := parseDownloadedCSV(content)
+				if err != nil {
+					return err
+				}
+				if len(records) < 2 {
+					return fmt.Errorf("downloaded CSV has %d rows, want header plus at least one data row", len(records))
+				}
+				for _, wantCol := range []string{"Year", "Month", "Cost"} {
+					if !slices.Contains(records[0], wantCol) {
+						return fmt.Errorf("downloaded CSV header %v does not contain %q", records[0], wantCol)
+					}
+				}
+				return nil
+			},
+		}},
+	})
+}
+
+func TestAccReportQueryDataSource_InvalidFileOutput(t *testing.T) {
+	config := strings.Replace(testAccReportQueryDataSourceConfig(),
+		"data \"doit_report_query\" \"test\" {", "data \"doit_report_query\" \"test\" {\n    file_output = \"xlsx\"", 1)
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
@@ -472,16 +539,63 @@ func TestAccReportQueryDataSource_ForecastSettings(t *testing.T) {
 			{
 				Config: testAccReportQueryDataSourceForecastSettingsConfig(),
 				ConfigStateChecks: []statecheck.StateCheck{
-					// result_json must contain forecastRows, proving forecast_settings is
+					// result_json must contain non-empty forecastRows, proving forecast_settings is
 					// applied rather than silently ignored.
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("result_json"),
-						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("row_count"),
 						knownvalue.NotNull()),
+				},
+			},
+		},
+	})
+}
+
+// TestAccReportQueryDataSource_ForecastFileOutput verifies that an ad-hoc query with
+// forecast_settings and file_output returns both a valid signed download URL and non-empty forecastRows,
+// and that the URL downloads a valid PNG file.
+func TestAccReportQueryDataSource_ForecastFileOutput(t *testing.T) {
+	filename := t.TempDir() + "/forecast_query.png"
+	config := testAccReportQueryDataSourceForecastFileOutputConfig(filename)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("file_output_url"),
+						knownvalue.NotNull()),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("result_json"),
+						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
+					statecheck.ExpectKnownValue(
+						"data.doit_report_query.test",
+						tfjsonpath.New("row_count"),
+						knownvalue.NotNull()),
+				},
+				Check: func(_ *terraform.State) error {
+					content, err := os.ReadFile(filename)
+					if err != nil {
+						return err
+					}
+					if !bytes.HasPrefix(content, []byte("\x89PNG\r\n\x1a\n")) {
+						return fmt.Errorf("downloaded file does not have a PNG header")
+					}
+					return nil
 				},
 			},
 		},
@@ -503,7 +617,7 @@ func TestAccReportQueryDataSource_ForecastConflict(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"data.doit_report_query.test",
 						tfjsonpath.New("result_json"),
-						knownvalue.StringRegexp(regexp.MustCompile(`forecastRows`))),
+						knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 				},
 			},
 		},
@@ -557,6 +671,52 @@ data "doit_report_query" "test" {
     }
 }
 `
+}
+
+func testAccReportQueryDataSourceForecastFileOutputConfig(filename string) string {
+	return fmt.Sprintf(`
+data "doit_report_query" "test" {
+    file_output = "png"
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_and_line_chart"
+        time_range = {
+          mode            = "last"
+          amount          = 12
+          unit            = "month"
+          include_current = true
+        }
+        dimensions = [
+          { id = "year", type = "datetime" },
+          { id = "month", type = "datetime" }
+        ]
+        forecast_settings = {
+            future_time_intervals     = 3
+            historical_time_intervals = 12
+            mode                      = "totals"
+        }
+    }
+}
+
+data "http" "report_png" {
+    url = data.doit_report_query.test.file_output_url
+}
+
+resource "local_sensitive_file" "report_png" {
+    filename       = %[1]q
+    content_base64 = data.http.report_png.response_body_base64
+}
+`, filename)
 }
 
 func testAccReportQueryDataSourceForecastConflictConfig() string {

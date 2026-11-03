@@ -21,8 +21,8 @@ func InvoicesDataSourceSchema(ctx context.Context) schema.Schema {
 			"filter": schema.StringAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).",
-				MarkdownDescription: "An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).",
+				Description:         "Supported keys: platform (an invoice platform), dueDate (milliseconds since the POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value is applied per request. Cancelled invoices and credit memos are returned only with status:CANCELED, and every other request excludes them.",
+				MarkdownDescription: "Supported keys: platform (an invoice platform), dueDate (milliseconds since the POSIX epoch), and status (OPEN, PAST DUE, PAID, or CANCELED). Only one status value is applied per request. Cancelled invoices and credit memos are returned only with status:CANCELED, and every other request excludes them.",
 			},
 			"invoices": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -59,8 +59,8 @@ func InvoicesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"status": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Status of the invoice",
-							MarkdownDescription: "Status of the invoice",
+							Description:         "Status of the invoice. `CANCELED` takes precedence over the payment status.",
+							MarkdownDescription: "Status of the invoice. `CANCELED` takes precedence over the payment status.",
 						},
 						"total_amount": schema.Float64Attribute{
 							Computed:            true,
@@ -69,8 +69,8 @@ func InvoicesDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"url": schema.StringAttribute{
 							Computed:            true,
-							Description:         "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.",
-							MarkdownDescription: "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.",
+							Description:         "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).",
+							MarkdownDescription: "Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page, or programmatically via the `getInvoicePdf` operation (`GET /billing/v1/invoices/{id}/pdf`).",
 						},
 					},
 					CustomType: InvoicesType{

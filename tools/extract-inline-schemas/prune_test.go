@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -772,7 +773,7 @@ func TestCollectReachableResponses(t *testing.T) {
         $ref: "#/components/responses/400"
 `)
 
-	reachable := collectReachableResponses(paths)
+	reachable := collectReachableResponses(nil, paths)
 
 	if !reachable["400"] {
 		t.Error("400 should be reachable")
@@ -790,7 +791,7 @@ func TestCollectReachableResponses(t *testing.T) {
 }
 
 func TestCollectReachableResponses_NilPaths(t *testing.T) {
-	reachable := collectReachableResponses(nil)
+	reachable := collectReachableResponses(nil, nil)
 	if len(reachable) != 0 {
 		t.Errorf("expected empty reachable set, got %d", len(reachable))
 	}
@@ -876,5 +877,696 @@ func TestCollectRefsFromNode_MixedRefs(t *testing.T) {
 	}
 	if len(responseQueue) != 2 {
 		t.Errorf("responseQueue length = %d, want 2", len(responseQueue))
+	}
+}
+
+func TestCollectReachableSchemas_HeaderRef(t *testing.T) {
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    post:
+      responses:
+        "201":
+          description: Created
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+components:
+  schemas:
+    Thing:
+      type: object
+    RequestID:
+      type: string
+    Unused:
+      type: object
+  headers:
+    RequestID:
+      description: Request id
+      schema:
+        $ref: "#/components/schemas/RequestID"
+`
+	reachable := reachableFromSpec(t, spec)
+
+	if !reachable["Thing"] {
+		t.Error("Thing should be reachable directly")
+	}
+	if !reachable["RequestID"] {
+		t.Error("RequestID should be reachable via components/headers/RequestID")
+	}
+	if reachable["Unused"] {
+		t.Error("Unused should not be reachable")
+	}
+}
+
+func TestCollectReachableSchemas_RequestBodyRef(t *testing.T) {
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/ThingBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+components:
+  schemas:
+    Thing:
+      type: object
+    ThingInput:
+      type: object
+    Unused:
+      type: object
+  requestBodies:
+    ThingBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingInput"
+`
+	reachable := reachableFromSpec(t, spec)
+
+	if !reachable["ThingInput"] {
+		t.Error("ThingInput should be reachable via components/requestBodies/ThingBody")
+	}
+	if reachable["Unused"] {
+		t.Error("Unused should not be reachable")
+	}
+}
+
+func TestCollectReachableSchemas_OtherComponentChain(t *testing.T) {
+	// response -> header -> header (cycle) -> schema, plus a schema that
+	// reaches a requestBody which refs another schema.
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    get:
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+components:
+  schemas:
+    Deep:
+      type: object
+    Other:
+      type: object
+    Unused:
+      type: object
+  responses:
+    Ok:
+      description: OK
+      headers:
+        A:
+          $ref: "#/components/headers/A"
+  headers:
+    A:
+      description: a
+      schema:
+        $ref: "#/components/schemas/Deep"
+      examples:
+        loop:
+          $ref: "#/components/headers/B"
+    B:
+      description: b
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Other"
+      examples:
+        loop:
+          $ref: "#/components/headers/A"
+`
+	reachable := reachableFromSpec(t, spec)
+
+	for _, name := range []string{"Deep", "Other"} {
+		if !reachable[name] {
+			t.Errorf("%s should be reachable through the headers chain", name)
+		}
+	}
+	if reachable["Unused"] {
+		t.Error("Unused should not be reachable")
+	}
+}
+
+func TestCollectOtherRefs(t *testing.T) {
+	node := mustParseYAML(t, `
+a:
+  $ref: "#/components/headers/H"
+b:
+  - $ref: "#/components/requestBodies/R"
+  - $ref: "#/components/examples/E"
+c:
+  $ref: "#/components/schemas/S"
+d:
+  $ref: "#/components/responses/Resp"
+e:
+  $ref: "#/components/parameters/P"
+f:
+  $ref: "other.yaml#/components/headers/X"
+g:
+  $ref: "#/components/headers"
+`)
+
+	var got []componentRef
+	collectOtherRefs(node, &got)
+
+	want := []componentRef{
+		{"headers", "H"},
+		{"requestBodies", "R"},
+		{"examples", "E"},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("ref %d = %v, want %v", i, got[i], want[i])
+		}
+	}
+}
+
+func reachableFromSpec(t *testing.T, spec string) map[string]bool {
+	t.Helper()
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(spec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+	return collectReachableSchemas(doc, findMapValue(doc, "paths"), findMapValue(doc, "components", "schemas"))
+}
+
+func TestPruneSequence_ResponseReferencedThroughCallback(t *testing.T) {
+	spec := `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /things:
+    post:
+      callbacks:
+        onEvent:
+          $ref: "#/components/callbacks/Event"
+      responses:
+        "201":
+          description: Created
+components:
+  schemas:
+    AckBody:
+      type: object
+    Unused:
+      type: object
+  responses:
+    Ack:
+      description: Ack
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AckBody"
+    Unused:
+      description: Unused
+  callbacks:
+    Event:
+      "{$request.body#/url}":
+        post:
+          responses:
+            "200":
+              $ref: "#/components/responses/Ack"
+`
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(spec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+	pathsNode := findMapValue(doc, "paths")
+	schemasNode := findMapValue(doc, "components", "schemas")
+	responsesNode := findMapValue(doc, "components", "responses")
+
+	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
+	pruneResponses(responsesNode, collectReachableResponses(doc, pathsNode))
+
+	if getMappingValue(schemasNode, "AckBody") == nil {
+		t.Error("AckBody schema should be kept")
+	}
+	if getMappingValue(responsesNode, "Ack") == nil {
+		t.Error("Ack response is referenced through a callback and must not be pruned (dangling $ref)")
+	}
+	if getMappingValue(responsesNode, "Unused") != nil {
+		t.Error("Unused response should be pruned")
+	}
+}
+
+// --- pruneComponentKind / collectReachableComponents ---
+
+const unmappedParameterSpec = `
+openapi: "3.0.1"
+info:
+  title: Test
+  version: v1
+paths:
+  /a/{id}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Body"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Rate:
+              $ref: "#/components/headers/Rate"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/A"
+  /b:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Region"
+      requestBody:
+        $ref: "#/components/requestBodies/OtherBody"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Other:
+              $ref: "#/components/headers/Other"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/B"
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: key
+      in: header
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    Region:
+      name: region
+      in: query
+      schema:
+        $ref: "#/components/schemas/Region"
+  requestBodies:
+    Body:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/A"
+    OtherBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OtherPayload"
+  headers:
+    Rate:
+      schema:
+        type: integer
+    Other:
+      schema:
+        $ref: "#/components/schemas/OtherHeader"
+  schemas:
+    A:
+      type: object
+    B:
+      type: object
+    Region:
+      type: string
+      enum: [us, eu]
+    OtherPayload:
+      type: object
+    OtherHeader:
+      type: string
+`
+
+func TestPruneComponentKinds_UnmappedOperation(t *testing.T) {
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(unmappedParameterSpec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+
+	// Retain only /a/{id}, as an unmapped /b would be pruned by prunePaths.
+	pathsNode := findMapValue(doc, "paths")
+	prunePaths(pathsNode, map[pathMethod]bool{{path: "/a/{id}", method: "get"}: true})
+	schemasNode := findMapValue(doc, "components", "schemas")
+	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
+
+	reachable := collectReachableComponents(doc, pathsNode)
+	removed := map[string]int{}
+	for _, kind := range prunableComponentKinds {
+		if kindNode := findMapValue(doc, "components", kind); kindNode != nil {
+			removed[kind] = pruneComponentKind(kindNode, reachable[kind])
+		}
+	}
+
+	for kind, want := range map[string]int{"parameters": 1, "requestBodies": 1, "headers": 1} {
+		if removed[kind] != want {
+			t.Errorf("removed %s = %d, want %d", kind, removed[kind], want)
+		}
+	}
+	for _, name := range []string{"Id", "Region"} {
+		got := getMappingValue(findMapValue(doc, "components", "parameters"), name) != nil
+		if got != (name == "Id") {
+			t.Errorf("parameter %s present = %v", name, got)
+		}
+	}
+	if findMapValue(doc, "components", "securitySchemes", "apiKey") == nil {
+		t.Error("securitySchemes entry was pruned")
+	}
+
+	// No $ref left in the document may dangle.
+	var check func(n *yaml.Node)
+	check = func(n *yaml.Node) {
+		if n.Kind == yaml.MappingNode {
+			for i := 0; i < len(n.Content)-1; i += 2 {
+				if n.Content[i].Value == "$ref" {
+					rest := strings.TrimPrefix(n.Content[i+1].Value, "#/")
+					if findMapValue(doc, strings.Split(rest, "/")...) == nil {
+						t.Errorf("dangling $ref %q", n.Content[i+1].Value)
+					}
+					continue
+				}
+				check(n.Content[i+1])
+			}
+			return
+		}
+		for _, c := range n.Content {
+			check(c)
+		}
+	}
+	check(doc)
+}
+
+// --- nested component references ---
+
+// pruneSpec runs the same pruning sequence as main's Phase 5 on spec.
+func pruneSpec(t *testing.T, spec string) *yaml.Node {
+	t.Helper()
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(spec), &root); err != nil {
+		t.Fatal(err)
+	}
+	doc := root.Content[0]
+	inlineAliases(doc)
+	pathsNode := findMapValue(doc, "paths")
+	schemasNode := findMapValue(doc, "components", "schemas")
+	pruneSchemas(schemasNode, collectReachableSchemas(doc, pathsNode, schemasNode))
+	reachable := collectReachableComponents(doc, pathsNode)
+	for _, kind := range prunableComponentKinds {
+		if kindNode := findMapValue(doc, "components", kind); kindNode != nil {
+			pruneComponentKind(kindNode, reachable[kind])
+		}
+	}
+	return doc
+}
+
+func TestPrune_NestedRefIntoParameter(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/parameters/Id/schema"
+components:
+  parameters:
+    Id:
+      name: id
+      in: query
+      schema:
+        type: string
+  schemas: {}
+`)
+	if findMapValue(doc, "components", "parameters", "Id") == nil {
+		t.Error("parameter Id was pruned although #/components/parameters/Id/schema is referenced")
+	}
+}
+
+func TestPrune_NestedRefIntoHeader(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/headers/Rate/schema"
+components:
+  headers:
+    Rate:
+      schema:
+        type: integer
+  schemas: {}
+`)
+	if findMapValue(doc, "components", "headers", "Rate") == nil {
+		t.Error("header Rate was pruned although #/components/headers/Rate/schema is referenced")
+	}
+}
+
+func TestPrune_NestedRefIntoSchema(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Outer/properties/inner"
+components:
+  schemas:
+    Outer:
+      type: object
+      properties:
+        inner:
+          type: string
+`)
+	if findMapValue(doc, "components", "schemas", "Outer") == nil {
+		t.Error("schema Outer was pruned although #/components/schemas/Outer/properties/inner is referenced")
+	}
+}
+
+// --- YAML anchors ---
+
+// TestPrune_AliasToPrunedAnchor checks the emitted YAML still loads, with the
+// aliased value intact, when a retained node aliases an anchor defined inside a
+// pruned component.
+func TestPrune_AliasToPrunedAnchor(t *testing.T) {
+	root := pruneSpec(t, `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/Kept"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kept"
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &desc shared text
+      schema: {type: string}
+    Kept:
+      name: kept
+      in: query
+      description: *desc
+      schema: {type: string}
+  schemas:
+    Unused:
+      type: object
+      description: &sdesc shared schema text
+    Kept:
+      type: object
+      description: *sdesc
+`)
+
+	out, err := yaml.Marshal(root)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var reloaded yaml.Node
+	if err := yaml.Unmarshal(out, &reloaded); err != nil {
+		t.Fatalf("emitted YAML does not reload: %v\n%s", err, out)
+	}
+	doc := reloaded.Content[0]
+	for path, want := range map[string][]string{
+		"shared text":        {"components", "parameters", "Kept", "description"},
+		"shared schema text": {"components", "schemas", "Kept", "description"},
+	} {
+		if got := findMapValue(doc, want...); got == nil || got.Value != path {
+			t.Errorf("%v = %v, want %q", want, got, path)
+		}
+	}
+}
+
+// TestPrune_AliasOutsidePathsAndComponents covers a retained alias in another
+// top-level section whose anchor lives in a pruned component.
+func TestPrune_AliasOutsidePathsAndComponents(t *testing.T) {
+	doc := pruneSpec(t, `
+openapi: "3.0.1"
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &desc shared text
+      schema: {type: string}
+  schemas: {}
+info:
+  title: t
+  version: v1
+  description: *desc
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+`)
+	assertReloads(t, doc)
+	if got := findMapValue(doc, "info", "description"); got == nil || got.Value != "shared text" {
+		t.Errorf("info.description = %v, want %q", got, "shared text")
+	}
+}
+
+// TestPrune_NestedAliases covers an alias whose target itself contains an
+// alias, in both component/path orders.
+func TestPrune_NestedAliases(t *testing.T) {
+	for name, spec := range map[string]string{
+		"components before paths": `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &inner shared text
+      schema: {type: string}
+  schemas:
+    Unused:
+      type: object
+      properties:
+        p: &outer
+          type: string
+          description: *inner
+    Kept:
+      type: object
+      properties:
+        q: *outer
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kept"
+`,
+		"paths before components": `
+openapi: "3.0.1"
+info: {title: t, version: v1}
+paths:
+  /a:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Kept"
+components:
+  parameters:
+    Unused:
+      name: unused
+      in: query
+      description: &inner shared text
+      schema: {type: string}
+  schemas:
+    Unused:
+      type: object
+      properties:
+        p: &outer
+          type: string
+          description: *inner
+    Kept:
+      type: object
+      properties:
+        q: *outer
+`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			doc := pruneSpec(t, spec)
+			assertReloads(t, doc)
+			got := findMapValue(doc, "components", "schemas", "Kept", "properties", "q", "description")
+			if got == nil || got.Value != "shared text" {
+				t.Errorf("Kept.q.description = %v, want %q", got, "shared text")
+			}
+		})
+	}
+}
+
+func assertReloads(t *testing.T, doc *yaml.Node) {
+	t.Helper()
+	out, err := yaml.Marshal(doc)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var reloaded yaml.Node
+	if err := yaml.Unmarshal(out, &reloaded); err != nil {
+		t.Fatalf("emitted YAML does not reload: %v\n%s", err, out)
 	}
 }

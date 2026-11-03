@@ -35,6 +35,7 @@ func TestAccAnomalyDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "initial_notifications.#"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "linked_anomalies.#"),
 					resource.TestCheckResourceAttrSet("data.doit_anomaly.test", "allocations.#"),
+					resource.TestMatchResourceAttr("data.doit_anomaly.test", "customer_feedback.review_status", regexp.MustCompile(`^(NEEDS_REVIEW|UNDER_REVIEW|RESOLVED)$`)),
 				),
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
@@ -494,6 +495,59 @@ data "doit_anomaly" "test" {
 
 output "anomaly_initial_notifications" {
   value = data.doit_anomaly.test.initial_notifications
+}
+`, id)
+}
+
+// TestAccAnomalyDataSource_CustomerFeedback verifies that the customer_feedback
+// nested object and its sub-attributes are accessible on anomaly and produce an
+// empty plan on drift check.
+func TestAccAnomalyDataSource_CustomerFeedback(t *testing.T) {
+	anomalyID := os.Getenv("TEST_ANOMALY_ID")
+	if anomalyID == "" {
+		t.Skip("TEST_ANOMALY_ID environment variable not set")
+	}
+
+	config := testAccAnomalyDataSourceCustomerFeedbackConfig(anomalyID)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_anomaly.test", "id", anomalyID),
+					resource.TestMatchResourceAttr("data.doit_anomaly.test", "customer_feedback.review_status", regexp.MustCompile(`^(NEEDS_REVIEW|UNDER_REVIEW|RESOLVED)$`)),
+					resource.TestMatchOutput("anomaly_review_status", regexp.MustCompile(`^(NEEDS_REVIEW|UNDER_REVIEW|RESOLVED)$`)),
+				),
+			},
+			// Drift verification
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccAnomalyDataSourceCustomerFeedbackConfig(id string) string {
+	return fmt.Sprintf(`
+data "doit_anomaly" "test" {
+  id = %[1]q
+}
+
+output "anomaly_customer_feedback" {
+  value = data.doit_anomaly.test.customer_feedback
+}
+
+output "anomaly_review_status" {
+  value = data.doit_anomaly.test.customer_feedback.review_status
 }
 `, id)
 }

@@ -79,3 +79,8 @@ output "anomaly_deactivation_reason" {
   description = "Why the anomaly stopped being active (null while still active)"
   value       = data.doit_anomaly.example.deactivation_reason
 }
+
+output "anomaly_customer_feedback" {
+  description = "Current review status and resolution feedback of the anomaly"
+  value       = data.doit_anomaly.example.customer_feedback
+}

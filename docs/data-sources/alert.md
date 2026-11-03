@@ -69,6 +69,7 @@ Read-Only:
 - `condition` (String) Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
 - `currency` (String) Currency code for monetary values.
 - `data_source` (String) Data source used to query data for the alert. Affects which dimensions and metrics are available.
+When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
 - `evaluate_for_each` (String) Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.
 - `ignore_values_range` (Attributes) Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected. (see [below for nested schema](#nestedatt--config--ignore_values_range))
 - `metric` (Attributes) Define how metrics are selected and filtered in reports. (see [below for nested schema](#nestedatt--config--metric))

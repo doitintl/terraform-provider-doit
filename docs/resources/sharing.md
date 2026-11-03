@@ -123,8 +123,10 @@ resource "doit_sharing" "alert" {
 }
 
 # ---------------------------------------------------------------------------
-# Allocations — do NOT support the `public` attribute. Setting `public` on
-# an allocation will be rejected by the provider at plan time.
+# Allocations (single and group) — always have at least `viewer` public access.
+# `public` is optional and defaults to `viewer`. It can be set to `editor` or
+# `viewer`, but not cleared: removing it from the configuration keeps the
+# current value.
 # ---------------------------------------------------------------------------
 resource "doit_allocation" "example" {
   name        = "Shared Allocation"
@@ -145,8 +147,8 @@ resource "doit_sharing" "allocation" {
   resource_id   = doit_allocation.example.id
   permissions   = local.permissions
 
-  # Note: `public` is NOT supported for allocations.
-  # The provider will reject it at plan time.
+  # Optional: let everyone in the organization edit this allocation.
+  # public = "editor"
 }
 ```
 
@@ -163,6 +165,13 @@ Possible values: `alerts`, `budgets`, `reports`, `allocations`
 ### Optional
 
 - `public` (String) The type of permissions granted to all users in the organization for this resource.
+
+Allocations (single and group) always have at least `viewer` public access, so it cannot be cleared:
+- If `public` is omitted, the stored value is kept.
+- An empty string (`""`) is accepted for backward compatibility and is treated as `viewer`.
+- An explicit `null` is rejected with `400 Bad Request`.
+
+For Reports, Budgets, and Alerts, an omitted or `null` value sets `public` to `null` (no public access).
 Possible values: `editor`, `viewer`
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 

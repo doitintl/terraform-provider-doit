@@ -5,10 +5,25 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+func isReportConfigWrapperNullOrUnknown(ctx context.Context, cfg tfsdk.Config) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if cfg.Raw.Type() == nil {
+		return false, diags
+	}
+	var configWrapper resource_report.ConfigValue
+	diags = cfg.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	if diags.HasError() {
+		return false, diags
+	}
+	return configWrapper.IsNull() || configWrapper.IsUnknown(), diags
+}
 
 func useNullOrDefaultForForecastSettings() planmodifier.Object {
 	return useNullOrDefaultForForecastSettingsModifier{}
@@ -116,5 +131,105 @@ func (m useEmptyForUnconfiguredMetricsMirrorModifier) PlanModifyList(ctx context
 	resp.Diagnostics.Append(diags...)
 	if !resp.Diagnostics.HasError() {
 		resp.PlanValue = emptyList
+	}
+}
+
+func useNullForCount() planmodifier.Object {
+	return useNullForCountModifier{}
+}
+
+type useNullForCountModifier struct{}
+
+func (m useNullForCountModifier) Description(_ context.Context) string {
+	return "Proposes null when config.count is omitted so the stored count object is cleared on update."
+}
+
+func (m useNullForCountModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m useNullForCountModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+	if req.ConfigValue.IsNull() {
+		resp.PlanValue = req.ConfigValue
+	}
+}
+
+func useNullForCustomTimeRange() planmodifier.Object {
+	return useNullForCustomTimeRangeModifier{}
+}
+
+type useNullForCustomTimeRangeModifier struct{}
+
+func (m useNullForCustomTimeRangeModifier) Description(_ context.Context) string {
+	return "Proposes null when config.custom_time_range is omitted so the stored custom_time_range object is cleared on update."
+}
+
+func (m useNullForCustomTimeRangeModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m useNullForCustomTimeRangeModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+	if req.ConfigValue.IsNull() {
+		resp.PlanValue = req.ConfigValue
+	}
+}
+
+func useNullForLimitByChange() planmodifier.Object {
+	return useNullForLimitByChangeModifier{}
+}
+
+type useNullForLimitByChangeModifier struct{}
+
+func (m useNullForLimitByChangeModifier) Description(_ context.Context) string {
+	return "Proposes null when config.limit_by_change is omitted so the stored limit_by_change object is cleared on update."
+}
+
+func (m useNullForLimitByChangeModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m useNullForLimitByChangeModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+	if req.ConfigValue.IsNull() {
+		resp.PlanValue = req.ConfigValue
+	}
+}
+
+func useNullForMetricFilter() planmodifier.Object {
+	return useNullForMetricFilterModifier{}
+}
+
+type useNullForMetricFilterModifier struct{}
+
+func (m useNullForMetricFilterModifier) Description(_ context.Context) string {
+	return "Proposes null when config.metric_filter is omitted so the stored metric_filter object is cleared on update."
+}
+
+func (m useNullForMetricFilterModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m useNullForMetricFilterModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+	if req.ConfigValue.IsNull() {
+		resp.PlanValue = req.ConfigValue
 	}
 }

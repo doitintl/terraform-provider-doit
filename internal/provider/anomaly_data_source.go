@@ -83,6 +83,7 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 		data.Attribution = types.StringUnknown()
 		data.BillingAccount = types.StringUnknown()
 		data.CostOfAnomaly = types.Float64Unknown()
+		data.CustomerFeedback = datasource_anomaly.NewCustomerFeedbackValueUnknown()
 		data.DeactivationReason = types.StringUnknown()
 		data.EndTime = types.Int64Unknown()
 		data.EntityLabel = types.StringUnknown()
@@ -231,6 +232,9 @@ func (ds *anomalyDataSource) Read(ctx context.Context, req datasource.ReadReques
 	// Map allocations
 	data.Allocations = mapAnomalyAllocationsForAnomaly(ctx, anomaly.Allocations, &resp.Diagnostics)
 
+	// Map customer_feedback
+	data.CustomerFeedback = mapAnomalyCustomerFeedbackForAnomaly(ctx, anomaly.CustomerFeedback, &resp.Diagnostics)
+
 	// Map notifications
 	data.Notifications = mapAnomalyNotificationsForAnomaly(ctx, anomaly.Notifications, &resp.Diagnostics)
 
@@ -360,4 +364,49 @@ func mapAnomalyAllocationsForAnomaly(ctx context.Context, allocations []models.G
 	list, diags := types.ListValueFrom(ctx, elemType, vals)
 	diagnostics.Append(diags...)
 	return list
+}
+
+// mapAnomalyCustomerFeedbackForAnomaly maps API AnomalyCustomerFeedback to Terraform
+// CustomerFeedbackValue for the singular anomaly data source.
+func mapAnomalyCustomerFeedbackForAnomaly(ctx context.Context, cf models.AnomalyCustomerFeedback, diagnostics *diag.Diagnostics) datasource_anomaly.CustomerFeedbackValue {
+	var resolutionVal types.String
+	if cf.Resolution != nil {
+		resolutionVal = types.StringValue(string(*cf.Resolution))
+	} else {
+		resolutionVal = types.StringNull()
+	}
+
+	var resolutionNoteVal datasource_anomaly.ResolutionNoteValue
+	if cf.ResolutionNote != nil {
+		var diags diag.Diagnostics
+		resolutionNoteVal, diags = datasource_anomaly.NewResolutionNoteValue(
+			datasource_anomaly.ResolutionNoteValue{}.AttributeTypes(ctx),
+			map[string]attr.Value{
+				"reason": types.StringValue(string(cf.ResolutionNote.Reason)),
+			},
+		)
+		diagnostics.Append(diags...)
+	} else {
+		resolutionNoteVal = datasource_anomaly.NewResolutionNoteValueNull()
+	}
+
+	var updatedAtVal types.String
+	if cf.UpdatedAt != nil {
+		updatedAtVal = types.StringValue(cf.UpdatedAt.UTC().Format(time.RFC3339))
+	} else {
+		updatedAtVal = types.StringNull()
+	}
+
+	cfVal, diags := datasource_anomaly.NewCustomerFeedbackValue(
+		datasource_anomaly.CustomerFeedbackValue{}.AttributeTypes(ctx),
+		map[string]attr.Value{
+			"resolution":      resolutionVal,
+			"resolution_note": resolutionNoteVal,
+			"review_status":   types.StringValue(string(cf.ReviewStatus)),
+			"updated_at":      updatedAtVal,
+			"updated_by":      types.StringPointerValue(cf.UpdatedBy),
+		},
+	)
+	diagnostics.Append(diags...)
+	return cfVal
 }

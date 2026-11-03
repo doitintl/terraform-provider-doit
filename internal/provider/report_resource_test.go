@@ -4868,11 +4868,10 @@ resource "doit_report" "grp_limit_metric_omitted" {
 `, i)
 }
 
-// TestAccReport_LimitByChangeNotClearable proves config.limit_by_change cannot be
-// cleared in place (an in-place update perpetually drifts, since the PATCH merge
-// retains the stored value), so ModifyPlan forces a destroy+create (Category C)
-// when it is removed.
-func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
+// TestAccReport_LimitByChange_ClearedInPlace proves config.limit_by_change can be
+// cleared in place on update (Category A: useNullForLimitByChange + SetNull()),
+// and re-added in place without replacement or drift.
+func TestAccReport_LimitByChange_ClearedInPlace(t *testing.T) {
 	n := acctest.RandInt()
 
 	present := statecheck.ExpectKnownValue(
@@ -4890,15 +4889,14 @@ func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 				Config:            testAccReportLimitByChange(n, "percentage", "gte", "[50]", "false"),
 				ConfigStateChecks: []statecheck.StateCheck{present},
 			},
-			// Step 2: omit limit_by_change — removal forces a replacement, and the
-			// recreated report has no limit_by_change.
+			// Step 2: omit limit_by_change — cleared in place via PATCH null.
 			{
 				Config: testAccReportLimitByChangeCleared(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(
 							"doit_report.lbc",
-							plancheck.ResourceActionDestroyBeforeCreate,
+							plancheck.ResourceActionUpdate,
 						),
 					},
 				},
@@ -4909,9 +4907,31 @@ func TestAccReport_LimitByChangeNotClearable(t *testing.T) {
 						knownvalue.Null()),
 				},
 			},
-			// Step 3: drift check after replacement.
+			// Step 3: drift check after clearing.
 			{
 				Config: testAccReportLimitByChangeCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: re-add limit_by_change in place.
+			{
+				Config: testAccReportLimitByChange(n, "percentage", "gte", "[50]", "false"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.lbc",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 5: drift check after re-adding.
+			{
+				Config: testAccReportLimitByChange(n, "percentage", "gte", "[50]", "false"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -5192,11 +5212,11 @@ resource "doit_report" "count_noagg" {
 `, i)
 }
 
-// TestAccReport_Count_RemovalForcesReplace verifies that removing count from config
-// forces a destroy+create (RequiresReplace), rather than perpetual drift or an API
-// error. count cannot be cleared in place (PATCH merge + no null representation), so
-// ModifyPlan surfaces its removal as a replacement.
-func TestAccReport_Count_RemovalForcesReplace(t *testing.T) {
+// TestAccReport_Count_ClearedInPlace verifies that removing count from config
+// (while switching aggregation away from "count") clears count in place via
+// PATCH null (Category A: useNullForCount + SetNull()), and that count can be
+// re-added in place without replacement or drift.
+func TestAccReport_Count_ClearedInPlace(t *testing.T) {
 	n := acctest.RandInt()
 
 	resource.ParallelTest(t, resource.TestCase{
@@ -5204,19 +5224,18 @@ func TestAccReport_Count_RemovalForcesReplace(t *testing.T) {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			// Create with count (aggregation = "count").
+			// Step 1: Create with count (aggregation = "count").
 			{
 				Config: testAccReportCount(n, "service_description", "fixed"),
 			},
-			// Remove count and switch aggregation to "total": expect a replacement,
-			// and the recreated report has no count.
+			// Step 2: Remove count and switch aggregation to "total": cleared in place.
 			{
 				Config: testAccReportCountOmitted(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(
 							"doit_report.count_test",
-							plancheck.ResourceActionDestroyBeforeCreate,
+							plancheck.ResourceActionUpdate,
 						),
 					},
 				},
@@ -5227,7 +5246,7 @@ func TestAccReport_Count_RemovalForcesReplace(t *testing.T) {
 						knownvalue.Null()),
 				},
 			},
-			// Drift check after replacement.
+			// Step 3: Drift check after clearing.
 			{
 				Config: testAccReportCountOmitted(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -5236,8 +5255,78 @@ func TestAccReport_Count_RemovalForcesReplace(t *testing.T) {
 					},
 				},
 			},
+			// Step 4: Re-add count and switch aggregation back to "count" in place.
+			{
+				Config: testAccReportCount(n, "service_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.count_test",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("id"),
+						knownvalue.StringExact("service_description")),
+				},
+			},
+			// Step 5: Drift check after re-adding.
+			{
+				Config: testAccReportCount(n, "service_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 6: Keep count while omitting aggregation (aggregation = "count"
+			// is preserved via Category B / UseStateForUnknown).
+			{
+				Config: testAccReportCountOmitAggregation(n, "service_description", "fixed"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("count").AtMapKey("id"),
+						knownvalue.StringExact("service_description")),
+					statecheck.ExpectKnownValue(
+						"doit_report.count_test",
+						tfjsonpath.New("config").AtMapKey("aggregation"),
+						knownvalue.StringExact("count")),
+				},
+			},
 		},
 	})
+}
+
+func testAccReportCountOmitAggregation(i int, id, ctype string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "count_test" {
+    name = "test-count-%d"
+    config = {
+        metrics = [{
+            type  = "basic"
+            value = "cost"
+        }]
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        count = {
+            id   = %q
+            type = %q
+        }
+    }
+}
+`, i, id, ctype)
 }
 
 // TestAccReport_Count_RequiredWhenAggregationCount verifies that aggregation =
@@ -5280,13 +5369,13 @@ resource "doit_report" "count_aggnoblock" {
 }
 
 // -----------------------------------------------------------------------------
-// clearableattr (issue #233): removal behavior for the nested Optional+Computed
-// objects the linter flags in config.
+// clearableattr (issue #233 & CMP-48763): removal behavior for the nested
+// Optional+Computed objects the linter flags in config.
 //
-// Each object is serialized in the update request as *T with `omitempty` (see
-// ExternalConfig in models_gen.go), and the report update is a PATCH that merges
-// config with no null representation. None can be cleared in place; the observed
-// removal behavior splits into two groups:
+// Cleared in place via explicit JSON null (Category A — null-preserving plan
+// modifier + nullable.Nullable[T].SetNull() in toExternalConfig):
+//   - count, custom_time_range, limit_by_change, metric_filter
+//   - forecast_settings (via useNullOrDefaultForForecastSettings)
 //
 // Silently preserved (Category B behavior — removal is idempotent, the prior value
 // sticks with no drift and no error; left as-is, forcing a replace would be
@@ -5297,16 +5386,6 @@ resource "doit_report" "count_aggnoblock" {
 //     while keeping forecast_settings (they only clear when time_intervals are
 //     supplied instead, via the API's server-side mutual exclusion — see
 //     TestAccReport_ForecastSettings_Lifecycle)
-//
-// Harmful — remediated with Category C replace-on-clear in reportResource.ModifyPlan
-// (requiresReplaceWhenCleared), so removing the block destroys+recreates:
-//   - limit_by_change: would otherwise perpetually drift
-//   - metric_filter (+ its required nested metric): the update would send an empty
-//     metricFilter and the API would reject it (400)
-//   - custom_time_range: the stale range would conflict with a changed
-//     time_range.mode and the API would reject the update (400)
-//
-// (config.count is the pre-existing Category C case; see TestAccReport_Count_*.)
 // -----------------------------------------------------------------------------
 
 // TestAccReport_AdvancedAnalysis_NotClearable proves config.advanced_analysis
@@ -5396,12 +5475,11 @@ resource "doit_report" "aa_clear" {
 `, i)
 }
 
-// TestAccReport_CustomTimeRange_RemovalForcesReplace proves config.custom_time_range
-// cannot be cleared in place. It is only meaningful with time_range.mode = "custom";
-// an in-place update that switches the mode to "last" and drops the block would
-// leave the stale custom range in the merged config and the API would reject it
-// (400). ModifyPlan forces a destroy+create (Category C) when it is removed.
-func TestAccReport_CustomTimeRange_RemovalForcesReplace(t *testing.T) {
+// TestAccReport_CustomTimeRange_ClearedInPlace proves config.custom_time_range
+// can be cleared in place on update (Category A: useNullForCustomTimeRange +
+// SetNull()) when switching time_range.mode away from "custom", and re-added
+// in place without replacement or drift.
+func TestAccReport_CustomTimeRange_ClearedInPlace(t *testing.T) {
 	n := acctest.RandInt()
 
 	present := statecheck.ExpectKnownValue(
@@ -5420,15 +5498,14 @@ func TestAccReport_CustomTimeRange_RemovalForcesReplace(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{present},
 			},
 			// Step 2: switch to a relative range and drop custom_time_range —
-			// removal forces a replacement, and the recreated report has no
-			// custom_time_range.
+			// cleared in place via PATCH null.
 			{
 				Config: testAccReportCustomTimeRangeCleared(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(
 							"doit_report.ctr_clear",
-							plancheck.ResourceActionDestroyBeforeCreate,
+							plancheck.ResourceActionUpdate,
 						),
 					},
 				},
@@ -5439,7 +5516,7 @@ func TestAccReport_CustomTimeRange_RemovalForcesReplace(t *testing.T) {
 						knownvalue.Null()),
 				},
 			},
-			// Step 3: drift check after replacement.
+			// Step 3: drift check after clearing.
 			{
 				Config: testAccReportCustomTimeRangeCleared(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -5448,8 +5525,177 @@ func TestAccReport_CustomTimeRange_RemovalForcesReplace(t *testing.T) {
 					},
 				},
 			},
+			// Step 4: re-add custom_time_range and switch mode back to "custom" in place.
+			{
+				Config: testAccReportWithCustomTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.ctr_clear",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 5: drift check after re-adding.
+			{
+				Config: testAccReportWithCustomTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 6: keep custom_time_range while omitting time_range (time_range.mode =
+			// "custom" is preserved via Category B / UseStateForUnknown).
+			{
+				Config: testAccReportWithCustomTimeRangeOmitTimeRange(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					present,
+					statecheck.ExpectKnownValue(
+						"doit_report.ctr_clear",
+						tfjsonpath.New("config").AtMapKey("time_range").AtMapKey("mode"),
+						knownvalue.StringExact("custom")),
+				},
+			},
+			// Step 7: update to a name-only config omitting the top-level config
+			// wrapper altogether (config wrapper and custom_time_range are preserved).
+			{
+				Config: testAccReportCustomTimeRangeNameOnly(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.ctr_clear",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present},
+			},
+			// Step 8: drift check on the name-only config.
+			{
+				Config: testAccReportCustomTimeRangeNameOnly(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
 		},
 	})
+}
+
+func testAccReportWithCustomTimeRangeOmitTimeRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_clear" {
+    name = "test-ctr-clear-%d"
+    config = {
+        metrics = [{
+            type  = "basic"
+            value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        custom_time_range = {
+            from = "2024-01-01T00:00:00Z"
+            to   = "2024-02-01T00:00:00Z"
+        }
+    }
+}
+`, i)
+}
+
+func testAccReportCustomTimeRangeNameOnly(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_clear" {
+    name = "test-ctr-clear-renamed-%d"
+}
+`, i)
+}
+
+// TestAccReport_CustomTimeRange_ModeValidation verifies the plan-time validator
+// rejects time_range.mode = "custom" without custom_time_range, and rejects
+// custom_time_range when time_range.mode is not "custom".
+func TestAccReport_CustomTimeRange_ModeValidation(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccReportCustomModeWithoutRange(n),
+				ExpectError: regexp.MustCompile(`Missing Custom Time Range`),
+			},
+			{
+				Config:      testAccReportCustomRangeWithLastMode(n),
+				ExpectError: regexp.MustCompile(`Invalid Custom Time Range Configuration`),
+			},
+		},
+	})
+}
+
+func testAccReportCustomModeWithoutRange(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_invalid" {
+    name = "test-ctr-invalid-%d"
+    config = {
+        metrics = [{
+            type  = "basic"
+            value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+            mode = "custom"
+        }
+    }
+}
+`, i)
+}
+
+func testAccReportCustomRangeWithLastMode(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "ctr_invalid" {
+    name = "test-ctr-invalid-%d"
+    config = {
+        metrics = [{
+            type  = "basic"
+            value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+        time_range = {
+            mode   = "last"
+            amount = 3
+            unit   = "month"
+        }
+        custom_time_range = {
+            from = "2024-01-01T00:00:00Z"
+            to   = "2024-02-01T00:00:00Z"
+        }
+    }
+}
+`, i)
 }
 
 func testAccReportWithCustomTimeRange(i int) string {
@@ -5566,7 +5812,10 @@ resource "doit_report" "ds_test" {
 `, i)
 }
 
-func TestAccReport_MetricFilter_RemovalForcesReplace(t *testing.T) {
+// TestAccReport_MetricFilter_ClearedInPlace proves config.metric_filter can be
+// cleared in place on update (Category A: useNullForMetricFilter + SetNull()),
+// and re-added in place without replacement or drift.
+func TestAccReport_MetricFilter_ClearedInPlace(t *testing.T) {
 	n := acctest.RandInt()
 
 	present := statecheck.ExpectKnownValue(
@@ -5588,15 +5837,14 @@ func TestAccReport_MetricFilter_RemovalForcesReplace(t *testing.T) {
 				Config:            testAccReportWithMetricFilter(n),
 				ConfigStateChecks: []statecheck.StateCheck{present, presentNested},
 			},
-			// Step 2: omit metric_filter — removal forces a replacement, and the
-			// recreated report has no metric_filter.
+			// Step 2: omit metric_filter — cleared in place via PATCH null.
 			{
 				Config: testAccReportMetricFilterCleared(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(
 							"doit_report.mf_clear",
-							plancheck.ResourceActionDestroyBeforeCreate,
+							plancheck.ResourceActionUpdate,
 						),
 					},
 				},
@@ -5607,9 +5855,31 @@ func TestAccReport_MetricFilter_RemovalForcesReplace(t *testing.T) {
 						knownvalue.Null()),
 				},
 			},
-			// Step 3: drift check after replacement.
+			// Step 3: drift check after clearing.
 			{
 				Config: testAccReportMetricFilterCleared(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			// Step 4: re-add metric_filter in place.
+			{
+				Config: testAccReportWithMetricFilter(n),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(
+							"doit_report.mf_clear",
+							plancheck.ResourceActionUpdate,
+						),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{present, presentNested},
+			},
+			// Step 5: drift check after re-adding.
+			{
+				Config: testAccReportWithMetricFilter(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),

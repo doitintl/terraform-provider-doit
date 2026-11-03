@@ -436,11 +436,17 @@ Optional:
 - `advanced_analysis` (Attributes) Advanced analysis options. Each can be set independently. (see [below for nested schema](#nestedatt--config--advanced_analysis))
 - `aggregation` (String) How to aggregate data values in the report.
 Possible values: `total`, `percent_total`, `percent_col`, `percent_row`, `total_over_total`, `count`
-- `count` (Attributes) The field to count distinct values of. Only applicable when aggregation is set to "count". (see [below for nested schema](#nestedatt--config--count))
+- `count` (Attributes) The field to count distinct values of. Only applicable when aggregation is set to "count".
+On PATCH, omit to preserve the existing field; send null to remove it.
+A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it. (see [below for nested schema](#nestedatt--config--count))
 - `currency` (String) Currency code for monetary values.
 Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, `BRL`, `SGD`, `MXN`, `CHF`, `MYR`, `TWD`, `EGP`, `ZAR`, `JPY`, `IDR`, `AED`, `THB`, `COP`
-- `custom_time_range` (Attributes) Required when the time range is set to "custom". (see [below for nested schema](#nestedatt--config--custom_time_range))
+- `custom_time_range` (Attributes) Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+Sending null while `timeRange.mode` stays "custom" is rejected. (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
+When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+On report update (PATCH), omission preserves the saved data source.
 Possible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
 - `display_settings` (Attributes) Display settings for the report. (see [below for nested schema](#nestedatt--config--display_settings))
@@ -459,14 +465,34 @@ Possible values: `column_chart`, `stacked_column_chart`, `bar_chart`, `stacked_b
 at most two of those three limit types — not all three. When `displayValues` is not
 `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
 Possible values: `none`, `top`, `all`
-- `limit_by_change` (Attributes) Limit by change filter. A report may configure at most two of
-`metricFilter`, `limitByChange`, and rank `group` limits — not all three. (see [below for nested schema](#nestedatt--config--limit_by_change))
-- `metric_filter` (Attributes) Metric filter to limit report rows by metric value. (see [below for nested schema](#nestedatt--config--metric_filter))
+- `limit_by_change` (Attributes) Limit by change filter; a report may configure at most two of `metricFilter`,
+`limitByChange` and rank `group` limits. Without `secondaryTimeRange` the change is
+a period-over-period delta between adjacent time buckets. With it, each row's
+primary-range total is compared with its secondary-range total, so column dimensions
+(`dimensions`, which `timeInterval` fills implicitly when omitted) only add buckets
+to those totals, while `group` gives every row its own change. A percentage change
+is comparable while both periods hold the same number of buckets; an absolute change
+is their plain difference and so scales with the bucket count. A row present in only
+one range counts as zero there, so a percentage threshold cannot be met from zero. A
+percentage-typed custom metric, or count aggregation, is rejected with
+`LIMIT_BY_CHANGE_METRIC_NOT_ADDITIVE_WITH_SECONDARY`.
+On PATCH, omit to preserve the existing limit; send null to remove it. (see [below for nested schema](#nestedatt--config--limit_by_change))
+- `metric_filter` (Attributes) Metric filter to limit report rows by metric value.
+On PATCH, omit to preserve the existing filter; send null to remove it. (see [below for nested schema](#nestedatt--config--metric_filter))
 - `metrics` (Attributes List) The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4. (see [below for nested schema](#nestedatt--config--metrics))
 - `secondary_time_range` (Attributes) Secondary time range for comparative reports. (see [below for nested schema](#nestedatt--config--secondary_time_range))
-- `sort_dimensions` (String) This option has no impact when reading reports via API.
+- `sort_dimensions` (String) Orders the columns produced by `dimensions`, both in the console and in a rendered
+`fileOutput` export. It does not reorder the `rows` of a JSON result.
+`a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+dimensions of a time series means chronologically. The default `desc` orders them by the
+metric instead, so a monthly report charts its priciest month first rather than in time
+order — set `a_to_z` for a time series you intend to export.
+A report with a forecast is always charted chronologically and ignores this field, and a
+comparative `displayValues` mode requires `a_to_z`.
 Possible values: `asc`, `desc`, `a_to_z`
-- `sort_groups` (String) This option has no impact when reading reports via API.
+- `sort_groups` (String) Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+not reorder the `rows` of a JSON result.
 Possible values: `asc`, `desc`, `a_to_z`
 - `splits` (Attributes List) The splits to use in the report. (see [below for nested schema](#nestedatt--config--splits))
 - `time_interval` (String) Time interval for grouping data in the report.
@@ -629,7 +655,8 @@ Required:
 
 - `change_type` (String) Possible values: `percentage`, `absolute`
 - `include_incomplete_data` (Boolean) When true, keeps rows whose deltas could not be evaluated.
-- `metric` (Attributes) Metric selector used in reports and filters. (see [below for nested schema](#nestedatt--config--limit_by_change--metric))
+- `metric` (Attributes) The metric the change is measured on. It must also be listed in the report's
+`config.metrics`; otherwise the request is rejected with a 400 and nothing is saved. (see [below for nested schema](#nestedatt--config--limit_by_change--metric))
 - `operator` (String) Comparison operator for period-over-period deltas: `gt` (Greater Than), `gte`
 (Greater Than or Equals), `lt` (Less Than), `lte` (Less Than or Equals), `b`
 (Between), `nb` (Not Between).

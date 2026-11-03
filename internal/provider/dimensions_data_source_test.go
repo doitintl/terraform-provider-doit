@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"sync"
 	"testing"
 
@@ -160,6 +161,94 @@ func testAccDimensionsDataSourceConfig() string {
 data "doit_dimensions" "test" {
 }
 `
+}
+
+// TestAccDimensionsDataSource_SortByAndSortOrder verifies that sort_by and sort_order work
+// properly with drift verification across different sort configurations.
+func TestAccDimensionsDataSource_SortByAndSortOrder(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDimensionsDataSourceSortConfig("id", "desc"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.sorted", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_dimensions.sorted", "sort_by", "id"),
+					resource.TestCheckResourceAttr("data.doit_dimensions.sorted", "sort_order", "desc"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccDimensionsDataSourceSortConfig("id", "desc"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			{
+				Config: testAccDimensionsDataSourceSortConfig("id", "asc"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.sorted", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_dimensions.sorted", "sort_by", "id"),
+					resource.TestCheckResourceAttr("data.doit_dimensions.sorted", "sort_order", "asc"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccDimensionsDataSourceSortConfig("id", "asc"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			{
+				Config: testAccDimensionsDataSourceSortConfig("key", "desc"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.doit_dimensions.sorted", "row_count"),
+					resource.TestCheckResourceAttr("data.doit_dimensions.sorted", "sort_by", "key"),
+					resource.TestCheckResourceAttr("data.doit_dimensions.sorted", "sort_order", "desc"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccDimensionsDataSourceSortConfig("key", "desc"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccDimensionsDataSource_SortByValidation verifies that removed or invalid sort_by values
+// (such as "timestamp") are rejected at schema validation time.
+func TestAccDimensionsDataSource_SortByValidation(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccDimensionsDataSourceSortConfig("timestamp", "desc"),
+				ExpectError: regexp.MustCompile(`(?i)value must be one of:.*"id"`),
+			},
+		},
+	})
+}
+
+func testAccDimensionsDataSourceSortConfig(sortBy, sortOrder string) string {
+	return fmt.Sprintf(`
+data "doit_dimensions" "sorted" {
+  sort_by    = %[1]q
+  sort_order = %[2]q
+}
+`, sortBy, sortOrder)
 }
 
 // Helper functions

@@ -270,6 +270,7 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewAnomalyDataSource,
 		NewAnomalyExplanationDataSource,
 		NewInvoiceDataSource,
+		NewInvoicePdfDataSource,
 		NewBillingExplainerDataSource,
 		NewCloudIncidentDataSource,
 		NewCommitmentDataSource,
@@ -347,6 +348,10 @@ func (p *doitProvider) DataSources(_ context.Context) []func() datasource.DataSo
 		NewServiceAccountsDataSource,
 		NewServiceAccountTokenDataSource,
 		NewServiceAccountTokensDataSource,
+		NewUserNotificationDataSource,
+		NewUserNotificationsDataSource,
+		NewComposerRecipesDataSource,
+		NewComposerRecipeResultsDataSource,
 	}
 }
 
@@ -373,6 +378,7 @@ func (p *doitProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewCustomerResource,
 		NewServiceAccountResource,
 		NewServiceAccountTokenResource,
+		NewUserNotificationResource,
 		NewRoleResource,
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -20,7 +21,7 @@ func TestAccBudgetDataSource(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -55,6 +56,16 @@ func TestAccBudgetDataSource(t *testing.T) {
 						"data.doit_budget.test",
 						tfjsonpath.New("time_interval"),
 						knownvalue.StringExact("month")),
+					// data_source is API-resolved (billing-datahub with DataHub
+					// metrics, otherwise billing) and must match the resource.
+					statecheck.ExpectKnownValue(
+						"data.doit_budget.test",
+						tfjsonpath.New("data_source"),
+						knownvalue.StringRegexp(regexp.MustCompile(`^billing(-datahub)?$`))),
+					statecheck.CompareValuePairs(
+						"data.doit_budget.test", tfjsonpath.New("data_source"),
+						"doit_budget.test", tfjsonpath.New("data_source"),
+						compare.ValuesSame()),
 					// Verify alerts list is populated
 					statecheck.ExpectKnownValue(
 						"data.doit_budget.test",
@@ -82,7 +93,7 @@ func TestAccBudgetDataSource_WithScopes(t *testing.T) {
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {
 				Source:            "hashicorp/time",
-				VersionConstraint: "~> 0.13.1",
+				VersionConstraint: "~> 0.13",
 			},
 		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
