@@ -410,8 +410,14 @@ func TestAwaitAsyncReport_Results413(t *testing.T) {
 				})
 				client := newAsyncTestClient(t, srv.Server)
 
+				// The deadline is a tripwire, not part of the assertion: the retry
+				// client has no elapsed-time limit, so without it a regression that
+				// retries 413 would spin until the package timeout.
+				ctx, cancel := context.WithTimeout(t.Context(), DefaultReadTimeout)
+				defer cancel()
+
 				start := time.Now()
-				_, diags := awaitAsyncReport(t.Context(), client, "query", "op-1", tc.fileOutput)
+				_, diags := awaitAsyncReport(ctx, client, "query", "op-1", tc.fileOutput)
 				elapsed := time.Since(start)
 
 				if !diags.HasError() {
