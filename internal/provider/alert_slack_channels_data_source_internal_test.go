@@ -147,6 +147,13 @@ func TestAlertSlackChannelsDataSource_Read_AutoPagination(t *testing.T) {
 		if maxResults := r.URL.Query().Get("maxResults"); maxResults != "500" {
 			t.Errorf("request %d: expected auto mode to request maxResults=500, got %q", count, maxResults)
 		}
+		wantToken := ""
+		if count > 1 {
+			wantToken = "token-page-2"
+		}
+		if got := r.URL.Query().Get("pageToken"); got != wantToken {
+			t.Errorf("request %d: expected pageToken %q, got %q", count, wantToken, got)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		if count == 1 {
 			token := "token-page-2"
@@ -363,6 +370,13 @@ func slackChannelsPartialServer(t *testing.T, partialPage int32) *httptest.Serve
 	var reqCount atomic.Int32
 	return httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		page := reqCount.Add(1)
+		wantToken := ""
+		if page > 1 {
+			wantToken = "page-2"
+		}
+		if got := r.URL.Query().Get("pageToken"); got != wantToken {
+			t.Errorf("request %d: expected pageToken %q, got %q", page, wantToken, got)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		resp := models.AlertSlackChannelList{
 			IsWorkspaceConnected: true,
