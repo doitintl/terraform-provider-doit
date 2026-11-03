@@ -362,6 +362,59 @@ func TestAlertSlackChannelsDataSource_Read_Empty(t *testing.T) {
 	}
 }
 
+func TestAlertSlackChannelsDataSource_Read_NameContainsForwarded(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		overrides map[string]tftypes.Value
+	}{
+		{
+			name: "auto",
+			overrides: map[string]tftypes.Value{
+				"name_contains": tftypes.NewValue(tftypes.String, "prod"),
+			},
+		},
+		{
+			name: "manual",
+			overrides: map[string]tftypes.Value{
+				"name_contains": tftypes.NewValue(tftypes.String, "prod"),
+				"max_results":   tftypes.NewValue(tftypes.Number, 5),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var reqCount atomic.Int32
+			server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				reqCount.Add(1)
+				if got := r.URL.Query().Get("nameContains"); got != "prod" {
+					t.Errorf("expected nameContains %q, got %q", "prod", got)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(models.AlertSlackChannelList{
+					ChannelsComplete:     true,
+					IsWorkspaceConnected: true,
+					WorkspaceStatus:      "ok",
+					Items:                []models.AlertSlackChannel{{Id: "C001", Name: new("prod-alerts")}},
+				})
+			}))
+
+			_, _, diags := readAlertSlackChannelsHelper(t, server, tt.overrides)
+			if diags.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", diags)
+			}
+
+			if reqCount.Load() != 1 {
+				t.Errorf("expected 1 HTTP request, got %d", reqCount.Load())
+			}
+		})
+	}
+}
+
 // slackChannelsPartialServer serves two pages; the page at partialPage (1-based)
 // reports channelsComplete=false.
 func slackChannelsPartialServer(t *testing.T, partialPage int32) *httptest.Server {
