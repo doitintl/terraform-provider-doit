@@ -35,8 +35,11 @@ func (d *alertSlackChannelsDataSource) Metadata(ctx context.Context, req datasou
 
 func (d *alertSlackChannelsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_alert_slack_channels.AlertSlackChannelsDataSourceSchema(ctx)
-	s.Description = "Retrieves Slack channels eligible for Alert notifications."
-	s.MarkdownDescription = "Retrieves Slack channels eligible for Alert notifications."
+	const description = "Retrieves Slack channels eligible for Alert notifications. " +
+		"When `max_results` is omitted, the provider fetches all pages using the API's maximum page size of 500; " +
+		"set `max_results` to control the page size yourself and fetch a single page."
+	s.Description = description
+	s.MarkdownDescription = description
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s
@@ -142,6 +145,8 @@ func (d *alertSlackChannelsDataSource) Read(ctx context.Context, req datasource.
 		if !data.PageToken.IsNull() {
 			params.PageToken = new(data.PageToken.ValueString())
 		}
+		// Use the API's maximum page size to keep the number of requests low.
+		params.MaxResults = new(500)
 		for {
 			apiResp, err := d.client.ListAlertSlackChannelsWithResponse(ctx, params)
 			if err != nil {

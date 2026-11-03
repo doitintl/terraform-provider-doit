@@ -3,12 +3,12 @@
 page_title: "doit_alert_slack_channels Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Retrieves Slack channels eligible for Alert notifications.
+  Retrieves Slack channels eligible for Alert notifications. When max_results is omitted, the provider fetches all pages using the API's maximum page size of 500; set max_results to control the page size yourself and fetch a single page.
 ---
 
 # doit_alert_slack_channels (Data Source)
 
-Retrieves Slack channels eligible for Alert notifications.
+Retrieves Slack channels eligible for Alert notifications. When `max_results` is omitted, the provider fetches all pages using the API's maximum page size of 500; set `max_results` to control the page size yourself and fetch a single page.
 
 ## Example Usage
 

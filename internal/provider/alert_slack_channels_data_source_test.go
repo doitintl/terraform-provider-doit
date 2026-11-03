@@ -9,15 +9,8 @@ import (
 )
 
 // TestAccAlertSlackChannelsDataSource_Basic exercises auto-pagination, which
-// walks the whole workspace. Every page makes the API re-enumerate all channels
-// from Slack, so on a large workspace it gets rate limited (503 + Retry-After)
-// and either runs for minutes or exhausts the read timeout.
-// TODO(CMP-52546): Enable once the API caches channel discovery between pages.
-// Auto-pagination is covered by the unit tests; see _MaxResults10 for a
-// single-request acceptance test.
+// walks the whole workspace.
 func TestAccAlertSlackChannelsDataSource_Basic(t *testing.T) {
-	t.Skip("skipped until CMP-52546: uncached Slack channel discovery rate limits full pagination")
-
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),

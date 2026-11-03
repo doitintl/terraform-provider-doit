@@ -144,6 +144,9 @@ func TestAlertSlackChannelsDataSource_Read_AutoPagination(t *testing.T) {
 	var reqCount atomic.Int32
 	server := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		count := reqCount.Add(1)
+		if maxResults := r.URL.Query().Get("maxResults"); maxResults != "500" {
+			t.Errorf("request %d: expected auto mode to request maxResults=500, got %q", count, maxResults)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		if count == 1 {
 			token := "token-page-2"
