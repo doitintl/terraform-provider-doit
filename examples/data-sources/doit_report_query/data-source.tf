@@ -70,6 +70,7 @@ resource "local_sensitive_file" "query_csv" {
   content_base64 = data.http.query_csv.response_body_base64
 }
 
+# Null here: with file_output set, the rows are in the CSV file rather than inline.
 output "row_count" {
   value = data.doit_report_query.cost_by_provider.row_count
 }

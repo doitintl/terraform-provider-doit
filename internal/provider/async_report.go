@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 	"uuid"
 
@@ -367,7 +368,7 @@ func fetchAsyncReportResults(
 		if err != nil {
 			diags.AddError(
 				"Error Running "+what,
-				fmt.Sprintf("Could not fetch results for operation %s: %s", operationID, err.Error()),
+				resultsFetchErrorDetail(operationID, err, fileOutput != nil),
 			)
 			return nil, diags
 		}
@@ -402,6 +403,47 @@ func fetchAsyncReportResults(
 
 		return resultsResp.JSON200, diags
 	}
+}
+
+// resultsTooLargeMarker is how the retry client reports a 413: it surfaces every
+// non-retryable 4xx as an error whose text starts with the status code.
+const resultsTooLargeMarker = "non-retryable error: 413"
+
+// resultsFetchErrorDetail explains a failed results fetch. A 413 means the
+// result exceeds the API's inline size limit, which the user can fix, so it
+// gets remediation advice instead of just the raw error.
+func resultsFetchErrorDetail(operationID string, err error, fileOutputRequested bool) string {
+	detail := fmt.Sprintf("Could not fetch results for operation %s: %s", operationID, err.Error())
+	if !strings.Contains(err.Error(), resultsTooLargeMarker) {
+		return detail
+	}
+
+	detail += "\n\nThe result is too large for the API to return inline."
+	if fileOutputRequested {
+		detail += " Rendering the requested file did not succeed, so the full result was" +
+			" not replaced by a file; read the data source again to retry the render."
+	} else {
+		detail += " Set file_output (for example \"csv\", which contains every row) to" +
+			" receive the rows as a file instead of inline."
+	}
+	return detail + " Alternatively, narrow the report with filters, fewer dimensions," +
+		" or a smaller time range."
+}
+
+// rowCountFromResult derives row_count from a results envelope. When the API
+// rendered a file it clears result.rows (the rows are in the file), so the
+// count is unknown rather than zero. Otherwise a missing rows field counts as 0.
+func rowCountFromResult(results *models.GetAsyncOperationResults200Response) types.Int64 {
+	if results.Result == nil {
+		return types.Int64Value(0)
+	}
+	if rows := nullableToPointer(results.Result.Rows); rows != nil {
+		return types.Int64Value(int64(len(*rows)))
+	}
+	if results.FileOutput != nil {
+		return types.Int64Null()
+	}
+	return types.Int64Value(0)
 }
 
 // asyncRunAborted cancels a still-running operation and reports why the wait

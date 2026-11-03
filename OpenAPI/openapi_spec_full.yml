@@ -2824,7 +2824,8 @@ paths:
         different tenant. Returns 425 Too Early if the operation has not yet
         reached a terminal state — poll the operation status endpoint, which
         returns its own Retry-After guidance, until it succeeds. Returns 422
-        if the operation terminated as failed or canceled. The poll status
+        if the operation terminated as failed or canceled. Returns 413 if the
+        result is too large to return inline. The poll status
         endpoint response does not include result data inline — this is the
         only endpoint that returns it.
       operationId: getAsyncOperationResults
@@ -2848,6 +2849,9 @@ paths:
             operation predates file output support and has no stored render
             input; a transient rendering failure instead returns 200 with
             `result` and no `fileOutput`, so retry the request for the file.
+            When the file is rendered, `result.rows` is null in the response —
+            the rows are in the file, not inline — so even very large results
+            can be retrieved this way.
             `pdf` is the chart and data table as a document, `png` the chart
             image, and `csv` every row of the result as raw data, one line per
             row with the report's dimensions and metrics, never truncated.
@@ -2943,6 +2947,10 @@ paths:
                             - forecast
                       rows:
                         type: array
+                        nullable: true
+                        description: >-
+                          Null when the fileOutput parameter was supplied and
+                          the file was rendered — the rows are in the file.
                         items:
                           type: array
                           items:
@@ -2984,12 +2992,12 @@ paths:
                     description: >-
                       Signed URL the rendered file can be downloaded from.
                       Present only when the fileOutput parameter was supplied
-                      and the file was rendered. Never a variant of the
-                      response — the result property above is returned either
-                      way, so a render that fails leaves result intact and
-                      omits fileOutput rather than failing the call. The URL is
-                      valid for 7 days; request the endpoint again for a fresh
-                      one.
+                      and the file was rendered — in that case `result.rows`
+                      is null, the rows are in the file instead of inline. A
+                      render that fails leaves result (including rows) intact
+                      and omits fileOutput rather than failing the call. The
+                      URL is valid for 7 days; request the endpoint again for a
+                      fresh one.
                     example: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
               examples:
                 withoutFileOutput:
@@ -3030,11 +3038,7 @@ paths:
                           type: string
                         - name: cost
                           type: float
-                      rows:
-                        - - Compute Engine
-                          - 1284.55
-                        - - Cloud Storage
-                          - 96.4
+                      rows: null
                       cacheHit: false
                     fileOutput: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
         "400":
@@ -3045,6 +3049,28 @@ paths:
           $ref: "#/components/responses/403"
         "404":
           $ref: "#/components/responses/404"
+        "413":
+          description: |-
+            Request Entity Too Large — the operation's result is too large to
+            return inline.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                resultTooLarge:
+                  summary: The inline result exceeds the response size limit
+                  value:
+                    type: https://developer.doit.com/errors/result_too_large
+                    title: Result Too Large
+                    status: 413
+                    detail: The result of this operation is too large to return inline
+                    instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    code: result_too_large
+                    retryable: false
         "422":
           $ref: "#/components/responses/422"
         "425":

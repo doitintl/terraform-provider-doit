@@ -10490,7 +10490,7 @@ type GetAsyncOperationResults200Response struct {
 	// CreateTime The creation time of the report, in milliseconds since the epoch. Present only when the operation was started against a saved report (run by id) and the report still exists; omitted for ad hoc runs against an inline config.
 	CreateTime *int64 `json:"createTime,omitempty"`
 
-	// FileOutput Signed URL the rendered file can be downloaded from. Present only when the fileOutput parameter was supplied and the file was rendered. Never a variant of the response — the result property above is returned either way, so a render that fails leaves result intact and omits fileOutput rather than failing the call. The URL is valid for 7 days; request the endpoint again for a fresh one.
+	// FileOutput Signed URL the rendered file can be downloaded from. Present only when the fileOutput parameter was supplied and the file was rendered — in that case `result.rows` is null, the rows are in the file instead of inline. A render that fails leaves result (including rows) intact and omits fileOutput rather than failing the call. The URL is valid for 7 days; request the endpoint again for a fresh one.
 	//
 	// Example: https://storage.googleapis.com/doitintl-cmp-async-report-results/1a2b3c/f47ac10b.pdf?X-Goog-Signature=abc123
 	FileOutput *string `json:"fileOutput,omitempty"`
@@ -10527,8 +10527,10 @@ type GetAsyncOperationResults200ResponseResult struct {
 	Details      *GetAsyncOperationResults200ResponseResultDetails      `json:"details,omitempty"`
 	ForecastRows *[][]nullable.Nullable[Value]                          `json:"forecastRows,omitempty"`
 	MlFeatures   *[]GetAsyncOperationResults200ResponseResultMlFeatures `json:"mlFeatures,omitempty"`
-	Rows         *[][]nullable.Nullable[Value]                          `json:"rows,omitempty"`
-	Schema       *[]SchemaField                                         `json:"schema,omitempty"`
+
+	// Rows Null when the fileOutput parameter was supplied and the file was rendered — the rows are in the file.
+	Rows   nullable.Nullable[[][]nullable.Nullable[Value]] `json:"rows,omitempty"`
+	Schema *[]SchemaField                                  `json:"schema,omitempty"`
 
 	// SecondaryRows Secondary time range rows.
 	SecondaryRows *[][]nullable.Nullable[Value] `json:"secondaryRows,omitempty"`
@@ -13087,7 +13089,7 @@ type CancelAsyncOperationParams struct {
 
 // GetAsyncOperationResultsParams defines parameters for GetAsyncOperationResults.
 type GetAsyncOperationResultsParams struct {
-	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file. `pdf` is the chart and data table as a document, `png` the chart image, and `csv` every row of the result as raw data, one line per row with the report's dimensions and metrics, never truncated.
+	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file. When the file is rendered, `result.rows` is null in the response — the rows are in the file, not inline — so even very large results can be retrieved this way. `pdf` is the chart and data table as a document, `png` the chart image, and `csv` every row of the result as raw data, one line per row with the report's dimensions and metrics, never truncated.
 	FileOutput *GetAsyncOperationResultsParamsFileOutput `form:"fileOutput,omitempty" json:"fileOutput,omitempty"`
 }
 
@@ -15045,7 +15047,7 @@ type ClientInterface interface {
 
 	// GetAsyncOperationResults Get results of an async report run operation
 	//
-	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 	//
 	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
 	GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -17602,7 +17604,7 @@ func (c *Client) CancelAsyncOperation(ctx context.Context, operationId string, p
 
 // GetAsyncOperationResults Get results of an async report run operation
 //
-// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 //
 // Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
 func (c *Client) GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -29822,7 +29824,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetAsyncOperationResultsWithResponse Get results of an async report run operation
 	//
-	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -34492,6 +34494,11 @@ func (r CancelAsyncOperationResp) ContentType() string {
 	return ""
 }
 
+// GetAsyncOperationResultsResp413Headers the declared response headers of an HTTP 413 response for GetAsyncOperationResults
+type GetAsyncOperationResultsResp413Headers struct {
+	RequestId *string
+}
+
 type GetAsyncOperationResultsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -34505,12 +34512,16 @@ type GetAsyncOperationResultsResp struct {
 	JSON403 *N403
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *N404
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *ProblemDetails
 	// JSON422 the response for an HTTP 422 `application/json` response
 	JSON422 *N422
 	// JSON425 the response for an HTTP 425 `application/json` response
 	JSON425 *N425
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *N500
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *GetAsyncOperationResultsResp413Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -34536,6 +34547,11 @@ func (r GetAsyncOperationResultsResp) GetJSON403() *N403 {
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r GetAsyncOperationResultsResp) GetJSON404() *N404 {
 	return r.JSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r GetAsyncOperationResultsResp) GetApplicationproblemJSON413() *ProblemDetails {
+	return r.ApplicationproblemJSON413
 }
 
 // GetJSON422 returns the response for an HTTP 422 `application/json` response
@@ -45598,7 +45614,7 @@ func (c *ClientWithResponses) CancelAsyncOperationWithResponse(ctx context.Conte
 
 // GetAsyncOperationResultsWithResponse Get results of an async report run operation
 //
-// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -50547,6 +50563,13 @@ func ParseGetAsyncOperationResultsResp(rsp *http.Response) (*GetAsyncOperationRe
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest ProblemDetails
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest N422
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -50568,6 +50591,19 @@ func ParseGetAsyncOperationResultsResp(rsp *http.Response) (*GetAsyncOperationRe
 		}
 		response.JSON500 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 413:
+		var headers GetAsyncOperationResultsResp413Headers
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers413 = &headers
 	}
 
 	return response, nil

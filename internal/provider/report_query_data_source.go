@@ -88,7 +88,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			"\n\nNote: Query results are dynamic — they change over time as new billing" +
 			" data is ingested. Every terraform plan will re-execute the query." +
 			" Set file_output to pdf, png, or csv to receive a signed file_output_url." +
-			" The URL lasts up to 7 days. A failed render leaves the result available and the URL null." +
+			" The URL lasts up to 7 days. A failed render leaves the result available and the URL null. When a file is rendered, the API clears rows from result_json (the rows are in the file) and row_count is null. Use file_output = \"csv\" for results too large to return inline; without it, an oversized result fails with a \"too large\" error." +
 			"\n\nThe result_json field contains the full result object, including the" +
 			" schema (column definitions: name, type, and optional unit, currency, aggregation, and id)," +
 			" rows (data), forecastRows (forecast data), secondaryRows (secondary time range data)," +
@@ -99,7 +99,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 			"\n\n~> **Note:** Query results are dynamic — they change over time as new" +
 			" billing data is ingested. Every `terraform plan` will re-execute the query." +
 			" Set `file_output` to `pdf`, `png`, or `csv` to receive a signed `file_output_url`." +
-			"\n\nThe signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. The download example stores the URL and file contents in Terraform state, so protect that state appropriately." +
+			"\n\nThe signed URL lasts up to seven days. If rendering fails, `file_output_url` is null while `result_json` remains available; read the data source again to request a new URL. When a file is rendered, the API clears `rows` from `result_json` (the rows are in the file) and `row_count` is null. Use `file_output = \"csv\"` for results too large to return inline; without it, an oversized result fails with a \"too large\" error. The download example stores the URL and file contents in Terraform state, so protect that state appropriately." +
 			"\n\nThe `result_json` field contains the full result object including:" +
 			"\n\n- `schema`: Array of column metadata objects (`name`, `type`, and optional `unit`, `currency`, `aggregation`, and `id` for allocation dimensions)" +
 			"\n- `rows`: Array of data rows, where each row is an array of cell values (`string`, `number`, or `null`)" +
@@ -117,8 +117,8 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 				MarkdownDescription: "The report configuration. Same structure as the `config` attribute on the `doit_report` resource.",
 			},
 			"file_output": dsschema.StringAttribute{
-				Description:         "Optional file format to render from the query result: pdf, png, or csv.",
-				MarkdownDescription: "Optional file format to render from the query result: `pdf`, `png`, or `csv`.",
+				Description:         "Optional file format to render from the query result: pdf, png, or csv. When a file is rendered, the API clears rows from result_json (the rows are in the file) and row_count is null. Use file_output = \"csv\" for results too large to return inline; without it, an oversized result fails with a \"too large\" error.",
+				MarkdownDescription: "Optional file format to render from the query result: `pdf`, `png`, or `csv`. When a file is rendered, the API clears `rows` from `result_json` (the rows are in the file) and `row_count` is null. Use `file_output = \"csv\"` for results too large to return inline; without it, an oversized result fails with a \"too large\" error.",
 				Optional:            true,
 				Validators:          []validator.String{stringvalidator.OneOf("pdf", "png", "csv")},
 			},
@@ -144,8 +144,8 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 				Computed:            true,
 			},
 			"row_count": dsschema.Int64Attribute{
-				Description:         "The number of data rows in the result.",
-				MarkdownDescription: "The number of data rows in the result.",
+				Description:         "The number of data rows in the result. Null when `file_output` was rendered, because the rows are then in the file instead of inline.",
+				MarkdownDescription: "The number of data rows in the result. Null when `file_output` was rendered, because the rows are then in the file instead of inline.",
 				Computed:            true,
 			},
 			"file_output_url": dsschema.StringAttribute{
@@ -271,11 +271,7 @@ func (d *reportQueryDataSource) Read(ctx context.Context, req datasource.ReadReq
 	if result.Result != nil {
 		data.CacheHit = types.BoolPointerValue(result.Result.CacheHit)
 
-		if result.Result.Rows != nil {
-			data.RowCount = types.Int64Value(int64(len(*result.Result.Rows)))
-		} else {
-			data.RowCount = types.Int64Value(0)
-		}
+		data.RowCount = rowCountFromResult(result)
 
 		resultJSON, marshalErr := json.Marshal(result.Result)
 		if marshalErr != nil {
