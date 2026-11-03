@@ -30,8 +30,8 @@ func DimensionDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"type": schema.StringAttribute{
 				Required:            true,
-				Description:         "Dimension type\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
-				MarkdownDescription: "Dimension type\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+				Description:         "Dimension type\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+				MarkdownDescription: "Dimension type\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"datetime",
@@ -47,6 +47,9 @@ func DimensionDataSourceSchema(ctx context.Context) schema.Schema {
 						"allocation_rule",
 						"gke",
 						"gke_label",
+						"attribution_tier_1",
+						"attribution_tier_2",
+						"attribution_tier_3",
 					),
 				},
 			},

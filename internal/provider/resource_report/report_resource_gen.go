@@ -162,14 +162,15 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"data_source": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
-						MarkdownDescription: "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
+						Description:         "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`, `attribution`",
+						MarkdownDescription: "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`, `attribution`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"billing",
 								"bqlens",
 								"billing-datahub",
 								"kubernetes-utilization",
+								"attribution",
 							),
 						},
 					},
@@ -185,8 +186,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
-									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -202,6 +203,9 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"allocation_rule",
 											"gke",
 											"gke_label",
+											"attribution_tier_1",
+											"attribution_tier_2",
+											"attribution_tier_3",
 										),
 									},
 								},
@@ -348,8 +352,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
-									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -365,6 +369,9 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"allocation_rule",
 											"gke",
 											"gke_label",
+											"attribution_tier_1",
+											"attribution_tier_2",
+											"attribution_tier_3",
 										),
 									},
 								},
@@ -548,8 +555,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
-									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -565,6 +572,9 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"allocation_rule",
 											"gke",
 											"gke_label",
+											"attribution_tier_1",
+											"attribution_tier_2",
+											"attribution_tier_3",
 										),
 									},
 								},

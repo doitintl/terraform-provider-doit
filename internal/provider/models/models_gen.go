@@ -780,6 +780,7 @@ func (e CloudAnalyticsBudgetDataSourceReadOnly) Valid() bool {
 
 // Defines values for CloudAnalyticsExternalConfigDataSource.
 const (
+	CloudAnalyticsExternalConfigDataSourceAttribution           CloudAnalyticsExternalConfigDataSource = "attribution"
 	CloudAnalyticsExternalConfigDataSourceBilling               CloudAnalyticsExternalConfigDataSource = "billing"
 	CloudAnalyticsExternalConfigDataSourceBillingDatahub        CloudAnalyticsExternalConfigDataSource = "billing-datahub"
 	CloudAnalyticsExternalConfigDataSourceBqlens                CloudAnalyticsExternalConfigDataSource = "bqlens"
@@ -789,6 +790,8 @@ const (
 // Valid indicates whether the value is a known member of the CloudAnalyticsExternalConfigDataSource enum.
 func (e CloudAnalyticsExternalConfigDataSource) Valid() bool {
 	switch e {
+	case CloudAnalyticsExternalConfigDataSourceAttribution:
+		return true
 	case CloudAnalyticsExternalConfigDataSourceBilling:
 		return true
 	case CloudAnalyticsExternalConfigDataSourceBillingDatahub:
@@ -2131,6 +2134,9 @@ const (
 	DimensionsTypesAllocationRule   DimensionsTypes = "allocation_rule"
 	DimensionsTypesAttribution      DimensionsTypes = "attribution"
 	DimensionsTypesAttributionGroup DimensionsTypes = "attribution_group"
+	DimensionsTypesAttributionTier1 DimensionsTypes = "attribution_tier_1"
+	DimensionsTypesAttributionTier2 DimensionsTypes = "attribution_tier_2"
+	DimensionsTypesAttributionTier3 DimensionsTypes = "attribution_tier_3"
 	DimensionsTypesDatetime         DimensionsTypes = "datetime"
 	DimensionsTypesFixed            DimensionsTypes = "fixed"
 	DimensionsTypesGke              DimensionsTypes = "gke"
@@ -2152,6 +2158,12 @@ func (e DimensionsTypes) Valid() bool {
 	case DimensionsTypesAttribution:
 		return true
 	case DimensionsTypesAttributionGroup:
+		return true
+	case DimensionsTypesAttributionTier1:
+		return true
+	case DimensionsTypesAttributionTier2:
+		return true
+	case DimensionsTypesAttributionTier3:
 		return true
 	case DimensionsTypesDatetime:
 		return true

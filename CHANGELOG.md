@@ -16,6 +16,10 @@
 
 ### ENHANCEMENTS
 
+- **data-source/doit_report_query**: Query DoiT Attribute attributions with `data_source = "attribution"` and the new `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` dimension types. Requires an Attribute subscription. A query must contain at least one tier dimension, and all of them must belong to the same attribution; the provider checks this at plan time. These are unrelated to the deprecated `attribution` and `attribution_group` dimension types; see the new [Attribute attributions guide](https://registry.terraform.io/providers/doitintl/doit/latest/docs/guides/attribute_attributions)
+
+- **resource/doit_report, resource/doit_alert, resource/doit_budget**: The Attribute values the API added to the shared enums are rejected at plan time where the API cannot use them: `data_source = "attribution"` on `doit_report` (the API cannot create or update attribution reports), and the `attribution_tier_*` dimension types in `doit_report` dimensions, filters and groups, `doit_alert` scopes and `doit_budget` scopes. A plan that would update an existing attribution report, such as an imported console view, also fails at plan time
+
 - **data-source/doit_report_query, data-source/doit_report_result**: A result too large for the API to return inline (over 30 MiB) now fails with an explanatory error suggesting `file_output = "csv"`, filters, fewer dimensions or a smaller time range, instead of an opaque HTTP 500. `file_output` is also now a working way around the limit
 
 - **data-source/doit_invoice, data-source/doit_invoices, data-source/doit_invoice_pdf**: Canceled invoices and credit memos are now supported. `status` can be `CANCELED`, which takes precedence over the payment status. `doit_invoices` returns canceled invoices only with `filter = "status:CANCELED"`; `doit_invoice` and `doit_invoice_pdf` can fetch them by ID

@@ -67,6 +67,8 @@ func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStat
 
 func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_alert.AlertResourceSchema(ctx)
+	// The alerts API rejects Attribute attribution tier dimensions as unknown.
+	rejectAttributionTierTypes(s.Attributes, "doit_alert", "config.scopes[*].type")
 	// No dimensions-type deprecation warning on config.scopes[*].type: the
 	// alerts API only accepts "attribution"/"attribution_group" and rejects the
 	// replacements ("allocation_rule"/"allocation") with a 400, so the warning

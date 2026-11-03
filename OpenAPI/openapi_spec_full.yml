@@ -120,8 +120,9 @@ tags:
       admin verifies the request. Agents create a request and hand the returned consentUrl to the admin;
       the admin verifies by entering the emailed code (or signing the request on the console), after which
       the tenant is provisioned and the request reports its customer id.
-  - name: Attribute Workloads (Beta)
-    description: Kubernetes workload cost data measured by the Attribute sensor.
+  - name: Attribute (Beta)
+    description: Kubernetes workload cost data measured by the Attribute sensor, and the Attribution
+      Center attributions that split cost into teams, products or customers.
 
 paths:
   /signup/v1/requests:
@@ -13739,7 +13740,7 @@ paths:
   "/attribute/v1/workloads/{dimension}/table":
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: queryAttributeWorkloadsTable
       summary: List Kubernetes workload costs by dimension
       description: |-
@@ -13785,25 +13786,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsTable"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   "/attribute/v1/workloads/{dimension}/stats":
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: queryAttributeWorkloadsStats
       summary: Get Kubernetes workload cost totals
       description: |-
@@ -13841,25 +13842,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsStats"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   "/attribute/v1/workloads/{dimension}/over-time":
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: queryAttributeWorkloadsOverTime
       summary: Get Kubernetes workload cost over time
       description: |-
@@ -13899,25 +13900,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsOverTime"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/w/details:
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: getAttributeWorkloadDetails
       summary: Get one workload's identity
       description: |-
@@ -13945,25 +13946,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadDetails"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/w/resources/table:
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: queryAttributeWorkloadResourcesTable
       summary: List one workload's cloud resources
       description: |-
@@ -14006,25 +14007,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsTable"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/w/resources/stats:
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: queryAttributeWorkloadResourcesStats
       summary: Get one workload's cost totals
       description: |-
@@ -14061,25 +14062,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsStats"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/w/resources/over-time:
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: queryAttributeWorkloadResourcesOverTime
       summary: Get one workload's resource cost over time
       description: |-
@@ -14118,25 +14119,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsOverTime"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/w/resources/non-network-types:
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: listAttributeWorkloadNonNetworkResourceTypes
       summary: List one workload's non-network resource types
       description: |-
@@ -14172,25 +14173,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadNonNetworkResourceTypes"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/cloud-providers:
     post:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: listAttributeWorkloadsCloudProviders
       summary: List the cloud providers that billed workload resources
       description: |-
@@ -14229,25 +14230,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsValues"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/signals:
     get:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: getAttributeWorkloadsSignals
       summary: Get workloads that need attention
       description: |-
@@ -14282,25 +14283,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsSignals"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   /attribute/v1/workloads/cost-data-status:
     get:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: getAttributeWorkloadsCostDataStatus
       summary: Check whether workload cost data exists
       description: |-
@@ -14322,25 +14323,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsCostDataStatus"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   "/attribute/v1/workloads/filters/{field}":
     get:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: listAttributeWorkloadsFilterValues
       summary: List the values of a workload filter field
       description: |-
@@ -14375,25 +14376,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsPaginatedValues"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   "/attribute/v1/workloads/filters/{field}/keys":
     get:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: listAttributeWorkloadsResourceTagKeys
       summary: List resource tag keys
       description: |-
@@ -14427,25 +14428,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsPaginatedValues"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
   "/attribute/v1/workloads/filters/{field}/values":
     get:
       tags:
-        - Attribute Workloads (Beta)
+        - Attribute (Beta)
       operationId: listAttributeWorkloadsResourceTagValues
       summary: List the values of one resource tag key
       description: |-
@@ -14480,21 +14481,193 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributeWorkloadsPaginatedValues"
         "400":
-          $ref: "#/components/responses/AttributeWorkloadsBadRequest"
+          $ref: "#/components/responses/AttributeBadRequest"
         "401":
-          $ref: "#/components/responses/AttributeWorkloadsUnauthorized"
+          $ref: "#/components/responses/AttributeUnauthorized"
         "403":
-          $ref: "#/components/responses/AttributeWorkloadsForbidden"
+          $ref: "#/components/responses/AttributeForbidden"
         "404":
-          $ref: "#/components/responses/AttributeWorkloadsNotFound"
+          $ref: "#/components/responses/AttributeNotFound"
         "409":
-          $ref: "#/components/responses/AttributeWorkloadsConflict"
+          $ref: "#/components/responses/AttributeConflict"
         "500":
-          $ref: "#/components/responses/AttributeWorkloadsInternalServerError"
+          $ref: "#/components/responses/AttributeInternalServerError"
         "502":
-          $ref: "#/components/responses/AttributeWorkloadsBadGateway"
+          $ref: "#/components/responses/AttributeBadGateway"
         "503":
-          $ref: "#/components/responses/AttributeWorkloadsServiceUnavailable"
+          $ref: "#/components/responses/AttributeServiceUnavailable"
+  /attribute/v1/attribution-center/sets:
+    get:
+      tags:
+        - Attribute (Beta)
+      operationId: listAttributeAttributionSets
+      summary: List attribution sets
+      description: |-
+        Returns the customer's attributions (Attribution Center sets), sorted by name, one page at a
+        time. Each set has its latest rule version in `rule`; `rule.state` is `etl-ready` for a
+        published attribution and `ui-draft` for a draft. `activeRuleId` is the newest published
+        version, or null when the set was never published. Deleted attributions are not listed.
+
+        To get an attribution's cost over time or by value, run a Cloud Analytics report with
+        `dataSource: attribution` and the dimension `attribution_tier_1` whose id is
+        `attributionSetId` with `-` replaced by `_`. Only published attributions with data have cost.
+
+        Paging: send `limit`; when the response has `nextCursor`, send it back as `after` for the
+        next page. No `nextCursor` means the last page.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeAttributionLimit"
+        - $ref: "#/components/parameters/attributeAttributionAfter"
+      responses:
+        "200":
+          description: OK - One page of attributions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeAttributionSets"
+        "400":
+          $ref: "#/components/responses/AttributeBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeConflict"
+        "500":
+          $ref: "#/components/responses/AttributeInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeServiceUnavailable"
+  /attribute/v1/attribution-center/sets/count:
+    get:
+      tags:
+        - Attribute (Beta)
+      operationId: countAttributeAttributionSets
+      summary: Count attributions
+      description: |-
+        Returns how many attributions (Attribution Center sets) the customer has. Drafts count;
+        deleted attributions do not.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        "200":
+          description: OK - The number of attributions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeAttributionSetsCount"
+        "400":
+          $ref: "#/components/responses/AttributeBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeConflict"
+        "500":
+          $ref: "#/components/responses/AttributeInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeServiceUnavailable"
+  "/attribute/v1/attribution-center/sets/{attributionSetId}":
+    get:
+      tags:
+        - Attribute (Beta)
+      operationId: getAttributeAttributionSet
+      summary: Get one attribution
+      description: |-
+        Returns one attribution (Attribution Center set) with its latest rule version. Get
+        `attributionSetId` from `listAttributeAttributionSets`. An unknown or deleted set returns
+        404 `not_found`.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeAttributionSetId"
+      responses:
+        "200":
+          description: OK - The attribution.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeAttributionSet"
+        "400":
+          $ref: "#/components/responses/AttributeBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeConflict"
+        "500":
+          $ref: "#/components/responses/AttributeInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeServiceUnavailable"
+  "/attribute/v1/attribution-center/sets/{attributionSetId}/versions":
+    get:
+      tags:
+        - Attribute (Beta)
+      operationId: listAttributeAttributionSetVersions
+      summary: List the rule versions of one attribution
+      description: |-
+        Returns the saved rule versions of one attribution, newest first, one page at a time.
+        Drafts are included; discarded versions are not. Use it to see how an attribution's rules
+        changed over time.
+
+        Paging: send `limit`; when the response has `nextCursor`, send it back as `after` for the
+        next page. No `nextCursor` means the last page.
+
+        Authenticate with `Authorization: Bearer <token>`. Omit `X-Tenant-Id` when the credential
+        resolves to one customer. When the credential can act on several customers, send
+        `X-Tenant-Id: <tenant-id>` to select one.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+        - $ref: "#/components/parameters/attributeAttributionSetId"
+        - $ref: "#/components/parameters/attributeAttributionLimit"
+        - $ref: "#/components/parameters/attributeAttributionAfter"
+      responses:
+        "200":
+          description: OK - One page of rule versions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttributeAttributionSetVersions"
+        "400":
+          $ref: "#/components/responses/AttributeBadRequest"
+        "401":
+          $ref: "#/components/responses/AttributeUnauthorized"
+        "403":
+          $ref: "#/components/responses/AttributeForbidden"
+        "404":
+          $ref: "#/components/responses/AttributeNotFound"
+        "409":
+          $ref: "#/components/responses/AttributeConflict"
+        "500":
+          $ref: "#/components/responses/AttributeInternalServerError"
+        "502":
+          $ref: "#/components/responses/AttributeBadGateway"
+        "503":
+          $ref: "#/components/responses/AttributeServiceUnavailable"
 components:
   x-doit-doc-anchors:
     caBudgetDataSourceDescription: &caBudgetDataSourceDescription |-
@@ -14548,11 +14721,20 @@ components:
         - bqlens
         - billing-datahub
         - kubernetes-utilization
+        - attribution
       x-enumDescriptions:
         billing: Standard Cloud Analytics billing data only.
         billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
         bqlens: BigQuery Lens data.
         kubernetes-utilization: Kubernetes utilization data.
+        attribution: >-
+          The cost of one Attribute attribution. Requires an `attribution_tier_1`, `attribution_tier_2`
+          or `attribution_tier_3` dimension in group, dimensions or filters, and every tier dimension
+          must belong to the same attribution. The tier id is the attribution set ID with `-` replaced
+          by `_`; `GET /analytics/v1/dimensions` lists the tier dimensions of every attribution that
+          has data. Cost that no rule attributed has a null tier value. Needs an Attribute plan
+          (403 otherwise). Read only: run it with the report query; reports cannot be created or
+          updated with it (400).
     CloudAnalyticsExternalConfigDataSource:
       allOf:
         - $ref: "#/components/schemas/CloudAnalyticsReportDataSource"
@@ -21227,6 +21409,9 @@ components:
         - allocation_rule
         - gke
         - gke_label
+        - attribution_tier_1
+        - attribution_tier_2
+        - attribution_tier_3
       x-enumDescriptions:
         fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
         label: Customer-defined resource labels; id is the label key, values are label values.
@@ -21241,6 +21426,9 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: "Deprecated. Use allocation_rule."
         attribution_group: "Deprecated. Use allocation."
+        attribution_tier_1: Tier 1 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
+        attribution_tier_2: Tier 2 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
+        attribution_tier_3: Tier 3 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
     AllocationDimensionsTypes:
       description: |-
         Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
@@ -28366,6 +28554,141 @@ components:
         hasWorkloadData:
           type: boolean
           description: True when the customer has at least one row of workload cost data.
+    AttributeAttributionRule:
+      type: object
+      description: |-
+        One rule version of an attribution: how its cost is split into values. Older versions can
+        miss fields; only `attributionSetId` is always present.
+      required:
+        - attributionSetId
+      properties:
+        attributionSetId:
+          type: string
+        state:
+          type: string
+          enum:
+            - ui-draft
+            - etl-ready
+            - deleted
+            - discarded
+          x-enumDescriptions:
+            ui-draft: A draft that is not applied to cost.
+            etl-ready: Published; applied to cost.
+            deleted: The attribution was deleted.
+            discarded: A discarded draft.
+        dateRange:
+          type: object
+          description: The days the rules apply to, as a half-open range [startDate, endDate).
+          required:
+            - startDate
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+              nullable: true
+              description: Exclusive. Null or absent means open-ended.
+        scope:
+          type: array
+          description: Filters that limit the cost the attribution works on; all must match.
+          items:
+            type: object
+            additionalProperties: true
+        billingFiltersByBucket:
+          type: array
+          description: |-
+            The rules per bucket (a service, usage account or provider): billing conditions, sensor
+            conditions and what happens to the remaining cost.
+          items:
+            type: object
+            additionalProperties: true
+    AttributeAttributionSet:
+      type: object
+      required:
+        - attributionSetId
+        - name
+        - description
+        - ruleId
+        - rule
+      properties:
+        attributionSetId:
+          type: string
+          description: |-
+            The attribution's ID. In Cloud Analytics reports, use it with `-` replaced by `_` as the
+            id of the `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` dimensions.
+        name:
+          type: string
+        description:
+          type: string
+        ruleId:
+          type: string
+          description: ID of the latest rule version.
+        version:
+          type: integer
+          minimum: 1
+          description: Number of the latest rule version.
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the latest rule version was saved.
+        rule:
+          $ref: "#/components/schemas/AttributeAttributionRule"
+        activeRuleId:
+          type: string
+          nullable: true
+          description: ID of the newest published (`etl-ready`) rule version; null when there is none.
+    AttributeAttributionSets:
+      type: object
+      required:
+        - sets
+      properties:
+        sets:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttributeAttributionSet"
+        nextCursor:
+          type: string
+          description: Send as `after` to get the next page. Absent on the last page.
+    AttributeAttributionSetsCount:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          type: integer
+          minimum: 0
+    AttributeAttributionSetVersion:
+      type: object
+      required:
+        - ruleId
+        - rule
+      properties:
+        ruleId:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+          description: When the version was saved.
+        rule:
+          $ref: "#/components/schemas/AttributeAttributionRule"
+    AttributeAttributionSetVersions:
+      type: object
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          description: Newest first.
+          items:
+            $ref: "#/components/schemas/AttributeAttributionSetVersion"
+        nextCursor:
+          type: string
+          description: Send as `after` to get the next page. Absent on the last page.
   responses:
     "400":
       description: >-
@@ -28782,7 +29105,7 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: composer-api.allocation_not_found
             retryable: false
-    AttributeWorkloadsBadRequest:
+    AttributeBadRequest:
       description: |-
         Bad Request - The query string, path or body does not match the operation's schema, for
         example a missing `from`, a `limit` out of range, a `field` or `dimension` outside its enum,
@@ -28793,7 +29116,7 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-    AttributeWorkloadsUnauthorized:
+    AttributeUnauthorized:
       description: |-
         Unauthorized - The `Authorization: Bearer <token>` header is missing, the token is not
         valid, or the person behind the token has no email address. Code: `unauthorized`.
@@ -28801,7 +29124,7 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-    AttributeWorkloadsForbidden:
+    AttributeForbidden:
       description: |-
         Forbidden - The caller cannot read this data. `code` gives the reason:
 
@@ -28818,16 +29141,17 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-    AttributeWorkloadsNotFound:
+    AttributeNotFound:
       description: |-
         Not Found - `route_not_found` when the path or HTTP method is not one of the Attribute
-        Workloads operations. `not_found` when the `workloadId` does not decode: copy it unchanged
-        from a `workload` row of `queryAttributeWorkloadsTable`.
+        operations. `not_found` when the `workloadId` does not decode (copy it unchanged from a
+        `workload` row of `queryAttributeWorkloadsTable`), or when no attribution has the
+        `attributionSetId` (take it from `listAttributeAttributionSets`).
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-    AttributeWorkloadsConflict:
+    AttributeConflict:
       description: |-
         Conflict - The customer is not set up in Attribute yet (`attribute_customer_not_provisioned`)
         or its Attribute setup needs a fix by DoiT (`attribute_tenant_reconciliation_required`).
@@ -28836,13 +29160,13 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-    AttributeWorkloadsInternalServerError:
+    AttributeInternalServerError:
       description: Internal Server Error - Unexpected error in the Attribute service (`upstream_error`). Retry with backoff.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-    AttributeWorkloadsBadGateway:
+    AttributeBadGateway:
       description: |-
         Bad Gateway - A service behind the gateway did not answer: token check (`auth_unavailable`)
         or the Attribute service (`upstream_unavailable`), or the Attribute service refused the
@@ -28851,7 +29175,7 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-    AttributeWorkloadsServiceUnavailable:
+    AttributeServiceUnavailable:
       description: |-
         Service Unavailable - The Attribute integration is turned off (`integration_disabled`), the
         token check is unavailable (`auth_unavailable`), or the permission check is unavailable
@@ -29558,6 +29882,32 @@ components:
       in: query
       required: false
       description: Returns only the values that contain this text, ignoring case.
+      schema:
+        type: string
+    attributeAttributionSetId:
+      name: attributionSetId
+      in: path
+      required: true
+      description: The `attributionSetId` of an attribution from `listAttributeAttributionSets`.
+      schema:
+        type: string
+        minLength: 1
+        example: 3f0c2b9e-1a4d-4c6e-9b7a-2d5e8f1a6c34
+    attributeAttributionLimit:
+      name: limit
+      in: query
+      required: false
+      description: Items per page, from 1 to 200. Defaults to 100.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 100
+    attributeAttributionAfter:
+      name: after
+      in: query
+      required: false
+      description: The `nextCursor` of the previous page. Omit it for the first page.
       schema:
         type: string
   securitySchemes:

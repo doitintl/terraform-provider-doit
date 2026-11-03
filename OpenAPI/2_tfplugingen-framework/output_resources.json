@@ -232,7 +232,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n\"attribution_tier_1\",\n\"attribution_tier_2\",\n\"attribution_tier_3\",\n)"
 																}
 															}
 														]
@@ -1571,7 +1571,7 @@
 																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 															}
 														],
-														"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
+														"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n\"attribution_tier_1\",\n\"attribution_tier_2\",\n\"attribution_tier_3\",\n)"
 													}
 												}
 											]
@@ -2876,7 +2876,7 @@
 															"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 														}
 													],
-													"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"bqlens\",\n\"billing-datahub\",\n\"kubernetes-utilization\",\n)"
+													"schema_definition": "stringvalidator.OneOf(\n\"billing\",\n\"bqlens\",\n\"billing-datahub\",\n\"kubernetes-utilization\",\n\"attribution\",\n)"
 												}
 											}
 										]
@@ -2908,7 +2908,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n\"attribution_tier_1\",\n\"attribution_tier_2\",\n\"attribution_tier_3\",\n)"
 																}
 															}
 														]
@@ -3105,7 +3105,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n\"attribution_tier_1\",\n\"attribution_tier_2\",\n\"attribution_tier_3\",\n)"
 																}
 															}
 														]
@@ -3313,7 +3313,7 @@
 																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 																		}
 																	],
-																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n)"
+																	"schema_definition": "stringvalidator.OneOf(\n\"datetime\",\n\"fixed\",\n\"optional\",\n\"label\",\n\"tag\",\n\"project_label\",\n\"system_label\",\n\"attribution\",\n\"attribution_group\",\n\"allocation\",\n\"allocation_rule\",\n\"gke\",\n\"gke_label\",\n\"attribution_tier_1\",\n\"attribution_tier_2\",\n\"attribution_tier_3\",\n)"
 																}
 															}
 														]

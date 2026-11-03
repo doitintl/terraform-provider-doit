@@ -114,8 +114,8 @@ tags:
   - name: Signup
     description: >-
       Start a Cloud Intelligence trial for an organization that is not yet a DoiT customer. These operations require no API key: they are rate limited, idempotent, and provision nothing until the organization's admin verifies the request. Agents create a request and hand the returned consentUrl to the admin; the admin verifies by entering the emailed code (or signing the request on the console), after which the tenant is provisioned and the request reports its customer id.
-  - name: Attribute Workloads (Beta)
-    description: Kubernetes workload cost data measured by the Attribute sensor.
+  - name: Attribute (Beta)
+    description: Kubernetes workload cost data measured by the Attribute sensor, and the Attribution Center attributions that split cost into teams, products or customers.
 paths:
   /analytics/v1/alerts:
     get:
@@ -9552,11 +9552,14 @@ components:
         - bqlens
         - billing-datahub
         - kubernetes-utilization
+        - attribution
       x-enumDescriptions:
         billing: Standard Cloud Analytics billing data only.
         billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
         bqlens: BigQuery Lens data.
         kubernetes-utilization: Kubernetes utilization data.
+        attribution: >-
+          The cost of one Attribute attribution. Requires an `attribution_tier_1`, `attribution_tier_2` or `attribution_tier_3` dimension in group, dimensions or filters, and every tier dimension must belong to the same attribution. The tier id is the attribution set ID with `-` replaced by `_`; `GET /analytics/v1/dimensions` lists the tier dimensions of every attribution that has data. Cost that no rule attributed has a null tier value. Needs an Attribute plan (403 otherwise). Read only: run it with the report query; reports cannot be created or updated with it (400).
       description: *caExternalConfigDataSourceDescription
     CloudDiagramActivityItem:
       type: object
@@ -12686,6 +12689,9 @@ components:
         - allocation_rule
         - gke
         - gke_label
+        - attribution_tier_1
+        - attribution_tier_2
+        - attribution_tier_3
       x-enumDescriptions:
         fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
         label: Customer-defined resource labels; id is the label key, values are label values.
@@ -12700,6 +12706,9 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: "Deprecated. Use allocation_rule."
         attribution_group: "Deprecated. Use allocation."
+        attribution_tier_1: Tier 1 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
+        attribution_tier_2: Tier 2 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
+        attribution_tier_3: Tier 3 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
     EligibleSpendDataPoint:
       type: object
       description: One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.

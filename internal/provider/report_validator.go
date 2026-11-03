@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -1066,4 +1067,182 @@ func validateReportLimitByChangeMetricListed(ctx context.Context, getter, priorS
 			"Add it to `metrics` or use one of the configured metrics in `limit_by_change.metric`.",
 			metric.MetricType.ValueString(), metric.Value.ValueString()),
 	)
+}
+
+// reportAttributionQueryDataSourceValidator validates DoiT Attribute attribution
+// queries on the doit_report_query data source:
+//   - data_source = "attribution" requires at least one attribution tier
+//     dimension in group, dimensions or filters;
+//   - attribution tier dimensions require data_source = "attribution" (the API
+//     default, billing or billing-datahub, rejects them); and
+//   - every tier dimension must belong to the same attribution (same id).
+//
+// The doit_report resource rejects both the data source and the tier types
+// outright (see attribution_validator.go), so this only applies to queries.
+type reportAttributionQueryDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportAttributionQueryDataSourceValidator{}
+
+func (v reportAttributionQueryDataSourceValidator) Description(_ context.Context) string {
+	return "Validates that data_source = \"attribution\" and the attribution tier dimensions are used together, for a single attribution"
+}
+
+func (v reportAttributionQueryDataSourceValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `data_source = \"attribution\"` and the attribution tier dimensions are used together, for a single attribution"
+}
+
+func (v reportAttributionQueryDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportAttributionQuery(ctx, req.Config, &resp.Diagnostics)
+}
+
+const invalidAttributionQuerySummary = "Invalid Attribution Query Configuration"
+
+// attributionTierRef is one attribution tier dimension found in a report config.
+type attributionTierRef struct {
+	path path.Path // path of the group/dimensions/filters element
+	id   types.String
+}
+
+func validateReportAttributionQuery(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+	configPath := path.Root("config")
+	var refs []attributionTierRef
+	hasUnknown := false
+
+	var groups types.List
+	d := getter.GetAttribute(ctx, configPath.AtName("group"), &groups)
+	diags.Append(d...)
+	if !d.HasError() && collectAttributionTierRefs(ctx, groups, configPath.AtName("group"), func(value resource_report.GroupValue) (types.String, types.String) {
+		return value.GroupType, value.Id
+	}, &refs, diags) {
+		hasUnknown = true
+	}
+
+	var dimensions types.List
+	d = getter.GetAttribute(ctx, configPath.AtName("dimensions"), &dimensions)
+	diags.Append(d...)
+	if !d.HasError() && collectAttributionTierRefs(ctx, dimensions, configPath.AtName("dimensions"), func(value resource_report.DimensionsValue) (types.String, types.String) {
+		return value.DimensionsType, value.Id
+	}, &refs, diags) {
+		hasUnknown = true
+	}
+
+	var filters types.List
+	d = getter.GetAttribute(ctx, configPath.AtName("filters"), &filters)
+	diags.Append(d...)
+	if !d.HasError() && collectAttributionTierRefs(ctx, filters, configPath.AtName("filters"), func(value resource_report.FiltersValue) (types.String, types.String) {
+		return value.FiltersType, value.Id
+	}, &refs, diags) {
+		hasUnknown = true
+	}
+
+	// Independent of data_source: all tier dimensions must share one attribution.
+	validateAttributionTierRefsSameID(refs, diags)
+
+	var dataSource types.String
+	d = getter.GetAttribute(ctx, configPath.AtName("data_source"), &dataSource)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if dataSource.IsUnknown() {
+		return
+	}
+
+	if dataSource.IsNull() || dataSource.ValueString() != attributionReportDataSource {
+		for _, ref := range refs {
+			diags.AddAttributeError(
+				ref.path.AtName("type"),
+				invalidAttributionQuerySummary,
+				fmt.Sprintf("Attribution tier dimensions select a DoiT Attribute attribution and require `data_source = %q`. "+
+					"Without it the API uses the billing data source and rejects the query. See %s",
+					attributionReportDataSource, attributeAttributionsGuideURL),
+			)
+		}
+		return
+	}
+
+	if len(refs) == 0 && !hasUnknown {
+		diags.AddAttributeError(
+			configPath.AtName("data_source"),
+			invalidAttributionQuerySummary,
+			fmt.Sprintf("`data_source = %q` requires at least one `attribution_tier_1`, `attribution_tier_2` or "+
+				"`attribution_tier_3` dimension in `group`, `dimensions` or `filters`. Its `id` is the attribution "+
+				"set ID with `-` replaced by `_`. See %s",
+				attributionReportDataSource, attributeAttributionsGuideURL),
+		)
+	}
+}
+
+// collectAttributionTierRefs appends the attribution tier dimensions of list to
+// refs and reports whether the list, an element, or an element type is unknown.
+// fields returns the element's type and id.
+func collectAttributionTierRefs[T attr.Value](
+	ctx context.Context,
+	list types.List,
+	listPath path.Path,
+	fields func(T) (types.String, types.String),
+	refs *[]attributionTierRef,
+	diags *diag.Diagnostics,
+) bool {
+	if list.IsUnknown() {
+		return true
+	}
+	if list.IsNull() {
+		return false
+	}
+
+	var elements []T
+	d := list.ElementsAs(ctx, &elements, false)
+	diags.Append(d...)
+	if d.HasError() {
+		return false
+	}
+
+	hasUnknown := false
+	for index, element := range elements {
+		if element.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if element.IsNull() {
+			continue
+		}
+		dimensionType, id := fields(element)
+		if dimensionType.IsUnknown() {
+			hasUnknown = true
+			continue
+		}
+		if dimensionType.IsNull() || !isAttributionTierType(dimensionType.ValueString()) {
+			continue
+		}
+		*refs = append(*refs, attributionTierRef{path: listPath.AtListIndex(index), id: id})
+	}
+	return hasUnknown
+}
+
+// validateAttributionTierRefsSameID reports every tier dimension whose known id
+// differs from the first known id. Unknown and null ids are skipped.
+func validateAttributionTierRefsSameID(refs []attributionTierRef, diags *diag.Diagnostics) {
+	first := ""
+	for _, ref := range refs {
+		if ref.id.IsUnknown() {
+			continue
+		}
+		if ref.id.IsNull() {
+			continue
+		}
+		if first == "" {
+			first = ref.id.ValueString()
+			continue
+		}
+		if ref.id.ValueString() == first {
+			continue
+		}
+		diags.AddAttributeError(
+			ref.path.AtName("id"),
+			invalidAttributionQuerySummary,
+			fmt.Sprintf("Every attribution tier dimension in a query must belong to the same attribution, "+
+				"but %q differs from %q. Query each attribution separately.", ref.id.ValueString(), first),
+		)
+	}
 }

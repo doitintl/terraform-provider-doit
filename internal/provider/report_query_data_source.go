@@ -65,6 +65,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 	// Get the generated report resource schema and extract its "config" attribute.
 	reportSchema := resource_report.ReportResourceSchema(ctx)
 	appendDimensionsTypeDeprecationValidators(reportSchema.Attributes, reportDimensionsTypeAttributePaths...)
+	describeAttributionQuerySchema(reportSchema.Attributes)
 	configAttr, ok := reportSchema.Attributes["config"].(rsschema.SingleNestedAttribute)
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -169,6 +170,8 @@ func (d *reportQueryDataSource) ConfigValidators(_ context.Context) []datasource
 		reportCumulativeComparisonDataSourceValidator{},
 		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
 		reportLimitByChangeDataSourceValidator{},
+		// data_source = "attribution" and the attribution tier dimensions require each other.
+		reportAttributionQueryDataSourceValidator{},
 	}
 }
 

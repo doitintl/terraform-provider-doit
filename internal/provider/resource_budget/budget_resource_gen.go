@@ -290,8 +290,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 						},
 						"type": schema.StringAttribute{
 							Required:            true,
-							Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
-							MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+							Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+							MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"datetime",
@@ -307,6 +307,9 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 									"allocation_rule",
 									"gke",
 									"gke_label",
+									"attribution_tier_1",
+									"attribution_tier_2",
+									"attribution_tier_3",
 								),
 							},
 						},

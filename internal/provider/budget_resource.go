@@ -72,6 +72,9 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	s := resource_budget.BudgetResourceSchema(ctx)
 	s.Version = budgetSchemaVersion
 	appendDimensionsTypeDeprecationValidators(s.Attributes, "scopes[*].type")
+	// The budgets API accepts Attribute attribution tier scopes, but tier
+	// dimensions need the "attribution" data source, which budgets reject.
+	rejectAttributionTierTypes(s.Attributes, "doit_budget", "scopes[*].type")
 	if attr, ok := s.Attributes["start_period"].(schema.Int64Attribute); ok {
 		attr.Validators = append(attr.Validators, budgetStartPeriodValidator{})
 		s.Attributes["start_period"] = attr
