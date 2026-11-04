@@ -473,6 +473,23 @@ func TestReportResource_ModifyPlan_AttributionReportReadOnly(t *testing.T) {
 		}
 	})
 
+	// lifecycle.ignore_changes = [config.data_source] makes the plan keep the
+	// stored value while config sets another one, and the update request sends
+	// the planned value, so the planned "attribution" decides.
+	t.Run("update with an ignored data_source change is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		state := attributionConfig("USD")
+		plan := attributionConfig("EUR")
+		cfg := attributionConfig("EUR")
+		cfg["data_source"] = types.StringValue("billing")
+
+		resp := lbcModifyPlan(ctx, t, state, plan, cfg)
+		if got := lbcCountErrors(resp.Diagnostics, attributionReportReadOnlySummary); got != 1 {
+			t.Fatalf("expected one %q error, got %d: %v", attributionReportReadOnlySummary, got, resp.Diagnostics)
+		}
+	})
+
 	t.Run("update of a billing report with data_source omitted is not rejected", func(t *testing.T) {
 		t.Parallel()
 

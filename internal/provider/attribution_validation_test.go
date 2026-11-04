@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
@@ -230,6 +231,54 @@ resource "doit_report" "test" {
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectUnknownValue("doit_report.test", tfjsonpath.New("config").AtMapKey("data_source")),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_IgnoredDataSourceKeepsStoredPlanValue checks the plan behavior
+// the ModifyPlan guard for attribution reports relies on: when config.data_source
+// is listed in lifecycle.ignore_changes, the plan keeps the stored value even
+// though config sets another one, and that planned value is what the update
+// request sends. The guard therefore has to check the planned value first. See
+// TestReportResource_ModifyPlan_AttributionReportReadOnly.
+func TestAccReport_IgnoredDataSourceKeepsStoredPlanValue(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(dataSource, currency, lifecycle string) string {
+		return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-ignored-data-source-%d"
+  config = {
+    data_source   = %q
+    currency      = %q
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+  %s
+}
+`, n, dataSource, currency, lifecycle)
+	}
+	dataSourcePath := tfjsonpath.New("config").AtMapKey("data_source")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: config("billing", "USD", "")},
+			{
+				Config: config("billing-datahub", "EUR", "lifecycle { ignore_changes = [config.data_source] }"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue("doit_report.test", dataSourcePath, knownvalue.StringExact("billing")),
 					},
 				},
 			},
