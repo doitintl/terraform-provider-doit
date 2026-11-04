@@ -396,6 +396,7 @@ func TestValidateReportAttributionQuery(t *testing.T) {
 		{name: "attribution with tier and datetime dimensions", dataSource: attribution, lists: lists{attributionGroupList(ctx, t, tierDim("set_a")), attributionDimensionsList(ctx, t, plainDim("year", "datetime")), nullFilters}},
 		{name: "same attribution across lists", dataSource: attribution, lists: lists{attributionGroupList(ctx, t, tierDim("set_a")), nullDimensions, attributionFiltersList(ctx, t, attributionDim{id: types.StringValue("set_a"), dimType: types.StringValue("attribution_tier_2")})}},
 		{name: "deprecated attribution dimension type is not a tier", dataSource: types.StringValue("billing"), lists: withGroup(plainDim("rule_id", "attribution"))},
+		{name: "equal empty ids are the same attribution", dataSource: attribution, lists: withGroup(tierDim(""), tierDim(""))},
 
 		// Deferral.
 		{name: "unknown data source with tier", dataSource: types.StringUnknown(), lists: withGroup(tierDim("set_a"))},
@@ -410,6 +411,10 @@ func TestValidateReportAttributionQuery(t *testing.T) {
 		{name: "tier with null data source", dataSource: types.StringNull(), lists: withGroup(tierDim("set_a")), wantPaths: []path.Path{groupType(0)}},
 		{name: "tier with billing data source", dataSource: types.StringValue("billing"), lists: withGroup(plainDim("year", "datetime"), tierDim("set_a")), wantPaths: []path.Path{groupType(1)}},
 		{name: "mismatched attribution ids", dataSource: attribution, lists: withGroup(tierDim("set_a"), tierDim("set_b"), tierDim("set_c")), wantPaths: []path.Path{groupID(1), groupID(2)}},
+		// An empty id is still an id: the comparison must not depend on its position.
+		{name: "empty id before another id", dataSource: attribution, lists: withGroup(tierDim(""), tierDim("set_a")), wantPaths: []path.Path{groupID(1)}},
+		{name: "empty id after another id", dataSource: attribution, lists: withGroup(tierDim("set_a"), tierDim("")), wantPaths: []path.Path{groupID(1)}},
+		{name: "empty id between other ids", dataSource: attribution, lists: withGroup(tierDim("set_a"), tierDim(""), tierDim("set_b")), wantPaths: []path.Path{groupID(1), groupID(2)}},
 		{name: "mismatched ids reported despite unknown data source", dataSource: types.StringUnknown(), lists: withGroup(tierDim("set_a"), tierDim("set_b")), wantPaths: []path.Path{groupID(1)}},
 		{name: "known-invalid tier after unknown element", dataSource: types.StringValue("billing"), lists: withGroup(attributionDim{unknown: true}, tierDim("set_a")), wantPaths: []path.Path{groupType(1)}},
 		{name: "known-invalid tier before unknown element", dataSource: types.StringValue("billing"), lists: withGroup(tierDim("set_a"), attributionDim{unknown: true}), wantPaths: []path.Path{groupType(0)}},

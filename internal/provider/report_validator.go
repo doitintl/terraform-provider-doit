@@ -1738,9 +1738,12 @@ func collectAttributionTierRefs[T attr.Value](
 }
 
 // validateAttributionTierRefsSameID reports every tier dimension whose known id
-// differs from the first known id. Unknown and null ids are skipped.
+// differs from the first known id. Unknown and null ids are skipped. An empty
+// id is an id like any other, so whether one is found must not depend on its
+// value.
 func validateAttributionTierRefsSameID(refs []attributionTierRef, diags *diag.Diagnostics) {
-	first := ""
+	var first string
+	haveFirst := false
 	for _, ref := range refs {
 		if ref.id.IsUnknown() {
 			continue
@@ -1748,8 +1751,9 @@ func validateAttributionTierRefsSameID(refs []attributionTierRef, diags *diag.Di
 		if ref.id.IsNull() {
 			continue
 		}
-		if first == "" {
+		if !haveFirst {
 			first = ref.id.ValueString()
+			haveFirst = true
 			continue
 		}
 		if ref.id.ValueString() == first {

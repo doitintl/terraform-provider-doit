@@ -150,6 +150,12 @@ func TestAccReportQuery_AttributionValidation(t *testing.T) {
 			group:      `{ id = "set_a", type = "attribution_tier_1" }, { id = "set_b", type = "attribution_tier_2" }`,
 			wantError:  `must belong to the same\s+attribution`,
 		},
+		{
+			// An empty id is an id too, wherever it appears in the list.
+			dataSource: `data_source = "attribution"`,
+			group:      `{ id = "", type = "attribution_tier_1" }, { id = "set_a", type = "attribution_tier_1" }`,
+			wantError:  `must belong to the same\s+attribution`,
+		},
 	}
 
 	testSteps := make([]resource.TestStep, 0, len(steps))
