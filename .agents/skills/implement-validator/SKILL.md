@@ -71,6 +71,7 @@ A Boolean `hasUnknown` flag may replace the counter. The uncertainty update and 
 - Do not put Terraform state predicates in switches or closures. Business-only switches are allowed after the relevant values are known.
 - Any helper that receives Terraform values and emits diagnostics must establish its own null/unknown guards. Never rely on a caller's facts.
 - If one large validator checks independent attributes, extract self-guarding diagnostic helpers so one unknown attribute does not suppress unrelated definite errors.
+- Track "seen yet" with a separate `bool` when the zero value is a legal value. `first := ""` as "no id seen yet" skips an empty id listed first but reports it listed second. See `first`/`haveFirst` in `validateAttributionTierRefsSameID` (`report_validator.go`).
 
 `validatorshape` enforces these control-flow forms. `validatordefer` consumes the verified form and detects unsafe presence and collection-count diagnostics.
 
@@ -80,6 +81,8 @@ A Boolean `hasUnknown` flag may replace the counter. The uncertainty update and 
 - Construct generated nested values only with generated `NewXxxValue`, `NewXxxValueMust`, `NewXxxValueNull`, or `NewXxxValueUnknown` constructors.
 - Cover the full null/unknown/known decision table, including unknown collection elements before and after known-invalid elements.
 - Assert diagnostic count, error/warning severity, exact summary, and attribute path when present. Also preserve known-valid and known-invalid behavior.
+- Test a legal zero value (e.g. an empty string) in both first and later positions; the result must not depend on order.
+- When a data source derives its schema from a resource's (as `doit_report_query` does), pin its value lists with a test that checks them against the resource's, as `TestReportQueryAttributionValuesExtendReportResource` does.
 - Add a plan-only acceptance regression when the bug requires Terraform evaluation to produce the unknown value.
 
 ## Verification
