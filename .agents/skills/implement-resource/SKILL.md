@@ -486,11 +486,13 @@ A `ModifyPlan` guard that decides on an Optional+Computed attribute the user may
 
 Decide in this order:
 
-1. **Plan**: known and non-null → decide on it.
-2. Otherwise **config**: unknown → defer (decide at apply); null → use **state**; known → use the config value.
+1. **Plan**: known → decide on it. For a **clearable (Category A)** attribute a null plan is authoritative: the modifier proposes null to clear the stored value (`useNullForUnknownStringWhenConfigNull`, `useNullForCount`) and the request sends that null, so validating the old state value would reject a valid clearing update.
+2. Plan unknown (or, for a **state-retaining Category B** attribute, null) → **config**: unknown → defer (decide at apply); null → use **state**; known → use the config value.
 
 ```go
 value := plan // from req.Plan.GetAttribute
+// A null plan is authoritative only for clearable attributes. Drop the IsNull()
+// term for those; keep it for a Category B attribute like data_source.
 if value.IsNull() || value.IsUnknown() {
     // read config; then:
     switch {
@@ -507,7 +509,7 @@ if !value.IsUnknown() && !value.IsNull() && value.ValueString() == forbidden { /
 
 An `IsUnknown()` check alone does not make a guard correct: deciding what unknown *means* (here: the stored value) is the part that matters. If the API treats an omitted field as "reset to default" rather than "keep", decide that explicitly too.
 
-Reference: the attribution guard in `ModifyPlan` of `internal/provider/report_resource.go`. Tests: see [Pin the real plan shape](../testing/SKILL.md#pin-the-real-plan-shape-for-modifyplan-logic).
+Reference: the attribution guard in `ModifyPlan` of `internal/provider/report_resource.go` (`data_source` is Category B, so it treats a null plan like an unknown one). The plan shapes this relies on are pinned by `TestAccReport_PlanShapeOfOmittedOptionalComputed` (`report_plan_shape_test.go`): unchanged plan is empty, omitted no-default attributes plan unknown, a schema `Default` stays known, a clearing modifier plans null. Tests: see [Pin the real plan shape](../testing/SKILL.md#pin-the-real-plan-shape-for-modifyplan-logic).
 
 ### Set Nested Attributes
 

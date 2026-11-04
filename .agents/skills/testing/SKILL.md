@@ -317,6 +317,7 @@ Templates from the attribution-report guard (`internal/provider/attribution_vali
 
 - `TestAccReport_OmittedDataSourceIsUnknownOnUpdate`: an omitted Optional+Computed attribute plans Unknown when another attribute changes.
 - `TestAccReport_IgnoredDataSourceKeepsStoredPlanValue`: with `lifecycle.ignore_changes`, the plan keeps the stored value while config says another.
+- `TestAccReport_PlanShapeOfOmittedOptionalComputed` (`report_plan_shape_test.go`): one resource, all four shapes (unchanged, unknown, schema `Default`, clearing modifier). `PreApply` plan checks cannot run with `PlanOnly`, so those steps apply.
 - Unit side: `TestReportResource_ModifyPlan_AttributionReportReadOnly` (`attribution_validator_internal_test.go`).
 
 ---
