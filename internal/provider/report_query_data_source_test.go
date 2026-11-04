@@ -181,6 +181,49 @@ func TestAccReportQueryDataSource_InvalidConfig(t *testing.T) {
 	})
 }
 
+// TestAccReportQueryDataSource_SecondaryTimeRangeOverlapRejected verifies that a
+// custom secondary range sharing a UTC day with the custom primary range is
+// rejected at plan time instead of failing the query.
+func TestAccReportQueryDataSource_SecondaryTimeRangeOverlapRejected(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation   = "total"
+        time_interval = "month"
+        time_range = {
+          mode = "custom"
+        }
+        custom_time_range = {
+          from = "2024-01-01T00:00:00Z"
+          to   = "2024-12-31T23:59:59Z"
+        }
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2023-01-01T00:00:00Z"
+            to   = "2024-01-01T00:00:00Z"
+          }
+        }
+    }
+}
+`,
+				ExpectError: regexp.MustCompile(`Overlapping Secondary Time Range`),
+			},
+		},
+	})
+}
+
 // TestAccReportQueryDataSource_MetricFieldsRequired verifies that report_query
 // enforces the same metric-field requirement as the resource: a metric object
 // missing type/value is rejected at plan time (not sent to the API as a bad

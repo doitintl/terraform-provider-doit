@@ -267,6 +267,8 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportFilterNAValidator{},
 		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
 		reportLimitByChangeValidator{},
+		// secondary_time_range must not overlap the primary time range.
+		reportSecondaryTimeRangeValidator{},
 	}
 }
 
@@ -332,6 +334,7 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	validateReportCustomTimeRangeMode(ctx, req.Config, priorState, &resp.Diagnostics)
 	validateReportLimitByChangeCountSecondary(ctx, req.Config, priorState, &resp.Diagnostics)
 	validateReportLimitByChangeMetricListed(ctx, req.Config, priorState, &resp.Diagnostics)
+	validateReportSecondaryTimeRange(ctx, req.Config, priorState, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

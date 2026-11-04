@@ -1504,7 +1504,9 @@ resource "doit_report" "secondary_custom" {
 
 // TestAccReport_SecondaryCustomTimeRangeTimezonePreservation round-trips
 // secondary_time_range.custom_time_range with a non-UTC offset (-05:00) and
-// drift-checks, verifying the offset is preserved with no drift.
+// drift-checks, verifying the offset is preserved with no drift. The secondary
+// range ends at 2023-12-31T23:59:59Z, the last UTC day before the primary range
+// starts: the API compares UTC days and rejects a secondary range that overlaps.
 func TestAccReport_SecondaryCustomTimeRangeTimezonePreservation(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -1523,7 +1525,7 @@ func TestAccReport_SecondaryCustomTimeRangeTimezonePreservation(t *testing.T) {
 					statecheck.ExpectKnownValue(
 						"doit_report.secondary_offset",
 						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("to"),
-						knownvalue.StringExact("2023-12-31T23:59:59-05:00")),
+						knownvalue.StringExact("2023-12-31T18:59:59-05:00")),
 				},
 			},
 			// Drift check — exercises the secondary Read path (time.Time.Equal).
@@ -1561,7 +1563,7 @@ resource "doit_report" "secondary_offset" {
         secondary_time_range = {
           custom_time_range = {
             from = "2023-01-01T00:00:00-05:00"
-            to   = "2023-12-31T23:59:59-05:00"
+            to   = "2023-12-31T18:59:59-05:00"
           }
         }
         data_source    = "billing"
@@ -1571,6 +1573,191 @@ resource "doit_report" "secondary_offset" {
     }
 }
 `, i)
+}
+
+// Primary and secondary time range HCL fragments for the overlap tests.
+const (
+	secOverlapCustomPrimary2024 = `
+        time_range = {
+          mode = "custom"
+        }
+        custom_time_range = {
+          from = "2024-01-01T00:00:00Z"
+          to   = "2024-12-31T23:59:59Z"
+        }`
+	secOverlapCustomSecondary2023 = `
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2023-01-01T00:00:00Z"
+            to   = "2023-12-31T23:59:59Z"
+          }
+        }`
+	secOverlapYearShift = `
+        secondary_time_range = {
+          amount          = 1
+          unit            = "year"
+          include_current = false
+        }`
+	secOverlapError = `Overlapping Secondary Time Range`
+)
+
+func testAccReportSecondaryOverlap(i int, timeRanges string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "secondary_overlap" {
+    name = "test-sec-overlap-%d"
+    config = {
+        metrics = [{
+          type  = "basic"
+          value = "cost"
+        }]
+        aggregation   = "total"
+        time_interval = "month"
+%s
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "table"
+    }
+}
+`, i, timeRanges)
+}
+
+// TestAccReport_SecondaryTimeRange_OverlapRejected verifies that secondary ranges
+// the API rejects for overlapping the primary range are rejected at plan time.
+func TestAccReport_SecondaryTimeRange_OverlapRejected(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Custom secondary ending at 2024-01-01T04:59:59Z, the primary's first UTC day.
+			{
+				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+`
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2023-01-01T00:00:00-05:00"
+            to   = "2023-12-31T23:59:59-05:00"
+          }
+        }`),
+				ExpectError: regexp.MustCompile(secOverlapError),
+			},
+			// One-year shift of a custom primary spanning more than a year.
+			{
+				Config: testAccReportSecondaryOverlap(n, `
+        time_range = {
+          mode = "custom"
+        }
+        custom_time_range = {
+          from = "2023-12-01T00:00:00Z"
+          to   = "2024-12-31T00:00:00Z"
+        }`+secOverlapYearShift),
+				ExpectError: regexp.MustCompile(secOverlapError),
+			},
+			// Relative secondary on a "last" primary longer than one year.
+			{
+				Config: testAccReportSecondaryOverlap(n, `
+        time_range = {
+          mode            = "last"
+          amount          = 2
+          unit            = "year"
+          include_current = false
+        }`+secOverlapYearShift),
+				ExpectError: regexp.MustCompile(secOverlapError),
+			},
+			{
+				Config: testAccReportSecondaryOverlap(n, `
+        time_range = {
+          mode            = "last"
+          amount          = 7
+          unit            = "day"
+          include_current = false
+        }
+        secondary_time_range = {
+          amount          = 0
+          unit            = "day"
+          include_current = false
+        }`),
+				ExpectError: regexp.MustCompile(`Invalid Secondary Time Range Amount`),
+			},
+		},
+	})
+}
+
+// TestAccReport_SecondaryTimeRange_InheritedOverlapRejected verifies that an update
+// moving the primary range onto a secondary range kept from the existing report
+// (secondary_time_range omitted from config) is rejected at plan time: the API
+// validates the merged config and would reject the update.
+func TestAccReport_SecondaryTimeRange_InheritedOverlapRejected(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapCustomSecondary2023),
+			},
+			{
+				Config: testAccReportSecondaryOverlap(n, `
+        time_range = {
+          mode = "custom"
+        }
+        custom_time_range = {
+          from = "2023-06-01T00:00:00Z"
+          to   = "2024-12-31T23:59:59Z"
+        }`),
+				ExpectError: regexp.MustCompile(`(?s)` + secOverlapError + `.*kept from the existing report`),
+			},
+		},
+	})
+}
+
+// TestAccReport_SecondaryTimeRange_CustomOnLongPrimary verifies that a custom
+// secondary range remains allowed on a "last" primary range longer than one year,
+// where a relative secondary range is rejected.
+func TestAccReport_SecondaryTimeRange_CustomOnLongPrimary(t *testing.T) {
+	n := acctest.RandInt()
+	config := testAccReportSecondaryOverlap(n, `
+        time_range = {
+          mode            = "last"
+          amount          = 2
+          unit            = "year"
+          include_current = false
+        }
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2020-01-01T00:00:00Z"
+            to   = "2020-12-31T23:59:59Z"
+          }
+        }`)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_overlap",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("to"),
+						knownvalue.StringExact("2020-12-31T23:59:59Z")),
+				},
+			},
+			{
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
 }
 
 // TestAccReport_SecondaryTimeRangeUpdate tests updating a report's secondary time range

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -1066,4 +1067,368 @@ func validateReportLimitByChangeMetricListed(ctx context.Context, getter, priorS
 			"Add it to `metrics` or use one of the configured metrics in `limit_by_change.metric`.",
 			metric.MetricType.ValueString(), metric.Value.ValueString()),
 	)
+}
+
+// reportSecondaryTimeRangeValidator rejects secondary_time_range settings that the
+// API refuses because the secondary range would overlap the primary range. The
+// API compares whole UTC days on create and on update (against the merged config).
+//
+// Only the cases that can be decided from the configuration are checked here: a
+// custom primary range against a custom secondary range or a one-year shift, a
+// relative secondary range on a "last" primary range longer than one year, and a
+// non-positive amount. Overlaps of a relative primary range with a custom
+// secondary range depend on the current date and are left to the API.
+//
+// A ConfigValidator rather than an attribute validator because attribute
+// validators do not run on attributes inside a SingleNestedAttribute with a
+// CustomType.
+type reportSecondaryTimeRangeValidator struct{}
+
+var _ resource.ConfigValidator = reportSecondaryTimeRangeValidator{}
+
+func (v reportSecondaryTimeRangeValidator) Description(_ context.Context) string {
+	return "Validates that secondary_time_range does not overlap the primary time range"
+}
+
+func (v reportSecondaryTimeRangeValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `secondary_time_range` does not overlap the primary time range"
+}
+
+func (v reportSecondaryTimeRangeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportSecondaryTimeRange(ctx, req.Config, nil, &resp.Diagnostics)
+}
+
+// reportSecondaryTimeRangeDataSourceValidator applies the same rules to the
+// report_query data source, whose config reuses the report resource types.
+type reportSecondaryTimeRangeDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportSecondaryTimeRangeDataSourceValidator{}
+
+func (v reportSecondaryTimeRangeDataSourceValidator) Description(ctx context.Context) string {
+	return reportSecondaryTimeRangeValidator{}.Description(ctx)
+}
+
+func (v reportSecondaryTimeRangeDataSourceValidator) MarkdownDescription(ctx context.Context) string {
+	return reportSecondaryTimeRangeValidator{}.MarkdownDescription(ctx)
+}
+
+func (v reportSecondaryTimeRangeDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportSecondaryTimeRange(ctx, req.Config, nil, &resp.Diagnostics)
+}
+
+// validateReportSecondaryTimeRange is shared by the report resource
+// (ConfigValidators and ModifyPlan) and the report_query data source.
+//
+// priorState, when non-nil, supplies secondary_time_range and time_range (or its
+// mode) when the config omits them: both are Optional+Computed and the API keeps
+// the stored value on update, then validates the merged config. custom_time_range
+// is clearable, so an omitted one is cleared and has no fallback.
+func validateReportSecondaryTimeRange(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
+	var secondary resource_report.SecondaryTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	inherited := false
+	if secondary.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		inherited = true
+	}
+
+	var timeRange resource_report.TimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if timeRange.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		inherited = true
+	}
+
+	var customTimeRange resource_report.CustomTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("custom_time_range"), &customTimeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	// The amount check does not depend on the primary range.
+	validateReportSecondaryAmount(secondary, diags)
+	if timeRange.IsUnknown() {
+		return
+	}
+
+	mode := types.StringNull()
+	if !timeRange.IsNull() {
+		mode = timeRange.Mode
+	}
+	if mode.IsNull() && priorState != nil {
+		var priorTimeRange resource_report.TimeRangeValue
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &priorTimeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		if priorTimeRange.IsUnknown() {
+			return
+		}
+		if !priorTimeRange.IsNull() {
+			mode = priorTimeRange.Mode
+			inherited = true
+		}
+	}
+
+	validateReportSecondaryOnLongPrimary(timeRange, mode, secondary, inherited, diags)
+	validateReportSecondaryCustomOverlap(mode, customTimeRange, secondary, inherited, diags)
+	validateReportSecondaryYearShiftOverlap(mode, customTimeRange, secondary, inherited, diags)
+}
+
+// validateReportSecondaryAmount rejects a relative secondary range whose amount is
+// zero or negative. Zero shifts the secondary range onto the primary range.
+func validateReportSecondaryAmount(secondary resource_report.SecondaryTimeRangeValue, diags *diag.Diagnostics) {
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	// A custom secondary range ignores amount.
+	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+	if secondary.Amount.IsNull() || secondary.Amount.IsUnknown() {
+		return
+	}
+
+	amount := secondary.Amount.ValueInt64()
+	if amount > 0 {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range").AtName("amount"),
+		"Invalid Secondary Time Range Amount",
+		fmt.Sprintf("`secondary_time_range.amount` must be greater than zero, got %d. "+
+			"The API rejects a negative amount, and an amount of 0 makes the secondary range overlap the primary range.", amount),
+	)
+}
+
+// validateReportSecondaryOnLongPrimary rejects a relative secondary range on a
+// "last" primary range longer than one year: the API has no shifted range for such
+// a primary range that would not overlap it.
+func validateReportSecondaryOnLongPrimary(timeRange resource_report.TimeRangeValue, mode types.String, secondary resource_report.SecondaryTimeRangeValue, inherited bool, diags *diag.Diagnostics) {
+	if timeRange.IsNull() || timeRange.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if mode.IsNull() || mode.IsUnknown() {
+		return
+	}
+	if timeRange.Unit.IsNull() || timeRange.Unit.IsUnknown() {
+		return
+	}
+	if timeRange.Amount.IsNull() || timeRange.Amount.IsUnknown() {
+		return
+	}
+	// A custom secondary range is allowed on any primary range.
+	if secondary.CustomTimeRange.IsUnknown() {
+		return
+	}
+	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+
+	if mode.ValueString() != "last" {
+		return
+	}
+	unit := timeRange.Unit.ValueString()
+	amount := timeRange.Amount.ValueInt64()
+	if !reportPrimaryExceedsOneYear(unit, amount) {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range"),
+		"Overlapping Secondary Time Range",
+		fmt.Sprintf("A relative `secondary_time_range` (`amount` and `unit`) cannot be combined with a primary `time_range` of the last %d %s(s): "+
+			"the API has no shifted secondary range for a primary range longer than one year, because it would overlap the primary range. "+
+			"Set `secondary_time_range.custom_time_range` to a range that ends before the primary range starts, or shorten `time_range`.%s",
+			amount, unit, reportSecondaryInheritedNote(inherited)),
+	)
+}
+
+// reportPrimaryExceedsOneYear reports whether a "last" primary range of amount
+// units is longer than one year, using the API's per-unit limits.
+func reportPrimaryExceedsOneYear(unit string, amount int64) bool {
+	switch unit {
+	case "day":
+		return amount > 365
+	case "week":
+		return amount > 52
+	case "month":
+		return amount > 12
+	case "quarter":
+		return amount > 4
+	case "year":
+		return amount > 1
+	default:
+		return false
+	}
+}
+
+// validateReportSecondaryCustomOverlap rejects a custom secondary range that shares
+// a UTC day with the custom primary range.
+func validateReportSecondaryCustomOverlap(mode types.String, customTimeRange resource_report.CustomTimeRangeValue, secondary resource_report.SecondaryTimeRangeValue, inherited bool, diags *diag.Diagnostics) {
+	if mode.IsNull() || mode.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	primaryFrom, primaryTo, ok := reportCustomRangeDays(customTimeRange)
+	if !ok {
+		return
+	}
+	secondaryFrom, secondaryTo, ok := reportCustomRangeDays(secondary.CustomTimeRange)
+	if !ok {
+		return
+	}
+
+	if mode.ValueString() != "custom" {
+		return
+	}
+	if !reportDayRangesOverlap(primaryFrom, primaryTo, secondaryFrom, secondaryTo) {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range"),
+		"Overlapping Secondary Time Range",
+		fmt.Sprintf("`secondary_time_range.custom_time_range` (%s to %s) overlaps the primary `custom_time_range` (%s to %s). "+
+			"The API compares whole days in UTC and rejects a secondary range that shares a day with the primary range. "+
+			"End the secondary range on %s or earlier, or start it on %s or later.%s",
+			reportFormatDay(secondaryFrom), reportFormatDay(secondaryTo),
+			reportFormatDay(primaryFrom), reportFormatDay(primaryTo),
+			reportFormatDay(primaryFrom.AddDate(0, 0, -1)), reportFormatDay(primaryTo.AddDate(0, 0, 1)),
+			reportSecondaryInheritedNote(inherited)),
+	)
+}
+
+// validateReportSecondaryYearShiftOverlap rejects the one-year relative secondary
+// range (the only relative option the API accepts for a custom primary range)
+// when the custom primary range spans a year or more, so that shifting it back
+// one year still reaches the primary range's first day.
+func validateReportSecondaryYearShiftOverlap(mode types.String, customTimeRange resource_report.CustomTimeRangeValue, secondary resource_report.SecondaryTimeRangeValue, inherited bool, diags *diag.Diagnostics) {
+	if mode.IsNull() || mode.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if secondary.CustomTimeRange.IsUnknown() {
+		return
+	}
+	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+	if secondary.Amount.IsNull() || secondary.Amount.IsUnknown() {
+		return
+	}
+	if secondary.Unit.IsNull() || secondary.Unit.IsUnknown() {
+		return
+	}
+	if secondary.IncludeCurrent.IsNull() || secondary.IncludeCurrent.IsUnknown() {
+		return
+	}
+	primaryFrom, primaryTo, ok := reportCustomRangeDays(customTimeRange)
+	if !ok {
+		return
+	}
+
+	if mode.ValueString() != "custom" {
+		return
+	}
+	// The API rejects every other relative option for a custom primary range on its own.
+	if secondary.Amount.ValueInt64() != 1 || secondary.Unit.ValueString() != "year" || secondary.IncludeCurrent.ValueBool() {
+		return
+	}
+	shiftedFrom := primaryFrom.AddDate(-1, 0, 0)
+	shiftedTo := primaryTo.AddDate(-1, 0, 0)
+	if !reportDayRangesOverlap(primaryFrom, primaryTo, shiftedFrom, shiftedTo) {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range"),
+		"Overlapping Secondary Time Range",
+		fmt.Sprintf("Shifting the primary `custom_time_range` (%s to %s) back one year gives %s to %s, which overlaps the primary range: "+
+			"the primary range spans a year or more. The API compares whole days in UTC and rejects an overlapping secondary range. "+
+			"Shorten the primary range, or set `secondary_time_range.custom_time_range` to a range that ends on %s or earlier.%s",
+			reportFormatDay(primaryFrom), reportFormatDay(primaryTo),
+			reportFormatDay(shiftedFrom), reportFormatDay(shiftedTo),
+			reportFormatDay(primaryFrom.AddDate(0, 0, -1)),
+			reportSecondaryInheritedNote(inherited)),
+	)
+}
+
+// reportCustomRangeDays returns the UTC days of a custom range's from and to, the
+// granularity at which the API compares ranges. ok is false when the range or
+// either bound is null or unknown, a bound is not RFC3339 (reported by
+// validateReportTimestamps), or to is before from (rejected by the API on its own).
+func reportCustomRangeDays(ctr resource_report.CustomTimeRangeValue) (time.Time, time.Time, bool) {
+	if ctr.IsNull() || ctr.IsUnknown() {
+		return time.Time{}, time.Time{}, false
+	}
+	if ctr.From.IsNull() || ctr.From.IsUnknown() {
+		return time.Time{}, time.Time{}, false
+	}
+	if ctr.To.IsNull() || ctr.To.IsUnknown() {
+		return time.Time{}, time.Time{}, false
+	}
+
+	from, err := time.Parse(time.RFC3339, ctr.From.ValueString())
+	if err != nil {
+		return time.Time{}, time.Time{}, false
+	}
+	to, err := time.Parse(time.RFC3339, ctr.To.ValueString())
+	if err != nil {
+		return time.Time{}, time.Time{}, false
+	}
+	if to.Before(from) {
+		return time.Time{}, time.Time{}, false
+	}
+	return from.UTC().Truncate(24 * time.Hour), to.UTC().Truncate(24 * time.Hour), true
+}
+
+// reportDayRangesOverlap reports whether two inclusive day ranges share a day.
+func reportDayRangesOverlap(primaryFrom, primaryTo, secondaryFrom, secondaryTo time.Time) bool {
+	return !secondaryFrom.After(primaryTo) && !secondaryTo.Before(primaryFrom)
+}
+
+func reportFormatDay(day time.Time) string {
+	return day.Format(time.DateOnly)
+}
+
+// reportSecondaryInheritedNote explains that part of the checked configuration
+// comes from the existing report rather than from the configuration.
+func reportSecondaryInheritedNote(inherited bool) string {
+	if !inherited {
+		return ""
+	}
+	return " If `secondary_time_range` or `time_range` is not in your configuration, it is kept from the existing report."
 }
