@@ -59,6 +59,23 @@ func buildSecondaryTestConfig(ctx context.Context, t *testing.T, tr resource_rep
 	return buildReportConfigWithMap(ctx, t, cfgMap)
 }
 
+// buildUnknownReportConfig builds a report configuration whose config wrapper is unknown.
+func buildUnknownReportConfig(ctx context.Context, t *testing.T) tfsdk.Config {
+	t.Helper()
+	schema := resource_report.ReportResourceSchema(ctx)
+	schemaType := schema.Type().TerraformType(ctx)
+	objType, ok := schemaType.(tftypes.Object)
+	if !ok {
+		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
+	}
+	attrValues := make(map[string]tftypes.Value, len(objType.AttributeTypes))
+	for name, attrType := range objType.AttributeTypes {
+		attrValues[name] = tftypes.NewValue(attrType, nil)
+	}
+	attrValues["config"] = tftypes.NewValue(objType.AttributeTypes["config"], tftypes.UnknownValue)
+	return tfsdk.Config{Schema: schema, Raw: tftypes.NewValue(schemaType, attrValues)}
+}
+
 func TestValidateReportSecondaryTimeRange(t *testing.T) {
 	ctx := t.Context()
 	s := types.StringValue
@@ -147,10 +164,9 @@ func TestValidateReportSecondaryTimeRange(t *testing.T) {
 			wantCount: 1, wantSummary: overlap, wantPath: secCTRPath, wantInDetail: inheritedNote,
 		},
 		{
-			name: "omitted time_range.mode inherited from state as custom",
+			name: "omitted time_range.mode is not inherited from state",
 			tr:   secondaryTestTimeRange(ctx, types.StringNull(), types.StringNull(), types.Int64Null()), ctr: primary, sec: custom("2024-02-01T00:00:00Z", "2024-03-01T00:00:00Z"),
-			prior:     &prior{tr: trCustom, ctr: primary, sec: nullSec},
-			wantCount: 1, wantSummary: overlap, wantPath: secCTRPath, wantInDetail: inheritedNote,
+			prior: &prior{tr: trCustom, ctr: primary, sec: nullSec},
 		},
 		{
 			name: "omitted custom_time_range is cleared, not inherited from state",
@@ -281,21 +297,8 @@ func TestValidateReportSecondaryTimeRange(t *testing.T) {
 // config wrapper defers validation.
 func TestValidateReportSecondaryTimeRange_UnknownConfig(t *testing.T) {
 	ctx := t.Context()
-	schema := resource_report.ReportResourceSchema(ctx)
-	schemaType := schema.Type().TerraformType(ctx)
-	objType, ok := schemaType.(tftypes.Object)
-	if !ok {
-		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
-	}
-	attrValues := make(map[string]tftypes.Value, len(objType.AttributeTypes))
-	for name, attrType := range objType.AttributeTypes {
-		attrValues[name] = tftypes.NewValue(attrType, nil)
-	}
-	attrValues["config"] = tftypes.NewValue(objType.AttributeTypes["config"], tftypes.UnknownValue)
-	config := tfsdk.Config{Schema: schema, Raw: tftypes.NewValue(schemaType, attrValues)}
-
 	var diagnostics diag.Diagnostics
-	validateReportSecondaryTimeRange(ctx, config, nil, &diagnostics)
+	validateReportSecondaryTimeRange(ctx, buildUnknownReportConfig(ctx, t), nil, &diagnostics)
 	if len(diagnostics) != 0 {
 		t.Fatalf("diagnostic count = %d, want 0: %v", len(diagnostics), diagnostics)
 	}

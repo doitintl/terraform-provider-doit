@@ -224,6 +224,54 @@ data "doit_report_query" "test" {
 	})
 }
 
+// TestAccReportQueryDataSource_TimeRangeMissingFieldsRejected verifies that
+// report_query rejects time range blocks missing a field the API requires at plan
+// time.
+func TestAccReportQueryDataSource_TimeRangeMissingFieldsRejected(t *testing.T) {
+	config := func(timeRanges string) string {
+		return `
+data "doit_report_query" "test" {
+    config = {
+        metrics = [
+          {
+            type  = "basic"
+            value = "cost"
+          }
+        ]
+        aggregation   = "total"
+        time_interval = "month"
+` + timeRanges + `
+    }
+}
+`
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config(`
+        time_range = {
+          mode   = "last"
+          amount = 3
+        }`),
+				ExpectError: regexp.MustCompile("Missing Time Range Field[\\s\\S]*`unit` is required"),
+			},
+			{
+				Config: config(`
+        secondary_time_range = {
+          amount          = 1
+          unit            = "year"
+          include_current = false
+        }`),
+				ExpectError: regexp.MustCompile("Missing Time Range[\\s\\S]*`time_range` is required when"),
+			},
+		},
+	})
+}
+
 // TestAccReportQueryDataSource_MetricFieldsRequired verifies that report_query
 // enforces the same metric-field requirement as the resource: a metric object
 // missing type/value is rejected at plan time (not sent to the API as a bad

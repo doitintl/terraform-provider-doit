@@ -1601,10 +1601,10 @@ const (
 	secOverlapError = `Overlapping Secondary Time Range`
 )
 
-func testAccReportSecondaryOverlap(i int, timeRanges string) string {
+func testAccReportTimeRanges(i int, timeRanges string) string {
 	return fmt.Sprintf(`
-resource "doit_report" "secondary_overlap" {
-    name = "test-sec-overlap-%d"
+resource "doit_report" "time_ranges" {
+    name = "test-time-ranges-%d"
     config = {
         metrics = [{
           type  = "basic"
@@ -1634,7 +1634,7 @@ func TestAccReport_SecondaryTimeRange_OverlapRejected(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Custom secondary ending at 2024-01-01T04:59:59Z, the primary's first UTC day.
 			{
-				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+`
+				Config: testAccReportTimeRanges(n, secOverlapCustomPrimary2024+`
         secondary_time_range = {
           custom_time_range = {
             from = "2023-01-01T00:00:00-05:00"
@@ -1645,7 +1645,7 @@ func TestAccReport_SecondaryTimeRange_OverlapRejected(t *testing.T) {
 			},
 			// One-year shift of a custom primary spanning more than a year.
 			{
-				Config: testAccReportSecondaryOverlap(n, `
+				Config: testAccReportTimeRanges(n, `
         time_range = {
           mode = "custom"
         }
@@ -1657,11 +1657,11 @@ func TestAccReport_SecondaryTimeRange_OverlapRejected(t *testing.T) {
 			},
 			// Relative secondary on a "last" primary longer than one year.
 			{
-				Config:      testAccReportSecondaryOverlap(n, secOverlapLast2Years+secOverlapYearShift),
+				Config:      testAccReportTimeRanges(n, secOverlapLast2Years+secOverlapYearShift),
 				ExpectError: regexp.MustCompile(secOverlapError),
 			},
 			{
-				Config: testAccReportSecondaryOverlap(n, `
+				Config: testAccReportTimeRanges(n, `
         time_range = {
           mode            = "last"
           amount          = 7
@@ -1692,10 +1692,10 @@ func TestAccReport_SecondaryTimeRange_InheritedOverlapRejected(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapCustomSecondary2023),
+				Config: testAccReportTimeRanges(n, secOverlapCustomPrimary2024+secOverlapCustomSecondary2023),
 			},
 			{
-				Config: testAccReportSecondaryOverlap(n, `
+				Config: testAccReportTimeRanges(n, `
         time_range = {
           mode = "custom"
         }
@@ -1714,7 +1714,7 @@ func TestAccReport_SecondaryTimeRange_InheritedOverlapRejected(t *testing.T) {
 // where a relative secondary range is rejected.
 func TestAccReport_SecondaryTimeRange_CustomOnLongPrimary(t *testing.T) {
 	n := acctest.RandInt()
-	config := testAccReportSecondaryOverlap(n, secOverlapLast2Years+secOverlapCustomSecondary2020)
+	config := testAccReportTimeRanges(n, secOverlapLast2Years+secOverlapCustomSecondary2020)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1754,17 +1754,22 @@ const secOverlapCustomSecondary2020 = `
         }`
 
 var secOverlapCustom2020From = statecheck.ExpectKnownValue(
-	"doit_report.secondary_overlap",
+	"doit_report.time_ranges",
 	tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("from"),
 	knownvalue.StringExact("2020-01-01T00:00:00Z"))
 
-// TestAccReport_SecondaryTimeRange_EmptyBlockKeepsCustom verifies that replacing a
-// custom secondary range with an empty `secondary_time_range = {}` on a "last"
-// primary range longer than one year is not rejected as a relative secondary range:
-// every leaf keeps its prior state value, so the plan is empty and the stored custom
-// range stays.
-func TestAccReport_SecondaryTimeRange_EmptyBlockKeepsCustom(t *testing.T) {
+// TestAccReport_TimeRange_MissingFieldsRejected verifies that time range blocks
+// missing a field the API requires are rejected at plan time. A configured
+// time_range or secondary_time_range replaces the stored object as a whole, so an
+// omitted field would otherwise fail at apply.
+func TestAccReport_TimeRange_MissingFieldsRejected(t *testing.T) {
 	n := acctest.RandInt()
+	const relativeSecondary = `
+        secondary_time_range = {
+          amount          = 1
+          unit            = "year"
+          include_current = false
+        }`
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1772,18 +1777,90 @@ func TestAccReport_SecondaryTimeRange_EmptyBlockKeepsCustom(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:            testAccReportSecondaryOverlap(n, secOverlapLast2Years+secOverlapCustomSecondary2020),
-				ConfigStateChecks: []statecheck.StateCheck{secOverlapCustom2020From},
+				Config: testAccReportTimeRanges(n, `
+        time_range = {
+          amount = 3
+          unit   = "month"
+        }`),
+				ExpectError: regexp.MustCompile("Missing Time Range Field[\\s\\S]*`mode` is required"),
 			},
 			{
-				Config: testAccReportSecondaryOverlap(n, secOverlapLast2Years+`
+				Config: testAccReportTimeRanges(n, `
+        time_range = {
+          mode   = "last"
+          amount = 3
+        }`),
+				ExpectError: regexp.MustCompile("Missing Time Range Field[\\s\\S]*`unit` is required"),
+			},
+			{
+				Config: testAccReportTimeRanges(n, secOverlapLast2Years+`
         secondary_time_range = {}`),
+				ExpectError: regexp.MustCompile("Missing Secondary Time Range Field[\\s\\S]*`include_current` is required"),
+			},
+			{
+				Config: testAccReportTimeRanges(n, secOverlapLast2Years+`
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2020-01-01T00:00:00Z"
+          }
+        }`),
+				ExpectError: regexp.MustCompile("Missing Custom Time Range Field[\\s\\S]*`to` is required"),
+			},
+			{
+				Config:      testAccReportTimeRanges(n, relativeSecondary),
+				ExpectError: regexp.MustCompile("Missing Time Range[\\s\\S]*`time_range` is required when"),
+			},
+		},
+	})
+}
+
+// TestAccReport_TimeRange_OmittedAmountAndIncludeCurrent verifies that amount and
+// include_current omitted from a changed time_range are planned as the 0 and false
+// the API stores, not kept from the existing report.
+func TestAccReport_TimeRange_OmittedAmountAndIncludeCurrent(t *testing.T) {
+	n := acctest.RandInt()
+	timeRangePath := tfjsonpath.New("config").AtMapKey("time_range")
+	currentMonth := testAccReportTimeRanges(n, `
+        time_range = {
+          mode = "current"
+          unit = "month"
+        }`)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportTimeRanges(n, `
+        time_range = {
+          mode            = "last"
+          amount          = 3
+          unit            = "month"
+          include_current = true
+        }`),
+			},
+			{
+				Config: currentMonth,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.time_ranges", plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue("doit_report.time_ranges", timeRangePath.AtMapKey("amount"), knownvalue.Int64Exact(0)),
+						plancheck.ExpectKnownValue("doit_report.time_ranges", timeRangePath.AtMapKey("include_current"), knownvalue.Bool(false)),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.time_ranges", timeRangePath.AtMapKey("amount"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("doit_report.time_ranges", timeRangePath.AtMapKey("include_current"), knownvalue.Bool(false)),
+				},
+			},
+			{
+				Config: currentMonth,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
-				ConfigStateChecks: []statecheck.StateCheck{secOverlapCustom2020From},
 			},
 		},
 	})
@@ -1802,29 +1879,29 @@ func TestAccReport_SecondaryTimeRange_SwitchCustomToRelative(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config:            testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapCustomSecondary2020),
+				Config:            testAccReportTimeRanges(n, secOverlapCustomPrimary2024+secOverlapCustomSecondary2020),
 				ConfigStateChecks: []statecheck.StateCheck{secOverlapCustom2020From},
 			},
 			{
-				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapYearShift),
+				Config: testAccReportTimeRanges(n, secOverlapCustomPrimary2024+secOverlapYearShift),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectResourceAction("doit_report.secondary_overlap", plancheck.ResourceActionUpdate),
+						plancheck.ExpectResourceAction("doit_report.time_ranges", plancheck.ResourceActionUpdate),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"doit_report.secondary_overlap",
+						"doit_report.time_ranges",
 						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range"),
 						knownvalue.Null()),
 					statecheck.ExpectKnownValue(
-						"doit_report.secondary_overlap",
+						"doit_report.time_ranges",
 						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("unit"),
 						knownvalue.StringExact("year")),
 				},
 			},
 			{
-				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapYearShift),
+				Config: testAccReportTimeRanges(n, secOverlapCustomPrimary2024+secOverlapYearShift),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -3357,7 +3434,7 @@ func TestAccReport_EmptyCustomTimeRange(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccReportEmptyCustomTimeRange(n),
-				ExpectError: regexp.MustCompile(`Empty Custom Time Range`),
+				ExpectError: regexp.MustCompile(`Missing Custom Time Range Field`),
 			},
 		},
 	})
