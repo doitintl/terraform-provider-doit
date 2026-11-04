@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -150,6 +151,62 @@ resource "local_sensitive_file" "report_csv" {
 				}
 				if !slices.Contains(records[0], "Cost") {
 					return fmt.Errorf("downloaded CSV header %v does not contain \"Cost\"", records[0])
+				}
+				return nil
+			},
+		}},
+	})
+}
+
+func TestAccReportResultDataSource_FileOutputJSON(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-rr-json")
+	filename := t.TempDir() + "/report.json"
+	config := strings.Replace(testAccReportResultDataSourceConfig(rName),
+		"id = doit_report.test.id", "id = doit_report.test.id\n    file_output = \"json\"", 1)
+	config += fmt.Sprintf(`
+data "http" "report_json" {
+    url = data.doit_report_result.test.file_output_url
+}
+
+resource "local_sensitive_file" "report_json" {
+    filename       = %q
+    content_base64 = data.http.report_json.response_body_base64
+}
+`, filename)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
+			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
+		},
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{{
+			Config: config,
+			ConfigStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
+				// The full result is in the file, so the inline row count is unknown.
+				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
+			},
+			Check: func(_ *terraform.State) error {
+				content, err := os.ReadFile(filename)
+				if err != nil {
+					return err
+				}
+				var result struct {
+					Schema []json.RawMessage   `json:"schema"`
+					Rows   [][]json.RawMessage `json:"rows"`
+				}
+				if err := json.Unmarshal(content, &result); err != nil {
+					return fmt.Errorf("downloaded file is not valid JSON: %w", err)
+				}
+				if len(result.Schema) == 0 {
+					return fmt.Errorf("downloaded JSON has no schema")
+				}
+				if len(result.Rows) == 0 {
+					return fmt.Errorf("downloaded JSON has no rows")
 				}
 				return nil
 			},

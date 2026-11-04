@@ -78,7 +78,7 @@ output "row_count" {
 # ─────────────────────────────────────────────────────────────────────────────
 # Render an ad-hoc query as a PNG chart
 # ─────────────────────────────────────────────────────────────────────────────
-# Set file_output to "png" (or "pdf" / "csv") to receive a signed download URL
+# Set file_output to "png" (or "pdf" / "csv" / "json") to receive a signed download URL
 # for the rendered file, without saving a report first. The URL is sensitive and
 # valid for up to seven days. This example stores the URL and the file contents
 # in Terraform state, so protect that state appropriately.
