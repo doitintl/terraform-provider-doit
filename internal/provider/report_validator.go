@@ -1232,6 +1232,11 @@ func validateReportSecondaryAmount(secondary resource_report.SecondaryTimeRangeV
 // validateReportSecondaryOnLongPrimary rejects a relative secondary range on a
 // "last" primary range longer than one year: the API has no shifted range for such
 // a primary range that would not overlap it.
+//
+// The secondary range counts as relative only when its amount and unit are set.
+// A null custom_time_range alone is not enough: in an otherwise unchanged
+// `secondary_time_range = {}` every leaf takes its prior state value, so a stored
+// custom range is kept and nothing is sent to the API.
 func validateReportSecondaryOnLongPrimary(timeRange resource_report.TimeRangeValue, mode types.String, secondary resource_report.SecondaryTimeRangeValue, inherited bool, diags *diag.Diagnostics) {
 	if timeRange.IsNull() || timeRange.IsUnknown() {
 		return
@@ -1253,6 +1258,12 @@ func validateReportSecondaryOnLongPrimary(timeRange resource_report.TimeRangeVal
 		return
 	}
 	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+	if secondary.Amount.IsNull() || secondary.Amount.IsUnknown() {
+		return
+	}
+	if secondary.Unit.IsNull() || secondary.Unit.IsUnknown() {
 		return
 	}
 

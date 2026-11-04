@@ -200,6 +200,13 @@ func TestValidateReportSecondaryTimeRange(t *testing.T) {
 		{name: "current mode is never longer than a year", tr: secondaryTestTimeRange(ctx, s("current"), s("year"), i(2)), ctr: nullCTR, sec: yearShift},
 		{name: "custom secondary on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: custom("2020-01-01T00:00:00Z", "2020-12-31T00:00:00Z")},
 		{name: "unknown secondary custom_time_range on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: secondaryTestCustom(ctx, resource_report.NewCustomTimeRangeValueUnknown())},
+		// An empty block may keep a stored custom range from prior state.
+		{name: "empty secondary block on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: secondaryTestRelative(ctx, types.Int64Null(), types.StringNull(), types.BoolNull())},
+		{name: "secondary without unit on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: secondaryTestRelative(ctx, i(1), types.StringNull(), types.BoolValue(false))},
+		{name: "secondary without amount on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: secondaryTestRelative(ctx, types.Int64Null(), s("year"), types.BoolValue(false))},
+		{name: "unknown secondary amount on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: secondaryTestRelative(ctx, types.Int64Unknown(), s("year"), types.BoolValue(false))},
+		{name: "unknown secondary unit on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: secondaryTestRelative(ctx, i(1), types.StringUnknown(), types.BoolValue(false))},
+		{name: "relative secondary without include_current on a primary longer than a year", tr: trLast(2, "year"), ctr: nullCTR, sec: secondaryTestRelative(ctx, i(1), s("year"), types.BoolNull()), wantCount: 1, wantSummary: overlap, wantPath: secPath},
 		{name: "unknown primary amount", tr: secondaryTestTimeRange(ctx, s("last"), s("year"), types.Int64Unknown()), ctr: nullCTR, sec: yearShift},
 		{name: "unknown primary unit", tr: secondaryTestTimeRange(ctx, s("last"), types.StringUnknown(), i(2)), ctr: nullCTR, sec: yearShift},
 		{

@@ -1657,13 +1657,7 @@ func TestAccReport_SecondaryTimeRange_OverlapRejected(t *testing.T) {
 			},
 			// Relative secondary on a "last" primary longer than one year.
 			{
-				Config: testAccReportSecondaryOverlap(n, `
-        time_range = {
-          mode            = "last"
-          amount          = 2
-          unit            = "year"
-          include_current = false
-        }`+secOverlapYearShift),
+				Config:      testAccReportSecondaryOverlap(n, secOverlapLast2Years+secOverlapYearShift),
 				ExpectError: regexp.MustCompile(secOverlapError),
 			},
 			{
@@ -1720,19 +1714,7 @@ func TestAccReport_SecondaryTimeRange_InheritedOverlapRejected(t *testing.T) {
 // where a relative secondary range is rejected.
 func TestAccReport_SecondaryTimeRange_CustomOnLongPrimary(t *testing.T) {
 	n := acctest.RandInt()
-	config := testAccReportSecondaryOverlap(n, `
-        time_range = {
-          mode            = "last"
-          amount          = 2
-          unit            = "year"
-          include_current = false
-        }
-        secondary_time_range = {
-          custom_time_range = {
-            from = "2020-01-01T00:00:00Z"
-            to   = "2020-12-31T23:59:59Z"
-          }
-        }`)
+	config := testAccReportSecondaryOverlap(n, secOverlapLast2Years+secOverlapCustomSecondary2020)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1740,16 +1722,109 @@ func TestAccReport_SecondaryTimeRange_CustomOnLongPrimary(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: config,
-				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(
-						"doit_report.secondary_overlap",
-						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("to"),
-						knownvalue.StringExact("2020-12-31T23:59:59Z")),
-				},
+				Config:            config,
+				ConfigStateChecks: []statecheck.StateCheck{secOverlapCustom2020From},
 			},
 			{
 				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+const secOverlapLast2Years = `
+        time_range = {
+          mode            = "last"
+          amount          = 2
+          unit            = "year"
+          include_current = false
+        }`
+
+const secOverlapCustomSecondary2020 = `
+        secondary_time_range = {
+          custom_time_range = {
+            from = "2020-01-01T00:00:00Z"
+            to   = "2020-12-31T23:59:59Z"
+          }
+        }`
+
+var secOverlapCustom2020From = statecheck.ExpectKnownValue(
+	"doit_report.secondary_overlap",
+	tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range").AtMapKey("from"),
+	knownvalue.StringExact("2020-01-01T00:00:00Z"))
+
+// TestAccReport_SecondaryTimeRange_EmptyBlockKeepsCustom verifies that replacing a
+// custom secondary range with an empty `secondary_time_range = {}` on a "last"
+// primary range longer than one year is not rejected as a relative secondary range:
+// every leaf keeps its prior state value, so the plan is empty and the stored custom
+// range stays.
+func TestAccReport_SecondaryTimeRange_EmptyBlockKeepsCustom(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:            testAccReportSecondaryOverlap(n, secOverlapLast2Years+secOverlapCustomSecondary2020),
+				ConfigStateChecks: []statecheck.StateCheck{secOverlapCustom2020From},
+			},
+			{
+				Config: testAccReportSecondaryOverlap(n, secOverlapLast2Years+`
+        secondary_time_range = {}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{secOverlapCustom2020From},
+			},
+		},
+	})
+}
+
+// TestAccReport_SecondaryTimeRange_SwitchCustomToRelative verifies that setting a
+// relative secondary range (amount and unit) without custom_time_range replaces a
+// stored custom secondary range rather than keeping it. The overlap checks rely on
+// this: a configured amount and unit are what the API validates, whatever is stored.
+func TestAccReport_SecondaryTimeRange_SwitchCustomToRelative(t *testing.T) {
+	n := acctest.RandInt()
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:            testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapCustomSecondary2020),
+				ConfigStateChecks: []statecheck.StateCheck{secOverlapCustom2020From},
+			},
+			{
+				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapYearShift),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.secondary_overlap", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_overlap",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("custom_time_range"),
+						knownvalue.Null()),
+					statecheck.ExpectKnownValue(
+						"doit_report.secondary_overlap",
+						tfjsonpath.New("config").AtMapKey("secondary_time_range").AtMapKey("unit"),
+						knownvalue.StringExact("year")),
+				},
+			},
+			{
+				Config: testAccReportSecondaryOverlap(n, secOverlapCustomPrimary2024+secOverlapYearShift),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
