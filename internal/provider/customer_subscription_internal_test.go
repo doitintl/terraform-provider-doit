@@ -109,31 +109,41 @@ func objectAttributes(t *testing.T, v interface {
 }
 
 // withCustomerSubscriptionEntry replaces the entry of the given type, after
-// applying the overrides to its attributes and to those of its schedule and source.
+// applying the overrides to its attributes and to those of its schedule and
+// source. The other entries keep their position: request builders send the
+// entries in set order.
 func withCustomerSubscriptionEntry(t *testing.T, set types.Set, entryType string, entry, schedule, source map[string]attr.Value) types.Set {
 	t.Helper()
 	ctx := t.Context()
-	entries := customerSubscriptionEntries(t, set)
-	current := entries[entryType]
+	var values []resource_customer_subscription.SubscriptionsValue
+	if diags := set.ElementsAs(ctx, &values, false); diags.HasError() {
+		t.Fatalf("subscriptions: %v", diags)
+	}
 
-	attrs := objectAttributes(t, current)
-	if len(schedule) > 0 {
-		scheduleAttrs := objectAttributes(t, current.Schedule)
-		maps.Copy(scheduleAttrs, schedule)
-		attrs["schedule"] = resource_customer_subscription.NewScheduleValueMust(resource_customer_subscription.ScheduleValue{}.AttributeTypes(ctx), scheduleAttrs)
+	found := false
+	for i, current := range values {
+		if current.SubscriptionsType.ValueString() != entryType {
+			continue
+		}
+		found = true
+		attrs := objectAttributes(t, current)
+		if len(schedule) > 0 {
+			scheduleAttrs := objectAttributes(t, current.Schedule)
+			maps.Copy(scheduleAttrs, schedule)
+			attrs["schedule"] = resource_customer_subscription.NewScheduleValueMust(resource_customer_subscription.ScheduleValue{}.AttributeTypes(ctx), scheduleAttrs)
+		}
+		if len(source) > 0 {
+			sourceAttrs := objectAttributes(t, current.Source)
+			maps.Copy(sourceAttrs, source)
+			attrs["source"] = resource_customer_subscription.NewSourceValueMust(resource_customer_subscription.SourceValue{}.AttributeTypes(ctx), sourceAttrs)
+		}
+		maps.Copy(attrs, entry)
+		values[i] = resource_customer_subscription.NewSubscriptionsValueMust(resource_customer_subscription.SubscriptionsValue{}.AttributeTypes(ctx), attrs)
 	}
-	if len(source) > 0 {
-		sourceAttrs := objectAttributes(t, current.Source)
-		maps.Copy(sourceAttrs, source)
-		attrs["source"] = resource_customer_subscription.NewSourceValueMust(resource_customer_subscription.SourceValue{}.AttributeTypes(ctx), sourceAttrs)
+	if !found {
+		t.Fatalf("no %s entry in %v", entryType, set)
 	}
-	maps.Copy(attrs, entry)
-	entries[entryType] = resource_customer_subscription.NewSubscriptionsValueMust(resource_customer_subscription.SubscriptionsValue{}.AttributeTypes(ctx), attrs)
 
-	values := make([]resource_customer_subscription.SubscriptionsValue, 0, len(entries))
-	for _, v := range entries {
-		values = append(values, v)
-	}
 	out, diags := types.SetValueFrom(ctx, customerSubscriptionEntriesType(ctx), values)
 	if diags.HasError() {
 		t.Fatalf("set: %v", diags)

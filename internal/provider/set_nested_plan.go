@@ -161,35 +161,27 @@ func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, p
 
 	pairs, err := p.pair(attrs, c, pl)
 	if err != nil || pairs == nil {
-		return plan, err // no unambiguous element correspondence: leave the plan alone
+		return plan, err // no element correspondence: leave the plan alone
 	}
 
-	used := make([]bool, len(s))
+	matches, err := matchOneToOne(len(c), len(s), func(ci, si int) (bool, error) {
+		return p.unchanged(attrs, c[ci], pl[pairs[ci]], s[si])
+	})
+	if err != nil {
+		return plan, err
+	}
+
 	out := make([]tftypes.Value, len(pl))
 	for ci, pi := range pairs {
-		matched := false
-		for si := range s {
-			if used[si] {
-				continue
-			}
-			ok, err := p.unchanged(attrs, c[ci], pl[pi], s[si])
-			if err != nil {
-				return plan, err
-			}
-			if ok {
-				out[pi] = s[si]
-				used[si] = true
-				matched = true
-				break
-			}
+		if si := matches[ci]; si >= 0 {
+			out[pi] = s[si]
+			continue
 		}
-		if !matched {
-			v, err := p.cleared(attrs, c[ci], pl[pi])
-			if err != nil {
-				return plan, err
-			}
-			out[pi] = v
+		v, err := p.cleared(attrs, c[ci], pl[pi])
+		if err != nil {
+			return plan, err
 		}
+		out[pi] = v
 	}
 
 	// Two elements may not become equal: the set would lose one of them.
@@ -209,30 +201,77 @@ func (p setNestedPlanner) pair(attrs map[string]schema.Attribute, config, plan [
 	if len(config) != len(plan) {
 		return nil, nil
 	}
-	used := make([]bool, len(plan))
-	pairs := make([]int, len(config))
-	for ci := range config {
-		found := false
-		for pi := range plan {
-			if used[pi] {
-				continue
-			}
-			ok, err := p.derived(attrs, config[ci], plan[pi])
+	pairs, err := matchOneToOne(len(config), len(plan), func(ci, pi int) (bool, error) {
+		return p.derived(attrs, config[ci], plan[pi])
+	})
+	if err != nil || !allMatched(pairs) {
+		return nil, err
+	}
+	return pairs, nil
+}
+
+// matchOneToOne assigns each left index a distinct right index for which ok
+// holds, with as many assigned pairs as possible. Elements that differ only in
+// values one of them leaves unknown or omits can match in more than one way,
+// so a first-fit choice could take the only counterpart of a later element;
+// augmenting paths reassign earlier choices instead. matches[l] is the right
+// index, or -1 when l has no counterpart.
+func matchOneToOne(left, right int, ok func(l, r int) (bool, error)) ([]int, error) {
+	candidates := make([][]int, left)
+	for l := range left {
+		for r := range right {
+			match, err := ok(l, r)
 			if err != nil {
 				return nil, err
 			}
-			if ok {
-				pairs[ci] = pi
-				used[pi] = true
-				found = true
-				break
+			if match {
+				candidates[l] = append(candidates[l], r)
 			}
 		}
-		if !found {
-			return nil, nil
+	}
+
+	owner := make([]int, right) // left index assigned to each right index
+	for r := range owner {
+		owner[r] = -1
+	}
+	var assign func(l int, visited []bool) bool
+	assign = func(l int, visited []bool) bool {
+		for _, r := range candidates[l] {
+			if visited[r] {
+				continue
+			}
+			visited[r] = true
+			if owner[r] < 0 || assign(owner[r], visited) {
+				owner[r] = l
+				return true
+			}
+		}
+		return false
+	}
+	for l := range left {
+		assign(l, make([]bool, right))
+	}
+
+	matches := make([]int, left)
+	for l := range matches {
+		matches[l] = -1
+	}
+	for r, l := range owner {
+		if l >= 0 {
+			matches[l] = r
 		}
 	}
-	return pairs, nil
+	return matches, nil
+}
+
+// allMatched reports whether every left index of matchOneToOne has a counterpart.
+func allMatched(matches []int) bool {
+	for _, m := range matches {
+		if m < 0 {
+			return false
+		}
+	}
+	return true
 }
 
 // derived reports whether a planned object can have been planned from the
@@ -388,32 +427,17 @@ func (p setNestedPlanner) unchangedSet(attrs map[string]schema.Attribute, config
 			return false, err
 		}
 	}
-	used := make([]bool, len(s))
-	for ci := range c {
+	matches, err := matchOneToOne(len(c), len(s), func(ci, si int) (bool, error) {
 		planned := tftypes.NewValue(c[ci].Type(), nil)
 		if pairs != nil {
 			planned = pl[pairs[ci]]
 		}
-		found := false
-		for si := range s {
-			if used[si] {
-				continue
-			}
-			ok, err := p.unchanged(attrs, c[ci], planned, s[si])
-			if err != nil {
-				return false, err
-			}
-			if ok {
-				used[si] = true
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false, nil
-		}
+		return p.unchanged(attrs, c[ci], planned, s[si])
+	})
+	if err != nil {
+		return false, err
 	}
-	return true, nil
+	return allMatched(matches), nil
 }
 
 func (p setNestedPlanner) unchangedList(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (bool, error) {
@@ -446,7 +470,8 @@ func (p setNestedPlanner) unchangedList(attrs map[string]schema.Attribute, confi
 }
 
 // cleared plans the cleared value for every omitted Category A attribute of a
-// changed element, which the clearing modifiers would plan outside a set.
+// changed element, which the clearing modifiers would plan outside a set. It
+// descends into nested objects, lists and sets of the element.
 func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, plan tftypes.Value) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
 		return plan, nil
@@ -459,16 +484,22 @@ func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, pla
 	changed := false
 	for name, a := range attrs {
 		cv, pv := c[name], pl[name]
-		var v tftypes.Value
+		v := pv
+		var err error
 		if clearer, ok := attributeClearer(a); ok && cv.IsNull() {
 			v = clearer.clearedValue(pv.Type())
-		} else if nested, ok := a.(schema.SingleNestedAttribute); ok {
-			var err error
-			if v, err = p.cleared(nested.Attributes, cv, pv); err != nil {
-				return plan, err
-			}
 		} else {
-			continue
+			switch a := a.(type) {
+			case schema.SingleNestedAttribute:
+				v, err = p.cleared(a.Attributes, cv, pv)
+			case schema.ListNestedAttribute:
+				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, false)
+			case schema.SetNestedAttribute:
+				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, true)
+			}
+		}
+		if err != nil {
+			return plan, err
 		}
 		if !v.Equal(pv) {
 			pl[name] = v
@@ -479,6 +510,41 @@ func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, pla
 		return plan, nil
 	}
 	return tftypes.NewValue(plan.Type(), pl), nil
+}
+
+// clearedElements is cleared for the elements of a nested list or set. List
+// elements correspond by index; set elements are paired first.
+func (p setNestedPlanner) clearedElements(attrs map[string]schema.Attribute, config, plan tftypes.Value, isSet bool) (tftypes.Value, error) {
+	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
+		return plan, nil
+	}
+	var c, pl []tftypes.Value
+	if err := asAll(config, &c, plan, &pl); err != nil {
+		return plan, err
+	}
+	if len(c) != len(pl) {
+		return plan, nil
+	}
+	pairs := make([]int, len(c))
+	for i := range pairs {
+		pairs[i] = i
+	}
+	if isSet {
+		var err error
+		if pairs, err = p.pair(attrs, c, pl); err != nil || pairs == nil {
+			return plan, err
+		}
+	}
+
+	out := make([]tftypes.Value, len(pl))
+	for ci, pi := range pairs {
+		v, err := p.cleared(attrs, c[ci], pl[pi])
+		if err != nil {
+			return plan, err
+		}
+		out[pi] = v
+	}
+	return tftypes.NewValue(plan.Type(), out), nil
 }
 
 // attributeClearer returns the clearing plan modifier of an attribute.

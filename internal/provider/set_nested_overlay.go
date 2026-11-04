@@ -10,9 +10,9 @@ import (
 )
 
 // overlaySetElements is the set counterpart of overlayListElements. Set
-// elements have no index, so each planned element is paired with the resolved
-// element that agrees with all of its known values (unknown values match
-// anything), and the overlay function is invoked for each pair. Planned elements
+// elements have no index, so each planned element is paired one-to-one with a
+// resolved element that agrees with all of its known values (unknown values
+// match anything), and the overlay function is invoked for each pair. Planned elements
 // without a counterpart keep their values.
 //
 // Resolved elements are built by the mapping function with the plan as prior
@@ -47,26 +47,25 @@ func overlaySetElements[T attr.Value](ctx context.Context, resolved, plan *types
 		resolvedValues[i] = v
 	}
 
-	used := make([]bool, len(resolvedElems))
-	for i := range planElems {
-		if planElems[i].IsNull() || planElems[i].IsUnknown() {
-			continue
-		}
-		planValue, err := planElems[i].ToTerraformValue(ctx)
+	planValues := make([]tftypes.Value, len(planElems))
+	for i, pe := range planElems {
+		v, err := pe.ToTerraformValue(ctx)
 		if err != nil {
 			diags.AddError("Error Overlaying Set Elements", err.Error())
 			return diags
 		}
-		for ri := range resolvedElems {
-			if used[ri] || resolvedElems[ri].IsNull() || resolvedElems[ri].IsUnknown() {
-				continue
-			}
-			if !knownValuesMatch(planValue, resolvedValues[ri]) {
-				continue
-			}
-			used[ri] = true
-			diags.Append(overlayFn(ctx, &resolvedElems[ri], &planElems[i])...)
-			break
+		planValues[i] = v
+	}
+
+	matches, _ := matchOneToOne(len(planElems), len(resolvedElems), func(pi, ri int) (bool, error) {
+		if planElems[pi].IsNull() || planElems[pi].IsUnknown() || resolvedElems[ri].IsNull() || resolvedElems[ri].IsUnknown() {
+			return false, nil
+		}
+		return knownValuesMatch(planValues[pi], resolvedValues[ri]), nil
+	})
+	for pi, ri := range matches {
+		if ri >= 0 {
+			diags.Append(overlayFn(ctx, &resolvedElems[ri], &planElems[pi])...)
 		}
 	}
 
@@ -117,21 +116,10 @@ func knownValuesMatch(pattern, value tftypes.Value) bool {
 		if pattern.As(&p) != nil || value.As(&v) != nil || len(p) != len(v) {
 			return false
 		}
-		used := make([]bool, len(v))
-		for _, pe := range p {
-			found := false
-			for vi, ve := range v {
-				if !used[vi] && knownValuesMatch(pe, ve) {
-					used[vi] = true
-					found = true
-					break
-				}
-			}
-			if !found {
-				return false
-			}
-		}
-		return true
+		matches, _ := matchOneToOne(len(p), len(v), func(pi, vi int) (bool, error) {
+			return knownValuesMatch(p[pi], v[vi]), nil
+		})
+		return allMatched(matches)
 	}
 	return pattern.Equal(value)
 }
