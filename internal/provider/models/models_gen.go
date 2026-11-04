@@ -7986,7 +7986,7 @@ type CommitmentPeriod struct {
 
 // CommitmentPolicy A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
 // `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
-// inventory coverage fields.
+// inventory coverage fields. Laddering steps are always 7 days apart for every policy.
 type CommitmentPolicy struct {
 	// BootstrapPercent Share of the target commitment purchased in the first (immediate) step, as a percentage.
 	//
@@ -7998,11 +7998,6 @@ type CommitmentPolicy struct {
 
 	// IsBuiltIn `true` for the three immutable built-in policies, `false` for tenant-defined policies.
 	IsBuiltIn bool `json:"isBuiltIn"`
-
-	// LadderIntervalDays Days between consecutive laddering steps.
-	//
-	// Example: 7
-	LadderIntervalDays int `json:"ladderIntervalDays"`
 
 	// LadderStepPercent Size of each incremental laddering step, as a percentage of the target commitment.
 	//
@@ -8052,7 +8047,7 @@ type CommitmentPolicyAssignmentService string
 
 // CommitmentPolicyDetail A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
 // `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
-// inventory coverage fields.
+// inventory coverage fields. Laddering steps are always 7 days apart for every policy.
 type CommitmentPolicyDetail struct {
 	// Assignments Scopes explicitly assigned to this policy across AWS and GCP, sorted by `cloud`, `accountId`, `service`, `region`. Empty when the policy is not assigned anywhere.
 	Assignments []CommitmentPolicyAssignment `json:"assignments"`
@@ -8072,11 +8067,6 @@ type CommitmentPolicyDetail struct {
 
 	// IsBuiltIn `true` for the three immutable built-in policies, `false` for tenant-defined policies.
 	IsBuiltIn bool `json:"isBuiltIn"`
-
-	// LadderIntervalDays Days between consecutive laddering steps.
-	//
-	// Example: 7
-	LadderIntervalDays int `json:"ladderIntervalDays"`
 
 	// LadderStepPercent Size of each incremental laddering step, as a percentage of the target commitment.
 	//
