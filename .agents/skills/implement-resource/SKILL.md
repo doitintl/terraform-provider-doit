@@ -486,9 +486,14 @@ values, but it does not do that for nested *attributes*. The framework then mark
 every Computed attribute, and every omitted Optional+Computed one, of every
 element unknown, so **every plan shows every element as replaced**. That
 happens even when the configuration sets every Optional+Computed field: a single
-Computed-only child (an ID, a timestamp, a permission flag) is enough. For the
-same reason, plan modifiers on attributes inside a set element see no prior
-state, so `UseStateForUnknown` and the clearing modifiers cannot work there.
+Computed-only child (an ID, a timestamp, a permission flag) is enough.
+
+Plan modifiers on attributes inside a set element cannot fix this. The
+framework (v1.19) passes them the configuration and prior state of the element
+**at the same index**, which is generally a different element. **Never use
+`UseStateForUnknown` on a set element attribute**: it can copy another element's
+value into the plan. The clearing modifiers are safe, because the value they
+plan does not depend on the prior value.
 
 **1. ModifyPlan: `planSetNestedAttributesFromState`** (`set_nested_plan.go`).
 Call it first in `ModifyPlan` of every resource with a set-nested attribute:
@@ -518,7 +523,10 @@ empty and top-level volatile fields like `etag` are not marked unknown. An
 unknown configured value (a reference to a resource that is not created yet)
 never matches. The clearing modifiers expose their cleared value through
 `configNullClearer`; give any new clearing modifier a `clearedValue` method,
-or it is treated as Category B inside sets.
+on any attribute kind, or it is treated as Category B inside sets. Sets are
+found at any depth, including inside nested objects, lists and maps. Element
+matching is one-to-one: when elements differ only in values one of them omits or
+leaves unknown, each still pairs with its own counterpart.
 
 **2. Overlay: `overlaySetElements`** (`set_nested_overlay.go`) is the set
 counterpart of `overlayListElements`. It pairs each planned element with the
@@ -550,7 +558,8 @@ attribute still needs Category A or B (`acknowledgeNotClearable(s,
 
 > **Linter:** `setnestedplan` flags a resource whose schema has Computed
 > attributes inside a set-nested attribute (at any depth) unless its
-> `ModifyPlan` calls `planSetNestedAttributesFromState`.
+> `ModifyPlan` calls `planSetNestedAttributesFromState`, and any
+> `UseStateForUnknown` on an attribute inside a set element.
 
 ### RFC3339 Timestamp Validation
 

@@ -16,9 +16,13 @@ import (
 // Core matches elements to the prior state by their configured values, but it
 // does not do so for nested attributes, and the framework cannot either: it
 // marks every Computed (and every omitted Optional+Computed) attribute of every
-// element unknown, so the set shows a replaced element on every plan. For the
-// same reason plan modifiers on attributes inside a set element see no prior
-// state, so UseStateForUnknown and the clearing modifiers do nothing there.
+// element unknown, so the set shows a replaced element on every plan. Plan
+// modifiers on attributes inside a set element cannot fix this: the framework
+// passes them the configuration and prior state of the element at the same
+// index, which is generally a different element. UseStateForUnknown there can
+// copy another element's value, so it must not be used on set element
+// attributes; the clearing modifiers are safe because the value they plan does
+// not depend on the prior value.
 //
 // This function does the matching Core does for set blocks: each planned
 // element whose configuration equals a prior element is planned as that prior
@@ -105,8 +109,43 @@ func (p setNestedPlanner) attribute(a schema.Attribute, config, plan, prior tfty
 		return p.object(a.Attributes, config, plan, prior)
 	case schema.ListNestedAttribute:
 		return p.list(a.NestedObject.Attributes, config, plan, prior)
+	case schema.MapNestedAttribute:
+		return p.mapElements(a.NestedObject.Attributes, config, plan, prior)
 	}
 	return plan, nil
+}
+
+// mapElements plans map elements key by key: Terraform matches map elements to
+// the prior state by key already, but a set inside an element needs this.
+func (p setNestedPlanner) mapElements(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+	if !isKnownNonNull(config) || !isKnownNonNull(plan) || !isKnownNonNull(prior) {
+		return plan, nil
+	}
+	var c, pl, s map[string]tftypes.Value
+	if err := asAll(config, &c, plan, &pl, prior, &s); err != nil {
+		return plan, err
+	}
+
+	changed := false
+	for key, pv := range pl {
+		cv, inConfig := c[key]
+		sv, inPrior := s[key]
+		if !inConfig || !inPrior {
+			continue
+		}
+		v, err := p.object(attrs, cv, pv, sv)
+		if err != nil {
+			return plan, err
+		}
+		if !v.Equal(pv) {
+			pl[key] = v
+			changed = true
+		}
+	}
+	if !changed {
+		return plan, nil
+	}
+	return tftypes.NewValue(plan.Type(), pl), nil
 }
 
 // list plans list elements index by index: Terraform matches list elements to
@@ -289,8 +328,20 @@ func (p setNestedPlanner) derived(attrs map[string]schema.Attribute, config, pla
 	}
 	for name, a := range attrs {
 		cv, pv := c[name], pl[name]
-		if cv.IsNull() || !cv.IsKnown() {
-			continue // filled in by a default or marked unknown
+		if !cv.IsKnown() {
+			// A configured unknown is planned unknown.
+			if pv.IsKnown() {
+				return false, nil
+			}
+			continue
+		}
+		if cv.IsNull() {
+			// Omitted: a Computed attribute may be filled in by a default or a
+			// plan modifier, or be marked unknown; any other attribute is null.
+			if !a.IsComputed() && !pv.IsNull() {
+				return false, nil
+			}
+			continue
 		}
 		var ok bool
 		var err error
@@ -301,8 +352,11 @@ func (p setNestedPlanner) derived(attrs map[string]schema.Attribute, config, pla
 			ok, err = p.derivedElements(a.NestedObject.Attributes, cv, pv, true)
 		case schema.ListNestedAttribute:
 			ok, err = p.derivedElements(a.NestedObject.Attributes, cv, pv, false)
+		case schema.MapNestedAttribute:
+			ok, err = p.derivedMap(a.NestedObject.Attributes, cv, pv)
 		default:
-			ok = !cv.IsFullyKnown() || pv.Equal(cv)
+			// Configured values are planned as configured, unknown parts included.
+			ok = pv.Equal(cv)
 		}
 		if err != nil || !ok {
 			return false, err
@@ -330,6 +384,30 @@ func (p setNestedPlanner) derivedElements(attrs map[string]schema.Attribute, con
 	for i := range c {
 		ok, err := p.derived(attrs, c[i], pl[i])
 		if err != nil || !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+// derivedMap is derived for the elements of a nested map.
+func (p setNestedPlanner) derivedMap(attrs map[string]schema.Attribute, config, plan tftypes.Value) (bool, error) {
+	if !plan.IsKnown() || plan.IsNull() {
+		return false, nil
+	}
+	var c, pl map[string]tftypes.Value
+	if err := asAll(config, &c, plan, &pl); err != nil {
+		return false, err
+	}
+	if len(c) != len(pl) {
+		return false, nil
+	}
+	for key, cv := range c {
+		pv, ok := pl[key]
+		if !ok {
+			return false, nil
+		}
+		if ok, err := p.derived(attrs, cv, pv); err != nil || !ok {
 			return false, err
 		}
 	}
@@ -379,6 +457,8 @@ func (p setNestedPlanner) unchanged(attrs map[string]schema.Attribute, config, p
 			ok, err = p.unchangedSet(a.NestedObject.Attributes, cv, pv, sv)
 		case schema.ListNestedAttribute:
 			ok, err = p.unchangedList(a.NestedObject.Attributes, cv, pv, sv)
+		case schema.MapNestedAttribute:
+			ok, err = p.unchangedMap(a.NestedObject.Attributes, cv, pv, sv)
 		default:
 			ok = sv.Equal(cv)
 		}
@@ -469,9 +549,41 @@ func (p setNestedPlanner) unchangedList(attrs map[string]schema.Attribute, confi
 	return true, nil
 }
 
+func (p setNestedPlanner) unchangedMap(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (bool, error) {
+	if !isKnownNonNull(prior) {
+		return false, nil
+	}
+	var c, pl, s map[string]tftypes.Value
+	if err := asAll(config, &c, prior, &s); err != nil {
+		return false, err
+	}
+	if len(c) != len(s) {
+		return false, nil
+	}
+	if isKnownNonNull(plan) {
+		if err := plan.As(&pl); err != nil {
+			return false, err
+		}
+	}
+	for key, cv := range c {
+		sv, ok := s[key]
+		if !ok {
+			return false, nil
+		}
+		planned, ok := pl[key]
+		if !ok {
+			planned = tftypes.NewValue(cv.Type(), nil)
+		}
+		if ok, err := p.unchanged(attrs, cv, planned, sv); err != nil || !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
 // cleared plans the cleared value for every omitted Category A attribute of a
 // changed element, which the clearing modifiers would plan outside a set. It
-// descends into nested objects, lists and sets of the element.
+// descends into nested objects, lists, sets and maps of the element.
 func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, plan tftypes.Value) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
 		return plan, nil
@@ -496,6 +608,8 @@ func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, pla
 				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, false)
 			case schema.SetNestedAttribute:
 				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, true)
+			case schema.MapNestedAttribute:
+				v, err = p.clearedMap(a.NestedObject.Attributes, cv, pv)
 			}
 		}
 		if err != nil {
@@ -547,29 +661,73 @@ func (p setNestedPlanner) clearedElements(attrs map[string]schema.Attribute, con
 	return tftypes.NewValue(plan.Type(), out), nil
 }
 
-// attributeClearer returns the clearing plan modifier of an attribute.
+// clearedMap is cleared for the elements of a nested map, key by key.
+func (p setNestedPlanner) clearedMap(attrs map[string]schema.Attribute, config, plan tftypes.Value) (tftypes.Value, error) {
+	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
+		return plan, nil
+	}
+	var c, pl map[string]tftypes.Value
+	if err := asAll(config, &c, plan, &pl); err != nil {
+		return plan, err
+	}
+	for key, pv := range pl {
+		cv, ok := c[key]
+		if !ok {
+			continue
+		}
+		v, err := p.cleared(attrs, cv, pv)
+		if err != nil {
+			return plan, err
+		}
+		pl[key] = v
+	}
+	return tftypes.NewValue(plan.Type(), pl), nil
+}
+
+// attributeClearer returns the clearing plan modifier of an attribute, for
+// every attribute kind that has plan modifiers.
 func attributeClearer(a schema.Attribute) (configNullClearer, bool) {
-	var modifiers []any
 	switch a := a.(type) {
 	case schema.StringAttribute:
-		for _, m := range a.PlanModifiers {
-			modifiers = append(modifiers, m)
-		}
+		return clearerIn(a.PlanModifiers)
 	case schema.BoolAttribute:
-		for _, m := range a.PlanModifiers {
-			modifiers = append(modifiers, m)
-		}
+		return clearerIn(a.PlanModifiers)
+	case schema.Int64Attribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.Int32Attribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.Float64Attribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.Float32Attribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.NumberAttribute:
+		return clearerIn(a.PlanModifiers)
 	case schema.ListAttribute:
-		for _, m := range a.PlanModifiers {
-			modifiers = append(modifiers, m)
-		}
+		return clearerIn(a.PlanModifiers)
+	case schema.SetAttribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.MapAttribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.ObjectAttribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.DynamicAttribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.SingleNestedAttribute:
+		return clearerIn(a.PlanModifiers)
 	case schema.ListNestedAttribute:
-		for _, m := range a.PlanModifiers {
-			modifiers = append(modifiers, m)
-		}
+		return clearerIn(a.PlanModifiers)
+	case schema.SetNestedAttribute:
+		return clearerIn(a.PlanModifiers)
+	case schema.MapNestedAttribute:
+		return clearerIn(a.PlanModifiers)
 	}
+	return nil, false
+}
+
+// clearerIn returns the first plan modifier that is a configNullClearer.
+func clearerIn[M any](modifiers []M) (configNullClearer, bool) {
 	for _, m := range modifiers {
-		if clearer, ok := m.(configNullClearer); ok {
+		if clearer, ok := any(m).(configNullClearer); ok {
 			return clearer, true
 		}
 	}

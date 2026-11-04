@@ -5,15 +5,20 @@
 // Terraform Core does not match the elements of a nested-attribute set to the
 // prior state, and the framework cannot either: it marks every Computed (and
 // every omitted Optional+Computed) attribute of every element unknown, so the
-// set shows a replaced element on every plan. Plan modifiers inside a set
-// element see no prior state, so UseStateForUnknown and the clearing
-// modifiers cannot help. The resource's ModifyPlan method must call
-// planSetNestedAttributesFromState, which matches elements by their configured
-// values.
+// set shows a replaced element on every plan. The resource's ModifyPlan method
+// must call planSetNestedAttributesFromState, which matches elements by their
+// configured values.
+//
+// Plan modifiers inside a set element cannot fix this: the framework passes
+// them the configuration and prior state of the element at the same index,
+// which is generally a different element. The linter therefore also reports
+// UseStateForUnknown on any attribute inside a set element, where it can copy
+// another element's value into the plan.
 package setnestedplan
 
 import (
 	"go/ast"
+	"slices"
 	"sort"
 	"strings"
 
@@ -64,7 +69,16 @@ func run(pass *analysis.Pass) (any, error) {
 
 	for _, m := range schemaMethods {
 		info, ok := facts.Schemas[m.schemaName]
-		if !ok || planned[receiverTypeName(m.fn)] {
+		if !ok {
+			continue
+		}
+		if path := stateForUnknownInSet(info.Attrs, "", false); path != "" {
+			pass.Reportf(m.fn.Body.Lbrace,
+				"%q is inside a set element and has UseStateForUnknown: the framework passes set element "+
+					"plan modifiers the prior state of the element at the same index, so it can copy another element's value",
+				path)
+		}
+		if planned[receiverTypeName(m.fn)] {
 			continue
 		}
 		if path := computedSetNested(info.Attrs, ""); path != "" {
@@ -139,6 +153,35 @@ func computedSetNested(attrs map[string]*schemaparser.AttrInfo, prefix string) s
 			childPrefix = path + "[*]."
 		}
 		if p := computedSetNested(a.NestedAttrs, childPrefix); p != "" {
+			return p
+		}
+	}
+	return ""
+}
+
+// stateForUnknownInSet returns the path of the first attribute inside a set
+// element, at any depth, that has the UseStateForUnknown plan modifier.
+func stateForUnknownInSet(attrs map[string]*schemaparser.AttrInfo, prefix string, inSet bool) string {
+	names := make([]string, 0, len(attrs))
+	for name := range attrs {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		a := attrs[name]
+		if a == nil {
+			continue
+		}
+		path := prefix + name
+		if inSet && slices.Contains(a.PlanModifiers, "UseStateForUnknown") {
+			return path
+		}
+		childPrefix := path + "."
+		if a.IsList || a.IsSet {
+			childPrefix = path + "[*]."
+		}
+		if p := stateForUnknownInSet(a.NestedAttrs, childPrefix, inSet || a.IsSet); p != "" {
 			return p
 		}
 	}

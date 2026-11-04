@@ -16,6 +16,7 @@ type StringAttribute struct {
 	Optional            bool
 	Computed            bool
 	Default             interface{}
+	PlanModifiers       []interface{}
 	Description         string
 	MarkdownDescription string
 }

@@ -89,3 +89,20 @@ func ConfigOnlyResourceSchema(ctx context.Context) schema.Schema {
 		},
 	}
 }
+
+func StateForUnknownResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{Computed: true},
+			"items": schema.SetNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name":   schema.StringAttribute{Required: true},
+						"status": schema.StringAttribute{Computed: true},
+					},
+				},
+				Required: true,
+			},
+		},
+	}
+}

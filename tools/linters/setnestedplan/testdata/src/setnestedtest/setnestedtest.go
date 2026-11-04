@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 func planSetNestedAttributesFromState(_ context.Context, _ resource.ModifyPlanRequest, _ *resource.ModifyPlanResponse) {
@@ -50,4 +52,28 @@ type configOnlyResource struct{}
 func (r *configOnlyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := ConfigOnlyResourceSchema(ctx)
 	resp.Schema = s
+}
+
+// --- BAD: UseStateForUnknown on a set element attribute; fine on a top-level one ---
+
+type stateForUnknownResource struct{}
+
+func (r *stateForUnknownResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `"items\[\*\].status" is inside a set element and has UseStateForUnknown`
+	s := StateForUnknownResourceSchema(ctx)
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	if items, ok := s.Attributes["items"].(schema.SetNestedAttribute); ok {
+		if attr, ok := items.NestedObject.Attributes["status"].(schema.StringAttribute); ok {
+			attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+			items.NestedObject.Attributes["status"] = attr
+		}
+		s.Attributes["items"] = items
+	}
+	resp.Schema = s
+}
+
+func (r *stateForUnknownResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planSetNestedAttributesFromState(ctx, req, resp)
 }

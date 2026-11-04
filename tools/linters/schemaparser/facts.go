@@ -38,6 +38,7 @@ type attrEntryWire struct {
 type attrInfoWire struct {
 	Class                  FieldClass
 	IsList                 bool
+	IsSet                  bool
 	HasDefault             bool
 	DefaultValue           any
 	NestedAttrsPresent     bool
@@ -118,6 +119,7 @@ func encodeAttrInfo(info *AttrInfo) *attrInfoWire {
 	return &attrInfoWire{
 		Class:                  info.Class,
 		IsList:                 info.IsList,
+		IsSet:                  info.IsSet,
 		HasDefault:             info.HasDefault,
 		DefaultValue:           info.DefaultValue,
 		NestedAttrsPresent:     info.NestedAttrs != nil,
@@ -173,6 +175,7 @@ func decodeAttrInfo(info *attrInfoWire) *AttrInfo {
 	return &AttrInfo{
 		Class:                  info.Class,
 		IsList:                 info.IsList,
+		IsSet:                  info.IsSet,
 		HasDefault:             info.HasDefault,
 		DefaultValue:           info.DefaultValue,
 		NestedAttrs:            decodeAttrs(info.NestedAttrs, info.NestedAttrsPresent),
