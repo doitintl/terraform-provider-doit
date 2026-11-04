@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -323,4 +324,90 @@ func runSchemaSetNestedPlan(t *testing.T, s schema.Schema, config, plan, state t
 		t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
 	}
 	return resp.Plan.Raw
+}
+
+// Two configured elements that differ only in an omitted Category A attribute
+// versus its cleared value (tags omitted, tags = []) are the same element once
+// the omitted attribute is cleared. The plan must not collapse them.
+func TestPlanSetNestedAttributesFromState_ClearingCollapsesElements(t *testing.T) {
+	childAttrs := map[string]schema.Attribute{
+		"key": schema.StringAttribute{Required: true},
+		"tags": schema.ListAttribute{
+			ElementType:   types.StringType,
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []planmodifier.List{useNullForUnknownListWhenConfigNull()},
+		},
+	}
+	childType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"key": tftypes.String, "tags": tftypes.List{ElementType: tftypes.String}}}
+	child := func(tags tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(childType, map[string]tftypes.Value{"key": tfString("k"), "tags": tags})
+	}
+	childSet := func(children ...tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(tftypes.Set{ElementType: childType}, children)
+	}
+
+	t.Run("top-level set", func(t *testing.T) {
+		s := schema.Schema{Attributes: map[string]schema.Attribute{
+			"items": schema.SetNestedAttribute{Required: true, NestedObject: schema.NestedAttributeObject{Attributes: childAttrs}},
+		}}
+		rootType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"items": tftypes.Set{ElementType: childType}}}
+		root := func(children ...tftypes.Value) tftypes.Value {
+			return tftypes.NewValue(rootType, map[string]tftypes.Value{"items": childSet(children...)})
+		}
+		config := root(child(tfNullTags), child(tfEmptyTags))
+		plan := root(child(tfUnknownTags), child(tfEmptyTags))
+		state := root(child(tfTags("old")))
+
+		req := resource.ModifyPlanRequest{
+			Config: tfsdk.Config{Schema: s, Raw: config},
+			Plan:   tfsdk.Plan{Schema: s, Raw: plan},
+			State:  tfsdk.State{Schema: s, Raw: state},
+		}
+		resp := &resource.ModifyPlanResponse{Plan: req.Plan}
+		planSetNestedAttributesFromState(t.Context(), req, resp)
+		assertDuplicateSetElements(t, resp.Diagnostics, "items")
+	})
+
+	t.Run("set nested in a changed element", func(t *testing.T) {
+		s := schema.Schema{Attributes: map[string]schema.Attribute{
+			"items": schema.SetNestedAttribute{Required: true, NestedObject: schema.NestedAttributeObject{Attributes: map[string]schema.Attribute{
+				"name":   schema.StringAttribute{Required: true},
+				"labels": schema.SetNestedAttribute{Optional: true, NestedObject: schema.NestedAttributeObject{Attributes: childAttrs}},
+			}}},
+		}}
+		itemType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"name": tftypes.String, "labels": tftypes.Set{ElementType: childType}}}
+		rootType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"items": tftypes.Set{ElementType: itemType}}}
+		root := func(name string, children ...tftypes.Value) tftypes.Value {
+			item := tftypes.NewValue(itemType, map[string]tftypes.Value{"name": tfString(name), "labels": childSet(children...)})
+			return tftypes.NewValue(rootType, map[string]tftypes.Value{"items": tftypes.NewValue(tftypes.Set{ElementType: itemType}, []tftypes.Value{item})})
+		}
+		// The outer element changed (b instead of a), so its labels are cleared.
+		config := root("b", child(tfNullTags), child(tfEmptyTags))
+		plan := root("b", child(tfUnknownTags), child(tfEmptyTags))
+		state := root("a", child(tfTags("old")))
+
+		req := resource.ModifyPlanRequest{
+			Config: tfsdk.Config{Schema: s, Raw: config},
+			Plan:   tfsdk.Plan{Schema: s, Raw: plan},
+			State:  tfsdk.State{Schema: s, Raw: state},
+		}
+		resp := &resource.ModifyPlanResponse{Plan: req.Plan}
+		planSetNestedAttributesFromState(t.Context(), req, resp)
+		assertDuplicateSetElements(t, resp.Diagnostics, "items[*].labels")
+	})
+}
+
+func assertDuplicateSetElements(t *testing.T, diags diag.Diagnostics, path string) {
+	t.Helper()
+	if diags.ErrorsCount() != 1 {
+		t.Fatalf("errors = %d, want 1: %v", diags.ErrorsCount(), diags)
+	}
+	d := diags.Errors()[0]
+	if d.Summary() != "Duplicate Set Elements" {
+		t.Errorf("summary = %q", d.Summary())
+	}
+	if want := "Two elements of " + path + " describe the same element"; !strings.Contains(d.Detail(), want) {
+		t.Errorf("detail = %q, want it to contain %q", d.Detail(), want)
+	}
 }

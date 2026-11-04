@@ -526,7 +526,11 @@ never matches. The clearing modifiers expose their cleared value through
 on any attribute kind, or it is treated as Category B inside sets. Sets are
 found at any depth, including inside nested objects, lists and maps. Element
 matching is one-to-one: when elements differ only in values one of them omits or
-leaves unknown, each still pairs with its own counterpart.
+leaves unknown, each still pairs with its own counterpart. Two configured elements that
+become the same element once omitted attributes take their prior or cleared
+values (one omits `tags`, the other sets `tags = []`) describe one remote
+element twice; the planner reports them as **Duplicate Set Elements** at plan
+time instead of letting the set collapse.
 
 **2. Overlay: `overlaySetElements`** (`set_nested_overlay.go`) is the set
 counterpart of `overlayListElements`. It pairs each planned element with the

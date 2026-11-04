@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -45,13 +46,21 @@ func planSetNestedAttributesFromState(ctx context.Context, req resource.ModifyPl
 	}
 
 	p := setNestedPlanner{ctx: ctx}
-	planned, err := p.object(s.Attributes, req.Config.Raw, resp.Plan.Raw, req.State.Raw)
+	planned, err := p.object(s.Attributes, req.Config.Raw, resp.Plan.Raw, req.State.Raw, "")
 	if err == nil {
 		var unchanged bool
 		unchanged, err = p.unchanged(s.Attributes, req.Config.Raw, planned, req.State.Raw)
 		if unchanged {
 			planned = req.State.Raw
 		}
+	}
+	if collapse, ok := errors.AsType[setElementsCollapseError](err); ok {
+		resp.Diagnostics.AddError(
+			"Duplicate Set Elements",
+			fmt.Sprintf("Two elements of %s describe the same element: one omits an attribute that the other sets to the value "+
+				"omitting it means (its cleared or current value). A set cannot hold the same element twice; remove one of them.", collapse.path),
+		)
+		return
 	}
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -74,7 +83,7 @@ type setNestedPlanner struct {
 }
 
 // object plans the children of an object value.
-func (p setNestedPlanner) object(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+func (p setNestedPlanner) object(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value, at string) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) || !isKnownNonNull(prior) {
 		return plan, nil
 	}
@@ -85,7 +94,7 @@ func (p setNestedPlanner) object(attrs map[string]schema.Attribute, config, plan
 
 	changed := false
 	for name, a := range attrs {
-		v, err := p.attribute(a, c[name], pl[name], s[name])
+		v, err := p.attribute(a, c[name], pl[name], s[name], attributePath(at, name))
 		if err != nil {
 			return plan, err
 		}
@@ -101,23 +110,23 @@ func (p setNestedPlanner) object(attrs map[string]schema.Attribute, config, plan
 }
 
 // attribute plans the nested attributes of one attribute value.
-func (p setNestedPlanner) attribute(a schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+func (p setNestedPlanner) attribute(a schema.Attribute, config, plan, prior tftypes.Value, at string) (tftypes.Value, error) {
 	switch a := a.(type) {
 	case schema.SetNestedAttribute:
-		return p.set(a.NestedObject.Attributes, config, plan, prior)
+		return p.set(a.NestedObject.Attributes, config, plan, prior, at)
 	case schema.SingleNestedAttribute:
-		return p.object(a.Attributes, config, plan, prior)
+		return p.object(a.Attributes, config, plan, prior, at)
 	case schema.ListNestedAttribute:
-		return p.list(a.NestedObject.Attributes, config, plan, prior)
+		return p.list(a.NestedObject.Attributes, config, plan, prior, at)
 	case schema.MapNestedAttribute:
-		return p.mapElements(a.NestedObject.Attributes, config, plan, prior)
+		return p.mapElements(a.NestedObject.Attributes, config, plan, prior, at)
 	}
 	return plan, nil
 }
 
 // mapElements plans map elements key by key: Terraform matches map elements to
 // the prior state by key already, but a set inside an element needs this.
-func (p setNestedPlanner) mapElements(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+func (p setNestedPlanner) mapElements(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value, at string) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) || !isKnownNonNull(prior) {
 		return plan, nil
 	}
@@ -133,7 +142,7 @@ func (p setNestedPlanner) mapElements(attrs map[string]schema.Attribute, config,
 		if !inConfig || !inPrior {
 			continue
 		}
-		v, err := p.object(attrs, cv, pv, sv)
+		v, err := p.object(attrs, cv, pv, sv, at+"[*]")
 		if err != nil {
 			return plan, err
 		}
@@ -150,7 +159,7 @@ func (p setNestedPlanner) mapElements(attrs map[string]schema.Attribute, config,
 
 // list plans list elements index by index: Terraform matches list elements to
 // the prior state by position already, but a set inside an element needs this.
-func (p setNestedPlanner) list(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+func (p setNestedPlanner) list(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value, at string) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) || !isKnownNonNull(prior) {
 		return plan, nil
 	}
@@ -167,7 +176,7 @@ func (p setNestedPlanner) list(attrs map[string]schema.Attribute, config, plan, 
 		if i >= len(s) {
 			break
 		}
-		v, err := p.object(attrs, c[i], pl[i], s[i])
+		v, err := p.object(attrs, c[i], pl[i], s[i], at+"[*]")
 		if err != nil {
 			return plan, err
 		}
@@ -184,7 +193,7 @@ func (p setNestedPlanner) list(attrs map[string]schema.Attribute, config, plan, 
 
 // set plans set elements: each element whose configuration equals a prior
 // element becomes that element; the others get their cleared values.
-func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value, at string) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
 		return plan, nil
 	}
@@ -216,22 +225,51 @@ func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, p
 			out[pi] = s[si]
 			continue
 		}
-		v, err := p.cleared(attrs, c[ci], pl[pi])
+		v, err := p.cleared(attrs, c[ci], pl[pi], at+"[*]")
 		if err != nil {
 			return plan, err
 		}
 		out[pi] = v
 	}
 
-	// Two elements may not become equal: the set would lose one of them.
-	for i := range out {
-		for j := i + 1; j < len(out); j++ {
-			if out[i].Equal(out[j]) {
-				return plan, nil
+	if err := distinctSetElements(out, at); err != nil {
+		return plan, err
+	}
+	return tftypes.NewValue(plan.Type(), out), nil
+}
+
+// setElementsCollapseError reports configured set elements that become the
+// same element once their omitted attributes take their prior or cleared
+// values: one element omits an attribute that another sets to that value.
+// Both describe the same remote element, and a set cannot hold it twice.
+type setElementsCollapseError struct {
+	path string
+}
+
+func (e setElementsCollapseError) Error() string {
+	return fmt.Sprintf("elements of %s are the same element once their omitted attributes are resolved", e.path)
+}
+
+// distinctSetElements returns a setElementsCollapseError when two planned
+// elements of the set at path are equal.
+func distinctSetElements(elements []tftypes.Value, path string) error {
+	for i := range elements {
+		for j := i + 1; j < len(elements); j++ {
+			if elements[i].Equal(elements[j]) {
+				return setElementsCollapseError{path: path}
 			}
 		}
 	}
-	return tftypes.NewValue(plan.Type(), out), nil
+	return nil
+}
+
+// attributePath joins an attribute name to its parent's path, using the [*]
+// element notation of acknowledgeNotClearable.
+func attributePath(parent, name string) string {
+	if parent == "" {
+		return name
+	}
+	return parent + "." + name
 }
 
 // pair returns, for every configured element, the index of the planned
@@ -584,7 +622,7 @@ func (p setNestedPlanner) unchangedMap(attrs map[string]schema.Attribute, config
 // cleared plans the cleared value for every omitted Category A attribute of a
 // changed element, which the clearing modifiers would plan outside a set. It
 // descends into nested objects, lists, sets and maps of the element.
-func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, plan tftypes.Value) (tftypes.Value, error) {
+func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, plan tftypes.Value, at string) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
 		return plan, nil
 	}
@@ -603,13 +641,13 @@ func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, pla
 		} else {
 			switch a := a.(type) {
 			case schema.SingleNestedAttribute:
-				v, err = p.cleared(a.Attributes, cv, pv)
+				v, err = p.cleared(a.Attributes, cv, pv, attributePath(at, name))
 			case schema.ListNestedAttribute:
-				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, false)
+				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, false, attributePath(at, name))
 			case schema.SetNestedAttribute:
-				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, true)
+				v, err = p.clearedElements(a.NestedObject.Attributes, cv, pv, true, attributePath(at, name))
 			case schema.MapNestedAttribute:
-				v, err = p.clearedMap(a.NestedObject.Attributes, cv, pv)
+				v, err = p.clearedMap(a.NestedObject.Attributes, cv, pv, attributePath(at, name))
 			}
 		}
 		if err != nil {
@@ -628,7 +666,7 @@ func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, pla
 
 // clearedElements is cleared for the elements of a nested list or set. List
 // elements correspond by index; set elements are paired first.
-func (p setNestedPlanner) clearedElements(attrs map[string]schema.Attribute, config, plan tftypes.Value, isSet bool) (tftypes.Value, error) {
+func (p setNestedPlanner) clearedElements(attrs map[string]schema.Attribute, config, plan tftypes.Value, isSet bool, at string) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
 		return plan, nil
 	}
@@ -652,17 +690,22 @@ func (p setNestedPlanner) clearedElements(attrs map[string]schema.Attribute, con
 
 	out := make([]tftypes.Value, len(pl))
 	for ci, pi := range pairs {
-		v, err := p.cleared(attrs, c[ci], pl[pi])
+		v, err := p.cleared(attrs, c[ci], pl[pi], at+"[*]")
 		if err != nil {
 			return plan, err
 		}
 		out[pi] = v
 	}
+	if isSet {
+		if err := distinctSetElements(out, at); err != nil {
+			return plan, err
+		}
+	}
 	return tftypes.NewValue(plan.Type(), out), nil
 }
 
 // clearedMap is cleared for the elements of a nested map, key by key.
-func (p setNestedPlanner) clearedMap(attrs map[string]schema.Attribute, config, plan tftypes.Value) (tftypes.Value, error) {
+func (p setNestedPlanner) clearedMap(attrs map[string]schema.Attribute, config, plan tftypes.Value, at string) (tftypes.Value, error) {
 	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
 		return plan, nil
 	}
@@ -675,7 +718,7 @@ func (p setNestedPlanner) clearedMap(attrs map[string]schema.Attribute, config, 
 		if !ok {
 			continue
 		}
-		v, err := p.cleared(attrs, cv, pv)
+		v, err := p.cleared(attrs, cv, pv, at+"[*]")
 		if err != nil {
 			return plan, err
 		}
