@@ -176,3 +176,52 @@ func TestToExternalConfigWrite_SendsPlannedDataSource(t *testing.T) {
 		})
 	}
 }
+
+// A null plan value is not always serialized the same way. Nullable objects
+// (count) send an explicit JSON null so the PATCH merge clears the stored value,
+// while pointer fields with omitempty (a filter's mode) are left out of the
+// request. The implement-resource skill tells request builders to pick the
+// representation per attribute, so this pins both.
+func TestToExternalConfigWrite_NullPlanSerialization(t *testing.T) {
+	ctx := t.Context()
+
+	cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+	filter := resource_report.NewFiltersValueMust(resource_report.FiltersValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"case_insensitive": types.BoolNull(),
+		"id":               types.StringValue("cloud_provider"),
+		"include_null":     types.BoolNull(),
+		"inverse":          types.BoolNull(),
+		"mode":             types.StringNull(),
+		"type":             types.StringValue("fixed"),
+		"values":           types.ListValueMust(types.StringType, []attr.Value{types.StringValue("google-cloud")}),
+	})
+	cfgMap["filters"] = types.ListValueMust(resource_report.FiltersValue{}.Type(ctx), []attr.Value{filter})
+
+	cfgVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), cfgMap)
+	if diags.HasError() {
+		t.Fatalf("NewConfigValue: %v", diags)
+	}
+	write, diags := toExternalConfigWrite(ctx, cfgVal)
+	if diags.HasError() {
+		t.Fatalf("toExternalConfigWrite: %v", diags)
+	}
+	gotJSON, err := json.Marshal(write)
+	if err != nil {
+		t.Fatalf("marshal write config: %v", err)
+	}
+
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(gotJSON, &got); err != nil {
+		t.Fatalf("unmarshal write config: %v", err)
+	}
+	if count, ok := got["count"]; !ok || string(count) != "null" {
+		t.Errorf("count: want an explicit JSON null, got %q (present=%v)", count, ok)
+	}
+	var filters []map[string]json.RawMessage
+	if err := json.Unmarshal(got["filters"], &filters); err != nil || len(filters) != 1 {
+		t.Fatalf("filters: got %s, err %v", got["filters"], err)
+	}
+	if mode, ok := filters[0]["mode"]; ok {
+		t.Errorf("filter mode: want it omitted from the request, got %s", mode)
+	}
+}

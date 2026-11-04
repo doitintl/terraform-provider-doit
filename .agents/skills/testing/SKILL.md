@@ -307,6 +307,18 @@ Every plan-first resource must have these test categories:
 | **Clearing lifecycle**                  | Set a clearable attribute → drift check → clear it → drift check (see [Clearing Optional+Computed Attributes](../implement-resource/SKILL.md#clearing-optionalcomputed-attributes)) |
 | **API normalization**                   | Use values the API will normalize, verify user value preserved                                                                                                                      |
 | **Value with boolean flags**            | Omit booleans, verify they resolve to `false` not `Unknown`                                                                                                                         |
+| **ModifyPlan plan shape**               | Plan-only checks (`ExpectUnknownValue` / `ExpectKnownValue`) for any `ModifyPlan` logic that reads omitted or computed values (see below)                                           |
+
+### Pin the real plan shape for ModifyPlan logic
+
+For `ModifyPlan` logic that reads omitted or computed attributes, do not guess what the plan holds. Add a small acceptance test that asserts the real plan with `ConfigPlanChecks.PreApply` (`plancheck.ExpectUnknownValue` / `plancheck.ExpectKnownValue`), then build the unit-test plans from that shape. A unit test whose plan is pre-filled with the stored value passes against a guard that never fires in practice.
+
+Templates from the attribution-report guard (`internal/provider/attribution_validation_test.go`):
+
+- `TestAccReport_OmittedDataSourceIsUnknownOnUpdate`: an omitted Optional+Computed attribute plans Unknown when another attribute changes.
+- `TestAccReport_IgnoredDataSourceKeepsStoredPlanValue`: with `lifecycle.ignore_changes`, the plan keeps the stored value while config says another.
+- `TestAccReport_PlanShapeOfOmittedOptionalComputed` (`report_plan_shape_test.go`): one resource, all four shapes (unchanged, unknown, schema `Default`, clearing modifier). `PreApply` plan checks cannot run with `PlanOnly`, so those steps apply.
+- Unit side: `TestReportResource_ModifyPlan_AttributionReportReadOnly` (`attribution_validator_internal_test.go`).
 
 ---
 
@@ -468,5 +480,6 @@ func getAlertCount(t *testing.T) int {
 - [ ] Use `resource.ParallelTest()`
 - [ ] Add drift verification step (`ExpectEmptyPlan()`)
 - [ ] Cover empty lists and omitted attributes
+- [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks
 - [ ] Use unique resource names
 - [ ] Cache expensive helpers with `sync.Once`

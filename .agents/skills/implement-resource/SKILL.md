@@ -163,7 +163,9 @@ Add `UseStateForUnknown()` plan modifiers to Computed-only fields that never cha
 
 ### Clearing Optional+Computed Attributes
 
-For `Optional+Computed` attributes, Terraform Core copies the prior state value into the `ProposedNewState` when the config value is null. The framework then skips its `MarkComputedNilsAsUnknown` phase because `ProposedNewState` already equals `PriorState`. This makes it **impossible for users to clear** the attribute by setting it to `null` or omitting it — the plan silently preserves the old value.
+For `Optional+Computed` attributes, Terraform Core copies the prior state value into the `ProposedNewState` when the config value is null. When nothing else in the plan changes, `ProposedNewState` equals `PriorState`, so the framework skips its `MarkComputedNilsAsUnknown` phase. This makes it **impossible for users to clear** the attribute by setting it to `null` or omitting it — the plan silently preserves the old value.
+
+> **⚠️ Only true when the resource is otherwise unchanged.** As soon as any other attribute changes, the framework runs `MarkComputedNilsAsUnknown` and plans every omitted Optional+Computed attribute as **Unknown**, not as the stored value, unless the attribute has a schema `Default` (it plans the default, always known; e.g. `doit_report.folder_id` plans `"root"`) or a plan modifier that sets the value. Measured for a nested attribute (`config.data_source` when `config.currency` changed, `TestAccReport_OmittedDataSourceIsUnknownOnUpdate`) and a top-level one (`labels`, same trigger). Code that runs at plan time (`ModifyPlan`, overlay, request builders) must not assume an omitted attribute holds the stored value. See [Guards that read an omitted Optional+Computed attribute](#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan).
 
 Not all Optional+Computed attributes should be clearable. **Every Optional+Computed attribute without a `Default` requires a conscious classification decision:**
 
@@ -334,11 +336,11 @@ if !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
 
 **Children of a clearable nested object** follow the same Category A / Category B classification as top-level attributes. A clearable parent can have Category B children (API-computed defaults that the user can't independently clear). These children go in `acknowledgeNotClearable` as usual.
 
-**API-computed fields alongside user-configured fields:** Some APIs return computed values alongside user-configured ones (e.g., `futureTimeIntervals` computed from `futureCustomDateRange`). The read path (`mapXxxToModel`) should map all API-returned fields faithfully. The overlay preserves the user's plan values on Create/Update. On subsequent plans, the framework's default Optional+Computed behavior proposes the prior state value for omitted fields, so the computed value doesn't cause drift.
+**API-computed fields alongside user-configured fields:** Some APIs return computed values alongside user-configured ones (e.g., `futureTimeIntervals` computed from `futureCustomDateRange`). The read path (`mapXxxToModel`) should map all API-returned fields faithfully. The overlay preserves the user's plan values on Create/Update. On subsequent no-change plans, the framework's default Optional+Computed behavior proposes the prior state value for omitted fields, so the computed value doesn't cause drift. On an update that changes something else, the omitted field plans as Unknown and the overlay resolves it from the API response.
 
 #### Category B: Not clearable (API-computed default)
 
-**Do not add any plan modifier.** The default framework behavior (prior state sticks) is correct. Use `acknowledgeNotClearable(s, paths...)` in the Schema() method to declare that these attributes were consciously classified:
+**Do not add any plan modifier.** The default framework behavior is correct: prior state sticks on a plan with no other change, and the attribute (having no `Default` and no modifier) plans as Unknown on an update (the overlay then resolves it from the API response, and `ModifyPlan` must read state explicitly, see [Guards that read an omitted Optional+Computed attribute](#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan)). Use `acknowledgeNotClearable(s, paths...)` in the Schema() method to declare that these attributes were consciously classified:
 
 ```go
 // In Schema():
@@ -368,7 +370,7 @@ acknowledgeNotClearable(s,
 - Fields tied to server-side identity or assignment: `role_id`, `status`
 - Fields where `null` is not a valid API state (server always provides a value)
 
-> **Note:** `UseStateForUnknown()` is for **Computed-only** stable fields (`id`, `create_time`), not for Optional+Computed. It is a no-op on Optional+Computed because Terraform Core copies prior state before the modifier runs, so the value is never Unknown.
+> **Note:** `UseStateForUnknown()` is for **Computed-only** stable fields (`id`, `create_time`), not for Optional+Computed. It does not belong on Optional+Computed: when nothing else changes Terraform Core has already copied prior state, so it does nothing, and on an update it would pin a stored value the user can no longer change by omitting it. The attribute can be Unknown on an update, so read state explicitly where the stored value matters.
 
 #### Category C: Replace-on-clear (cannot be cleared in place)
 
@@ -473,6 +475,41 @@ statecheck.ExpectKnownValue(
 The overlay (`IsUnknown()` check) correctly interacts with this modifier: when the modifier sets the plan to `[]` (not unknown), the overlay leaves it as `[]`.
 
 See: `internal/provider/planmodifier_null_on_config_null_list.go` and [framework issue #603](https://github.com/hashicorp/terraform-plugin-framework/issues/603).
+
+### Guards that read an omitted Optional+Computed attribute in ModifyPlan
+
+A `ModifyPlan` guard that decides on an Optional+Computed attribute the user may have omitted (e.g. reject updates of a report whose stored `data_source` is `"attribution"`) cannot read the attribute from one place:
+
+- **An omitted attribute plans as Unknown** (when it has no schema `Default` and no plan modifier that sets it) on any update that changes something else (see [Clearing Optional+Computed Attributes](#clearing-optionalcomputed-attributes)). Skipping unknown values makes the guard never fire for the case it was written for.
+- **`lifecycle.ignore_changes` makes the plan differ from the config.** The plan keeps the stored value while config says another one.
+- **The update request sends the planned value**, so the plan is what the API will see; a guard that only reads config lets the update through to an apply-time rejection.
+
+Decide in this order:
+
+1. **Plan**: known → decide on it. For a **clearable (Category A)** attribute a null plan is authoritative: the modifier proposes null to clear the stored value (`useNullForUnknownStringWhenConfigNull`, `useNullForCount`), so validating the old state value would reject a valid clearing update. How the request expresses that null differs per attribute: a nullable object (`count`) sends an explicit JSON `null` (`.SetNull()`), while a pointer field with `omitempty` (a filter's `mode`) is simply left out. Check the generated field type before writing the request builder (`TestToExternalConfigWrite_NullPlanSerialization`).
+2. Plan unknown (or, for a **state-retaining Category B** attribute, null) → **config**: unknown → defer (decide at apply); null → use **state**; known → use the config value.
+
+```go
+value := plan // from req.Plan.GetAttribute
+// A null plan is authoritative only for clearable attributes. Drop the IsNull()
+// term for those; keep it for a Category B attribute like data_source.
+if value.IsNull() || value.IsUnknown() {
+    // read config; then:
+    switch {
+    case config.IsUnknown():
+        value = config // defer
+    case config.IsNull():
+        // read state into value
+    default:
+        value = config
+    }
+}
+if !value.IsUnknown() && !value.IsNull() && value.ValueString() == forbidden { /* error */ }
+```
+
+An `IsUnknown()` check alone does not make a guard correct: deciding what unknown *means* (here: the stored value) is the part that matters. If the API treats an omitted field as "reset to default" rather than "keep", decide that explicitly too.
+
+Reference: the attribution guard in `ModifyPlan` of `internal/provider/report_resource.go` (`data_source` is Category B, so it treats a null plan like an unknown one). The plan shapes this relies on are pinned by `TestAccReport_PlanShapeOfOmittedOptionalComputed` (`report_plan_shape_test.go`): unchanged plan is empty, omitted no-default attributes plan unknown, a schema `Default` stays known, a clearing modifier plans null. Tests: see [Pin the real plan shape](../testing/SKILL.md#pin-the-real-plan-shape-for-modifyplan-logic).
 
 ### Set Nested Attributes
 
