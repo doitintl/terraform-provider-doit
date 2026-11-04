@@ -471,24 +471,28 @@ func TestPlanSetNestedAttributesFromState_CollapseWithUnknownValues(t *testing.T
 
 	t.Run("unknown names in a top-level set", func(t *testing.T) {
 		config := top(child(tfUnknownString, tfNullTags, tfNullString), child(tfUnknownString, tfEmptyTags, tfNullString))
-		plan := top(child(tfUnknownString, tfUnknownTags, tfUnknownString), child(tfUnknownString, tfEmptyTags, tfUnknownString))
+		plan := func() tftypes.Value {
+			return top(child(tfUnknownString, tfUnknownTags, tfUnknownString), child(tfUnknownString, tfEmptyTags, tfUnknownString))
+		}
 		state := top(child(tfString("old"), tfTags("x"), tfString("ok")))
-		resp := run(t, topLevel, config, plan, state)
+		resp := run(t, topLevel, config, plan(), state)
 		if resp.Diagnostics.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
 		}
-		assertTF(t, "plan", resp.Plan.Raw, plan)
+		assertTF(t, "plan", resp.Plan.Raw, plan())
 	})
 
 	t.Run("unknown names in a nested set", func(t *testing.T) {
 		config := nestedRoot("b", child(tfUnknownString, tfNullTags, tfNullString), child(tfUnknownString, tfEmptyTags, tfNullString))
-		plan := nestedRoot("b", child(tfUnknownString, tfUnknownTags, tfUnknownString), child(tfUnknownString, tfEmptyTags, tfUnknownString))
+		plan := func() tftypes.Value {
+			return nestedRoot("b", child(tfUnknownString, tfUnknownTags, tfUnknownString), child(tfUnknownString, tfEmptyTags, tfUnknownString))
+		}
 		state := nestedRoot("a", child(tfString("old"), tfTags("x"), tfString("ok")))
-		resp := run(t, nested, config, plan, state)
+		resp := run(t, nested, config, plan(), state)
 		if resp.Diagnostics.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
 		}
-		assertTF(t, "plan", resp.Plan.Raw, plan)
+		assertTF(t, "plan", resp.Plan.Raw, plan())
 	})
 
 	t.Run("known names with unknown computed values", func(t *testing.T) {
@@ -548,4 +552,81 @@ func TestPlanSetNestedAttributesFromState_KeepsPlannedValues(t *testing.T) {
 
 	got := runSchemaSetNestedPlan(t, s, config, plan, state)
 	assertTF(t, "plan", got, root(tfString("new default"), tfUnknownString, tfString("ok")))
+}
+
+// testRevisionModifier plans a new value for a Computed attribute.
+type testRevisionModifier struct{}
+
+func (testRevisionModifier) Description(context.Context) string         { return "plans a revision" }
+func (testRevisionModifier) MarkdownDescription(context.Context) string { return "plans a revision" }
+func (testRevisionModifier) PlanModifyString(_ context.Context, _ planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	resp.PlanValue = types.StringValue("r2")
+}
+
+// A matched set element keeps the known values that plan modifiers planned in
+// it: an element whose planned value differs from the prior one changed.
+func TestPlanSetNestedAttributesFromState_KeepsPlannedElementValues(t *testing.T) {
+	s := schema.Schema{Attributes: map[string]schema.Attribute{
+		"items": schema.SetNestedAttribute{Required: true, NestedObject: schema.NestedAttributeObject{Attributes: map[string]schema.Attribute{
+			"name": schema.StringAttribute{Required: true},
+			"mode": schema.StringAttribute{
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{testDefaultStringModifier{}},
+			},
+			"revision": schema.StringAttribute{
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{testRevisionModifier{}},
+			},
+			"status": schema.StringAttribute{Computed: true},
+		}}},
+	}}
+	itemType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{
+		"name": tftypes.String, "mode": tftypes.String, "revision": tftypes.String, "status": tftypes.String,
+	}}
+	rootType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"items": tftypes.Set{ElementType: itemType}}}
+	item := func(name string, mode, revision, status tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(itemType, map[string]tftypes.Value{"name": tfString(name), "mode": mode, "revision": revision, "status": status})
+	}
+	root := func(items ...tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(rootType, map[string]tftypes.Value{"items": tftypes.NewValue(tftypes.Set{ElementType: itemType}, items)})
+	}
+
+	t.Run("planned values equal the prior ones", func(t *testing.T) {
+		state := root(item("a", tfString("new default"), tfString("r2"), tfString("ok")))
+		config := root(item("a", tfNullString, tfNullString, tfNullString))
+		plan := root(item("a", tfString("new default"), tfString("r2"), tfUnknownString))
+		assertTF(t, "plan", runSchemaSetNestedPlan(t, s, config, plan, state), state)
+	})
+
+	t.Run("planned values differ from the prior ones", func(t *testing.T) {
+		state := root(item("a", tfString("old default"), tfString("r1"), tfString("ok")))
+		config := root(item("a", tfNullString, tfNullString, tfNullString))
+		plan := func() tftypes.Value { return root(item("a", tfString("new default"), tfString("r2"), tfUnknownString)) }
+		assertTF(t, "plan", runSchemaSetNestedPlan(t, s, config, plan(), state), plan())
+	})
+}
+
+// The planner must not change the values it is given: tftypes.Value.As
+// returns a value's own map or slice, and the framework still holds the plan
+// and the state.
+func TestPlanSetNestedAttributesFromState_DoesNotModifyInputs(t *testing.T) {
+	prior := func() tftypes.Value {
+		return tfRoot(tfString("id-1"),
+			tfItem("a", map[string]tftypes.Value{"note": tfString("n"), "status": tfString("ok"), "tags": tfTags("x"), "settings": tfSettings(true)}),
+			tfItem("b", map[string]tftypes.Value{"note": tfString("n"), "status": tfString("ok"), "tags": tfEmptyTags, "settings": tfSettings(true)}))
+	}
+	// a is unchanged except for its cleared tags, b changed, c is new.
+	config := func() tftypes.Value {
+		return tfRoot(tfNullString, tfItem("a", nil), tfItem("b", map[string]tftypes.Value{"opt": tfString("x")}), tfItem("c", nil))
+	}
+	plan := func() tftypes.Value {
+		return tfRoot(tfUnknownString, tfPlannedItem("a", nil), tfPlannedItem("b", map[string]tftypes.Value{"opt": tfString("x")}), tfPlannedItem("c", nil))
+	}
+
+	configValue, planValue, priorValue := config(), plan(), prior()
+	runSetNestedPlan(t, configValue, planValue, priorValue)
+	assertTF(t, "config", configValue, config())
+	assertTF(t, "plan", planValue, plan())
+	assertTF(t, "state", priorValue, prior())
 }

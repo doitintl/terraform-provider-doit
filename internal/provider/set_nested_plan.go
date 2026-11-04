@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -206,7 +208,7 @@ func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, p
 		return plan, err
 	}
 	if isKnownNonNull(prior) {
-		if err := prior.As(&s); err != nil {
+		if err := asCopy(prior, &s); err != nil {
 			return plan, err
 		}
 	}
@@ -483,7 +485,7 @@ func (p setNestedPlanner) unchanged(attrs map[string]schema.Attribute, config, p
 		return false, err
 	}
 	if isKnownNonNull(plan) {
-		if err := plan.As(&pl); err != nil {
+		if err := asCopy(plan, &pl); err != nil {
 			return false, err
 		}
 	}
@@ -491,13 +493,18 @@ func (p setNestedPlanner) unchanged(attrs map[string]schema.Attribute, config, p
 	for name, a := range attrs {
 		cv, pv, sv := c[name], pl[name], s[name]
 		if a.IsComputed() && !a.IsOptional() {
-			continue // Computed-only: the configuration has no say
+			// Computed-only: the configuration has no say, but a value a plan
+			// modifier planned is a change unless the prior value equals it.
+			if pl != nil && !knownValuesMatch(pv, sv) {
+				return false, nil
+			}
+			continue
 		}
 		if !cv.IsKnown() {
 			return false, nil
 		}
 		if cv.IsNull() {
-			if !unchangedOmitted(a, pv, sv) {
+			if !unchangedOmitted(a, pv, pl != nil, sv) {
 				return false, nil
 			}
 			continue
@@ -525,7 +532,8 @@ func (p setNestedPlanner) unchanged(attrs map[string]schema.Attribute, config, p
 }
 
 // unchangedOmitted is unchanged for an attribute the configuration omits.
-func unchangedOmitted(a schema.Attribute, plan, prior tftypes.Value) bool {
+// hasPlan reports whether plan holds the planned value of the attribute.
+func unchangedOmitted(a schema.Attribute, plan tftypes.Value, hasPlan bool, prior tftypes.Value) bool {
 	if clearer, ok := attributeClearer(a); ok {
 		// Category A: omitted means cleared.
 		return prior.IsNull() || prior.Equal(clearer.clearedValue(prior.Type()))
@@ -533,10 +541,9 @@ func unchangedOmitted(a schema.Attribute, plan, prior tftypes.Value) bool {
 	if !a.IsComputed() {
 		return prior.IsNull() // plain Optional: omitted means null
 	}
-	if attributeHasDefault(a) {
-		return prior.Equal(plan) // the plan holds the default
-	}
-	return true // Category B: the prior value stays
+	// Category B: the prior value stays, unless a default or a plan modifier
+	// planned a known value; an unknown planned value matches anything.
+	return !hasPlan || knownValuesMatch(plan, prior)
 }
 
 func (p setNestedPlanner) unchangedSet(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (bool, error) {
@@ -554,7 +561,7 @@ func (p setNestedPlanner) unchangedSet(attrs map[string]schema.Attribute, config
 	// is known, and must match a distinct prior element.
 	var pairs []int
 	if isKnownNonNull(plan) {
-		if err := plan.As(&pl); err != nil {
+		if err := asCopy(plan, &pl); err != nil {
 			return false, err
 		}
 		var err error
@@ -587,7 +594,7 @@ func (p setNestedPlanner) unchangedList(attrs map[string]schema.Attribute, confi
 		return false, nil
 	}
 	if isKnownNonNull(plan) {
-		if err := plan.As(&pl); err != nil {
+		if err := asCopy(plan, &pl); err != nil {
 			return false, err
 		}
 	}
@@ -616,7 +623,7 @@ func (p setNestedPlanner) unchangedMap(attrs map[string]schema.Attribute, config
 		return false, nil
 	}
 	if isKnownNonNull(plan) {
-		if err := plan.As(&pl); err != nil {
+		if err := asCopy(plan, &pl); err != nil {
 			return false, err
 		}
 	}
@@ -796,43 +803,6 @@ func clearerIn[M any](modifiers []M) (configNullClearer, bool) {
 	return nil, false
 }
 
-// attributeHasDefault reports whether an attribute has a schema default.
-func attributeHasDefault(a schema.Attribute) bool {
-	switch a := a.(type) {
-	case schema.StringAttribute:
-		return a.Default != nil
-	case schema.BoolAttribute:
-		return a.Default != nil
-	case schema.Int64Attribute:
-		return a.Default != nil
-	case schema.Int32Attribute:
-		return a.Default != nil
-	case schema.Float64Attribute:
-		return a.Default != nil
-	case schema.Float32Attribute:
-		return a.Default != nil
-	case schema.NumberAttribute:
-		return a.Default != nil
-	case schema.ListAttribute:
-		return a.Default != nil
-	case schema.SetAttribute:
-		return a.Default != nil
-	case schema.MapAttribute:
-		return a.Default != nil
-	case schema.ObjectAttribute:
-		return a.Default != nil
-	case schema.SingleNestedAttribute:
-		return a.Default != nil
-	case schema.ListNestedAttribute:
-		return a.Default != nil
-	case schema.SetNestedAttribute:
-		return a.Default != nil
-	case schema.MapNestedAttribute:
-		return a.Default != nil
-	}
-	return false
-}
-
 func isKnownNonNull(v tftypes.Value) bool {
 	return v.IsKnown() && !v.IsNull()
 }
@@ -844,9 +814,25 @@ func asAll(pairs ...any) error {
 		if !ok {
 			return fmt.Errorf("asAll: argument %d is %T, not tftypes.Value", i, pairs[i])
 		}
-		if err := v.As(pairs[i+1]); err != nil {
+		if err := asCopy(v, pairs[i+1]); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// asCopy is tftypes.Value.As for object, map, list and set values, with a
+// copy of the elements: As returns the value's own map or slice, and writing
+// to it would change the value, which the framework still holds.
+func asCopy(v tftypes.Value, dst any) error {
+	if err := v.As(dst); err != nil {
+		return err
+	}
+	switch d := dst.(type) {
+	case *map[string]tftypes.Value:
+		*d = maps.Clone(*d)
+	case *[]tftypes.Value:
+		*d = slices.Clone(*d)
 	}
 	return nil
 }

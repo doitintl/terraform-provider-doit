@@ -274,9 +274,8 @@ func TestPlanSetNestedAttributesFromState(t *testing.T) {
 
 	t.Run("create is left alone", func(t *testing.T) {
 		config := tfRoot(tfNullString, tfItem("a", nil))
-		plan := tfRoot(tfUnknownString, tfPlannedItem("a", nil))
-		got := runSetNestedPlan(t, config, plan, tftypes.NewValue(setNestedTestRootType, nil))
-		assertTF(t, "plan", got, plan)
+		got := runSetNestedPlan(t, config, tfRoot(tfUnknownString, tfPlannedItem("a", nil)), tftypes.NewValue(setNestedTestRootType, nil))
+		assertTF(t, "plan", got, tfRoot(tfUnknownString, tfPlannedItem("a", nil)))
 	})
 }
 

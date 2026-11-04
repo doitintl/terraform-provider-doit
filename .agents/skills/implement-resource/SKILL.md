@@ -511,13 +511,16 @@ resource needs no key or per-attribute code:
 
 | Element attribute (config omitted) | Matches a prior element when | Planned in a changed element |
 | --- | --- | --- |
-| Computed-only | always | unknown |
-| Optional+Computed, Category B | always (prior value stays) | unknown (overlay resolves it) |
+| Computed-only | always, unless a plan modifier planned a known value: then prior equals it | unknown |
+| Optional+Computed, Category B | always (prior value stays), unless a default or plan modifier planned a known value: then prior equals it | unknown (overlay resolves it) |
 | Optional+Computed, Category A (clearing modifier) | prior is null or the cleared value | the cleared value |
 | Optional | prior is null | null |
 | Configured (any class) | prior value equals config | config value |
 
-A matched element is planned as its prior element. When the whole
+A matched element is planned as its prior element. The planner never
+changes the values it is given: `tftypes.Value.As` returns a value's own map
+or slice, so helpers that build new values from it must copy it first (see
+`asCopy`). When the whole
 configuration equals the prior state and the plan agrees with it on every known
 value, the plan becomes the prior state, so it is empty and top-level volatile
 fields like `etag` are not marked unknown. A known value that differs was
