@@ -82,7 +82,6 @@ func (d *ps4cCommitmentPolicyDataSource) Read(ctx context.Context, req datasourc
 		data.TargetCoverage = types.Float64Unknown()
 		data.LookbackDays = types.Int64Unknown()
 		data.LadderStepPercent = types.Float64Unknown()
-		data.LadderIntervalDays = types.Int64Unknown()
 		data.BootstrapPercent = types.Float64Unknown()
 		data.CreatedTime = types.StringUnknown()
 		data.UpdatedTime = types.StringUnknown()

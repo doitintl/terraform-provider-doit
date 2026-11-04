@@ -22,16 +22,15 @@ func TestMapCommitmentPolicyDetailToModel_FullyPopulated(t *testing.T) {
 	updatedTime := time.Date(2026, 2, 15, 14, 30, 0, 0, time.UTC)
 
 	apiResp := &models.CommitmentPolicyDetail{
-		Id:                 "balanced",
-		Name:               "Balanced",
-		IsBuiltIn:          true,
-		TargetCoverage:     80.0,
-		LookbackDays:       60,
-		LadderStepPercent:  10.0,
-		LadderIntervalDays: 7,
-		BootstrapPercent:   35.0,
-		CreatedTime:        valueToNullable(createdTime),
-		UpdatedTime:        valueToNullable(updatedTime),
+		Id:                "balanced",
+		Name:              "Balanced",
+		IsBuiltIn:         true,
+		TargetCoverage:    80.0,
+		LookbackDays:      60,
+		LadderStepPercent: 10.0,
+		BootstrapPercent:  35.0,
+		CreatedTime:       valueToNullable(createdTime),
+		UpdatedTime:       valueToNullable(updatedTime),
 		Assignments: []models.CommitmentPolicyAssignment{
 			{
 				AccountId: "012345-6789AB-CDEF01",
@@ -74,9 +73,6 @@ func TestMapCommitmentPolicyDetailToModel_FullyPopulated(t *testing.T) {
 	}
 	if got := data.LadderStepPercent.ValueFloat64(); got != 10.0 {
 		t.Errorf("ladder_step_percent = %v, want 10.0", got)
-	}
-	if got := data.LadderIntervalDays.ValueInt64(); got != 7 {
-		t.Errorf("ladder_interval_days = %d, want 7", got)
 	}
 	if got := data.BootstrapPercent.ValueFloat64(); got != 35.0 {
 		t.Errorf("bootstrap_percent = %v, want 35.0", got)
@@ -132,17 +128,16 @@ func TestMapCommitmentPolicyDetailToModel_EmptyAssignments(t *testing.T) {
 	ctx := t.Context()
 
 	apiResp := &models.CommitmentPolicyDetail{
-		Id:                 "max_savings",
-		Name:               "Max Savings",
-		IsBuiltIn:          true,
-		TargetCoverage:     95.0,
-		LookbackDays:       30,
-		LadderStepPercent:  15.0,
-		LadderIntervalDays: 7,
-		BootstrapPercent:   50.0,
-		CreatedTime:        nullable.Nullable[time.Time]{},
-		UpdatedTime:        nullable.Nullable[time.Time]{},
-		Assignments:        []models.CommitmentPolicyAssignment{},
+		Id:                "max_savings",
+		Name:              "Max Savings",
+		IsBuiltIn:         true,
+		TargetCoverage:    95.0,
+		LookbackDays:      30,
+		LadderStepPercent: 15.0,
+		BootstrapPercent:  50.0,
+		CreatedTime:       nullable.Nullable[time.Time]{},
+		UpdatedTime:       nullable.Nullable[time.Time]{},
+		Assignments:       []models.CommitmentPolicyAssignment{},
 	}
 
 	var data ps4cCommitmentPolicyDataSourceModel
@@ -173,7 +168,6 @@ func TestPs4cCommitmentPolicyRead(t *testing.T) {
 		"targetCoverage": 80,
 		"lookbackDays": 60,
 		"ladderStepPercent": 10,
-		"ladderIntervalDays": 7,
 		"bootstrapPercent": 35,
 		"createdTime": "2026-01-10T12:00:00Z",
 		"updatedTime": "2026-02-15T14:30:00Z",

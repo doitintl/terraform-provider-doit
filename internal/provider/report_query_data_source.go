@@ -172,6 +172,10 @@ func (d *reportQueryDataSource) ConfigValidators(_ context.Context) []datasource
 		reportLimitByChangeDataSourceValidator{},
 		// data_source = "attribution" and the attribution tier dimensions require each other.
 		reportAttributionQueryDataSourceValidator{},
+		// secondary_time_range must not overlap the primary time range.
+		reportSecondaryTimeRangeDataSourceValidator{},
+		// time_range and secondary_time_range must set every field the API requires.
+		reportTimeRangeRequiredFieldsDataSourceValidator{},
 	}
 }
 

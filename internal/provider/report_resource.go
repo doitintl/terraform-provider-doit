@@ -176,15 +176,16 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.display_settings.data_label_font_size", // API defaults font size
 		"config.display_settings.decimal_precision",    // API defaults precision
 
-		// config.time_range
-		"config.time_range.mode",            // API defaults mode
-		"config.time_range.unit",            // API defaults unit
-		"config.time_range.amount",          // API defaults amount
-		"config.time_range.include_current", // API defaults to false
+		// config.time_range: a configured block replaces the stored time range as a
+		// whole, so omitted fields are not kept from the existing report.
+		"config.time_range.mode",            // required when time_range is set
+		"config.time_range.unit",            // required unless mode is "custom"
+		"config.time_range.amount",          // API stores 0 when omitted; ModifyPlan plans 0
+		"config.time_range.include_current", // API stores false when omitted; ModifyPlan plans false
 
 		// config.custom_time_range
-		"config.custom_time_range.from", // API defaults from date
-		"config.custom_time_range.to",   // API defaults to date
+		"config.custom_time_range.from", // required when custom_time_range is set
+		"config.custom_time_range.to",   // required when custom_time_range is set
 
 		// config.splits
 		"config.splits[*].id",               // API-assigned split ID
@@ -197,12 +198,14 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		"config.splits[*].targets[*].type",  // API provides default type
 		"config.splits[*].targets[*].value", // API provides default value
 
-		// config.secondary_time_range
-		"config.secondary_time_range.unit",                   // API defaults unit
-		"config.secondary_time_range.amount",                 // API defaults amount
-		"config.secondary_time_range.include_current",        // API defaults to false
-		"config.secondary_time_range.custom_time_range.from", // API defaults from date
-		"config.secondary_time_range.custom_time_range.to",   // API defaults to date
+		// config.secondary_time_range: a configured block replaces the stored
+		// secondary range as a whole, so omitted fields are not kept from the
+		// existing report.
+		"config.secondary_time_range.unit",                   // required without custom_time_range
+		"config.secondary_time_range.amount",                 // required without custom_time_range
+		"config.secondary_time_range.include_current",        // required without custom_time_range
+		"config.secondary_time_range.custom_time_range.from", // required when custom_time_range is set
+		"config.secondary_time_range.custom_time_range.to",   // required when custom_time_range is set
 
 		// config.forecast_settings
 		"config.forecast_settings.future_custom_date_range",
@@ -272,12 +275,17 @@ func (r *reportResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		reportFilterNAValidator{},
 		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
 		reportLimitByChangeValidator{},
+		// secondary_time_range must not overlap the primary time range.
+		reportSecondaryTimeRangeValidator{},
+		// time_range and secondary_time_range must set every field the API requires.
+		reportTimeRangeRequiredFieldsValidator{},
 	}
 }
 
 // ModifyPlan validates cross-field constraints that depend on resolved unknown values or
 // Category B unclearable attributes inherited from prior state on update (layout,
-// aggregation, time_range, secondary_time_range, and metrics).
+// aggregation, time_range, secondary_time_range, and metrics). It also plans the
+// values the API stores for fields omitted from a configured time_range.
 func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// Skip on destroy (no plan).
 	if req.Plan.Raw.IsNull() {
@@ -349,6 +357,8 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		return
 	}
 
+	planReportTimeRangeOmittedFields(ctx, req, resp)
+
 	var priorState attributeGetter
 	if !req.State.Raw.IsNull() && len(resp.RequiresReplace) == 0 {
 		priorState = req.State
@@ -357,6 +367,7 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	validateReportCustomTimeRangeMode(ctx, req.Config, priorState, &resp.Diagnostics)
 	validateReportLimitByChangeCountSecondary(ctx, req.Config, priorState, &resp.Diagnostics)
 	validateReportLimitByChangeMetricListed(ctx, req.Config, priorState, &resp.Diagnostics)
+	validateReportSecondaryTimeRange(ctx, req.Config, priorState, &resp.Diagnostics)
 }
 
 func (r *reportResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -159,7 +160,7 @@ func (v reportForecastConflictValidator) ValidateResource(ctx context.Context, r
 }
 
 // reportTimestampValidator validates custom_time_range objects:
-// 1. When set, at least one of from/to must be specified (rejects empty `{}`).
+// 1. When set, both from and to must be specified.
 // 2. Any provided from/to values must be valid RFC3339 timestamps.
 //
 // This is a ConfigValidator because attribute-level validators do not fire on
@@ -170,11 +171,11 @@ type reportTimestampValidator struct{}
 var _ resource.ConfigValidator = reportTimestampValidator{}
 
 func (v reportTimestampValidator) Description(_ context.Context) string {
-	return "Validates custom_time_range objects are non-empty and contain valid RFC3339 timestamps"
+	return "Validates custom_time_range objects set both from and to and contain valid RFC3339 timestamps"
 }
 
 func (v reportTimestampValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates `custom_time_range` objects are non-empty and contain valid RFC3339 timestamps"
+	return "Validates `custom_time_range` objects set both `from` and `to` and contain valid RFC3339 timestamps"
 }
 
 func (v reportTimestampValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -183,18 +184,18 @@ func (v reportTimestampValidator) ValidateResource(ctx context.Context, req reso
 
 // reportTimestampDataSourceValidator is the data-source counterpart of
 // reportTimestampValidator. The report_query data source reuses the report
-// resource's config types, so the same validation applies — rejecting empty date
-// ranges at plan time instead of letting them fail at the API.
+// resource's config types, so the same validation applies — rejecting incomplete
+// date ranges at plan time instead of letting them fail at the API.
 type reportTimestampDataSourceValidator struct{}
 
 var _ datasource.ConfigValidator = reportTimestampDataSourceValidator{}
 
 func (v reportTimestampDataSourceValidator) Description(_ context.Context) string {
-	return "Validates custom_time_range objects are non-empty and contain valid RFC3339 timestamps"
+	return "Validates custom_time_range objects set both from and to and contain valid RFC3339 timestamps"
 }
 
 func (v reportTimestampDataSourceValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates `custom_time_range` objects are non-empty and contain valid RFC3339 timestamps"
+	return "Validates `custom_time_range` objects set both `from` and `to` and contain valid RFC3339 timestamps"
 }
 
 func (v reportTimestampDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
@@ -202,11 +203,14 @@ func (v reportTimestampDataSourceValidator) ValidateDataSource(ctx context.Conte
 }
 
 // validateReportTimestamps is the shared body used by both the resource and the
-// report_query data source. It rejects empty custom/forecast date ranges and
-// validates that any provided from/to values are RFC3339. Unknown values are
-// deferred (not treated as empty) so dynamic references validate once resolved.
+// report_query data source. It rejects custom time ranges missing a bound and
+// empty forecast date ranges, and validates that any provided from/to values are
+// RFC3339. Unknown values are deferred (not treated as empty) so dynamic
+// references validate once resolved.
 func validateReportTimestamps(ctx context.Context, config tfsdk.Config, diags *diag.Diagnostics) {
-	// Reject empty custom_time_range objects (set but both from and to are null).
+	// A configured custom_time_range needs both bounds: the API replaces the stored
+	// range with the configured block, so an omitted bound is not kept from the
+	// existing report.
 	ctrPaths := []path.Path{
 		path.Root("config").AtName("custom_time_range"),
 		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range"),
@@ -218,15 +222,19 @@ func validateReportTimestamps(ctx context.Context, config tfsdk.Config, diags *d
 		if d.HasError() || ctr.IsNull() || ctr.IsUnknown() {
 			continue
 		}
-		if ctr.From.IsUnknown() || ctr.To.IsUnknown() {
-			continue // defer validation until values are known
-		}
 
-		if ctr.From.IsNull() && ctr.To.IsNull() {
+		if ctr.From.IsNull() {
 			diags.AddAttributeError(
-				p,
-				"Empty Custom Time Range",
-				"custom_time_range requires at least one of `from` or `to` to be set.",
+				p.AtName("from"),
+				"Missing Custom Time Range Field",
+				"`from` is required when `custom_time_range` is set.",
+			)
+		}
+		if ctr.To.IsNull() {
+			diags.AddAttributeError(
+				p.AtName("to"),
+				"Missing Custom Time Range Field",
+				"`to` is required when `custom_time_range` is set.",
 			)
 		}
 	}
@@ -355,8 +363,9 @@ func (v reportCustomTimeRangeModeValidator) MarkdownDescription(_ context.Contex
 }
 
 func (v reportCustomTimeRangeModeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	// Defer when time_range or time_range.mode is omitted in config so ModifyPlan
-	// can inherit the stored mode on update (or reject on create).
+	// Defer when time_range is omitted in config so ModifyPlan can check the stored
+	// mode on update (or reject on create). An omitted time_range.mode is reported
+	// by reportTimeRangeRequiredFieldsValidator.
 	var timeRange resource_report.TimeRangeValue
 	d := req.Config.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
 	resp.Diagnostics.Append(d...)
@@ -1066,6 +1075,513 @@ func validateReportLimitByChangeMetricListed(ctx context.Context, getter, priorS
 		fmt.Sprintf("`limit_by_change.metric` (type %q, value %q) must also be listed in `metrics`; the API rejects the report otherwise. "+
 			"Add it to `metrics` or use one of the configured metrics in `limit_by_change.metric`.",
 			metric.MetricType.ValueString(), metric.Value.ValueString()),
+	)
+}
+
+// reportSecondaryTimeRangeValidator rejects secondary_time_range settings that the
+// API refuses because the secondary range would overlap the primary range. The
+// API compares whole UTC days on create and on update (against the merged config).
+//
+// Only the cases that can be decided from the configuration are checked here: a
+// custom primary range against a custom secondary range or a one-year shift, a
+// relative secondary range on a "last" primary range longer than one year, and a
+// non-positive amount. Overlaps of a relative primary range with a custom
+// secondary range depend on the current date and are left to the API.
+//
+// A ConfigValidator rather than an attribute validator because attribute
+// validators do not run on attributes inside a SingleNestedAttribute with a
+// CustomType.
+type reportSecondaryTimeRangeValidator struct{}
+
+var _ resource.ConfigValidator = reportSecondaryTimeRangeValidator{}
+
+func (v reportSecondaryTimeRangeValidator) Description(_ context.Context) string {
+	return "Validates that secondary_time_range does not overlap the primary time range"
+}
+
+func (v reportSecondaryTimeRangeValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `secondary_time_range` does not overlap the primary time range"
+}
+
+func (v reportSecondaryTimeRangeValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportSecondaryTimeRange(ctx, req.Config, nil, &resp.Diagnostics)
+}
+
+// reportSecondaryTimeRangeDataSourceValidator applies the same rules to the
+// report_query data source, whose config reuses the report resource types.
+type reportSecondaryTimeRangeDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportSecondaryTimeRangeDataSourceValidator{}
+
+func (v reportSecondaryTimeRangeDataSourceValidator) Description(ctx context.Context) string {
+	return reportSecondaryTimeRangeValidator{}.Description(ctx)
+}
+
+func (v reportSecondaryTimeRangeDataSourceValidator) MarkdownDescription(ctx context.Context) string {
+	return reportSecondaryTimeRangeValidator{}.MarkdownDescription(ctx)
+}
+
+func (v reportSecondaryTimeRangeDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportSecondaryTimeRange(ctx, req.Config, nil, &resp.Diagnostics)
+}
+
+// validateReportSecondaryTimeRange is shared by the report resource
+// (ConfigValidators and ModifyPlan) and the report_query data source.
+//
+// priorState, when non-nil, supplies secondary_time_range and time_range when the
+// config omits them: both are Optional+Computed and the API keeps the stored value
+// on update, then validates the merged config. custom_time_range
+// is clearable, so an omitted one is cleared and has no fallback.
+func validateReportSecondaryTimeRange(ctx context.Context, getter, priorState attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
+	var secondary resource_report.SecondaryTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	inherited := false
+	if secondary.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		inherited = true
+	}
+
+	var timeRange resource_report.TimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if timeRange.IsNull() && priorState != nil {
+		d = priorState.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+		diags.Append(d...)
+		if d.HasError() {
+			return
+		}
+		inherited = true
+	}
+
+	var customTimeRange resource_report.CustomTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("custom_time_range"), &customTimeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	// The amount check does not depend on the primary range.
+	validateReportSecondaryAmount(secondary, diags)
+	if timeRange.IsUnknown() {
+		return
+	}
+
+	// An omitted mode is not inherited: the API replaces the stored time range with
+	// the configured block. validateReportTimeRangeRequiredFields reports it.
+	mode := types.StringNull()
+	if !timeRange.IsNull() {
+		mode = timeRange.Mode
+	}
+
+	validateReportSecondaryOnLongPrimary(timeRange, mode, secondary, inherited, diags)
+	validateReportSecondaryCustomOverlap(mode, customTimeRange, secondary, inherited, diags)
+	validateReportSecondaryYearShiftOverlap(mode, customTimeRange, secondary, inherited, diags)
+}
+
+// validateReportSecondaryAmount rejects a relative secondary range whose amount is
+// zero or negative. Zero shifts the secondary range onto the primary range.
+func validateReportSecondaryAmount(secondary resource_report.SecondaryTimeRangeValue, diags *diag.Diagnostics) {
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	// A custom secondary range ignores amount.
+	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+	if secondary.Amount.IsNull() || secondary.Amount.IsUnknown() {
+		return
+	}
+
+	amount := secondary.Amount.ValueInt64()
+	if amount > 0 {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range").AtName("amount"),
+		"Invalid Secondary Time Range Amount",
+		fmt.Sprintf("`secondary_time_range.amount` must be greater than zero, got %d. "+
+			"The API rejects a negative amount, and an amount of 0 makes the secondary range overlap the primary range.", amount),
+	)
+}
+
+// validateReportSecondaryOnLongPrimary rejects a relative secondary range on a
+// "last" primary range longer than one year: the API has no shifted range for such
+// a primary range that would not overlap it.
+//
+// The secondary range counts as relative only when its amount and unit are set.
+// A relative range missing either is reported by
+// validateReportTimeRangeRequiredFields instead.
+func validateReportSecondaryOnLongPrimary(timeRange resource_report.TimeRangeValue, mode types.String, secondary resource_report.SecondaryTimeRangeValue, inherited bool, diags *diag.Diagnostics) {
+	if timeRange.IsNull() || timeRange.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if mode.IsNull() || mode.IsUnknown() {
+		return
+	}
+	if timeRange.Unit.IsNull() || timeRange.Unit.IsUnknown() {
+		return
+	}
+	if timeRange.Amount.IsNull() || timeRange.Amount.IsUnknown() {
+		return
+	}
+	// A custom secondary range is allowed on any primary range.
+	if secondary.CustomTimeRange.IsUnknown() {
+		return
+	}
+	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+	if secondary.Amount.IsNull() || secondary.Amount.IsUnknown() {
+		return
+	}
+	if secondary.Unit.IsNull() || secondary.Unit.IsUnknown() {
+		return
+	}
+
+	if mode.ValueString() != "last" {
+		return
+	}
+	unit := timeRange.Unit.ValueString()
+	amount := timeRange.Amount.ValueInt64()
+	if !reportPrimaryExceedsOneYear(unit, amount) {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range"),
+		"Overlapping Secondary Time Range",
+		fmt.Sprintf("A relative `secondary_time_range` (`amount` and `unit`) cannot be combined with a primary `time_range` of the last %d %s(s): "+
+			"the API has no shifted secondary range for a primary range longer than one year, because it would overlap the primary range. "+
+			"Set `secondary_time_range.custom_time_range` to a range that ends before the primary range starts, or shorten `time_range`.%s",
+			amount, unit, reportSecondaryInheritedNote(inherited)),
+	)
+}
+
+// reportPrimaryExceedsOneYear reports whether a "last" primary range of amount
+// units is longer than one year, using the API's per-unit limits.
+func reportPrimaryExceedsOneYear(unit string, amount int64) bool {
+	switch unit {
+	case "day":
+		return amount > 365
+	case "week":
+		return amount > 52
+	case "month":
+		return amount > 12
+	case "quarter":
+		return amount > 4
+	case "year":
+		return amount > 1
+	default:
+		return false
+	}
+}
+
+// validateReportSecondaryCustomOverlap rejects a custom secondary range that shares
+// a UTC day with the custom primary range.
+func validateReportSecondaryCustomOverlap(mode types.String, customTimeRange resource_report.CustomTimeRangeValue, secondary resource_report.SecondaryTimeRangeValue, inherited bool, diags *diag.Diagnostics) {
+	if mode.IsNull() || mode.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	primaryFrom, primaryTo, ok := reportCustomRangeDays(customTimeRange)
+	if !ok {
+		return
+	}
+	secondaryFrom, secondaryTo, ok := reportCustomRangeDays(secondary.CustomTimeRange)
+	if !ok {
+		return
+	}
+
+	if mode.ValueString() != "custom" {
+		return
+	}
+	if !reportDayRangesOverlap(primaryFrom, primaryTo, secondaryFrom, secondaryTo) {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range").AtName("custom_time_range"),
+		"Overlapping Secondary Time Range",
+		fmt.Sprintf("`secondary_time_range.custom_time_range` (%s to %s) overlaps the primary `custom_time_range` (%s to %s). "+
+			"The API compares whole days in UTC and rejects a secondary range that shares a day with the primary range. "+
+			"End the secondary range on %s or earlier, or start it on %s or later.%s",
+			reportFormatDay(secondaryFrom), reportFormatDay(secondaryTo),
+			reportFormatDay(primaryFrom), reportFormatDay(primaryTo),
+			reportFormatDay(primaryFrom.AddDate(0, 0, -1)), reportFormatDay(primaryTo.AddDate(0, 0, 1)),
+			reportSecondaryInheritedNote(inherited)),
+	)
+}
+
+// validateReportSecondaryYearShiftOverlap rejects the one-year relative secondary
+// range (the only relative option the API accepts for a custom primary range)
+// when the custom primary range spans a year or more, so that shifting it back
+// one year still reaches the primary range's first day.
+func validateReportSecondaryYearShiftOverlap(mode types.String, customTimeRange resource_report.CustomTimeRangeValue, secondary resource_report.SecondaryTimeRangeValue, inherited bool, diags *diag.Diagnostics) {
+	if mode.IsNull() || mode.IsUnknown() {
+		return
+	}
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if secondary.CustomTimeRange.IsUnknown() {
+		return
+	}
+	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+	if secondary.Amount.IsNull() || secondary.Amount.IsUnknown() {
+		return
+	}
+	if secondary.Unit.IsNull() || secondary.Unit.IsUnknown() {
+		return
+	}
+	if secondary.IncludeCurrent.IsNull() || secondary.IncludeCurrent.IsUnknown() {
+		return
+	}
+	primaryFrom, primaryTo, ok := reportCustomRangeDays(customTimeRange)
+	if !ok {
+		return
+	}
+
+	if mode.ValueString() != "custom" {
+		return
+	}
+	// The API rejects every other relative option for a custom primary range on its own.
+	if secondary.Amount.ValueInt64() != 1 || secondary.Unit.ValueString() != "year" || secondary.IncludeCurrent.ValueBool() {
+		return
+	}
+	shiftedFrom := primaryFrom.AddDate(-1, 0, 0)
+	shiftedTo := primaryTo.AddDate(-1, 0, 0)
+	if !reportDayRangesOverlap(primaryFrom, primaryTo, shiftedFrom, shiftedTo) {
+		return
+	}
+	diags.AddAttributeError(
+		path.Root("config").AtName("secondary_time_range"),
+		"Overlapping Secondary Time Range",
+		fmt.Sprintf("Shifting the primary `custom_time_range` (%s to %s) back one year gives %s to %s, which overlaps the primary range: "+
+			"the primary range spans a year or more. The API compares whole days in UTC and rejects an overlapping secondary range. "+
+			"Shorten the primary range, or set `secondary_time_range.custom_time_range` to a range that ends on %s or earlier.%s",
+			reportFormatDay(primaryFrom), reportFormatDay(primaryTo),
+			reportFormatDay(shiftedFrom), reportFormatDay(shiftedTo),
+			reportFormatDay(primaryFrom.AddDate(0, 0, -1)),
+			reportSecondaryInheritedNote(inherited)),
+	)
+}
+
+// reportCustomRangeDays returns the UTC days of a custom range's from and to, the
+// granularity at which the API compares ranges. ok is false when the range or
+// either bound is null or unknown, a bound is not RFC3339 (reported by
+// validateReportTimestamps), or to is before from (rejected by the API on its own).
+func reportCustomRangeDays(ctr resource_report.CustomTimeRangeValue) (time.Time, time.Time, bool) {
+	if ctr.IsNull() || ctr.IsUnknown() {
+		return time.Time{}, time.Time{}, false
+	}
+	if ctr.From.IsNull() || ctr.From.IsUnknown() {
+		return time.Time{}, time.Time{}, false
+	}
+	if ctr.To.IsNull() || ctr.To.IsUnknown() {
+		return time.Time{}, time.Time{}, false
+	}
+
+	from, err := time.Parse(time.RFC3339, ctr.From.ValueString())
+	if err != nil {
+		return time.Time{}, time.Time{}, false
+	}
+	to, err := time.Parse(time.RFC3339, ctr.To.ValueString())
+	if err != nil {
+		return time.Time{}, time.Time{}, false
+	}
+	if to.Before(from) {
+		return time.Time{}, time.Time{}, false
+	}
+	return from.UTC().Truncate(24 * time.Hour), to.UTC().Truncate(24 * time.Hour), true
+}
+
+// reportDayRangesOverlap reports whether two inclusive day ranges share a day.
+func reportDayRangesOverlap(primaryFrom, primaryTo, secondaryFrom, secondaryTo time.Time) bool {
+	return !secondaryFrom.After(primaryTo) && !secondaryTo.Before(primaryFrom)
+}
+
+func reportFormatDay(day time.Time) string {
+	return day.Format(time.DateOnly)
+}
+
+// reportSecondaryInheritedNote explains that part of the checked configuration
+// comes from the existing report rather than from the configuration.
+func reportSecondaryInheritedNote(inherited bool) string {
+	if !inherited {
+		return ""
+	}
+	return " If `secondary_time_range` or `time_range` is not in your configuration, it is kept from the existing report."
+}
+
+// reportTimeRangeRequiredFieldsValidator rejects time range blocks that omit a
+// field the API requires. A configured time_range or secondary_time_range replaces
+// the stored object as a whole, and the API has no per-field defaults: omitted
+// fields are not kept from the existing report.
+type reportTimeRangeRequiredFieldsValidator struct{}
+
+var _ resource.ConfigValidator = reportTimeRangeRequiredFieldsValidator{}
+
+func (v reportTimeRangeRequiredFieldsValidator) Description(_ context.Context) string {
+	return "Validates that time_range and secondary_time_range set every field the API requires"
+}
+
+func (v reportTimeRangeRequiredFieldsValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `time_range` and `secondary_time_range` set every field the API requires"
+}
+
+func (v reportTimeRangeRequiredFieldsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	validateReportTimeRangeRequiredFields(ctx, req.Config, &resp.Diagnostics)
+}
+
+// reportTimeRangeRequiredFieldsDataSourceValidator is the data-source counterpart
+// of reportTimeRangeRequiredFieldsValidator.
+type reportTimeRangeRequiredFieldsDataSourceValidator struct{}
+
+var _ datasource.ConfigValidator = reportTimeRangeRequiredFieldsDataSourceValidator{}
+
+func (v reportTimeRangeRequiredFieldsDataSourceValidator) Description(ctx context.Context) string {
+	return reportTimeRangeRequiredFieldsValidator{}.Description(ctx)
+}
+
+func (v reportTimeRangeRequiredFieldsDataSourceValidator) MarkdownDescription(ctx context.Context) string {
+	return reportTimeRangeRequiredFieldsValidator{}.MarkdownDescription(ctx)
+}
+
+func (v reportTimeRangeRequiredFieldsDataSourceValidator) ValidateDataSource(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	validateReportTimeRangeRequiredFields(ctx, req.Config, &resp.Diagnostics)
+}
+
+// validateReportTimeRangeRequiredFields is the shared body used by the report
+// resource and the report_query data source. Missing custom_time_range bounds are
+// reported by validateReportTimestamps.
+func validateReportTimeRangeRequiredFields(ctx context.Context, getter attributeGetter, diags *diag.Diagnostics) {
+	var configWrapper resource_report.ConfigValue
+	d := getter.GetAttribute(ctx, path.Root("config"), &configWrapper)
+	diags.Append(d...)
+	if d.HasError() || configWrapper.IsNull() || configWrapper.IsUnknown() {
+		return
+	}
+
+	var timeRange resource_report.TimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("time_range"), &timeRange)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	var secondary resource_report.SecondaryTimeRangeValue
+	d = getter.GetAttribute(ctx, path.Root("config").AtName("secondary_time_range"), &secondary)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+
+	validateReportPrimaryTimeRangeFields(timeRange, diags)
+	validateReportSecondaryTimeRangeFields(secondary, diags)
+	validateReportSecondaryRequiresTimeRange(timeRange, secondary, diags)
+}
+
+// validateReportPrimaryTimeRangeFields requires time_range.mode, and
+// time_range.unit unless the mode is "custom". An omitted amount or
+// include_current is valid: the API stores 0 and false.
+func validateReportPrimaryTimeRangeFields(timeRange resource_report.TimeRangeValue, diags *diag.Diagnostics) {
+	if timeRange.IsNull() || timeRange.IsUnknown() {
+		return
+	}
+	timeRangePath := path.Root("config").AtName("time_range")
+
+	if timeRange.Mode.IsUnknown() {
+		return
+	}
+	if timeRange.Mode.IsNull() {
+		diags.AddAttributeError(
+			timeRangePath.AtName("mode"),
+			"Missing Time Range Field",
+			"`mode` is required when `time_range` is set.",
+		)
+		return
+	}
+	if timeRange.Mode.ValueString() == "custom" {
+		return
+	}
+
+	if timeRange.Unit.IsNull() {
+		diags.AddAttributeError(
+			timeRangePath.AtName("unit"),
+			"Missing Time Range Field",
+			fmt.Sprintf("`unit` is required when `time_range.mode` is %q.", timeRange.Mode.ValueString()),
+		)
+	}
+}
+
+// validateReportSecondaryTimeRangeFields requires amount, unit, and
+// include_current on a relative secondary range (one without custom_time_range).
+func validateReportSecondaryTimeRangeFields(secondary resource_report.SecondaryTimeRangeValue, diags *diag.Diagnostics) {
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if secondary.CustomTimeRange.IsUnknown() {
+		return
+	}
+	if !secondary.CustomTimeRange.IsNull() {
+		return
+	}
+	secondaryPath := path.Root("config").AtName("secondary_time_range")
+	const detail = "`%s` is required when `secondary_time_range` does not set `custom_time_range`."
+
+	if secondary.Amount.IsNull() {
+		diags.AddAttributeError(secondaryPath.AtName("amount"), "Missing Secondary Time Range Field", fmt.Sprintf(detail, "amount"))
+	}
+	if secondary.Unit.IsNull() {
+		diags.AddAttributeError(secondaryPath.AtName("unit"), "Missing Secondary Time Range Field", fmt.Sprintf(detail, "unit"))
+	}
+	if secondary.IncludeCurrent.IsNull() {
+		diags.AddAttributeError(secondaryPath.AtName("include_current"), "Missing Secondary Time Range Field", fmt.Sprintf(detail, "include_current"))
+	}
+}
+
+// validateReportSecondaryRequiresTimeRange rejects secondary_time_range without
+// time_range. The API rejects a request that sets the secondary range without the
+// primary range, and the provider sends secondary_time_range on every update while
+// an omitted time_range is not sent.
+func validateReportSecondaryRequiresTimeRange(timeRange resource_report.TimeRangeValue, secondary resource_report.SecondaryTimeRangeValue, diags *diag.Diagnostics) {
+	if secondary.IsNull() || secondary.IsUnknown() {
+		return
+	}
+	if !timeRange.IsNull() {
+		return
+	}
+
+	diags.AddAttributeError(
+		path.Root("config").AtName("time_range"),
+		"Missing Time Range",
+		"`time_range` is required when `secondary_time_range` is set.",
 	)
 }
 

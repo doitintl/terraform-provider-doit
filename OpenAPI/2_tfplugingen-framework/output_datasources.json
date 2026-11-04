@@ -14043,13 +14043,6 @@
 										}
 									},
 									{
-										"name": "ladder_interval_days",
-										"int64": {
-											"computed_optional_required": "computed",
-											"description": "Days between consecutive laddering steps."
-										}
-									},
-									{
 										"name": "ladder_step_percent",
 										"float64": {
 											"computed_optional_required": "computed",
@@ -14184,13 +14177,6 @@
 						"bool": {
 							"computed_optional_required": "computed",
 							"description": "`true` for the three immutable built-in policies, `false` for tenant-defined policies."
-						}
-					},
-					{
-						"name": "ladder_interval_days",
-						"int64": {
-							"computed_optional_required": "computed",
-							"description": "Days between consecutive laddering steps."
 						}
 					},
 					{

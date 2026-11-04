@@ -19,24 +19,22 @@ func TestMapCommitmentPoliciesToItemsList_FullyPopulated(t *testing.T) {
 
 	policies := []models.CommitmentPolicy{
 		{
-			Id:                 "conservative",
-			Name:               "Conservative",
-			IsBuiltIn:          true,
-			TargetCoverage:     65.0,
-			LookbackDays:       60,
-			LadderStepPercent:  5.0,
-			LadderIntervalDays: 7,
-			BootstrapPercent:   20.0,
+			Id:                "conservative",
+			Name:              "Conservative",
+			IsBuiltIn:         true,
+			TargetCoverage:    65.0,
+			LookbackDays:      60,
+			LadderStepPercent: 5.0,
+			BootstrapPercent:  20.0,
 		},
 		{
-			Id:                 "balanced",
-			Name:               "Balanced",
-			IsBuiltIn:          true,
-			TargetCoverage:     80.0,
-			LookbackDays:       60,
-			LadderStepPercent:  10.0,
-			LadderIntervalDays: 7,
-			BootstrapPercent:   35.0,
+			Id:                "balanced",
+			Name:              "Balanced",
+			IsBuiltIn:         true,
+			TargetCoverage:    80.0,
+			LookbackDays:      60,
+			LadderStepPercent: 10.0,
+			BootstrapPercent:  35.0,
 		},
 	}
 
@@ -112,7 +110,6 @@ func TestPs4cCommitmentPoliciesRead_AutoPagination(t *testing.T) {
 						"targetCoverage": 80,
 						"lookbackDays": 60,
 						"ladderStepPercent": 10,
-						"ladderIntervalDays": 7,
 						"bootstrapPercent": 35
 					}
 				],
@@ -131,7 +128,6 @@ func TestPs4cCommitmentPoliciesRead_AutoPagination(t *testing.T) {
 					"targetCoverage": 65,
 					"lookbackDays": 60,
 					"ladderStepPercent": 5,
-					"ladderIntervalDays": 7,
 					"bootstrapPercent": 20
 				}
 			],
@@ -181,7 +177,6 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_MaxResults(t *testing.T) {
 					"targetCoverage": 65,
 					"lookbackDays": 60,
 					"ladderStepPercent": 5,
-					"ladderIntervalDays": 7,
 					"bootstrapPercent": 20
 				}
 			],
@@ -237,7 +232,6 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T)
 						"targetCoverage": 80,
 						"lookbackDays": 60,
 						"ladderStepPercent": 10,
-						"ladderIntervalDays": 7,
 						"bootstrapPercent": 35
 					}
 				],
@@ -256,7 +250,6 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_PageTokenOnly(t *testing.T)
 					"targetCoverage": 95,
 					"lookbackDays": 30,
 					"ladderStepPercent": 15,
-					"ladderIntervalDays": 7,
 					"bootstrapPercent": 50
 				}
 			],
@@ -311,7 +304,6 @@ func TestPs4cCommitmentPoliciesRead_ManualPagination_Both(t *testing.T) {
 					"targetCoverage": 80,
 					"lookbackDays": 60,
 					"ladderStepPercent": 10,
-					"ladderIntervalDays": 7,
 					"bootstrapPercent": 35
 				}
 			],

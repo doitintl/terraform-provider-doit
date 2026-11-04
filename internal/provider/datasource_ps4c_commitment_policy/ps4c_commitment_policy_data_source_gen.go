@@ -75,11 +75,6 @@ func Ps4cCommitmentPolicyDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "`true` for the three immutable built-in policies, `false` for tenant-defined policies.",
 				MarkdownDescription: "`true` for the three immutable built-in policies, `false` for tenant-defined policies.",
 			},
-			"ladder_interval_days": schema.Int64Attribute{
-				Computed:            true,
-				Description:         "Days between consecutive laddering steps.",
-				MarkdownDescription: "Days between consecutive laddering steps.",
-			},
 			"ladder_step_percent": schema.Float64Attribute{
 				Computed:            true,
 				Description:         "Size of each incremental laddering step, as a percentage of the target commitment.",
@@ -120,18 +115,17 @@ func Ps4cCommitmentPolicyDataSourceSchema(ctx context.Context) schema.Schema {
 }
 
 type Ps4cCommitmentPolicyModel struct {
-	Assignments        types.List    `tfsdk:"assignments"`
-	BootstrapPercent   types.Float64 `tfsdk:"bootstrap_percent"`
-	CreatedTime        types.String  `tfsdk:"created_time"`
-	Id                 types.String  `tfsdk:"id"`
-	IsBuiltIn          types.Bool    `tfsdk:"is_built_in"`
-	LadderIntervalDays types.Int64   `tfsdk:"ladder_interval_days"`
-	LadderStepPercent  types.Float64 `tfsdk:"ladder_step_percent"`
-	LookbackDays       types.Int64   `tfsdk:"lookback_days"`
-	Name               types.String  `tfsdk:"name"`
-	PolicyId           types.String  `tfsdk:"policy_id"`
-	TargetCoverage     types.Float64 `tfsdk:"target_coverage"`
-	UpdatedTime        types.String  `tfsdk:"updated_time"`
+	Assignments       types.List    `tfsdk:"assignments"`
+	BootstrapPercent  types.Float64 `tfsdk:"bootstrap_percent"`
+	CreatedTime       types.String  `tfsdk:"created_time"`
+	Id                types.String  `tfsdk:"id"`
+	IsBuiltIn         types.Bool    `tfsdk:"is_built_in"`
+	LadderStepPercent types.Float64 `tfsdk:"ladder_step_percent"`
+	LookbackDays      types.Int64   `tfsdk:"lookback_days"`
+	Name              types.String  `tfsdk:"name"`
+	PolicyId          types.String  `tfsdk:"policy_id"`
+	TargetCoverage    types.Float64 `tfsdk:"target_coverage"`
+	UpdatedTime       types.String  `tfsdk:"updated_time"`
 }
 
 var _ basetypes.ObjectTypable = AssignmentsType{}
