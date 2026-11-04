@@ -40,7 +40,12 @@ resource "doit_report" "my_report" {
       include_current = true
       unit            = "month"
     }
-    # Compare against the same period last year
+    # Compare against the same period last year.
+    # The secondary range must not overlap the primary range. Days are compared
+    # in UTC, so a secondary custom_time_range must end on the UTC day before the
+    # primary range starts, or earlier. A relative secondary range (amount/unit)
+    # cannot be used with a "last" primary range longer than one year; use a
+    # custom_time_range instead.
     secondary_time_range = {
       amount          = 1
       unit            = "year"
