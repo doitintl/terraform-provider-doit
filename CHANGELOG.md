@@ -8,6 +8,8 @@
 
 - **data-source/doit_report_query, data-source/doit_report_result**: When `file_output` is set and the file is rendered, the API now clears `rows` from `result_json` (the rows are in the file) and `row_count` is null instead of the row count. `schema`, `forecastRows`, `secondaryRows` and `cacheHit` are unchanged. If rendering fails, `result_json` still contains every row and `file_output_url` is null. Configurations that read `jsondecode(result_json).rows` or `row_count` together with `file_output` must read the file instead, or drop `file_output`
 
+- **data-source/doit_ps4c_commitment_policy, data-source/doit_ps4c_commitment_policies**: Removed the `ladder_interval_days` attribute. The API no longer returns it because laddering steps are always 7 days apart for every policy. Configurations that reference it must drop the reference
+
 ### FEATURES
 
 - **resource/doit_customer_notification**: New resource to manage organization-wide cost-anomaly notifications, delivered by email, Slack and Microsoft Teams. Slack channel IDs and Teams conversation IDs are supplied by you, because the API cannot look them up yet. The API lowercases emails; the configured spelling is kept in state. Requires the `settings` (Manage settings) permission

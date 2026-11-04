@@ -14562,7 +14562,7 @@ components:
       description: |-
         A commitment-laddering policy, either built-in or defined by the tenant. Percentages are
         `1`–`100`, as entered in the DoiT Console, not the 0–1 fractions used by the recommendation and
-        inventory coverage fields.
+        inventory coverage fields. Laddering steps are always 7 days apart for every policy.
       required:
         - id
         - name
@@ -14570,7 +14570,6 @@ components:
         - targetCoverage
         - lookbackDays
         - ladderStepPercent
-        - ladderIntervalDays
         - bootstrapPercent
       properties:
         id:
@@ -14603,11 +14602,6 @@ components:
           maximum: 100
           description: Size of each incremental laddering step, as a percentage of the target commitment.
           example: 10
-        ladderIntervalDays:
-          type: integer
-          minimum: 1
-          description: Days between consecutive laddering steps.
-          example: 7
         bootstrapPercent:
           type: number
           format: double

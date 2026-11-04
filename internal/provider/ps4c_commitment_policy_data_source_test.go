@@ -24,7 +24,6 @@ func TestAccPs4cCommitmentPolicyDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_ps4c_commitment_policy.test", "target_coverage", "80"),
 					resource.TestCheckResourceAttr("data.doit_ps4c_commitment_policy.test", "lookback_days", "60"),
 					resource.TestCheckResourceAttr("data.doit_ps4c_commitment_policy.test", "ladder_step_percent", "10"),
-					resource.TestCheckResourceAttr("data.doit_ps4c_commitment_policy.test", "ladder_interval_days", "7"),
 					resource.TestCheckResourceAttr("data.doit_ps4c_commitment_policy.test", "bootstrap_percent", "35"),
 					resource.TestCheckResourceAttrSet("data.doit_ps4c_commitment_policy.test", "assignments.#"),
 				),
