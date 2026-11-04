@@ -55,7 +55,6 @@ Read-Only:
 - `bootstrap_percent` (Number) Share of the target commitment purchased in the first (immediate) step, as a percentage.
 - `id` (String) Policy identifier. Built-in policies use the fixed ids `conservative`, `balanced` and `max_savings`; custom policies have an opaque id.
 - `is_built_in` (Boolean) `true` for the three immutable built-in policies, `false` for tenant-defined policies.
-- `ladder_interval_days` (Number) Days between consecutive laddering steps.
 - `ladder_step_percent` (Number) Size of each incremental laddering step, as a percentage of the target commitment.
 - `lookback_days` (Number) Days of historical usage analyzed to build the recommendation baseline.
 - `name` (String) Display name. Built-in names are fixed; custom names are chosen by the tenant.

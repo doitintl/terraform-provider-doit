@@ -24,14 +24,13 @@ func mapCommitmentPoliciesToItemsList(ctx context.Context, policies []models.Com
 	vals := make([]attr.Value, 0, len(policies))
 	for _, p := range policies {
 		attrs := map[string]attr.Value{
-			"bootstrap_percent":    types.Float64Value(p.BootstrapPercent),
-			"id":                   types.StringValue(p.Id),
-			"is_built_in":          types.BoolValue(p.IsBuiltIn),
-			"ladder_interval_days": types.Int64Value(int64(p.LadderIntervalDays)),
-			"ladder_step_percent":  types.Float64Value(p.LadderStepPercent),
-			"lookback_days":        types.Int64Value(int64(p.LookbackDays)),
-			"name":                 types.StringValue(p.Name),
-			"target_coverage":      types.Float64Value(p.TargetCoverage),
+			"bootstrap_percent":   types.Float64Value(p.BootstrapPercent),
+			"id":                  types.StringValue(p.Id),
+			"is_built_in":         types.BoolValue(p.IsBuiltIn),
+			"ladder_step_percent": types.Float64Value(p.LadderStepPercent),
+			"lookback_days":       types.Int64Value(int64(p.LookbackDays)),
+			"name":                types.StringValue(p.Name),
+			"target_coverage":     types.Float64Value(p.TargetCoverage),
 		}
 		item, d := datasource_ps4c_commitment_policies.NewItemsValue(attrTypes, attrs)
 		diags.Append(d...)
