@@ -5,7 +5,10 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // The CI tenant has no DoiT Attribute plan, so these tests cannot run a real
@@ -181,5 +184,49 @@ func TestAccReportQuery_AttributionReachesAPI(t *testing.T) {
 				`{ id = "set_a", type = "attribution_tier_1" }`),
 			ExpectError: regexp.MustCompile(`(?i)entitlement_not_enabled|enable\s+Attribute`),
 		}},
+	})
+}
+
+// TestAccReport_OmittedDataSourceIsUnknownOnUpdate checks the plan behavior the
+// ModifyPlan guard for attribution reports relies on: when config omits
+// data_source and another attribute changes, the plan holds an unknown value,
+// not the stored one. The guard therefore reads the stored value when config
+// omits data_source. See TestReportResource_ModifyPlan_AttributionReportReadOnly.
+func TestAccReport_OmittedDataSourceIsUnknownOnUpdate(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(currency string) string {
+		return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-omitted-data-source-%d"
+  config = {
+    currency      = %q
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+}
+`, n, currency)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: config("USD")},
+			{
+				Config: config("EUR"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("doit_report.test", tfjsonpath.New("config").AtMapKey("data_source")),
+					},
+				},
+			},
+		},
 	})
 }

@@ -449,18 +449,40 @@ func TestReportResource_ModifyPlan_AttributionReportReadOnly(t *testing.T) {
 		return cfg
 	}
 
-	t.Run("update of an attribution report inherited from state is rejected", func(t *testing.T) {
+	// Config omits data_source. When another attribute changes, the framework
+	// plans the omitted computed data_source as unknown, not as the stored value
+	// (TestAccReport_OmittedDataSourceIsUnknownOnUpdate checks that against the
+	// real framework), so the guard has to look at the stored value.
+	t.Run("update of an attribution report with data_source omitted is rejected", func(t *testing.T) {
 		t.Parallel()
 
-		// Config omits data_source, so the plan inherits "attribution" from state.
 		state := attributionConfig("USD")
 		plan := attributionConfig("EUR")
+		plan["data_source"] = types.StringUnknown()
 		cfg := attributionConfig("EUR")
 		cfg["data_source"] = types.StringNull()
 
 		resp := lbcModifyPlan(ctx, t, state, plan, cfg)
 		if got := lbcCountErrors(resp.Diagnostics, attributionReportReadOnlySummary); got != 1 {
 			t.Fatalf("expected one %q error, got %d: %v", attributionReportReadOnlySummary, got, resp.Diagnostics)
+		}
+	})
+
+	t.Run("update of a billing report with data_source omitted is not rejected", func(t *testing.T) {
+		t.Parallel()
+
+		state := lbcBaseConfigMap(ctx, t)
+		state["data_source"] = types.StringValue("billing")
+		plan := lbcBaseConfigMap(ctx, t)
+		plan["data_source"] = types.StringUnknown()
+		plan["currency"] = types.StringValue("EUR")
+		cfg := lbcBaseConfigMap(ctx, t)
+		cfg["data_source"] = types.StringNull()
+		cfg["currency"] = types.StringValue("EUR")
+
+		resp := lbcModifyPlan(ctx, t, state, plan, cfg)
+		if got := lbcCountErrors(resp.Diagnostics, attributionReportReadOnlySummary); got != 0 {
+			t.Fatalf("expected no %q error, got %d: %v", attributionReportReadOnlySummary, got, resp.Diagnostics)
 		}
 	})
 
@@ -493,9 +515,10 @@ func TestReportResource_ModifyPlan_AttributionReportReadOnly(t *testing.T) {
 		}
 	})
 
-	// With an unknown data_source the outcome depends on the value it resolves
-	// to at apply, so the guard defers instead of assuming the stored value.
-	t.Run("unknown planned data source is deferred", func(t *testing.T) {
+	// With a configured but unknown data_source the outcome depends on the value
+	// it resolves to at apply, so the guard defers instead of assuming the
+	// stored value.
+	t.Run("configured unknown data source is deferred", func(t *testing.T) {
 		t.Parallel()
 
 		state := attributionConfig("USD")

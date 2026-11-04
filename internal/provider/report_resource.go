@@ -292,22 +292,34 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		return
 	}
 
-	// An attribution report (e.g. an imported console Attributions view) keeps
-	// data_source = "attribution" from prior state when config omits it, so the
-	// enum validator on data_source never sees it. The API merges an update into
-	// the stored report and rejects it when the merged data source is
-	// "attribution", so fail at plan time rather than at apply. This reads the
-	// planned value, not the stored one: an update that sets another data source
-	// is accepted by the API, and an unknown value is decided at apply.
+	// An attribution report (e.g. an imported console Attributions view) cannot
+	// be updated through the API, and the enum validator on data_source never sees
+	// the stored "attribution" value. The API merges an update into the stored
+	// report and rejects it when the merged data source is "attribution". When
+	// config omits data_source the plan holds an unknown value, because the
+	// framework marks computed attributes without a config value unknown whenever
+	// the plan changes, and the request then omits dataSource, which the API
+	// resets to the tenant default instead of keeping the stored one. So an
+	// omitted data_source means the stored value; a configured one is used as
+	// given, because an update that sets another data source is accepted; and an
+	// unknown one is decided at apply.
 	if !req.State.Raw.IsNull() && !req.Plan.Raw.Equal(req.State.Raw) {
+		dataSourcePath := path.Root("config").AtName("data_source")
+
 		var dataSource types.String
-		resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("data_source"), &dataSource)...)
+		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, dataSourcePath, &dataSource)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
+		if dataSource.IsNull() {
+			resp.Diagnostics.Append(req.State.GetAttribute(ctx, dataSourcePath, &dataSource)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
 		if !dataSource.IsUnknown() && !dataSource.IsNull() && dataSource.ValueString() == attributionReportDataSource {
 			resp.Diagnostics.AddAttributeError(
-				path.Root("config").AtName("data_source"),
+				dataSourcePath,
 				attributionReportReadOnlySummary,
 				attributionReportReadOnlyDetail,
 			)
