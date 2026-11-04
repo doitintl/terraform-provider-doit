@@ -405,3 +405,50 @@ func overlayListElements(ctx context.Context, resolved, plan interface{}, fn int
 
 // Package-level ctx for test function calls.
 var ctx = context.Background()
+
+// --- GOOD: Set elements overlaid by matching ---
+
+func overlayGoodNestedSetAlert(_ context.Context, resolved, plan *AlertsValue) {
+	// percentage: Optional+Computed — guarded by IsUnknown. ✓
+	if plan.Percentage.IsUnknown() {
+		plan.Percentage = resolved.Percentage
+	}
+	// triggered: Computed-only — unconditional. ✓
+	plan.Triggered = resolved.Triggered
+	// threshold: Required — not mentioned. ✓
+}
+
+func mapNestedSetToModel(apiResp *ApiResponse, m *NestedSetModel) {}
+
+func overlayNestedSetComputedFields(apiResp *ApiResponse, plan *NestedSetModel) {
+	resolved := *plan
+	mapNestedSetToModel(apiResp, &resolved)
+
+	plan.Id = resolved.Id
+
+	overlaySetElements(ctx, &resolved.Alerts, &plan.Alerts, overlayGoodNestedSetAlert)
+}
+
+// --- BAD: Set sub-overlay missing Computed-only nested field ---
+
+func overlayBadNestedSetMissing(_ context.Context, resolved, plan *AlertsValue) { // want `overlayBadNestedSetMissing: Computed-only field\(s\) not set from API response: triggered`
+	// percentage: Optional+Computed — guarded by IsUnknown. ✓
+	if plan.Percentage.IsUnknown() {
+		plan.Percentage = resolved.Percentage
+	}
+	// triggered: Computed-only — MISSING! ✗
+}
+
+func mapBadNestedSetMissingToModel(apiResp *ApiResponse, m *NestedSetModel) {}
+
+func overlayBadNestedSetMissingComputedFields(apiResp *ApiResponse, plan *NestedSetModel) {
+	resolved := *plan
+	mapBadNestedSetMissingToModel(apiResp, &resolved)
+
+	plan.Id = resolved.Id
+
+	overlaySetElements(ctx, &resolved.Alerts, &plan.Alerts, overlayBadNestedSetMissing)
+}
+
+// Stub overlaySetElements for test compilation.
+func overlaySetElements(ctx context.Context, resolved, plan interface{}, fn interface{}) {}

@@ -86,6 +86,7 @@ func testSchemaFacts(reverse bool) *schemaparser.SchemaFacts {
 			name: "empty_nested",
 			info: &schemaparser.AttrInfo{
 				Class:       schemaparser.Optional,
+				IsSet:       true,
 				NestedAttrs: map[string]*schemaparser.AttrInfo{},
 			},
 		},

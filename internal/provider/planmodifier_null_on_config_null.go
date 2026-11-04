@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 // useEmptyForUnknownWhenConfigNull returns a plan modifier that proposes an empty
@@ -88,4 +89,14 @@ func (m useEmptyForUnknownBoolWhenConfigNullModifier) PlanModifyBool(_ context.C
 	if req.ConfigValue.IsNull() && !req.StateValue.IsNull() {
 		resp.PlanValue = types.BoolValue(false)
 	}
+}
+
+// clearedValue implements configNullClearer for planSetNestedAttributesFromState.
+func (m useEmptyForUnknownWhenConfigNullModifier) clearedValue(t tftypes.Type) tftypes.Value {
+	return tftypes.NewValue(t, "")
+}
+
+// clearedValue implements configNullClearer for planSetNestedAttributesFromState.
+func (m useEmptyForUnknownBoolWhenConfigNullModifier) clearedValue(t tftypes.Type) tftypes.Value {
+	return tftypes.NewValue(t, false)
 }

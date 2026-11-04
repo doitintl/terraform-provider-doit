@@ -36,6 +36,7 @@ linters:
     - delete404
     - timeoutcheck
     - read404
+    - setnestedplan
     - configuretype
     - errformat
     - listnullread
@@ -92,6 +93,7 @@ linters:
           - delete404
           - timeoutcheck
           - read404
+          - setnestedplan
           - errformat
           - listnullread
           - usestatefunknown
@@ -117,6 +119,7 @@ linters:
           - delete404
           - timeoutcheck
           - read404
+          - setnestedplan
           - configuretype
           - errformat
           - listnullread
@@ -140,6 +143,7 @@ linters:
           - overlayinvariant
           - delete404
           - read404
+          - setnestedplan
           - listnullread
           - usestatefunknown
           - crudnaming
@@ -219,6 +223,9 @@ linters:
       read404:
         type: "module"
         description: "Ensures resource Read methods call RemoveResource for externally deleted resources."
+      setnestedplan:
+        type: "module"
+        description: "Ensures resources with Computed attributes inside a SetNestedAttribute plan the set from the prior state in ModifyPlan."
       configuretype:
         type: "module"
         description: "Detects mismatched Configure type strings (Data Source vs Resource)."

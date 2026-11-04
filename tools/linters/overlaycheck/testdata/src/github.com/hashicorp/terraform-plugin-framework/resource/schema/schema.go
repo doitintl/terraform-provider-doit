@@ -54,6 +54,15 @@ type ListNestedAttribute struct {
 	MarkdownDescription string
 }
 
+type SetNestedAttribute struct {
+	NestedObject        NestedAttributeObject
+	Required            bool
+	Optional            bool
+	Computed            bool
+	Description         string
+	MarkdownDescription string
+}
+
 type NestedAttributeObject struct {
 	Attributes map[string]Attribute
 }

@@ -2411,6 +2411,361 @@
 			}
 		},
 		{
+			"name": "customer_subscription",
+			"schema": {
+				"attributes": [
+					{
+						"name": "recipients",
+						"single_nested": {
+							"computed_optional_required": "required",
+							"attributes": [
+								{
+									"name": "emails",
+									"list": {
+										"computed_optional_required": "required",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Email destinations in stored order. Reads return each address trimmed and lowercase. Addresses must belong to the organization's approved domains and must be a user or a pending invite. `doit.com` and `doit-intl.com` pass the domain check. A blank email, an email with no domain, or a domain the tenant does not allow is refused with `422` and code `DOMAIN_NOT_APPROVED`. An email that is not a user or a pending invite is refused with `422` and code `NOT_INVITED_USER`. The same email twice, ignoring case, is refused with `422` and code `customers.duplicate_recipient`. An address already stored, and still present, is not checked again.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+														}
+													],
+													"schema_definition": "listvalidator.SizeAtLeast(0)"
+												}
+											}
+										]
+									}
+								},
+								{
+									"name": "slack_channels",
+									"list": {
+										"computed_optional_required": "required",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Slack channel ids in stored order. Reads return the public id. Ids are compared exactly after trim. A duplicate id is refused with `422` and code `customers.duplicate_recipient`. A blank or unconnected id is refused with `422` and code `SLACK_CHANNEL_NOT_CONNECTED`. This API does not list eligible channels.",
+										"validators": [
+											{
+												"custom": {
+													"imports": [
+														{
+															"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+														}
+													],
+													"schema_definition": "listvalidator.SizeAtLeast(0)"
+												}
+											}
+										]
+									}
+								}
+							],
+							"description": "Delivery targets. Both arrays are required."
+						}
+					},
+					{
+						"name": "subscriptions",
+						"set_nested": {
+							"computed_optional_required": "required",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "attachments",
+										"list": {
+											"computed_optional_required": "computed_optional",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Files to attach to the report email. Report only. Omitted stores an empty list.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+															}
+														],
+														"schema_definition": "listvalidator.UniqueValues()"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "pdf_settings",
+										"single_nested": {
+											"computed_optional_required": "computed_optional",
+											"attributes": [
+												{
+													"name": "include_annotations",
+													"bool": {
+														"computed_optional_required": "required",
+														"description": "Include annotations in the PDF time range."
+													}
+												},
+												{
+													"name": "include_table",
+													"bool": {
+														"computed_optional_required": "required",
+														"description": "Include the data table in the PDF."
+													}
+												},
+												{
+													"name": "show_filters",
+													"bool": {
+														"computed_optional_required": "required",
+														"description": "Include the report filters summary in the PDF."
+													}
+												}
+											],
+											"description": "PDF rendering options. Report only. Omitted stores all `true`."
+										}
+									},
+									{
+										"name": "schedule",
+										"single_nested": {
+											"computed_optional_required": "required",
+											"attributes": [
+												{
+													"name": "custom_period_amount",
+													"int64": {
+														"computed_optional_required": "computed_optional",
+														"description": "Number of `customPeriodUnit` between deliveries. Required when `frequency` is `Custom`. At least 1.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+																		}
+																	],
+																	"schema_definition": "int64validator.AtLeast(1)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "custom_period_unit",
+													"string": {
+														"computed_optional_required": "computed_optional",
+														"description": "Unit for `customPeriodAmount`. Required when `frequency` is `Custom`.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"Day\",\n\"Week\",\n\"Month\",\n\"Year\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "frequency",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "Delivery frequency to store.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.OneOf(\n\"Daily\",\n\"Weekly\",\n\"Monthly\",\n\"Annually\",\n\"Custom\",\n)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "start_date",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "When this schedule starts. The start day is the calendar date of this instant in `timeZone`, not its UTC date. To start on 2026-11-03 in `America/Los_Angeles`, send `2026-11-03T00:00:00-08:00` (`2026-11-03T08:00:00Z`). A read returns the stored instant as UTC RFC3339 (`Z`)."
+													}
+												},
+												{
+													"name": "time",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "Delivery clock to store. The value is an instant. A read returns it as UTC RFC3339 (`Z`) and does not preserve an offset. The calendar date is stored and is not the start date. Deliveries use only the hour and minute of that instant, interpreted in `timeZone`."
+													}
+												},
+												{
+													"name": "time_zone",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "IANA time zone for this schedule.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.LengthAtLeast(1)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "next_at",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Next calculated delivery, returned as UTC RFC3339 (`Z`). The server sets it. A schedule change recalculates it."
+													}
+												}
+											],
+											"description": "Delivery schedule."
+										}
+									},
+									{
+										"name": "source",
+										"single_nested": {
+											"computed_optional_required": "required",
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "required",
+														"description": "ID of the dashboard, report, or commitment. Must belong to the tenant. Report ids come from `GET /analytics/v1/reports` and `GET /analytics/v1/reports/{id}`. Commitment ids come from `GET /analytics/v1/commitment-manager` and `GET /analytics/v1/commitment-manager/{id}`. Create checks that id against the customer's dashboards and the preset dashboards.",
+														"validators": [
+															{
+																"custom": {
+																	"imports": [
+																		{
+																			"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+																		}
+																	],
+																	"schema_definition": "stringvalidator.LengthAtLeast(1)"
+																}
+															}
+														]
+													}
+												},
+												{
+													"name": "name",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Display name of the source resource."
+													}
+												}
+											],
+											"description": "Source to attach. Must belong to the tenant."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "required",
+											"description": "Scheduled subscription type.",
+											"validators": [
+												{
+													"custom": {
+														"imports": [
+															{
+																"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+															}
+														],
+														"schema_definition": "stringvalidator.OneOf(\n\"commitment-manager\",\n\"dashboard-subscription\",\n\"report-subscription\",\n)"
+													}
+												}
+											]
+										}
+									},
+									{
+										"name": "permissions",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "can_delete",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the caller may delete this subscription. Always `false` for an alert or a budget."
+													}
+												},
+												{
+													"name": "can_edit_recipients",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the caller may replace recipients."
+													}
+												},
+												{
+													"name": "can_unsubscribe",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the caller may remove their own recipient email."
+													}
+												}
+											],
+											"description": "Actions the authenticated caller may perform on this nested subscription."
+										}
+									}
+								]
+							},
+							"description": "Scheduled subscriptions to store on the new subscription. The server sorts them by `type` ascending. Request order is not stored and is not significant. A change of only that order does not write. The response is ordered by `type`, not by this request.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+											}
+										],
+										"schema_definition": "setvalidator.SizeBetween(1, 3)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "created_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email address of the subscription creator. On create, the caller."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Opaque version token for optimistic concurrency. 64 lowercase hex characters when set. The response `ETag` header is this value wrapped in double quotes. Send `If-Match: \"\u003cetag\u003e\"`. `null` only on a dry-run create. It only covers fields this API can write."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Server-assigned subscription id. `null` only on a dry-run create."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Display name. For a scheduled subscription, `{source name}` plus `(Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, from the nested type that sorts first. For an alert or a budget, the source name."
+						}
+					}
+				],
+				"description": "Create, view, update, and delete dashboard, report, commitment, alert, and budget subscriptions. This is not Organization-wide notifications.",
+				"markdown_description": "Create, view, update, and delete dashboard, report, commitment, alert, and budget subscriptions. This is not Organization-wide notifications."
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [

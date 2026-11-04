@@ -58,6 +58,8 @@ type AttrInfo struct {
 	Class FieldClass
 	// IsList is true if the attribute is a ListAttribute or ListNestedAttribute.
 	IsList bool
+	// IsSet is true if the attribute is a SetAttribute or SetNestedAttribute.
+	IsSet bool
 	// HasDefault is true if the attribute has a Default value in the schema.
 	// Fields with defaults are resolved at plan time and are never Unknown,
 	// so they don't need IsUnknown() guards in overlay functions.
@@ -272,6 +274,7 @@ func classifyAttributeLit(lit *ast.CompositeLit) *AttrInfo {
 
 	// Check if it's a list type.
 	info.IsList = strings.HasPrefix(typeName, "List")
+	info.IsSet = strings.HasPrefix(typeName, "Set")
 
 	for _, elt := range lit.Elts {
 		kv, ok := elt.(*ast.KeyValueExpr)
@@ -297,6 +300,9 @@ func classifyAttributeLit(lit *ast.CompositeLit) *AttrInfo {
 				info.HasDefault = true
 				info.DefaultValue = extractStaticDefault(kv.Value)
 			}
+		case "PlanModifiers":
+			// PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}
+			info.PlanModifiers = appendUnique(info.PlanModifiers, extractModifierNames(kv.Value)...)
 		case "NestedObject":
 			// Recurse into nested attributes (ListNestedAttribute, SetNestedAttribute).
 			nestedLit, ok := kv.Value.(*ast.CompositeLit)
@@ -789,6 +795,7 @@ func applyIfBlockOverride(ifStmt *ast.IfStmt, schemaVar string, schema *SchemaIn
 	if exists {
 		// Copy existing metadata that isn't affected by classification changes.
 		info.IsList = existing.IsList
+		info.IsSet = existing.IsSet
 		info.HasDefault = existing.HasDefault
 		info.DefaultValue = existing.DefaultValue
 		info.NestedAttrs = existing.NestedAttrs
@@ -985,6 +992,7 @@ func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 	dst := &AttrInfo{
 		Class:                  src.Class,
 		IsList:                 src.IsList,
+		IsSet:                  src.IsSet,
 		HasDefault:             src.HasDefault,
 		DefaultValue:           src.DefaultValue,
 		NotClearable:           src.NotClearable,

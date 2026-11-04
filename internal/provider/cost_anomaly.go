@@ -107,6 +107,9 @@ func setCostAnomalyDescriptions(attributes map[string]schema.Attribute, descript
 		case schema.Int64Attribute:
 			a.Description, a.MarkdownDescription = description, description
 			attributes[name] = a
+		case schema.BoolAttribute:
+			a.Description, a.MarkdownDescription = description, description
+			attributes[name] = a
 		case schema.ListAttribute:
 			a.Description, a.MarkdownDescription = description, description
 			attributes[name] = a

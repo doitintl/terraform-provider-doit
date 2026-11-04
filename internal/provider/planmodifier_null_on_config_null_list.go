@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 // useNullForUnknownListWhenConfigNull is the List equivalent of
@@ -37,4 +38,9 @@ func (m useNullForUnknownListWhenConfigNullModifier) PlanModifyList(ctx context.
 		resp.Diagnostics.Append(diags...)
 		resp.PlanValue = emptyList
 	}
+}
+
+// clearedValue implements configNullClearer for planSetNestedAttributesFromState.
+func (m useNullForUnknownListWhenConfigNullModifier) clearedValue(t tftypes.Type) tftypes.Value {
+	return tftypes.NewValue(t, []tftypes.Value{})
 }

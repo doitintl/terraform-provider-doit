@@ -105,6 +105,22 @@ func overlayMyResourceAlert(_ context.Context, resolved, plan *resource_myresour
 }
 ```
 
+**Pattern: `overlaySetElements` for SetNestedAttribute**
+
+Set elements have no index, so `overlaySetElements` pairs each planned element
+with the resolved element that agrees with its known values. It takes the same
+sub-overlay callback, which the linter validates the same way. A resource with a
+set-nested attribute also needs `planSetNestedAttributesFromState` in
+`ModifyPlan`; see [Set Nested Attributes](../SKILL.md#set-nested-attributes).
+
+```go
+if plan.Items.IsUnknown() {
+    plan.Items = resolved.Items
+} else if !plan.Items.IsNull() {
+    diags.Append(overlaySetElements(ctx, &resolved.Items, &plan.Items, overlayMyResourceItem)...)
+}
+```
+
 **Pattern: direct sub-overlay for SingleNestedAttribute**
 
 ```go
