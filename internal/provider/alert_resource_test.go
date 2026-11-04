@@ -1042,6 +1042,21 @@ func TestAccAlert_ScopesAliasTypes(t *testing.T) {
 				Config:           testAccAlertScopesAliasTypes(n, "attribution", "attribution", testAttribution()),
 				ConfigPlanChecks: noDrift,
 			},
+			// Migrate back to the replacement names, as the deprecation
+			// warning recommends: an update, not a create.
+			{
+				Config: testAccAlertScopesAliasTypes(n, "allocation_rule", "allocation_rule", testAttribution()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction("doit_alert.this", plancheck.ResourceActionUpdate),
+				}},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_alert.this", scopesPath, scope("allocation_rule", "allocation_rule")),
+				},
+			},
+			{
+				Config:           testAccAlertScopesAliasTypes(n, "allocation_rule", "allocation_rule", testAttribution()),
+				ConfigPlanChecks: noDrift,
+			},
 			// Import has no prior state to preserve the configured spelling, so
 			// the API's canonical names come back.
 			{
@@ -1097,6 +1112,21 @@ func TestAccAlert_ScopesAliasTypesGroup(t *testing.T) {
 			},
 			{
 				Config:           testAccAlertScopesAliasTypes(n, "attribution_group", groupID, "x"),
+				ConfigPlanChecks: noDrift,
+			},
+			// Migrate back to the replacement name, as the deprecation warning
+			// recommends: an update, not a create.
+			{
+				Config: testAccAlertScopesAliasTypes(n, "allocation", groupID, "x"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction("doit_alert.this", plancheck.ResourceActionUpdate),
+				}},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_alert.this", scopesPath, scopeType("allocation")),
+				},
+			},
+			{
+				Config:           testAccAlertScopesAliasTypes(n, "allocation", groupID, "x"),
 				ConfigPlanChecks: noDrift,
 			},
 		},
