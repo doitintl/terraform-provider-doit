@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: modelsv2
+output: models_gen.go
+generate:
+  models: true
+  client: true
+compatibility:
+  always-prefix-enum-values: true
+output-options:
+  response-type-suffix: Resp
+  nullable-type: true

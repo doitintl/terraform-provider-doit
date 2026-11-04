@@ -1,0 +1,7 @@
+# Data sources generated from OpenAPI/openapi_spec_v2.yml (api-specs, external-api-v2).
+# Same format as OpenAPI/1_tfplugingen-openapi/datasources.yml. A data source lives
+# in exactly one of the two configs. `make generate-v2` skips the schema generator
+# while this file has no entries.
+provider:
+  name: doit
+data_sources: {}

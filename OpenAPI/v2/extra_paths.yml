@@ -1,0 +1,4 @@
+# Additional path+method pairs used by manually-written resources/data sources
+# that are served by the v2 spec but have no entry in resources.yml or
+# datasources.yml. Same format as OpenAPI/extra_paths.yml.
+paths: []
