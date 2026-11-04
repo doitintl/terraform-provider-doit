@@ -32,7 +32,7 @@ generate:
 	for f in OpenAPI/2_tfplugingen-framework/output_datasources.json OpenAPI/2_tfplugingen-framework/output_resources.json; do \
 		[ -n "$$(tail -c 1 "$$f")" ] && echo >> "$$f"; \
 	done
-	cd internal/provider/models && go generate ./...
+	cd internal/provider/models && go generate .
 
 # Generate the v2 (api-specs) models and Terraform schemas. Independent of `generate`.
 # V2_SPEC can point at a local file (e.g. a downloaded external-api-v2-full.yaml)
@@ -54,7 +54,7 @@ generate-v2:
 		(cd $(V2_FRAMEWORK_DIR) && go run github.com/doitintl/terraform-plugin-codegen-framework/cmd/tfplugingen-framework generate data-sources --input output_datasources_v2.json --output ../../internal/provider); \
 		[ -n "$$(tail -c 1 $(V2_FRAMEWORK_DIR)/output_datasources_v2.json)" ] && echo >> $(V2_FRAMEWORK_DIR)/output_datasources_v2.json || true; \
 	else echo "v2: no data sources configured, skipping data source schemas"; fi
-	cd internal/provider/models/v2 && go generate ./...
+	cd internal/provider/models/v2 && go generate .
 
 # Generate provider documentation from templates
 docs:
