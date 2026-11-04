@@ -91,6 +91,7 @@ Verify code generation still works:
 
 ```bash
 make generate
+make generate-v2
 make docs
 ```
 
@@ -300,8 +301,9 @@ golangci-lint run
 
 # Generate and check for drift
 make generate
+make generate-v2
 make docs
-git diff --exit-code -- docs/ internal/provider/datasource_* internal/provider/resource_*
+git diff --exit-code -- docs/ internal/provider/datasource_* internal/provider/resource_* internal/provider/models OpenAPI/openapi_spec_processed.yml OpenAPI/openapi_spec_v2_processed.yml OpenAPI/2_tfplugingen-framework
 
 # Run the unit suite (see the `testing` skill). `make test` clears TF_ACC, so it
 # runs only unit tests even when TF_ACC=1 is set in your shell (e.g. from
