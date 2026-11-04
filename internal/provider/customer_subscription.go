@@ -246,7 +246,7 @@ func buildCustomerSubscriptionSchedule(ctx context.Context, schedule *models.Cus
 
 	nextAt := types.StringNull()
 	if schedule.NextAt != nil {
-		nextAt = types.StringValue(schedule.NextAt.UTC().Format(time.RFC3339))
+		nextAt = types.StringValue(schedule.NextAt.UTC().Format(time.RFC3339Nano))
 	}
 
 	customPeriodUnit := types.StringNull()
@@ -270,7 +270,8 @@ func buildCustomerSubscriptionSchedule(ctx context.Context, schedule *models.Cus
 
 // preserveCustomerSubscriptionTimestamp returns the prior value when it is the
 // same instant as the API's: the API drops the offset of a configured
-// timestamp and returns it in UTC.
+// timestamp and returns it in UTC. The API keeps fractional seconds, so the
+// fallback keeps them too.
 func preserveCustomerSubscriptionTimestamp(prior types.String, apiValue time.Time) types.String {
 	if !prior.IsNull() && !prior.IsUnknown() {
 		priorTime, err := time.Parse(time.RFC3339, prior.ValueString())
@@ -278,7 +279,7 @@ func preserveCustomerSubscriptionTimestamp(prior types.String, apiValue time.Tim
 			return prior
 		}
 	}
-	return types.StringValue(apiValue.UTC().Format(time.RFC3339))
+	return types.StringValue(apiValue.UTC().Format(time.RFC3339Nano))
 }
 
 // overlayCustomerSubscriptionComputedFields applies the plan-first overlay for Create/Update.
@@ -396,40 +397,47 @@ func (plan *customerSubscriptionResourceModel) toCreateRequest(ctx context.Conte
 
 // toUpdateRequest converts the TF model to a JSON merge patch (RFC 7396).
 //
-// The patch always carries both recipient lists and the full subscriptions set:
-// the API removes entry types that are missing from the set. An omitted
-// attachments list is planned as [], which clears it; an omitted pdf_settings
-// is unknown and not sent, so the API keeps the stored value.
-func (plan *customerSubscriptionResourceModel) toUpdateRequest(ctx context.Context) (models.UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody, diag.Diagnostics) {
+// The patch carries only the parts that change: the API checks permissions per
+// part, and a recipient-only patch must not carry the report attachments and
+// PDF settings of the subscriptions. state is the prior state.
+//
+// Changed subscriptions are sent as the full set: the API removes entry types
+// that are missing from it. An omitted attachments list is planned as [],
+// which clears it; an omitted pdf_settings is unknown and not sent, so the API
+// keeps the stored value. The API needs recipients or subscriptions, so
+// recipients are sent when neither changed (a patch that writes nothing).
+func (plan *customerSubscriptionResourceModel) toUpdateRequest(ctx context.Context, state *customerSubscriptionResourceModel) (models.UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
+	var req models.UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody
 
-	recipients, d := plan.customerSubscriptionRecipients(ctx)
-	diags.Append(d...)
+	if !plan.Subscriptions.Equal(state.Subscriptions) {
+		var entries []resource_customer_subscription.SubscriptionsValue
+		diags.Append(plan.Subscriptions.ElementsAs(ctx, &entries, false)...)
 
-	var entries []resource_customer_subscription.SubscriptionsValue
-	diags.Append(plan.Subscriptions.ElementsAs(ctx, &entries, false)...)
-
-	patches := make([]models.CustomerSubscriptionEntryPatch, 0, len(entries))
-	for _, entry := range entries {
-		schedule, d := toCustomerSubscriptionScheduleInput(entry.Schedule)
-		diags.Append(d...)
-		attachments, pdfSettings, d := toCustomerSubscriptionReportOptions(ctx, entry)
-		diags.Append(d...)
-		patches = append(patches, models.CustomerSubscriptionEntryPatch{
-			Type:        models.CustomerSubscriptionType(entry.SubscriptionsType.ValueString()),
-			Source:      models.CustomerSubscriptionSourceInput{Id: entry.Source.Id.ValueString()},
-			Schedule:    &schedule,
-			Attachments: attachments,
-			PdfSettings: pdfSettings,
-		})
+		patches := make([]models.CustomerSubscriptionEntryPatch, 0, len(entries))
+		for _, entry := range entries {
+			schedule, d := toCustomerSubscriptionScheduleInput(entry.Schedule)
+			diags.Append(d...)
+			attachments, pdfSettings, d := toCustomerSubscriptionReportOptions(ctx, entry)
+			diags.Append(d...)
+			patches = append(patches, models.CustomerSubscriptionEntryPatch{
+				Type:        models.CustomerSubscriptionType(entry.SubscriptionsType.ValueString()),
+				Source:      models.CustomerSubscriptionSourceInput{Id: entry.Source.Id.ValueString()},
+				Schedule:    &schedule,
+				Attachments: attachments,
+				PdfSettings: pdfSettings,
+			})
+		}
+		req.Subscriptions = &patches
 	}
 
-	req := models.UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody{
-		Recipients: &models.CustomerSubscriptionRecipientPatch{
+	if !plan.Recipients.Equal(state.Recipients) || req.Subscriptions == nil {
+		recipients, d := plan.customerSubscriptionRecipients(ctx)
+		diags.Append(d...)
+		req.Recipients = &models.CustomerSubscriptionRecipientPatch{
 			Emails:        &recipients.Emails,
 			SlackChannels: &recipients.SlackChannels,
-		},
-		Subscriptions: &patches,
+		}
 	}
 
 	return req, diags

@@ -73,7 +73,9 @@ func run(pass *analysis.Pass) (any, error) {
 			continue
 		}
 		if path := stateForUnknownInSet(info.Attrs, "", false); path != "" {
-			pass.Reportf(m.fn.Body.Lbrace,
+			// Reported at the closing brace: golangci-lint keeps one issue per
+			// line, and the ModifyPlan finding below is at the declaration.
+			pass.Reportf(m.fn.Body.Rbrace,
 				"%q is inside a set element and has UseStateForUnknown: the framework passes set element "+
 					"plan modifiers the prior state of the element at the same index, so it can copy another element's value",
 				path)

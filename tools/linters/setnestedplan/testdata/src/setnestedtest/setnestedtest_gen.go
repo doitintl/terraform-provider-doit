@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 
@@ -99,6 +101,59 @@ func StateForUnknownResourceSchema(ctx context.Context) schema.Schema {
 					Attributes: map[string]schema.Attribute{
 						"name":   schema.StringAttribute{Required: true},
 						"status": schema.StringAttribute{Computed: true},
+					},
+				},
+				Required: true,
+			},
+		},
+	}
+}
+
+func LiteralStateForUnknownResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"items": schema.SetNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Required: true},
+						"status": schema.StringAttribute{
+							Computed:      true,
+							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						},
+					},
+				},
+				Required: true,
+			},
+		},
+	}
+}
+
+func ReplacedStateForUnknownResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"items": schema.SetNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Required: true},
+					},
+				},
+				Required: true,
+			},
+		},
+	}
+}
+
+func BothProblemsResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"items": schema.SetNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Required: true},
+						"status": schema.StringAttribute{
+							Computed:      true,
+							PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						},
 					},
 				},
 				Required: true,

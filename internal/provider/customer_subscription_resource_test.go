@@ -219,6 +219,10 @@ func TestAccCustomerSubscription_SetMembership(t *testing.T) {
 	both := testAccCustomerSubscriptionConfig(rName, testAccCustomerSubscriptionEmailRecipients(),
 		testAccCustomerSubscriptionReportEntry(testAccCustomerSubscriptionSchedule, ""),
 		testAccCustomerSubscriptionCommitmentEntry())
+	// Only the report entry changes; the commitment entry stays as it is.
+	bothReportChanged := testAccCustomerSubscriptionConfig(rName, testAccCustomerSubscriptionEmailRecipients(),
+		testAccCustomerSubscriptionReportEntry(strings.Replace(testAccCustomerSubscriptionSchedule, "T08:00:00Z", "T10:30:00Z", 1), ""),
+		testAccCustomerSubscriptionCommitmentEntry())
 	commitmentOnly := testAccCustomerSubscriptionConfig(rName, testAccCustomerSubscriptionEmailRecipients(),
 		testAccCustomerSubscriptionCommitmentEntry())
 
@@ -244,6 +248,24 @@ func TestAccCustomerSubscription_SetMembership(t *testing.T) {
 				},
 			},
 			testAccCustomerSubscriptionDriftCheck(both),
+			// Changing one entry keeps the computed values of the other known.
+			{
+				Config: bothReportChanged,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(testAccCustomerSubscriptionAddr, plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue(testAccCustomerSubscriptionAddr, tfjsonpath.New("subscriptions"), knownvalue.SetPartial([]knownvalue.Check{
+							knownvalue.ObjectPartial(map[string]knownvalue.Check{
+								"type":        knownvalue.StringExact("commitment-manager"),
+								"permissions": knownvalue.NotNull(),
+								"source":      knownvalue.ObjectPartial(map[string]knownvalue.Check{"name": knownvalue.NotNull()}),
+								"schedule":    knownvalue.ObjectPartial(map[string]knownvalue.Check{"next_at": knownvalue.NotNull()}),
+							}),
+						})),
+					},
+				},
+			},
+			testAccCustomerSubscriptionDriftCheck(bothReportChanged),
 			{
 				Config: commitmentOnly,
 				ConfigPlanChecks: resource.ConfigPlanChecks{

@@ -1,7 +1,11 @@
 // Stub package for analysistest.
 package schema
 
-import "context"
+import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+)
 
 type Schema struct {
 	Attributes          map[string]Attribute
@@ -16,7 +20,7 @@ type StringAttribute struct {
 	Optional            bool
 	Computed            bool
 	Default             interface{}
-	PlanModifiers       []interface{}
+	PlanModifiers       []planmodifier.String
 	Description         string
 	MarkdownDescription string
 }

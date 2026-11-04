@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
@@ -58,7 +59,7 @@ func (r *configOnlyResource) Schema(ctx context.Context, _ resource.SchemaReques
 
 type stateForUnknownResource struct{}
 
-func (r *stateForUnknownResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `"items\[\*\].status" is inside a set element and has UseStateForUnknown`
+func (r *stateForUnknownResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := StateForUnknownResourceSchema(ctx)
 	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
 		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
@@ -72,8 +73,55 @@ func (r *stateForUnknownResource) Schema(ctx context.Context, _ resource.SchemaR
 		s.Attributes["items"] = items
 	}
 	resp.Schema = s
-}
+} // want `"items\[\*\].status" is inside a set element and has UseStateForUnknown`
 
 func (r *stateForUnknownResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	planSetNestedAttributesFromState(ctx, req, resp)
 }
+
+// --- BAD: UseStateForUnknown in a generated attribute literal ---
+
+type literalStateForUnknownResource struct{}
+
+func (r *literalStateForUnknownResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := LiteralStateForUnknownResourceSchema(ctx)
+	resp.Schema = s
+} // want `"items\[\*\].status" is inside a set element and has UseStateForUnknown`
+
+func (r *literalStateForUnknownResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planSetNestedAttributesFromState(ctx, req, resp)
+}
+
+// --- BAD: UseStateForUnknown in a full attribute replacement in Schema() ---
+
+type replacedStateForUnknownResource struct{}
+
+func (r *replacedStateForUnknownResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := ReplacedStateForUnknownResourceSchema(ctx)
+	s.Attributes["items"] = schema.SetNestedAttribute{
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"name": schema.StringAttribute{Required: true},
+				"status": schema.StringAttribute{
+					Computed:      true,
+					PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				},
+			},
+		},
+		Required: true,
+	}
+	resp.Schema = s
+} // want `"items\[\*\].status" is inside a set element and has UseStateForUnknown`
+
+func (r *replacedStateForUnknownResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planSetNestedAttributesFromState(ctx, req, resp)
+}
+
+// --- BAD: both problems; each is reported on its own line ---
+
+type bothProblemsResource struct{}
+
+func (r *bothProblemsResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `SetNestedAttribute "items" has Computed attributes in its elements`
+	s := BothProblemsResourceSchema(ctx)
+	resp.Schema = s
+} // want `"items\[\*\].status" is inside a set element and has UseStateForUnknown`

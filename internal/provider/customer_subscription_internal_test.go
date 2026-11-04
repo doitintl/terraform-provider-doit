@@ -452,28 +452,63 @@ func TestCustomerSubscriptionToCreateRequest(t *testing.T) {
 }
 
 func TestCustomerSubscriptionToUpdateRequest(t *testing.T) {
-	// The patch carries both recipient lists and the full set: the API removes
-	// entry types that are missing from it.
 	resp := testCustomerSubscriptionResponse()
 	resp.Recipients.SlackChannels = nil
-	plan := customerSubscriptionPlanFromResponse(t, resp)
-	plan.Subscriptions = withCustomerSubscriptionEntry(t, plan.Subscriptions, "report-subscription",
-		map[string]attr.Value{"pdf_settings": resource_customer_subscription.NewPdfSettingsValueUnknown()}, nil, nil)
+	state := customerSubscriptionPlanFromResponse(t, resp)
 
-	req, diags := plan.toUpdateRequest(t.Context())
+	const recipients = `"recipients": {"emails": ["finops@example.com"], "slackChannels": []}`
+	// Changed subscriptions are sent as the full set: the API removes entry
+	// types that are missing from it.
+	const subscriptions = `"subscriptions": [
+		{"type": "dashboard-subscription", "source": {"id": "dash-1"},
+		 "schedule": {"frequency": "Weekly", "startDate": "2026-11-03T08:00:00Z", "time": "2026-11-03T08:00:00Z", "timeZone": "America/Los_Angeles"}},
+		{"type": "report-subscription", "source": {"id": "report-1"},
+		 "schedule": {"frequency": "Custom", "customPeriodAmount": 2, "customPeriodUnit": "Week", "startDate": "2026-11-03T08:00:00Z", "time": "2026-11-03T08:00:00Z", "timeZone": "America/Los_Angeles"},
+		 "attachments": ["pdf"]}
+	]`
+	changedSubscriptions := withCustomerSubscriptionEntry(t, state.Subscriptions, "report-subscription",
+		map[string]attr.Value{"pdf_settings": resource_customer_subscription.NewPdfSettingsValueUnknown()}, nil, nil)
+	changedRecipients, diags := types.ListValueFrom(t.Context(), types.StringType, []string{"finops@example.com"})
 	if diags.HasError() {
-		t.Fatalf("unexpected diagnostics: %v", diags)
+		t.Fatal(diags)
 	}
-	assertJSONEqual(t, req, `{
-		"recipients": {"emails": ["finops@example.com"], "slackChannels": []},
-		"subscriptions": [
-			{"type": "dashboard-subscription", "source": {"id": "dash-1"},
-			 "schedule": {"frequency": "Weekly", "startDate": "2026-11-03T08:00:00Z", "time": "2026-11-03T08:00:00Z", "timeZone": "America/Los_Angeles"}},
-			{"type": "report-subscription", "source": {"id": "report-1"},
-			 "schedule": {"frequency": "Custom", "customPeriodAmount": 2, "customPeriodUnit": "Week", "startDate": "2026-11-03T08:00:00Z", "time": "2026-11-03T08:00:00Z", "timeZone": "America/Los_Angeles"},
-			 "attachments": ["pdf"]}
-		]
-	}`)
+	changedSlack, diags := types.ListValueFrom(t.Context(), types.StringType, []string{"C0123ABCD"})
+	if diags.HasError() {
+		t.Fatal(diags)
+	}
+	recipientsWithSlack := resource_customer_subscription.NewRecipientsValueMust(
+		resource_customer_subscription.RecipientsValue{}.AttributeTypes(t.Context()),
+		map[string]attr.Value{"emails": changedRecipients, "slack_channels": changedSlack},
+	)
+
+	tests := []struct {
+		name string
+		plan func(*customerSubscriptionResourceModel)
+		want string
+	}{
+		// A recipient-only patch must not carry the stored report options.
+		{"recipients changed", func(p *customerSubscriptionResourceModel) { p.Recipients = recipientsWithSlack },
+			`{"recipients": {"emails": ["finops@example.com"], "slackChannels": ["C0123ABCD"]}}`},
+		{"subscriptions changed", func(p *customerSubscriptionResourceModel) { p.Subscriptions = changedSubscriptions },
+			`{` + subscriptions + `}`},
+		{"both changed", func(p *customerSubscriptionResourceModel) {
+			p.Recipients = recipientsWithSlack
+			p.Subscriptions = changedSubscriptions
+		}, `{"recipients": {"emails": ["finops@example.com"], "slackChannels": ["C0123ABCD"]}, ` + subscriptions + `}`},
+		// The API needs one of the two; unchanged recipients write nothing.
+		{"neither changed", func(*customerSubscriptionResourceModel) {}, `{` + recipients + `}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plan := state
+			tt.plan(&plan)
+			req, diags := plan.toUpdateRequest(t.Context(), &state)
+			if diags.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", diags)
+			}
+			assertJSONEqual(t, req, tt.want)
+		})
+	}
 }
 
 // TestCustomerSubscriptionResourceDelete runs every case through the plain test
@@ -711,5 +746,30 @@ func TestValidateCustomerSubscriptionEntries(t *testing.T) {
 			validateCustomerSubscriptionEntries(tt.value, &diags)
 			assertSingleError(t, diags, tt.summary, tt.path)
 		})
+	}
+}
+
+// The API keeps fractional seconds, so a timestamp without a prior spelling
+// (import, or a value changed outside Terraform) keeps them too.
+func TestMapCustomerSubscriptionToModel_FractionalSeconds(t *testing.T) {
+	resp := testCustomerSubscriptionResponse()
+	schedule := resp.Subscriptions[0].Schedule
+	schedule.StartDate = time.Date(2030, 1, 7, 0, 0, 0, 123000000, time.UTC)
+	schedule.Time = time.Date(2030, 1, 7, 8, 0, 0, 456789000, time.UTC)
+	nextAt := time.Date(2030, 1, 14, 8, 0, 0, 500000000, time.UTC)
+	schedule.NextAt = &nextAt
+
+	var state customerSubscriptionResourceModel
+	mustMapCustomerSubscription(t, resp, &state)
+
+	s := customerSubscriptionEntries(t, state.Subscriptions)["dashboard-subscription"].Schedule
+	if got := s.StartDate.ValueString(); got != "2030-01-07T00:00:00.123Z" {
+		t.Errorf("start_date = %q", got)
+	}
+	if got := s.Time.ValueString(); got != "2030-01-07T08:00:00.456789Z" {
+		t.Errorf("time = %q", got)
+	}
+	if got := s.NextAt.ValueString(); got != "2030-01-14T08:00:00.5Z" {
+		t.Errorf("next_at = %q", got)
 	}
 }

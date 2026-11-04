@@ -300,6 +300,9 @@ func classifyAttributeLit(lit *ast.CompositeLit) *AttrInfo {
 				info.HasDefault = true
 				info.DefaultValue = extractStaticDefault(kv.Value)
 			}
+		case "PlanModifiers":
+			// PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}
+			info.PlanModifiers = appendUnique(info.PlanModifiers, extractModifierNames(kv.Value)...)
 		case "NestedObject":
 			// Recurse into nested attributes (ListNestedAttribute, SetNestedAttribute).
 			nestedLit, ok := kv.Value.(*ast.CompositeLit)

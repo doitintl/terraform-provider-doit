@@ -255,7 +255,7 @@ func (r *customerSubscriptionResource) Update(ctx context.Context, req resource.
 		return
 	}
 
-	apiReq, diags := plan.toUpdateRequest(ctx)
+	apiReq, diags := plan.toUpdateRequest(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
