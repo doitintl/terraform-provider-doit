@@ -314,7 +314,7 @@ Common patterns:
 | Normalization | Example | Impact |
 |---------------|---------|--------|
 | Sentinel stripping | `[Service N/A]` → `Service` | Need `mergeSentinelValues` in Read |
-| Type aliasing | `allocation_rule` → `attribution` | Need `normalizeDimensionsType` |
+| Type aliasing | `allocation_rule` → `attribution` | Need `normalizeDimensionsType` (for the type **and** its paired id). Whether an endpoint accepts the new alias varies per endpoint and changes over time (alerts and `GET /dimension` rejected it until Nov 2026, #384/#443): probe each endpoint before deciding where a deprecation warning goes, and never leave a "API rejects X" workaround without an acceptance test that notices when it stops being true |
 | Timestamp to UTC | `2024-01-15T00:00:00-05:00` → `2024-01-15T05:00:00Z` | Need timestamp preservation |
 | Boolean defaults | `include_null: true` → API returns `false` | Need state-first read pattern |
 | Empty list to null | `scopes: []` → API returns `null` | Need empty-list fallback |

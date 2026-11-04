@@ -1,6 +1,8 @@
 package provider_test
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -58,4 +60,52 @@ data "doit_dimension" "test" {
   id   = data.doit_dimensions.first.dimensions[0].id
 }
 `
+}
+
+// TestAccDimensionDataSource_AllocationTypes verifies that the replacement and
+// legacy dimension types both resolve, and that state keeps the configured
+// spelling even though the API reports "allocation_rule"/"allocation" for both
+// (#443). The API pairs each type with its own id, so they change together.
+func TestAccDimensionDataSource_AllocationTypes(t *testing.T) {
+	cases := map[string][2]string{
+		"allocation_rule": {"allocation_rule", "allocation_rule"},
+		"attribution":     {"attribution", "attribution"},
+	}
+	if groupID := os.Getenv("TEST_ATTRIBUTION_GROUP"); groupID != "" {
+		cases["allocation"] = [2]string{"allocation", groupID}
+		cases["attribution_group"] = [2]string{"attribution_group", groupID}
+	}
+
+	for name, tc := range cases {
+		typ, id := tc[0], tc[1]
+		t.Run(name, func(t *testing.T) {
+			config := fmt.Sprintf(`
+data "doit_dimension" "test" {
+  type = %q
+  id   = %q
+}
+`, typ, id)
+			resource.ParallelTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+				PreCheck:                 testAccPreCheckFunc(t),
+				TerraformVersionChecks:   testAccTFVersionChecks,
+				Steps: []resource.TestStep{
+					{
+						Config: config,
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.doit_dimension.test", "type", typ),
+							resource.TestCheckResourceAttr("data.doit_dimension.test", "id", id),
+							resource.TestCheckResourceAttrSet("data.doit_dimension.test", "label"),
+						),
+					},
+					{
+						Config: config,
+						ConfigPlanChecks: resource.ConfigPlanChecks{
+							PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+						},
+					},
+				},
+			})
+		})
+	}
 }

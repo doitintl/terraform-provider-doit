@@ -61,7 +61,7 @@ func TestDeprecatedDimensionsTypeValidator(t *testing.T) {
 		{
 			name:       "attribution",
 			value:      types.StringValue("attribution"),
-			wantDetail: `Dimension type "attribution" is deprecated and will soon no longer be supported by the DoiT API. Use "allocation_rule" instead.`,
+			wantDetail: `Dimension type "attribution" is deprecated and will soon no longer be supported by the DoiT API. Use "allocation_rule" instead. If this block also sets "id", change it from "attribution" to "allocation_rule" as well.`,
 		},
 		{
 			name:       "attribution group",
@@ -135,6 +135,10 @@ func TestDeprecatedDimensionsTypeValidatorResourceSchemaWiring(t *testing.T) {
 			schema: resourceSchemaForTest(ctx, &reportResource{}),
 			paths:  reportDimensionsTypeAttributePaths,
 		},
+		"alert": {
+			schema: resourceSchemaForTest(ctx, &alertResource{}),
+			paths:  []string{"config.scopes[*].type"},
+		},
 	}
 
 	for name, test := range resourceSchemas {
@@ -149,10 +153,9 @@ func TestDeprecatedDimensionsTypeValidatorResourceSchemaWiring(t *testing.T) {
 	}
 }
 
-// The dimensions API returns "Dimension not found" for the replacement types
-// ("allocation_rule"/"allocation"), so the deprecation warning must not be
-// attached to the dimension data source type (#384).
-func TestDeprecatedDimensionsTypeValidatorNotWiredForDimensionDataSource(t *testing.T) {
+// The dimensions API resolves "allocation_rule"/"allocation" lookups (#443),
+// so the deprecation warning is attached to the dimension data source type.
+func TestDeprecatedDimensionsTypeValidatorWiredForDimensionDataSource(t *testing.T) {
 	t.Parallel()
 
 	var response datasource.SchemaResponse
@@ -162,23 +165,23 @@ func TestDeprecatedDimensionsTypeValidatorNotWiredForDimensionDataSource(t *test
 	}
 
 	attribute := dataSourceStringAttributeAtPath(t, response.Schema.Attributes, "type")
-	for _, candidate := range attribute.Validators {
-		if _, ok := candidate.(deprecatedDimensionsTypeValidator); ok {
-			t.Fatal("dimension data source type must not carry the deprecated dimension type validator: the dimensions API returns not found for the replacement types")
-		}
-	}
+	assertHasDeprecatedDimensionsTypeValidator(t, attribute.Validators)
 }
 
-// The alerts API rejects the replacement types ("allocation_rule"/"allocation")
-// with a 400, so the deprecation warning must not be attached to alert scopes (#384).
-func TestDeprecatedDimensionsTypeValidatorNotWiredForAlert(t *testing.T) {
+// The id hint applies to "attribution" only: "attribution_group" and its
+// replacement "allocation" share the same allocation ID.
+func TestDeprecatedDimensionsTypeValidatorIDHintOnlyForAttribution(t *testing.T) {
 	t.Parallel()
 
-	alertSchema := resourceSchemaForTest(t.Context(), &alertResource{})
-	attribute := resourceStringAttributeAtPath(t, alertSchema.Attributes, "config.scopes[*].type")
-	for _, candidate := range attribute.Validators {
-		if _, ok := candidate.(deprecatedDimensionsTypeValidator); ok {
-			t.Fatal("alert config.scopes[*].type must not carry the deprecated dimension type validator")
+	for value, wantHint := range map[string]bool{"attribution": true, "attribution_group": false} {
+		response := &validator.StringResponse{}
+		deprecatedDimensionsTypeValidator{}.ValidateString(t.Context(), validator.StringRequest{
+			Path:        path.Root("type"),
+			ConfigValue: types.StringValue(value),
+		}, response)
+
+		if got := strings.Contains(response.Diagnostics.Warnings()[0].Detail(), `"id"`); got != wantHint {
+			t.Errorf("%s: id hint present = %t, want %t", value, got, wantHint)
 		}
 	}
 }

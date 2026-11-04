@@ -39,11 +39,15 @@ func (v deprecatedDimensionsTypeValidator) ValidateString(_ context.Context, req
 	}
 
 	value := req.ConfigValue.ValueString()
-	var replacement string
+	var replacement, idHint string
 	switch value {
 	case "attribution":
 		replacement = "allocation_rule"
+		// The API pairs each type with its own id and rejects a mix
+		// (400 for alert and budget scopes, 404 for dimension lookups).
+		idHint = ` If this block also sets "id", change it from "attribution" to "allocation_rule" as well.`
 	case "attribution_group":
+		// The id is the allocation ID, which does not change.
 		replacement = "allocation"
 	default:
 		return
@@ -53,9 +57,10 @@ func (v deprecatedDimensionsTypeValidator) ValidateString(_ context.Context, req
 		req.Path,
 		deprecatedDimensionsTypeWarningSummary,
 		fmt.Sprintf(
-			"Dimension type %q is deprecated and will soon no longer be supported by the DoiT API. Use %q instead.",
+			"Dimension type %q is deprecated and will soon no longer be supported by the DoiT API. Use %q instead.%s",
 			value,
 			replacement,
+			idHint,
 		),
 	)
 }

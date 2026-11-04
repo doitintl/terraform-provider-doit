@@ -50,14 +50,11 @@ func (d *dimensionDataSource) Configure(_ context.Context, req datasource.Config
 
 func (d *dimensionDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_dimension.DimensionDataSourceSchema(ctx)
-	// No dimensions-type deprecation warning on type: the dimensions API only
-	// resolves "attribution" and returns "Dimension not found" for the
-	// replacements ("allocation_rule"/"allocation"), so the warning would
-	// recommend a value that breaks the lookup.
 	// No validator for the Attribute attribution tier types either: the API
 	// lists them only on the dimensions list endpoint, and whether this lookup
 	// resolves them is unverified (the CI tenant has no Attribute plan).
 	if typeAttr, ok := s.Attributes["type"].(dsschema.StringAttribute); ok {
+		typeAttr.Validators = append(typeAttr.Validators, deprecatedDimensionsTypeValidator{})
 		typeAttr.Description = appendDescriptionNote(typeAttr.Description, attributionTierDimensionPlainNote)
 		typeAttr.MarkdownDescription = appendDescriptionNote(typeAttr.MarkdownDescription, attributionTierDimensionNote)
 		s.Attributes["type"] = typeAttr
@@ -125,8 +122,15 @@ func (d *dimensionDataSource) Read(ctx context.Context, req datasource.ReadReque
 	// Map scalar fields — preserve user's configured type when the API
 	// returns a canonical alias (e.g. user sends "allocation", API returns
 	// "attribution_group"). Without this, re-reads would cause perpetual drift.
+	// The id pairs with the type ("attribution" is looked up as id
+	// "attribution" but comes back as "allocation_rule"), so it is normalized
+	// the same way.
 	userType := state.Type.ValueString()
+	userID := state.Id.ValueString()
 	state.Id = types.StringPointerValue(dimension.Id)
+	if dimension.Id != nil {
+		state.Id = types.StringValue(normalizeDimensionsType(*dimension.Id, userID))
+	}
 	state.Label = types.StringPointerValue(dimension.Label)
 	if dimension.Type != nil {
 		state.Type = types.StringValue(normalizeDimensionsType(string(*dimension.Type), userType))
