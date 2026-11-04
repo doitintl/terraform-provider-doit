@@ -21,6 +21,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/read404"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/requestguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/retrypolicy"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/setnestedplan"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/testserver"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
@@ -75,6 +76,10 @@ func init() {
 
 	register.Plugin("read404", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{read404.Analyzer}}, nil
+	})
+
+	register.Plugin("setnestedplan", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{setnestedplan.Analyzer}}, nil
 	})
 
 	register.Plugin("configuretype", func(_ any) (register.LinterPlugin, error) {

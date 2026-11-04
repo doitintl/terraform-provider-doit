@@ -1999,6 +1999,180 @@ func (e Currency) Valid() bool {
 	}
 }
 
+// Defines values for CustomerSubscriptionAttachment.
+const (
+	CustomerSubscriptionAttachmentCsv CustomerSubscriptionAttachment = "csv"
+	CustomerSubscriptionAttachmentPdf CustomerSubscriptionAttachment = "pdf"
+)
+
+// Valid indicates whether the value is a known member of the CustomerSubscriptionAttachment enum.
+func (e CustomerSubscriptionAttachment) Valid() bool {
+	switch e {
+	case CustomerSubscriptionAttachmentCsv:
+		return true
+	case CustomerSubscriptionAttachmentPdf:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CustomerSubscriptionConflictCode.
+const (
+	CustomerSubscriptionConflictCodeCustomersEntryIsResource         CustomerSubscriptionConflictCode = "customers.entry_is_resource"
+	CustomerSubscriptionConflictCodeCustomersLastDestination         CustomerSubscriptionConflictCode = "customers.last_destination"
+	CustomerSubscriptionConflictCodeCustomersSubscriptionIdAmbiguous CustomerSubscriptionConflictCode = "customers.subscription_id_ambiguous"
+	CustomerSubscriptionConflictCodeIdempotencyRequestInProgress     CustomerSubscriptionConflictCode = "idempotency_request_in_progress"
+)
+
+// Valid indicates whether the value is a known member of the CustomerSubscriptionConflictCode enum.
+func (e CustomerSubscriptionConflictCode) Valid() bool {
+	switch e {
+	case CustomerSubscriptionConflictCodeCustomersEntryIsResource:
+		return true
+	case CustomerSubscriptionConflictCodeCustomersLastDestination:
+		return true
+	case CustomerSubscriptionConflictCodeCustomersSubscriptionIdAmbiguous:
+		return true
+	case CustomerSubscriptionConflictCodeIdempotencyRequestInProgress:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CustomerSubscriptionCustomPeriodUnit.
+const (
+	CustomerSubscriptionCustomPeriodUnitDay   CustomerSubscriptionCustomPeriodUnit = "Day"
+	CustomerSubscriptionCustomPeriodUnitMonth CustomerSubscriptionCustomPeriodUnit = "Month"
+	CustomerSubscriptionCustomPeriodUnitWeek  CustomerSubscriptionCustomPeriodUnit = "Week"
+	CustomerSubscriptionCustomPeriodUnitYear  CustomerSubscriptionCustomPeriodUnit = "Year"
+)
+
+// Valid indicates whether the value is a known member of the CustomerSubscriptionCustomPeriodUnit enum.
+func (e CustomerSubscriptionCustomPeriodUnit) Valid() bool {
+	switch e {
+	case CustomerSubscriptionCustomPeriodUnitDay:
+		return true
+	case CustomerSubscriptionCustomPeriodUnitMonth:
+		return true
+	case CustomerSubscriptionCustomPeriodUnitWeek:
+		return true
+	case CustomerSubscriptionCustomPeriodUnitYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CustomerSubscriptionFrequency.
+const (
+	CustomerSubscriptionFrequencyAnnually CustomerSubscriptionFrequency = "Annually"
+	CustomerSubscriptionFrequencyCustom   CustomerSubscriptionFrequency = "Custom"
+	CustomerSubscriptionFrequencyDaily    CustomerSubscriptionFrequency = "Daily"
+	CustomerSubscriptionFrequencyMonthly  CustomerSubscriptionFrequency = "Monthly"
+	CustomerSubscriptionFrequencyWeekly   CustomerSubscriptionFrequency = "Weekly"
+)
+
+// Valid indicates whether the value is a known member of the CustomerSubscriptionFrequency enum.
+func (e CustomerSubscriptionFrequency) Valid() bool {
+	switch e {
+	case CustomerSubscriptionFrequencyAnnually:
+		return true
+	case CustomerSubscriptionFrequencyCustom:
+		return true
+	case CustomerSubscriptionFrequencyDaily:
+		return true
+	case CustomerSubscriptionFrequencyMonthly:
+		return true
+	case CustomerSubscriptionFrequencyWeekly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CustomerSubscriptionProblemCode.
+const (
+	CustomerSubscriptionProblemCodeCustomersDuplicateRecipient        CustomerSubscriptionProblemCode = "customers.duplicate_recipient"
+	CustomerSubscriptionProblemCodeCustomersDuplicateSubscriptionType CustomerSubscriptionProblemCode = "customers.duplicate_subscription_type"
+	CustomerSubscriptionProblemCodeDOMAINNOTAPPROVED                  CustomerSubscriptionProblemCode = "DOMAIN_NOT_APPROVED"
+	CustomerSubscriptionProblemCodeIdempotencyKeyReused               CustomerSubscriptionProblemCode = "idempotency_key_reused"
+	CustomerSubscriptionProblemCodeNOTINVITEDUSER                     CustomerSubscriptionProblemCode = "NOT_INVITED_USER"
+	CustomerSubscriptionProblemCodeSLACKCHANNELNOTCONNECTED           CustomerSubscriptionProblemCode = "SLACK_CHANNEL_NOT_CONNECTED"
+	CustomerSubscriptionProblemCodeValidationFailed                   CustomerSubscriptionProblemCode = "validation_failed"
+)
+
+// Valid indicates whether the value is a known member of the CustomerSubscriptionProblemCode enum.
+func (e CustomerSubscriptionProblemCode) Valid() bool {
+	switch e {
+	case CustomerSubscriptionProblemCodeCustomersDuplicateRecipient:
+		return true
+	case CustomerSubscriptionProblemCodeCustomersDuplicateSubscriptionType:
+		return true
+	case CustomerSubscriptionProblemCodeDOMAINNOTAPPROVED:
+		return true
+	case CustomerSubscriptionProblemCodeIdempotencyKeyReused:
+		return true
+	case CustomerSubscriptionProblemCodeNOTINVITEDUSER:
+		return true
+	case CustomerSubscriptionProblemCodeSLACKCHANNELNOTCONNECTED:
+		return true
+	case CustomerSubscriptionProblemCodeValidationFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CustomerSubscriptionScheduledType.
+const (
+	CustomerSubscriptionScheduledTypeCommitmentManager     CustomerSubscriptionScheduledType = "commitment-manager"
+	CustomerSubscriptionScheduledTypeDashboardSubscription CustomerSubscriptionScheduledType = "dashboard-subscription"
+	CustomerSubscriptionScheduledTypeReportSubscription    CustomerSubscriptionScheduledType = "report-subscription"
+)
+
+// Valid indicates whether the value is a known member of the CustomerSubscriptionScheduledType enum.
+func (e CustomerSubscriptionScheduledType) Valid() bool {
+	switch e {
+	case CustomerSubscriptionScheduledTypeCommitmentManager:
+		return true
+	case CustomerSubscriptionScheduledTypeDashboardSubscription:
+		return true
+	case CustomerSubscriptionScheduledTypeReportSubscription:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CustomerSubscriptionType.
+const (
+	CustomerSubscriptionTypeAlert                 CustomerSubscriptionType = "alert"
+	CustomerSubscriptionTypeBudget                CustomerSubscriptionType = "budget"
+	CustomerSubscriptionTypeCommitmentManager     CustomerSubscriptionType = "commitment-manager"
+	CustomerSubscriptionTypeDashboardSubscription CustomerSubscriptionType = "dashboard-subscription"
+	CustomerSubscriptionTypeReportSubscription    CustomerSubscriptionType = "report-subscription"
+)
+
+// Valid indicates whether the value is a known member of the CustomerSubscriptionType enum.
+func (e CustomerSubscriptionType) Valid() bool {
+	switch e {
+	case CustomerSubscriptionTypeAlert:
+		return true
+	case CustomerSubscriptionTypeBudget:
+		return true
+	case CustomerSubscriptionTypeCommitmentManager:
+		return true
+	case CustomerSubscriptionTypeDashboardSubscription:
+		return true
+	case CustomerSubscriptionTypeReportSubscription:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DiagramRelationshipRelation.
 const (
 	DiagramRelationshipRelationDownstream  DiagramRelationshipRelation = "downstream"
@@ -8606,6 +8780,17 @@ type CreateCustomerNotificationRequest struct {
 	Settings CustomerNotificationSettings `json:"settings"`
 }
 
+// CreateCustomerSubscriptionRequest Fields of a new subscription. Unknown fields and server-set fields are rejected. `subscriptions` has one, two, or three scheduled types, each at most once. Both recipient arrays are required, and at least one address is required.
+//
+// Example: {"recipients":{"emails":["finops@example.com"],"slackChannels":["C0123ABCD"]},"subscriptions":[{"schedule":{"frequency":"Weekly","startDate":"2026-10-23T00:00:00Z","time":"2026-10-23T08:00:00Z","timeZone":"Europe/Warsaw"},"source":{"id":"dashboard_123"},"type":"dashboard-subscription"}]}
+type CreateCustomerSubscriptionRequest struct {
+	// Recipients Delivery targets. Both arrays are required.
+	Recipients CustomerSubscriptionRecipients `json:"recipients"`
+
+	// Subscriptions Scheduled subscriptions to store on the new subscription. The server sorts them by `type` ascending. Request order is not stored and is not significant. A change of only that order does not write. The response is ordered by `type`, not by this request.
+	Subscriptions []CustomerSubscriptionEntryInput `json:"subscriptions"`
+}
+
 // CreateDatahubDataset201Response defines model for CreateDatahubDataset201Response.
 type CreateDatahubDataset201Response struct {
 	// Description The description of the dataset.
@@ -8982,6 +9167,395 @@ type CustomerSettings struct {
 	// MfaRequired Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have.
 	MfaRequired *bool `json:"mfaRequired,omitempty"`
 }
+
+// CustomerSubscription One subscription. A scheduled subscription, an alert, and a budget use this same schema. `etag` is the opaque version token. Quote it when sending `If-Match` (`If-Match: "<etag>"`) on update and delete. The `ETag` response header carries that quoted form. `id` and `etag` are null only on a dry-run create.
+//
+// Example: {"createdBy":"owner@example.com","etag":"3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e","id":"notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9","name":"Executive costs (Dashboard Subscription)","recipients":{"emails":["finops@example.com"],"slackChannels":["C0123ABCD"]},"subscriptions":[{"permissions":{"canDelete":true,"canEditRecipients":true,"canUnsubscribe":false},"schedule":{"frequency":"Weekly","nextAt":"2026-10-30T08:00:00Z","startDate":"2026-10-23T00:00:00Z","time":"2026-10-23T08:00:00Z","timeZone":"Europe/Warsaw"},"source":{"id":"dashboard_123","name":"Executive costs"},"type":"dashboard-subscription"}]}
+type CustomerSubscription struct {
+	// CreatedBy Email address of the subscription creator. On create, the caller.
+	//
+	// Example: owner@example.com
+	CreatedBy *openapi_types.Email `json:"createdBy,omitempty"`
+
+	// Etag Opaque version token for optimistic concurrency. 64 lowercase hex characters when set. The response `ETag` header is this value wrapped in double quotes. Send `If-Match: "<etag>"`. `null` only on a dry-run create. It only covers fields this API can write.
+	//
+	// Example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+	Etag nullable.Nullable[string] `json:"etag,omitempty"`
+
+	// Id Server-assigned subscription id. `null` only on a dry-run create.
+	//
+	// Example: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+	Id nullable.Nullable[string] `json:"id,omitempty"`
+
+	// Name Display name. For a scheduled subscription, `{source name}` plus `(Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, from the nested type that sorts first. For an alert or a budget, the source name.
+	//
+	// Example: Executive costs (Dashboard Subscription)
+	Name *string `json:"name,omitempty"`
+
+	// Recipients Delivery targets shared by every nested subscription on this item.
+	Recipients CustomerSubscriptionRecipients `json:"recipients"`
+
+	// Subscriptions Nested subscriptions ordered by `type` ascending. The server sorts them. One entry per visible type. A scheduled subscription has one, two, or three scheduled types. An alert or a budget has exactly one entry.
+	Subscriptions []CustomerSubscriptionEntry `json:"subscriptions"`
+}
+
+// CustomerSubscriptionAttachment File to attach to a report subscription email. Values may appear at most once. Attachments are email-only: Slack-only subscriptions may still store the choice, and delivery skips the files when there is no email recipient. An oversized file is omitted from that email with a note in the body. This API does not upload or return file bytes.
+//
+// Example: pdf
+type CustomerSubscriptionAttachment string
+
+// CustomerSubscriptionConflict RFC 9457 Problem Details for a subscription conflict. Clients branch on `code`.
+type CustomerSubscriptionConflict struct {
+	// Code Machine-readable conflict code. Clients branch on `code`.
+	//
+	// Example: customers.entry_is_resource
+	Code CustomerSubscriptionConflictCode `json:"code"`
+
+	// Detail Human-readable explanation of this occurrence.
+	//
+	// Example: Alert and budget subscriptions cannot be deleted through this endpoint.
+	Detail string `json:"detail"`
+
+	// Instance Request URI of the form `https://api.doit.com/requests/{requestId}`.
+	//
+	// Example: https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS
+	Instance string `json:"instance"`
+
+	// Retryable True only for `idempotency_request_in_progress`.
+	//
+	// Example: false
+	Retryable bool `json:"retryable"`
+
+	// Status HTTP status of this occurrence. 409 for this response.
+	//
+	// Example: 409
+	Status int `json:"status"`
+
+	// Title Short summary of the problem class. Branch on `code`, not `title`.
+	//
+	// Example: The subscription is the source resource
+	Title string `json:"title"`
+
+	// Type Problem type URI, `https://developer.doit.com/errors/<code>`.
+	//
+	// Example: https://developer.doit.com/errors/customers.entry_is_resource
+	Type                 string                 `json:"type"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// CustomerSubscriptionConflictCode Machine-readable conflict code. Clients branch on `code`.
+//
+// Example: customers.entry_is_resource
+type CustomerSubscriptionConflictCode string
+
+// CustomerSubscriptionCustomPeriodUnit Unit for a `Custom` frequency.
+//
+// Example: Month
+type CustomerSubscriptionCustomPeriodUnit string
+
+// CustomerSubscriptionEntry One nested subscription. `schedule` is present for a dashboard, report, or commitment subscription and omitted for an alert or a budget. `attachments` and `pdfSettings` are present only for a `report-subscription` and omitted for every other type.
+//
+// Example: {"permissions":{"canDelete":true,"canEditRecipients":true,"canUnsubscribe":false},"schedule":{"frequency":"Weekly","nextAt":"2026-10-30T08:00:00Z","startDate":"2026-10-23T00:00:00Z","time":"2026-10-23T08:00:00Z","timeZone":"Europe/Warsaw"},"source":{"id":"dashboard_123","name":"Executive costs"},"type":"dashboard-subscription"}
+type CustomerSubscriptionEntry struct {
+	// Attachments Files to attach to the report subscription email. Present only for `report-subscription`. Always an array on read. Empty means no file. Rejected on any other type with `422`.
+	//
+	// Example: ["pdf","csv"]
+	Attachments *[]CustomerSubscriptionAttachment `json:"attachments,omitempty"`
+
+	// PdfSettings PDF rendering options. Present only for `report-subscription`. Always present on a report read. Rejected on any other type with `422`.
+	PdfSettings *CustomerSubscriptionPdfSettings `json:"pdfSettings,omitempty"`
+
+	// Permissions Actions the authenticated caller may perform on this nested subscription.
+	Permissions *CustomerSubscriptionPermissions `json:"permissions,omitempty"`
+
+	// Schedule Delivery schedule. Omitted for an alert or a budget. Never `null`.
+	Schedule *CustomerSubscriptionSchedule `json:"schedule,omitempty"`
+
+	// Source Source resource for this nested subscription.
+	Source CustomerSubscriptionSource `json:"source"`
+
+	// Type Kind of nested subscription.
+	//
+	// Example: dashboard-subscription
+	Type CustomerSubscriptionType `json:"type"`
+}
+
+// CustomerSubscriptionEntryInput One scheduled subscription to create. `type` is `dashboard-subscription`, `report-subscription`, or `commitment-manager`, and each type appears once. `attachments` and `pdfSettings` are accepted only when `type` is `report-subscription`. Omitted `attachments` stores `[]`. Omitted `pdfSettings` stores all `true`. A duplicate or unknown attachment value is `422`.
+//
+// Example: {"schedule":{"frequency":"Weekly","startDate":"2026-10-23T00:00:00Z","time":"2026-10-23T08:00:00Z","timeZone":"Europe/Warsaw"},"source":{"id":"dashboard_123"},"type":"dashboard-subscription"}
+type CustomerSubscriptionEntryInput struct {
+	// Attachments Files to attach to the report email. Report only. Omitted stores an empty list.
+	//
+	// Example: ["pdf"]
+	Attachments *[]CustomerSubscriptionAttachment `json:"attachments,omitempty"`
+
+	// PdfSettings PDF rendering options. Report only. Omitted stores all `true`.
+	PdfSettings *CustomerSubscriptionPdfSettings `json:"pdfSettings,omitempty"`
+
+	// Schedule Delivery schedule.
+	Schedule CustomerSubscriptionScheduleInput `json:"schedule"`
+
+	// Source Source to attach. Must belong to the tenant.
+	Source CustomerSubscriptionSourceInput `json:"source"`
+
+	// Type Scheduled subscription type.
+	//
+	// Example: dashboard-subscription
+	Type CustomerSubscriptionScheduledType `json:"type"`
+}
+
+// CustomerSubscriptionEntryPatch One entry in a subscription-set patch. On a scheduled subscription, `type` is a scheduled type and `schedule` is required. On an alert or a budget, the array must be the one stored entry with the same `type` and `source.id` and no `schedule`. On a report subscription, an omitted `attachments` or `pdfSettings` stays. A sent `attachments` array replaces that list, including `[]` to clear. A sent `pdfSettings` object replaces all three flags and requires all three. A recipient-only patch must not send these fields. Changing them requires the same permission as a schedule change.
+//
+// Example: {"schedule":{"frequency":"Weekly","startDate":"2026-10-23T00:00:00Z","time":"2026-10-23T08:00:00Z","timeZone":"Europe/Warsaw"},"source":{"id":"dashboard_123"},"type":"dashboard-subscription"}
+type CustomerSubscriptionEntryPatch struct {
+	// Attachments Replacement attachment list for a report subscription. Omitted keeps the stored list. `[]` clears it. Rejected on any other type with `422`.
+	//
+	// Example: ["csv"]
+	Attachments *[]CustomerSubscriptionAttachment `json:"attachments,omitempty"`
+
+	// PdfSettings Replacement PDF settings for a report subscription. Omitted keeps the stored settings. When sent, all three flags are required. Rejected on any other type with `422`.
+	PdfSettings *CustomerSubscriptionPdfSettings `json:"pdfSettings,omitempty"`
+
+	// Schedule Delivery schedule. Required for a scheduled type. Omit it when echoing an alert or a budget.
+	Schedule *CustomerSubscriptionScheduleInput `json:"schedule,omitempty"`
+
+	// Source Source to attach, or the stored alert or budget id.
+	Source CustomerSubscriptionSourceInput `json:"source"`
+
+	// Type Nested subscription type.
+	//
+	// Example: dashboard-subscription
+	Type CustomerSubscriptionType `json:"type"`
+}
+
+// CustomerSubscriptionFrequency Console delivery frequency. Wire values match the Console labels.
+//
+// Example: Weekly
+type CustomerSubscriptionFrequency string
+
+// CustomerSubscriptionPdfSettings PDF rendering options for a report subscription. Present on every `report-subscription` read. A missing stored object reads as all `true`. The flags apply only when `pdf` is in `attachments`. They may still be stored while PDF is off.
+//
+// Example: {"includeAnnotations":true,"includeTable":true,"showFilters":true}
+type CustomerSubscriptionPdfSettings struct {
+	// IncludeAnnotations Include annotations in the PDF time range.
+	//
+	// Example: true
+	IncludeAnnotations bool `json:"includeAnnotations"`
+
+	// IncludeTable Include the data table in the PDF.
+	//
+	// Example: true
+	IncludeTable bool `json:"includeTable"`
+
+	// ShowFilters Include the report filters summary in the PDF.
+	//
+	// Example: true
+	ShowFilters bool `json:"showFilters"`
+}
+
+// CustomerSubscriptionPermissions Actions the authenticated caller may perform on this nested subscription. Computed per request; a different token can see different values.
+//
+// Example: {"canDelete":true,"canEditRecipients":true,"canUnsubscribe":false}
+type CustomerSubscriptionPermissions struct {
+	// CanDelete Whether the caller may delete this subscription. Always `false` for an alert or a budget.
+	//
+	// Example: true
+	CanDelete bool `json:"canDelete"`
+
+	// CanEditRecipients Whether the caller may replace recipients.
+	//
+	// Example: true
+	CanEditRecipients bool `json:"canEditRecipients"`
+
+	// CanUnsubscribe Whether the caller may remove their own recipient email.
+	//
+	// Example: false
+	CanUnsubscribe bool `json:"canUnsubscribe"`
+}
+
+// CustomerSubscriptionProblem RFC 9457 Problem Details for a subscription request rejected with 422. Clients branch on `code`.
+type CustomerSubscriptionProblem struct {
+	// Code Machine-readable rejection code. Clients must match `code` exactly, including case.
+	//
+	// Example: customers.duplicate_recipient
+	Code CustomerSubscriptionProblemCode `json:"code"`
+
+	// Detail Human-readable explanation of this rejection.
+	//
+	// Example: The same email or Slack channel appears twice in one list.
+	Detail string `json:"detail"`
+
+	// Instance Request URI for this rejection, `https://api.doit.com/requests/{requestId}`.
+	//
+	// Example: https://api.doit.com/requests/req_01H5X8Z2AB3CDEFGHJKMNP0QRS
+	Instance string `json:"instance"`
+
+	// Retryable Always `false` for these codes.
+	//
+	// Example: false
+	Retryable bool `json:"retryable"`
+
+	// Status HTTP status of this occurrence. 422 for this response.
+	//
+	// Example: 422
+	Status int `json:"status"`
+
+	// Title Short summary of this rejection. Branch on `code`, not `title`.
+	//
+	// Example: Duplicate recipient
+	Title string `json:"title"`
+
+	// Type Problem type URI for this 422, `https://developer.doit.com/errors/<code>`.
+	//
+	// Example: https://developer.doit.com/errors/customers.duplicate_recipient
+	Type                 string                 `json:"type"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// CustomerSubscriptionProblemCode Machine-readable rejection code. Clients must match `code` exactly, including case.
+//
+// Example: customers.duplicate_recipient
+type CustomerSubscriptionProblemCode string
+
+// CustomerSubscriptionRecipientPatch Recipient lists to replace. An included array replaces that list. An omitted array stays. `null` is rejected. An empty array clears that list. Both lists empty after the patch is `409` `customers.last_destination`.
+//
+// Example: {"emails":["new-user@example.com","finops@example.com"]}
+type CustomerSubscriptionRecipientPatch struct {
+	// Emails Replacement email list, in the order sent. The same rules as `CustomerSubscriptionRecipients.emails` apply to a new address.
+	//
+	// Example: ["new-user@example.com","finops@example.com"]
+	Emails *[]openapi_types.Email `json:"emails,omitempty"`
+
+	// SlackChannels Replacement Slack channel id list, in the order sent. The same rules as `CustomerSubscriptionRecipients.slackChannels` apply to a new id.
+	//
+	// Example: ["C0123ABCD"]
+	SlackChannels *[]string `json:"slackChannels,omitempty"`
+}
+
+// CustomerSubscriptionRecipients Delivery targets. This object reads and writes email addresses and Slack channel ids only. Microsoft Teams and the in-app bell are not returned and cannot be set. A Teams destination stored in the Console still counts as a destination, so clearing email and Slack on that subscription does not return `409` `customers.last_destination`. Both arrays are always present on read. An unused list is an empty array, never omitted and never `null`. Emails are trimmed and stored lowercase. Channel ids are trimmed. A replaced list is stored in the order sent. Reads do not sort. A disconnected Slack channel stays in the list at its stored id. Create requires at least one email or Slack channel. A stored alert or budget may have both lists empty.
+//
+// Example: {"emails":["finops@example.com"],"slackChannels":["C0123ABCD"]}
+type CustomerSubscriptionRecipients struct {
+	// Emails Email destinations in stored order. Reads return each address trimmed and lowercase. Addresses must belong to the organization's approved domains and must be a user or a pending invite. `doit.com` and `doit-intl.com` pass the domain check. A blank email, an email with no domain, or a domain the tenant does not allow is refused with `422` and code `DOMAIN_NOT_APPROVED`. An email that is not a user or a pending invite is refused with `422` and code `NOT_INVITED_USER`. The same email twice, ignoring case, is refused with `422` and code `customers.duplicate_recipient`. An address already stored, and still present, is not checked again.
+	//
+	// Example: ["finops@example.com"]
+	Emails []openapi_types.Email `json:"emails"`
+
+	// SlackChannels Slack channel ids in stored order. Reads return the public id. Ids are compared exactly after trim. A duplicate id is refused with `422` and code `customers.duplicate_recipient`. A blank or unconnected id is refused with `422` and code `SLACK_CHANNEL_NOT_CONNECTED`. This API does not list eligible channels.
+	//
+	// Example: ["C0123ABCD"]
+	SlackChannels []string `json:"slackChannels"`
+}
+
+// CustomerSubscriptionSchedule Delivery schedule for a dashboard, report, or commitment subscription. Omitted on an alert or a budget, never `null`. `customPeriodAmount` and `customPeriodUnit` are omitted unless `frequency` is `Custom`. `nextAt` moves when the next delivery is calculated.
+//
+// Example: {"frequency":"Weekly","nextAt":"2026-10-30T08:00:00Z","startDate":"2026-10-23T00:00:00Z","time":"2026-10-23T08:00:00Z","timeZone":"Europe/Warsaw"}
+type CustomerSubscriptionSchedule struct {
+	// CustomPeriodAmount Number of `customPeriodUnit` between deliveries. Present only when `frequency` is `Custom`. At least 1.
+	//
+	// Example: 2
+	CustomPeriodAmount *int `json:"customPeriodAmount,omitempty"`
+
+	// CustomPeriodUnit Unit for `customPeriodAmount`. Present only when `frequency` is `Custom`.
+	//
+	// Example: Month
+	CustomPeriodUnit *CustomerSubscriptionCustomPeriodUnit `json:"customPeriodUnit,omitempty"`
+
+	// Frequency Console delivery frequency.
+	//
+	// Example: Weekly
+	Frequency CustomerSubscriptionFrequency `json:"frequency"`
+
+	// NextAt Next calculated delivery, returned as UTC RFC3339 (`Z`). The server sets it. A schedule change recalculates it.
+	//
+	// Example: 2026-10-30T08:00:00Z
+	NextAt *time.Time `json:"nextAt,omitempty"`
+
+	// StartDate When this schedule starts. The start day is the calendar date of this instant in `timeZone`, not its UTC date. To start on 2026-11-03 in `America/Los_Angeles`, send `2026-11-03T00:00:00-08:00` (`2026-11-03T08:00:00Z`). A read returns the stored instant as UTC RFC3339 (`Z`).
+	//
+	// Example: 2026-11-03T08:00:00Z
+	StartDate time.Time `json:"startDate"`
+
+	// Time Stored instant of the delivery clock, returned as UTC RFC3339 (`Z`). An offset in the request is not preserved. `2026-10-23T10:00:00+02:00` is returned as `2026-10-23T08:00:00Z`. The calendar date is the date of that instant. It is stored and returned, and it is not the subscription start date. Deliveries use only the hour and minute of that instant, interpreted in `timeZone`. Sending `time` already in `Z` makes the next read match the sent date and clock.
+	//
+	// Example: 2026-10-23T08:00:00Z
+	Time time.Time `json:"time"`
+
+	// TimeZone IANA time zone used to calculate deliveries.
+	//
+	// Example: Europe/Warsaw
+	TimeZone string `json:"timeZone"`
+}
+
+// CustomerSubscriptionScheduleInput Schedule fields the client sends. `nextAt` is server-set and rejected. `customPeriodAmount` and `customPeriodUnit` are required when `frequency` is `Custom` and rejected otherwise.
+//
+// Example: {"frequency":"Weekly","startDate":"2026-11-03T08:00:00Z","time":"2026-11-03T16:00:00Z","timeZone":"America/Los_Angeles"}
+type CustomerSubscriptionScheduleInput struct {
+	// CustomPeriodAmount Number of `customPeriodUnit` between deliveries. Required when `frequency` is `Custom`. At least 1.
+	//
+	// Example: 2
+	CustomPeriodAmount *int `json:"customPeriodAmount,omitempty"`
+
+	// CustomPeriodUnit Unit for `customPeriodAmount`. Required when `frequency` is `Custom`.
+	//
+	// Example: Month
+	CustomPeriodUnit *CustomerSubscriptionCustomPeriodUnit `json:"customPeriodUnit,omitempty"`
+
+	// Frequency Delivery frequency to store.
+	//
+	// Example: Weekly
+	Frequency CustomerSubscriptionFrequency `json:"frequency"`
+
+	// StartDate When this schedule starts. The start day is the calendar date of this instant in `timeZone`, not its UTC date. To start on 2026-11-03 in `America/Los_Angeles`, send `2026-11-03T00:00:00-08:00` (`2026-11-03T08:00:00Z`). A read returns the stored instant as UTC RFC3339 (`Z`).
+	//
+	// Example: 2026-11-03T08:00:00Z
+	StartDate time.Time `json:"startDate"`
+
+	// Time Delivery clock to store. The value is an instant. A read returns it as UTC RFC3339 (`Z`) and does not preserve an offset. The calendar date is stored and is not the start date. Deliveries use only the hour and minute of that instant, interpreted in `timeZone`.
+	//
+	// Example: 2026-10-23T08:00:00Z
+	Time time.Time `json:"time"`
+
+	// TimeZone IANA time zone for this schedule.
+	//
+	// Example: Europe/Warsaw
+	TimeZone string `json:"timeZone"`
+}
+
+// CustomerSubscriptionScheduledType Scheduled type that create and a patch of a scheduled subscription can write. `alert` and `budget` are rejected.
+//
+// Example: dashboard-subscription
+type CustomerSubscriptionScheduledType string
+
+// CustomerSubscriptionSource Source resource for one nested subscription. `name` is read live from the source and can change without a write to this API.
+//
+// Example: {"id":"dashboard_123","name":"Executive costs"}
+type CustomerSubscriptionSource struct {
+	// Id ID of the dashboard, report, commitment, alert, or budget. Writable on create and on a patch of a scheduled subscription. On an alert or a budget it is the resource id. Report ids come from `GET /analytics/v1/reports` and `GET /analytics/v1/reports/{id}`. Commitment ids come from `GET /analytics/v1/commitment-manager` and `GET /analytics/v1/commitment-manager/{id}`.
+	//
+	// Example: dashboard_123
+	Id string `json:"id"`
+
+	// Name Display name of the source resource.
+	//
+	// Example: Executive costs
+	Name *string `json:"name,omitempty"`
+}
+
+// CustomerSubscriptionSourceInput Source to attach. `id` is the same property GET returns. `name` is server-set and rejected.
+//
+// Example: {"id":"dashboard_123"}
+type CustomerSubscriptionSourceInput struct {
+	// Id ID of the dashboard, report, or commitment. Must belong to the tenant. Report ids come from `GET /analytics/v1/reports` and `GET /analytics/v1/reports/{id}`. Commitment ids come from `GET /analytics/v1/commitment-manager` and `GET /analytics/v1/commitment-manager/{id}`. Create checks that id against the customer's dashboards and the preset dashboards.
+	//
+	// Example: dashboard_123
+	Id string `json:"id"`
+}
+
+// CustomerSubscriptionType Kind of subscription nested on one item. One id namespace is shared by a scheduled subscription, an alert, and a budget. Create accepts only `dashboard-subscription`, `report-subscription`, and `commitment-manager`. GET returns `alert` and `budget`. PATCH may replace their recipient lists, and that is the one write this API makes on them. Those lists are the same ones written by `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`. `EntryPatch.type` includes `alert` and `budget` so an echo of the stored entry validates.
+//
+// Example: dashboard-subscription
+type CustomerSubscriptionType string
 
 // CustomerUpdate Partial update to a customer's general settings. Every field is optional; only fields present in the request body are changed. Fields are nested exactly as the `getCustomer` response nests them. See the operation description for `urlSlug`'s null-vs-absent semantics, which differ from every other field.
 type CustomerUpdate struct {
@@ -12143,6 +12717,17 @@ type UpdateCustomerNotificationRequest struct {
 	Settings *PatchCustomerNotificationSettings `json:"settings,omitempty"`
 }
 
+// UpdateCustomerSubscriptionRequest JSON Merge Patch (RFC 7396) for one subscription. At least one of `recipients` or `subscriptions` is required. Omitted fields stay unchanged. `null` is rejected. Any other field is rejected.
+//
+// Example: {"recipients":{"emails":["new-user@example.com","finops@example.com"]}}
+type UpdateCustomerSubscriptionRequest struct {
+	// Recipients Recipient lists to replace. An omitted list stays.
+	Recipients *CustomerSubscriptionRecipientPatch `json:"recipients,omitempty"`
+
+	// Subscriptions Desired nested subscriptions. The server sorts them by `type` ascending. Request order is not stored and is not significant. On a scheduled subscription, the scheduled set to store. On an alert or a budget, the one stored entry.
+	Subscriptions *[]CustomerSubscriptionEntryPatch `json:"subscriptions,omitempty"`
+}
+
 // UpdateDatahubDataset200Response defines model for UpdateDatahubDataset200Response.
 type UpdateDatahubDataset200Response struct {
 	// Description The description of the dataset.
@@ -12801,6 +13386,9 @@ type ComposerAllocationNotFound = ProblemDetails
 // Conflict RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type Conflict = ProblemDetails
 
+// CustomerSubscriptionUnprocessable RFC 9457 Problem Details for a subscription request rejected with 422. Clients branch on `code`.
+type CustomerSubscriptionUnprocessable = CustomerSubscriptionProblem
+
 // Forbidden RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type Forbidden = ProblemDetails
 
@@ -13428,6 +14016,39 @@ type UpdateCustomerNotificationParams struct {
 	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
 }
 
+// CreateCustomerSubscriptionParams defines parameters for CreateCustomerSubscription.
+type CreateCustomerSubscriptionParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// DeleteCustomerSubscriptionParams defines parameters for DeleteCustomerSubscription.
+type DeleteCustomerSubscriptionParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
+// UpdateCustomerSubscriptionParams defines parameters for UpdateCustomerSubscription.
+type UpdateCustomerSubscriptionParams struct {
+	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
+	DryRun *DryRun `form:"dryRun,omitempty" json:"dryRun,omitempty"`
+
+	// IfMatch The ETag of the current version, from a get, create or update response. A stale value returns 412; re-read the resource and retry with the new ETag.
+	IfMatch IfMatchRequired `json:"If-Match"`
+
+	// IdempotencyKey Client-generated key (UUID v4 or ULID recommended). Retrying with the same key and request returns the stored response instead of repeating the operation; the key is kept for 24 hours.
+	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
+}
+
 // CreateRoleParams defines parameters for CreateRole.
 type CreateRoleParams struct {
 	// IdempotencyKey Caller-chosen key (1-255 characters) that makes retries safe; the same key with the same body returns the original response.
@@ -13992,6 +14613,12 @@ type CreateCustomerNotificationJSONRequestBody = CreateCustomerNotificationReque
 // UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody defines body for UpdateCustomerNotification for application/merge-patch+json ContentType.
 type UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody = UpdateCustomerNotificationRequest
 
+// CreateCustomerSubscriptionJSONRequestBody defines body for CreateCustomerSubscription for application/json ContentType.
+type CreateCustomerSubscriptionJSONRequestBody = CreateCustomerSubscriptionRequest
+
+// UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody defines body for UpdateCustomerSubscription for application/merge-patch+json ContentType.
+type UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody = UpdateCustomerSubscriptionRequest
+
 // CreateDatahubDatasetJSONRequestBody defines body for CreateDatahubDataset for application/json ContentType.
 type CreateDatahubDatasetJSONRequestBody = CreateDatahubDatasetRequestBody
 
@@ -14036,6 +14663,294 @@ type RemoveTicketTagsJSONRequestBody = TagsRequest
 
 // AddTicketTagsJSONRequestBody defines body for AddTicketTags for application/json ContentType.
 type AddTicketTagsJSONRequestBody = TagsRequest
+
+// Getter for additional properties for CustomerSubscriptionConflict. Returns the specified
+// element and whether it was found
+func (a CustomerSubscriptionConflict) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for CustomerSubscriptionConflict
+func (a *CustomerSubscriptionConflict) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for CustomerSubscriptionConflict to handle AdditionalProperties
+func (a *CustomerSubscriptionConflict) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["code"]; found {
+		err = json.Unmarshal(raw, &a.Code)
+		if err != nil {
+			return fmt.Errorf("error reading 'code': %w", err)
+		}
+		delete(object, "code")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["instance"]; found {
+		err = json.Unmarshal(raw, &a.Instance)
+		if err != nil {
+			return fmt.Errorf("error reading 'instance': %w", err)
+		}
+		delete(object, "instance")
+	}
+
+	if raw, found := object["retryable"]; found {
+		err = json.Unmarshal(raw, &a.Retryable)
+		if err != nil {
+			return fmt.Errorf("error reading 'retryable': %w", err)
+		}
+		delete(object, "retryable")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &a.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+		delete(object, "title")
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for CustomerSubscriptionConflict to handle AdditionalProperties
+func (a CustomerSubscriptionConflict) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["code"], err = json.Marshal(a.Code)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'code': %w", err)
+	}
+
+	object["detail"], err = json.Marshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	object["instance"], err = json.Marshal(a.Instance)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'instance': %w", err)
+	}
+
+	object["retryable"], err = json.Marshal(a.Retryable)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'retryable': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	object["title"], err = json.Marshal(a.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
+	object["type"], err = json.Marshal(a.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for CustomerSubscriptionProblem. Returns the specified
+// element and whether it was found
+func (a CustomerSubscriptionProblem) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for CustomerSubscriptionProblem
+func (a *CustomerSubscriptionProblem) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for CustomerSubscriptionProblem to handle AdditionalProperties
+func (a *CustomerSubscriptionProblem) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["code"]; found {
+		err = json.Unmarshal(raw, &a.Code)
+		if err != nil {
+			return fmt.Errorf("error reading 'code': %w", err)
+		}
+		delete(object, "code")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["instance"]; found {
+		err = json.Unmarshal(raw, &a.Instance)
+		if err != nil {
+			return fmt.Errorf("error reading 'instance': %w", err)
+		}
+		delete(object, "instance")
+	}
+
+	if raw, found := object["retryable"]; found {
+		err = json.Unmarshal(raw, &a.Retryable)
+		if err != nil {
+			return fmt.Errorf("error reading 'retryable': %w", err)
+		}
+		delete(object, "retryable")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &a.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+		delete(object, "title")
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for CustomerSubscriptionProblem to handle AdditionalProperties
+func (a CustomerSubscriptionProblem) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["code"], err = json.Marshal(a.Code)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'code': %w", err)
+	}
+
+	object["detail"], err = json.Marshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	object["instance"], err = json.Marshal(a.Instance)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'instance': %w", err)
+	}
+
+	object["retryable"], err = json.Marshal(a.Retryable)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'retryable': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	object["title"], err = json.Marshal(a.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
+	object["type"], err = json.Marshal(a.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
 
 // Getter for additional properties for ProblemDetails. Returns the specified
 // element and whether it was found
@@ -15685,6 +16600,82 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 	UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCustomerSubscriptionWithBody Create a subscription
+	//
+	// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+	// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+	// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+	// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+	// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+	CreateCustomerSubscriptionWithBody(ctx context.Context, params *CreateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateCustomerSubscription Create a subscription
+	//
+	// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+	// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+	// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+	// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+	// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+	CreateCustomerSubscription(ctx context.Context, params *CreateCustomerSubscriptionParams, body CreateCustomerSubscriptionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteCustomerSubscription Delete a subscription
+	//
+	// Deletes a dashboard, report, or commitment subscription and every scheduled entry on it. Returns `204`. Deleting an id that is already gone also returns `204`, so a retry does not fail. `If-Match` is required when the document still exists; a stale value is `412`. An id that matches no scheduled subscription, alert, or budget returns `204` when `If-Match` is present.
+	// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// The caller must have `canDelete` for the subscription. Manage Settings users, a creator with the permission for each scheduled type, and a source owner or editor may delete it. Source viewers and recipients cannot. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator.
+	// `Idempotency-Key` is required. The same key, caller, customer, method, path, and `If-Match` replays the stored success response. A different `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key and does not delete.
+	// Reads are immediately consistent. After a completed delete, a GET of that id returns `404`.
+	//
+	// Corresponds with DELETE /customers/v1/subscriptions/{id} (the `DeleteCustomerSubscription` operationId).
+	DeleteCustomerSubscription(ctx context.Context, id string, params *DeleteCustomerSubscriptionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCustomerSubscription Retrieve a subscription
+	//
+	// Returns one dashboard, report, commitment, alert, or budget subscription. The body is the same object as a list item. `schedule` is omitted on an alert or a budget.
+	// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists, which writes the same lists as `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. Create, delete, and full management stay on those APIs. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// Manage Settings users can view the subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. Keys the caller cannot see are omitted from `subscriptions`. A missing, foreign-tenant, or non-visible subscription returns `404` without revealing whether it exists.
+	//
+	// Corresponds with GET /customers/v1/subscriptions/{id} (the `GetCustomerSubscription` operationId).
+	GetCustomerSubscription(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomerSubscriptionWithBody Update a subscription
+	//
+	// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+	// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+	// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+	// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+	// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+	// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+	UpdateCustomerSubscriptionWithBody(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBody Update a subscription
+	//
+	// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+	// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+	// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+	// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+	// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+	// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type.
+	//
+	// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+	UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, body UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListDatahubDatasets List datasets
 	//
@@ -18923,6 +19914,142 @@ func (c *Client) UpdateCustomerNotificationWithBody(ctx context.Context, id stri
 // Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 func (c *Client) UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateCustomerNotificationRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCustomerSubscriptionWithBody Create a subscription
+//
+// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+func (c *Client) CreateCustomerSubscriptionWithBody(ctx context.Context, params *CreateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomerSubscriptionRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateCustomerSubscription Create a subscription
+//
+// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+func (c *Client) CreateCustomerSubscription(ctx context.Context, params *CreateCustomerSubscriptionParams, body CreateCustomerSubscriptionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateCustomerSubscriptionRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteCustomerSubscription Delete a subscription
+//
+// Deletes a dashboard, report, or commitment subscription and every scheduled entry on it. Returns `204`. Deleting an id that is already gone also returns `204`, so a retry does not fail. `If-Match` is required when the document still exists; a stale value is `412`. An id that matches no scheduled subscription, alert, or budget returns `204` when `If-Match` is present.
+// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// The caller must have `canDelete` for the subscription. Manage Settings users, a creator with the permission for each scheduled type, and a source owner or editor may delete it. Source viewers and recipients cannot. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator.
+// `Idempotency-Key` is required. The same key, caller, customer, method, path, and `If-Match` replays the stored success response. A different `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key and does not delete.
+// Reads are immediately consistent. After a completed delete, a GET of that id returns `404`.
+//
+// Corresponds with DELETE /customers/v1/subscriptions/{id} (the `DeleteCustomerSubscription` operationId).
+func (c *Client) DeleteCustomerSubscription(ctx context.Context, id string, params *DeleteCustomerSubscriptionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteCustomerSubscriptionRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCustomerSubscription Retrieve a subscription
+//
+// Returns one dashboard, report, commitment, alert, or budget subscription. The body is the same object as a list item. `schedule` is omitted on an alert or a budget.
+// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists, which writes the same lists as `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. Create, delete, and full management stay on those APIs. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// Manage Settings users can view the subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. Keys the caller cannot see are omitted from `subscriptions`. A missing, foreign-tenant, or non-visible subscription returns `404` without revealing whether it exists.
+//
+// Corresponds with GET /customers/v1/subscriptions/{id} (the `GetCustomerSubscription` operationId).
+func (c *Client) GetCustomerSubscription(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomerSubscriptionRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCustomerSubscriptionWithBody Update a subscription
+//
+// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+func (c *Client) UpdateCustomerSubscriptionWithBody(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerSubscriptionRequestWithBody(c.Server, id, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBody Update a subscription
+//
+// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+//
+// Takes a body of the `application/merge-patch+json` content type.
+//
+// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+func (c *Client) UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, body UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateCustomerSubscriptionRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -25921,6 +27048,299 @@ func NewUpdateCustomerNotificationRequestWithBody(server string, id string, para
 	return req, nil
 }
 
+// NewCreateCustomerSubscriptionRequest calls the generic CreateCustomerSubscription builder with application/json body
+func NewCreateCustomerSubscriptionRequest(server string, params *CreateCustomerSubscriptionParams, body CreateCustomerSubscriptionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateCustomerSubscriptionRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateCustomerSubscriptionRequestWithBody constructs an http.Request for the CreateCustomerSubscription method, with any body, and a specified content type
+func NewCreateCustomerSubscriptionRequestWithBody(server string, params *CreateCustomerSubscriptionParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/subscriptions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteCustomerSubscriptionRequest constructs an http.Request for the DeleteCustomerSubscription method
+func NewDeleteCustomerSubscriptionRequest(server string, id string, params *DeleteCustomerSubscriptionParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/subscriptions/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewGetCustomerSubscriptionRequest constructs an http.Request for the GetCustomerSubscription method
+func NewGetCustomerSubscriptionRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/subscriptions/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateCustomerSubscriptionRequestWithApplicationMergePatchPlusJSONBody calls the generic UpdateCustomerSubscription builder with application/merge-patch+json body
+func NewUpdateCustomerSubscriptionRequestWithApplicationMergePatchPlusJSONBody(server string, id string, params *UpdateCustomerSubscriptionParams, body UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateCustomerSubscriptionRequestWithBody(server, id, params, "application/merge-patch+json", bodyReader)
+}
+
+// NewUpdateCustomerSubscriptionRequestWithBody constructs an http.Request for the UpdateCustomerSubscription method, with any body, and a specified content type
+func NewUpdateCustomerSubscriptionRequestWithBody(server string, id string, params *UpdateCustomerSubscriptionParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/subscriptions/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.DryRun != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dryRun", *params.DryRun, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-Match", params.IfMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("If-Match", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam1)
+
+	}
+
+	return req, nil
+}
+
 // NewListDatahubDatasetsRequest constructs an http.Request for the ListDatahubDatasets method
 func NewListDatahubDatasetsRequest(server string) (*http.Request, error) {
 	var err error
@@ -30540,6 +31960,86 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 	UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerNotificationResp, error)
+
+	// CreateCustomerSubscriptionWithBodyWithResponse Create a subscription
+	//
+	// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+	// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+	// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+	// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+	// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+	CreateCustomerSubscriptionWithBodyWithResponse(ctx context.Context, params *CreateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomerSubscriptionResp, error)
+
+	// CreateCustomerSubscriptionWithResponse Create a subscription
+	//
+	// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+	// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+	// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+	// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+	// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+	CreateCustomerSubscriptionWithResponse(ctx context.Context, params *CreateCustomerSubscriptionParams, body CreateCustomerSubscriptionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomerSubscriptionResp, error)
+
+	// DeleteCustomerSubscriptionWithResponse Delete a subscription
+	//
+	// Deletes a dashboard, report, or commitment subscription and every scheduled entry on it. Returns `204`. Deleting an id that is already gone also returns `204`, so a retry does not fail. `If-Match` is required when the document still exists; a stale value is `412`. An id that matches no scheduled subscription, alert, or budget returns `204` when `If-Match` is present.
+	// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// The caller must have `canDelete` for the subscription. Manage Settings users, a creator with the permission for each scheduled type, and a source owner or editor may delete it. Source viewers and recipients cannot. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator.
+	// `Idempotency-Key` is required. The same key, caller, customer, method, path, and `If-Match` replays the stored success response. A different `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key and does not delete.
+	// Reads are immediately consistent. After a completed delete, a GET of that id returns `404`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /customers/v1/subscriptions/{id} (the `DeleteCustomerSubscription` operationId).
+	DeleteCustomerSubscriptionWithResponse(ctx context.Context, id string, params *DeleteCustomerSubscriptionParams, reqEditors ...RequestEditorFn) (*DeleteCustomerSubscriptionResp, error)
+
+	// GetCustomerSubscriptionWithResponse Retrieve a subscription
+	//
+	// Returns one dashboard, report, commitment, alert, or budget subscription. The body is the same object as a list item. `schedule` is omitted on an alert or a budget.
+	// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists, which writes the same lists as `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. Create, delete, and full management stay on those APIs. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// Manage Settings users can view the subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. Keys the caller cannot see are omitted from `subscriptions`. A missing, foreign-tenant, or non-visible subscription returns `404` without revealing whether it exists.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /customers/v1/subscriptions/{id} (the `GetCustomerSubscription` operationId).
+	GetCustomerSubscriptionWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomerSubscriptionResp, error)
+
+	// UpdateCustomerSubscriptionWithBodyWithResponse Update a subscription
+	//
+	// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+	// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+	// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+	// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+	// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+	// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+	UpdateCustomerSubscriptionWithBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerSubscriptionResp, error)
+
+	// UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBodyWithResponse Update a subscription
+	//
+	// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+	// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+	// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+	// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+	// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+	// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+	//
+	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+	UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, body UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerSubscriptionResp, error)
 
 	// ListDatahubDatasetsWithResponse List datasets
 	//
@@ -38928,6 +40428,523 @@ func (r UpdateCustomerNotificationResp) ContentType() string {
 	return ""
 }
 
+// CreateCustomerSubscriptionResp200Headers the declared response headers of an HTTP 200 response for CreateCustomerSubscription
+type CreateCustomerSubscriptionResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// CreateCustomerSubscriptionResp201Headers the declared response headers of an HTTP 201 response for CreateCustomerSubscription
+type CreateCustomerSubscriptionResp201Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	Location        *string
+	RequestId       *string
+}
+
+// CreateCustomerSubscriptionResp409Headers the declared response headers of an HTTP 409 response for CreateCustomerSubscription
+type CreateCustomerSubscriptionResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// CreateCustomerSubscriptionResp422Headers the declared response headers of an HTTP 422 response for CreateCustomerSubscription
+type CreateCustomerSubscriptionResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type CreateCustomerSubscriptionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerSubscription
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *CustomerSubscription
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *CustomerSubscriptionConflict
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *CustomerSubscriptionUnprocessable
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateCustomerSubscriptionResp200Headers
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateCustomerSubscriptionResp201Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateCustomerSubscriptionResp409Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateCustomerSubscriptionResp422Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateCustomerSubscriptionResp) GetJSON200() *CustomerSubscription {
+	return r.JSON200
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateCustomerSubscriptionResp) GetJSON201() *CustomerSubscription {
+	return r.JSON201
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r CreateCustomerSubscriptionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r CreateCustomerSubscriptionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r CreateCustomerSubscriptionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateCustomerSubscriptionResp) GetApplicationproblemJSON409() *CustomerSubscriptionConflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateCustomerSubscriptionResp) GetApplicationproblemJSON422() *CustomerSubscriptionUnprocessable {
+	return r.ApplicationproblemJSON422
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r CreateCustomerSubscriptionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateCustomerSubscriptionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateCustomerSubscriptionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateCustomerSubscriptionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateCustomerSubscriptionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteCustomerSubscriptionResp204Headers the declared response headers of an HTTP 204 response for DeleteCustomerSubscription
+type DeleteCustomerSubscriptionResp204Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// DeleteCustomerSubscriptionResp409Headers the declared response headers of an HTTP 409 response for DeleteCustomerSubscription
+type DeleteCustomerSubscriptionResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerSubscriptionResp412Headers the declared response headers of an HTTP 412 response for DeleteCustomerSubscription
+type DeleteCustomerSubscriptionResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerSubscriptionResp422Headers the declared response headers of an HTTP 422 response for DeleteCustomerSubscription
+type DeleteCustomerSubscriptionResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// DeleteCustomerSubscriptionResp428Headers the declared response headers of an HTTP 428 response for DeleteCustomerSubscription
+type DeleteCustomerSubscriptionResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type DeleteCustomerSubscriptionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *CustomerSubscriptionConflict
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *UnprocessableEntity
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteCustomerSubscriptionResp204Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DeleteCustomerSubscriptionResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *DeleteCustomerSubscriptionResp412Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *DeleteCustomerSubscriptionResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *DeleteCustomerSubscriptionResp428Headers
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r DeleteCustomerSubscriptionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r DeleteCustomerSubscriptionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r DeleteCustomerSubscriptionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteCustomerSubscriptionResp) GetApplicationproblemJSON409() *CustomerSubscriptionConflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r DeleteCustomerSubscriptionResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r DeleteCustomerSubscriptionResp) GetApplicationproblemJSON422() *UnprocessableEntity {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r DeleteCustomerSubscriptionResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r DeleteCustomerSubscriptionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteCustomerSubscriptionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteCustomerSubscriptionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteCustomerSubscriptionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteCustomerSubscriptionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetCustomerSubscriptionResp200Headers the declared response headers of an HTTP 200 response for GetCustomerSubscription
+type GetCustomerSubscriptionResp200Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	RequestId       *string
+}
+
+// GetCustomerSubscriptionResp409Headers the declared response headers of an HTTP 409 response for GetCustomerSubscription
+type GetCustomerSubscriptionResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type GetCustomerSubscriptionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerSubscription
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *CustomerSubscriptionConflict
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetCustomerSubscriptionResp200Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *GetCustomerSubscriptionResp409Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCustomerSubscriptionResp) GetJSON200() *CustomerSubscription {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetCustomerSubscriptionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetCustomerSubscriptionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetCustomerSubscriptionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetCustomerSubscriptionResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r GetCustomerSubscriptionResp) GetApplicationproblemJSON409() *CustomerSubscriptionConflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetCustomerSubscriptionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCustomerSubscriptionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCustomerSubscriptionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCustomerSubscriptionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCustomerSubscriptionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateCustomerSubscriptionResp200Headers the declared response headers of an HTTP 200 response for UpdateCustomerSubscription
+type UpdateCustomerSubscriptionResp200Headers struct {
+	ContentLanguage *string
+	ETag            *string
+	RequestId       *string
+	XDryRun         *string
+}
+
+// UpdateCustomerSubscriptionResp409Headers the declared response headers of an HTTP 409 response for UpdateCustomerSubscription
+type UpdateCustomerSubscriptionResp409Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerSubscriptionResp412Headers the declared response headers of an HTTP 412 response for UpdateCustomerSubscription
+type UpdateCustomerSubscriptionResp412Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerSubscriptionResp415Headers the declared response headers of an HTTP 415 response for UpdateCustomerSubscription
+type UpdateCustomerSubscriptionResp415Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerSubscriptionResp422Headers the declared response headers of an HTTP 422 response for UpdateCustomerSubscription
+type UpdateCustomerSubscriptionResp422Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+// UpdateCustomerSubscriptionResp428Headers the declared response headers of an HTTP 428 response for UpdateCustomerSubscription
+type UpdateCustomerSubscriptionResp428Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type UpdateCustomerSubscriptionResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerSubscription
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *CustomerSubscriptionConflict
+	// ApplicationproblemJSON412 the response for an HTTP 412 `application/problem+json` response
+	ApplicationproblemJSON412 *PreconditionFailed
+	// ApplicationproblemJSON415 the response for an HTTP 415 `application/problem+json` response
+	ApplicationproblemJSON415 *UnsupportedMediaType
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *CustomerSubscriptionUnprocessable
+	// ApplicationproblemJSON428 the response for an HTTP 428 `application/problem+json` response
+	ApplicationproblemJSON428 *PreconditionRequired
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateCustomerSubscriptionResp200Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateCustomerSubscriptionResp409Headers
+	// Headers412 the parsed response headers for an HTTP 412 response
+	Headers412 *UpdateCustomerSubscriptionResp412Headers
+	// Headers415 the parsed response headers for an HTTP 415 response
+	Headers415 *UpdateCustomerSubscriptionResp415Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateCustomerSubscriptionResp422Headers
+	// Headers428 the parsed response headers for an HTTP 428 response
+	Headers428 *UpdateCustomerSubscriptionResp428Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateCustomerSubscriptionResp) GetJSON200() *CustomerSubscription {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r UpdateCustomerSubscriptionResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r UpdateCustomerSubscriptionResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r UpdateCustomerSubscriptionResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r UpdateCustomerSubscriptionResp) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateCustomerSubscriptionResp) GetApplicationproblemJSON409() *CustomerSubscriptionConflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON412 returns the response for an HTTP 412 `application/problem+json` response
+func (r UpdateCustomerSubscriptionResp) GetApplicationproblemJSON412() *PreconditionFailed {
+	return r.ApplicationproblemJSON412
+}
+
+// GetApplicationproblemJSON415 returns the response for an HTTP 415 `application/problem+json` response
+func (r UpdateCustomerSubscriptionResp) GetApplicationproblemJSON415() *UnsupportedMediaType {
+	return r.ApplicationproblemJSON415
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateCustomerSubscriptionResp) GetApplicationproblemJSON422() *CustomerSubscriptionUnprocessable {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON428 returns the response for an HTTP 428 `application/problem+json` response
+func (r UpdateCustomerSubscriptionResp) GetApplicationproblemJSON428() *PreconditionRequired {
+	return r.ApplicationproblemJSON428
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r UpdateCustomerSubscriptionResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateCustomerSubscriptionResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateCustomerSubscriptionResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateCustomerSubscriptionResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateCustomerSubscriptionResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ListDatahubDatasetsResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -46743,6 +48760,122 @@ func (c *ClientWithResponses) UpdateCustomerNotificationWithApplicationMergePatc
 		return nil, err
 	}
 	return ParseUpdateCustomerNotificationResp(rsp)
+}
+
+// CreateCustomerSubscriptionWithBodyWithResponse Create a subscription
+//
+// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+func (c *ClientWithResponses) CreateCustomerSubscriptionWithBodyWithResponse(ctx context.Context, params *CreateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomerSubscriptionResp, error) {
+	rsp, err := c.CreateCustomerSubscriptionWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomerSubscriptionResp(rsp)
+}
+
+// CreateCustomerSubscriptionWithResponse Create a subscription
+//
+// Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
+// `subscriptions` must contain one to three entries. A repeated type is `422` `customers.duplicate_subscription_type`. An `alert` or `budget` type, an empty `subscriptions` array, or any server-set field (`id`, `name`, `createdBy`, `etag`, `permissions`, `source.name`, `schedule.nextAt`) is `422` `validation_failed`. `source.id` must belong to the tenant. A missing or foreign source is `422` `validation_failed`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients` and `CustomerSubscriptionScheduleInput`.
+// The caller must be allowed to manage every sent type: a DoiT employee, Manage Settings, or the permission for that type. Users Manager alone grants no access.
+// `Idempotency-Key` is required. The same key, caller, customer, method, path, and body replays the stored success response. A different body for that key is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with `id` and `etag` null and writes nothing.
+// Reads are immediately consistent. After a `201`, a GET of that id returns the created subscription. The first delivery can take up to an hour.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /customers/v1/subscriptions (the `CreateCustomerSubscription` operationId).
+func (c *ClientWithResponses) CreateCustomerSubscriptionWithResponse(ctx context.Context, params *CreateCustomerSubscriptionParams, body CreateCustomerSubscriptionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomerSubscriptionResp, error) {
+	rsp, err := c.CreateCustomerSubscription(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateCustomerSubscriptionResp(rsp)
+}
+
+// DeleteCustomerSubscriptionWithResponse Delete a subscription
+//
+// Deletes a dashboard, report, or commitment subscription and every scheduled entry on it. Returns `204`. Deleting an id that is already gone also returns `204`, so a retry does not fail. `If-Match` is required when the document still exists; a stale value is `412`. An id that matches no scheduled subscription, alert, or budget returns `204` when `If-Match` is present.
+// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// The caller must have `canDelete` for the subscription. Manage Settings users, a creator with the permission for each scheduled type, and a source owner or editor may delete it. Source viewers and recipients cannot. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator.
+// `Idempotency-Key` is required. The same key, caller, customer, method, path, and `If-Match` replays the stored success response. A different `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key and does not delete.
+// Reads are immediately consistent. After a completed delete, a GET of that id returns `404`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /customers/v1/subscriptions/{id} (the `DeleteCustomerSubscription` operationId).
+func (c *ClientWithResponses) DeleteCustomerSubscriptionWithResponse(ctx context.Context, id string, params *DeleteCustomerSubscriptionParams, reqEditors ...RequestEditorFn) (*DeleteCustomerSubscriptionResp, error) {
+	rsp, err := c.DeleteCustomerSubscription(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteCustomerSubscriptionResp(rsp)
+}
+
+// GetCustomerSubscriptionWithResponse Retrieve a subscription
+//
+// Returns one dashboard, report, commitment, alert, or budget subscription. The body is the same object as a list item. `schedule` is omitted on an alert or a budget.
+// Create does not accept `alert` or `budget`. GET returns them. PATCH may replace their recipient lists, which writes the same lists as `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. Create, delete, and full management stay on those APIs. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// Manage Settings users can view the subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. Keys the caller cannot see are omitted from `subscriptions`. A missing, foreign-tenant, or non-visible subscription returns `404` without revealing whether it exists.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /customers/v1/subscriptions/{id} (the `GetCustomerSubscription` operationId).
+func (c *ClientWithResponses) GetCustomerSubscriptionWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomerSubscriptionResp, error) {
+	rsp, err := c.GetCustomerSubscription(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomerSubscriptionResp(rsp)
+}
+
+// UpdateCustomerSubscriptionWithBodyWithResponse Update a subscription
+//
+// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+func (c *ClientWithResponses) UpdateCustomerSubscriptionWithBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerSubscriptionResp, error) {
+	rsp, err := c.UpdateCustomerSubscriptionWithBody(ctx, id, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerSubscriptionResp(rsp)
+}
+
+// UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBodyWithResponse Update a subscription
+//
+// Partially updates one dashboard, report, commitment, alert, or budget subscription with an `application/merge-patch+json` body (RFC 7396). The writable fields are `recipients.emails`, `recipients.slackChannels`, and, on a scheduled subscription, `subscriptions`. Any other field, `recipients: null`, or `null` for either recipient list is `422` `validation_failed`. A patch that sets neither `recipients` nor `subscriptions` is `422` `validation_failed`. A wrong `Content-Type` is `415`. Recipient and schedule value rules are on `CustomerSubscriptionRecipients`, `CustomerSubscriptionRecipientPatch`, and `CustomerSubscriptionScheduleInput`.
+// On a scheduled subscription, `subscriptions` is the desired set of dashboard, report, and commitment subscriptions. A type in the body and not on the document is added. A type on the document and missing from the body is removed. A type in both is updated when `source.id` or the schedule differs, and `nextAt` is recalculated. A stored entry this API does not list stays on the subscription. An empty `subscriptions` array is `422` `validation_failed`; deleting the item is `DELETE`. A repeated type is `422` `customers.duplicate_subscription_type`. An omitted `subscriptions` array leaves the nested types unchanged.
+// Create does not accept `alert` or `budget`. GET returns them. On an alert or a budget, `subscriptions` is accepted only when it is the one stored entry with the same `type` and `source.id` and no `schedule`. Any other array is `422` `validation_failed`. Those items never gain a dashboard, report, or commitment subscription. Alerts and budgets keep their own APIs for create, delete, and full management. This `PATCH` is the one write this API makes on them, and it may replace their recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// A patch whose normalized values match the stored values returns `200` and does not write. The `etag` is unchanged.
+// Recipient changes are allowed when the caller can edit every key on the document, including a key the response did not show. Otherwise they are allowed only when the caller removes exactly their own email: no added address, no Slack change, and no subscription-set change. Any other recipient change is `403`. The caller must be allowed to manage every added or changed scheduled type and to delete every removed type.
+// `If-Match` must contain the current strong ETag. The token only covers fields this API can write. `Idempotency-Key` is required. The same key, caller, customer, method, path, body, and `If-Match` replays the stored success response. A different body or `If-Match` is `422` `idempotency_key_reused`. A missing key is `400` `idempotency_key_required`. While the first request is in progress, another request with that key is `409` `idempotency_request_in_progress`. A `4xx` response releases the key. `dryRun=true` does not reserve the key. It returns the would-be subscription with the current `etag` and writes nothing.
+// Reads are immediately consistent. After a completed update, a GET of that id returns the new state.
+//
+// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /customers/v1/subscriptions/{id} (the `UpdateCustomerSubscription` operationId).
+func (c *ClientWithResponses) UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerSubscriptionParams, body UpdateCustomerSubscriptionApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerSubscriptionResp, error) {
+	rsp, err := c.UpdateCustomerSubscriptionWithApplicationMergePatchPlusJSONBody(ctx, id, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateCustomerSubscriptionResp(rsp)
 }
 
 // ListDatahubDatasetsWithResponse List datasets
@@ -54907,6 +57040,673 @@ func ParseUpdateCustomerNotificationResp(rsp *http.Response) (*UpdateCustomerNot
 			headers.RequestId = &value
 		}
 		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateCustomerSubscriptionResp parses an HTTP response from a CreateCustomerSubscriptionWithResponse call
+func ParseCreateCustomerSubscriptionResp(rsp *http.Response) (*CreateCustomerSubscriptionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateCustomerSubscriptionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerSubscription
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest CustomerSubscription
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest CustomerSubscriptionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest CustomerSubscriptionUnprocessable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateCustomerSubscriptionResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 201:
+		var headers CreateCustomerSubscriptionResp201Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateCustomerSubscriptionResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateCustomerSubscriptionResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteCustomerSubscriptionResp parses an HTTP response from a DeleteCustomerSubscriptionWithResponse call
+func ParseDeleteCustomerSubscriptionResp(rsp *http.Response) (*DeleteCustomerSubscriptionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteCustomerSubscriptionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest CustomerSubscriptionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest UnprocessableEntity
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteCustomerSubscriptionResp204Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 409:
+		var headers DeleteCustomerSubscriptionResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers DeleteCustomerSubscriptionResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 422:
+		var headers DeleteCustomerSubscriptionResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers DeleteCustomerSubscriptionResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetCustomerSubscriptionResp parses an HTTP response from a GetCustomerSubscriptionWithResponse call
+func ParseGetCustomerSubscriptionResp(rsp *http.Response) (*GetCustomerSubscriptionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCustomerSubscriptionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerSubscription
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest CustomerSubscriptionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetCustomerSubscriptionResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 409:
+		var headers GetCustomerSubscriptionResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateCustomerSubscriptionResp parses an HTTP response from a UpdateCustomerSubscriptionWithResponse call
+func ParseUpdateCustomerSubscriptionResp(rsp *http.Response) (*UpdateCustomerSubscriptionResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateCustomerSubscriptionResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerSubscription
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest N404
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest CustomerSubscriptionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest PreconditionFailed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 415:
+		var dest UnsupportedMediaType
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON415 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest CustomerSubscriptionUnprocessable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest PreconditionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON428 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateCustomerSubscriptionResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("X-Dry-Run"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Dry-Run", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XDryRun = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateCustomerSubscriptionResp409Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 412:
+		var headers UpdateCustomerSubscriptionResp412Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers412 = &headers
+	case rsp.StatusCode == 415:
+		var headers UpdateCustomerSubscriptionResp415Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers415 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateCustomerSubscriptionResp422Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 428:
+		var headers UpdateCustomerSubscriptionResp428Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers428 = &headers
 	}
 
 	return response, nil

@@ -266,3 +266,16 @@ resources:
     delete:
       path: /iam/v1/roles/{id}
       method: DELETE
+  customer_subscription:
+    create:
+      path: /customers/v1/subscriptions
+      method: POST
+    read:
+      path: /customers/v1/subscriptions/{id}
+      method: GET
+    update:
+      path: /customers/v1/subscriptions/{id}
+      method: PATCH
+    delete:
+      path: /customers/v1/subscriptions/{id}
+      method: DELETE

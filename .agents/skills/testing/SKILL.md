@@ -337,6 +337,32 @@ func TestAccResource_WithEmptyLists(t *testing.T) {
 
 ---
 
+## Set Nested Attribute Coverage
+
+Set elements are planned by `planSetNestedAttributesFromState` (see
+[Set Nested Attributes](../implement-resource/SKILL.md#set-nested-attributes)).
+The drift step after create is what exposes a missing or broken set planner, so
+every set-nested attribute needs these acceptance steps, each followed by an
+`ExpectEmptyPlan()` drift check:
+
+| Step | Why |
+| --- | --- |
+| Create with every element Optional+Computed attribute **omitted** | Omitted O+C attributes are wildcards when matching prior elements |
+| Change **one** attribute of **one** element | Only that element may change; assert the others keep their computed values |
+| Change an attribute **outside** the set | The set must stay unchanged, not show replaced elements |
+| Add an element, then remove one | Set membership updates in place |
+| Values the API normalizes inside an element | Read must keep the planned spelling, or the overlay cannot pair the element |
+| Import + drift check | Read builds the set with no prior state |
+
+Assert set contents with `knownvalue.SetExact` / `knownvalue.SetPartial` of
+`knownvalue.ObjectPartial` checks: elements have no index for `tfjsonpath`.
+
+For unit tests of the planner itself, build `tftypes` values for config, plan and
+state as in `set_nested_plan_internal_test.go`. The planned value must be what
+the framework produces: Computed attributes the config leaves null are unknown.
+
+---
+
 ## Testing Custom Generated Types
 
 Generated custom types (e.g., `RulesValue`) have an internal `state` field. **Never construct them with struct literals** — use `NewXxxValueMust()`:

@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 // useNullForUnknownStringWhenConfigNull is a null-based String equivalent of
@@ -58,4 +59,14 @@ func (m useNullForUnknownListNullWhenConfigNullModifier) PlanModifyList(_ contex
 	if req.ConfigValue.IsNull() && !req.StateValue.IsNull() {
 		resp.PlanValue = types.ListNull(m.elemType)
 	}
+}
+
+// clearedValue implements configNullClearer for planSetNestedAttributesFromState.
+func (m useNullForUnknownStringWhenConfigNullModifier) clearedValue(t tftypes.Type) tftypes.Value {
+	return tftypes.NewValue(t, nil)
+}
+
+// clearedValue implements configNullClearer for planSetNestedAttributesFromState.
+func (m useNullForUnknownListNullWhenConfigNullModifier) clearedValue(t tftypes.Type) tftypes.Value {
+	return tftypes.NewValue(t, nil)
 }
