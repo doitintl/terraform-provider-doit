@@ -748,3 +748,84 @@ func TestAccCustomerSubscription_Validation(t *testing.T) {
 		})
 	}
 }
+
+// TestAccCustomerSubscription_IgnoreChanges ignores subscriptions: removing
+// attachments from the configuration plans nothing, and a recipient change
+// leaves the stored attachments alone.
+func TestAccCustomerSubscription_IgnoreChanges(t *testing.T) {
+	if os.Getenv("TEST_USER_2") == "" {
+		t.Skip("TEST_USER_2 is not set, skipping ignore_changes test")
+	}
+	rName := acctest.RandomWithPrefix("tf-acc-csub-ign")
+	ignore := func(cfg string) string {
+		return strings.Replace(cfg, `resource "doit_customer_subscription" "this" {`, `resource "doit_customer_subscription" "this" {
+  lifecycle {
+    ignore_changes = [subscriptions]
+  }`, 1)
+	}
+
+	created := ignore(testAccCustomerSubscriptionConfig(rName, testAccCustomerSubscriptionEmailRecipients(),
+		testAccCustomerSubscriptionReportEntry(testAccCustomerSubscriptionSchedule, `      attachments = ["pdf"]`)))
+	withoutAttachments := ignore(testAccCustomerSubscriptionConfig(rName, testAccCustomerSubscriptionEmailRecipients(),
+		testAccCustomerSubscriptionReportEntry(testAccCustomerSubscriptionSchedule, "")))
+	otherRecipients := ignore(testAccCustomerSubscriptionConfig(rName,
+		fmt.Sprintf(`{ emails = [%q, %q], slack_channels = [] }`, testUser(), os.Getenv("TEST_USER_2")),
+		testAccCustomerSubscriptionReportEntry(testAccCustomerSubscriptionSchedule, "")))
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckCustomerSubscriptionDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: created},
+			// Removing attachments from the ignored set plans nothing.
+			testAccCustomerSubscriptionDriftCheck(withoutAttachments),
+			// A recipient change updates in place and keeps the attachments.
+			{
+				Config: otherRecipients,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(testAccCustomerSubscriptionAddr, plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: testAccCheckCustomerSubscriptionAttachments(t, "pdf"),
+			},
+			testAccCustomerSubscriptionDriftCheck(otherRecipients),
+		},
+	})
+}
+
+// testAccCheckCustomerSubscriptionAttachments checks the attachments the API
+// stores for the report entry.
+func testAccCheckCustomerSubscriptionAttachments(t *testing.T, want ...string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[testAccCustomerSubscriptionAddr]
+		if !ok {
+			return fmt.Errorf("resource %s not found in state", testAccCustomerSubscriptionAddr)
+		}
+		resp, err := getAPIClient(t).GetCustomerSubscriptionWithResponse(t.Context(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+		if resp.JSON200 == nil {
+			return fmt.Errorf("get subscription: status %d: %s", resp.StatusCode(), string(resp.Body))
+		}
+		for _, entry := range resp.JSON200.Subscriptions {
+			if entry.Type != models.CustomerSubscriptionTypeReportSubscription {
+				continue
+			}
+			var got []string
+			if entry.Attachments != nil {
+				for _, a := range *entry.Attachments {
+					got = append(got, string(a))
+				}
+			}
+			if strings.Join(got, ",") != strings.Join(want, ",") {
+				return fmt.Errorf("stored attachments = %v, want %v", got, want)
+			}
+			return nil
+		}
+		return fmt.Errorf("no report entry in subscription %s", rs.Primary.ID)
+	}
+}

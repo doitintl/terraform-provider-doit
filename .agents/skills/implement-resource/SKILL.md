@@ -518,8 +518,12 @@ resource needs no key or per-attribute code:
 | Configured (any class) | prior value equals config | config value |
 
 A matched element is planned as its prior element. When the whole
-configuration equals the prior state, the plan becomes the prior state, so it is
-empty and top-level volatile fields like `etag` are not marked unknown. An
+configuration equals the prior state and the plan agrees with it on every known
+value, the plan becomes the prior state, so it is empty and top-level volatile
+fields like `etag` are not marked unknown. A known value that differs was
+planned on purpose by another plan modifier (a default, for example), so that
+plan is kept. `lifecycle { ignore_changes = [<set>] }` works as usual: Terraform
+hands the planner the prior value of the ignored set. An
 unknown configured value (a reference to a resource that is not created yet)
 never matches. The clearing modifiers expose their cleared value through
 `configNullClearer`; give any new clearing modifier a `clearedValue` method,

@@ -31,7 +31,9 @@ import (
 // (Category B) match anything; an omitted attribute with a clearing modifier
 // (Category A) matches only its cleared value, and is planned as the cleared
 // value in an element that changed. When the whole configuration equals the
-// prior state, the plan becomes the prior state, so it is empty.
+// prior state and the plan agrees with it on every known value, the plan
+// becomes the prior state, so it is empty. A known value that differs was
+// planned on purpose by another plan modifier, so that plan is kept.
 //
 // Call it first in ModifyPlan of every resource whose schema has a
 // SetNestedAttribute. It only changes Computed values, so it never contradicts
@@ -50,7 +52,9 @@ func planSetNestedAttributesFromState(ctx context.Context, req resource.ModifyPl
 	if err == nil {
 		var unchanged bool
 		unchanged, err = p.unchanged(s.Attributes, req.Config.Raw, planned, req.State.Raw)
-		if unchanged {
+		// Only unknowns may differ: a known value that differs from the prior
+		// state was planned on purpose (by another plan modifier) and is kept.
+		if unchanged && knownValuesMatch(planned, req.State.Raw) {
 			planned = req.State.Raw
 		}
 	}

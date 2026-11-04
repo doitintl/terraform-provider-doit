@@ -498,3 +498,54 @@ func TestPlanSetNestedAttributesFromState_CollapseWithUnknownValues(t *testing.T
 		assertDuplicateSetElements(t, run(t, topLevel, config, plan, state).Diagnostics, "items")
 	})
 }
+
+// testDefaultStringModifier plans a fixed value when the configuration omits
+// the attribute, like a sibling-dependent default.
+type testDefaultStringModifier struct{}
+
+func (testDefaultStringModifier) Description(context.Context) string { return "plans a default" }
+func (testDefaultStringModifier) MarkdownDescription(context.Context) string {
+	return "plans a default"
+}
+func (testDefaultStringModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if req.ConfigValue.IsNull() {
+		resp.PlanValue = types.StringValue("new default")
+	}
+}
+
+// The plan becomes the prior state only when it agrees with it on every known
+// value. A value another plan modifier planned on purpose is a change: it is
+// kept, set elements still take their prior values, and the other unknown
+// values stay unknown.
+func TestPlanSetNestedAttributesFromState_KeepsPlannedValues(t *testing.T) {
+	s := schema.Schema{Attributes: map[string]schema.Attribute{
+		"mode": schema.StringAttribute{
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []planmodifier.String{testDefaultStringModifier{}},
+		},
+		"etag": schema.StringAttribute{Computed: true},
+		"items": schema.SetNestedAttribute{Required: true, NestedObject: schema.NestedAttributeObject{Attributes: map[string]schema.Attribute{
+			"name":   schema.StringAttribute{Required: true},
+			"status": schema.StringAttribute{Computed: true},
+		}}},
+	}}
+	itemType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"name": tftypes.String, "status": tftypes.String}}
+	rootType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{
+		"mode": tftypes.String, "etag": tftypes.String, "items": tftypes.Set{ElementType: itemType},
+	}}
+	root := func(mode, etag, status tftypes.Value) tftypes.Value {
+		item := tftypes.NewValue(itemType, map[string]tftypes.Value{"name": tfString("a"), "status": status})
+		return tftypes.NewValue(rootType, map[string]tftypes.Value{
+			"mode": mode, "etag": etag, "items": tftypes.NewValue(tftypes.Set{ElementType: itemType}, []tftypes.Value{item}),
+		})
+	}
+
+	state := root(tfString("old default"), tfString("e1"), tfString("ok"))
+	config := root(tfNullString, tfNullString, tfNullString)
+	// The modifier planned a new mode; the framework marked etag and status unknown.
+	plan := root(tfString("new default"), tfUnknownString, tfUnknownString)
+
+	got := runSchemaSetNestedPlan(t, s, config, plan, state)
+	assertTF(t, "plan", got, root(tfString("new default"), tfUnknownString, tfString("ok")))
+}
