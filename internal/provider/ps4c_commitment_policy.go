@@ -23,7 +23,6 @@ func mapCommitmentPolicyDetailToModel(ctx context.Context, apiResp *models.Commi
 	data.TargetCoverage = types.Float64Value(apiResp.TargetCoverage)
 	data.LookbackDays = types.Int64Value(int64(apiResp.LookbackDays))
 	data.LadderStepPercent = types.Float64Value(apiResp.LadderStepPercent)
-	data.LadderIntervalDays = types.Int64Value(int64(apiResp.LadderIntervalDays))
 	data.BootstrapPercent = types.Float64Value(apiResp.BootstrapPercent)
 
 	if createdTime := nullableToPointer(apiResp.CreatedTime); createdTime != nil {

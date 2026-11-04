@@ -38,11 +38,6 @@ func Ps4cCommitmentPoliciesDataSourceSchema(ctx context.Context) schema.Schema {
 							Description:         "`true` for the three immutable built-in policies, `false` for tenant-defined policies.",
 							MarkdownDescription: "`true` for the three immutable built-in policies, `false` for tenant-defined policies.",
 						},
-						"ladder_interval_days": schema.Int64Attribute{
-							Computed:            true,
-							Description:         "Days between consecutive laddering steps.",
-							MarkdownDescription: "Days between consecutive laddering steps.",
-						},
 						"ladder_step_percent": schema.Float64Attribute{
 							Computed:            true,
 							Description:         "Size of each incremental laddering step, as a percentage of the target commitment.",
@@ -192,24 +187,6 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 			fmt.Sprintf(`is_built_in expected to be basetypes.BoolValue, was: %T`, isBuiltInAttribute))
 	}
 
-	ladderIntervalDaysAttribute, ok := attributes["ladder_interval_days"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`ladder_interval_days is missing from object`)
-
-		return nil, diags
-	}
-
-	ladderIntervalDaysVal, ok := ladderIntervalDaysAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`ladder_interval_days expected to be basetypes.Int64Value, was: %T`, ladderIntervalDaysAttribute))
-	}
-
 	ladderStepPercentAttribute, ok := attributes["ladder_step_percent"]
 
 	if !ok {
@@ -287,15 +264,14 @@ func (t ItemsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue
 	}
 
 	return ItemsValue{
-		BootstrapPercent:   bootstrapPercentVal,
-		Id:                 idVal,
-		IsBuiltIn:          isBuiltInVal,
-		LadderIntervalDays: ladderIntervalDaysVal,
-		LadderStepPercent:  ladderStepPercentVal,
-		LookbackDays:       lookbackDaysVal,
-		Name:               nameVal,
-		TargetCoverage:     targetCoverageVal,
-		state:              attr.ValueStateKnown,
+		BootstrapPercent:  bootstrapPercentVal,
+		Id:                idVal,
+		IsBuiltIn:         isBuiltInVal,
+		LadderStepPercent: ladderStepPercentVal,
+		LookbackDays:      lookbackDaysVal,
+		Name:              nameVal,
+		TargetCoverage:    targetCoverageVal,
+		state:             attr.ValueStateKnown,
 	}, diags
 }
 
@@ -416,24 +392,6 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 			fmt.Sprintf(`is_built_in expected to be basetypes.BoolValue, was: %T`, isBuiltInAttribute))
 	}
 
-	ladderIntervalDaysAttribute, ok := attributes["ladder_interval_days"]
-
-	if !ok {
-		diags.AddError(
-			"Attribute Missing",
-			`ladder_interval_days is missing from object`)
-
-		return NewItemsValueUnknown(), diags
-	}
-
-	ladderIntervalDaysVal, ok := ladderIntervalDaysAttribute.(basetypes.Int64Value)
-
-	if !ok {
-		diags.AddError(
-			"Attribute Wrong Type",
-			fmt.Sprintf(`ladder_interval_days expected to be basetypes.Int64Value, was: %T`, ladderIntervalDaysAttribute))
-	}
-
 	ladderStepPercentAttribute, ok := attributes["ladder_step_percent"]
 
 	if !ok {
@@ -511,15 +469,14 @@ func NewItemsValue(attributeTypes map[string]attr.Type, attributes map[string]at
 	}
 
 	return ItemsValue{
-		BootstrapPercent:   bootstrapPercentVal,
-		Id:                 idVal,
-		IsBuiltIn:          isBuiltInVal,
-		LadderIntervalDays: ladderIntervalDaysVal,
-		LadderStepPercent:  ladderStepPercentVal,
-		LookbackDays:       lookbackDaysVal,
-		Name:               nameVal,
-		TargetCoverage:     targetCoverageVal,
-		state:              attr.ValueStateKnown,
+		BootstrapPercent:  bootstrapPercentVal,
+		Id:                idVal,
+		IsBuiltIn:         isBuiltInVal,
+		LadderStepPercent: ladderStepPercentVal,
+		LookbackDays:      lookbackDaysVal,
+		Name:              nameVal,
+		TargetCoverage:    targetCoverageVal,
+		state:             attr.ValueStateKnown,
 	}, diags
 }
 
@@ -591,19 +548,18 @@ func (t ItemsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = ItemsValue{}
 
 type ItemsValue struct {
-	BootstrapPercent   basetypes.Float64Value `tfsdk:"bootstrap_percent"`
-	Id                 basetypes.StringValue  `tfsdk:"id"`
-	IsBuiltIn          basetypes.BoolValue    `tfsdk:"is_built_in"`
-	LadderIntervalDays basetypes.Int64Value   `tfsdk:"ladder_interval_days"`
-	LadderStepPercent  basetypes.Float64Value `tfsdk:"ladder_step_percent"`
-	LookbackDays       basetypes.Int64Value   `tfsdk:"lookback_days"`
-	Name               basetypes.StringValue  `tfsdk:"name"`
-	TargetCoverage     basetypes.Float64Value `tfsdk:"target_coverage"`
-	state              attr.ValueState
+	BootstrapPercent  basetypes.Float64Value `tfsdk:"bootstrap_percent"`
+	Id                basetypes.StringValue  `tfsdk:"id"`
+	IsBuiltIn         basetypes.BoolValue    `tfsdk:"is_built_in"`
+	LadderStepPercent basetypes.Float64Value `tfsdk:"ladder_step_percent"`
+	LookbackDays      basetypes.Int64Value   `tfsdk:"lookback_days"`
+	Name              basetypes.StringValue  `tfsdk:"name"`
+	TargetCoverage    basetypes.Float64Value `tfsdk:"target_coverage"`
+	state             attr.ValueState
 }
 
 func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 8)
+	attrTypes := make(map[string]tftypes.Type, 7)
 
 	var val tftypes.Value
 	var err error
@@ -611,7 +567,6 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 	attrTypes["bootstrap_percent"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["id"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["is_built_in"] = basetypes.BoolType{}.TerraformType(ctx)
-	attrTypes["ladder_interval_days"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["ladder_step_percent"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["lookback_days"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["name"] = basetypes.StringType{}.TerraformType(ctx)
@@ -621,7 +576,7 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 8)
+		vals := make(map[string]tftypes.Value, 7)
 
 		val, err = v.BootstrapPercent.ToTerraformValue(ctx)
 
@@ -646,14 +601,6 @@ func (v ItemsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error)
 		}
 
 		vals["is_built_in"] = val
-
-		val, err = v.LadderIntervalDays.ToTerraformValue(ctx)
-
-		if err != nil {
-			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
-		}
-
-		vals["ladder_interval_days"] = val
 
 		val, err = v.LadderStepPercent.ToTerraformValue(ctx)
 
@@ -717,14 +664,13 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	var diags diag.Diagnostics
 
 	attributeTypes := map[string]attr.Type{
-		"bootstrap_percent":    basetypes.Float64Type{},
-		"id":                   basetypes.StringType{},
-		"is_built_in":          basetypes.BoolType{},
-		"ladder_interval_days": basetypes.Int64Type{},
-		"ladder_step_percent":  basetypes.Float64Type{},
-		"lookback_days":        basetypes.Int64Type{},
-		"name":                 basetypes.StringType{},
-		"target_coverage":      basetypes.Float64Type{},
+		"bootstrap_percent":   basetypes.Float64Type{},
+		"id":                  basetypes.StringType{},
+		"is_built_in":         basetypes.BoolType{},
+		"ladder_step_percent": basetypes.Float64Type{},
+		"lookback_days":       basetypes.Int64Type{},
+		"name":                basetypes.StringType{},
+		"target_coverage":     basetypes.Float64Type{},
 	}
 
 	if v.IsNull() {
@@ -738,14 +684,13 @@ func (v ItemsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, d
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"bootstrap_percent":    v.BootstrapPercent,
-			"id":                   v.Id,
-			"is_built_in":          v.IsBuiltIn,
-			"ladder_interval_days": v.LadderIntervalDays,
-			"ladder_step_percent":  v.LadderStepPercent,
-			"lookback_days":        v.LookbackDays,
-			"name":                 v.Name,
-			"target_coverage":      v.TargetCoverage,
+			"bootstrap_percent":   v.BootstrapPercent,
+			"id":                  v.Id,
+			"is_built_in":         v.IsBuiltIn,
+			"ladder_step_percent": v.LadderStepPercent,
+			"lookback_days":       v.LookbackDays,
+			"name":                v.Name,
+			"target_coverage":     v.TargetCoverage,
 		})
 
 	return objVal, diags
@@ -778,10 +723,6 @@ func (v ItemsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
-	if !v.LadderIntervalDays.Equal(other.LadderIntervalDays) {
-		return false
-	}
-
 	if !v.LadderStepPercent.Equal(other.LadderStepPercent) {
 		return false
 	}
@@ -811,13 +752,12 @@ func (v ItemsValue) Type(ctx context.Context) attr.Type {
 
 func (v ItemsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
-		"bootstrap_percent":    basetypes.Float64Type{},
-		"id":                   basetypes.StringType{},
-		"is_built_in":          basetypes.BoolType{},
-		"ladder_interval_days": basetypes.Int64Type{},
-		"ladder_step_percent":  basetypes.Float64Type{},
-		"lookback_days":        basetypes.Int64Type{},
-		"name":                 basetypes.StringType{},
-		"target_coverage":      basetypes.Float64Type{},
+		"bootstrap_percent":   basetypes.Float64Type{},
+		"id":                  basetypes.StringType{},
+		"is_built_in":         basetypes.BoolType{},
+		"ladder_step_percent": basetypes.Float64Type{},
+		"lookback_days":       basetypes.Int64Type{},
+		"name":                basetypes.StringType{},
+		"target_coverage":     basetypes.Float64Type{},
 	}
 }
