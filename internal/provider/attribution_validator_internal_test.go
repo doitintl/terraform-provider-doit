@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"reflect"
+	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -17,201 +19,206 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func TestUnsupportedAttributionTierTypeValidator(t *testing.T) {
-	t.Parallel()
-
-	testPath := path.Root("config").AtName("scopes").AtListIndex(0).AtName("type")
-	tests := []struct {
-		name      string
-		value     types.String
-		wantError bool
-	}{
-		{name: "null", value: types.StringNull()},
-		{name: "unknown", value: types.StringUnknown()},
-		{name: "ordinary dimension type", value: types.StringValue("fixed")},
-		{name: "deprecated attribution", value: types.StringValue("attribution")},
-		{name: "deprecated attribution group", value: types.StringValue("attribution_group")},
-		{name: "allocation rule", value: types.StringValue("allocation_rule")},
-		{name: "case-sensitive match", value: types.StringValue("Attribution_Tier_1")},
-		{name: "tier 1", value: types.StringValue("attribution_tier_1"), wantError: true},
-		{name: "tier 2", value: types.StringValue("attribution_tier_2"), wantError: true},
-		{name: "tier 3", value: types.StringValue("attribution_tier_3"), wantError: true},
+// validateStringValue runs every validator of a string attribute against value
+// and returns the diagnostics they produce.
+func validateStringValue(ctx context.Context, validators []validator.String, attributePath path.Path, value string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	for _, candidate := range validators {
+		response := &validator.StringResponse{}
+		candidate.ValidateString(ctx, validator.StringRequest{Path: attributePath, ConfigValue: types.StringValue(value)}, response)
+		diags.Append(response.Diagnostics...)
 	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			response := &validator.StringResponse{}
-			unsupportedAttributionTierTypeValidator{typeName: "doit_alert"}.ValidateString(t.Context(), validator.StringRequest{
-				Path:        testPath,
-				ConfigValue: test.value,
-			}, response)
-
-			wantErrors := 0
-			if test.wantError {
-				wantErrors = 1
-			}
-			if got := len(response.Diagnostics); got != wantErrors {
-				t.Fatalf("diagnostics = %d, want %d: %v", got, wantErrors, response.Diagnostics)
-			}
-			if !test.wantError {
-				return
-			}
-
-			assertAttributeError(t, response.Diagnostics[0], unsupportedAttributionTierTypeSummary, testPath)
-			detail := response.Diagnostics[0].Detail()
-			for _, want := range []string{test.value.ValueString(), "doit_alert", "doit_report_query", "allocation_rule"} {
-				if !strings.Contains(detail, want) {
-					t.Errorf("detail %q does not mention %q", detail, want)
-				}
-			}
-		})
-	}
+	return diags
 }
 
-func TestAttributionReportDataSourceValidator(t *testing.T) {
-	t.Parallel()
+var attributionTierTypes = []string{"attribution_tier_1", "attribution_tier_2", "attribution_tier_3"}
 
-	testPath := path.Root("config").AtName("data_source")
-	tests := []struct {
-		name      string
-		value     types.String
-		wantError bool
-	}{
-		{name: "null", value: types.StringNull()},
-		{name: "unknown", value: types.StringUnknown()},
-		{name: "billing", value: types.StringValue("billing")},
-		{name: "billing-datahub", value: types.StringValue("billing-datahub")},
-		{name: "attribution", value: types.StringValue("attribution"), wantError: true},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			response := &validator.StringResponse{}
-			attributionReportDataSourceValidator{}.ValidateString(t.Context(), validator.StringRequest{
-				Path:        testPath,
-				ConfigValue: test.value,
-			}, response)
-
-			wantErrors := 0
-			if test.wantError {
-				wantErrors = 1
-			}
-			if got := len(response.Diagnostics); got != wantErrors {
-				t.Fatalf("diagnostics = %d, want %d: %v", got, wantErrors, response.Diagnostics)
-			}
-			if test.wantError {
-				assertAttributeError(t, response.Diagnostics[0], attributionReportReadOnlySummary, testPath)
-			}
-		})
-	}
-}
-
-func TestAttributionRejectionSchemaWiring(t *testing.T) {
+// The generated enums of doit_report, doit_alert and doit_budget leave out the
+// Attribute values, which only an ad-hoc query can use, and the schema notes
+// point users to doit_report_query.
+func TestAttributionValuesRejectedByGeneratedSchemas(t *testing.T) {
 	t.Parallel()
 
 	ctx := t.Context()
-	resources := map[string]struct {
-		schemaPaths  []string
-		typeName     string
-		rejectSource bool
+	tests := []struct {
+		name      string
+		resource  resourceWithSchema
+		typePaths []string
+		dataPath  string
 	}{
-		"report": {schemaPaths: reportDimensionsTypeAttributePaths, typeName: "doit_report", rejectSource: true},
-		"alert":  {schemaPaths: []string{"config.scopes[*].type"}, typeName: "doit_alert"},
-		"budget": {schemaPaths: []string{"scopes[*].type"}, typeName: "doit_budget"},
-	}
-	schemas := map[string]resourceWithSchema{
-		"report": &reportResource{},
-		"alert":  &alertResource{},
-		"budget": &budgetResource{},
+		{name: "report", resource: &reportResource{}, typePaths: reportDimensionsTypeAttributePaths, dataPath: "config.data_source"},
+		{name: "alert", resource: &alertResource{}, typePaths: []string{"config.scopes[*].type"}},
+		{name: "budget", resource: &budgetResource{}, typePaths: []string{"scopes[*].type"}},
 	}
 
-	for name, test := range resources {
-		t.Run(name, func(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := resourceSchemaForTest(ctx, schemas[name])
-			for _, attributePath := range test.schemaPaths {
+			s := resourceSchemaForTest(ctx, test.resource)
+			for _, attributePath := range test.typePaths {
 				attribute := resourceStringAttributeAtPath(t, s.Attributes, attributePath)
-				count := 0
-				for _, candidate := range attribute.Validators {
-					if tier, ok := candidate.(unsupportedAttributionTierTypeValidator); ok {
-						count++
-						if tier.typeName != test.typeName {
-							t.Errorf("%s: typeName = %q, want %q", attributePath, tier.typeName, test.typeName)
-						}
+				for _, value := range attributionTierTypes {
+					if !validateStringValue(ctx, attribute.Validators, path.Root("type"), value).HasError() {
+						t.Errorf("%s: %q is accepted, want an error", attributePath, value)
 					}
 				}
-				if count != 1 {
-					t.Errorf("%s: tier validator count = %d, want 1", attributePath, count)
+				// The deprecated attribution types are a different thing and stay valid.
+				for _, value := range []string{"fixed", "allocation_rule", "attribution", "attribution_group"} {
+					if diags := validateStringValue(ctx, attribute.Validators, path.Root("type"), value); diags.HasError() {
+						t.Errorf("%s: %q is rejected: %v", attributePath, value, diags)
+					}
 				}
-				if !strings.Contains(attribute.MarkdownDescription, attributionTierUnsupportedNote) {
+				if !strings.Contains(attribute.MarkdownDescription, attributionTierTypeNote) {
 					t.Errorf("%s: markdown description lacks the tier note", attributePath)
 				}
-				if !strings.Contains(attribute.Description, attributionTierUnsupportedPlainNote) {
+				if !strings.Contains(attribute.Description, attributionTierTypePlainNote) {
 					t.Errorf("%s: description lacks the tier note", attributePath)
 				}
 			}
 
-			if !test.rejectSource {
+			if test.dataPath == "" {
 				return
 			}
-			attribute := resourceStringAttributeAtPath(t, s.Attributes, "config.data_source")
-			if got := countValidators[attributionReportDataSourceValidator](attribute.Validators); got != 1 {
-				t.Errorf("config.data_source: read-only validator count = %d, want 1", got)
+			attribute := resourceStringAttributeAtPath(t, s.Attributes, test.dataPath)
+			if !validateStringValue(ctx, attribute.Validators, path.Root("data_source"), attributionReportDataSource).HasError() {
+				t.Errorf("%s: %q is accepted, want an error", test.dataPath, attributionReportDataSource)
+			}
+			for _, value := range []string{"billing", "billing-datahub"} {
+				if diags := validateStringValue(ctx, attribute.Validators, path.Root("data_source"), value); diags.HasError() {
+					t.Errorf("%s: %q is rejected: %v", test.dataPath, value, diags)
+				}
 			}
 			if !strings.Contains(attribute.MarkdownDescription, attributionDataSourceReadOnlyNote) {
-				t.Error("config.data_source: markdown description lacks the read-only note")
+				t.Errorf("%s: markdown description lacks the read-only note", test.dataPath)
 			}
 		})
 	}
 }
 
-// doit_report_query is the one place attribution queries work: it derives its
-// config from a fresh copy of the report resource schema, so the resource's
-// rejections must not leak into it.
-func TestAttributionRejectionNotWiredForReportQuery(t *testing.T) {
+// doit_report_query is the one place attribution queries work. It derives its
+// schema from the report resource, so it has to restore the values that schema
+// leaves out.
+func TestReportQueryAcceptsAttributionValues(t *testing.T) {
 	t.Parallel()
 
+	ctx := t.Context()
 	var response datasource.SchemaResponse
-	(&reportQueryDataSource{}).Schema(t.Context(), datasource.SchemaRequest{}, &response)
+	(&reportQueryDataSource{}).Schema(ctx, datasource.SchemaRequest{}, &response)
 	if response.Diagnostics.HasError() {
 		t.Fatalf("building report query schema: %v", response.Diagnostics.Errors())
 	}
 
 	for _, attributePath := range reportDimensionsTypeAttributePaths {
 		attribute := dataSourceStringAttributeAtPath(t, response.Schema.Attributes, attributePath)
-		if got := countValidators[unsupportedAttributionTierTypeValidator](attribute.Validators); got != 0 {
-			t.Errorf("%s: tier validator count = %d, want 0", attributePath, got)
+		for _, value := range reportQueryDimensionsTypes {
+			if diags := validateStringValue(ctx, attribute.Validators, path.Root("type"), value); diags.HasError() {
+				t.Errorf("%s: %q is rejected: %v", attributePath, value, diags)
+			}
+		}
+		if !validateStringValue(ctx, attribute.Validators, path.Root("type"), "not_a_type").HasError() {
+			t.Errorf("%s: an unknown type is accepted", attributePath)
 		}
 		assertHasDeprecatedDimensionsTypeValidator(t, attribute.Validators)
-		if strings.Contains(attribute.MarkdownDescription, attributionTierUnsupportedNote) {
-			t.Errorf("%s: carries the resource-only rejection note", attributePath)
+		if strings.Contains(attribute.MarkdownDescription, attributionTierTypeNote) {
+			t.Errorf("%s: carries the resource-only tier note", attributePath)
 		}
 		if !strings.Contains(attribute.MarkdownDescription, attributionQueryTierTypeNote) {
 			t.Errorf("%s: markdown description lacks the query tier note", attributePath)
 		}
+		for _, value := range attributionTierTypes {
+			if !strings.Contains(attribute.Description, "`"+value+"`") {
+				t.Errorf("%s: description does not list %q", attributePath, value)
+			}
+		}
 	}
 
 	attribute := dataSourceStringAttributeAtPath(t, response.Schema.Attributes, "config.data_source")
-	if got := countValidators[attributionReportDataSourceValidator](attribute.Validators); got != 0 {
-		t.Errorf("config.data_source: read-only validator count = %d, want 0", got)
+	for _, value := range reportQueryDataSources {
+		if diags := validateStringValue(ctx, attribute.Validators, path.Root("data_source"), value); diags.HasError() {
+			t.Errorf("config.data_source: %q is rejected: %v", value, diags)
+		}
+	}
+	if !validateStringValue(ctx, attribute.Validators, path.Root("data_source"), "not_a_source").HasError() {
+		t.Error("config.data_source: an unknown data source is accepted")
+	}
+	if strings.Contains(attribute.MarkdownDescription, attributionDataSourceReadOnlyNote) {
+		t.Error("config.data_source: carries the resource-only read-only note")
 	}
 	if !strings.Contains(attribute.MarkdownDescription, attributionQueryDataSourceNote) {
 		t.Error("config.data_source: markdown description lacks the query note")
 	}
 
 	found := false
-	for _, configValidator := range (&reportQueryDataSource{}).ConfigValidators(t.Context()) {
+	for _, configValidator := range (&reportQueryDataSource{}).ConfigValidators(ctx) {
 		if _, ok := configValidator.(reportAttributionQueryDataSourceValidator); ok {
 			found = true
 		}
 	}
 	if !found {
 		t.Error("report query does not register reportAttributionQueryDataSourceValidator")
+	}
+}
+
+var oneOfValuePattern = regexp.MustCompile(`"([^"]+)"`)
+
+// oneOfValues returns the values of the generated stringvalidator.OneOf among
+// validators, read from its description.
+func oneOfValues(ctx context.Context, t *testing.T, validators []validator.String) []string {
+	t.Helper()
+
+	for _, candidate := range validators {
+		description := candidate.Description(ctx)
+		if !strings.HasPrefix(description, "value must be one of:") {
+			continue
+		}
+
+		var values []string
+		for _, match := range oneOfValuePattern.FindAllStringSubmatch(description, -1) {
+			values = append(values, match[1])
+		}
+		return values
+	}
+
+	t.Fatal("no OneOf validator among the attribute's validators")
+	return nil
+}
+
+// The query schema lists its enums explicitly, so a value that upstream adds to
+// the report resource's enums must also be added there.
+func TestReportQueryAttributionValuesExtendReportResource(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	resourceAttributes := resourceSchemaForTest(ctx, &reportResource{}).Attributes
+
+	tests := []struct {
+		name   string
+		paths  []string
+		want   []string
+		extras []string
+	}{
+		{name: "data source", paths: []string{"config.data_source"}, want: reportQueryDataSources, extras: []string{attributionReportDataSource}},
+		{name: "dimension types", paths: reportDimensionsTypeAttributePaths, want: reportQueryDimensionsTypes, extras: attributionTierTypes},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			wantFromResource := slices.DeleteFunc(slices.Clone(test.want), func(value string) bool { return slices.Contains(test.extras, value) })
+			for _, attributePath := range test.paths {
+				got := oneOfValues(ctx, t, resourceStringAttributeAtPath(t, resourceAttributes, attributePath).Validators)
+				if !slices.Equal(slices.Sorted(slices.Values(got)), slices.Sorted(slices.Values(wantFromResource))) {
+					t.Errorf("%s: report resource accepts %v, the query schema extends %v", attributePath, got, wantFromResource)
+				}
+			}
+			for _, extra := range test.extras {
+				if !slices.Contains(test.want, extra) {
+					t.Errorf("query values lack %q", extra)
+				}
+			}
+		})
 	}
 }
 
@@ -230,22 +237,14 @@ func TestAttributionTierNotRejectedForDimensionDataSource(t *testing.T) {
 	if !ok {
 		t.Fatalf("type has type %T, want schema.StringAttribute", response.Schema.Attributes["type"])
 	}
-	if got := countValidators[unsupportedAttributionTierTypeValidator](attribute.Validators); got != 0 {
-		t.Errorf("tier validator count = %d, want 0", got)
+	for _, value := range attributionTierTypes {
+		if diags := validateStringValue(t.Context(), attribute.Validators, path.Root("type"), value); diags.HasError() {
+			t.Errorf("%q is rejected: %v", value, diags)
+		}
 	}
 	if !strings.Contains(attribute.MarkdownDescription, attributionTierDimensionNote) {
 		t.Error("markdown description lacks the tier note")
 	}
-}
-
-func countValidators[V validator.String](validators []validator.String) int {
-	count := 0
-	for _, candidate := range validators {
-		if _, ok := candidate.(V); ok {
-			count++
-		}
-	}
-	return count
 }
 
 func assertAttributeError(t *testing.T, diagnostic diag.Diagnostic, summary string, wantPath path.Path) {

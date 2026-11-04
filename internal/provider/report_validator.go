@@ -1077,8 +1077,9 @@ func validateReportLimitByChangeMetricListed(ctx context.Context, getter, priorS
 //     default, billing or billing-datahub, rejects them); and
 //   - every tier dimension must belong to the same attribution (same id).
 //
-// The doit_report resource rejects both the data source and the tier types
-// outright (see attribution_validator.go), so this only applies to queries.
+// The generated schema of the doit_report resource leaves out both the data
+// source and the tier types (see attribution_schema.go), so this only applies
+// to queries.
 type reportAttributionQueryDataSourceValidator struct{}
 
 var _ datasource.ConfigValidator = reportAttributionQueryDataSourceValidator{}

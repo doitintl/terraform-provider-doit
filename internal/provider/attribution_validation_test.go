@@ -9,9 +9,9 @@ import (
 )
 
 // The CI tenant has no DoiT Attribute plan, so these tests cannot run a real
-// attribution query. They check that the provider rejects the Attribute values
-// where the API cannot use them, and that a valid attribution query reaches the
-// API. Only TestAccReportQuery_AttributionReachesAPI calls the API.
+// attribution query. They check that the generated schemas reject the Attribute
+// values where the API cannot use them, and that a valid attribution query
+// reaches the API. Only TestAccReportQuery_AttributionReachesAPI calls the API.
 
 const attributionTestReportConfig = `
 resource "doit_report" "this" {
@@ -38,7 +38,7 @@ func TestAccReport_AttributionDataSourceRejected(t *testing.T) {
 		Steps: []resource.TestStep{{
 			Config:      fmt.Sprintf(attributionTestReportConfig, "attribution", "fixed"),
 			PlanOnly:    true,
-			ExpectError: regexp.MustCompile(`Attribution Reports Are Read-Only`),
+			ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Value Match.*got:\s+"attribution"`),
 		}},
 	})
 }
@@ -51,7 +51,7 @@ func TestAccReport_AttributionTierRejected(t *testing.T) {
 		Steps: []resource.TestStep{{
 			Config:      fmt.Sprintf(attributionTestReportConfig, "billing", "attribution_tier_1"),
 			PlanOnly:    true,
-			ExpectError: regexp.MustCompile(`Unsupported Dimension Type(.|\n)*doit_report does not\s+support`),
+			ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Value Match.*got:\s+"attribution_tier_1"`),
 		}},
 	})
 }
@@ -80,7 +80,7 @@ resource "doit_alert" "this" {
 }
 `,
 			PlanOnly:    true,
-			ExpectError: regexp.MustCompile(`Unsupported Dimension Type(.|\n)*doit_alert does not\s+support`),
+			ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Value Match.*got:\s+"attribution_tier_2"`),
 		}},
 	})
 }
@@ -103,7 +103,7 @@ resource "doit_budget" "this" {
 }
 `,
 			PlanOnly:    true,
-			ExpectError: regexp.MustCompile(`Unsupported Dimension Type(.|\n)*doit_budget does not\s+support`),
+			ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Value Match.*got:\s+"attribution_tier_3"`),
 		}},
 	})
 }

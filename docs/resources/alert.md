@@ -279,9 +279,9 @@ Required:
 Required:
 
 - `id` (String) Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
-The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions and are rejected here: they only work in the `doit_report_query` data source with `data_source = "attribution"`. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
+- `type` (String) Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
+The DoiT Attribute attribution tier types (`attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3`) are only available in the `doit_report_query` data source. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 
 Optional:
 

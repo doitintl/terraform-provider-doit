@@ -44,11 +44,11 @@ func (r *reportResource) Metadata(_ context.Context, req resource.MetadataReques
 func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_report.ReportResourceSchema(ctx)
 	appendDimensionsTypeDeprecationValidators(s.Attributes, reportDimensionsTypeAttributePaths...)
-	// Attribute attributions are read-only: the API rejects report create/update
-	// with the "attribution" data source, and tier dimensions require it.
-	// doit_report_query builds its own copy of this schema, so these stay off it.
-	rejectAttributionReportDataSource(s.Attributes, "config.data_source")
-	rejectAttributionTierTypes(s.Attributes, "doit_report", reportDimensionsTypeAttributePaths...)
+	// Attribute attributions are read-only: the generated enums leave out the
+	// "attribution" data source and the tier dimensions, which report create and
+	// update reject. doit_report_query builds its own copy of this schema.
+	describeAttributionReportDataSource(s.Attributes, "config.data_source")
+	describeAttributionTierTypes(s.Attributes, reportDimensionsTypeAttributePaths...)
 
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.
@@ -286,7 +286,7 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 
 	// An attribution report (e.g. an imported console Attributions view) keeps
 	// data_source = "attribution" from prior state when config omits it, so the
-	// attribute validator never sees it. The API rejects every update of such a
+	// enum validator on data_source never sees it. The API rejects every update of such a
 	// report, so fail at plan time rather than at apply.
 	if !req.State.Raw.IsNull() && !req.Plan.Raw.Equal(req.State.Raw) {
 		var dataSource types.String

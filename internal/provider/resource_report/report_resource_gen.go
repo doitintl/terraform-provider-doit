@@ -162,15 +162,14 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 					"data_source": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
-						Description:         "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`, `attribution`",
-						MarkdownDescription: "Data source of the report.\nWhen omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`, `attribution`",
+						Description:         "Data source of the report.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nThe `attribution` data source is read only and is available on `POST /analytics/v1/reports/query` only.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
+						MarkdownDescription: "Data source of the report.\nWhen omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.\nOn report update (PATCH), omission preserves the saved data source.\nThe `attribution` data source is read only and is available on `POST /analytics/v1/reports/query` only.\nPossible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`",
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"billing",
 								"bqlens",
 								"billing-datahub",
 								"kubernetes-utilization",
-								"attribution",
 							),
 						},
 					},
@@ -186,8 +185,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
-									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+									Description:         "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -203,9 +202,6 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"allocation_rule",
 											"gke",
 											"gke_label",
-											"attribution_tier_1",
-											"attribution_tier_2",
-											"attribution_tier_3",
 										),
 									},
 								},
@@ -352,8 +348,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								},
 								"type": schema.StringAttribute{
 									Required:            true,
-									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
-									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+									Description:         "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -369,9 +365,6 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"allocation_rule",
 											"gke",
 											"gke_label",
-											"attribution_tier_1",
-											"attribution_tier_2",
-											"attribution_tier_3",
 										),
 									},
 								},
@@ -555,8 +548,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 								"type": schema.StringAttribute{
 									Optional:            true,
 									Computed:            true,
-									Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
-									MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`",
+									Description:         "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
+									MarkdownDescription: "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.\nPossible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`",
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											"datetime",
@@ -572,9 +565,6 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 											"allocation_rule",
 											"gke",
 											"gke_label",
-											"attribution_tier_1",
-											"attribution_tier_2",
-											"attribution_tier_3",
 										),
 									},
 								},
@@ -1157,8 +1147,8 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 				},
 				Optional:            true,
 				Computed:            true,
-				Description:         "Report configuration.",
-				MarkdownDescription: "Report configuration.",
+				Description:         "Report configuration for creating or updating a report.",
+				MarkdownDescription: "Report configuration for creating or updating a report.",
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,

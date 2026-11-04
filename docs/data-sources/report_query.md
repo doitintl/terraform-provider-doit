@@ -243,9 +243,8 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 - `custom_time_range` (Attributes) Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
 A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
 Sending null while `timeRange.mode` stays "custom" is rejected. (see [below for nested schema](#nestedatt--config--custom_time_range))
-- `data_source` (String) Data source of the report.
-When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
-On report update (PATCH), omission preserves the saved data source.
+- `data_source` (String) Data source of the query.
+When omitted, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
 Possible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`, `attribution`
 `attribution` queries one DoiT Attribute attribution. It needs an Attribute subscription and at least one `attribution_tier_1`, `attribution_tier_2` or `attribution_tier_3` dimension in `group`, `dimensions` or `filters`, all with the same attribution `id`. See the [Attribute attributions guide](../guides/attribute_attributions).
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
@@ -337,7 +336,7 @@ Optional:
 Optional:
 
 - `id` (String) The identifier of the dimension.
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+- `type` (String) Dimension type. Pair it with `id`; list the valid `id` and `type` pairs of your account with the `doit_dimensions` data source. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
 The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions and require `data_source = "attribution"`; their `id` is the attribution set ID with `-` replaced by `_`. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 
@@ -366,7 +365,7 @@ to leave the stored value unchanged.
 Required:
 
 - `id` (String) Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+- `type` (String) Dimension type. Pair it with `id`; list the valid `id` and `type` pairs of your account with the `doit_dimensions` data source. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
 The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions and require `data_source = "attribution"`; their `id` is the attribution set ID with `-` replaced by `_`. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 
@@ -421,7 +420,7 @@ Optional:
 
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+- `type` (String) Dimension type. Pair it with `id`; list the valid `id` and `type` pairs of your account with the `doit_dimensions` data source. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
 Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
 The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions and require `data_source = "attribution"`; their `id` is the attribution set ID with `-` replaced by `_`. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 

@@ -416,7 +416,7 @@ resource "doit_report" "forecast" {
 
 ### Optional
 
-- `config` (Attributes) Report configuration. (see [below for nested schema](#nestedatt--config))
+- `config` (Attributes) Report configuration for creating or updating a report. (see [below for nested schema](#nestedatt--config))
 - `description` (String) Report description.
 - `folder_id` (String) Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
 - `labels` (List of String) Array of label IDs assigned to the report
@@ -445,10 +445,11 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
 Sending null while `timeRange.mode` stays "custom" is rejected. (see [below for nested schema](#nestedatt--config--custom_time_range))
 - `data_source` (String) Data source of the report.
-When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
 On report update (PATCH), omission preserves the saved data source.
-Possible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`, `attribution`
-`attribution` (DoiT Attribute attributions) is rejected here because the API cannot save attribution reports; query them with the `doit_report_query` data source. See the [Attribute attributions guide](../guides/attribute_attributions).
+The `attribution` data source is read only and is available on `POST /analytics/v1/reports/query` only.
+Possible values: `billing`, `bqlens`, `billing-datahub`, `kubernetes-utilization`
+The DoiT Attribute `attribution` data source is only available in the `doit_report_query` data source, because the API cannot save attribution reports. See the [Attribute attributions guide](../guides/attribute_attributions).
 - `dimensions` (Attributes List) See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions). (see [below for nested schema](#nestedatt--config--dimensions))
 - `display_settings` (Attributes) Display settings for the report. (see [below for nested schema](#nestedatt--config--display_settings))
 - `display_values` (String) See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
@@ -538,9 +539,9 @@ Optional:
 Optional:
 
 - `id` (String) The identifier of the dimension.
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
-The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions and are rejected here: they only work in the `doit_report_query` data source with `data_source = "attribution"`. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
+- `type` (String) Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
+The DoiT Attribute attribution tier types (`attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3`) are only available in the `doit_report_query` data source. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 
 
 <a id="nestedatt--config--display_settings"></a>
@@ -567,9 +568,9 @@ to leave the stored value unchanged.
 Required:
 
 - `id` (String) Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
-The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions and are rejected here: they only work in the `doit_report_query` data source with `data_source = "attribution"`. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
+- `type` (String) Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
+The DoiT Attribute attribution tier types (`attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3`) are only available in the `doit_report_query` data source. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 
 Optional:
 
@@ -622,9 +623,9 @@ Optional:
 
 - `id` (String) Dimension ID.
 - `limit` (Attributes) To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom). (see [below for nested schema](#nestedatt--config--group--limit))
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
-The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions and are rejected here: they only work in the `doit_report_query` data source with `data_source = "attribution"`. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
+- `type` (String) Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
+The DoiT Attribute attribution tier types (`attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3`) are only available in the `doit_report_query` data source. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 
 <a id="nestedatt--config--group--limit"></a>
 ### Nested Schema for `config.group.limit`

@@ -7359,6 +7359,11 @@ components:
       Data source of the report.
       When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
       On report update (PATCH), omission preserves the saved data source.
+    caExternalConfigWriteDataSourceDescription: &caExternalConfigWriteDataSourceDescription |-
+      Data source of the report.
+      When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+      On report update (PATCH), omission preserves the saved data source.
+      The `attribution` data source is read only and is available on `POST /analytics/v1/reports/query` only.
   schemas:
     AccountManagerListItem:
       type: object
@@ -7482,7 +7487,7 @@ components:
             All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer.
           maxItems: 26
           items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
+            $ref: "#/components/schemas/ExternalScopeFilter"
         metric:
           $ref: "#/components/schemas/MetricConfig"
         currency:
@@ -7533,7 +7538,7 @@ components:
             All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Omission preserves scopes and [] clears them.
           maxItems: 26
           items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
+            $ref: "#/components/schemas/ExternalScopeFilter"
         metric:
           $ref: "#/components/schemas/MetricConfig"
         currency:
@@ -9278,7 +9283,7 @@ components:
           description: The filters selected define the scope of the budget. At least one filter is required.
           minItems: 1
           items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
+            $ref: "#/components/schemas/ExternalScopeFilter"
         startPeriod:
           type: integer
           description: Budget start Date
@@ -9499,7 +9504,7 @@ components:
           type: array
           description: The filters selected define the scope of the budget. Omit to keep the existing scope.
           items:
-            $ref: "#/components/schemas/ExternalConfigFilter"
+            $ref: "#/components/schemas/ExternalScopeFilter"
         startPeriod:
           type: integer
           description: Budget start Date
@@ -9561,6 +9566,19 @@ components:
         attribution: >-
           The cost of one Attribute attribution. Requires an `attribution_tier_1`, `attribution_tier_2` or `attribution_tier_3` dimension in group, dimensions or filters, and every tier dimension must belong to the same attribution. The tier id is the attribution set ID with `-` replaced by `_`; `GET /analytics/v1/dimensions` lists the tier dimensions of every attribution that has data. Cost that no rule attributed has a null tier value. Needs an Attribute plan (403 otherwise). Read only: run it with the report query; reports cannot be created or updated with it (400).
       description: *caExternalConfigDataSourceDescription
+    CloudAnalyticsExternalConfigWriteDataSource:
+      type: string
+      enum:
+        - billing
+        - bqlens
+        - billing-datahub
+        - kubernetes-utilization
+      x-enumDescriptions:
+        billing: Standard Cloud Analytics billing data only.
+        billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        bqlens: BigQuery Lens data.
+        kubernetes-utilization: Kubernetes utilization data.
+      description: *caExternalConfigWriteDataSourceDescription
     CloudDiagramActivityItem:
       type: object
       required:
@@ -12048,7 +12066,7 @@ components:
           description: Report description.
           example: Cost breakdown by service in the last 3 months
         config:
-          $ref: "#/components/schemas/ExternalConfig"
+          $ref: "#/components/schemas/ExternalConfigWrite"
         labels:
           type: array
           items:
@@ -12643,6 +12661,18 @@ components:
           description: The label of the dimension.
         type:
           $ref: "#/components/schemas/DimensionsTypes"
+    DimensionWrite:
+      description: Definition of a report dimension.
+      type: object
+      properties:
+        id:
+          type: string
+          description: The identifier of the dimension.
+        type:
+          $ref: "#/components/schemas/ScopeDimensionsTypes"
+      example:
+        id: sku_description
+        type: fixed
     DimensionsExternalAPIGetResponse:
       type: object
       description: Dimension metadata returned by the API.
@@ -12706,9 +12736,9 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: "Deprecated. Use allocation_rule."
         attribution_group: "Deprecated. Use allocation."
-        attribution_tier_1: Tier 1 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
-        attribution_tier_2: Tier 2 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
-        attribution_tier_3: Tier 3 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Reports only, with dataSource attribution.
+        attribution_tier_1: Tier 1 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Only for report queries with dataSource attribution; not accepted in alert or budget scopes.
+        attribution_tier_2: Tier 2 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Only for report queries with dataSource attribution; not accepted in alert or budget scopes.
+        attribution_tier_3: Tier 3 values of an Attribute attribution; id is the attribution set ID with `-` replaced by `_`. Only for report queries with dataSource attribution; not accepted in alert or budget scopes.
     EligibleSpendDataPoint:
       type: object
       description: One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.
@@ -13152,6 +13182,275 @@ components:
         operator: gt
         values:
           - 50
+    ExternalConfigWrite:
+      type: object
+      description: Report configuration for creating or updating a report.
+      properties:
+        metrics:
+          type: array
+          description: The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
+          items:
+            $ref: "#/components/schemas/ExternalMetric"
+        metricFilter:
+          allOf:
+            - $ref: "#/components/schemas/ExternalConfigMetricFilter"
+          nullable: true
+        limitAggregation:
+          type: string
+          description: |-
+            Controls how rows excluded by limits are rendered. Applies when any limit type is active
+            (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
+            at most two of those three limit types — not all three. When `displayValues` is not
+            `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
+          enum:
+            - none
+            - top
+            - all
+          default: none
+        limitByChange:
+          allOf:
+            - $ref: "#/components/schemas/ExternalLimitByChange"
+          nullable: true
+        aggregation:
+          description: How to aggregate data values in the report.
+          type: string
+          enum:
+            - total
+            - percent_total
+            - percent_col
+            - percent_row
+            - total_over_total
+            - count
+        advancedAnalysis:
+          $ref: "#/components/schemas/AdvancedAnalysis"
+        forecastSettings:
+          allOf:
+            - $ref: "#/components/schemas/ExternalForecastSettings"
+          nullable: true
+          description: |-
+            Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.
+        timeInterval:
+          description: Time interval for grouping data in the report.
+          type: string
+          enum:
+            - hour
+            - day
+            - dayCumSum
+            - week
+            - isoweek
+            - month
+            - quarter
+            - year
+            - week_day
+        dimensions:
+          description: See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).
+          type: array
+          items:
+            $ref: "#/components/schemas/DimensionWrite"
+        timeRange:
+          $ref: "#/components/schemas/TimeSettings"
+        secondaryTimeRange:
+          $ref: "#/components/schemas/TimeSettingsSecondary"
+        includePromotionalCredits:
+          type: boolean
+          description: |-
+            Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).
+            If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
+        includeSubtotals:
+          type: boolean
+          description: |-
+            Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
+          default: false
+        filters:
+          type: array
+          description: The filters to apply to the report.
+          items:
+            $ref: "#/components/schemas/ExternalScopeFilter"
+        group:
+          type: array
+          description: |-
+            The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by).
+          items:
+            $ref: "#/components/schemas/GroupWrite"
+        layout:
+          $ref: "#/components/schemas/ExternalRenderer"
+        displayValues:
+          type: string
+          description: See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
+          enum:
+            - actuals_only
+            - absolute_change
+            - percentage_change
+            - absolute_and_percentage
+        currency:
+          $ref: "#/components/schemas/Currency"
+        sortGroups:
+          type: string
+          default: asc
+          enum:
+            - asc
+            - desc
+            - a_to_z
+          description: |-
+            Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+            export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+            not reorder the `rows` of a JSON result.
+        sortDimensions:
+          type: string
+          default: desc
+          enum:
+            - asc
+            - desc
+            - a_to_z
+          description: |-
+            Orders the columns produced by `dimensions`, both in the console and in a rendered
+            `fileOutput` export. It does not reorder the `rows` of a JSON result.
+            `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+            dimensions of a time series means chronologically. The default `desc` orders them by the
+            metric instead, so a monthly report charts its priciest month first rather than in time
+            order — set `a_to_z` for a time series you intend to export.
+            A report with a forecast is always charted chronologically and ignores this field, and a
+            comparative `displayValues` mode requires `a_to_z`.
+        dataSource:
+          $ref: "#/components/schemas/CloudAnalyticsExternalConfigWriteDataSource"
+        splits:
+          type: array
+          description: The splits to use in the report.
+          items:
+            $ref: "#/components/schemas/ExternalSplit"
+        displaySettings:
+          $ref: "#/components/schemas/ExternalDisplaySettings"
+        customTimeRange:
+          description: |-
+            Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+            A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+            Sending null while `timeRange.mode` stays "custom" is rejected.
+          allOf:
+            - $ref: '#/components/schemas/ExternalConfigWriteCustomTimeRange'
+        count:
+          description: |-
+            The field to count distinct values of. Only applicable when aggregation is set to "count".
+            On PATCH, omit to preserve the existing field; send null to remove it.
+            A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
+          allOf:
+            - $ref: '#/components/schemas/ExternalConfigWriteCount'
+      example:
+        metrics:
+          - type: basic
+            value: cost
+          - type: basic
+            value: usage
+          - type: extended
+            value: amortized_cost
+        metricFilter:
+          metric:
+            type: basic
+            value: cost
+          operator: nb
+          values:
+            - -1
+            - 1
+          operand: series_total
+        limitAggregation: top
+        limitByChange:
+          metric:
+            type: basic
+            value: cost
+          changeType: percentage
+          operator: gte
+          values:
+            - 50
+          includeIncompleteData: false
+        aggregation: total
+        advancedAnalysis:
+          forecast: false
+          notTrending: false
+          trendingDown: false
+          trendingUp: false
+        forecastSettings:
+          mode: totals
+          futureTimeIntervals: 3
+        timeInterval: month
+        dimensions:
+          - id: year
+            type: datetime
+          - id: month
+            type: datetime
+        timeRange:
+          amount: 3
+          includeCurrent: false
+          mode: last
+          unit: month
+        includePromotionalCredits: false
+        includeSubtotals: false
+        filters:
+          - id: attribution
+            type: attribution
+            values:
+              - RB8DndcxODriK83IBXXf
+              - D7r4znsTj2UC95zGnunW
+            inverse: true
+          - id: cloud_provider
+            type: fixed
+            values:
+              - amazon-web-services
+              - google-cloud
+              - microsoft-azure
+        group:
+          - id: service_description
+            limit:
+              metric:
+                type: basic
+                value: cost
+              sort: a_to_z
+              value: 0
+            type: fixed
+        layout: table
+        displayValues: actuals_only
+        currency: USD
+        sortGroups: a_to_z
+        sortDimensions: a_to_z
+    ExternalConfigWriteCount:
+      type: object
+      nullable: true
+      description: |-
+        The field to count distinct values of. Only applicable when aggregation is set to "count".
+        On PATCH, omit to preserve the existing field; send null to remove it.
+        A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          description: The field identifier to count distinct values of.
+        type:
+          type: string
+          enum:
+            - fixed
+            - label
+            - tag
+            - project_label
+            - system_label
+          description: The metadata field type.
+    ExternalConfigWriteCustomTimeRange:
+      description: |-
+        Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+        A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+        Sending null while `timeRange.mode` stays "custom" is rejected.
+      type: object
+      nullable: true
+      properties:
+        from:
+          type: string
+          format: date-time
+          description: The start timestamp of the time range in RFC3339 format.
+          example: "2024-03-10T23:00:00Z"
+        to:
+          type: string
+          format: date-time
+          description: The end timestamp of the time range in RFC3339 format.
+          example: "2024-03-12T23:00:00Z"
     ExternalDisplaySettings:
       type: object
       description: Display settings for the report.
@@ -13426,6 +13725,60 @@ components:
           description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
           default: root
           example: root
+    ExternalScopeFilter:
+      description: |-
+        To include or exclude certain values.
+        When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+        When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          description: >-
+            Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
+        type:
+          $ref: "#/components/schemas/ScopeDimensionsTypes"
+        values:
+          type: array
+          description: >-
+            List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+          items:
+            type: string
+        mode:
+          type: string
+          description: Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
+          enum:
+            - is
+            - starts_with
+            - ends_with
+            - contains
+            - regexp
+          x-enumDescriptions:
+            is: Exact match on one or more values.
+            starts_with: Value starts with the given string(s).
+            ends_with: Value ends with the given string(s).
+            contains: Value contains the given string(s).
+            regexp: Value matches the regular expression in `values` (exactly one pattern).
+        inverse:
+          type: boolean
+          description: Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
+        caseInsensitive:
+          type: boolean
+          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+          default: false
+        includeNull:
+          type: boolean
+          description: Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
+          default: false
+      example:
+        id: cloud_provider
+        type: fixed
+        inverse: false
+        values:
+          - google-cloud
     ExternalSplit:
       type: object
       description: Specification of how to split costs.
@@ -13501,7 +13854,7 @@ components:
       description: Partial report object used for updates.
       properties:
         config:
-          $ref: "#/components/schemas/ExternalConfig"
+          $ref: "#/components/schemas/ExternalConfigWrite"
         description:
           type: string
           description: Report description
@@ -14903,6 +15256,27 @@ components:
             Ordered, non-overlapping date ranges when this rule applies. Empty or absent means the rule always applies.
           items:
             $ref: "#/components/schemas/AllocationRulePeriod"
+    GroupWrite:
+      description: The dimension that defines a row in the report.
+      type: object
+      properties:
+        id:
+          type: string
+          description: Dimension ID.
+          example: service_description
+        limit:
+          $ref: "#/components/schemas/Limit"
+        type:
+          $ref: "#/components/schemas/ScopeDimensionsTypes"
+      example:
+        id: service_description
+        type: fixed
+        limit:
+          value: 3
+          sort: desc
+          metric:
+            type: basic
+            value: cost
     HexColor:
       type: string
       description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
@@ -16059,6 +16433,38 @@ components:
             - percent_row
             - total_over_total
             - count
+    ScopeDimensionsTypes:
+      description: |-
+        Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+      type: string
+      enum:
+        - datetime
+        - fixed
+        - optional
+        - label
+        - tag
+        - project_label
+        - system_label
+        - attribution
+        - attribution_group
+        - allocation
+        - allocation_rule
+        - gke
+        - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: "Deprecated. Use allocation_rule."
+        attribution_group: "Deprecated. Use allocation."
     Seats:
       type: object
       description: Licensing seat counts for a subscription.
