@@ -201,16 +201,24 @@ func validateCustomerNotificationDestinations(destinations resource_customer_not
 		return
 	}
 
-	lists := []struct {
-		name          string
-		list          types.List
-		caseSensitive bool
-	}{
+	validateDestinationLists(customerNotificationDestinationsPath, []destinationList{
 		{"emails", destinations.Emails, false},
 		{"slack_channels", destinations.SlackChannels, true},
 		{"teams_channels", destinations.TeamsChannels, true},
-	}
+	}, "At least one of `emails`, `slack_channels` or `teams_channels` must contain an entry.", diags)
+}
 
+// destinationList is one list of delivery targets checked by validateDestinationLists.
+type destinationList struct {
+	name          string
+	list          types.List
+	caseSensitive bool
+}
+
+// validateDestinationLists requires one non-empty list and rejects empty and
+// duplicate entries (emails compare case-insensitively). Unknown lists or
+// elements defer the checks that depend on them.
+func validateDestinationLists(basePath path.Path, lists []destinationList, noneDetail string, diags *diag.Diagnostics) {
 	anyEntry := false // a known or unknown entry exists in some list
 	for _, l := range lists {
 		if l.list.IsUnknown() {
@@ -230,7 +238,7 @@ func validateCustomerNotificationDestinations(destinations resource_customer_not
 			if value.IsUnknown() {
 				continue
 			}
-			listPath := customerNotificationDestinationsPath.AtName(l.name)
+			listPath := basePath.AtName(l.name)
 			if value.IsNull() || strings.TrimSpace(value.ValueString()) == "" {
 				diags.AddAttributeError(listPath, "Invalid Destination", "Destination entries must not be null or empty.")
 				continue
@@ -247,11 +255,7 @@ func validateCustomerNotificationDestinations(destinations resource_customer_not
 	}
 
 	if !anyEntry {
-		diags.AddAttributeError(
-			customerNotificationDestinationsPath,
-			"No Destinations",
-			"At least one of `emails`, `slack_channels` or `teams_channels` must contain an entry.",
-		)
+		diags.AddAttributeError(basePath, "No Destinations", noneDetail)
 	}
 }
 
