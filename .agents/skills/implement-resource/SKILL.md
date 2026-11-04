@@ -530,7 +530,10 @@ leaves unknown, each still pairs with its own counterpart. Two configured elemen
 become the same element once omitted attributes take their prior or cleared
 values (one omits `tags`, the other sets `tags = []`) describe one remote
 element twice; the planner reports them as **Duplicate Set Elements** at plan
-time instead of letting the set collapse.
+time instead of letting the set collapse. Only fully known configurations are
+reported: when a configured value is unknown (a reference to a resource not
+created yet), the elements may still differ, and the planner keeps the
+framework's plan for that set until the value is known.
 
 **2. Overlay: `overlaySetElements`** (`set_nested_overlay.go`) is the set
 counterpart of `overlayListElements`. It pairs each planned element with the

@@ -220,7 +220,9 @@ func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, p
 	}
 
 	out := make([]tftypes.Value, len(pl))
+	configs := make([]tftypes.Value, len(pl))
 	for ci, pi := range pairs {
+		configs[pi] = c[ci]
 		if si := matches[ci]; si >= 0 {
 			out[pi] = s[si]
 			continue
@@ -232,7 +234,7 @@ func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, p
 		out[pi] = v
 	}
 
-	if err := distinctSetElements(out, at); err != nil {
+	if distinct, err := distinctSetElements(out, configs, at); err != nil || !distinct {
 		return plan, err
 	}
 	return tftypes.NewValue(plan.Type(), out), nil
@@ -250,17 +252,28 @@ func (e setElementsCollapseError) Error() string {
 	return fmt.Sprintf("elements of %s are the same element once their omitted attributes are resolved", e.path)
 }
 
-// distinctSetElements returns a setElementsCollapseError when two planned
-// elements of the set at path are equal.
-func distinctSetElements(elements []tftypes.Value, path string) error {
+// distinctSetElements reports whether the planned elements of the set at path
+// are distinct. configs holds the configured element of each planned element.
+//
+// Equal elements whose configurations are fully known describe one remote
+// element twice: that is a setElementsCollapseError. When an equal element's
+// configuration has unknown values (a reference to a resource that is not
+// created yet), the elements may still differ once those values are known.
+// That is no error, but the planned set cannot keep them apart, so distinct is
+// false and the caller keeps the framework's plan for the set.
+func distinctSetElements(elements, configs []tftypes.Value, path string) (bool, error) {
 	for i := range elements {
 		for j := i + 1; j < len(elements); j++ {
-			if elements[i].Equal(elements[j]) {
-				return setElementsCollapseError{path: path}
+			if !elements[i].Equal(elements[j]) {
+				continue
 			}
+			if configs[i].IsFullyKnown() && configs[j].IsFullyKnown() {
+				return false, setElementsCollapseError{path: path}
+			}
+			return false, nil
 		}
 	}
-	return nil
+	return true, nil
 }
 
 // attributePath joins an attribute name to its parent's path, using the [*]
@@ -689,7 +702,9 @@ func (p setNestedPlanner) clearedElements(attrs map[string]schema.Attribute, con
 	}
 
 	out := make([]tftypes.Value, len(pl))
+	configs := make([]tftypes.Value, len(pl))
 	for ci, pi := range pairs {
+		configs[pi] = c[ci]
 		v, err := p.cleared(attrs, c[ci], pl[pi], at+"[*]")
 		if err != nil {
 			return plan, err
@@ -697,7 +712,7 @@ func (p setNestedPlanner) clearedElements(attrs map[string]schema.Attribute, con
 		out[pi] = v
 	}
 	if isSet {
-		if err := distinctSetElements(out, at); err != nil {
+		if distinct, err := distinctSetElements(out, configs, at); err != nil || !distinct {
 			return plan, err
 		}
 	}

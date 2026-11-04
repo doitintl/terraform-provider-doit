@@ -411,3 +411,90 @@ func assertDuplicateSetElements(t *testing.T, diags diag.Diagnostics, path strin
 		t.Errorf("detail = %q, want it to contain %q", d.Detail(), want)
 	}
 }
+
+// Elements whose configured values are unknown may still differ once those
+// values are known, so equal planned elements are not a duplicate then: the
+// plan keeps them apart. Unknown Computed values do not hide a duplicate.
+func TestPlanSetNestedAttributesFromState_CollapseWithUnknownValues(t *testing.T) {
+	childAttrs := map[string]schema.Attribute{
+		"name": schema.StringAttribute{Required: true},
+		"tags": schema.ListAttribute{
+			ElementType:   types.StringType,
+			Optional:      true,
+			Computed:      true,
+			PlanModifiers: []planmodifier.List{useNullForUnknownListWhenConfigNull()},
+		},
+		"status": schema.StringAttribute{Computed: true},
+	}
+	childType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{
+		"name": tftypes.String, "tags": tftypes.List{ElementType: tftypes.String}, "status": tftypes.String,
+	}}
+	child := func(name, tags, status tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(childType, map[string]tftypes.Value{"name": name, "tags": tags, "status": status})
+	}
+	childSet := func(children ...tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(tftypes.Set{ElementType: childType}, children)
+	}
+
+	topLevel := schema.Schema{Attributes: map[string]schema.Attribute{
+		"items": schema.SetNestedAttribute{Required: true, NestedObject: schema.NestedAttributeObject{Attributes: childAttrs}},
+	}}
+	topType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"items": tftypes.Set{ElementType: childType}}}
+	top := func(children ...tftypes.Value) tftypes.Value {
+		return tftypes.NewValue(topType, map[string]tftypes.Value{"items": childSet(children...)})
+	}
+
+	nested := schema.Schema{Attributes: map[string]schema.Attribute{
+		"items": schema.SetNestedAttribute{Required: true, NestedObject: schema.NestedAttributeObject{Attributes: map[string]schema.Attribute{
+			"group":  schema.StringAttribute{Required: true},
+			"labels": schema.SetNestedAttribute{Optional: true, NestedObject: schema.NestedAttributeObject{Attributes: childAttrs}},
+		}}},
+	}}
+	itemType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"group": tftypes.String, "labels": tftypes.Set{ElementType: childType}}}
+	nestedType := tftypes.Object{AttributeTypes: map[string]tftypes.Type{"items": tftypes.Set{ElementType: itemType}}}
+	nestedRoot := func(group string, children ...tftypes.Value) tftypes.Value {
+		item := tftypes.NewValue(itemType, map[string]tftypes.Value{"group": tfString(group), "labels": childSet(children...)})
+		return tftypes.NewValue(nestedType, map[string]tftypes.Value{"items": tftypes.NewValue(tftypes.Set{ElementType: itemType}, []tftypes.Value{item})})
+	}
+
+	run := func(t *testing.T, s schema.Schema, config, plan, state tftypes.Value) *resource.ModifyPlanResponse {
+		t.Helper()
+		req := resource.ModifyPlanRequest{
+			Config: tfsdk.Config{Schema: s, Raw: config},
+			Plan:   tfsdk.Plan{Schema: s, Raw: plan},
+			State:  tfsdk.State{Schema: s, Raw: state},
+		}
+		resp := &resource.ModifyPlanResponse{Plan: req.Plan}
+		planSetNestedAttributesFromState(t.Context(), req, resp)
+		return resp
+	}
+
+	t.Run("unknown names in a top-level set", func(t *testing.T) {
+		config := top(child(tfUnknownString, tfNullTags, tfNullString), child(tfUnknownString, tfEmptyTags, tfNullString))
+		plan := top(child(tfUnknownString, tfUnknownTags, tfUnknownString), child(tfUnknownString, tfEmptyTags, tfUnknownString))
+		state := top(child(tfString("old"), tfTags("x"), tfString("ok")))
+		resp := run(t, topLevel, config, plan, state)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+		}
+		assertTF(t, "plan", resp.Plan.Raw, plan)
+	})
+
+	t.Run("unknown names in a nested set", func(t *testing.T) {
+		config := nestedRoot("b", child(tfUnknownString, tfNullTags, tfNullString), child(tfUnknownString, tfEmptyTags, tfNullString))
+		plan := nestedRoot("b", child(tfUnknownString, tfUnknownTags, tfUnknownString), child(tfUnknownString, tfEmptyTags, tfUnknownString))
+		state := nestedRoot("a", child(tfString("old"), tfTags("x"), tfString("ok")))
+		resp := run(t, nested, config, plan, state)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
+		}
+		assertTF(t, "plan", resp.Plan.Raw, plan)
+	})
+
+	t.Run("known names with unknown computed values", func(t *testing.T) {
+		config := top(child(tfString("k"), tfNullTags, tfNullString), child(tfString("k"), tfEmptyTags, tfNullString))
+		plan := top(child(tfString("k"), tfUnknownTags, tfUnknownString), child(tfString("k"), tfEmptyTags, tfUnknownString))
+		state := top(child(tfString("old"), tfTags("x"), tfString("ok")))
+		assertDuplicateSetElements(t, run(t, topLevel, config, plan, state).Diagnostics, "items")
+	})
+}
