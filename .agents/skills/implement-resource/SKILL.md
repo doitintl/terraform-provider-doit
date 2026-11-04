@@ -486,7 +486,7 @@ A `ModifyPlan` guard that decides on an Optional+Computed attribute the user may
 
 Decide in this order:
 
-1. **Plan**: known → decide on it. For a **clearable (Category A)** attribute a null plan is authoritative: the modifier proposes null to clear the stored value (`useNullForUnknownStringWhenConfigNull`, `useNullForCount`) and the request sends that null, so validating the old state value would reject a valid clearing update.
+1. **Plan**: known → decide on it. For a **clearable (Category A)** attribute a null plan is authoritative: the modifier proposes null to clear the stored value (`useNullForUnknownStringWhenConfigNull`, `useNullForCount`), so validating the old state value would reject a valid clearing update. How the request expresses that null differs per attribute: a nullable object (`count`) sends an explicit JSON `null` (`.SetNull()`), while a pointer field with `omitempty` (a filter's `mode`) is simply left out. Check the generated field type before writing the request builder (`TestToExternalConfigWrite_NullPlanSerialization`).
 2. Plan unknown (or, for a **state-retaining Category B** attribute, null) → **config**: unknown → defer (decide at apply); null → use **state**; known → use the config value.
 
 ```go
