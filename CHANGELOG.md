@@ -20,6 +20,10 @@
 
 ### ENHANCEMENTS
 
+- **data-source/doit_report_query**: Query DoiT Attribute attributions with `data_source = "attribution"` and the new `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` dimension types. Requires an Attribute subscription. A query must contain at least one tier dimension, and all of them must belong to the same attribution; the provider checks this at plan time. These are unrelated to the deprecated `attribution` and `attribution_group` dimension types; see the new [Attribute attributions guide](https://registry.terraform.io/providers/doitintl/doit/latest/docs/guides/attribute_attributions)
+
+- **resource/doit_report, resource/doit_alert, resource/doit_budget**: The Attribute values are not valid where the API cannot use them, and Terraform reports them as invalid values at plan time: `data_source = "attribution"` on `doit_report` (the API cannot create or update attribution reports), and the `attribution_tier_*` dimension types in `doit_report` dimensions, filters and groups, `doit_alert` scopes and `doit_budget` scopes. A plan that would update an existing attribution report, such as an imported console view, also fails at plan time
+
 - **data-source/doit_report_query, data-source/doit_report_result**: `file_output` now accepts `json`, which renders the full result (`schema`, `rows`, `secondaryRows`, `forecastRows`) as a file behind `file_output_url`. Unlike `csv` it keeps the secondary and forecast rows, so it is the way to retrieve a result too large to return inline. With `json`, `result_json` omits `rows`, `secondaryRows` and `forecastRows`, and `row_count` is null. The "too large" error now suggests `json` as well as `csv`
 
 - **data-source/doit_report_query, data-source/doit_report_result**: A result too large for the API to return inline (over 30 MiB) now fails with an explanatory error suggesting `file_output = "csv"`, filters, fewer dimensions or a smaller time range, instead of an opaque HTTP 500. `file_output` is also now a working way around the limit

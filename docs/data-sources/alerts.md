@@ -142,7 +142,7 @@ Read-Only:
 - `include_null` (Boolean) Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
 - `inverse` (Boolean) Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
 - `mode` (String) Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
-- `type` (String) Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+- `type` (String) Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
 - `values` (List of String) List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
 
 

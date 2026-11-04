@@ -284,11 +284,11 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 			return config, diags
 		}
 
-		apiScopes := make([]models.ExternalConfigFilter, len(scopes))
+		apiScopes := make([]models.ExternalScopeFilter, len(scopes))
 		for i, scope := range scopes {
-			filterType := models.DimensionsTypes(scope.ScopesType.ValueString())
+			filterType := models.ScopeDimensionsTypes(scope.ScopesType.ValueString())
 
-			apiScopes[i] = models.ExternalConfigFilter{
+			apiScopes[i] = models.ExternalScopeFilter{
 				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
 				Id:              scope.Id.ValueString(),
 				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
@@ -296,7 +296,7 @@ func (plan *alertResourceModel) toAlertConfig(ctx context.Context) (config model
 				Type:            filterType,
 			}
 			if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
-				apiScopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
+				apiScopes[i].Mode = new(models.ExternalScopeFilterMode(scope.Mode.ValueString()))
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string
@@ -366,11 +366,11 @@ func (plan *alertResourceModel) toAlertConfigUpdate(ctx context.Context) (config
 			return nil, diags
 		}
 
-		apiScopes := make([]models.ExternalConfigFilter, len(scopes))
+		apiScopes := make([]models.ExternalScopeFilter, len(scopes))
 		for i, scope := range scopes {
-			filterType := models.DimensionsTypes(scope.ScopesType.ValueString())
+			filterType := models.ScopeDimensionsTypes(scope.ScopesType.ValueString())
 
-			apiScopes[i] = models.ExternalConfigFilter{
+			apiScopes[i] = models.ExternalScopeFilter{
 				CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
 				Id:              scope.Id.ValueString(),
 				IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
@@ -378,7 +378,7 @@ func (plan *alertResourceModel) toAlertConfigUpdate(ctx context.Context) (config
 				Type:            filterType,
 			}
 			if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
-				apiScopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
+				apiScopes[i].Mode = new(models.ExternalScopeFilterMode(scope.Mode.ValueString()))
 			}
 			if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 				var values []string

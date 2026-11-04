@@ -309,8 +309,8 @@ func mapAlertMetric(ctx context.Context, metric models.MetricConfig, diagnostics
 	return metricVal
 }
 
-// mapAlertScopes maps API ExternalConfigFilter slice to Terraform scopes list.
-func mapAlertScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter, diagnostics *diag.Diagnostics) types.List {
+// mapAlertScopes maps API ExternalScopeFilter slice to Terraform scopes list.
+func mapAlertScopes(ctx context.Context, scopes *[]models.ExternalScopeFilter, diagnostics *diag.Diagnostics) types.List {
 	if scopes == nil || len(*scopes) == 0 {
 		emptyScopesList, d := types.ListValueFrom(ctx, datasource_alerts.ScopesValue{}.Type(ctx), []datasource_alerts.ScopesValue{})
 		diagnostics.Append(d...)

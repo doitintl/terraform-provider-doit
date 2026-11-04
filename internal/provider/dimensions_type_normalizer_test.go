@@ -46,3 +46,19 @@ func Test_normalizeDimensionsType_EmptyStateUsesAPIValue(t *testing.T) {
 		t.Errorf("expected 'attribution_group', got '%s'", got)
 	}
 }
+
+func Test_normalizeDimensionsType_AttributionTierIsNotAnAlias(t *testing.T) {
+	// Attribute attribution tiers are not aliases of the deprecated
+	// "attribution" type, in either direction.
+	for _, pair := range [][2]string{
+		{"attribution_tier_1", "attribution"},
+		{"attribution", "attribution_tier_1"},
+		{"attribution_tier_2", "allocation_rule"},
+		{"allocation_rule", "attribution_tier_3"},
+	} {
+		apiValue, stateValue := pair[0], pair[1]
+		if got := normalizeDimensionsType(apiValue, stateValue); got != apiValue {
+			t.Errorf("normalizeDimensionsType(%q, %q) = %q, want %q", apiValue, stateValue, got, apiValue)
+		}
+	}
+}

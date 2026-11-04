@@ -71,7 +71,8 @@ output "available_clouds" {
 
 - `id` (String) Dimension id
 - `type` (String) Dimension type
-Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`
+Possible values: `datetime`, `fixed`, `optional`, `label`, `tag`, `project_label`, `system_label`, `attribution`, `attribution_group`, `allocation`, `allocation_rule`, `gke`, `gke_label`, `attribution_tier_1`, `attribution_tier_2`, `attribution_tier_3`
+The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types select DoiT Attribute attributions; use the `doit_dimensions` data source to list the ones your account has data for. They are unrelated to the deprecated `attribution` type. See the [Attribute attributions guide](../guides/attribute_attributions).
 
 ### Optional
 

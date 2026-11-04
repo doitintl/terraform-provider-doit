@@ -288,7 +288,7 @@ func (ds *alertDataSource) mapMetricToModel(ctx context.Context, metric *models.
 	return metricVal, diags
 }
 
-func (ds *alertDataSource) mapScopeToModel(ctx context.Context, scope *models.ExternalConfigFilter) (datasource_alert.ScopesValue, diag.Diagnostics) {
+func (ds *alertDataSource) mapScopeToModel(ctx context.Context, scope *models.ExternalScopeFilter) (datasource_alert.ScopesValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Map values

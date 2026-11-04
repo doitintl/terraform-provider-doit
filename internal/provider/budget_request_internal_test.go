@@ -56,7 +56,7 @@ func TestBudgetToCreateRequest(t *testing.T) {
 	if req.Name != "budget" || req.Currency != models.Currency("USD") || req.Type != "recurring" || req.StartPeriod != 1759276800000 {
 		t.Errorf("required fields not copied: %+v", req)
 	}
-	if len(req.Scopes) != 1 || req.Scopes[0].Id != "allocation_rule" || req.Scopes[0].Mode == nil || *req.Scopes[0].Mode != models.ExternalConfigFilterMode("is") {
+	if len(req.Scopes) != 1 || req.Scopes[0].Id != "allocation_rule" || req.Scopes[0].Mode == nil || *req.Scopes[0].Mode != models.ExternalScopeFilterMode("is") {
 		t.Errorf("scopes = %+v", req.Scopes)
 	}
 	if req.Metric == nil || *req.Metric != models.BudgetCreateRequestMetricAmortizedCost {

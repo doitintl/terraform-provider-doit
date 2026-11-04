@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	dsschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -53,6 +54,14 @@ func (d *dimensionDataSource) Schema(ctx context.Context, _ datasource.SchemaReq
 	// resolves "attribution" and returns "Dimension not found" for the
 	// replacements ("allocation_rule"/"allocation"), so the warning would
 	// recommend a value that breaks the lookup.
+	// No validator for the Attribute attribution tier types either: the API
+	// lists them only on the dimensions list endpoint, and whether this lookup
+	// resolves them is unverified (the CI tenant has no Attribute plan).
+	if typeAttr, ok := s.Attributes["type"].(dsschema.StringAttribute); ok {
+		typeAttr.Description = appendDescriptionNote(typeAttr.Description, attributionTierDimensionPlainNote)
+		typeAttr.MarkdownDescription = appendDescriptionNote(typeAttr.MarkdownDescription, attributionTierDimensionNote)
+		s.Attributes["type"] = typeAttr
+	}
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
 	resp.Schema = s

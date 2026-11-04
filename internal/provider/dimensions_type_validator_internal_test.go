@@ -53,6 +53,12 @@ func TestDeprecatedDimensionsTypeValidator(t *testing.T) {
 			value: types.StringValue("Attribution"),
 		},
 		{
+			// Attribute attribution tiers share the "attribution" prefix but
+			// are unrelated to the deprecated type.
+			name:  "attribution tier",
+			value: types.StringValue("attribution_tier_1"),
+		},
+		{
 			name:       "attribution",
 			value:      types.StringValue("attribution"),
 			wantDetail: `Dimension type "attribution" is deprecated and will soon no longer be supported by the DoiT API. Use "allocation_rule" instead.`,

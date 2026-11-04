@@ -64,19 +64,36 @@ func (v deprecatedDimensionsTypeValidator) ValidateString(_ context.Context, req
 // to generated resource schema attributes without modifying generated files.
 // Paths use dotted notation and [*] for nested collection elements.
 func appendDimensionsTypeDeprecationValidators(attributes map[string]schema.Attribute, attributePaths ...string) {
+	updateStringAttributesAtPaths(attributes, "appendDimensionsTypeDeprecationValidators", func(attribute schema.StringAttribute) schema.StringAttribute {
+		attribute.Validators = append(attribute.Validators, deprecatedDimensionsTypeValidator{})
+		return attribute
+	}, attributePaths...)
+}
+
+// updateStringAttributesAtPaths applies update to the string attribute at each
+// path and panics when a path does not resolve to a string attribute, so a
+// renamed generated attribute fails loudly instead of silently losing its
+// hand-written additions. caller names the public helper in the panic message.
+func updateStringAttributesAtPaths(
+	attributes map[string]schema.Attribute,
+	caller string,
+	update func(schema.StringAttribute) schema.StringAttribute,
+	attributePaths ...string,
+) {
 	for _, attributePath := range attributePaths {
-		if appendDimensionsTypeDeprecationValidatorAtPath(attributes, strings.Split(attributePath, ".")) {
+		if updateStringAttributeAtPath(attributes, strings.Split(attributePath, "."), update) {
 			continue
 		}
 
 		panic(fmt.Sprintf(
-			"appendDimensionsTypeDeprecationValidators: string attribute path %q not found in schema",
+			"%s: string attribute path %q not found in schema",
+			caller,
 			attributePath,
 		))
 	}
 }
 
-func appendDimensionsTypeDeprecationValidatorAtPath(attributes map[string]schema.Attribute, segments []string) bool {
+func updateStringAttributeAtPath(attributes map[string]schema.Attribute, segments []string, update func(schema.StringAttribute) schema.StringAttribute) bool {
 	name := strings.TrimSuffix(segments[0], "[*]")
 	attribute, ok := attributes[name]
 	if !ok {
@@ -89,20 +106,19 @@ func appendDimensionsTypeDeprecationValidatorAtPath(attributes map[string]schema
 			return false
 		}
 
-		stringAttribute.Validators = append(stringAttribute.Validators, deprecatedDimensionsTypeValidator{})
-		attributes[name] = stringAttribute
+		attributes[name] = update(stringAttribute)
 		return true
 	}
 
 	switch nestedAttribute := attribute.(type) {
 	case schema.SingleNestedAttribute:
-		return appendDimensionsTypeDeprecationValidatorAtPath(nestedAttribute.Attributes, segments[1:])
+		return updateStringAttributeAtPath(nestedAttribute.Attributes, segments[1:], update)
 	case schema.ListNestedAttribute:
-		return appendDimensionsTypeDeprecationValidatorAtPath(nestedAttribute.NestedObject.Attributes, segments[1:])
+		return updateStringAttributeAtPath(nestedAttribute.NestedObject.Attributes, segments[1:], update)
 	case schema.SetNestedAttribute:
-		return appendDimensionsTypeDeprecationValidatorAtPath(nestedAttribute.NestedObject.Attributes, segments[1:])
+		return updateStringAttributeAtPath(nestedAttribute.NestedObject.Attributes, segments[1:], update)
 	case schema.MapNestedAttribute:
-		return appendDimensionsTypeDeprecationValidatorAtPath(nestedAttribute.NestedObject.Attributes, segments[1:])
+		return updateStringAttributeAtPath(nestedAttribute.NestedObject.Attributes, segments[1:], update)
 	default:
 		return false
 	}

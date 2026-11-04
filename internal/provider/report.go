@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -623,7 +624,7 @@ func (plan *reportResourceModel) toCreateRequest(ctx context.Context) (req model
 		req.Labels = &labels
 	}
 
-	config, d := toExternalConfig(ctx, plan.Config)
+	config, d := toExternalConfigWrite(ctx, plan.Config)
 	diags.Append(d...)
 	if diags.HasError() {
 		return req, diags
@@ -652,7 +653,7 @@ func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req model
 		req.Description = plan.Description.ValueStringPointer()
 	}
 
-	config, d := toExternalConfig(ctx, plan.Config)
+	config, d := toExternalConfigWrite(ctx, plan.Config)
 	diags.Append(d...)
 	if diags.HasError() {
 		return req, diags
@@ -660,6 +661,33 @@ func (plan *reportResourceModel) toUpdateRequest(ctx context.Context) (req model
 	req.Config = config
 
 	return req, diags
+}
+
+// toExternalConfigWrite builds the config of a report create or update request.
+// The API spec gives these requests their own copy of the report config
+// (ExternalConfigWrite), which drops the values only an ad-hoc query accepts.
+// Both types have the same JSON shape, so the config from toExternalConfig is
+// converted through its wire form; that also keeps null distinct from omitted
+// on the nullable fields.
+func toExternalConfigWrite(ctx context.Context, config resource_report.ConfigValue) (*models.ExternalConfigWrite, diag.Diagnostics) {
+	externalConfig, diags := toExternalConfig(ctx, config)
+	if diags.HasError() || externalConfig == nil {
+		return nil, diags
+	}
+
+	raw, err := json.Marshal(externalConfig)
+	if err != nil {
+		diags.AddError("Error building report config", fmt.Sprintf("Could not encode the report config: %s", err))
+		return nil, diags
+	}
+
+	var write models.ExternalConfigWrite
+	if err := json.Unmarshal(raw, &write); err != nil {
+		diags.AddError("Error building report config", fmt.Sprintf("Could not convert the report config to a write request: %s", err))
+		return nil, diags
+	}
+
+	return &write, diags
 }
 
 func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (externalConfig *models.ExternalConfig, diags diag.Diagnostics) {

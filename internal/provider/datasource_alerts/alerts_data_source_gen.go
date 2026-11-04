@@ -118,8 +118,8 @@ func AlertsDataSourceSchema(ctx context.Context) schema.Schema {
 											},
 											"type": schema.StringAttribute{
 												Computed:            true,
-												Description:         "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
-												MarkdownDescription: "Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.",
+												Description:         "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.",
+												MarkdownDescription: "Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.",
 											},
 											"values": schema.ListAttribute{
 												ElementType:         types.StringType,

@@ -780,6 +780,7 @@ func (e CloudAnalyticsBudgetDataSourceReadOnly) Valid() bool {
 
 // Defines values for CloudAnalyticsExternalConfigDataSource.
 const (
+	CloudAnalyticsExternalConfigDataSourceAttribution           CloudAnalyticsExternalConfigDataSource = "attribution"
 	CloudAnalyticsExternalConfigDataSourceBilling               CloudAnalyticsExternalConfigDataSource = "billing"
 	CloudAnalyticsExternalConfigDataSourceBillingDatahub        CloudAnalyticsExternalConfigDataSource = "billing-datahub"
 	CloudAnalyticsExternalConfigDataSourceBqlens                CloudAnalyticsExternalConfigDataSource = "bqlens"
@@ -789,6 +790,8 @@ const (
 // Valid indicates whether the value is a known member of the CloudAnalyticsExternalConfigDataSource enum.
 func (e CloudAnalyticsExternalConfigDataSource) Valid() bool {
 	switch e {
+	case CloudAnalyticsExternalConfigDataSourceAttribution:
+		return true
 	case CloudAnalyticsExternalConfigDataSourceBilling:
 		return true
 	case CloudAnalyticsExternalConfigDataSourceBillingDatahub:
@@ -796,6 +799,30 @@ func (e CloudAnalyticsExternalConfigDataSource) Valid() bool {
 	case CloudAnalyticsExternalConfigDataSourceBqlens:
 		return true
 	case CloudAnalyticsExternalConfigDataSourceKubernetesUtilization:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CloudAnalyticsExternalConfigWriteDataSource.
+const (
+	CloudAnalyticsExternalConfigWriteDataSourceBilling               CloudAnalyticsExternalConfigWriteDataSource = "billing"
+	CloudAnalyticsExternalConfigWriteDataSourceBillingDatahub        CloudAnalyticsExternalConfigWriteDataSource = "billing-datahub"
+	CloudAnalyticsExternalConfigWriteDataSourceBqlens                CloudAnalyticsExternalConfigWriteDataSource = "bqlens"
+	CloudAnalyticsExternalConfigWriteDataSourceKubernetesUtilization CloudAnalyticsExternalConfigWriteDataSource = "kubernetes-utilization"
+)
+
+// Valid indicates whether the value is a known member of the CloudAnalyticsExternalConfigWriteDataSource enum.
+func (e CloudAnalyticsExternalConfigWriteDataSource) Valid() bool {
+	switch e {
+	case CloudAnalyticsExternalConfigWriteDataSourceBilling:
+		return true
+	case CloudAnalyticsExternalConfigWriteDataSourceBillingDatahub:
+		return true
+	case CloudAnalyticsExternalConfigWriteDataSourceBqlens:
+		return true
+	case CloudAnalyticsExternalConfigWriteDataSourceKubernetesUtilization:
 		return true
 	default:
 		return false
@@ -2305,6 +2332,9 @@ const (
 	DimensionsTypesAllocationRule   DimensionsTypes = "allocation_rule"
 	DimensionsTypesAttribution      DimensionsTypes = "attribution"
 	DimensionsTypesAttributionGroup DimensionsTypes = "attribution_group"
+	DimensionsTypesAttributionTier1 DimensionsTypes = "attribution_tier_1"
+	DimensionsTypesAttributionTier2 DimensionsTypes = "attribution_tier_2"
+	DimensionsTypesAttributionTier3 DimensionsTypes = "attribution_tier_3"
 	DimensionsTypesDatetime         DimensionsTypes = "datetime"
 	DimensionsTypesFixed            DimensionsTypes = "fixed"
 	DimensionsTypesGke              DimensionsTypes = "gke"
@@ -2326,6 +2356,12 @@ func (e DimensionsTypes) Valid() bool {
 	case DimensionsTypesAttribution:
 		return true
 	case DimensionsTypesAttributionGroup:
+		return true
+	case DimensionsTypesAttributionTier1:
+		return true
+	case DimensionsTypesAttributionTier2:
+		return true
+	case DimensionsTypesAttributionTier3:
 		return true
 	case DimensionsTypesDatetime:
 		return true
@@ -2608,6 +2644,189 @@ func (e ExternalConfigMetricFilterOperator) Valid() bool {
 	case ExternalConfigMetricFilterOperatorNb:
 		return true
 	case ExternalConfigMetricFilterOperatorNe:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigWriteAggregation.
+const (
+	ExternalConfigWriteAggregationCount          ExternalConfigWriteAggregation = "count"
+	ExternalConfigWriteAggregationPercentCol     ExternalConfigWriteAggregation = "percent_col"
+	ExternalConfigWriteAggregationPercentRow     ExternalConfigWriteAggregation = "percent_row"
+	ExternalConfigWriteAggregationPercentTotal   ExternalConfigWriteAggregation = "percent_total"
+	ExternalConfigWriteAggregationTotal          ExternalConfigWriteAggregation = "total"
+	ExternalConfigWriteAggregationTotalOverTotal ExternalConfigWriteAggregation = "total_over_total"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigWriteAggregation enum.
+func (e ExternalConfigWriteAggregation) Valid() bool {
+	switch e {
+	case ExternalConfigWriteAggregationCount:
+		return true
+	case ExternalConfigWriteAggregationPercentCol:
+		return true
+	case ExternalConfigWriteAggregationPercentRow:
+		return true
+	case ExternalConfigWriteAggregationPercentTotal:
+		return true
+	case ExternalConfigWriteAggregationTotal:
+		return true
+	case ExternalConfigWriteAggregationTotalOverTotal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigWriteDisplayValues.
+const (
+	ExternalConfigWriteDisplayValuesAbsoluteAndPercentage ExternalConfigWriteDisplayValues = "absolute_and_percentage"
+	ExternalConfigWriteDisplayValuesAbsoluteChange        ExternalConfigWriteDisplayValues = "absolute_change"
+	ExternalConfigWriteDisplayValuesActualsOnly           ExternalConfigWriteDisplayValues = "actuals_only"
+	ExternalConfigWriteDisplayValuesPercentageChange      ExternalConfigWriteDisplayValues = "percentage_change"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigWriteDisplayValues enum.
+func (e ExternalConfigWriteDisplayValues) Valid() bool {
+	switch e {
+	case ExternalConfigWriteDisplayValuesAbsoluteAndPercentage:
+		return true
+	case ExternalConfigWriteDisplayValuesAbsoluteChange:
+		return true
+	case ExternalConfigWriteDisplayValuesActualsOnly:
+		return true
+	case ExternalConfigWriteDisplayValuesPercentageChange:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigWriteLimitAggregation.
+const (
+	ExternalConfigWriteLimitAggregationAll  ExternalConfigWriteLimitAggregation = "all"
+	ExternalConfigWriteLimitAggregationNone ExternalConfigWriteLimitAggregation = "none"
+	ExternalConfigWriteLimitAggregationTop  ExternalConfigWriteLimitAggregation = "top"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigWriteLimitAggregation enum.
+func (e ExternalConfigWriteLimitAggregation) Valid() bool {
+	switch e {
+	case ExternalConfigWriteLimitAggregationAll:
+		return true
+	case ExternalConfigWriteLimitAggregationNone:
+		return true
+	case ExternalConfigWriteLimitAggregationTop:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigWriteSortDimensions.
+const (
+	ExternalConfigWriteSortDimensionsAToZ ExternalConfigWriteSortDimensions = "a_to_z"
+	ExternalConfigWriteSortDimensionsAsc  ExternalConfigWriteSortDimensions = "asc"
+	ExternalConfigWriteSortDimensionsDesc ExternalConfigWriteSortDimensions = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigWriteSortDimensions enum.
+func (e ExternalConfigWriteSortDimensions) Valid() bool {
+	switch e {
+	case ExternalConfigWriteSortDimensionsAToZ:
+		return true
+	case ExternalConfigWriteSortDimensionsAsc:
+		return true
+	case ExternalConfigWriteSortDimensionsDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigWriteSortGroups.
+const (
+	ExternalConfigWriteSortGroupsAToZ ExternalConfigWriteSortGroups = "a_to_z"
+	ExternalConfigWriteSortGroupsAsc  ExternalConfigWriteSortGroups = "asc"
+	ExternalConfigWriteSortGroupsDesc ExternalConfigWriteSortGroups = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigWriteSortGroups enum.
+func (e ExternalConfigWriteSortGroups) Valid() bool {
+	switch e {
+	case ExternalConfigWriteSortGroupsAToZ:
+		return true
+	case ExternalConfigWriteSortGroupsAsc:
+		return true
+	case ExternalConfigWriteSortGroupsDesc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigWriteTimeInterval.
+const (
+	ExternalConfigWriteTimeIntervalDay       ExternalConfigWriteTimeInterval = "day"
+	ExternalConfigWriteTimeIntervalDayCumSum ExternalConfigWriteTimeInterval = "dayCumSum"
+	ExternalConfigWriteTimeIntervalHour      ExternalConfigWriteTimeInterval = "hour"
+	ExternalConfigWriteTimeIntervalIsoweek   ExternalConfigWriteTimeInterval = "isoweek"
+	ExternalConfigWriteTimeIntervalMonth     ExternalConfigWriteTimeInterval = "month"
+	ExternalConfigWriteTimeIntervalQuarter   ExternalConfigWriteTimeInterval = "quarter"
+	ExternalConfigWriteTimeIntervalWeek      ExternalConfigWriteTimeInterval = "week"
+	ExternalConfigWriteTimeIntervalWeekDay   ExternalConfigWriteTimeInterval = "week_day"
+	ExternalConfigWriteTimeIntervalYear      ExternalConfigWriteTimeInterval = "year"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigWriteTimeInterval enum.
+func (e ExternalConfigWriteTimeInterval) Valid() bool {
+	switch e {
+	case ExternalConfigWriteTimeIntervalDay:
+		return true
+	case ExternalConfigWriteTimeIntervalDayCumSum:
+		return true
+	case ExternalConfigWriteTimeIntervalHour:
+		return true
+	case ExternalConfigWriteTimeIntervalIsoweek:
+		return true
+	case ExternalConfigWriteTimeIntervalMonth:
+		return true
+	case ExternalConfigWriteTimeIntervalQuarter:
+		return true
+	case ExternalConfigWriteTimeIntervalWeek:
+		return true
+	case ExternalConfigWriteTimeIntervalWeekDay:
+		return true
+	case ExternalConfigWriteTimeIntervalYear:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalConfigWriteCountType.
+const (
+	ExternalConfigWriteCountTypeFixed        ExternalConfigWriteCountType = "fixed"
+	ExternalConfigWriteCountTypeLabel        ExternalConfigWriteCountType = "label"
+	ExternalConfigWriteCountTypeProjectLabel ExternalConfigWriteCountType = "project_label"
+	ExternalConfigWriteCountTypeSystemLabel  ExternalConfigWriteCountType = "system_label"
+	ExternalConfigWriteCountTypeTag          ExternalConfigWriteCountType = "tag"
+)
+
+// Valid indicates whether the value is a known member of the ExternalConfigWriteCountType enum.
+func (e ExternalConfigWriteCountType) Valid() bool {
+	switch e {
+	case ExternalConfigWriteCountTypeFixed:
+		return true
+	case ExternalConfigWriteCountTypeLabel:
+		return true
+	case ExternalConfigWriteCountTypeProjectLabel:
+		return true
+	case ExternalConfigWriteCountTypeSystemLabel:
+		return true
+	case ExternalConfigWriteCountTypeTag:
 		return true
 	default:
 		return false
@@ -2905,6 +3124,33 @@ func (e ExternalReportType) Valid() bool {
 	case ExternalReportTypeManaged:
 		return true
 	case ExternalReportTypePreset:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExternalScopeFilterMode.
+const (
+	ExternalScopeFilterModeContains   ExternalScopeFilterMode = "contains"
+	ExternalScopeFilterModeEndsWith   ExternalScopeFilterMode = "ends_with"
+	ExternalScopeFilterModeIs         ExternalScopeFilterMode = "is"
+	ExternalScopeFilterModeRegexp     ExternalScopeFilterMode = "regexp"
+	ExternalScopeFilterModeStartsWith ExternalScopeFilterMode = "starts_with"
+)
+
+// Valid indicates whether the value is a known member of the ExternalScopeFilterMode enum.
+func (e ExternalScopeFilterMode) Valid() bool {
+	switch e {
+	case ExternalScopeFilterModeContains:
+		return true
+	case ExternalScopeFilterModeEndsWith:
+		return true
+	case ExternalScopeFilterModeIs:
+		return true
+	case ExternalScopeFilterModeRegexp:
+		return true
+	case ExternalScopeFilterModeStartsWith:
 		return true
 	default:
 		return false
@@ -3907,6 +4153,57 @@ func (e SchemaFieldUnit) Valid() bool {
 	case SchemaFieldUnitNumber:
 		return true
 	case SchemaFieldUnitPercent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ScopeDimensionsTypes.
+const (
+	ScopeDimensionsTypesAllocation       ScopeDimensionsTypes = "allocation"
+	ScopeDimensionsTypesAllocationRule   ScopeDimensionsTypes = "allocation_rule"
+	ScopeDimensionsTypesAttribution      ScopeDimensionsTypes = "attribution"
+	ScopeDimensionsTypesAttributionGroup ScopeDimensionsTypes = "attribution_group"
+	ScopeDimensionsTypesDatetime         ScopeDimensionsTypes = "datetime"
+	ScopeDimensionsTypesFixed            ScopeDimensionsTypes = "fixed"
+	ScopeDimensionsTypesGke              ScopeDimensionsTypes = "gke"
+	ScopeDimensionsTypesGkeLabel         ScopeDimensionsTypes = "gke_label"
+	ScopeDimensionsTypesLabel            ScopeDimensionsTypes = "label"
+	ScopeDimensionsTypesOptional         ScopeDimensionsTypes = "optional"
+	ScopeDimensionsTypesProjectLabel     ScopeDimensionsTypes = "project_label"
+	ScopeDimensionsTypesSystemLabel      ScopeDimensionsTypes = "system_label"
+	ScopeDimensionsTypesTag              ScopeDimensionsTypes = "tag"
+)
+
+// Valid indicates whether the value is a known member of the ScopeDimensionsTypes enum.
+func (e ScopeDimensionsTypes) Valid() bool {
+	switch e {
+	case ScopeDimensionsTypesAllocation:
+		return true
+	case ScopeDimensionsTypesAllocationRule:
+		return true
+	case ScopeDimensionsTypesAttribution:
+		return true
+	case ScopeDimensionsTypesAttributionGroup:
+		return true
+	case ScopeDimensionsTypesDatetime:
+		return true
+	case ScopeDimensionsTypesFixed:
+		return true
+	case ScopeDimensionsTypesGke:
+		return true
+	case ScopeDimensionsTypesGkeLabel:
+		return true
+	case ScopeDimensionsTypesLabel:
+		return true
+	case ScopeDimensionsTypesOptional:
+		return true
+	case ScopeDimensionsTypesProjectLabel:
+		return true
+	case ScopeDimensionsTypesSystemLabel:
+		return true
+	case ScopeDimensionsTypesTag:
 		return true
 	default:
 		return false
@@ -5621,7 +5918,7 @@ type AlertConfig struct {
 	Operator MetricFilterText `json:"operator"`
 
 	// Scopes All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer.
-	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	Scopes *[]ExternalScopeFilter `json:"scopes,omitempty"`
 
 	// TimeInterval The period each evaluation looks at.
 	TimeInterval AlertConfigTimeInterval `json:"timeInterval"`
@@ -5657,7 +5954,7 @@ type AlertConfigUpdate struct {
 	Operator *MetricFilterText `json:"operator,omitempty"`
 
 	// Scopes All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Omission preserves scopes and [] clears them.
-	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	Scopes *[]ExternalScopeFilter `json:"scopes,omitempty"`
 
 	// TimeInterval The period each evaluation looks at. Omission preserves the saved interval.
 	TimeInterval *AlertConfigUpdateTimeInterval `json:"timeInterval,omitempty"`
@@ -6826,7 +7123,7 @@ type BudgetCreateRequest struct {
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget. At least one filter is required.
-	Scopes []ExternalConfigFilter `json:"scopes"`
+	Scopes []ExternalScopeFilter `json:"scopes"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -6978,7 +7275,7 @@ type BudgetUpdateRequest struct {
 	RecipientsSlackChannels *[]SlackChannel `json:"recipientsSlackChannels,omitempty"`
 
 	// Scopes The filters selected define the scope of the budget. Omit to keep the existing scope.
-	Scopes *[]ExternalConfigFilter `json:"scopes,omitempty"`
+	Scopes *[]ExternalScopeFilter `json:"scopes,omitempty"`
 
 	// SeasonalAmounts List of seasonal amounts for recurring budgets with different amounts per period.
 	SeasonalAmounts *[]float64 `json:"seasonalAmounts,omitempty"`
@@ -7018,6 +7315,12 @@ type CloudAnalyticsBudgetDataSourceReadOnly string
 // When omitted on create or on an ad-hoc query, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
 // On report update (PATCH), omission preserves the saved data source.
 type CloudAnalyticsExternalConfigDataSource string
+
+// CloudAnalyticsExternalConfigWriteDataSource Data source of the report.
+// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+// On report update (PATCH), omission preserves the saved data source.
+// The `attribution` data source is read only and is available on `POST /analytics/v1/reports/query` only.
+type CloudAnalyticsExternalConfigWriteDataSource string
 
 // CloudDiagramActivityItem An individual activity record within an activity group.
 type CloudDiagramActivityItem struct {
@@ -8883,10 +9186,10 @@ type CreateLabelRequestColor string
 
 // CreateReportRequestBody defines model for CreateReportRequestBody.
 type CreateReportRequestBody struct {
-	// Config Report configuration.
+	// Config Report configuration for creating or updating a report.
 	//
 	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
-	Config *ExternalConfig `json:"config,omitempty"`
+	Config *ExternalConfigWrite `json:"config,omitempty"`
 
 	// Description Report description.
 	//
@@ -9689,6 +9992,17 @@ type DimensionExternalAPIListItem struct {
 	Type *DimensionsTypes `json:"type,omitempty"`
 }
 
+// DimensionWrite Definition of a report dimension.
+//
+// Example: {"id":"sku_description","type":"fixed"}
+type DimensionWrite struct {
+	// Id The identifier of the dimension.
+	Id *string `json:"id,omitempty"`
+
+	// Type Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+	Type *ScopeDimensionsTypes `json:"type,omitempty"`
+}
+
 // DimensionsExternalAPIGetResponse Dimension metadata returned by the API.
 type DimensionsExternalAPIGetResponse struct {
 	Id    *string `json:"id,omitempty"`
@@ -9988,6 +10302,167 @@ type ExternalConfigMetricFilterOperand string
 // `nb` (Not Between), `e` (Equals), `ne` (Not Equals).
 type ExternalConfigMetricFilterOperator string
 
+// ExternalConfigWrite Report configuration for creating or updating a report.
+//
+// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
+type ExternalConfigWrite struct {
+	// AdvancedAnalysis Advanced analysis options. Each can be set independently.
+	AdvancedAnalysis *AdvancedAnalysis `json:"advancedAnalysis,omitempty"`
+
+	// Aggregation How to aggregate data values in the report.
+	Aggregation *ExternalConfigWriteAggregation `json:"aggregation,omitempty"`
+
+	// Count The field to count distinct values of. Only applicable when aggregation is set to "count".
+	// On PATCH, omit to preserve the existing field; send null to remove it.
+	// A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
+	Count nullable.Nullable[ExternalConfigWriteCount] `json:"count,omitempty"`
+
+	// Currency Currency code for monetary values.
+	Currency *Currency `json:"currency,omitempty"`
+
+	// CustomTimeRange Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+	// A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+	// Sending null while `timeRange.mode` stays "custom" is rejected.
+	CustomTimeRange nullable.Nullable[ExternalConfigWriteCustomTimeRange] `json:"customTimeRange,omitempty"`
+
+	// DataSource Data source of the report.
+	// When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
+	// On report update (PATCH), omission preserves the saved data source.
+	// The `attribution` data source is read only and is available on `POST /analytics/v1/reports/query` only.
+	DataSource *CloudAnalyticsExternalConfigWriteDataSource `json:"dataSource,omitempty"`
+
+	// Dimensions See [Dimensions](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#dimensions).
+	Dimensions *[]DimensionWrite `json:"dimensions,omitempty"`
+
+	// DisplaySettings Display settings for the report.
+	DisplaySettings *ExternalDisplaySettings `json:"displaySettings,omitempty"`
+
+	// DisplayValues See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
+	DisplayValues *ExternalConfigWriteDisplayValues `json:"displayValues,omitempty"`
+
+	// Filters The filters to apply to the report.
+	Filters *[]ExternalScopeFilter `json:"filters,omitempty"`
+
+	// ForecastSettings Forecast configuration. On PATCH, omit to preserve existing settings; send null to clear/disable forecasting.
+	ForecastSettings nullable.Nullable[ExternalForecastSettings] `json:"forecastSettings,omitempty"`
+
+	// Group The rows that appear in the tabular format of the report. See [Group by](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#group-by).
+	Group *[]GroupWrite `json:"group,omitempty"`
+
+	// IncludePromotionalCredits Whether to include [promotional credits](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#promotional-credits).
+	// If set to **true**, the report must use time interval `month`, `quarter`, or `year`.
+	IncludePromotionalCredits *bool `json:"includePromotionalCredits,omitempty"`
+
+	// IncludeSubtotals Whether to include subgroup totals in the report. This option has no impact when reading a report via API.
+	IncludeSubtotals *bool `json:"includeSubtotals,omitempty"`
+
+	// Layout Type of visualization or output format. cumulative_comparison requires daily datetime dimensions (year, month, day), total aggregation, one metric, a secondary time range, and no comparative or forecast.
+	Layout *ExternalRenderer `json:"layout,omitempty"`
+
+	// LimitAggregation Controls how rows excluded by limits are rendered. Applies when any limit type is active
+	// (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
+	// at most two of those three limit types — not all three. When `displayValues` is not
+	// `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
+	LimitAggregation *ExternalConfigWriteLimitAggregation          `json:"limitAggregation,omitempty"`
+	LimitByChange    nullable.Nullable[ExternalLimitByChange]      `json:"limitByChange,omitempty"`
+	MetricFilter     nullable.Nullable[ExternalConfigMetricFilter] `json:"metricFilter,omitempty"`
+
+	// Metrics The list of metrics to apply to the report. Custom metric can be used only once. Maximum number of metrics is 4.
+	Metrics *[]ExternalMetric `json:"metrics,omitempty"`
+
+	// SecondaryTimeRange Secondary time range for comparative reports.
+	//
+	// Example: {"amount":1,"includeCurrent":false,"unit":"year"}
+	SecondaryTimeRange *TimeSettingsSecondary `json:"secondaryTimeRange,omitempty"`
+
+	// SortDimensions Orders the columns produced by `dimensions`, both in the console and in a rendered
+	// `fileOutput` export. It does not reorder the `rows` of a JSON result.
+	// `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+	// dimensions of a time series means chronologically. The default `desc` orders them by the
+	// metric instead, so a monthly report charts its priciest month first rather than in time
+	// order — set `a_to_z` for a time series you intend to export.
+	// A report with a forecast is always charted chronologically and ignores this field, and a
+	// comparative `displayValues` mode requires `a_to_z`.
+	SortDimensions *ExternalConfigWriteSortDimensions `json:"sortDimensions,omitempty"`
+
+	// SortGroups Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+	// export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+	// not reorder the `rows` of a JSON result.
+	SortGroups *ExternalConfigWriteSortGroups `json:"sortGroups,omitempty"`
+
+	// Splits The splits to use in the report.
+	Splits *[]ExternalSplit `json:"splits,omitempty"`
+
+	// TimeInterval Time interval for grouping data in the report.
+	TimeInterval *ExternalConfigWriteTimeInterval `json:"timeInterval,omitempty"`
+
+	// TimeRange Specify a predefined or custom time range for the report.
+	// For example, to specify a custom time range of "last 2 days", set the mode to `last`, the amount to `2`, and the unit to `day`. If `includeCurrent` is `true`, the range will be yesterday and today; otherwise, the range will be yesterday and the day before yesterday.
+	// If "custom" type is specified, you need to provide a custom time range in the `customTimeRange` field.
+	//
+	// Example: {"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}
+	TimeRange *TimeSettings `json:"timeRange,omitempty"`
+}
+
+// ExternalConfigWriteAggregation How to aggregate data values in the report.
+type ExternalConfigWriteAggregation string
+
+// ExternalConfigWriteDisplayValues See [View data as (Comparative report)](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#view-as).
+type ExternalConfigWriteDisplayValues string
+
+// ExternalConfigWriteLimitAggregation Controls how rows excluded by limits are rendered. Applies when any limit type is active
+// (`metricFilter`, `limitByChange`, or a `group` entry with a `limit`). A report may configure
+// at most two of those three limit types — not all three. When `displayValues` is not
+// `actuals_only`, this field must be `none` (or omitted, which defaults to `none`).
+type ExternalConfigWriteLimitAggregation string
+
+// ExternalConfigWriteSortDimensions Orders the columns produced by `dimensions`, both in the console and in a rendered
+// `fileOutput` export. It does not reorder the `rows` of a JSON result.
+// `a_to_z` orders the columns by the dimension value, which for the `year`/`month`/`day`
+// dimensions of a time series means chronologically. The default `desc` orders them by the
+// metric instead, so a monthly report charts its priciest month first rather than in time
+// order — set `a_to_z` for a time series you intend to export.
+// A report with a forecast is always charted chronologically and ignores this field, and a
+// comparative `displayValues` mode requires `a_to_z`.
+type ExternalConfigWriteSortDimensions string
+
+// ExternalConfigWriteSortGroups Orders the rows produced by `group`, both in the console and in a rendered `fileOutput`
+// export. `a_to_z` orders them by the dimension value, `asc`/`desc` by the metric. It does
+// not reorder the `rows` of a JSON result.
+type ExternalConfigWriteSortGroups string
+
+// ExternalConfigWriteTimeInterval Time interval for grouping data in the report.
+type ExternalConfigWriteTimeInterval string
+
+// ExternalConfigWriteCount The field to count distinct values of. Only applicable when aggregation is set to "count".
+// On PATCH, omit to preserve the existing field; send null to remove it.
+// A PATCH that sets `aggregation` to a value other than "count" without sending `count` removes it.
+type ExternalConfigWriteCount struct {
+	// Id The field identifier to count distinct values of.
+	Id string `json:"id"`
+
+	// Type The metadata field type.
+	Type ExternalConfigWriteCountType `json:"type"`
+}
+
+// ExternalConfigWriteCountType The metadata field type.
+type ExternalConfigWriteCountType string
+
+// ExternalConfigWriteCustomTimeRange Required when the time range is set to "custom". On PATCH, omit to preserve the existing range; send null to remove it.
+// A PATCH that sets `timeRange` to a mode other than "custom" without sending `customTimeRange` removes it.
+// Sending null while `timeRange.mode` stays "custom" is rejected.
+type ExternalConfigWriteCustomTimeRange struct {
+	// From The start timestamp of the time range in RFC3339 format.
+	//
+	// Example: 2024-03-10T23:00:00Z
+	From *time.Time `json:"from,omitempty"`
+
+	// To The end timestamp of the time range in RFC3339 format.
+	//
+	// Example: 2024-03-12T23:00:00Z
+	To *time.Time `json:"to,omitempty"`
+}
+
 // ExternalDisplaySettings Display settings for the report.
 type ExternalDisplaySettings struct {
 	// AxisLabelFontSize Font size used for axis labels on charts.
@@ -10172,6 +10647,37 @@ type ExternalReport struct {
 // ExternalReportType Report type.
 type ExternalReportType string
 
+// ExternalScopeFilter To include or exclude certain values.
+// When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+// When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.
+//
+// Example: {"id":"cloud_provider","inverse":false,"type":"fixed","values":["google-cloud"]}
+type ExternalScopeFilter struct {
+	// CaseInsensitive If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+	CaseInsensitive *bool `json:"caseInsensitive,omitempty"`
+
+	// Id Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.
+	Id string `json:"id"`
+
+	// IncludeNull Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
+	IncludeNull *bool `json:"includeNull,omitempty"`
+
+	// Inverse Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
+	Inverse *bool `json:"inverse,omitempty"`
+
+	// Mode Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
+	Mode *ExternalScopeFilterMode `json:"mode,omitempty"`
+
+	// Type Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+	Type ScopeDimensionsTypes `json:"type"`
+
+	// Values List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+	Values *[]string `json:"values,omitempty"`
+}
+
+// ExternalScopeFilterMode Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
+type ExternalScopeFilterMode string
+
 // ExternalSplit Specification of how to split costs.
 type ExternalSplit struct {
 	// Id ID of the field to split.
@@ -10228,10 +10734,10 @@ type ExternalSplitTargetType string
 //
 // Example: {"config":{"timeInterval":"week","timeRange":{"amount":1,"includeCurrent":false,"mode":"last","unit":"month"}},"description":"An update via API","name":"A new name"}
 type ExternalUpdateReport struct {
-	// Config Report configuration.
+	// Config Report configuration for creating or updating a report.
 	//
 	// Example: {"advancedAnalysis":{"forecast":false,"notTrending":false,"trendingDown":false,"trendingUp":false},"aggregation":"total","currency":"USD","dimensions":[{"id":"year","type":"datetime"},{"id":"month","type":"datetime"}],"displayValues":"actuals_only","filters":[{"id":"attribution","inverse":true,"type":"attribution","values":["RB8DndcxODriK83IBXXf","D7r4znsTj2UC95zGnunW"]},{"id":"cloud_provider","type":"fixed","values":["amazon-web-services","google-cloud","microsoft-azure"]}],"forecastSettings":{"futureTimeIntervals":3,"mode":"totals"},"group":[{"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"a_to_z","value":0},"type":"fixed"}],"includePromotionalCredits":false,"includeSubtotals":false,"layout":"table","limitAggregation":"top","limitByChange":{"changeType":"percentage","includeIncompleteData":false,"metric":{"type":"basic","value":"cost"},"operator":"gte","values":[50]},"metricFilter":{"metric":{"type":"basic","value":"cost"},"operand":"series_total","operator":"nb","values":[-1,1]},"metrics":[{"type":"basic","value":"cost"},{"type":"basic","value":"usage"},{"type":"extended","value":"amortized_cost"}],"sortDimensions":"a_to_z","sortGroups":"a_to_z","timeInterval":"month","timeRange":{"amount":3,"includeCurrent":false,"mode":"last","unit":"month"}}
-	Config *ExternalConfig `json:"config,omitempty"`
+	Config *ExternalConfigWrite `json:"config,omitempty"`
 
 	// Description Report description
 	Description *string `json:"description,omitempty"`
@@ -11275,6 +11781,24 @@ type GroupAllocationRule struct {
 // GroupAllocationRuleAction Action to perform with this rule.
 type GroupAllocationRuleAction string
 
+// GroupWrite The dimension that defines a row in the report.
+//
+// Example: {"id":"service_description","limit":{"metric":{"type":"basic","value":"cost"},"sort":"desc","value":3},"type":"fixed"}
+type GroupWrite struct {
+	// Id Dimension ID.
+	//
+	// Example: service_description
+	Id *string `json:"id,omitempty"`
+
+	// Limit To limit the number of results based on ranking. See [Limit by rank](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+	//
+	// Example: {"metric":{"type":"basic","value":"cost"},"sort":"desc","value":3}
+	Limit *Limit `json:"limit,omitempty"`
+
+	// Type Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+	Type *ScopeDimensionsTypes `json:"type,omitempty"`
+}
+
 // HexColor A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
 //
 // Example: #1A73E8
@@ -12110,6 +12634,9 @@ type SchemaFieldType string
 
 // SchemaFieldUnit Semantic unit of the column values.
 type SchemaFieldUnit string
+
+// ScopeDimensionsTypes Dimension type for alert and budget scopes and for the filters, group and dimensions of report create and update requests. See `DimensionsTypes` for per-value meanings. The `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` types are not accepted here: they need `dataSource: attribution`, which is only available on `POST /analytics/v1/reports/query`.
+type ScopeDimensionsTypes string
 
 // Seats Licensing seat counts for a subscription.
 type Seats struct {

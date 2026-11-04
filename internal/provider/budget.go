@@ -175,7 +175,7 @@ type budgetRequestParts struct {
 	collaborators *[]models.Collaborator
 	recipients    *[]string
 	slackChannels *[]models.SlackChannel
-	scopes        []models.ExternalConfigFilter
+	scopes        []models.ExternalScopeFilter
 	seasonal      *[]float64
 }
 
@@ -250,17 +250,17 @@ func (plan *budgetResourceModel) toRequestParts(ctx context.Context) (parts budg
 		return parts, diags
 	}
 
-	parts.scopes = make([]models.ExternalConfigFilter, len(scopes))
+	parts.scopes = make([]models.ExternalScopeFilter, len(scopes))
 	for i, scope := range scopes {
-		parts.scopes[i] = models.ExternalConfigFilter{
+		parts.scopes[i] = models.ExternalScopeFilter{
 			CaseInsensitive: scope.CaseInsensitive.ValueBoolPointer(),
 			Id:              scope.Id.ValueString(),
 			IncludeNull:     scope.IncludeNull.ValueBoolPointer(),
 			Inverse:         scope.Inverse.ValueBoolPointer(),
-			Type:            models.DimensionsTypes(scope.ScopesType.ValueString()),
+			Type:            models.ScopeDimensionsTypes(scope.ScopesType.ValueString()),
 		}
 		if !scope.Mode.IsNull() && !scope.Mode.IsUnknown() {
-			parts.scopes[i].Mode = new(models.ExternalConfigFilterMode(scope.Mode.ValueString()))
+			parts.scopes[i].Mode = new(models.ExternalScopeFilterMode(scope.Mode.ValueString()))
 		}
 		if !scope.Values.IsNull() && !scope.Values.IsUnknown() {
 			var values []string

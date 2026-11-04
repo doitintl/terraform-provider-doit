@@ -44,6 +44,11 @@ func (r *reportResource) Metadata(_ context.Context, req resource.MetadataReques
 func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	s := resource_report.ReportResourceSchema(ctx)
 	appendDimensionsTypeDeprecationValidators(s.Attributes, reportDimensionsTypeAttributePaths...)
+	// Attribute attributions are read-only: the generated enums leave out the
+	// "attribution" data source and the tier dimensions, which report create and
+	// update reject. doit_report_query builds its own copy of this schema.
+	describeAttributionReportDataSource(s.Attributes, "config.data_source")
+	describeAttributionTierTypes(s.Attributes, reportDimensionsTypeAttributePaths...)
 
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.
@@ -285,6 +290,56 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	// Skip on destroy (no plan).
 	if req.Plan.Raw.IsNull() {
 		return
+	}
+
+	// An attribution report (e.g. an imported console Attributions view) cannot
+	// be updated through the API, and the enum validator on data_source never sees
+	// the stored "attribution" value. The API merges an update into the stored
+	// report and rejects it when the merged data source is "attribution", so fail
+	// at plan time rather than at apply.
+	//
+	// The update request sends the planned data_source, so that value decides. It
+	// can be "attribution" although config says otherwise, because
+	// lifecycle.ignore_changes keeps the stored value in the plan. When the plan
+	// has no value, because config omits data_source and another attribute changes
+	// (the framework then plans the computed attribute as unknown), the request
+	// omits dataSource, which the API resets to the tenant default instead of
+	// keeping the stored one. An omitted data_source therefore means the stored
+	// value, and an unknown configured one is decided at apply.
+	if !req.State.Raw.IsNull() && !req.Plan.Raw.Equal(req.State.Raw) {
+		dataSourcePath := path.Root("config").AtName("data_source")
+
+		var dataSource types.String
+		resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, dataSourcePath, &dataSource)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if dataSource.IsNull() || dataSource.IsUnknown() {
+			var configDataSource types.String
+			resp.Diagnostics.Append(req.Config.GetAttribute(ctx, dataSourcePath, &configDataSource)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			switch {
+			case configDataSource.IsUnknown():
+				dataSource = configDataSource
+			case configDataSource.IsNull():
+				resp.Diagnostics.Append(req.State.GetAttribute(ctx, dataSourcePath, &dataSource)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+			default:
+				dataSource = configDataSource
+			}
+		}
+		if !dataSource.IsUnknown() && !dataSource.IsNull() && dataSource.ValueString() == attributionReportDataSource {
+			resp.Diagnostics.AddAttributeError(
+				dataSourcePath,
+				attributionReportReadOnlySummary,
+				attributionReportReadOnlyDetail,
+			)
+			return
+		}
 	}
 
 	// Determine effective layout: use plan layout if known. If layout was omitted from

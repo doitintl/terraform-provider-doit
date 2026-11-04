@@ -31,4 +31,31 @@ If the `read` timeout is reached — or you interrupt Terraform — the provider
 
 {{ tffile (printf "examples/data-sources/%s/data-source.tf" .Name) }}
 
+## Querying Attribute attributions
+
+With a DoiT Attribute subscription, `data_source = "attribution"` queries the cost of one Attribute attribution. The query needs at least one `attribution_tier_1`, `attribution_tier_2` or `attribution_tier_3` dimension in `group`, `dimensions` or `filters`, and every tier dimension must use the same `id`: the attribution set ID with `-` replaced by `_`.
+
+```terraform
+data "doit_report_query" "team_costs" {
+  config = {
+    data_source   = "attribution"
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 30
+      unit            = "day"
+      include_current = true
+    }
+    group = [
+      {
+        id   = replace(var.attribution_set_id, "-", "_")
+        type = "attribution_tier_1"
+      }
+    ]
+  }
+}
+```
+
+~> **Note:** Attribute attributions are unrelated to the deprecated `attribution` and `attribution_group` dimension types, which are the old names of allocation rules and allocations. See the [Attribute attributions guide](../guides/attribute_attributions).
+
 {{ .SchemaMarkdown | trimspace }}
