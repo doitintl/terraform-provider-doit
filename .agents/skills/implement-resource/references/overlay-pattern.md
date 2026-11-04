@@ -159,7 +159,7 @@ The Read path detects **real** external changes while ignoring API normalization
 
 **Sentinel restoration** (`mergeSentinelValues`): When the API strips user-provided sentinels (e.g. `[Service N/A]`), restore them if the API value is a substring of the state value.
 
-**Type alias normalization** (`normalizeDimensionsType`): When the API returns a canonical type name for a user-provided alias (e.g. `attribution` for `allocation_rule`), normalize back to the user's alias.
+**Type alias normalization** (`normalizeDimensionsType`): When the API returns a canonical type name for a user-provided alias (e.g. `attribution` for `allocation_rule`), normalize back to the user's alias. Normalize the paired `id` too (`attribution` pairs with id `attribution`, `allocation_rule` with `allocation_rule`; the API rejects a mix), as `alert.go` and `dimension_data_source.go` do.
 
 ## Common Pitfalls
 

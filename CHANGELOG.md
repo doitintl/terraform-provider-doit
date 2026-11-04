@@ -20,6 +20,8 @@
 
 ### ENHANCEMENTS
 
+- **resource/doit_alert, data-source/doit_dimension**: Warn again that `type = "attribution"` and `"attribution_group"` are deprecated in favor of `allocation_rule` and `allocation`; both APIs now accept the new names. The warning for `attribution` now also says to change `id` to `allocation_rule`, because the API rejects a mismatched type and id. `doit_dimension` keeps the configured `id` in state when the API returns the new name ([#443](https://github.com/doitintl/terraform-provider-doit/issues/443))
+
 - **data-source/doit_report_query**: Query DoiT Attribute attributions with `data_source = "attribution"` and the new `attribution_tier_1`, `attribution_tier_2` and `attribution_tier_3` dimension types. Requires an Attribute subscription. A query must contain at least one tier dimension, and all of them must belong to the same attribution; the provider checks this at plan time. These are unrelated to the deprecated `attribution` and `attribution_group` dimension types; see the new [Attribute attributions guide](https://registry.terraform.io/providers/doitintl/doit/latest/docs/guides/attribute_attributions)
 
 - **resource/doit_report, resource/doit_alert, resource/doit_budget**: The Attribute values are not valid where the API cannot use them, and Terraform reports them as invalid values at plan time: `data_source = "attribution"` on `doit_report` (the API cannot create or update attribution reports), and the `attribution_tier_*` dimension types in `doit_report` dimensions, filters and groups, `doit_alert` scopes and `doit_budget` scopes. A plan that would update an existing attribution report, such as an imported console view, also fails at plan time

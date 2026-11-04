@@ -70,10 +70,7 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 	// The alerts API rejects Attribute attribution tier dimensions as unknown, so
 	// the generated enum leaves them out.
 	describeAttributionTierTypes(s.Attributes, "config.scopes[*].type")
-	// No dimensions-type deprecation warning on config.scopes[*].type: the
-	// alerts API only accepts "attribution"/"attribution_group" and rejects the
-	// replacements ("allocation_rule"/"allocation") with a 400, so the warning
-	// would recommend a value that breaks the alert (#384).
+	appendDimensionsTypeDeprecationValidators(s.Attributes, "config.scopes[*].type")
 
 	// Add UseStateForUnknown to stable Computed-only fields so they don't
 	// show as "(known after apply)" on every plan that modifies the resource.

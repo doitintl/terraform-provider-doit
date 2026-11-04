@@ -993,15 +993,25 @@ resource "doit_alert" "test_recipient" {
 	})
 }
 
-// TestAccAlert_ScopesAliasTypes tests that using the "allocation_rule" alias type
-// in alert scopes is handled correctly. Note: As of now, the alert API only accepts
-// "attribution" (not the "allocation_rule" alias), so we test with "attribution"
-// and the provider deliberately emits no deprecation warning for it (#384).
-// The normalization code in the provider ensures that if the API is updated to accept
-// aliases in the future, or if the user imports a resource that was created with aliases,
-// the state will remain consistent.
+// TestAccAlert_ScopesAliasTypes verifies that the replacement dimension types
+// ("allocation_rule"/"allocation") and the legacy ones ("attribution"/
+// "attribution_group") both work in alert scopes: the configured spelling is
+// kept in state, there is no drift, and switching between the two spellings
+// updates in place. The alerts API pairs each type with its own id, so type and
+// id are always changed together (#443).
 func TestAccAlert_ScopesAliasTypes(t *testing.T) {
 	n := acctest.RandInt()
+	scope := func(typ, id string) knownvalue.Check {
+		return knownvalue.ListExact([]knownvalue.Check{
+			knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"type": knownvalue.StringExact(typ),
+				"id":   knownvalue.StringExact(id),
+				"mode": knownvalue.StringExact("is"),
+			}),
+		})
+	}
+	scopesPath := tfjsonpath.New("config").AtMapKey("scopes")
+	noDrift := resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -1009,36 +1019,91 @@ func TestAccAlert_ScopesAliasTypes(t *testing.T) {
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAlertScopesAliasTypes(n),
+				Config: testAccAlertScopesAliasTypes(n, "allocation_rule", "allocation_rule", testAttribution()),
 				ConfigStateChecks: []statecheck.StateCheck{
-					// Verify type and id are preserved in state
-					statecheck.ExpectKnownValue(
-						"doit_alert.this",
-						tfjsonpath.New("config").AtMapKey("scopes"),
-						knownvalue.ListExact([]knownvalue.Check{
-							knownvalue.ObjectPartial(map[string]knownvalue.Check{
-								"type": knownvalue.StringExact("attribution"),
-								"id":   knownvalue.StringExact("attribution"),
-								"mode": knownvalue.StringExact("is"),
-							}),
-						}),
-					),
+					statecheck.ExpectKnownValue("doit_alert.this", scopesPath, scope("allocation_rule", "allocation_rule")),
 				},
 			},
-			// Verify no drift on re-apply
 			{
-				Config: testAccAlertScopesAliasTypes(n),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
+				Config:           testAccAlertScopesAliasTypes(n, "allocation_rule", "allocation_rule", testAttribution()),
+				ConfigPlanChecks: noDrift,
+			},
+			// Switch to the legacy spelling in place.
+			{
+				Config: testAccAlertScopesAliasTypes(n, "attribution", "attribution", testAttribution()),
+				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction("doit_alert.this", plancheck.ResourceActionUpdate),
+				}},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_alert.this", scopesPath, scope("attribution", "attribution")),
 				},
+			},
+			{
+				Config:           testAccAlertScopesAliasTypes(n, "attribution", "attribution", testAttribution()),
+				ConfigPlanChecks: noDrift,
+			},
+			// Import has no prior state to preserve the configured spelling, so
+			// the API's canonical names come back.
+			{
+				ResourceName:            "doit_alert.this",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"config.scopes.0.type", "config.scopes.0.id"},
 			},
 		},
 	})
 }
 
-func testAccAlertScopesAliasTypes(i int) string {
+// TestAccAlert_ScopesAliasTypesGroup is the allocation group counterpart of
+// TestAccAlert_ScopesAliasTypes: "allocation" and "attribution_group" take the
+// allocation group ID as the scope id.
+func TestAccAlert_ScopesAliasTypesGroup(t *testing.T) {
+	groupID := os.Getenv("TEST_ATTRIBUTION_GROUP")
+	if groupID == "" {
+		t.Skip("TEST_ATTRIBUTION_GROUP must be set for this test")
+	}
+	n := acctest.RandInt()
+	scopeType := func(typ string) knownvalue.Check {
+		return knownvalue.ListExact([]knownvalue.Check{
+			knownvalue.ObjectPartial(map[string]knownvalue.Check{
+				"type": knownvalue.StringExact(typ),
+				"id":   knownvalue.StringExact(groupID),
+			}),
+		})
+	}
+	scopesPath := tfjsonpath.New("config").AtMapKey("scopes")
+	noDrift := resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()}}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAlertScopesAliasTypes(n, "allocation", groupID, "x"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_alert.this", scopesPath, scopeType("allocation")),
+				},
+			},
+			{
+				Config:           testAccAlertScopesAliasTypes(n, "allocation", groupID, "x"),
+				ConfigPlanChecks: noDrift,
+			},
+			{
+				Config: testAccAlertScopesAliasTypes(n, "attribution_group", groupID, "x"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_alert.this", scopesPath, scopeType("attribution_group")),
+				},
+			},
+			{
+				Config:           testAccAlertScopesAliasTypes(n, "attribution_group", groupID, "x"),
+				ConfigPlanChecks: noDrift,
+			},
+		},
+	})
+}
+
+func testAccAlertScopesAliasTypes(i int, scopeType, scopeID, value string) string {
 	return fmt.Sprintf(`
 resource "doit_alert" "this" {
   name = "test-alert-alias-%d"
@@ -1054,15 +1119,15 @@ resource "doit_alert" "this" {
     operator      = "gt"
     scopes = [
       {
-        type   = "attribution"
-        id     = "attribution"
+        type   = "%s"
+        id     = "%s"
         mode   = "is"
         values = ["%s"]
       }
     ]
   }
 }
-`, i, testAttribution())
+`, i, scopeType, scopeID, value)
 }
 
 // TestAccAlert_IncludeNull tests that the include_null property on alert scopes
