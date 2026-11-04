@@ -1064,6 +1064,20 @@ func TestAccAlert_ScopesAliasTypes(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"config.scopes.0.type", "config.scopes.0.id"},
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					if len(states) != 1 {
+						return fmt.Errorf("expected 1 imported instance, got %d", len(states))
+					}
+					// The API returns its canonical names on read (currently the
+					// legacy ones). Either is fine as long as type and id still
+					// form a pair the API accepts; a mix or an empty value is not.
+					a := states[0].Attributes
+					typ, id := a["config.scopes.0.type"], a["config.scopes.0.id"]
+					if typ != id || (typ != "attribution" && typ != "allocation_rule") {
+						return fmt.Errorf("imported scope type %q and id %q are not a matching attribution/allocation_rule pair", typ, id)
+					}
+					return nil
+				},
 			},
 		},
 	})
