@@ -5139,15 +5139,18 @@ func (e ListLabelsParamsSortOrder) Valid() bool {
 
 // Defines values for GetAsyncOperationResultsParamsFileOutput.
 const (
-	GetAsyncOperationResultsParamsFileOutputCsv GetAsyncOperationResultsParamsFileOutput = "csv"
-	GetAsyncOperationResultsParamsFileOutputPdf GetAsyncOperationResultsParamsFileOutput = "pdf"
-	GetAsyncOperationResultsParamsFileOutputPng GetAsyncOperationResultsParamsFileOutput = "png"
+	GetAsyncOperationResultsParamsFileOutputCsv  GetAsyncOperationResultsParamsFileOutput = "csv"
+	GetAsyncOperationResultsParamsFileOutputJson GetAsyncOperationResultsParamsFileOutput = "json"
+	GetAsyncOperationResultsParamsFileOutputPdf  GetAsyncOperationResultsParamsFileOutput = "pdf"
+	GetAsyncOperationResultsParamsFileOutputPng  GetAsyncOperationResultsParamsFileOutput = "png"
 )
 
 // Valid indicates whether the value is a known member of the GetAsyncOperationResultsParamsFileOutput enum.
 func (e GetAsyncOperationResultsParamsFileOutput) Valid() bool {
 	switch e {
 	case GetAsyncOperationResultsParamsFileOutputCsv:
+		return true
+	case GetAsyncOperationResultsParamsFileOutputJson:
 		return true
 	case GetAsyncOperationResultsParamsFileOutputPdf:
 		return true
@@ -13606,7 +13609,7 @@ type CancelAsyncOperationParams struct {
 
 // GetAsyncOperationResultsParams defines parameters for GetAsyncOperationResults.
 type GetAsyncOperationResultsParams struct {
-	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input; a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file. When the file is rendered, `result.rows` is null in the response — the rows are in the file, not inline — so even very large results can be retrieved this way. `pdf` is the chart and data table as a document, `png` the chart image, and `csv` every row of the result as raw data, one line per row with the report's dimensions and metrics, never truncated.
+	// FileOutput Additionally render the operation's result as a file and return a signed URL to it in `fileOutput`. The file is generated from the result the operation already produced, not by re-running the query, and is stored beside that result for the operation's lifetime, so a repeat request for the same operation and format returns a fresh signed URL to the same file rather than rendering it again. Omit the parameter and the response is unchanged. Returns 422 when the operation predates file output support and has no stored render input (`json` never needs one, so it cannot return 422); a transient rendering failure instead returns 200 with `result` and no `fileOutput`, so retry the request for the file. When the file is rendered, `result.rows` is null in the response — the rows are in the file, not inline — so even very large results can be retrieved this way. `pdf` is the chart and data table as a document, `png` the chart image, `csv` every row of the result as raw data, one line per row with the report's dimensions and metrics, never truncated, and `json` the full report result, the same object the inline response carries as `result`, including `secondaryRows` and `forecastRows` — the remediation for a 413 response. With `json` the response omits all three row sets, not only `rows`.
 	FileOutput *GetAsyncOperationResultsParamsFileOutput `form:"fileOutput,omitempty" json:"fileOutput,omitempty"`
 }
 
@@ -15564,7 +15567,7 @@ type ClientInterface interface {
 
 	// GetAsyncOperationResults Get results of an async report run operation
 	//
-	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline — request it again with `fileOutput=json`, or narrow the report. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 	//
 	// Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
 	GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -18121,7 +18124,7 @@ func (c *Client) CancelAsyncOperation(ctx context.Context, operationId string, p
 
 // GetAsyncOperationResults Get results of an async report run operation
 //
-// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline — request it again with `fileOutput=json`, or narrow the report. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 //
 // Corresponds with GET /analytics/v1/reports/operations/{operationId}/results (the `GetAsyncOperationResults` operationId).
 func (c *Client) GetAsyncOperationResults(ctx context.Context, operationId string, params *GetAsyncOperationResultsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -30341,7 +30344,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetAsyncOperationResultsWithResponse Get results of an async report run operation
 	//
-	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+	// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline — request it again with `fileOutput=json`, or narrow the report. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -46131,7 +46134,7 @@ func (c *ClientWithResponses) CancelAsyncOperationWithResponse(ctx context.Conte
 
 // GetAsyncOperationResultsWithResponse Get results of an async report run operation
 //
-// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
+// Returns the result of a succeeded async report operation, including report metadata (id, reportName, owner, type, createTime, updateTime, urlUI) when the operation was started against a saved report — the same shape as the sync GetReportResponse, instead of requiring a second call to GET /analytics/v1/reports/{id}/config for it. Returns 404 if the operationId does not exist, has expired, or belongs to a different tenant. Returns 425 Too Early if the operation has not yet reached a terminal state — poll the operation status endpoint, which returns its own Retry-After guidance, until it succeeds. Returns 422 if the operation terminated as failed or canceled. Returns 413 if the result is too large to return inline — request it again with `fileOutput=json`, or narrow the report. The poll status endpoint response does not include result data inline — this is the only endpoint that returns it.
 //
 // Returns a wrapper object for the known response body format(s).
 //

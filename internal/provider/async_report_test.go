@@ -300,6 +300,7 @@ func TestAwaitAsyncReport_FileOutput(t *testing.T) {
 	pdf := models.GetAsyncOperationResultsParamsFileOutputPdf
 	png := models.GetAsyncOperationResultsParamsFileOutputPng
 	csv := models.GetAsyncOperationResultsParamsFileOutputCsv
+	jsonFmt := models.GetAsyncOperationResultsParamsFileOutputJson
 	for _, tc := range []struct {
 		name      string
 		format    *models.GetAsyncOperationResultsParamsFileOutput
@@ -331,6 +332,13 @@ func TestAwaitAsyncReport_FileOutput(t *testing.T) {
 			body:      `{"result":{"rows":[],"cacheHit":false},"fileOutput":"https://storage.example/op.csv?sig=ghi"}`,
 			wantQuery: "fileOutput=csv",
 			wantURL:   "https://storage.example/op.csv?sig=ghi",
+		},
+		{
+			name:      "json",
+			format:    &jsonFmt,
+			body:      `{"result":{"cacheHit":false},"fileOutput":"https://storage.example/op.json?sig=jkl"}`,
+			wantQuery: "fileOutput=json",
+			wantURL:   "https://storage.example/op.json?sig=jkl",
 		},
 		{
 			name:      "render failed but result remains",
@@ -393,7 +401,7 @@ func TestAwaitAsyncReport_Results413(t *testing.T) {
 		{
 			name:       "without file output suggests it",
 			fileOutput: nil,
-			wantHints:  []string{"too large", "Set file_output", "result_too_large"},
+			wantHints:  []string{"too large", "Set file_output", "json", "result_too_large"},
 		},
 		{
 			name:       "with file output says the render failed",

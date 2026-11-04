@@ -423,8 +423,8 @@ func resultsFetchErrorDetail(operationID string, err error, fileOutputRequested 
 		detail += " Rendering the requested file did not succeed, so the full result was" +
 			" not replaced by a file; read the data source again to retry the render."
 	} else {
-		detail += " Set file_output (for example \"csv\", which contains every row) to" +
-			" receive the rows as a file instead of inline."
+		detail += " Set file_output to \"json\" (the full result) or \"csv\" (every row) to" +
+			" receive the data as a file instead of inline."
 	}
 	return detail + " Alternatively, narrow the report with filters, fewer dimensions," +
 		" or a smaller time range."
