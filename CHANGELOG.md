@@ -6,7 +6,7 @@
 
 - **data-source/doit_support_request_comments**: `comments[].id` is now a string instead of a number. The API returns either an integer (Zendesk tickets) or a string (new ticketing system), so the ID is exposed as an opaque string; integer IDs keep their decimal form (`"12345"`). Configurations that compare it numerically or pass it to a number-typed variable must be adjusted
 
-- **data-source/doit_report_query, data-source/doit_report_result**: When `file_output` is set and the file is rendered, the API now clears `rows` from `result_json` (the rows are in the file) and `row_count` is null instead of the row count. `schema`, `forecastRows`, `secondaryRows` and `cacheHit` are unchanged. If rendering fails, `result_json` still contains every row and `file_output_url` is null. Configurations that read `jsondecode(result_json).rows` or `row_count` together with `file_output` must read the file instead, or drop `file_output`
+- **data-source/doit_report_query, data-source/doit_report_result**: When `file_output` is set and the file is rendered, the API now clears `rows` from `result_json` (the rows are in the file) and `row_count` is null instead of the row count. `schema` and `cacheHit` are unchanged, as are `forecastRows` and `secondaryRows` except with `file_output = "json"`, which omits them as well. If rendering fails, `result_json` still contains every row and `file_output_url` is null. Configurations that read `jsondecode(result_json).rows` or `row_count` together with `file_output` must read the file instead, or drop `file_output`
 
 - **data-source/doit_ps4c_commitment_policy, data-source/doit_ps4c_commitment_policies**: Removed the `ladder_interval_days` attribute. The API no longer returns it because laddering steps are always 7 days apart for every policy. Configurations that reference it must drop the reference
 
@@ -17,6 +17,8 @@
 - **data-source/doit_customer_notification, data-source/doit_customer_notifications**: New data sources to read one organization-wide cost-anomaly notification by ID, or list all of them (not paginated). Emails are returned as the API stores them, in lowercase. Require the `settings` (Manage settings) permission
 
 ### ENHANCEMENTS
+
+- **data-source/doit_report_query, data-source/doit_report_result**: `file_output` now accepts `json`, which renders the full result (`schema`, `rows`, `secondaryRows`, `forecastRows`) as a file behind `file_output_url`. Unlike `csv` it keeps the secondary and forecast rows, so it is the way to retrieve a result too large to return inline. With `json`, `result_json` omits `rows`, `secondaryRows` and `forecastRows`, and `row_count` is null. The "too large" error now suggests `json` as well as `csv`
 
 - **data-source/doit_report_query, data-source/doit_report_result**: A result too large for the API to return inline (over 30 MiB) now fails with an explanatory error suggesting `file_output = "csv"`, filters, fewer dimensions or a smaller time range, instead of an opaque HTTP 500. `file_output` is also now a working way around the limit
 
