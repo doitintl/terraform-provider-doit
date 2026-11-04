@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -231,5 +232,36 @@ func (m useNullForMetricFilterModifier) PlanModifyObject(ctx context.Context, re
 	}
 	if req.ConfigValue.IsNull() {
 		resp.PlanValue = req.ConfigValue
+	}
+}
+
+// planReportTimeRangeOmittedFields plans 0 for time_range.amount and false for
+// time_range.include_current when a configured time_range omits them and the plan
+// would otherwise show them as unknown. The API replaces the stored time range
+// with the configured block and stores 0 and false for these omitted fields, so
+// the plan shows the stored values instead of "(known after apply)". Values kept
+// from prior state in a plan without changes are left alone.
+func planReportTimeRangeOmittedFields(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	timeRangePath := path.Root("config").AtName("time_range")
+
+	var configTimeRange resource_report.TimeRangeValue
+	diags := req.Config.GetAttribute(ctx, timeRangePath, &configTimeRange)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() || configTimeRange.IsNull() || configTimeRange.IsUnknown() {
+		return
+	}
+
+	var planTimeRange resource_report.TimeRangeValue
+	diags = req.Plan.GetAttribute(ctx, timeRangePath, &planTimeRange)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() || planTimeRange.IsNull() || planTimeRange.IsUnknown() {
+		return
+	}
+
+	if configTimeRange.Amount.IsNull() && planTimeRange.Amount.IsUnknown() {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, timeRangePath.AtName("amount"), types.Int64Value(0))...)
+	}
+	if configTimeRange.IncludeCurrent.IsNull() && planTimeRange.IncludeCurrent.IsUnknown() {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, timeRangePath.AtName("include_current"), types.BoolValue(false))...)
 	}
 }

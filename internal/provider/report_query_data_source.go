@@ -169,6 +169,10 @@ func (d *reportQueryDataSource) ConfigValidators(_ context.Context) []datasource
 		reportCumulativeComparisonDataSourceValidator{},
 		// limit_by_change: no count aggregation with a secondary range, and its metric must be in metrics.
 		reportLimitByChangeDataSourceValidator{},
+		// secondary_time_range must not overlap the primary time range.
+		reportSecondaryTimeRangeDataSourceValidator{},
+		// time_range and secondary_time_range must set every field the API requires.
+		reportTimeRangeRequiredFieldsDataSourceValidator{},
 	}
 }
 
