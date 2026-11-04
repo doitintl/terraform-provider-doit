@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: DoiT API
+  description: Programmatic access to DoiT Platform
+  version: v2
+servers:
+  - url: ${API_BASE_URL}
+security:
+  - bearerAuth: []
+tags: []
+paths: {}
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: '#/components/securitySchemes/BearerAuth'
+    BearerAuth:
+      description: |
+        HTTP Bearer token authentication scheme. Clients pass the token in the
+        `Authorization: Bearer <token>` header on every request. Absent or invalid
+        token → `401 unauthorized`, plus a `WWW-Authenticate: Bearer
+        realm="api.doit.com"` header advertising the required scheme.
+
+        Multi-tenant principals additionally require the `X-Tenant-Id` header
+        to disambiguate which customer the request applies to.
+      type: http
+      scheme: bearer
+x-samples-languages:
+  - curl
+  - go
+  - node
+  - python
+x-cli-config:
+  security: bearerAuth

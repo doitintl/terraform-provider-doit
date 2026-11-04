@@ -23,7 +23,7 @@ For a legacy endpoint whose contract will not change (frozen v1 content), the AP
 
 This skill **evaluates**. It does not fix, adapt, or compensate. The deliverable is a verdict plus a findings list — never a patched pipeline.
 
-> **NEVER modify the OpenAPI spec (`OpenAPI/openapi_spec_full.yml`)** — it is a carbon copy of the upstream version and all manual changes WILL be overwritten on the next sync. If there are issues with the spec, flag them as findings.
+> **NEVER modify the OpenAPI spec (`OpenAPI/openapi_spec_full.yml`, `OpenAPI/openapi_spec_v2.yml`)** — each is a carbon copy of the upstream version and all manual changes WILL be overwritten on the next sync. If there are issues with the spec, flag them as findings.
 
 > **The schema must come from the code generator.** If the generator produces an incorrect, incomplete, or invalid schema, that is a finding — not something to fix locally.
 
@@ -36,10 +36,10 @@ Every item below looks clever and is wrong. If you catch yourself reaching for o
 | Do not | Why it is wrong |
 |--------|-----------------|
 | Rename an attribute anywhere in the pipeline | The Terraform attribute permanently diverges from the API contract. The next upstream sync either silently reverts it or double-applies it. |
-| Edit `OpenAPI/openapi_spec_full.yml` | Carbon copy of upstream; overwritten on sync. |
-| Edit `OpenAPI/extra_paths.yml` or `tools/extract-inline-schemas` to reshape the schema | Same divergence, hidden one layer deeper where the next reader will not find it. |
-| Add an alias or override in `OpenAPI/1_tfplugingen-openapi/{datasources,resources}.yml` to dodge a name | Hides an upstream contract bug behind provider-local config. |
-| Hand-edit or post-process a `*_gen.go` file | Regenerated on every `make generate`. |
+| Edit `OpenAPI/openapi_spec_full.yml` or `OpenAPI/openapi_spec_v2.yml` | Carbon copies of upstream; overwritten on sync. |
+| Edit `OpenAPI/extra_paths.yml`, `OpenAPI/v2/extra_paths.yml` or `tools/extract-inline-schemas` to reshape the schema | Same divergence, hidden one layer deeper where the next reader will not find it. |
+| Add an alias or override in `OpenAPI/1_tfplugingen-openapi/{datasources,resources}.yml` or `OpenAPI/v2/{datasources,resources}.yml` to dodge a name | Hides an upstream contract bug behind provider-local config. |
+| Hand-edit or post-process a `*_gen.go` file | Regenerated on every `make generate` / `make generate-v2`. |
 | Drop or exclude the offending field | Silent data loss — users cannot see a field the API returns. |
 | Wrap the object in an artificial nesting level to move a field off the schema root | Invents an API shape that does not exist, purely to defeat a validation rule. |
 | Downgrade to "data source only" to sidestep a schema-level problem | Reserved and invalid attribute names apply identically to data sources. This solves nothing. |
@@ -48,7 +48,16 @@ The correct output for any of these situations is: **the API contract must chang
 
 ## Step 1: Run the Code Generation Pipeline (Test Only)
 
-**Get the spec.** Normally the pipeline consumes the OpenAPI 3.0.1 spec in `doiteng/omni`:
+**Pick the pipeline.** There are two, side by side until the omni cutover:
+
+| The contract lives in | Pipeline | Spec | Config |
+|-----------------------|----------|------|--------|
+| A v1 service (omni's 3.0.1 spec today, `analytics/v1` and the like) | v1: `make generate` | `OpenAPI/openapi_spec_full.yml` | `OpenAPI/1_tfplugingen-openapi/`, `OpenAPI/extra_paths.yml` |
+| A v2 service of the `external-api-v2` aggregate (`auth/v2`, `cloudops/v2`, `tokenomics/v2`, ...), OpenAPI 3.1 | v2: `make generate-v2` | `OpenAPI/openapi_spec_v2.yml` | `OpenAPI/v2/` |
+
+An api-specs PR for a v1 service still goes through the v1 pipeline, as described next. A v2 service is covered under **Evaluating a v2 service** below.
+
+**Get the spec (v1).** Normally the pipeline consumes the OpenAPI 3.0.1 spec in `doiteng/omni`:
 
 ```bash
 make sync-spec PR=<omni-pr>   # or REF=<branch>; replaces OpenAPI/openapi_spec_full.yml
@@ -83,6 +92,16 @@ What was checked on a 3.1 spec (`mock-1.0.4`): `type: [X, "null"]`, nullable arr
 - **Fixed in [#427](https://github.com/doitintl/terraform-provider-doit/pull/427):** `extract-inline-schemas` used to prune a schema referenced only through a component header or component request body, which failed generation for most 3.1 specs (the DoiT shared `RequestID` header triggers it). [#429](https://github.com/doitintl/terraform-provider-doit/pull/429) fixed the mirror case: a parameter used only by unmapped operations kept a `$ref` to a pruned schema, and `oapi-codegen` failed with `map key "X" not found`. On a checkout older than #427 or #429, update first. The pruner now follows `$ref`s through every other components section too (`examples`, `links`, `callbacks`, ...), so none of them is a pipeline incompatibility.
 - **Not yet exercised:** `const`, `prefixItems`, `if`/`then`/`else`, numeric `exclusiveMinimum` and a standalone `type: "null"`. For these, what the generator does is known only from its source.
 - **Mixed specs:** a 3.1 spec must not also use `nullable: true`. In 3.1 mode `oapi-codegen` ignores it, so the field silently loses `nullable.Nullable[T]`, which the hand-written code relies on.
+
+**Evaluating a v2 service.** `OpenAPI/openapi_spec_v2.yml` is the *public* combined spec (`external-api-v2.yaml`), which only contains operations that are not `x-internal`. While a v2 operation is still internal it is missing from that file, and in `external-api-v2-1.0.1` that was every operation. Evaluate against the `-full` variant instead, kept outside the repo, and never commit its output:
+
+```bash
+gh release download external-api-v2-<ver> -R doiteng/api-specs -p external-api-v2-full.yaml -D /tmp/v2-eval   # or a PR's pre-release asset
+# add the endpoint under test to OpenAPI/v2/datasources.yml or resources.yml, then:
+make generate-v2 V2_SPEC=/tmp/v2-eval/external-api-v2-full.yaml
+```
+
+`generate-v2` runs the schema generator only for a config that has entries, so a data-source-only or resource-only evaluation needs no manual stages. It still runs the model stage (`oapi-codegen`), which reads the processed spec `OpenAPI/openapi_spec_v2_processed.yml`. `OpenAPI/v2/*.yml` and `OpenAPI/v2/extra_paths.yml` list only what the provider uses; the `-full` file also carries `x-internal` operations and fields the provider can never ship, so judge only the endpoint under test. `make sync-spec-v2 VERSION=<ver>` replaces the committed public file; use it to refresh the repo's copy, not to evaluate.
 
 When both a 3.1 PR and its 3.0.1 omni projection exist, report a difference between them only if it changes one of two things:
 - **What the generator reads:** types, `required`, `nullable`, enums, `format` (including `password` and `set`), `default`, composition, parameter names and locations, declared status codes.
@@ -130,8 +149,10 @@ cat internal/provider/datasource_<name>/*_gen.go
 git checkout -- OpenAPI/ internal/provider/
 # Remove what the run added. git clean only touches untracked files, so the
 # tracked schemas of an existing resource or data source stay. Review first:
-git clean -n -- internal/provider/
+git clean -n -- internal/provider/ OpenAPI/
 git clean -fd -- internal/provider/datasource_<name>/ internal/provider/resource_<name>/
+# A v2 run also leaves untracked framework inputs:
+rm -f OpenAPI/2_tfplugingen-framework/output_*_v2.json
 ```
 
 ## Step 2: Reserved and Invalid Attribute Names

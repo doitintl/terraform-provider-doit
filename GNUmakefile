@@ -32,7 +32,29 @@ generate:
 	for f in OpenAPI/2_tfplugingen-framework/output_datasources.json OpenAPI/2_tfplugingen-framework/output_resources.json; do \
 		[ -n "$$(tail -c 1 "$$f")" ] && echo >> "$$f"; \
 	done
-	cd internal/provider/models && go generate ./...
+	cd internal/provider/models && go generate .
+
+# Generate the v2 (api-specs) models and Terraform schemas. Independent of `generate`.
+# V2_SPEC can point at a local file (e.g. a downloaded external-api-v2-full.yaml)
+# to exercise generation while the public spec has no paths; do not commit its output.
+# The schema generator rejects an empty config, so it only runs for configs with entries.
+V2_SPEC ?= OpenAPI/openapi_spec_v2.yml
+V2_FRAMEWORK_DIR := OpenAPI/2_tfplugingen-framework
+generate-v2:
+	go run ./tools/extract-inline-schemas -input $(V2_SPEC) -output OpenAPI/openapi_spec_v2_processed.yml -datasources OpenAPI/v2/datasources.yml -resources OpenAPI/v2/resources.yml -extra-paths OpenAPI/v2/extra_paths.yml
+	@if grep -qE '^  [A-Za-z0-9_]+:$$' OpenAPI/v2/resources.yml; then \
+		set -e; \
+		go run github.com/doitintl/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi generate -config OpenAPI/v2/resources.yml --output $(V2_FRAMEWORK_DIR)/output_resources_v2.json OpenAPI/openapi_spec_v2_processed.yml; \
+		(cd $(V2_FRAMEWORK_DIR) && go run github.com/doitintl/terraform-plugin-codegen-framework/cmd/tfplugingen-framework generate resources --input output_resources_v2.json --output ../../internal/provider); \
+		[ -n "$$(tail -c 1 $(V2_FRAMEWORK_DIR)/output_resources_v2.json)" ] && echo >> $(V2_FRAMEWORK_DIR)/output_resources_v2.json || true; \
+	else echo "v2: no resources configured, skipping resource schemas"; fi
+	@if grep -qE '^  [A-Za-z0-9_]+:$$' OpenAPI/v2/datasources.yml; then \
+		set -e; \
+		go run github.com/doitintl/terraform-plugin-codegen-openapi/cmd/tfplugingen-openapi generate -config OpenAPI/v2/datasources.yml --output $(V2_FRAMEWORK_DIR)/output_datasources_v2.json OpenAPI/openapi_spec_v2_processed.yml; \
+		(cd $(V2_FRAMEWORK_DIR) && go run github.com/doitintl/terraform-plugin-codegen-framework/cmd/tfplugingen-framework generate data-sources --input output_datasources_v2.json --output ../../internal/provider); \
+		[ -n "$$(tail -c 1 $(V2_FRAMEWORK_DIR)/output_datasources_v2.json)" ] && echo >> $(V2_FRAMEWORK_DIR)/output_datasources_v2.json || true; \
+	else echo "v2: no data sources configured, skipping data source schemas"; fi
+	cd internal/provider/models/v2 && go generate .
 
 # Generate provider documentation from templates
 docs:
@@ -126,4 +148,11 @@ sync-spec:
 		echo "Synced OpenAPI/openapi_spec_full.yml from doiteng/omni ref: $$REF"; \
 	fi
 
-.PHONY: fmt lint lint-build lint-tools test testacc testacc-run build install generate docs validate-docs validate-examples apply-pr sync-spec
+# Fetch the public v2 spec from an api-specs release: make sync-spec-v2 VERSION=1.0.1
+# (default: the external-api-v2-latest release). Requires read access to doiteng/api-specs.
+sync-spec-v2:
+	@TAG=external-api-v2-$${VERSION:-latest}; \
+	gh release download "$$TAG" --repo doiteng/api-specs -p external-api-v2.yaml -O OpenAPI/openapi_spec_v2.yml --clobber && \
+	echo "Synced OpenAPI/openapi_spec_v2.yml from doiteng/api-specs release $$TAG"
+
+.PHONY: fmt lint lint-build lint-tools test testacc testacc-run build install generate generate-v2 docs validate-docs validate-examples apply-pr sync-spec sync-spec-v2
