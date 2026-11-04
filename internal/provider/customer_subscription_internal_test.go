@@ -719,7 +719,7 @@ func TestValidateCustomerSubscriptionEntries(t *testing.T) {
 		{"attachments on dashboard", testCustomerSubscriptionEntrySet(t,
 			testCustomerSubscriptionEntry(t, dashboard, map[string]attr.Value{"attachments": attachments}, nil)), "Attachments Not Allowed", ".attachments"},
 		{"empty attachments on dashboard", testCustomerSubscriptionEntrySet(t,
-			testCustomerSubscriptionEntry(t, dashboard, map[string]attr.Value{"attachments": stringList(t)}, nil)), "Attachments Not Allowed", ".attachments"},
+			testCustomerSubscriptionEntry(t, dashboard, map[string]attr.Value{"attachments": stringList(t)}, nil)), "", ""},
 		{"pdf settings on dashboard", testCustomerSubscriptionEntrySet(t,
 			testCustomerSubscriptionEntry(t, dashboard, map[string]attr.Value{"pdf_settings": pdfSettings}, nil)), "PDF Settings Not Allowed", ".pdf_settings"},
 		{"unknown attachments on dashboard are deferred", testCustomerSubscriptionEntrySet(t,

@@ -120,7 +120,7 @@ func validateCustomerSubscriptionEntryType(entry resource_customer_subscription.
 	seenTypes[entryType] = true
 }
 
-// validateCustomerSubscriptionReportOptions rejects attachments and
+// validateCustomerSubscriptionReportOptions rejects non-empty attachments and
 // pdf_settings on any type other than report-subscription.
 func validateCustomerSubscriptionReportOptions(entry resource_customer_subscription.SubscriptionsValue, entryPath path.Path, diags *diag.Diagnostics) {
 	if entry.SubscriptionsType.IsNull() || entry.SubscriptionsType.IsUnknown() {
@@ -130,11 +130,13 @@ func validateCustomerSubscriptionReportOptions(entry resource_customer_subscript
 		return
 	}
 
-	if !entry.Attachments.IsUnknown() && !entry.Attachments.IsNull() {
+	// An empty list is allowed: it is what state holds for other types (so
+	// generated import configuration contains it), and it is never sent.
+	if !entry.Attachments.IsUnknown() && !entry.Attachments.IsNull() && len(entry.Attachments.Elements()) > 0 {
 		diags.AddAttributeError(
 			entryPath.AtName("attachments"),
 			"Attachments Not Allowed",
-			fmt.Sprintf("`attachments` is only allowed for `report-subscription`, not for %q.", entry.SubscriptionsType.ValueString()),
+			fmt.Sprintf("`attachments` must be empty for %q: only `report-subscription` sends files.", entry.SubscriptionsType.ValueString()),
 		)
 	}
 	if !entry.PdfSettings.IsUnknown() && !entry.PdfSettings.IsNull() {

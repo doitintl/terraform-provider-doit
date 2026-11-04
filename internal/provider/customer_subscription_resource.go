@@ -482,7 +482,7 @@ func customizeCustomerSubscriptionEntriesSchema(subscriptions schema.SetNestedAt
 		"type":         "What to deliver: `dashboard-subscription`, `report-subscription`, or `commitment-manager`. Each type may appear once.",
 		"source":       "The dashboard, report, or commitment to deliver.",
 		"schedule":     "Delivery schedule.",
-		"attachments":  "Files to attach to report emails: `pdf`, `csv`, or both, in the configured order. Only allowed for `report-subscription`. When omitted, no files are attached: removing `attachments` from the configuration removes every attachment.",
+		"attachments":  "Files to attach to report emails: `pdf`, `csv`, or both, in the configured order. Only `report-subscription` sends files; for other types it must be empty or omitted. When omitted, no files are attached: removing `attachments` from the configuration removes every attachment.",
 		"pdf_settings": "PDF rendering options for report emails. Only allowed for `report-subscription`. When omitted, the API keeps its stored settings (all `true` for a new subscription).",
 		"permissions":  "What the provider's credentials may do with this entry. Computed per request.",
 	})

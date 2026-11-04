@@ -151,7 +151,7 @@ Required:
 
 Optional:
 
-- `attachments` (List of String) Files to attach to report emails: `pdf`, `csv`, or both, in the configured order. Only allowed for `report-subscription`. When omitted, no files are attached: removing `attachments` from the configuration removes every attachment.
+- `attachments` (List of String) Files to attach to report emails: `pdf`, `csv`, or both, in the configured order. Only `report-subscription` sends files; for other types it must be empty or omitted. When omitted, no files are attached: removing `attachments` from the configuration removes every attachment.
 - `pdf_settings` (Attributes) PDF rendering options for report emails. Only allowed for `report-subscription`. When omitted, the API keeps its stored settings (all `true` for a new subscription). (see [below for nested schema](#nestedatt--subscriptions--pdf_settings))
 
 Read-Only:
