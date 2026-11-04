@@ -165,7 +165,7 @@ Add `UseStateForUnknown()` plan modifiers to Computed-only fields that never cha
 
 For `Optional+Computed` attributes, Terraform Core copies the prior state value into the `ProposedNewState` when the config value is null. When nothing else in the plan changes, `ProposedNewState` equals `PriorState`, so the framework skips its `MarkComputedNilsAsUnknown` phase. This makes it **impossible for users to clear** the attribute by setting it to `null` or omitting it — the plan silently preserves the old value.
 
-> **⚠️ Only true when the resource is otherwise unchanged.** As soon as any other attribute changes, the framework runs `MarkComputedNilsAsUnknown` and plans every omitted Optional+Computed attribute (without a plan modifier) as **Unknown**, not as the stored value. Measured for a nested attribute (`config.data_source` when `config.currency` changed, `TestAccReport_OmittedDataSourceIsUnknownOnUpdate`) and a top-level one (`labels`, same trigger). Code that runs at plan time (`ModifyPlan`, overlay, request builders) must not assume an omitted attribute holds the stored value. See [Guards that read an omitted Optional+Computed attribute](#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan).
+> **⚠️ Only true when the resource is otherwise unchanged.** As soon as any other attribute changes, the framework runs `MarkComputedNilsAsUnknown` and plans every omitted Optional+Computed attribute as **Unknown**, not as the stored value, unless the attribute has a schema `Default` (it plans the default, always known; e.g. `doit_report.folder_id` plans `"root"`) or a plan modifier that sets the value. Measured for a nested attribute (`config.data_source` when `config.currency` changed, `TestAccReport_OmittedDataSourceIsUnknownOnUpdate`) and a top-level one (`labels`, same trigger). Code that runs at plan time (`ModifyPlan`, overlay, request builders) must not assume an omitted attribute holds the stored value. See [Guards that read an omitted Optional+Computed attribute](#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan).
 
 Not all Optional+Computed attributes should be clearable. **Every Optional+Computed attribute without a `Default` requires a conscious classification decision:**
 
@@ -340,7 +340,7 @@ if !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
 
 #### Category B: Not clearable (API-computed default)
 
-**Do not add any plan modifier.** The default framework behavior is correct: prior state sticks on a plan with no other change, and the attribute plans as Unknown on an update (the overlay then resolves it from the API response, and `ModifyPlan` must read state explicitly, see [Guards that read an omitted Optional+Computed attribute](#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan)). Use `acknowledgeNotClearable(s, paths...)` in the Schema() method to declare that these attributes were consciously classified:
+**Do not add any plan modifier.** The default framework behavior is correct: prior state sticks on a plan with no other change, and the attribute (having no `Default` and no modifier) plans as Unknown on an update (the overlay then resolves it from the API response, and `ModifyPlan` must read state explicitly, see [Guards that read an omitted Optional+Computed attribute](#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan)). Use `acknowledgeNotClearable(s, paths...)` in the Schema() method to declare that these attributes were consciously classified:
 
 ```go
 // In Schema():
@@ -480,7 +480,7 @@ See: `internal/provider/planmodifier_null_on_config_null_list.go` and [framework
 
 A `ModifyPlan` guard that decides on an Optional+Computed attribute the user may have omitted (e.g. reject updates of a report whose stored `data_source` is `"attribution"`) cannot read the attribute from one place:
 
-- **An omitted attribute plans as Unknown** on any update that changes something else (see [Clearing Optional+Computed Attributes](#clearing-optionalcomputed-attributes)). Skipping unknown values makes the guard never fire for the case it was written for.
+- **An omitted attribute plans as Unknown** (when it has no schema `Default` and no plan modifier that sets it) on any update that changes something else (see [Clearing Optional+Computed Attributes](#clearing-optionalcomputed-attributes)). Skipping unknown values makes the guard never fire for the case it was written for.
 - **`lifecycle.ignore_changes` makes the plan differ from the config.** The plan keeps the stored value while config says another one.
 - **The update request sends the planned value**, so the plan is what the API will see; a guard that only reads config lets the update through to an apply-time rejection.
 
