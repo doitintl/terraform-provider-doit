@@ -474,6 +474,84 @@ The overlay (`IsUnknown()` check) correctly interacts with this modifier: when t
 
 See: `internal/provider/planmodifier_null_on_config_null_list.go` and [framework issue #603](https://github.com/hashicorp/terraform-plugin-framework/issues/603).
 
+### Set Nested Attributes
+
+A `SetNestedAttribute` (generated from an array with `format: set`) needs three
+pieces. `doit_customer_subscription` (`subscriptions`) is the reference
+implementation.
+
+**Why:** set elements have no identity that Terraform can track. For set
+*blocks*, Terraform Core matches elements to the prior state by their configured
+values, but it does not do that for nested *attributes*. The framework then marks
+every Computed attribute, and every omitted Optional+Computed one, of every
+element unknown, so **every plan shows every element as replaced**. That
+happens even when the configuration sets every Optional+Computed field: a single
+Computed-only child (an ID, a timestamp, a permission flag) is enough. For the
+same reason, plan modifiers on attributes inside a set element see no prior
+state, so `UseStateForUnknown` and the clearing modifiers cannot work there.
+
+**1. ModifyPlan: `planSetNestedAttributesFromState`** (`set_nested_plan.go`).
+Call it first in `ModifyPlan` of every resource with a set-nested attribute:
+
+```go
+var _ resource.ResourceWithModifyPlan = (*xResource)(nil)
+
+func (r *xResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+    planSetNestedAttributesFromState(ctx, req, resp)
+}
+```
+
+It does the matching Core does for set blocks, driven by the schema, so the
+resource needs no key or per-attribute code:
+
+| Element attribute (config omitted) | Matches a prior element when | Planned in a changed element |
+| --- | --- | --- |
+| Computed-only | always | unknown |
+| Optional+Computed, Category B | always (prior value stays) | unknown (overlay resolves it) |
+| Optional+Computed, Category A (clearing modifier) | prior is null or the cleared value | the cleared value |
+| Optional | prior is null | null |
+| Configured (any class) | prior value equals config | config value |
+
+A matched element is planned as its prior element. When the whole
+configuration equals the prior state, the plan becomes the prior state, so it is
+empty and top-level volatile fields like `etag` are not marked unknown. An
+unknown configured value (a reference to a resource that is not created yet)
+never matches. The clearing modifiers expose their cleared value through
+`configNullClearer`; give any new clearing modifier a `clearedValue` method,
+or it is treated as Category B inside sets.
+
+**2. Overlay: `overlaySetElements`** (`set_nested_overlay.go`) is the set
+counterpart of `overlayListElements`. It pairs each planned element with the
+resolved element that agrees with all of its known values, then calls the
+per-element sub-overlay. The `overlaycheck` linter validates that callback
+against the nested schema, the same way as for lists:
+
+```go
+if plan.Items.IsUnknown() {
+    plan.Items = resolved.Items
+} else if !plan.Items.IsNull() {
+    diags.Append(overlaySetElements(ctx, &resolved.Items, &plan.Items, overlayXxxItem)...)
+}
+```
+
+Pairing only works if the mapping keeps the planned spelling of configured
+values the API normalizes. The resolved set is built with the plan as prior
+state, so it does that once Read does (point 3).
+
+**3. Read mapping: correlate prior elements yourself.** Normalization
+preservation (timestamps, email case) needs the prior element of each API
+element. For lists that element is at the same index; a set has no index. Match
+prior elements by a value that identifies the element (`type` for
+subscriptions), or by the configured values when there is no such key.
+
+**Classification inside sets** is unchanged: every Optional+Computed element
+attribute still needs Category A or B (`acknowledgeNotClearable(s,
+"items[*].field")`). Category C cannot target a set element.
+
+> **Linter:** `setnestedplan` flags a resource whose schema has Computed
+> attributes inside a set-nested attribute (at any depth) unless its
+> `ModifyPlan` calls `planSetNestedAttributesFromState`.
+
 ### RFC3339 Timestamp Validation
 
 Use the `rfc3339Validator` for schema-level validation of timestamp attributes. This provides early feedback at plan time instead of apply time.

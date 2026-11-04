@@ -1,0 +1,566 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+)
+
+// planSetNestedAttributesFromState plans the elements of every
+// SetNestedAttribute in the schema from the prior state.
+//
+// Set elements have no identity Terraform can track. For set blocks, Terraform
+// Core matches elements to the prior state by their configured values, but it
+// does not do so for nested attributes, and the framework cannot either: it
+// marks every Computed (and every omitted Optional+Computed) attribute of every
+// element unknown, so the set shows a replaced element on every plan. For the
+// same reason plan modifiers on attributes inside a set element see no prior
+// state, so UseStateForUnknown and the clearing modifiers do nothing there.
+//
+// This function does the matching Core does for set blocks: each planned
+// element whose configuration equals a prior element is planned as that prior
+// element. Computed-only attributes and omitted Optional+Computed attributes
+// (Category B) match anything; an omitted attribute with a clearing modifier
+// (Category A) matches only its cleared value, and is planned as the cleared
+// value in an element that changed. When the whole configuration equals the
+// prior state, the plan becomes the prior state, so it is empty.
+//
+// Call it first in ModifyPlan of every resource whose schema has a
+// SetNestedAttribute. It only changes Computed values, so it never contradicts
+// the configuration.
+func planSetNestedAttributesFromState(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || resp.Plan.Raw.IsNull() {
+		return // create or destroy — nothing to match
+	}
+	s, ok := req.Plan.Schema.(schema.Schema)
+	if !ok {
+		return
+	}
+
+	p := setNestedPlanner{ctx: ctx}
+	planned, err := p.object(s.Attributes, req.Config.Raw, resp.Plan.Raw, req.State.Raw)
+	if err == nil {
+		var unchanged bool
+		unchanged, err = p.unchanged(s.Attributes, req.Config.Raw, planned, req.State.Raw)
+		if unchanged {
+			planned = req.State.Raw
+		}
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Planning Set Attributes",
+			fmt.Sprintf("Could not match planned set elements to the prior state. Please report this issue to the provider developers: %s", err),
+		)
+		return
+	}
+	resp.Plan.Raw = planned
+}
+
+// configNullClearer is implemented by the clearing plan modifiers. clearedValue
+// is the value the modifier plans when the configuration is null.
+type configNullClearer interface {
+	clearedValue(t tftypes.Type) tftypes.Value
+}
+
+type setNestedPlanner struct {
+	ctx context.Context
+}
+
+// object plans the children of an object value.
+func (p setNestedPlanner) object(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+	if !isKnownNonNull(config) || !isKnownNonNull(plan) || !isKnownNonNull(prior) {
+		return plan, nil
+	}
+	var c, pl, s map[string]tftypes.Value
+	if err := asAll(config, &c, plan, &pl, prior, &s); err != nil {
+		return plan, err
+	}
+
+	changed := false
+	for name, a := range attrs {
+		v, err := p.attribute(a, c[name], pl[name], s[name])
+		if err != nil {
+			return plan, err
+		}
+		if !v.Equal(pl[name]) {
+			pl[name] = v
+			changed = true
+		}
+	}
+	if !changed {
+		return plan, nil
+	}
+	return tftypes.NewValue(plan.Type(), pl), nil
+}
+
+// attribute plans the nested attributes of one attribute value.
+func (p setNestedPlanner) attribute(a schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+	switch a := a.(type) {
+	case schema.SetNestedAttribute:
+		return p.set(a.NestedObject.Attributes, config, plan, prior)
+	case schema.SingleNestedAttribute:
+		return p.object(a.Attributes, config, plan, prior)
+	case schema.ListNestedAttribute:
+		return p.list(a.NestedObject.Attributes, config, plan, prior)
+	}
+	return plan, nil
+}
+
+// list plans list elements index by index: Terraform matches list elements to
+// the prior state by position already, but a set inside an element needs this.
+func (p setNestedPlanner) list(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+	if !isKnownNonNull(config) || !isKnownNonNull(plan) || !isKnownNonNull(prior) {
+		return plan, nil
+	}
+	var c, pl, s []tftypes.Value
+	if err := asAll(config, &c, plan, &pl, prior, &s); err != nil {
+		return plan, err
+	}
+	if len(c) != len(pl) {
+		return plan, nil
+	}
+
+	changed := false
+	for i := range pl {
+		if i >= len(s) {
+			break
+		}
+		v, err := p.object(attrs, c[i], pl[i], s[i])
+		if err != nil {
+			return plan, err
+		}
+		if !v.Equal(pl[i]) {
+			pl[i] = v
+			changed = true
+		}
+	}
+	if !changed {
+		return plan, nil
+	}
+	return tftypes.NewValue(plan.Type(), pl), nil
+}
+
+// set plans set elements: each element whose configuration equals a prior
+// element becomes that element; the others get their cleared values.
+func (p setNestedPlanner) set(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (tftypes.Value, error) {
+	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
+		return plan, nil
+	}
+	var c, pl, s []tftypes.Value
+	if err := asAll(config, &c, plan, &pl); err != nil {
+		return plan, err
+	}
+	if isKnownNonNull(prior) {
+		if err := prior.As(&s); err != nil {
+			return plan, err
+		}
+	}
+
+	pairs, err := p.pair(attrs, c, pl)
+	if err != nil || pairs == nil {
+		return plan, err // no unambiguous element correspondence: leave the plan alone
+	}
+
+	used := make([]bool, len(s))
+	out := make([]tftypes.Value, len(pl))
+	for ci, pi := range pairs {
+		matched := false
+		for si := range s {
+			if used[si] {
+				continue
+			}
+			ok, err := p.unchanged(attrs, c[ci], pl[pi], s[si])
+			if err != nil {
+				return plan, err
+			}
+			if ok {
+				out[pi] = s[si]
+				used[si] = true
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			v, err := p.cleared(attrs, c[ci], pl[pi])
+			if err != nil {
+				return plan, err
+			}
+			out[pi] = v
+		}
+	}
+
+	// Two elements may not become equal: the set would lose one of them.
+	for i := range out {
+		for j := i + 1; j < len(out); j++ {
+			if out[i].Equal(out[j]) {
+				return plan, nil
+			}
+		}
+	}
+	return tftypes.NewValue(plan.Type(), out), nil
+}
+
+// pair returns, for every configured element, the index of the planned
+// element derived from it, or nil when the elements do not correspond.
+func (p setNestedPlanner) pair(attrs map[string]schema.Attribute, config, plan []tftypes.Value) ([]int, error) {
+	if len(config) != len(plan) {
+		return nil, nil
+	}
+	used := make([]bool, len(plan))
+	pairs := make([]int, len(config))
+	for ci := range config {
+		found := false
+		for pi := range plan {
+			if used[pi] {
+				continue
+			}
+			ok, err := p.derived(attrs, config[ci], plan[pi])
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				pairs[ci] = pi
+				used[pi] = true
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, nil
+		}
+	}
+	return pairs, nil
+}
+
+// derived reports whether a planned object can have been planned from the
+// configured object: every known configured value is in the plan.
+func (p setNestedPlanner) derived(attrs map[string]schema.Attribute, config, plan tftypes.Value) (bool, error) {
+	if !config.IsKnown() {
+		return !plan.IsKnown(), nil
+	}
+	if config.IsNull() || plan.IsNull() || !plan.IsKnown() {
+		return config.IsNull() == plan.IsNull() && plan.IsKnown(), nil
+	}
+	var c, pl map[string]tftypes.Value
+	if err := asAll(config, &c, plan, &pl); err != nil {
+		return false, err
+	}
+	for name, a := range attrs {
+		cv, pv := c[name], pl[name]
+		if cv.IsNull() || !cv.IsKnown() {
+			continue // filled in by a default or marked unknown
+		}
+		var ok bool
+		var err error
+		switch a := a.(type) {
+		case schema.SingleNestedAttribute:
+			ok, err = p.derived(a.Attributes, cv, pv)
+		case schema.SetNestedAttribute:
+			ok, err = p.derivedElements(a.NestedObject.Attributes, cv, pv, true)
+		case schema.ListNestedAttribute:
+			ok, err = p.derivedElements(a.NestedObject.Attributes, cv, pv, false)
+		default:
+			ok = !cv.IsFullyKnown() || pv.Equal(cv)
+		}
+		if err != nil || !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+// derivedElements is derived for the elements of a nested list or set.
+func (p setNestedPlanner) derivedElements(attrs map[string]schema.Attribute, config, plan tftypes.Value, isSet bool) (bool, error) {
+	if !plan.IsKnown() || plan.IsNull() {
+		return false, nil
+	}
+	var c, pl []tftypes.Value
+	if err := asAll(config, &c, plan, &pl); err != nil {
+		return false, err
+	}
+	if len(c) != len(pl) {
+		return false, nil
+	}
+	if isSet {
+		pairs, err := p.pair(attrs, c, pl)
+		return pairs != nil, err
+	}
+	for i := range c {
+		ok, err := p.derived(attrs, c[i], pl[i])
+		if err != nil || !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+// unchanged reports whether the prior object satisfies the configuration, so
+// that planning it unchanged is correct. plan is the object planned from config.
+func (p setNestedPlanner) unchanged(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (bool, error) {
+	if !config.IsKnown() || !prior.IsKnown() {
+		return false, nil
+	}
+	if config.IsNull() || prior.IsNull() {
+		return config.IsNull() && prior.IsNull(), nil
+	}
+	var c, pl, s map[string]tftypes.Value
+	if err := asAll(config, &c, prior, &s); err != nil {
+		return false, err
+	}
+	if isKnownNonNull(plan) {
+		if err := plan.As(&pl); err != nil {
+			return false, err
+		}
+	}
+
+	for name, a := range attrs {
+		cv, pv, sv := c[name], pl[name], s[name]
+		if a.IsComputed() && !a.IsOptional() {
+			continue // Computed-only: the configuration has no say
+		}
+		if !cv.IsKnown() {
+			return false, nil
+		}
+		if cv.IsNull() {
+			if !unchangedOmitted(a, pv, sv) {
+				return false, nil
+			}
+			continue
+		}
+
+		var ok bool
+		var err error
+		switch a := a.(type) {
+		case schema.SingleNestedAttribute:
+			ok, err = p.unchanged(a.Attributes, cv, pv, sv)
+		case schema.SetNestedAttribute:
+			ok, err = p.unchangedSet(a.NestedObject.Attributes, cv, pv, sv)
+		case schema.ListNestedAttribute:
+			ok, err = p.unchangedList(a.NestedObject.Attributes, cv, pv, sv)
+		default:
+			ok = sv.Equal(cv)
+		}
+		if err != nil || !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+// unchangedOmitted is unchanged for an attribute the configuration omits.
+func unchangedOmitted(a schema.Attribute, plan, prior tftypes.Value) bool {
+	if clearer, ok := attributeClearer(a); ok {
+		// Category A: omitted means cleared.
+		return prior.IsNull() || prior.Equal(clearer.clearedValue(prior.Type()))
+	}
+	if !a.IsComputed() {
+		return prior.IsNull() // plain Optional: omitted means null
+	}
+	if attributeHasDefault(a) {
+		return prior.Equal(plan) // the plan holds the default
+	}
+	return true // Category B: the prior value stays
+}
+
+func (p setNestedPlanner) unchangedSet(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (bool, error) {
+	if !isKnownNonNull(prior) {
+		return false, nil
+	}
+	var c, pl, s []tftypes.Value
+	if err := asAll(config, &c, prior, &s); err != nil {
+		return false, err
+	}
+	if len(c) != len(s) {
+		return false, nil
+	}
+	// Each configured element pairs with its planned element, when the plan
+	// is known, and must match a distinct prior element.
+	var pairs []int
+	if isKnownNonNull(plan) {
+		if err := plan.As(&pl); err != nil {
+			return false, err
+		}
+		var err error
+		if pairs, err = p.pair(attrs, c, pl); err != nil || pairs == nil {
+			return false, err
+		}
+	}
+	used := make([]bool, len(s))
+	for ci := range c {
+		planned := tftypes.NewValue(c[ci].Type(), nil)
+		if pairs != nil {
+			planned = pl[pairs[ci]]
+		}
+		found := false
+		for si := range s {
+			if used[si] {
+				continue
+			}
+			ok, err := p.unchanged(attrs, c[ci], planned, s[si])
+			if err != nil {
+				return false, err
+			}
+			if ok {
+				used[si] = true
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func (p setNestedPlanner) unchangedList(attrs map[string]schema.Attribute, config, plan, prior tftypes.Value) (bool, error) {
+	if !isKnownNonNull(prior) {
+		return false, nil
+	}
+	var c, pl, s []tftypes.Value
+	if err := asAll(config, &c, prior, &s); err != nil {
+		return false, err
+	}
+	if len(c) != len(s) {
+		return false, nil
+	}
+	if isKnownNonNull(plan) {
+		if err := plan.As(&pl); err != nil {
+			return false, err
+		}
+	}
+	for i := range c {
+		planned := tftypes.NewValue(c[i].Type(), nil)
+		if i < len(pl) {
+			planned = pl[i]
+		}
+		ok, err := p.unchanged(attrs, c[i], planned, s[i])
+		if err != nil || !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+// cleared plans the cleared value for every omitted Category A attribute of a
+// changed element, which the clearing modifiers would plan outside a set.
+func (p setNestedPlanner) cleared(attrs map[string]schema.Attribute, config, plan tftypes.Value) (tftypes.Value, error) {
+	if !isKnownNonNull(config) || !isKnownNonNull(plan) {
+		return plan, nil
+	}
+	var c, pl map[string]tftypes.Value
+	if err := asAll(config, &c, plan, &pl); err != nil {
+		return plan, err
+	}
+
+	changed := false
+	for name, a := range attrs {
+		cv, pv := c[name], pl[name]
+		var v tftypes.Value
+		if clearer, ok := attributeClearer(a); ok && cv.IsNull() {
+			v = clearer.clearedValue(pv.Type())
+		} else if nested, ok := a.(schema.SingleNestedAttribute); ok {
+			var err error
+			if v, err = p.cleared(nested.Attributes, cv, pv); err != nil {
+				return plan, err
+			}
+		} else {
+			continue
+		}
+		if !v.Equal(pv) {
+			pl[name] = v
+			changed = true
+		}
+	}
+	if !changed {
+		return plan, nil
+	}
+	return tftypes.NewValue(plan.Type(), pl), nil
+}
+
+// attributeClearer returns the clearing plan modifier of an attribute.
+func attributeClearer(a schema.Attribute) (configNullClearer, bool) {
+	var modifiers []any
+	switch a := a.(type) {
+	case schema.StringAttribute:
+		for _, m := range a.PlanModifiers {
+			modifiers = append(modifiers, m)
+		}
+	case schema.BoolAttribute:
+		for _, m := range a.PlanModifiers {
+			modifiers = append(modifiers, m)
+		}
+	case schema.ListAttribute:
+		for _, m := range a.PlanModifiers {
+			modifiers = append(modifiers, m)
+		}
+	case schema.ListNestedAttribute:
+		for _, m := range a.PlanModifiers {
+			modifiers = append(modifiers, m)
+		}
+	}
+	for _, m := range modifiers {
+		if clearer, ok := m.(configNullClearer); ok {
+			return clearer, true
+		}
+	}
+	return nil, false
+}
+
+// attributeHasDefault reports whether an attribute has a schema default.
+func attributeHasDefault(a schema.Attribute) bool {
+	switch a := a.(type) {
+	case schema.StringAttribute:
+		return a.Default != nil
+	case schema.BoolAttribute:
+		return a.Default != nil
+	case schema.Int64Attribute:
+		return a.Default != nil
+	case schema.Int32Attribute:
+		return a.Default != nil
+	case schema.Float64Attribute:
+		return a.Default != nil
+	case schema.Float32Attribute:
+		return a.Default != nil
+	case schema.NumberAttribute:
+		return a.Default != nil
+	case schema.ListAttribute:
+		return a.Default != nil
+	case schema.SetAttribute:
+		return a.Default != nil
+	case schema.MapAttribute:
+		return a.Default != nil
+	case schema.ObjectAttribute:
+		return a.Default != nil
+	case schema.SingleNestedAttribute:
+		return a.Default != nil
+	case schema.ListNestedAttribute:
+		return a.Default != nil
+	case schema.SetNestedAttribute:
+		return a.Default != nil
+	case schema.MapNestedAttribute:
+		return a.Default != nil
+	}
+	return false
+}
+
+func isKnownNonNull(v tftypes.Value) bool {
+	return v.IsKnown() && !v.IsNull()
+}
+
+// asAll converts pairs of (value, destination) with tftypes.Value.As.
+func asAll(pairs ...any) error {
+	for i := 0; i+1 < len(pairs); i += 2 {
+		v, ok := pairs[i].(tftypes.Value)
+		if !ok {
+			return fmt.Errorf("asAll: argument %d is %T, not tftypes.Value", i, pairs[i])
+		}
+		if err := v.As(pairs[i+1]); err != nil {
+			return err
+		}
+	}
+	return nil
+}

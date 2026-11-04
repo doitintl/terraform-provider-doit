@@ -426,7 +426,7 @@ func collectSubOverlayCallsFromExpr(expr ast.Expr, planParam string, result *ove
 		}
 
 		// Pattern 1: overlayListElements(ctx, &resolved.X, &plan.X, overlayCallback)
-		if calledName == "overlayListElements" || calledName == "overlayListElementsByKey" {
+		if calledName == "overlayListElements" || calledName == "overlayListElementsByKey" || calledName == "overlaySetElements" {
 			if len(call.Args) >= 4 {
 				// The plan field is the third argument: &plan.X
 				fieldName := extractFieldFromAddrExpr(call.Args[2], planParam)

@@ -583,3 +583,72 @@ func MultiLevelResourceSchema(ctx context.Context) schema.Schema {
 		},
 	}
 }
+
+// NestedSetModel — has a SetNestedAttribute with mixed nested fields.
+type NestedSetModel struct {
+	Id     types.String
+	Name   types.String
+	Alerts types.Set
+}
+
+// NestedSetResourceSchema — SetNestedAttribute with mixed nested fields.
+func NestedSetResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"alerts": schema.SetNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"percentage": schema.Float64Attribute{
+							Optional: true,
+							Computed: true,
+						},
+						"triggered": schema.BoolAttribute{
+							Computed: true,
+						},
+						"threshold": schema.Float64Attribute{
+							Required: true,
+						},
+					},
+				},
+				Required: true,
+			},
+		},
+	}
+}
+
+// BadNestedSetMissingResourceSchema — same schema as NestedSet; tests a missing computed nested field.
+func BadNestedSetMissingResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"name": schema.StringAttribute{
+				Required: true,
+			},
+			"alerts": schema.SetNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"percentage": schema.Float64Attribute{
+							Optional: true,
+							Computed: true,
+						},
+						"triggered": schema.BoolAttribute{
+							Computed: true,
+						},
+						"threshold": schema.Float64Attribute{
+							Required: true,
+						},
+					},
+				},
+				Required: true,
+			},
+		},
+	}
+}

@@ -12,6 +12,8 @@
 
 - **resource/doit_customer_notification**: New resource to manage organization-wide cost-anomaly notifications, delivered by email, Slack and Microsoft Teams. Slack channel IDs and Teams conversation IDs are supplied by you, because the API cannot look them up yet. The API lowercases emails; the configured spelling is kept in state. Requires the `settings` (Manage settings) permission
 
+- **resource/doit_customer_subscription**: New resource to manage organization-wide subscriptions: scheduled email or Slack delivery of a dashboard, a report (optionally with PDF and CSV attachments), a commitment, or any combination of the three to one set of recipients. Alert and budget IDs, which the subscriptions API also returns, are rejected on import; manage those with `doit_alert` and `doit_budget`. The API lowercases emails and returns schedule timestamps in UTC; the configured spelling is kept in state
+
 - **data-source/doit_customer_notification, data-source/doit_customer_notifications**: New data sources to read one organization-wide cost-anomaly notification by ID, or list all of them (not paginated). Emails are returned as the API stores them, in lowercase. Require the `settings` (Manage settings) permission
 
 ### ENHANCEMENTS
