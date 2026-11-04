@@ -294,8 +294,11 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 
 	// An attribution report (e.g. an imported console Attributions view) keeps
 	// data_source = "attribution" from prior state when config omits it, so the
-	// enum validator on data_source never sees it. The API rejects every update of such a
-	// report, so fail at plan time rather than at apply.
+	// enum validator on data_source never sees it. The API merges an update into
+	// the stored report and rejects it when the merged data source is
+	// "attribution", so fail at plan time rather than at apply. This reads the
+	// planned value, not the stored one: an update that sets another data source
+	// is accepted by the API, and an unknown value is decided at apply.
 	if !req.State.Raw.IsNull() && !req.Plan.Raw.Equal(req.State.Raw) {
 		var dataSource types.String
 		resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("data_source"), &dataSource)...)

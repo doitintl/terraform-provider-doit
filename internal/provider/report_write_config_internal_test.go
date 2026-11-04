@@ -135,3 +135,44 @@ func TestToExternalConfigWrite_NullAndUnknownConfig(t *testing.T) {
 		})
 	}
 }
+
+// The API merges an update with the stored report and checks the merged data
+// source, and an omitted data source resets to the tenant default instead of
+// keeping the stored one. The request therefore has to carry the planned value.
+func TestToExternalConfigWrite_SendsPlannedDataSource(t *testing.T) {
+	ctx := t.Context()
+
+	tests := []struct {
+		name       string
+		dataSource types.String
+		want       *string
+	}{
+		{name: "billing", dataSource: types.StringValue("billing"), want: new("billing")},
+		{name: "billing-datahub", dataSource: types.StringValue("billing-datahub"), want: new("billing-datahub")},
+		{name: "null is omitted", dataSource: types.StringNull(), want: nil},
+		{name: "unknown is omitted", dataSource: types.StringUnknown(), want: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+			cfgMap["data_source"] = tt.dataSource
+			cfgVal, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), cfgMap)
+			if diags.HasError() {
+				t.Fatalf("NewConfigValue: %v", diags)
+			}
+
+			write, diags := toExternalConfigWrite(ctx, cfgVal)
+			if diags.HasError() {
+				t.Fatalf("toExternalConfigWrite: %v", diags)
+			}
+
+			switch {
+			case tt.want == nil && write.DataSource != nil:
+				t.Errorf("dataSource = %q, want it omitted", *write.DataSource)
+			case tt.want != nil && (write.DataSource == nil || string(*write.DataSource) != *tt.want):
+				t.Errorf("dataSource = %v, want %q", write.DataSource, *tt.want)
+			}
+		})
+	}
+}

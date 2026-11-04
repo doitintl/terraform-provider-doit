@@ -477,6 +477,37 @@ func TestReportResource_ModifyPlan_AttributionReportReadOnly(t *testing.T) {
 		}
 	})
 
+	// The API checks the data source of the merged report, so an update that
+	// sets a different data source is not an update of an attribution report:
+	// the guard reads the planned value, not the stored one.
+	t.Run("update that sets another data source is not rejected", func(t *testing.T) {
+		t.Parallel()
+
+		state := attributionConfig("USD")
+		plan := attributionConfig("USD")
+		plan["data_source"] = types.StringValue("billing")
+
+		resp := lbcModifyPlan(ctx, t, state, plan, plan)
+		if got := lbcCountErrors(resp.Diagnostics, attributionReportReadOnlySummary); got != 0 {
+			t.Fatalf("expected no %q error, got %d: %v", attributionReportReadOnlySummary, got, resp.Diagnostics)
+		}
+	})
+
+	// With an unknown data_source the outcome depends on the value it resolves
+	// to at apply, so the guard defers instead of assuming the stored value.
+	t.Run("unknown planned data source is deferred", func(t *testing.T) {
+		t.Parallel()
+
+		state := attributionConfig("USD")
+		plan := attributionConfig("USD")
+		plan["data_source"] = types.StringUnknown()
+
+		resp := lbcModifyPlan(ctx, t, state, plan, plan)
+		if got := lbcCountErrors(resp.Diagnostics, attributionReportReadOnlySummary); got != 0 {
+			t.Fatalf("expected no %q error, got %d: %v", attributionReportReadOnlySummary, got, resp.Diagnostics)
+		}
+	})
+
 	t.Run("update of a billing report is not rejected", func(t *testing.T) {
 		t.Parallel()
 

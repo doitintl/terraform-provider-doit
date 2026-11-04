@@ -97,5 +97,6 @@ provider rejects them at plan time:
 A saved report that uses the `attribution` data source, for example one created in
 the DoiT console, can be read with the [`doit_report`](../data-sources/report) data
 source and run with [`doit_report_result`](../data-sources/report_result). Do not
-import it into a `doit_report` resource: the API rejects every update of such a
-report, so the provider fails any plan that would change it.
+import it into a `doit_report` resource: the API rejects an update that leaves the
+report on the `attribution` data source, so the provider fails any plan that would
+change such a report.
