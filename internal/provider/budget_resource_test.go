@@ -559,6 +559,14 @@ func TestAccBudget_Import(t *testing.T) {
 				// first apply; TestAccBudget_ScopesAliasTypes covers that path.
 				ImportStateVerifyIgnore: []string{"scopes.0.id", "scopes.0.type"},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_budget.this",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }

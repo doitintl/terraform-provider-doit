@@ -83,6 +83,7 @@ A Boolean `hasUnknown` flag may replace the counter. The uncertainty update and 
 - Assert diagnostic count, error/warning severity, exact summary, and attribute path when present. Also preserve known-valid and known-invalid behavior.
 - Test a legal zero value (e.g. an empty string) in both first and later positions; the result must not depend on order.
 - When a data source derives its schema from a resource's (as `doit_report_query` does), pin its value lists with a test that checks them against the resource's, as `TestReportQueryAttributionValuesExtendReportResource` does.
+- A validator must accept every value Read can write to state (empty lists, API-filled defaults): `-generate-config-out` copies state into configuration. #440's `attachments = []` on a commitment entry was rejected this way; the `GenerateConfig` import step in the resource's import test catches it.
 - Add a plan-only acceptance regression when the bug requires Terraform evaluation to produce the unknown value.
 
 ## Verification

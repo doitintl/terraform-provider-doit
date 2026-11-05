@@ -49,6 +49,14 @@ func TestAccLabelAssignmentsResource_Basic(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_label_assignments.test",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }
@@ -285,6 +293,14 @@ func TestAccLabelAssignmentsResource_MixedObjectTypes(t *testing.T) {
 				ResourceName:      "doit_label_assignments.test",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_label_assignments.test",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
 			},
 		},
 	})
