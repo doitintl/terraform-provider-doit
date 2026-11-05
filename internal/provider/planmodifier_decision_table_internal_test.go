@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -37,6 +39,41 @@ func allNullObject(ctx context.Context, t *testing.T, attrTypes map[string]attr.
 			t.Fatalf("null value for %s: %v", name, err)
 		}
 		attrs[name] = v
+	}
+	return types.ObjectValueMust(attrTypes, attrs)
+}
+
+// markedObject is a known object with one string (else float) attribute set
+// to a value that depends on marker and every other attribute null, so two
+// objects built with different markers differ and the same marker builds equal
+// objects. Tables use it to tell the planned value from the prior state's.
+func markedObject(ctx context.Context, t *testing.T, attrTypes map[string]attr.Type, marker int) types.Object {
+	t.Helper()
+	names := make([]string, 0, len(attrTypes))
+	for name := range attrTypes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	marked := ""
+	for _, kind := range []attr.Type{types.StringType, types.Float64Type} {
+		for _, name := range names {
+			if attrTypes[name].Equal(kind) {
+				marked = name
+				break
+			}
+		}
+		if marked != "" {
+			break
+		}
+	}
+	if marked == "" {
+		t.Fatalf("no string or float attribute to mark in %v", names)
+	}
+	attrs := allNullObject(ctx, t, attrTypes).Attributes()
+	if attrTypes[marked].Equal(types.StringType) {
+		attrs[marked] = types.StringValue(fmt.Sprintf("marker-%d", marker))
+	} else {
+		attrs[marked] = types.Float64Value(float64(marker))
 	}
 	return types.ObjectValueMust(attrTypes, attrs)
 }
@@ -77,6 +114,21 @@ func TestObjectNullWhenConfigNullModifiers(t *testing.T) {
 		{"report metric_filter", useNullForMetricFilter(), resource_report.MetricFilterValue{}.AttributeTypes(ctx), presentReportConfig},
 	}
 
+	// The configured and the planned object are the same (a configured
+	// value is planned as it is); the state holds a different one.
+	const plannedMarker, storedMarker = 2, 1
+	objectOf := func(t *testing.T, s valueState, attrTypes map[string]attr.Type, marker int) types.Object {
+		t.Helper()
+		switch s {
+		case vsNull:
+			return types.ObjectNull(attrTypes)
+		case vsUnknown:
+			return types.ObjectUnknown(attrTypes)
+		default:
+			return markedObject(ctx, t, attrTypes, marker)
+		}
+	}
+
 	for _, m := range modifiers {
 		for _, config := range []valueState{vsNull, vsUnknown, vsKnown} {
 			for _, state := range []valueState{vsNull, vsKnown} {
@@ -84,9 +136,9 @@ func TestObjectNullWhenConfigNullModifiers(t *testing.T) {
 					t.Run(m.name+"/config "+string(config)+", state "+string(state)+", plan "+string(plan), func(t *testing.T) {
 						req := planmodifier.ObjectRequest{
 							Config:      m.config,
-							ConfigValue: objectInState(ctx, t, config, m.attrTypes),
-							StateValue:  objectInState(ctx, t, state, m.attrTypes),
-							PlanValue:   objectInState(ctx, t, plan, m.attrTypes),
+							ConfigValue: objectOf(t, config, m.attrTypes, plannedMarker),
+							StateValue:  objectOf(t, state, m.attrTypes, storedMarker),
+							PlanValue:   objectOf(t, plan, m.attrTypes, plannedMarker),
 						}
 						resp := &planmodifier.ObjectResponse{PlanValue: req.PlanValue}
 
@@ -95,7 +147,8 @@ func TestObjectNullWhenConfigNullModifiers(t *testing.T) {
 						if resp.Diagnostics.HasError() {
 							t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
 						}
-						want := objectInState(ctx, t, plan, m.attrTypes)
+						// Only a null config value changes the plan; any other plan stays as it was.
+						want := objectOf(t, plan, m.attrTypes, plannedMarker)
 						if config == vsNull {
 							want = types.ObjectNull(m.attrTypes)
 						}

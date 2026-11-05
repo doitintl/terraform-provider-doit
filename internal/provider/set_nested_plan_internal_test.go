@@ -405,15 +405,16 @@ func TestPlanSetNestedAttributesFromState_DecisionTable(t *testing.T) {
 				assertTF(t, "plan", got, tfRoot(tfString("id-1"), newPrior()))
 				return
 			}
-			a := setNestedItems(t, got)["a"]
-			for attrName, want := range tt.want {
-				assertTF(t, attrName, a[attrName], want)
+			// The complete plan: one element, with what the row expects of the
+			// changed attribute and the class defaults for every other one.
+			// A changed element keeps what the configuration sets, and its
+			// Computed and Category B attributes are unknown.
+			wantElement := map[string]tftypes.Value{
+				"opt": tfString("o"), "note": tfUnknownString, "status": tfUnknownString,
+				"tags": tfTags("t"), "settings": tfUnknownObj,
 			}
-			var root map[string]tftypes.Value
-			if err := got.As(&root); err != nil {
-				t.Fatal(err)
-			}
-			assertTF(t, "id", root["id"], tfUnknownString)
+			maps.Copy(wantElement, tt.want)
+			assertTF(t, "plan", got, tfRoot(tfUnknownString, tfItem("a", wantElement)))
 		})
 	}
 }
