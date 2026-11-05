@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -130,6 +131,73 @@ resource "doit_report" "test" {
 				Config:      config("cumulative_comparison"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`Missing Secondary Time Range`),
+			},
+		},
+	})
+}
+
+// TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate checks that dropping
+// data_source from the config of a report stored with a non-default data source
+// (billing; the CI tenant default is billing-datahub) does not change it. The omitted attribute plans unknown on update and the
+// request omits dataSource, which the API may reset to the tenant default.
+func TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(dataSource, currency string) string {
+		return fmt.Sprintf(`
+# Control: created without data_source, so it shows the tenant default
+# (billing-datahub). test stores billing, which differs, so the check on test
+# below cannot pass by accident.
+resource "doit_report" "control" {
+  name = "test-omitted-data-source-control-%[1]d"
+  config = {
+    currency      = "USD"
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+}
+
+resource "doit_report" "test" {
+  name = "test-omitted-data-source-keeps-%[1]d"
+  config = {
+    %[2]s
+    currency      = %[3]q
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+}
+`, n, dataSource, currency)
+	}
+	dataSourcePath := tfjsonpath.New("config").AtMapKey("data_source")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config(`data_source = "billing"`, "USD"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.test", dataSourcePath, knownvalue.StringExact("billing")),
+					statecheck.ExpectKnownValue("doit_report.control", dataSourcePath, knownvalue.StringExact("billing-datahub")),
+				},
+			},
+			{
+				Config: config("", "EUR"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.test", dataSourcePath, knownvalue.StringExact("billing")),
+				},
 			},
 		},
 	})

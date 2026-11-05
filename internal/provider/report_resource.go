@@ -524,7 +524,9 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 
-	reportReq, diags := plan.toUpdateRequest(ctx)
+	// The overlay below keeps the original plan; only the request carries the stored value.
+	requestPlan := plan.withStoredDataSource(state)
+	reportReq, diags := requestPlan.toUpdateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
