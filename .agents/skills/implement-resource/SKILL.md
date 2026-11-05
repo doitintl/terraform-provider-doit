@@ -371,7 +371,7 @@ A modifier runs for every plan, and for an omitted Optional+Computed attribute w
 2. **What omitting means:** clear (null or `[]`), keep the stored value, reset to a default, or defer (unknown). `useNullOrDefaultForForecastSettings` resets: with forecast on, dropping `forecast_settings` plans the default object even though the plan held the stored settings. Say it in `Description()`.
 3. **Act only on a null config value.** Return early for a configured or unknown value so what the user set, and an unknown reference, reach the plan unchanged.
 4. **Read siblings from the config first, then the plan.** The config tells whether the user omitted the sibling; the plan tells what it resolves to. Append the diagnostics of every `GetAttribute` to `resp.Diagnostics` and return on error. Never write `_ = req.Config.GetAttribute(...)`: a path that stops existing then turns into a silent null instead of an error. (`diagsuppressed` catches `x, _ :=` and bare calls; check the single-value `_ =` form by eye.)
-5. **Know when it does not run.** The framework (v1.19.0, `AttributeModifyPlan` in `internal/fwserver/attribute_plan_modification.go`) runs the modifiers of nested attributes only when the planned parent is known and not null: "Null and unknown values should not have nested schema to modify". A custom-typed parent such as `config.*` does not stop it, since known objects are converted with `ValueFromObject` and their children are walked. So a modifier on `config.count` fires when `config` is known, and not when the whole `config` block is omitted (its plan is unknown), which is why `report.go` fills such children in the overlay. Pin the plan shape with an acceptance test for the case you rely on.
+5. **Know when it does not run.** The framework (v1.19.0, `NestedAttributeObjectPlanModify` in `internal/fwserver/attribute_plan_modification.go`) runs the modifiers of an object's children only when the planned object is known and not null; for a null or unknown one it returns first ("any plan modification from a null or unknown object into a known object must occur at the object level"). A custom-typed parent such as `config.*` does not stop it. Measured with instrumented modifiers on the CI tenant (`TestAccReport_PlanShapeOfOmittedConfig`): with `config` set, the modifiers of `config.count` and `config.metrics` ran on every plan; with `config` omitted they did not run on the create plan or on an update plan that changes another attribute (the plan of `config` is unknown there, so `report.go` fills these children in the overlay), and they did run on a plan without changes, where `config` is the stored one. Pin the plan shape of the case you rely on with an acceptance test.
 6. **Keep the other layers in step.** The overlay, the Read mapping and the request builder must agree with the value the modifier plans (`useEmptyForUnconfiguredMetricsMirror` and `mapReportToModel`, the clearing table above).
 7. **Name it for what it does.** `clearableattr` classifies attributes by modifier names of the form `use{Empty,Null}ForUnknown*WhenConfigNull` as Category A. A modifier that clears nothing server-side (the metrics mirror) must not use such a name.
 
@@ -420,9 +420,11 @@ as Category B (prior state sticks) is wrong when removal must actually take effe
 when prior-state does **not** stick cleanly — **some** (not all) **nested**
 Optional+Computed objects are re-marked "known after apply" whenever they are absent
 from config, causing perpetual drift. (Whether a nested `objectplanmodifier` can fix this depends on the parent: the
-framework runs it only while the parent object's plan is known and not null, so it
-does not run when the whole `config` block is omitted, and it does run for a known
-`config`, custom-typed or not. Test the case before choosing Category C.) Whether a
+framework runs it only while the parent object's plan is known and not null. With
+the whole `config` block omitted that is unknown on create and on an update that
+changes something else, and it runs for a known `config`, custom-typed or not; see
+point 5 under "Writing a custom plan modifier". Test the case before choosing
+Category C.) Whether a
 given nested object actually drifts must be **verified empirically** — many are silently
 preserved and are correctly handled as Category B (see below).
 
