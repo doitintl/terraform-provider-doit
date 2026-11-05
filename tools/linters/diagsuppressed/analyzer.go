@@ -7,6 +7,7 @@
 //	Bad:
 //
 //	    myList, _ = types.ListValue(types.StringType, []attr.Value{})
+//	    _ = req.Config.GetAttribute(ctx, p, &v) // single return value
 //
 //	Good:
 //
@@ -64,13 +65,8 @@ func run(pass *analysis.Pass) (any, error) {
 }
 
 // checkBlankAssign flags diag.Diagnostics return values assigned to the blank
-// identifier (e.g. val, _ := listValue()).
+// identifier (e.g. val, _ := listValue() or _ = x.ElementsAs(...)).
 func checkBlankAssign(pass *analysis.Pass, assign *ast.AssignStmt) {
-	// We need at least 2 LHS values (e.g., val, diags := ...).
-	if len(assign.Lhs) < 2 {
-		return
-	}
-
 	// Check each LHS for blank identifiers.
 	for i, lhs := range assign.Lhs {
 		ident, ok := lhs.(*ast.Ident)
@@ -141,6 +137,10 @@ func typeOfPosition(pass *analysis.Pass, assign *ast.AssignStmt, pos int) types.
 		// Multi-value return is represented as a Tuple.
 		tuple, ok := rhsType.(*types.Tuple)
 		if !ok {
+			// A single-value call (_ = x.ElementsAs(...)).
+			if len(assign.Lhs) == 1 && pos == 0 {
+				return rhsType
+			}
 			return nil
 		}
 		if pos >= tuple.Len() {

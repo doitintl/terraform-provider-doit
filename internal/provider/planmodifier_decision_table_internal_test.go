@@ -222,6 +222,7 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 
 	const (
 		wantNull    = "null"
+		wantError   = "error"
 		wantUnknown = "unknown"
 		wantTotals  = "totals default"
 		wantAsPlan  = "plan untouched"
@@ -251,7 +252,7 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 		{name: "forecast false, stored settings retained in the plan", configValue: vsNull, configForecast: boolValue(false), planForecast: boolValue(false), storedPlan: true, want: wantNull},
 		{name: "forecast omitted, stored settings retained in the plan", configValue: vsNull, configForecast: nullBool, planForecast: boolValue(true), storedPlan: true, want: wantNull},
 		{name: "forecast unknown in config and plan", configValue: vsNull, configForecast: unknownBool, planForecast: unknownBool, want: wantUnknown},
-		{name: "forecast attribute missing from the config schema", configValue: vsNull, missingPath: true, want: wantNull},
+		{name: "forecast attribute missing from the config schema", configValue: vsNull, missingPath: true, want: wantError},
 	}
 
 	for _, tt := range tests {
@@ -290,6 +291,12 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 
 			useNullOrDefaultForForecastSettings().PlanModifyObject(ctx, req, resp)
 
+			if tt.want == wantError {
+				if !resp.Diagnostics.HasError() {
+					t.Fatalf("expected an error diagnostic for the unreadable forecast path, got none (PlanValue = %v)", resp.PlanValue)
+				}
+				return
+			}
 			if resp.Diagnostics.HasError() {
 				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
 			}

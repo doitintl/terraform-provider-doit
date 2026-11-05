@@ -285,7 +285,11 @@ func mapBudgetScopes(ctx context.Context, scopes *[]models.ExternalConfigFilter)
 			}
 		} else {
 			emptyVals, d := types.ListValueFrom(ctx, types.StringType, []string{})
-			_ = d // ListValueFrom with empty typed slice never errors
+			if d.HasError() {
+				emptyScopes, ed := types.ListValueFrom(ctx, datasource_budgets.ScopesValue{}.Type(ctx), []datasource_budgets.ScopesValue{})
+				d.Append(ed...)
+				return emptyScopes, d
+			}
 			valuesList = emptyVals
 		}
 
