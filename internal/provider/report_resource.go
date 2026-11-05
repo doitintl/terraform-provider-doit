@@ -238,6 +238,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 func (r *reportResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {

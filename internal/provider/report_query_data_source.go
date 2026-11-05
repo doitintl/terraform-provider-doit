@@ -66,6 +66,7 @@ func (d *reportQueryDataSource) Schema(ctx context.Context, _ datasource.SchemaR
 	reportSchema := resource_report.ReportResourceSchema(ctx)
 	allowAttributionQueryValues(reportSchema.Attributes)
 	appendDimensionsTypeDeprecationValidators(reportSchema.Attributes, reportDimensionsTypeAttributePaths...)
+	rejectNullCollectionElements(reportSchema.Attributes)
 	configAttr, ok := reportSchema.Attributes["config"].(rsschema.SingleNestedAttribute)
 	if !ok {
 		resp.Diagnostics.AddError(

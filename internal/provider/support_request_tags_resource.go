@@ -101,6 +101,7 @@ func (r *supportRequestTagsResource) Schema(ctx context.Context, _ resource.Sche
 				// set is allowed and clears the managed tags (like label_assignments).
 				// Enforced at plan time so invalid configs fail before any API call.
 				Validators: []validator.Set{
+					setvalidator.NoNullValues(),
 					setvalidator.SizeAtMost(50),
 					setvalidator.ValueStringsAre(
 						stringvalidator.LengthBetween(1, 80),

@@ -112,6 +112,7 @@ func (r *customThemeResource) Schema(ctx context.Context, _ resource.SchemaReque
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

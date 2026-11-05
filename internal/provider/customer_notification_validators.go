@@ -71,11 +71,15 @@ func validateCustomerNotificationAllocations(allocations resource_customer_notif
 			continue
 		}
 		knownCount++
-		if id.IsNull() || id.ValueString() == "" {
+		if id.IsNull() {
+			// Rejected by the attribute's NoNullValues validator.
+			continue
+		}
+		if id.ValueString() == "" {
 			diags.AddAttributeError(
 				idsPath,
 				"Invalid Allocation ID",
-				"Allocation IDs must not be null or empty.",
+				"Allocation IDs must not be empty.",
 			)
 			continue
 		}

@@ -64,6 +64,7 @@ func (d *cloudDiagramsDataSource) Schema(ctx context.Context, _ datasource.Schem
 
 	genSchema.Attributes["timeouts"] = timeouts.Attributes(ctx)
 
+	rejectNullDataSourceCollectionElements(genSchema.Attributes)
 	resp.Schema = genSchema
 }
 

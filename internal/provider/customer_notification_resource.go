@@ -197,6 +197,7 @@ func (r *customerNotificationResource) Schema(ctx context.Context, _ resource.Sc
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

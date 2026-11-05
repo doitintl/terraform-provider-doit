@@ -103,6 +103,7 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

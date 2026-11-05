@@ -99,6 +99,7 @@ func (d *cloudDiagramsStatussheetDataSource) Schema(ctx context.Context, _ datas
 	genSchema.Description = "Retrieves the components of a specific Cloud Diagram layer. At least one component ID list must be provided."
 	genSchema.MarkdownDescription = "Retrieves the components of a specific Cloud Diagram layer. At least one component ID list must be provided."
 
+	rejectNullDataSourceCollectionElements(genSchema.Attributes)
 	resp.Schema = genSchema
 }
 

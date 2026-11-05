@@ -156,6 +156,7 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

@@ -113,6 +113,7 @@ func (r *cloudconnectAwsAccountResource) Schema(ctx context.Context, _ resource.
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

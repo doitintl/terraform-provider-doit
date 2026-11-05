@@ -75,6 +75,15 @@ A Boolean `hasUnknown` flag may replace the counter. The uncertainty update and 
 
 `validatorshape` enforces these control-flow forms. `validatordefer` consumes the verified form and detects unsafe presence and collection-count diagnostics.
 
+## Null Elements in Collections
+
+`listvalidator.ValueStringsAre(...)` and `UniqueValues()` skip null elements, so `ids = [null]` passes plan. A request builder that converts the collection with `ElementsAs` into a non-pointer slice (`[]string`, `[]float64`) then fails at apply with "This is always an error in the provider".
+
+- Every Required or Optional list or set of primitives needs `listvalidator.NoNullValues()` / `setvalidator.NoNullValues()`.
+- Generated schemas get it from `rejectNullCollectionElements(s.Attributes)` (`rejectNullDataSourceCollectionElements` for data sources), called right before `resp.Schema = s`. It walks nested attributes too. Hand-written schemas add the validator directly.
+- `TestResourceCollectionsRejectNullElements` and `TestDataSourceCollectionsRejectNullElements` fail for any registered resource or data source that skips this, so a new resource cannot forget it.
+- A config validator that already rejects null elements (cost-anomaly `allocations.ids`) is an alternative, but the attribute validator is the default.
+
 ## Tests
 
 - Store validator unit tests in `_internal_test.go` files.

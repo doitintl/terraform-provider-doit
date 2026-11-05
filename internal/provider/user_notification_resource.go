@@ -337,6 +337,7 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 
@@ -349,7 +350,6 @@ const (
 // non-null, unique and valid, and sets its description.
 func withUserNotificationListRules(list schema.ListAttribute, description string, elementValidator validator.String) schema.ListAttribute {
 	list.Validators = append(list.Validators,
-		listvalidator.NoNullValues(),
 		listvalidator.UniqueValues(),
 		listvalidator.ValueStringsAre(elementValidator),
 	)

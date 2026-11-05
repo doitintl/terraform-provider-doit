@@ -626,7 +626,7 @@ func TestAccCustomerNotification_Validation(t *testing.T) {
       min_excess_cost = { amount = "100", currency = "USD" }
       allocations     = { mode = "include", ids = [null] }
 `,
-			err: `Invalid Allocation ID`,
+			err: `null value`,
 		},
 		"empty_allocation_id": {
 			settings: `
