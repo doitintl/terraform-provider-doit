@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -46,12 +47,24 @@ resource "doit_alert" "this" {
 	}
 	channelPath := tfjsonpath.New("recipients_slack_channels").AtSliceIndex(0)
 
+	// The omitted children are resolved by the API on create. Comparing them before
+	// and after the update fails if the update overwrites them. Mutating the request
+	// builder showed the API validates customer_id (400 on a wrong value), so the
+	// plan check above is what protects the builder from sending a bad one.
+	customerID := statecheck.CompareValue(compare.ValuesSame())
+
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			{Config: config(1000)},
+			{
+				Config: config(1000),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_alert.this", channelPath.AtMapKey("customer_id"), knownvalue.NotNull()),
+					customerID.AddStateValue("doit_alert.this", channelPath.AtMapKey("customer_id")),
+				},
+			},
 			{
 				Config: config(2000),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
@@ -62,6 +75,7 @@ resource "doit_alert" "this" {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("doit_alert.this", channelPath.AtMapKey("id"), knownvalue.StringExact(testSlackChannel())),
 					statecheck.ExpectKnownValue("doit_alert.this", channelPath.AtMapKey("shared"), knownvalue.Bool(true)),
+					customerID.AddStateValue("doit_alert.this", channelPath.AtMapKey("customer_id")),
 				},
 			},
 			{Config: config(2000), PlanOnly: true},

@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -95,6 +96,22 @@ resource "doit_budget" "this" {
 	}
 	channelPath := tfjsonpath.New("recipients_slack_channels").AtSliceIndex(0)
 
+	// name, shared and type are resolved by the API on create. Comparing them before
+	// and after the update fails if the update overwrites them. Mutating the request
+	// builder (a wrong name, an inverted shared) did not change them, because the API
+	// derives them from the Slack channel and ignores what the client sends, so they
+	// cannot be lost through this path.
+	name := statecheck.CompareValue(compare.ValuesSame())
+	shared := statecheck.CompareValue(compare.ValuesSame())
+	channelType := statecheck.CompareValue(compare.ValuesSame())
+	compareChildren := func() []statecheck.StateCheck {
+		return []statecheck.StateCheck{
+			name.AddStateValue("doit_budget.this", channelPath.AtMapKey("name")),
+			shared.AddStateValue("doit_budget.this", channelPath.AtMapKey("shared")),
+			channelType.AddStateValue("doit_budget.this", channelPath.AtMapKey("type")),
+		}
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders: map[string]resource.ExternalProvider{
 			"time": {Source: "hashicorp/time", VersionConstraint: "~> 0.13"},
@@ -103,15 +120,20 @@ resource "doit_budget" "this" {
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{
-			{Config: config(100)},
+			{
+				Config: config(100),
+				ConfigStateChecks: append([]statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_budget.this", channelPath.AtMapKey("type"), knownvalue.NotNull()),
+				}, compareChildren()...),
+			},
 			{
 				Config: config(200),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectUnknownValue("doit_budget.this", channelPath.AtMapKey("name")),
 				}},
-				ConfigStateChecks: []statecheck.StateCheck{
+				ConfigStateChecks: append([]statecheck.StateCheck{
 					statecheck.ExpectKnownValue("doit_budget.this", channelPath.AtMapKey("id"), knownvalue.StringExact(testSlackChannel())),
-				},
+				}, compareChildren()...),
 			},
 			{Config: config(200), PlanOnly: true},
 		},
