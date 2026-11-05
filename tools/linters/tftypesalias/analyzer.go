@@ -9,7 +9,7 @@
 //
 // The check is intentionally local: it tracks the variable passed as &v to As
 // and reports writes to v, or to a subslice of v, unless v was reassigned
-// before them on every path. It does not follow v into
+// before them on every path, and only inside the block that holds the As call. It does not follow v into
 // other variables or functions.
 package tftypesalias
 
@@ -55,6 +55,13 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
+// asCall is an As call that makes a variable an alias. The alias holds only
+// inside scope, the block of the call: elsewhere the call may not have run.
+type asCall struct {
+	end   token.Pos
+	scope ast.Node
+}
+
 // reassignment is a plain or short-declaration assignment to an alias
 // variable. It clears the alias only for positions inside scope, the block
 // that holds it: an assignment under an if, in a loop body or in a closure
@@ -68,7 +75,7 @@ type reassignment struct {
 // the writes to them. Positions order the two: a write counts when some As
 // call precedes it with no guaranteed reassignment in between.
 func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
-	aliasFrom := map[types.Object][]token.Pos{} // object → ends of its As calls
+	aliasFrom := map[types.Object][]asCall{}
 	reassigned := map[types.Object][]reassignment{}
 
 	var stack []ast.Node
@@ -81,11 +88,17 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 		switch n := n.(type) {
 		case *ast.CallExpr:
 			if obj := aliasTarget(pass, n); obj != nil {
-				aliasFrom[obj] = append(aliasFrom[obj], n.End())
+				aliasFrom[obj] = append(aliasFrom[obj], asCall{n.End(), enclosingScope(stack)})
 			}
 		case *ast.AssignStmt:
 			if n.Tok != token.ASSIGN && n.Tok != token.DEFINE {
 				break
+			}
+			// A loop post statement runs after the body, if at all.
+			if len(stack) > 1 {
+				if f, ok := stack[len(stack)-2].(*ast.ForStmt); ok && f.Post == n {
+					break
+				}
 			}
 			for _, lhs := range n.Lhs {
 				id, ok := lhs.(*ast.Ident)
@@ -113,12 +126,12 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 			return "", false
 		}
 		obj := pass.TypesInfo.Uses[id]
-		for _, from := range aliasFrom[obj] {
-			if pos < from {
+		for _, call := range aliasFrom[obj] {
+			if pos < call.end || pos >= call.scope.End() {
 				continue
 			}
 			cleared := slices.ContainsFunc(reassigned[obj], func(r reassignment) bool {
-				return r.end > from && r.end <= pos && r.scope.Pos() <= pos && pos < r.scope.End()
+				return r.end > call.end && r.end <= pos && r.scope.Pos() <= pos && pos < r.scope.End()
 			})
 			if !cleared {
 				return id.Name, true
@@ -148,6 +161,14 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 			}
 		case *ast.IncDecStmt:
 			indexed(n.X)
+		case *ast.RangeStmt:
+			if n.Tok == token.ASSIGN {
+				for _, target := range []ast.Expr{n.Key, n.Value} {
+					if target != nil {
+						indexed(target)
+					}
+				}
+			}
 		case *ast.CallExpr:
 			if len(n.Args) == 0 || !isWriteCall(pass, n) {
 				return true
@@ -188,7 +209,7 @@ func unsliced(expr ast.Expr) ast.Expr {
 // tftypes.Value and v is a map[string]tftypes.Value or []tftypes.Value.
 func aliasTarget(pass *analysis.Pass, call *ast.CallExpr) types.Object {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || sel.Sel.Name != "As" || len(call.Args) != 1 || !isTftypesValue(pass.TypesInfo.TypeOf(sel.X)) {
+	if !ok || sel.Sel.Name != "As" || len(call.Args) != 1 || !isTftypesValue(derefType(pass.TypesInfo.TypeOf(sel.X))) {
 		return nil
 	}
 	un, ok := call.Args[0].(*ast.UnaryExpr)
@@ -219,7 +240,15 @@ func aliasTarget(pass *analysis.Pass, call *ast.CallExpr) types.Object {
 // isWriteCall reports whether call is a builtin or library call that mutates
 // its first argument.
 func isWriteCall(pass *analysis.Pass, call *ast.CallExpr) bool {
-	switch fun := ast.Unparen(call.Fun).(type) {
+	callee := ast.Unparen(call.Fun)
+	// Unwrap explicit instantiation: f[T](x) and f[T, U](x).
+	switch c := callee.(type) {
+	case *ast.IndexExpr:
+		callee = ast.Unparen(c.X)
+	case *ast.IndexListExpr:
+		callee = ast.Unparen(c.X)
+	}
+	switch fun := callee.(type) {
 	case *ast.Ident:
 		b, ok := pass.TypesInfo.Uses[fun].(*types.Builtin)
 		return ok && (b.Name() == "delete" || b.Name() == "clear" || b.Name() == "copy")
@@ -228,6 +257,14 @@ func isWriteCall(pass *analysis.Pass, call *ast.CallExpr) bool {
 		return ok && fn.Pkg() != nil && inPlaceSliceFuncs[fn.Pkg().Path()+"."+fn.Name()]
 	}
 	return false
+}
+
+// derefType returns the element type of a pointer type, and t otherwise.
+func derefType(t types.Type) types.Type {
+	if p, ok := t.(*types.Pointer); ok {
+		return p.Elem()
+	}
+	return t
 }
 
 func isTftypesValue(t types.Type) bool {
