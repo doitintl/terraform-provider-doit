@@ -134,7 +134,7 @@ func (d *cloudDiagramsSnapshotDataSource) Read(ctx context.Context, req datasour
 	snapshot := apiResp.JSON200
 
 	// Map API response to Terraform state.
-	data.CreatedAt = types.StringValue(snapshot.CreatedAt.UTC().Format(time.RFC3339))
+	data.CreatedAt = types.StringValue(snapshot.CreatedAt.UTC().Format(time.RFC3339Nano))
 	data.Name = types.StringPointerValue(snapshot.Name)
 	data.PrevState = types.StringPointerValue(snapshot.PrevState)
 

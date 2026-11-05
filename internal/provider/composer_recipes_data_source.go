@@ -179,7 +179,7 @@ func mapComposerRecipesItemsList(ctx context.Context, items []models.ComposerRec
 	for _, item := range items {
 		var detectionTime types.String
 		if item.DetectionTime != nil {
-			detectionTime = types.StringValue(item.DetectionTime.UTC().Format(time.RFC3339))
+			detectionTime = types.StringValue(item.DetectionTime.UTC().Format(time.RFC3339Nano))
 		} else {
 			detectionTime = types.StringNull()
 		}

@@ -124,12 +124,12 @@ func (d *customThemesDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 			var createTime, updateTime types.String
 			if theme.CreateTime != nil {
-				createTime = types.StringValue(theme.CreateTime.Format(time.RFC3339))
+				createTime = types.StringValue(theme.CreateTime.Format(time.RFC3339Nano))
 			} else {
 				createTime = types.StringNull()
 			}
 			if theme.UpdateTime != nil {
-				updateTime = types.StringValue(theme.UpdateTime.Format(time.RFC3339))
+				updateTime = types.StringValue(theme.UpdateTime.Format(time.RFC3339Nano))
 			} else {
 				updateTime = types.StringNull()
 			}

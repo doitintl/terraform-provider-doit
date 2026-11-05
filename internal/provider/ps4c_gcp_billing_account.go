@@ -22,7 +22,7 @@ func mapGcpBillingAccountDetailToModel(ctx context.Context, apiResp *models.GcpB
 	data.CudExportHealthy = types.BoolPointerValue(nullableToPointer(apiResp.CudExportHealthy))
 
 	if syncTime := nullableToPointer(apiResp.CommitmentsSyncTime); syncTime != nil {
-		data.CommitmentsSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339))
+		data.CommitmentsSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339Nano))
 	} else {
 		data.CommitmentsSyncTime = types.StringNull()
 	}
@@ -100,7 +100,7 @@ func mapGcpAccountOnboardingStatus(ctx context.Context, status *[]models.GcpOnbo
 		func(i int) (map[string]attr.Value, diag.Diagnostics) {
 			startedAt := types.StringNull()
 			if t := nullableToPointer(entries[i].OnboardingStartedAt); t != nil {
-				startedAt = types.StringValue(t.UTC().Format(time.RFC3339))
+				startedAt = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 			}
 
 			return map[string]attr.Value{

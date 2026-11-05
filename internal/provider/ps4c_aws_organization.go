@@ -20,7 +20,7 @@ func mapAwsOrganizationDetailToModel(ctx context.Context, apiResp *models.AwsOrg
 	data.DisplayName = types.StringPointerValue(nullableToPointer(apiResp.DisplayName))
 
 	if syncTime := nullableToPointer(apiResp.SavingsPlansSyncTime); syncTime != nil {
-		data.SavingsPlansSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339))
+		data.SavingsPlansSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339Nano))
 	} else {
 		data.SavingsPlansSyncTime = types.StringNull()
 	}
@@ -124,7 +124,7 @@ func mapOrgOnboardingStatus(ctx context.Context, status *models.AwsOnboardingSta
 func onboardingStatusEntryAttrs(entry *models.AwsOnboardingStatusEntry) map[string]attr.Value {
 	var startedAt types.String
 	if t := nullableToPointer(entry.OnboardingStartedAt); t != nil {
-		startedAt = types.StringValue(t.UTC().Format(time.RFC3339))
+		startedAt = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	} else {
 		startedAt = types.StringNull()
 	}

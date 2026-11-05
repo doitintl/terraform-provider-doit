@@ -117,13 +117,13 @@ func (d *customThemeDataSource) Read(ctx context.Context, req datasource.ReadReq
 	data.PrimaryColor = types.StringValue(theme.PrimaryColor)
 
 	if theme.CreateTime != nil {
-		data.CreateTime = types.StringValue(theme.CreateTime.Format(time.RFC3339))
+		data.CreateTime = types.StringValue(theme.CreateTime.Format(time.RFC3339Nano))
 	} else {
 		data.CreateTime = types.StringNull()
 	}
 
 	if theme.UpdateTime != nil {
-		data.UpdateTime = types.StringValue(theme.UpdateTime.Format(time.RFC3339))
+		data.UpdateTime = types.StringValue(theme.UpdateTime.Format(time.RFC3339Nano))
 	} else {
 		data.UpdateTime = types.StringNull()
 	}

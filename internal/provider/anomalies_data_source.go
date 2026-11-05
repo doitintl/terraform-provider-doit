@@ -242,7 +242,7 @@ func (d *anomaliesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			// Map AcknowledgedAt (nullable.Nullable[time.Time])
 			var acknowledgedAtVal types.String
 			if acknowledgedAt := nullableToPointer(anomaly.AcknowledgedAt); acknowledgedAt != nil {
-				acknowledgedAtVal = types.StringValue(acknowledgedAt.UTC().Format(time.RFC3339))
+				acknowledgedAtVal = types.StringValue(acknowledgedAt.UTC().Format(time.RFC3339Nano))
 			} else {
 				acknowledgedAtVal = types.StringNull()
 			}
@@ -422,7 +422,7 @@ func mapAnomalyNotifications(ctx context.Context, notifications []models.Notific
 			datasource_anomalies.NotificationsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"channel":   types.StringValue(string(n.Channel)),
-				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339)),
+				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339Nano)),
 			},
 		)
 		diagnostics.Append(diags...)
@@ -449,7 +449,7 @@ func mapAnomalyInitialNotifications(ctx context.Context, initialNotifications []
 			datasource_anomalies.InitialNotificationsValue{}.AttributeTypes(ctx),
 			map[string]attr.Value{
 				"channel":   types.StringValue(string(n.Channel)),
-				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339)),
+				"timestamp": types.StringValue(n.Timestamp.UTC().Format(time.RFC3339Nano)),
 			},
 		)
 		diagnostics.Append(diags...)

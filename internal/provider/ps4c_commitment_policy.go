@@ -26,13 +26,13 @@ func mapCommitmentPolicyDetailToModel(ctx context.Context, apiResp *models.Commi
 	data.BootstrapPercent = types.Float64Value(apiResp.BootstrapPercent)
 
 	if createdTime := nullableToPointer(apiResp.CreatedTime); createdTime != nil {
-		data.CreatedTime = types.StringValue(createdTime.UTC().Format(time.RFC3339))
+		data.CreatedTime = types.StringValue(createdTime.UTC().Format(time.RFC3339Nano))
 	} else {
 		data.CreatedTime = types.StringNull()
 	}
 
 	if updatedTime := nullableToPointer(apiResp.UpdatedTime); updatedTime != nil {
-		data.UpdatedTime = types.StringValue(updatedTime.UTC().Format(time.RFC3339))
+		data.UpdatedTime = types.StringValue(updatedTime.UTC().Format(time.RFC3339Nano))
 	} else {
 		data.UpdatedTime = types.StringNull()
 	}

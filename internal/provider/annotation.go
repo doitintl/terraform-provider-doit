@@ -47,21 +47,21 @@ func mapAnnotationToModel(ctx context.Context, resp *models.AnnotationListItem, 
 	state.Content = types.StringValue(resp.Content)
 
 	// Check if the timestamp has changed semantically before overwriting to preserve user formatting
-	existingTime, err := time.Parse(time.RFC3339, state.Timestamp.ValueString())
+	existingTime, err := time.Parse(time.RFC3339Nano, state.Timestamp.ValueString())
 	if err == nil && existingTime.Equal(resp.Timestamp) {
 		// Keep the existing string to avoid diffs if the time is the same
 	} else {
-		state.Timestamp = types.StringValue(resp.Timestamp.UTC().Format(time.RFC3339))
+		state.Timestamp = types.StringValue(resp.Timestamp.UTC().Format(time.RFC3339Nano))
 	}
 
 	if resp.CreateTime != nil {
-		state.CreateTime = types.StringValue(resp.CreateTime.Format(time.RFC3339))
+		state.CreateTime = types.StringValue(resp.CreateTime.Format(time.RFC3339Nano))
 	} else {
 		state.CreateTime = types.StringNull()
 	}
 
 	if resp.UpdateTime != nil {
-		state.UpdateTime = types.StringValue(resp.UpdateTime.Format(time.RFC3339))
+		state.UpdateTime = types.StringValue(resp.UpdateTime.Format(time.RFC3339Nano))
 	} else {
 		state.UpdateTime = types.StringNull()
 	}
@@ -152,7 +152,7 @@ func overlayAnnotationComputedFields(ctx context.Context, apiResp *models.Annota
 func (plan *annotationResourceModel) toCreateRequest(ctx context.Context) (models.CreateAnnotationRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	timestamp, err := time.Parse(time.RFC3339, plan.Timestamp.ValueString())
+	timestamp, err := time.Parse(time.RFC3339Nano, plan.Timestamp.ValueString())
 	if err != nil {
 		diags.AddError(
 			"Error Parsing Timestamp",
@@ -193,7 +193,7 @@ func (plan *annotationResourceModel) toCreateRequest(ctx context.Context) (model
 func (plan *annotationResourceModel) toUpdateRequest(ctx context.Context) (models.UpdateAnnotationRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	timestamp, err := time.Parse(time.RFC3339, plan.Timestamp.ValueString())
+	timestamp, err := time.Parse(time.RFC3339Nano, plan.Timestamp.ValueString())
 	if err != nil {
 		diags.AddError(
 			"Error Parsing Timestamp",

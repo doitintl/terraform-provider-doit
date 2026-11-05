@@ -180,7 +180,7 @@ func mapNodeActivitiesToState(
 				"activity":    types.StringValue(string(a.Activity)),
 				"metadata":    mapFreeformJSON(a.Metadata),
 				"statussheet": types.StringValue(a.Statussheet),
-				"timestamp":   types.StringValue(a.Timestamp.Format(time.RFC3339)),
+				"timestamp":   types.StringValue(a.Timestamp.Format(time.RFC3339Nano)),
 				"user":        types.StringValue(a.User),
 			},
 		)

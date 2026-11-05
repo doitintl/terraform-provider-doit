@@ -261,14 +261,14 @@ func mapCommitmentListItem(ctx context.Context, c models.CommitmentExternalListI
 
 	var startDate types.String
 	if c.StartDate != nil {
-		startDate = types.StringValue(c.StartDate.UTC().Format(time.RFC3339))
+		startDate = types.StringValue(c.StartDate.UTC().Format(time.RFC3339Nano))
 	} else {
 		startDate = types.StringNull()
 	}
 
 	var endDate types.String
 	if c.EndDate != nil {
-		endDate = types.StringValue(c.EndDate.UTC().Format(time.RFC3339))
+		endDate = types.StringValue(c.EndDate.UTC().Format(time.RFC3339Nano))
 	} else {
 		endDate = types.StringNull()
 	}
@@ -337,14 +337,14 @@ func mapCommitmentsListPeriods(ctx context.Context, periods *[]models.Commitment
 
 		var startDate types.String
 		if p.StartDate != nil {
-			startDate = types.StringValue(p.StartDate.UTC().Format(time.RFC3339))
+			startDate = types.StringValue(p.StartDate.UTC().Format(time.RFC3339Nano))
 		} else {
 			startDate = types.StringNull()
 		}
 
 		var endDate types.String
 		if p.EndDate != nil {
-			endDate = types.StringValue(p.EndDate.UTC().Format(time.RFC3339))
+			endDate = types.StringValue(p.EndDate.UTC().Format(time.RFC3339Nano))
 		} else {
 			endDate = types.StringNull()
 		}

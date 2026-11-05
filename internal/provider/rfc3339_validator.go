@@ -39,7 +39,7 @@ func (v rfc3339Validator) ValidateString(_ context.Context, req validator.String
 // RFC3339 validation logic, used by both the attribute-level rfc3339Validator
 // and the resource-level reportTimestampValidator.
 func validateRFC3339(value string, attrPath path.Path, diags *diag.Diagnostics) {
-	if _, err := time.Parse(time.RFC3339, value); err != nil {
+	if _, err := time.Parse(time.RFC3339Nano, value); err != nil {
 		diags.AddAttributeError(
 			attrPath,
 			"Invalid RFC3339 Timestamp",

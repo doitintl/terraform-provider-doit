@@ -243,7 +243,7 @@ func (r *serviceAccountTokenResource) Create(ctx context.Context, req resource.C
 			return
 		}
 		plan.State = types.StringValue(string(updated.State))
-		plan.LastUsedTime = nullableTimeToString(updated.LastUsedTime)
+		plan.LastUsedTime = nullableTimeToWholeSeconds(updated.LastUsedTime)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	}
 }

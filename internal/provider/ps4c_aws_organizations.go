@@ -34,7 +34,7 @@ func awsOrganizationItemAttrs(ctx context.Context, org models.AwsOrganization) (
 
 	savingsPlansSyncTime := types.StringNull()
 	if syncTime := nullableToPointer(org.SavingsPlansSyncTime); syncTime != nil {
-		savingsPlansSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339))
+		savingsPlansSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339Nano))
 	}
 
 	onboardingStatus, d := mapItemsOnboardingStatus(ctx, org.OnboardingStatus)
@@ -127,7 +127,7 @@ func mapItemsOnboardingStatus(ctx context.Context, status *models.AwsOnboardingS
 func itemsOnboardingStatusEntryAttrs(entry *models.AwsOnboardingStatusEntry) map[string]attr.Value {
 	startedAt := types.StringNull()
 	if t := nullableToPointer(entry.OnboardingStartedAt); t != nil {
-		startedAt = types.StringValue(t.UTC().Format(time.RFC3339))
+		startedAt = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	return map[string]attr.Value{

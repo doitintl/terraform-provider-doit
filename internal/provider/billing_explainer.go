@@ -18,7 +18,7 @@ func mapBillingExplainerToModel(ctx context.Context, apiResp *models.BillingExpl
 
 	data.CustomerId = types.StringValue(apiResp.CustomerId)
 	data.InvoiceMonth = types.StringValue(apiResp.InvoiceMonth)
-	data.UpdateTime = types.StringValue(apiResp.UpdateTime.UTC().Format(time.RFC3339))
+	data.UpdateTime = types.StringValue(apiResp.UpdateTime.UTC().Format(time.RFC3339Nano))
 
 	doitCredits, d := datasource_billing_explainer.NewDoitCreditsValue(
 		datasource_billing_explainer.DoitCreditsValue{}.AttributeTypes(ctx),

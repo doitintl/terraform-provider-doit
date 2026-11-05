@@ -274,7 +274,7 @@ func buildCustomerSubscriptionSchedule(ctx context.Context, schedule *models.Cus
 // fallback keeps them too.
 func preserveCustomerSubscriptionTimestamp(prior types.String, apiValue time.Time) types.String {
 	if !prior.IsNull() && !prior.IsUnknown() {
-		priorTime, err := time.Parse(time.RFC3339, prior.ValueString())
+		priorTime, err := time.Parse(time.RFC3339Nano, prior.ValueString())
 		if err == nil && priorTime.Equal(apiValue) {
 			return prior
 		}
@@ -468,11 +468,11 @@ func (plan *customerSubscriptionResourceModel) customerSubscriptionRecipients(ct
 func toCustomerSubscriptionScheduleInput(schedule resource_customer_subscription.ScheduleValue) (models.CustomerSubscriptionScheduleInput, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	startDate, err := time.Parse(time.RFC3339, schedule.StartDate.ValueString())
+	startDate, err := time.Parse(time.RFC3339Nano, schedule.StartDate.ValueString())
 	if err != nil {
 		diags.AddError("Invalid Schedule Start Date", fmt.Sprintf("Could not parse start_date %q as RFC 3339: %s", schedule.StartDate.ValueString(), err))
 	}
-	deliveryTime, err := time.Parse(time.RFC3339, schedule.Time.ValueString())
+	deliveryTime, err := time.Parse(time.RFC3339Nano, schedule.Time.ValueString())
 	if err != nil {
 		diags.AddError("Invalid Schedule Time", fmt.Sprintf("Could not parse time %q as RFC 3339: %s", schedule.Time.ValueString(), err))
 	}

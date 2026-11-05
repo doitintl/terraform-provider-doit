@@ -77,7 +77,7 @@ func TestMapUserNotificationToModel(t *testing.T) {
 	if got := state.UserId.ValueString(); got != "user-1" {
 		t.Errorf("user_id = %q, want user-1 (kept from path)", got)
 	}
-	if got := state.CreateTime.ValueString(); got != "2026-10-01T08:00:00Z" {
+	if got := state.CreateTime.ValueString(); got != "2026-10-01T08:00:00.000123Z" {
 		t.Errorf("create_time = %q", got)
 	}
 	if got := state.UpdateTime.ValueString(); got != "2026-10-02T09:30:00Z" {

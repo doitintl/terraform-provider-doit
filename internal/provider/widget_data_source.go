@@ -171,8 +171,8 @@ func mapWidgetToModel(ctx context.Context, widget *models.Widget, data *widgetDa
 	periodVal, d := datasource_widget.NewPeriodValue(
 		datasource_widget.PeriodValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
-			"start_time": types.StringValue(metric.Period.StartTime.UTC().Format(time.RFC3339)),
-			"end_time":   types.StringValue(metric.Period.EndTime.UTC().Format(time.RFC3339)),
+			"start_time": types.StringValue(metric.Period.StartTime.UTC().Format(time.RFC3339Nano)),
+			"end_time":   types.StringValue(metric.Period.EndTime.UTC().Format(time.RFC3339Nano)),
 		},
 	)
 	diags.Append(d...)

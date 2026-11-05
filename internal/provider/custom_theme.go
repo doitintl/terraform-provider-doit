@@ -54,13 +54,13 @@ func mapCustomThemeToModel(ctx context.Context, resp *models.CustomTheme, state 
 	state.PrimaryColor = types.StringValue(resp.PrimaryColor)
 
 	if resp.CreateTime != nil {
-		state.CreateTime = types.StringValue(resp.CreateTime.Format(time.RFC3339))
+		state.CreateTime = types.StringValue(resp.CreateTime.Format(time.RFC3339Nano))
 	} else {
 		state.CreateTime = types.StringNull()
 	}
 
 	if resp.UpdateTime != nil {
-		state.UpdateTime = types.StringValue(resp.UpdateTime.Format(time.RFC3339))
+		state.UpdateTime = types.StringValue(resp.UpdateTime.Format(time.RFC3339Nano))
 	} else {
 		state.UpdateTime = types.StringNull()
 	}

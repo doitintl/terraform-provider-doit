@@ -123,7 +123,7 @@ func (d *cloudDiagramsSnapshotsDataSource) Read(ctx context.Context, req datasou
 	if apiResp.JSON200 != nil && len(*apiResp.JSON200) > 0 {
 		snapshotVals = make([]ds.CloudDiagramsSnapshotsValue, 0, len(*apiResp.JSON200))
 		for _, s := range *apiResp.JSON200 {
-			createdAtStr := s.CreatedAt.UTC().Format(time.RFC3339)
+			createdAtStr := s.CreatedAt.UTC().Format(time.RFC3339Nano)
 
 			snapshotVal, valDiags := ds.NewCloudDiagramsSnapshotsValue(
 				ds.CloudDiagramsSnapshotsValue{}.AttributeTypes(ctx),

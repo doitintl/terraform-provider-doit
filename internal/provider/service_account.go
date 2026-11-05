@@ -62,13 +62,13 @@ func mapServiceAccountToModel(ctx context.Context, resp *models.ServiceAccount, 
 	state.Etag = types.StringPointerValue(nullableToPointer(resp.Etag))
 
 	if t := nullableToPointer(resp.CreateTime); t != nil {
-		state.CreateTime = types.StringValue(t.Format(time.RFC3339))
+		state.CreateTime = types.StringValue(t.Format(time.RFC3339Nano))
 	} else {
 		state.CreateTime = types.StringNull()
 	}
 
 	if t := nullableToPointer(resp.UpdateTime); t != nil {
-		state.UpdateTime = types.StringValue(t.Format(time.RFC3339))
+		state.UpdateTime = types.StringValue(t.Format(time.RFC3339Nano))
 	} else {
 		state.UpdateTime = types.StringNull()
 	}

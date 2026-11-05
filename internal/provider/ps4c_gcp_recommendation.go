@@ -83,7 +83,7 @@ func mapEligibleUsageToModel(ctx context.Context, usage []models.EligibleSpendDa
 	for _, point := range usage {
 		usageTime := types.StringNull()
 		if t := nullableToPointer(point.UsageTime); t != nil {
-			usageTime = types.StringValue(t.UTC().Format(time.RFC3339))
+			usageTime = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 		}
 
 		attrs := map[string]attr.Value{

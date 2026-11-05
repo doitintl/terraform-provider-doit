@@ -150,7 +150,7 @@ func mapExportToState(
 		ds.MetadataValue{}.AttributeTypes(ctx),
 		map[string]attr.Value{
 			"connections": connectionsMap,
-			"date":        types.StringValue(export.Metadata.Date.UTC().Format(time.RFC3339)),
+			"date":        types.StringValue(export.Metadata.Date.UTC().Format(time.RFC3339Nano)),
 			"user":        types.StringValue(export.Metadata.User),
 			"version":     types.StringValue(export.Metadata.Version),
 		},

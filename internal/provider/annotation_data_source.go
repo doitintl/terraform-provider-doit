@@ -120,16 +120,16 @@ func (d *annotationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	// Map API response to model
 	data.Id = types.StringValue(annotation.Id)
 	data.Content = types.StringValue(annotation.Content)
-	data.Timestamp = types.StringValue(annotation.Timestamp.UTC().Format(time.RFC3339))
+	data.Timestamp = types.StringValue(annotation.Timestamp.UTC().Format(time.RFC3339Nano))
 
 	if annotation.CreateTime != nil {
-		data.CreateTime = types.StringValue(annotation.CreateTime.UTC().Format(time.RFC3339))
+		data.CreateTime = types.StringValue(annotation.CreateTime.UTC().Format(time.RFC3339Nano))
 	} else {
 		data.CreateTime = types.StringNull()
 	}
 
 	if annotation.UpdateTime != nil {
-		data.UpdateTime = types.StringValue(annotation.UpdateTime.UTC().Format(time.RFC3339))
+		data.UpdateTime = types.StringValue(annotation.UpdateTime.UTC().Format(time.RFC3339Nano))
 	} else {
 		data.UpdateTime = types.StringNull()
 	}
