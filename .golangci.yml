@@ -37,6 +37,7 @@ linters:
     - timeoutcheck
     - read404
     - setnestedplan
+    - tftypesalias
     - configuretype
     - errformat
     - listnullread
@@ -95,6 +96,7 @@ linters:
           - timeoutcheck
           - read404
           - setnestedplan
+          - tftypesalias
           - errformat
           - listnullread
           - usestatefunknown
@@ -122,6 +124,7 @@ linters:
           - timeoutcheck
           - read404
           - setnestedplan
+          - tftypesalias
           - configuretype
           - errformat
           - listnullread
@@ -229,6 +232,9 @@ linters:
       attrswitch:
         type: "module"
         description: "Requires type switches over schema.Attribute to handle every nested kind and every kind with the field they read."
+      tftypesalias:
+        type: "module"
+        description: "Reports writes to the maps and slices returned by tftypes.Value.As, which are the value's own."
       setnestedplan:
         type: "module"
         description: "Ensures resources with Computed attributes inside a SetNestedAttribute plan the set from the prior state in ModifyPlan."
