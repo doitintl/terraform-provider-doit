@@ -349,9 +349,12 @@ the generated config.
   plan as a no-op import. No `ImportStateVerify` is needed.
 - Use the test whose config sets the most Optional attributes (a group, not a
   minimal single).
-- Resources that only import pre-existing objects already declared in the test
-  config (`doit_customer`, `doit_asset`) cannot take it: an import block for an
-  address that is already in configuration conflicts.
+- For a resource whose test imports a pre-existing object that the test config
+  already declares (`doit_customer`, `doit_asset`), append the step after the
+  existing import and drift checks, with the import ID and no
+  `ImportStatePersist`. After step 1 terraform-plugin-testing imports into
+  `<type>.generated` (`testing_new_import_state.go`), so it does not clash with
+  the declaration.
 - A failure means fix the validator or schema to accept what Read writes, and
   add a unit case for it; do not weaken the step.
 

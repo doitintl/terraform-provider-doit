@@ -130,6 +130,17 @@ func TestAccCustomerResource_Import(t *testing.T) {
 					},
 				},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change. After step 1
+			// the framework imports into doit_customer.generated, so it does not
+			// clash with the declaration in the test config.
+			{
+				ResourceName:    "doit_customer.test",
+				ImportState:     true,
+				ImportStateId:   customer.Id,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }
