@@ -52,14 +52,35 @@ func run(pass *analysis.Pass) (any, error) {
 			checkBody(pass, fn.Body)
 		}
 	})
+	// Function literals outside any function: var f = func() {...}. Nested
+	// literals belong to the body that checkBody already walks.
+	for _, file := range pass.Files {
+		for _, decl := range file.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok {
+				continue
+			}
+			ast.Inspect(gen, func(n ast.Node) bool {
+				if lit, ok := n.(*ast.FuncLit); ok {
+					checkBody(pass, lit.Body)
+					return false
+				}
+				return true
+			})
+		}
+	}
 	return nil, nil
 }
 
 // asCall is an As call that makes a variable an alias. The alias holds only
 // inside scope, the block of the call: elsewhere the call may not have run.
+//
+// A call in a loop also reaches the code before it in the next iteration:
+// body is the loop body then, and nil for a call outside any loop.
 type asCall struct {
 	end   token.Pos
 	scope ast.Node
+	body  *ast.BlockStmt
 }
 
 // reassignment is a plain or short-declaration assignment to an alias
@@ -88,7 +109,26 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 		switch n := n.(type) {
 		case *ast.CallExpr:
 			if obj := aliasTarget(pass, n); obj != nil {
-				aliasFrom[obj] = append(aliasFrom[obj], asCall{n.End(), enclosingScope(stack)})
+				call := asCall{end: n.End(), scope: enclosingScope(stack)}
+				call.body = enclosingLoopBody(stack, n)
+				if call.body != nil && n.Pos() < call.body.Pos() {
+					// In a for post statement: runs after the body, so the
+					// alias holds in the body but not after the loop.
+					call.scope = call.body
+				}
+				aliasFrom[obj] = append(aliasFrom[obj], call)
+			}
+		case *ast.RangeStmt:
+			// for _, m = range ...: m is rebound inside the body only.
+			if n.Tok != token.ASSIGN {
+				break
+			}
+			for _, target := range []ast.Expr{n.Key, n.Value} {
+				if id, ok := target.(*ast.Ident); ok {
+					if obj := pass.TypesInfo.Uses[id]; obj != nil {
+						reassigned[obj] = append(reassigned[obj], reassignment{n.Body.Lbrace, n.Body})
+					}
+				}
 			}
 		case *ast.AssignStmt:
 			if n.Tok != token.ASSIGN && n.Tok != token.DEFINE {
@@ -126,15 +166,27 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 			return "", false
 		}
 		obj := pass.TypesInfo.Uses[id]
+		inScope := func(scope ast.Node, p token.Pos) bool { return scope.Pos() <= p && p < scope.End() }
 		for _, call := range aliasFrom[obj] {
-			if pos < call.end || pos >= call.scope.End() {
-				continue
+			if pos >= call.end && inScope(call.scope, pos) {
+				cleared := slices.ContainsFunc(reassigned[obj], func(r reassignment) bool {
+					return r.end > call.end && r.end <= pos && inScope(r.scope, pos)
+				})
+				if !cleared {
+					return id.Name, true
+				}
 			}
-			cleared := slices.ContainsFunc(reassigned[obj], func(r reassignment) bool {
-				return r.end > call.end && r.end <= pos && r.scope.Pos() <= pos && pos < r.scope.End()
-			})
-			if !cleared {
-				return id.Name, true
+			// Next iteration: the write is above the call, in the same loop.
+			if call.body != nil && pos < call.end && inScope(call.body, pos) && inScope(call.scope, pos) {
+				cleared := slices.ContainsFunc(reassigned[obj], func(r reassignment) bool {
+					// Before the write in the same iteration, or after the
+					// call on every path through the iteration.
+					return (r.end >= call.body.Pos() && r.end <= pos && inScope(r.scope, pos)) ||
+						(r.end > call.end && r.end <= call.body.End() && inScope(r.scope, call.end))
+				})
+				if !cleared {
+					return id.Name, true
+				}
 			}
 		}
 		return "", false
@@ -187,10 +239,41 @@ func enclosingScope(stack []ast.Node) ast.Node {
 		switch stack[i].(type) {
 		case *ast.BlockStmt, *ast.CaseClause, *ast.CommClause:
 			return stack[i]
+		case *ast.IfStmt:
+			// The initializer of an else-if only runs when the earlier
+			// conditions are false.
+			if i > 0 {
+				if parent, ok := stack[i-1].(*ast.IfStmt); ok && parent.Else == stack[i] {
+					return stack[i]
+				}
+			}
 		}
 	}
 	return stack[0]
 }
+
+// enclosingLoopBody returns the body of the innermost for or range statement
+// that holds n in its body, or in its post statement. Closures end the search:
+// they do not necessarily run in the iteration that defines them.
+func enclosingLoopBody(stack []ast.Node, n ast.Node) *ast.BlockStmt {
+	for i := len(stack) - 2; i >= 0; i-- {
+		switch l := stack[i].(type) {
+		case *ast.FuncLit:
+			return nil
+		case *ast.ForStmt:
+			if within(n, l.Body) || (l.Post != nil && within(n, l.Post)) {
+				return l.Body
+			}
+		case *ast.RangeStmt:
+			if within(n, l.Body) {
+				return l.Body
+			}
+		}
+	}
+	return nil
+}
+
+func within(n, outer ast.Node) bool { return outer.Pos() <= n.Pos() && n.End() <= outer.End() }
 
 // unsliced strips parentheses and slice expressions: s[1:] and s[:] share
 // the backing array of s.
