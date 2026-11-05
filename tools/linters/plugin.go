@@ -31,6 +31,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/validatordefer"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/validatorshape"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/volatileplan"
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/modernize"
@@ -89,6 +90,10 @@ func init() {
 	})
 	register.Plugin("setnestedplan", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{setnestedplan.Analyzer}}, nil
+	})
+
+	register.Plugin("volatileplan", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{volatileplan.Analyzer}}, nil
 	})
 
 	register.Plugin("configuretype", func(_ any) (register.LinterPlugin, error) {

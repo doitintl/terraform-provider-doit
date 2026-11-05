@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -217,6 +218,53 @@ func TestAccServiceAccount_ClearableLifecycle(t *testing.T) {
 						plancheck.ExpectEmptyPlan(),
 					},
 				},
+			},
+		},
+	})
+}
+
+// testAccCheckServiceAccountEtagCurrent compares the stored etag with the one
+// the API returns, so a stale etag left by an update fails the step.
+func testAccCheckServiceAccountEtagCurrent(t *testing.T) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources["doit_service_account.this"]
+		if !ok {
+			return fmt.Errorf("doit_service_account.this not found in state")
+		}
+		resp, err := getAPIClient(t).GetServiceAccountWithResponse(t.Context(), rs.Primary.ID)
+		if err != nil || resp.JSON200 == nil {
+			return fmt.Errorf("reading service account: %v", err)
+		}
+		etag, _ := resp.JSON200.Etag.Get()
+		if got := rs.Primary.Attributes["etag"]; etag == "" || got != etag {
+			return fmt.Errorf("etag in state %q, API returns %q", got, etag)
+		}
+		return nil
+	}
+}
+
+// An update whose only change comes from a clearing plan modifier (Terraform
+// proposed the stored value) must still plan etag and update_time unknown, or
+// state keeps the old etag and the next update without refresh fails with 412.
+func TestAccServiceAccount_ClearOnlyUpdateRefreshesEtag(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-sa-etag")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: testAccServiceAccountConfig(rName, "Initial description", `["budgetsReadOnly"]`)},
+			{
+				Config: testAccServiceAccountMinimalConfig(rName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_service_account.this", plancheck.ResourceActionUpdate),
+						plancheck.ExpectUnknownValue("doit_service_account.this", tfjsonpath.New("etag")),
+						plancheck.ExpectUnknownValue("doit_service_account.this", tfjsonpath.New("update_time")),
+					},
+				},
+				Check: testAccCheckServiceAccountEtagCurrent(t),
 			},
 		},
 	})

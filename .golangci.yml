@@ -38,6 +38,7 @@ linters:
     - timeoutcheck
     - read404
     - setnestedplan
+    - volatileplan
     - tftypesalias
     - configuretype
     - errformat
@@ -104,6 +105,7 @@ linters:
           - timeoutcheck
           - read404
           - setnestedplan
+          - volatileplan
           - tftypesalias
           - errformat
           - listnullread
@@ -132,6 +134,7 @@ linters:
           - timeoutcheck
           - read404
           - setnestedplan
+          - volatileplan
           - tftypesalias
           - configuretype
           - errformat
@@ -158,6 +161,7 @@ linters:
           - delete404
           - read404
           - setnestedplan
+          - volatileplan
           - listnullread
           - usestatefunknown
           - crudnaming
@@ -251,6 +255,9 @@ linters:
       setnestedplan:
         type: "module"
         description: "Ensures resources with Computed attributes inside a SetNestedAttribute plan the set from the prior state in ModifyPlan."
+      volatileplan:
+        type: "module"
+        description: "Ensures resources with an etag and a clearing plan modifier mark the etag unknown on updates in ModifyPlan."
       configuretype:
         type: "module"
         description: "Detects mismatched Configure type strings (Data Source vs Resource)."

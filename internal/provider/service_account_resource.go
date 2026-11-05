@@ -23,6 +23,7 @@ var (
 	_ resource.Resource                = (*serviceAccountResource)(nil)
 	_ resource.ResourceWithConfigure   = (*serviceAccountResource)(nil)
 	_ resource.ResourceWithImportState = (*serviceAccountResource)(nil)
+	_ resource.ResourceWithModifyPlan  = (*serviceAccountResource)(nil)
 )
 
 // NewServiceAccountResource creates a new service account resource instance.
@@ -104,6 +105,12 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 	})
 
 	resp.Schema = s
+}
+
+// ModifyPlan marks etag and update_time unknown on updates that only clear an
+// attribute; the framework leaves them known in that case.
+func (r *serviceAccountResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"), path.Root("update_time"))
 }
 
 func (r *serviceAccountResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

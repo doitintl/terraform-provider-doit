@@ -396,6 +396,58 @@ func TestAccCustomerSubscription_ClearAttachments(t *testing.T) {
 	})
 }
 
+// An update whose only change comes from a clearing plan modifier (Terraform
+// proposed the stored value) must still plan etag unknown, or state keeps the
+// old etag and the next update without refresh fails with 412.
+func TestAccCustomerSubscription_ClearAttachmentsRefreshesEtag(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-csub-etag")
+
+	withAttachments := testAccCustomerSubscriptionConfig(rName, testAccCustomerSubscriptionEmailRecipients(),
+		testAccCustomerSubscriptionReportEntry(testAccCustomerSubscriptionSchedule, `      attachments = ["pdf", "csv"]`))
+	without := testAccCustomerSubscriptionConfig(rName, testAccCustomerSubscriptionEmailRecipients(),
+		testAccCustomerSubscriptionReportEntry(testAccCustomerSubscriptionSchedule, ""))
+
+	resource.ParallelTest(t, resource.TestCase{
+		CheckDestroy:             testAccCheckCustomerSubscriptionDestroy(t),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: withAttachments},
+			{
+				Config: without,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(testAccCustomerSubscriptionAddr, plancheck.ResourceActionUpdate),
+						plancheck.ExpectUnknownValue(testAccCustomerSubscriptionAddr, tfjsonpath.New("etag")),
+					},
+				},
+				Check: testAccCheckCustomerSubscriptionEtagCurrent(t),
+			},
+		},
+	})
+}
+
+// testAccCheckCustomerSubscriptionEtagCurrent compares the stored etag with
+// the one the API returns.
+func testAccCheckCustomerSubscriptionEtagCurrent(t *testing.T) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[testAccCustomerSubscriptionAddr]
+		if !ok {
+			return fmt.Errorf("resource %s not found in state", testAccCustomerSubscriptionAddr)
+		}
+		resp, err := getAPIClient(t).GetCustomerSubscriptionWithResponse(t.Context(), rs.Primary.ID)
+		if err != nil || resp.JSON200 == nil {
+			return fmt.Errorf("reading subscription: %v", err)
+		}
+		etag, _ := resp.JSON200.Etag.Get()
+		if got := rs.Primary.Attributes["etag"]; etag == "" || got != etag {
+			return fmt.Errorf("etag in state %q, API returns %q", got, etag)
+		}
+		return nil
+	}
+}
+
 // TestAccCustomerSubscription_CustomFrequency switches a Custom frequency back
 // to Weekly, which drops custom_period_amount and custom_period_unit.
 func TestAccCustomerSubscription_CustomFrequency(t *testing.T) {
