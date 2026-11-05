@@ -290,6 +290,15 @@ func TestAccUserNotification_Import(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"timeouts"},
 				ImportStateIdFunc:       testAccUserNotificationImportID,
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:      testAccUserNotificationAddr,
+				ImportStateIdFunc: testAccUserNotificationImportID,
+				ImportState:       true,
+				ImportStateKind:   resource.ImportBlockWithID,
+				GenerateConfig:    true,
+			},
 			// Drift check after import
 			testAccUserNotificationDriftCheck(cfg),
 		},

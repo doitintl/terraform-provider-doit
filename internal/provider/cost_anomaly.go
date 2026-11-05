@@ -117,6 +117,8 @@ func setCostAnomalyDescriptions(attributes map[string]schema.Attribute, descript
 			a.Description, a.MarkdownDescription = description, description
 			attributes[name] = a
 		default:
+			// Only the kinds the cost anomaly schemas use are supported; any
+			// other kind panics instead of silently keeping its description.
 			panic(fmt.Sprintf("setCostAnomalyDescriptions: unsupported attribute %q (%T)", name, a))
 		}
 	}

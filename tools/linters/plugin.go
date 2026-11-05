@@ -2,6 +2,7 @@
 package linters
 
 import (
+	"github.com/doitintl/terraform-provider-doit/tools/linters/attrswitch"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/clearableattr"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/constructor"
@@ -24,6 +25,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/setnestedplan"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/testserver"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/tftypesalias"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/unknownguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
@@ -47,6 +49,10 @@ func (p *analyzerPlugin) GetLoadMode() string {
 }
 
 func init() {
+	register.Plugin("attrswitch", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{attrswitch.Analyzer}}, nil
+	})
+
 	register.Plugin("diagsuppressed", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{diagsuppressed.Analyzer}}, nil
 	})
@@ -78,6 +84,9 @@ func init() {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{read404.Analyzer}}, nil
 	})
 
+	register.Plugin("tftypesalias", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{tftypesalias.Analyzer}}, nil
+	})
 	register.Plugin("setnestedplan", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{setnestedplan.Analyzer}}, nil
 	})

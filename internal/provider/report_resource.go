@@ -368,9 +368,9 @@ func (r *reportResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	// Validate proposed configuration when effective layout is cumulative_comparison. Validating
 	// against req.Config on create ensures missing required attributes (like secondary_time_range
 	// or dimensions) are caught before apply, rather than being treated as unknown computed values.
-	// On update, validating against req.Plan ensures Category B unclearable attributes preserved
-	// from prior state are recognized.
-	var target attributeGetter = req.Plan
+	// On update the plan holds an omitted Category B attribute as unknown, not as the stored
+	// value the API keeps, so plannedOrStoredGetter resolves it from prior state.
+	var target attributeGetter = plannedOrStoredGetter{plan: req.Plan, config: req.Config, state: req.State}
 	if req.State.Raw.IsNull() {
 		target = req.Config
 	}
@@ -524,7 +524,9 @@ func (r *reportResource) Update(ctx context.Context, req resource.UpdateRequest,
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 
-	reportReq, diags := plan.toUpdateRequest(ctx)
+	// The overlay below keeps the original plan; only the request carries the stored value.
+	requestPlan := plan.withStoredDataSource(state)
+	reportReq, diags := requestPlan.toUpdateRequest(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

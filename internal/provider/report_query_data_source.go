@@ -408,6 +408,8 @@ func convertResourceAttrsToDataSource(attrs map[string]rsschema.Attribute) (map[
 				CustomType:          a.CustomType,
 			}
 		default:
+			// The report schema only uses the kinds above; any other kind is
+			// reported rather than dropped from the data source schema.
 			diags.AddError(
 				"Unsupported Attribute Type in Schema Converter",
 				fmt.Sprintf("Attribute %q has type %T which is not handled by convertResourceAttrsToDataSource. "+

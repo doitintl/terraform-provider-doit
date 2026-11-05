@@ -212,6 +212,21 @@ func TestAccServiceAccountToken_Import(t *testing.T) {
 					return rs.Primary.Attributes["service_account_id"] + "/" + rs.Primary.ID, nil
 				},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName: testAccServiceAccountTokenAddr,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[testAccServiceAccountTokenAddr]
+					if !ok {
+						return "", fmt.Errorf("resource %s not found in state", testAccServiceAccountTokenAddr)
+					}
+					return rs.Primary.Attributes["service_account_id"] + "/" + rs.Primary.ID, nil
+				},
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Drift check after import
 			{
 				Config: cfg,

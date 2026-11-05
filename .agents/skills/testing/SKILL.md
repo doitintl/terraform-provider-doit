@@ -280,6 +280,7 @@ All acceptance tests for resources should verify that re-applying the same confi
 | Main tests            | ✅ Required   | Update step catches drift from create |
 | Feature tests         | ✅ Required   | Feature-specific attributes           |
 | Import tests          | ❌ Not needed | Tests import, not drift               |
+| Import tests          | ✅ Generated config step | See [Generated Import Configuration](#generated-import-configuration) |
 | Validation/Disappears | ❌ Not needed | Tests error handling                  |
 
 ### Known API Issues
@@ -301,6 +302,7 @@ Every plan-first resource must have these test categories:
 | **Create + drift check**                | Create, then re-apply with `ExpectEmptyPlan()`                                                                                                                                      |
 | **Update + drift check**                | Create, modify, then re-apply with `ExpectEmptyPlan()`                                                                                                                              |
 | **Import + drift check**                | Create, import, then re-apply with `ExpectEmptyPlan()`                                                                                                                              |
+| **Import + generated config**           | Create, then an import block with `-generate-config-out` (`ImportBlockWithID` + `GenerateConfig`); the generated configuration must validate and plan as a no-op import |
 | **Omitted Optional+Computed**           | Omit each field, verify no drift after API assigns defaults                                                                                                                         |
 | **null↔[] consistency (non-clearable)** | Omit list fields, assert `ListSizeExact(0)` on Create AND drift-check                                                                                                               |
 | **null↔[] consistency (clearable)**     | Omit clearable list fields, assert `knownvalue.ListExact([]knownvalue.Check{})` on Create AND drift-check                                                                           |
@@ -318,7 +320,44 @@ Templates from the attribution-report guard (`internal/provider/attribution_vali
 - `TestAccReport_OmittedDataSourceIsUnknownOnUpdate`: an omitted Optional+Computed attribute plans Unknown when another attribute changes.
 - `TestAccReport_IgnoredDataSourceKeepsStoredPlanValue`: with `lifecycle.ignore_changes`, the plan keeps the stored value while config says another.
 - `TestAccReport_PlanShapeOfOmittedOptionalComputed` (`report_plan_shape_test.go`): one resource, all four shapes (unchanged, unknown, schema `Default`, clearing modifier). `PreApply` plan checks cannot run with `PlanOnly`, so those steps apply.
+- Make a probe that asserts "the value is kept" able to fail: first check the tenant default differs from the value you store, and add a control resource created without the attribute. `TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate` first passed vacuously because the tenant default was the stored value.
 - Unit side: `TestReportResource_ModifyPlan_AttributionReportReadOnly` (`attribution_validator_internal_test.go`).
+
+---
+
+## Generated Import Configuration
+
+Every resource's happy-path import test ends with an import-block step that
+generates configuration. `terraform plan -generate-config-out` copies every
+Optional and Optional+Computed attribute from state into HCL, so a validator
+that rejects a value Read itself writes (an empty list, a default the API fills
+in) breaks generated configuration, and nothing else notices. #440 hit this:
+state held `attachments = []` for a commitment entry and the validator rejected
+the generated config.
+
+```go
+{
+    ResourceName:    "doit_x.this",
+    ImportState:     true,
+    ImportStateKind: resource.ImportBlockWithID,
+    GenerateConfig:  true,
+},
+```
+
+- Put it after the `ImportStateVerify` step. Copy that step's `ImportStateId` /
+  `ImportStateIdFunc` when the ID is not the plain `id`.
+- The step fails if the generated configuration does not validate or does not
+  plan as a no-op import. No `ImportStateVerify` is needed.
+- Use the test whose config sets the most Optional attributes (a group, not a
+  minimal single).
+- For a resource whose test imports a pre-existing object that the test config
+  already declares (`doit_customer`, `doit_asset`), append the step after the
+  existing import and drift checks, with the import ID and no
+  `ImportStatePersist`. After step 1 terraform-plugin-testing imports into
+  `<type>.generated` (`testing_new_import_state.go`), so it does not clash with
+  the declaration.
+- A failure means fix the validator or schema to accept what Read writes, and
+  add a unit case for it; do not weaken the step.
 
 ---
 
@@ -479,6 +518,7 @@ func getAlertCount(t *testing.T) int {
 
 - [ ] Use `resource.ParallelTest()`
 - [ ] Add drift verification step (`ExpectEmptyPlan()`)
+- [ ] Add the `GenerateConfig` import-block step to the import test
 - [ ] Cover empty lists and omitted attributes
 - [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks
 - [ ] Use unique resource names

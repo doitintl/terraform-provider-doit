@@ -356,6 +356,55 @@ func TestBudgetCollaboratorsOwnerValidator(t *testing.T) {
 	}
 }
 
+// The API rejects a collaborator without a role ("invalid role"), although the
+// schema marks role Optional+Computed. Omitting it must fail at plan time, and a
+// role that is not known yet must be deferred.
+func TestBudgetCollaboratorsRoleValidator(t *testing.T) {
+	ctx := t.Context()
+	elementType := resource_budget.CollaboratorsValue{}.Type(ctx)
+	owner := newTestBudgetCollaborator(ctx, types.StringValue("owner"))
+	viewer := newTestBudgetCollaborator(ctx, types.StringValue("viewer"))
+	unknownRole := newTestBudgetCollaborator(ctx, types.StringUnknown())
+	nullRole := newTestBudgetCollaborator(ctx, types.StringNull())
+
+	list := func(values ...attr.Value) types.List {
+		return types.ListValueMust(elementType, values)
+	}
+
+	tests := []struct {
+		name          string
+		collaborators types.List
+		wantError     bool
+	}{
+		{name: "null list is skipped", collaborators: types.ListNull(elementType)},
+		{name: "unknown list is deferred", collaborators: types.ListUnknown(elementType)},
+		{name: "unknown element is deferred", collaborators: list(resource_budget.NewCollaboratorsValueUnknown())},
+		{name: "unknown role is deferred", collaborators: list(owner, unknownRole)},
+		{name: "all roles set passes", collaborators: list(owner, viewer)},
+		{name: "null role fails", collaborators: list(owner, nullRole), wantError: true},
+		{name: "null role listed first fails", collaborators: list(nullRole, owner), wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := buildBudgetValidatorConfig(ctx, t, map[string]attr.Value{
+				"collaborators": tt.collaborators,
+			})
+			resp := &resource.ValidateConfigResponse{}
+			budgetCollaboratorsRoleValidator{}.ValidateResource(ctx, resource.ValidateConfigRequest{Config: config}, resp)
+
+			if got := resp.Diagnostics.HasError(); got != tt.wantError {
+				t.Fatalf("HasError() = %v, want %v (diagnostics: %v)", got, tt.wantError, resp.Diagnostics)
+			}
+			wantPath := path.Root("collaborators").AtListIndex(1)
+			if tt.name == "null role listed first fails" {
+				wantPath = path.Root("collaborators").AtListIndex(0)
+			}
+			assertBudgetValidatorDiagnostics(t, resp.Diagnostics, tt.wantError, "Collaborator Role Required", wantPath.AtName("role"))
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // TestBudgetScopeNAValidator — unknown element handling
 // ---------------------------------------------------------------------------

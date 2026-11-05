@@ -288,6 +288,14 @@ func TestAccServiceAccount_Import(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"etag"},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_service_account.this",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Step 3: Drift check after import
 			{
 				Config: testAccServiceAccountConfig(rName, "Import test account", `["budgetsReadOnly", "budgetsManager"]`),

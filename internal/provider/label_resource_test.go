@@ -100,6 +100,14 @@ func TestAccLabel_Import(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_label.this",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Step 3: Drift check — re-apply config after import, expect no changes.
 			{
 				Config: testAccLabel(rName),

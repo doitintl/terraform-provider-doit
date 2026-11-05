@@ -214,8 +214,11 @@ func TestToExternalConfigWrite_NullPlanSerialization(t *testing.T) {
 	if err := json.Unmarshal(gotJSON, &got); err != nil {
 		t.Fatalf("unmarshal write config: %v", err)
 	}
-	if count, ok := got["count"]; !ok || string(count) != "null" {
-		t.Errorf("count: want an explicit JSON null, got %q (present=%v)", count, ok)
+	// Nullable objects send an explicit null so the PATCH merge clears the stored value.
+	for _, key := range []string{"count", "customTimeRange", "limitByChange", "metricFilter", "forecastSettings"} {
+		if raw, ok := got[key]; !ok || string(raw) != "null" {
+			t.Errorf("%s: want an explicit JSON null, got %q (present=%v)", key, raw, ok)
+		}
 	}
 	var filters []map[string]json.RawMessage
 	if err := json.Unmarshal(got["filters"], &filters); err != nil || len(filters) != 1 {
@@ -223,5 +226,43 @@ func TestToExternalConfigWrite_NullPlanSerialization(t *testing.T) {
 	}
 	if mode, ok := filters[0]["mode"]; ok {
 		t.Errorf("filter mode: want it omitted from the request, got %s", mode)
+	}
+}
+
+// An omitted data_source plans unknown on update and the request leaves it out,
+// which the API resets to the tenant default. The update request therefore has
+// to carry the stored value when the plan has none.
+func TestReportModelWithStoredDataSource(t *testing.T) {
+	ctx := t.Context()
+
+	model := func(dataSource types.String) reportResourceModel {
+		cfgMap := validCumulativeComparisonConfigMap(ctx, t)
+		cfgMap["data_source"] = dataSource
+		cfg, diags := resource_report.NewConfigValue(resource_report.ConfigValue{}.AttributeTypes(ctx), cfgMap)
+		if diags.HasError() {
+			t.Fatalf("NewConfigValue: %v", diags)
+		}
+		return reportResourceModel{Config: cfg}
+	}
+
+	tests := []struct {
+		name  string
+		plan  types.String
+		state types.String
+		want  types.String
+	}{
+		{name: "unknown plan takes the stored value", plan: types.StringUnknown(), state: types.StringValue("billing"), want: types.StringValue("billing")},
+		{name: "known plan wins", plan: types.StringValue("bqlens"), state: types.StringValue("billing"), want: types.StringValue("bqlens")},
+		{name: "unknown plan with no stored value stays unknown", plan: types.StringUnknown(), state: types.StringNull(), want: types.StringUnknown()},
+		{name: "null plan stays null", plan: types.StringNull(), state: types.StringValue("billing"), want: types.StringNull()},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := model(tt.plan).withStoredDataSource(model(tt.state))
+			if !got.Config.DataSource.Equal(tt.want) {
+				t.Errorf("data_source = %s, want %s", got.Config.DataSource, tt.want)
+			}
+		})
 	}
 }

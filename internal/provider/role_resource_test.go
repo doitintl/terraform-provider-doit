@@ -259,6 +259,14 @@ func TestAccRole_Import(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"timeouts"},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    roleResourceAddr,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Step 3: Drift check after import
 			{
 				Config: testAccRoleConfig(rName, "Import test role", rolePermsTwo),

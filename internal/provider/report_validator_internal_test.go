@@ -1158,6 +1158,39 @@ func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
 	}
 }
 
+// TestReportResource_ModifyPlan_CumulativeComparisonOmittedSecondaryTimeRange builds the
+// plan an update really produces: the stored report has no secondary_time_range, config
+// omits it, and the plan holds it as unknown (pinned by
+// TestAccReport_PlanShapeOfOmittedOptionalComputed). Moving the report to
+// cumulative_comparison must still fail at plan time instead of at the API.
+func TestReportResource_ModifyPlan_CumulativeComparisonOmittedSecondaryTimeRange(t *testing.T) {
+	ctx := t.Context()
+	stateMap := validCumulativeComparisonConfigMap(ctx, t)
+	stateMap["layout"] = types.StringValue("table")
+	stateMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	planMap := validCumulativeComparisonConfigMap(ctx, t)
+	planMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueUnknown()
+
+	configMap := validCumulativeComparisonConfigMap(ctx, t)
+	configMap["secondary_time_range"] = resource_report.NewSecondaryTimeRangeValueNull()
+
+	req := resource.ModifyPlanRequest{
+		State:  tfsdk.State(buildReportConfigWithMap(ctx, t, stateMap)),
+		Plan:   tfsdk.Plan(buildReportConfigWithMap(ctx, t, planMap)),
+		Config: buildReportConfigWithMap(ctx, t, configMap),
+	}
+	resp := &resource.ModifyPlanResponse{}
+	(&reportResource{}).ModifyPlan(ctx, req, resp)
+
+	for _, d := range resp.Diagnostics.Errors() {
+		if d.Summary() == "Missing Secondary Time Range" {
+			return
+		}
+	}
+	t.Fatalf("expected 'Missing Secondary Time Range', got: %v", resp.Diagnostics)
+}
+
 // TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred asserts that an explicitly
 // unknown planned layout (e.g. from a dynamic expression in HCL) defers validation
 // rather than substituting the prior state's layout, so transitions away from cumulative_comparison

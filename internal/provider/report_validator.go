@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
@@ -672,6 +673,37 @@ func (v reportCumulativeComparisonDataSourceValidator) ValidateDataSource(ctx co
 // allowing shared validation logic to run both in ConfigValidators and ModifyPlan.
 type attributeGetter interface {
 	GetAttribute(ctx context.Context, path path.Path, target any) diag.Diagnostics
+}
+
+// plannedOrStoredGetter reads the proposed value of an attribute on update. The
+// framework plans an omitted Optional+Computed attribute as unknown whenever
+// another attribute changes, even though the API keeps the stored value. So an
+// unknown planned value is resolved to the stored one when config omits the
+// attribute. A null planned value (a deliberate clear) and an unknown config
+// value (decided at apply) are left alone.
+type plannedOrStoredGetter struct {
+	plan, config, state attributeGetter
+}
+
+func (g plannedOrStoredGetter) GetAttribute(ctx context.Context, p path.Path, target any) diag.Diagnostics {
+	diags := g.plan.GetAttribute(ctx, p, target)
+	if diags.HasError() {
+		return diags
+	}
+	planned, ok := target.(attr.Value)
+	if !ok || !planned.IsUnknown() {
+		return diags
+	}
+	configured, ok := reflect.TypeAssert[attr.Value](reflect.New(reflect.TypeOf(target).Elem()))
+	if !ok {
+		return diags
+	}
+	diags.Append(g.config.GetAttribute(ctx, p, configured)...)
+	if diags.HasError() || !configured.IsNull() {
+		return diags
+	}
+	diags.Append(g.state.GetAttribute(ctx, p, target)...)
+	return diags
 }
 
 // validateReportCumulativeComparison is the shared validation logic for both the

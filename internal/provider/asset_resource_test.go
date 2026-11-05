@@ -53,6 +53,17 @@ func TestAccAssetResource_Import(t *testing.T) {
 					},
 				},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change. After step 1
+			// the framework imports into doit_asset.generated, so it does not
+			// clash with the declaration in the test config.
+			{
+				ResourceName:    "doit_asset.test",
+				ImportState:     true,
+				ImportStateId:   assetID,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }
@@ -86,6 +97,17 @@ func TestAccAssetResource_ImportAWS(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_asset.test", "id", assetID),
 					resource.TestCheckResourceAttr("doit_asset.test", "type", "amazon-web-services"),
 				),
+			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change. After step 1
+			// the framework imports into doit_asset.generated, so it does not
+			// clash with the declaration in the test config.
+			{
+				ResourceName:    "doit_asset.test",
+				ImportState:     true,
+				ImportStateId:   assetID,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
 			},
 		},
 	})

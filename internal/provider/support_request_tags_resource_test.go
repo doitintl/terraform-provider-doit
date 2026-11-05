@@ -143,6 +143,14 @@ func TestAccSupportRequestTags_Import(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_support_request_tags.test",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Re-apply after import to reconcile tags, then verify no drift
 			{
 				Config: testAccSupportRequestTagsConfig([]string{"tf-test-import"}),

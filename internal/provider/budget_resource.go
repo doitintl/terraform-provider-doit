@@ -165,6 +165,7 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		budgetAlertsLengthValidator{},
 		budgetRecipientsMinLengthValidator{},
 		budgetCollaboratorsOwnerValidator{},
+		budgetCollaboratorsRoleValidator{},
 		budgetSlackChannelsValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		budgetScopeNAValidator{},
