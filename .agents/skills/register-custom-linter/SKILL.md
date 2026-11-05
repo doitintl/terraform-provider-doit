@@ -13,6 +13,9 @@ This skill covers the **three registration steps** needed after creating a new a
 - It exports `var Analyzer = &analysis.Analyzer{Name: "<name>", ...}`
 - Its tests pass: `cd tools/linters && go test ./<name>/... -v`
 
+> [!CAUTION]
+> **Use `-count=1` when you change only `testdata/`.** `go test` does not see edits to the fixture files that `analysistest` loads, so it can report `(cached)` and pass against stale fixtures. Run `cd tools/linters && go test -count=1 ./<name>/...` after adding or editing a fixture (this is separate from the golangci-lint cache in Step 4).
+
 ## Step 1: Register in `plugin.go`
 
 File: `tools/linters/plugin.go`

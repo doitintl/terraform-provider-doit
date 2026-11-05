@@ -24,6 +24,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/setnestedplan"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/structliteral"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/testserver"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/tftypesalias"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/timeoutcheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/unknownguard"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/usestatefunknown"
@@ -78,6 +79,9 @@ func init() {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{read404.Analyzer}}, nil
 	})
 
+	register.Plugin("tftypesalias", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{tftypesalias.Analyzer}}, nil
+	})
 	register.Plugin("setnestedplan", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{setnestedplan.Analyzer}}, nil
 	})
