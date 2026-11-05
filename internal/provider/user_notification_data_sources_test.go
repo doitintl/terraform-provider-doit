@@ -318,9 +318,13 @@ func TestAccUserNotificationDataSource_CopySettingsTypesToAnotherUser(t *testing
 		Steps: []resource.TestStep{
 			{
 				Config: config,
+				// Exact checks: a zero ".%" or ".#" count also passes when the
+				// attribute is null.
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccUserNotificationCopyAddr, testAccUserNotificationSettingsPath("credit_utilization"), knownvalue.ObjectExact(map[string]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccUserNotificationCopyAddr, testAccUserNotificationSettingsPath("new_invoices", "billing_profile_ids"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.credit_utilization.%", "0"),
-					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.new_invoices.billing_profile_ids.#", "0"),
 					resource.TestCheckResourceAttrPair(testAccUserNotificationCopyAddr, "settings.daily_digest.allocation_ids.0", "doit_allocation.a", "id"),
 					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.insights.severities.0", "critical"),
 					resource.TestCheckNoResourceAttr(testAccUserNotificationCopyAddr, "settings.cost_anomalies.min_severity"),

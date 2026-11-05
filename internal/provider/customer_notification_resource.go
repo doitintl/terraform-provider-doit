@@ -26,6 +26,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*customerNotificationResource)(nil)
 	_ resource.ResourceWithImportState      = (*customerNotificationResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*customerNotificationResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*customerNotificationResource)(nil)
 )
 
 // NewCustomerNotificationResource creates a new customer notification resource instance.
@@ -58,6 +59,10 @@ func (r *customerNotificationResource) Metadata(_ context.Context, req resource.
 // ImportState imports a notification by its ID.
 func (r *customerNotificationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func (r *customerNotificationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planNotificationMetadataUnknownOnUpdate(ctx, req, resp)
 }
 
 func (r *customerNotificationResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {

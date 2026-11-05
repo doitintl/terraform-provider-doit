@@ -128,7 +128,7 @@ func TestMapUserNotificationToDataSource_SettingsTypes(t *testing.T) {
 		t.Fatalf("unexpected diagnostics: %v", diags)
 	}
 
-	if data.Settings.CostAnomalies.IsNull() != true {
+	if !data.Settings.CostAnomalies.IsNull() {
 		t.Errorf("cost_anomalies = %s, want null", data.Settings.CostAnomalies)
 	}
 	if data.Settings.CreditUtilization.IsNull() || data.Settings.CreditUtilization.IsUnknown() {

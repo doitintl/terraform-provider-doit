@@ -30,6 +30,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*userNotificationResource)(nil)
 	_ resource.ResourceWithImportState      = (*userNotificationResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*userNotificationResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*userNotificationResource)(nil)
 )
 
 // NewUserNotificationResource creates a new user notification resource instance.
@@ -74,6 +75,10 @@ func (r *userNotificationResource) ImportState(ctx context.Context, req resource
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("user_id"), parts[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), parts[1])...)
+}
+
+func (r *userNotificationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planNotificationMetadataUnknownOnUpdate(ctx, req, resp)
 }
 
 func (r *userNotificationResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
