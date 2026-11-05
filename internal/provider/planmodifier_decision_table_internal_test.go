@@ -229,12 +229,13 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 	}{
 		{name: "forecast_settings configured", configValue: vsKnown, configForecast: boolValue(true), planForecast: boolValue(true), want: wantAsPlan},
 		{name: "forecast_settings unknown", configValue: vsUnknown, configForecast: boolValue(true), planForecast: boolValue(true), want: wantUnknown},
-		{name: "forecast omitted", configValue: vsNull, configForecast: nullBool, planForecast: nullBool, want: wantNull},
-		{name: "forecast omitted, plan unknown", configValue: vsNull, configForecast: nullBool, planForecast: unknownBool, want: wantNull},
+		// Omitted in the config, the plan still holds the stored forecast
+		// (TestAccReport_PlanShapeOfForecastSettings, TestAccReport_ForecastSettingsWhenAdvancedAnalysisOmittedAfterForecastOn).
+		{name: "forecast omitted, stored false", configValue: vsNull, configForecast: nullBool, planForecast: boolValue(false), want: wantNull},
+		{name: "forecast omitted, stored true", configValue: vsNull, configForecast: nullBool, planForecast: boolValue(true), want: wantNull},
 		{name: "forecast true", configValue: vsNull, configForecast: boolValue(true), planForecast: boolValue(true), want: wantTotals},
 		{name: "forecast false", configValue: vsNull, configForecast: boolValue(false), planForecast: boolValue(false), want: wantNull},
 		{name: "forecast unknown in config and plan", configValue: vsNull, configForecast: unknownBool, planForecast: unknownBool, want: wantUnknown},
-		{name: "forecast known in config, plan null", configValue: vsNull, configForecast: boolValue(true), planForecast: nullBool, want: wantNull},
 		{name: "forecast attribute missing from the config schema", configValue: vsNull, missingPath: true, want: wantNull},
 	}
 
