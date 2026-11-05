@@ -2,6 +2,7 @@
 package linters
 
 import (
+	"github.com/doitintl/terraform-provider-doit/tools/linters/attrswitch"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/clearableattr"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/configuretype"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/constructor"
@@ -48,6 +49,10 @@ func (p *analyzerPlugin) GetLoadMode() string {
 }
 
 func init() {
+	register.Plugin("attrswitch", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{attrswitch.Analyzer}}, nil
+	})
+
 	register.Plugin("diagsuppressed", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{diagsuppressed.Analyzer}}, nil
 	})

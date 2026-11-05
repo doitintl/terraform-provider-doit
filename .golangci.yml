@@ -56,6 +56,7 @@ linters:
     - clearableattr
     - validatorshape
     - validatordefer
+    - attrswitch
     - modernize
   exclusions:
     generated: lax
@@ -111,6 +112,7 @@ linters:
           - clearableattr
           - validatorshape
           - validatordefer
+          - attrswitch
           - modernize
       # Test files — exclude custom linters. paralleltest, retrypolicy and
       # testserver are absent deliberately: they only apply to tests.
@@ -139,6 +141,7 @@ linters:
           - clearableattr
           - validatorshape
           - validatordefer
+          - attrswitch
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -226,6 +229,9 @@ linters:
       read404:
         type: "module"
         description: "Ensures resource Read methods call RemoveResource for externally deleted resources."
+      attrswitch:
+        type: "module"
+        description: "Requires type switches over schema.Attribute to handle every nested kind and every kind with the field they read."
       tftypesalias:
         type: "module"
         description: "Reports writes to the maps and slices returned by tftypes.Value.As, which are the value's own."
