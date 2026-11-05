@@ -43,7 +43,11 @@ func (m useNullOrDefaultForForecastSettingsModifier) MarkdownDescription(ctx con
 func (m useNullOrDefaultForForecastSettingsModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
 	if req.ConfigValue.IsNull() {
 		var configForecast types.Bool
-		_ = req.Config.GetAttribute(ctx, path.Root("config").AtName("advanced_analysis").AtName("forecast"), &configForecast)
+		configDiags := req.Config.GetAttribute(ctx, path.Root("config").AtName("advanced_analysis").AtName("forecast"), &configForecast)
+		resp.Diagnostics.Append(configDiags...)
+		if configDiags.HasError() {
+			return
+		}
 
 		if configForecast.IsNull() {
 			resp.PlanValue = req.ConfigValue

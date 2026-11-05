@@ -46,6 +46,16 @@ func badSuppressedDiagShortAssign() {
 	_ = list
 }
 
+func badSuppressedSingleReturn() {
+	var list ListValue
+	_ = list.elementsAs(nil) // want "diag.Diagnostics return value must not be suppressed"
+}
+
+func badSuppressedSingleReturnAssign() {
+	var diags diag.Diagnostics
+	_ = diags // want "diag.Diagnostics return value must not be suppressed"
+}
+
 // --- BAD: discarded bare call (return value dropped entirely) ---
 
 func badDiscardedSingleReturn() {
@@ -87,6 +97,12 @@ func okBlankNonDiag() {
 
 func okBlankTwoStrings() {
 	_, _ = twoStrings() // Two strings, not diagnostics.
+}
+
+func okBlankCommaOk() {
+	m := map[string]diag.Diagnostics{}
+	_, ok := m["k"] // Comma-ok form: the blank is a map value, not a call result.
+	_ = ok
 }
 
 // --- NOT flagged: bare calls that do not return diagnostics ---
