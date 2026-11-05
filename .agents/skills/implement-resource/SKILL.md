@@ -371,7 +371,7 @@ A modifier runs for every plan, and for an omitted Optional+Computed attribute w
 2. **What omitting means:** clear (null or `[]`), keep the stored value, reset to a default, or defer (unknown). `useNullOrDefaultForForecastSettings` resets: with forecast on, dropping `forecast_settings` plans the default object even though the plan held the stored settings. Say it in `Description()`.
 3. **Act only on a null config value.** Return early for a configured or unknown value so what the user set, and an unknown reference, reach the plan unchanged.
 4. **Read siblings from the config first, then the plan.** The config tells whether the user omitted the sibling; the plan tells what it resolves to. Append the diagnostics of every `GetAttribute` to `resp.Diagnostics` and return on error. Never write `_ = req.Config.GetAttribute(...)`: a path that stops existing then turns into a silent null instead of an error. (`diagsuppressed` catches `x, _ :=` and bare calls; check the single-value `_ =` form by eye.)
-5. **Confirm it fires.** Plan modifiers on children of an unknown object, or on custom-typed parents like `config.*`, do not run (see `report.go`, Category C below). Pin the plan shape with an acceptance test before relying on the modifier.
+5. **Know when it does not run.** The framework (v1.19.0, `AttributeModifyPlan` in `internal/fwserver/attribute_plan_modification.go`) runs the modifiers of nested attributes only when the planned parent is known and not null: "Null and unknown values should not have nested schema to modify". A custom-typed parent such as `config.*` does not stop it, since known objects are converted with `ValueFromObject` and their children are walked. So a modifier on `config.count` fires when `config` is known, and not when the whole `config` block is omitted (its plan is unknown), which is why `report.go` fills such children in the overlay. Pin the plan shape with an acceptance test for the case you rely on.
 6. **Keep the other layers in step.** The overlay, the Read mapping and the request builder must agree with the value the modifier plans (`useEmptyForUnconfiguredMetricsMirror` and `mapReportToModel`, the clearing table above).
 7. **Name it for what it does.** `clearableattr` classifies attributes by modifier names of the form `use{Empty,Null}ForUnknown*WhenConfigNull` as Category A. A modifier that clears nothing server-side (the metrics mirror) must not use such a name.
 
@@ -419,8 +419,10 @@ pointer just omits it), so the stored value always survives. Leaving such an att
 as Category B (prior state sticks) is wrong when removal must actually take effect, or
 when prior-state does **not** stick cleanly — **some** (not all) **nested**
 Optional+Computed objects are re-marked "known after apply" whenever they are absent
-from config, causing perpetual drift. (A nested `objectplanmodifier` cannot fix this:
-object plan modifiers on custom-typed parents like `config.*` do not fire.) Whether a
+from config, causing perpetual drift. (Whether a nested `objectplanmodifier` can fix this depends on the parent: the
+framework runs it only while the parent object's plan is known and not null, so it
+does not run when the whole `config` block is omitted, and it does run for a known
+`config`, custom-typed or not. Test the case before choosing Category C.) Whether a
 given nested object actually drifts must be **verified empirically** — many are silently
 preserved and are correctly handled as Category B (see below).
 
