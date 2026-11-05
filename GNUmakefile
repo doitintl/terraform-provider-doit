@@ -77,7 +77,7 @@ fmt:
 # .envrc.local is loaded in the developer's shell.
 test:
 	TF_ACC= DOIT_API_TOKEN= DOIT_HOST= DOIT_CUSTOMER_CONTEXT= DOIT_REQUEST_TIMEOUT= \
-	go test -v -cover -timeout=120s -parallel=10 ./...
+	go test -v -cover -timeout=120s -parallel=10 -count=3 -shuffle=on ./...
 
 # gotestsum wraps `go test` and automatically reruns individual failed tests,
 # which tames acceptance-test flakiness caused by the upstream API. Pinned and
