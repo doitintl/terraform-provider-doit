@@ -8,7 +8,7 @@
 // modifier plans an update with the stored etag still known. State then keeps
 // the old etag after apply, and the next update without a refresh sends a
 // stale If-Match and fails with 412. The resource's ModifyPlan method must
-// call planVolatileAttributesUnknownOnUpdate.
+// call planVolatileAttributesUnknownOnUpdate with path.Root("etag").
 //
 // Only etag is checked: a stale timestamp such as update_time is replaced by
 // the next Read, so it does not break the next update.
@@ -16,6 +16,8 @@ package volatileplan
 
 import (
 	"go/ast"
+	"go/token"
+	"slices"
 	"strings"
 
 	"github.com/doitintl/terraform-provider-doit/tools/linters/schemaparser"
@@ -121,18 +123,35 @@ func usesClearingModifier(body *ast.BlockStmt) bool {
 	return found
 }
 
-// callsHelper reports whether a method body calls planVolatileAttributesUnknownOnUpdate.
+// callsHelper reports whether a method body calls
+// planVolatileAttributesUnknownOnUpdate with path.Root("etag") among its paths.
 func callsHelper(body *ast.BlockStmt) bool {
 	found := false
 	ast.Inspect(body, func(n ast.Node) bool {
-		if call, ok := n.(*ast.CallExpr); ok {
-			if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == helperName {
-				found = true
-			}
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return !found
+		}
+		if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == helperName && slices.ContainsFunc(call.Args, isRootEtag) {
+			found = true
 		}
 		return !found
 	})
 	return found
+}
+
+// isRootEtag reports whether expr is the call path.Root("etag").
+func isRootEtag(expr ast.Expr) bool {
+	call, ok := expr.(*ast.CallExpr)
+	if !ok || len(call.Args) != 1 {
+		return false
+	}
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || sel.Sel.Name != "Root" {
+		return false
+	}
+	lit, ok := call.Args[0].(*ast.BasicLit)
+	return ok && lit.Kind == token.STRING && lit.Value == `"etag"`
 }
 
 // receiverTypeName returns the receiver type name of a method, unwrapping a
