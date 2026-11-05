@@ -11815,6 +11815,520 @@
 			}
 		},
 		{
+			"name": "customer_subscription",
+			"schema": {
+				"attributes": [
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Subscription id returned by list or create. Ids are independent ids of a scheduled subscription, an alert, or a budget. The server looks up a scheduled subscription, then an alert, then a budget. An id found in more than one of those collections is `409` `customers.subscription_id_ambiguous`. That is an invariant breach. There is no second identifier to send, and a client cannot disambiguate it. Auto-generated ids do not collide.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthAtLeast(1)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "created_by",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Email address of the subscription creator. On create, the caller."
+						}
+					},
+					{
+						"name": "etag",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Opaque version token for optimistic concurrency. 64 lowercase hex characters when set. The response `ETag` header is this value wrapped in double quotes. Send `If-Match: \"\u003cetag\u003e\"`. `null` only on a dry-run create. It only covers fields this API can write."
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "computed",
+							"description": "Display name. For a scheduled subscription, `{source name}` plus `(Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, from the nested type that sorts first. For an alert or a budget, the source name."
+						}
+					},
+					{
+						"name": "recipients",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "emails",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Email destinations in stored order. Reads return each address trimmed and lowercase. Addresses must belong to the organization's approved domains and must be a user or a pending invite. `doit.com` and `doit-intl.com` pass the domain check. A blank email, an email with no domain, or a domain the tenant does not allow is refused with `422` and code `DOMAIN_NOT_APPROVED`. An email that is not a user or a pending invite is refused with `422` and code `NOT_INVITED_USER`. The same email twice, ignoring case, is refused with `422` and code `customers.duplicate_recipient`. An address already stored, and still present, is not checked again."
+									}
+								},
+								{
+									"name": "slack_channels",
+									"list": {
+										"computed_optional_required": "computed",
+										"element_type": {
+											"string": {}
+										},
+										"description": "Slack channel ids in stored order. Reads return the public id. Ids are compared exactly after trim. A duplicate id is refused with `422` and code `customers.duplicate_recipient`. A blank or unconnected id is refused with `422` and code `SLACK_CHANNEL_NOT_CONNECTED`. This API does not list eligible channels."
+									}
+								}
+							],
+							"description": "Delivery targets shared by every nested subscription on this item."
+						}
+					},
+					{
+						"name": "subscriptions",
+						"set_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "attachments",
+										"list": {
+											"computed_optional_required": "computed",
+											"element_type": {
+												"string": {}
+											},
+											"description": "Files to attach to the report subscription email. Present only for `report-subscription`. Always an array on read. Empty means no file. Rejected on any other type with `422`."
+										}
+									},
+									{
+										"name": "pdf_settings",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "include_annotations",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Include annotations in the PDF time range."
+													}
+												},
+												{
+													"name": "include_table",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Include the data table in the PDF."
+													}
+												},
+												{
+													"name": "show_filters",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Include the report filters summary in the PDF."
+													}
+												}
+											],
+											"description": "PDF rendering options. Present only for `report-subscription`. Always present on a report read. Rejected on any other type with `422`."
+										}
+									},
+									{
+										"name": "permissions",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "can_delete",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the caller may delete this subscription. Always `false` for an alert or a budget."
+													}
+												},
+												{
+													"name": "can_edit_recipients",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the caller may replace recipients."
+													}
+												},
+												{
+													"name": "can_unsubscribe",
+													"bool": {
+														"computed_optional_required": "computed",
+														"description": "Whether the caller may remove their own recipient email."
+													}
+												}
+											],
+											"description": "Actions the authenticated caller may perform on this nested subscription."
+										}
+									},
+									{
+										"name": "schedule",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "custom_period_amount",
+													"int64": {
+														"computed_optional_required": "computed",
+														"description": "Number of `customPeriodUnit` between deliveries. Present only when `frequency` is `Custom`. At least 1."
+													}
+												},
+												{
+													"name": "custom_period_unit",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Unit for `customPeriodAmount`. Present only when `frequency` is `Custom`."
+													}
+												},
+												{
+													"name": "frequency",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Console delivery frequency."
+													}
+												},
+												{
+													"name": "next_at",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Next calculated delivery, returned as UTC RFC3339 (`Z`). The server sets it. A schedule change recalculates it."
+													}
+												},
+												{
+													"name": "start_date",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "When this schedule starts. The start day is the calendar date of this instant in `timeZone`, not its UTC date. To start on 2026-11-03 in `America/Los_Angeles`, send `2026-11-03T00:00:00-08:00` (`2026-11-03T08:00:00Z`). A read returns the stored instant as UTC RFC3339 (`Z`)."
+													}
+												},
+												{
+													"name": "time",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Stored instant of the delivery clock, returned as UTC RFC3339 (`Z`). An offset in the request is not preserved. `2026-10-23T10:00:00+02:00` is returned as `2026-10-23T08:00:00Z`. The calendar date is the date of that instant. It is stored and returned, and it is not the subscription start date. Deliveries use only the hour and minute of that instant, interpreted in `timeZone`. Sending `time` already in `Z` makes the next read match the sent date and clock."
+													}
+												},
+												{
+													"name": "time_zone",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "IANA time zone used to calculate deliveries."
+													}
+												}
+											],
+											"description": "Delivery schedule. Omitted for an alert or a budget. Never `null`."
+										}
+									},
+									{
+										"name": "source",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "id",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "ID of the dashboard, report, commitment, alert, or budget. Writable on create and on a patch of a scheduled subscription. On an alert or a budget it is the resource id. Report ids come from `GET /analytics/v1/reports` and `GET /analytics/v1/reports/{id}`. Commitment ids come from `GET /analytics/v1/commitment-manager` and `GET /analytics/v1/commitment-manager/{id}`."
+													}
+												},
+												{
+													"name": "name",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "Display name of the source resource."
+													}
+												}
+											],
+											"description": "Source resource for this nested subscription."
+										}
+									},
+									{
+										"name": "type",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Kind of nested subscription."
+										}
+									}
+								]
+							},
+							"description": "Nested subscriptions ordered by `type` ascending. The server sorts them. One entry per visible type. A scheduled subscription has one, two, or three scheduled types. An alert or a budget has exactly one entry."
+						}
+					}
+				],
+				"description": "Create, view, update, and delete dashboard, report, commitment, alert, and budget subscriptions. This is not Organization-wide notifications.",
+				"markdown_description": "Create, view, update, and delete dashboard, report, commitment, alert, and budget subscriptions. This is not Organization-wide notifications."
+			}
+		},
+		{
+			"name": "customer_subscriptions",
+			"schema": {
+				"attributes": [
+					{
+						"name": "max_results",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection."
+						}
+					},
+					{
+						"name": "page_token",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Page token, returned by a previous call, to request the next page of results"
+						}
+					},
+					{
+						"name": "items",
+						"list_nested": {
+							"computed_optional_required": "computed",
+							"nested_object": {
+								"attributes": [
+									{
+										"name": "created_by",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Email address of the subscription creator. On create, the caller."
+										}
+									},
+									{
+										"name": "etag",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Opaque version token for optimistic concurrency. 64 lowercase hex characters when set. The response `ETag` header is this value wrapped in double quotes. Send `If-Match: \"\u003cetag\u003e\"`. `null` only on a dry-run create. It only covers fields this API can write."
+										}
+									},
+									{
+										"name": "id",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Server-assigned subscription id. `null` only on a dry-run create."
+										}
+									},
+									{
+										"name": "name",
+										"string": {
+											"computed_optional_required": "computed",
+											"description": "Display name. For a scheduled subscription, `{source name}` plus `(Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, from the nested type that sorts first. For an alert or a budget, the source name."
+										}
+									},
+									{
+										"name": "recipients",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "emails",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Email destinations in stored order. Reads return each address trimmed and lowercase. Addresses must belong to the organization's approved domains and must be a user or a pending invite. `doit.com` and `doit-intl.com` pass the domain check. A blank email, an email with no domain, or a domain the tenant does not allow is refused with `422` and code `DOMAIN_NOT_APPROVED`. An email that is not a user or a pending invite is refused with `422` and code `NOT_INVITED_USER`. The same email twice, ignoring case, is refused with `422` and code `customers.duplicate_recipient`. An address already stored, and still present, is not checked again."
+													}
+												},
+												{
+													"name": "slack_channels",
+													"list": {
+														"computed_optional_required": "computed",
+														"element_type": {
+															"string": {}
+														},
+														"description": "Slack channel ids in stored order. Reads return the public id. Ids are compared exactly after trim. A duplicate id is refused with `422` and code `customers.duplicate_recipient`. A blank or unconnected id is refused with `422` and code `SLACK_CHANNEL_NOT_CONNECTED`. This API does not list eligible channels."
+													}
+												}
+											],
+											"description": "Delivery targets shared by every nested subscription on this item."
+										}
+									},
+									{
+										"name": "subscriptions",
+										"set_nested": {
+											"computed_optional_required": "computed",
+											"nested_object": {
+												"attributes": [
+													{
+														"name": "attachments",
+														"list": {
+															"computed_optional_required": "computed",
+															"element_type": {
+																"string": {}
+															},
+															"description": "Files to attach to the report subscription email. Present only for `report-subscription`. Always an array on read. Empty means no file. Rejected on any other type with `422`."
+														}
+													},
+													{
+														"name": "pdf_settings",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "include_annotations",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Include annotations in the PDF time range."
+																	}
+																},
+																{
+																	"name": "include_table",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Include the data table in the PDF."
+																	}
+																},
+																{
+																	"name": "show_filters",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Include the report filters summary in the PDF."
+																	}
+																}
+															],
+															"description": "PDF rendering options. Present only for `report-subscription`. Always present on a report read. Rejected on any other type with `422`."
+														}
+													},
+													{
+														"name": "permissions",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "can_delete",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Whether the caller may delete this subscription. Always `false` for an alert or a budget."
+																	}
+																},
+																{
+																	"name": "can_edit_recipients",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Whether the caller may replace recipients."
+																	}
+																},
+																{
+																	"name": "can_unsubscribe",
+																	"bool": {
+																		"computed_optional_required": "computed",
+																		"description": "Whether the caller may remove their own recipient email."
+																	}
+																}
+															],
+															"description": "Actions the authenticated caller may perform on this nested subscription."
+														}
+													},
+													{
+														"name": "schedule",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "custom_period_amount",
+																	"int64": {
+																		"computed_optional_required": "computed",
+																		"description": "Number of `customPeriodUnit` between deliveries. Present only when `frequency` is `Custom`. At least 1."
+																	}
+																},
+																{
+																	"name": "custom_period_unit",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Unit for `customPeriodAmount`. Present only when `frequency` is `Custom`."
+																	}
+																},
+																{
+																	"name": "frequency",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Console delivery frequency."
+																	}
+																},
+																{
+																	"name": "next_at",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Next calculated delivery, returned as UTC RFC3339 (`Z`). The server sets it. A schedule change recalculates it."
+																	}
+																},
+																{
+																	"name": "start_date",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "When this schedule starts. The start day is the calendar date of this instant in `timeZone`, not its UTC date. To start on 2026-11-03 in `America/Los_Angeles`, send `2026-11-03T00:00:00-08:00` (`2026-11-03T08:00:00Z`). A read returns the stored instant as UTC RFC3339 (`Z`)."
+																	}
+																},
+																{
+																	"name": "time",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Stored instant of the delivery clock, returned as UTC RFC3339 (`Z`). An offset in the request is not preserved. `2026-10-23T10:00:00+02:00` is returned as `2026-10-23T08:00:00Z`. The calendar date is the date of that instant. It is stored and returned, and it is not the subscription start date. Deliveries use only the hour and minute of that instant, interpreted in `timeZone`. Sending `time` already in `Z` makes the next read match the sent date and clock."
+																	}
+																},
+																{
+																	"name": "time_zone",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "IANA time zone used to calculate deliveries."
+																	}
+																}
+															],
+															"description": "Delivery schedule. Omitted for an alert or a budget. Never `null`."
+														}
+													},
+													{
+														"name": "source",
+														"single_nested": {
+															"computed_optional_required": "computed",
+															"attributes": [
+																{
+																	"name": "id",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "ID of the dashboard, report, commitment, alert, or budget. Writable on create and on a patch of a scheduled subscription. On an alert or a budget it is the resource id. Report ids come from `GET /analytics/v1/reports` and `GET /analytics/v1/reports/{id}`. Commitment ids come from `GET /analytics/v1/commitment-manager` and `GET /analytics/v1/commitment-manager/{id}`."
+																	}
+																},
+																{
+																	"name": "name",
+																	"string": {
+																		"computed_optional_required": "computed",
+																		"description": "Display name of the source resource."
+																	}
+																}
+															],
+															"description": "Source resource for this nested subscription."
+														}
+													},
+													{
+														"name": "type",
+														"string": {
+															"computed_optional_required": "computed",
+															"description": "Kind of nested subscription."
+														}
+													}
+												]
+											},
+											"description": "Nested subscriptions ordered by `type` ascending. The server sorts them. One entry per visible type. A scheduled subscription has one, two, or three scheduled types. An alert or a budget has exactly one entry."
+										}
+									}
+								]
+							},
+							"description": "Subscriptions ordered by `id` ascending."
+						}
+					},
+					{
+						"name": "row_count",
+						"int64": {
+							"computed_optional_required": "computed",
+							"description": "Total number of subscriptions visible to the caller. The same value is returned on every page."
+						}
+					}
+				],
+				"description": "Create, view, update, and delete dashboard, report, commitment, alert, and budget subscriptions. This is not Organization-wide notifications.",
+				"markdown_description": "Create, view, update, and delete dashboard, report, commitment, alert, and budget subscriptions. This is not Organization-wide notifications."
+			}
+		},
+		{
 			"name": "datahub_dataset",
 			"schema": {
 				"attributes": [

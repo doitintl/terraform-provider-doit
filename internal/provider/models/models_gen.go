@@ -9636,6 +9636,22 @@ type CustomerSubscriptionEntryPatch struct {
 // Example: Weekly
 type CustomerSubscriptionFrequency string
 
+// CustomerSubscriptionListResponse One page of visible subscriptions.
+//
+// Example: {"items":[],"rowCount":0}
+type CustomerSubscriptionListResponse struct {
+	// Items Subscriptions ordered by `id` ascending.
+	//
+	// Example: []
+	Items []CustomerSubscription `json:"items"`
+
+	// PageToken Pass as `pageToken` to fetch the next page. Absent when there are no more pages.
+	PageToken *string `json:"pageToken,omitempty"`
+
+	// RowCount Total number of subscriptions visible to the caller. The same value is returned on every page.
+	RowCount int64 `json:"rowCount"`
+}
+
 // CustomerSubscriptionPdfSettings PDF rendering options for a report subscription. Present on every `report-subscription` read. A missing stored object reads as all `true`. The flags apply only when `pdf` is in `attachments`. They may still be stored while PDF is off.
 //
 // Example: {"includeAnnotations":true,"includeTable":true,"showFilters":true}
@@ -14543,6 +14559,15 @@ type UpdateCustomerNotificationParams struct {
 	IdempotencyKey IdempotencyKeyRequired `json:"Idempotency-Key"`
 }
 
+// ListCustomerSubscriptionsParams defines parameters for ListCustomerSubscriptions.
+type ListCustomerSubscriptionsParams struct {
+	// MaxResults The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+	MaxResults *MaxResults `form:"maxResults,omitempty" json:"maxResults,omitempty"`
+
+	// PageToken Page token, returned by a previous call, to request the next page of results
+	PageToken *PageToken `form:"pageToken,omitempty" json:"pageToken,omitempty"`
+}
+
 // CreateCustomerSubscriptionParams defines parameters for CreateCustomerSubscription.
 type CreateCustomerSubscriptionParams struct {
 	// DryRun If true, validates the request and returns the would-be result without applying it. The response then carries the X-Dry-Run header.
@@ -17127,6 +17152,16 @@ type ClientInterface interface {
 	//
 	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 	UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCustomerSubscriptions List subscriptions
+	//
+	// Lists dashboard, report, commitment, alert, and budget subscriptions visible to the caller. Items are ordered by `id` ascending. Nested `subscriptions` are ordered by `type` ascending. `maxResults` defaults to 50. An omitted value, `0`, or a value above 500 is treated as 50. A non-integer `maxResults` is `400`. Pass the response `pageToken` to request the next page. That field is absent when there are no more pages. A `pageToken` that matches no id is `400`. `rowCount` is the total number of subscriptions visible to the caller. That value is the same on every page.
+	// One subscription record is one item. Its dashboard, report, and commitment subscriptions are nested entries that share `recipients`. An alert is one item. A budget is one item. An alert or a budget never shares an item with a scheduled subscription. Draft budgets are omitted. An alert is included only when the tenant has the Governance Alerts entitlement and the caller can view that alert. When the entitlement is missing or cannot be confirmed, the list contains no alerts. An alert with no recipients is still included.
+	// One id namespace is shared by a scheduled subscription, an alert, and a budget. Create accepts only `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Those scheduled types are the resource: create, recipient replace, subscription-set replace, and delete. GET returns alerts and budgets so a caller can see who receives them. Create, delete, and full management of those resources, including recipients, stay on `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. PATCH on this API may replace those same recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// Manage Settings users can view every subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. A caller who can see only some nested subscriptions still receives that record; `subscriptions` omits the entries they cannot see.
+	//
+	// Corresponds with GET /customers/v1/subscriptions (the `ListCustomerSubscriptions` operationId).
+	ListCustomerSubscriptions(ctx context.Context, params *ListCustomerSubscriptionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateCustomerSubscriptionWithBody Create a subscription
 	//
@@ -20441,6 +20476,26 @@ func (c *Client) UpdateCustomerNotificationWithBody(ctx context.Context, id stri
 // Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 func (c *Client) UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateCustomerNotificationRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCustomerSubscriptions List subscriptions
+//
+// Lists dashboard, report, commitment, alert, and budget subscriptions visible to the caller. Items are ordered by `id` ascending. Nested `subscriptions` are ordered by `type` ascending. `maxResults` defaults to 50. An omitted value, `0`, or a value above 500 is treated as 50. A non-integer `maxResults` is `400`. Pass the response `pageToken` to request the next page. That field is absent when there are no more pages. A `pageToken` that matches no id is `400`. `rowCount` is the total number of subscriptions visible to the caller. That value is the same on every page.
+// One subscription record is one item. Its dashboard, report, and commitment subscriptions are nested entries that share `recipients`. An alert is one item. A budget is one item. An alert or a budget never shares an item with a scheduled subscription. Draft budgets are omitted. An alert is included only when the tenant has the Governance Alerts entitlement and the caller can view that alert. When the entitlement is missing or cannot be confirmed, the list contains no alerts. An alert with no recipients is still included.
+// One id namespace is shared by a scheduled subscription, an alert, and a budget. Create accepts only `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Those scheduled types are the resource: create, recipient replace, subscription-set replace, and delete. GET returns alerts and budgets so a caller can see who receives them. Create, delete, and full management of those resources, including recipients, stay on `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. PATCH on this API may replace those same recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// Manage Settings users can view every subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. A caller who can see only some nested subscriptions still receives that record; `subscriptions` omits the entries they cannot see.
+//
+// Corresponds with GET /customers/v1/subscriptions (the `ListCustomerSubscriptions` operationId).
+func (c *Client) ListCustomerSubscriptions(ctx context.Context, params *ListCustomerSubscriptionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCustomerSubscriptionsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -27575,6 +27630,72 @@ func NewUpdateCustomerNotificationRequestWithBody(server string, id string, para
 	return req, nil
 }
 
+// NewListCustomerSubscriptionsRequest constructs an http.Request for the ListCustomerSubscriptions method
+func NewListCustomerSubscriptionsRequest(server string, params *ListCustomerSubscriptionsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/customers/v1/subscriptions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.MaxResults != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "maxResults", *params.MaxResults, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.PageToken != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "pageToken", *params.PageToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateCustomerSubscriptionRequest calls the generic CreateCustomerSubscription builder with application/json body
 func NewCreateCustomerSubscriptionRequest(server string, params *CreateCustomerSubscriptionParams, body CreateCustomerSubscriptionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -32487,6 +32608,18 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 	UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerNotificationParams, body UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerNotificationResp, error)
+
+	// ListCustomerSubscriptionsWithResponse List subscriptions
+	//
+	// Lists dashboard, report, commitment, alert, and budget subscriptions visible to the caller. Items are ordered by `id` ascending. Nested `subscriptions` are ordered by `type` ascending. `maxResults` defaults to 50. An omitted value, `0`, or a value above 500 is treated as 50. A non-integer `maxResults` is `400`. Pass the response `pageToken` to request the next page. That field is absent when there are no more pages. A `pageToken` that matches no id is `400`. `rowCount` is the total number of subscriptions visible to the caller. That value is the same on every page.
+	// One subscription record is one item. Its dashboard, report, and commitment subscriptions are nested entries that share `recipients`. An alert is one item. A budget is one item. An alert or a budget never shares an item with a scheduled subscription. Draft budgets are omitted. An alert is included only when the tenant has the Governance Alerts entitlement and the caller can view that alert. When the entitlement is missing or cannot be confirmed, the list contains no alerts. An alert with no recipients is still included.
+	// One id namespace is shared by a scheduled subscription, an alert, and a budget. Create accepts only `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Those scheduled types are the resource: create, recipient replace, subscription-set replace, and delete. GET returns alerts and budgets so a caller can see who receives them. Create, delete, and full management of those resources, including recipients, stay on `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. PATCH on this API may replace those same recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+	// Manage Settings users can view every subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. A caller who can see only some nested subscriptions still receives that record; `subscriptions` omits the entries they cannot see.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /customers/v1/subscriptions (the `ListCustomerSubscriptions` operationId).
+	ListCustomerSubscriptionsWithResponse(ctx context.Context, params *ListCustomerSubscriptionsParams, reqEditors ...RequestEditorFn) (*ListCustomerSubscriptionsResp, error)
 
 	// CreateCustomerSubscriptionWithBodyWithResponse Create a subscription
 	//
@@ -40955,6 +41088,83 @@ func (r UpdateCustomerNotificationResp) ContentType() string {
 	return ""
 }
 
+// ListCustomerSubscriptionsResp200Headers the declared response headers of an HTTP 200 response for ListCustomerSubscriptions
+type ListCustomerSubscriptionsResp200Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+}
+
+type ListCustomerSubscriptionsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CustomerSubscriptionListResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *N400
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *N403
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *N500
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListCustomerSubscriptionsResp200Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCustomerSubscriptionsResp) GetJSON200() *CustomerSubscriptionListResponse {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r ListCustomerSubscriptionsResp) GetJSON400() *N400 {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r ListCustomerSubscriptionsResp) GetJSON401() *N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r ListCustomerSubscriptionsResp) GetJSON403() *N403 {
+	return r.JSON403
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r ListCustomerSubscriptionsResp) GetJSON500() *N500 {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCustomerSubscriptionsResp) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCustomerSubscriptionsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCustomerSubscriptionsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCustomerSubscriptionsResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateCustomerSubscriptionResp200Headers the declared response headers of an HTTP 200 response for CreateCustomerSubscription
 type CreateCustomerSubscriptionResp200Headers struct {
 	ContentLanguage *string
@@ -49289,6 +49499,24 @@ func (c *ClientWithResponses) UpdateCustomerNotificationWithApplicationMergePatc
 	return ParseUpdateCustomerNotificationResp(rsp)
 }
 
+// ListCustomerSubscriptionsWithResponse List subscriptions
+//
+// Lists dashboard, report, commitment, alert, and budget subscriptions visible to the caller. Items are ordered by `id` ascending. Nested `subscriptions` are ordered by `type` ascending. `maxResults` defaults to 50. An omitted value, `0`, or a value above 500 is treated as 50. A non-integer `maxResults` is `400`. Pass the response `pageToken` to request the next page. That field is absent when there are no more pages. A `pageToken` that matches no id is `400`. `rowCount` is the total number of subscriptions visible to the caller. That value is the same on every page.
+// One subscription record is one item. Its dashboard, report, and commitment subscriptions are nested entries that share `recipients`. An alert is one item. A budget is one item. An alert or a budget never shares an item with a scheduled subscription. Draft budgets are omitted. An alert is included only when the tenant has the Governance Alerts entitlement and the caller can view that alert. When the entitlement is missing or cannot be confirmed, the list contains no alerts. An alert with no recipients is still included.
+// One id namespace is shared by a scheduled subscription, an alert, and a budget. Create accepts only `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Those scheduled types are the resource: create, recipient replace, subscription-set replace, and delete. GET returns alerts and budgets so a caller can see who receives them. Create, delete, and full management of those resources, including recipients, stay on `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. PATCH on this API may replace those same recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+// Manage Settings users can view every subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. A caller who can see only some nested subscriptions still receives that record; `subscriptions` omits the entries they cannot see.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /customers/v1/subscriptions (the `ListCustomerSubscriptions` operationId).
+func (c *ClientWithResponses) ListCustomerSubscriptionsWithResponse(ctx context.Context, params *ListCustomerSubscriptionsParams, reqEditors ...RequestEditorFn) (*ListCustomerSubscriptionsResp, error) {
+	rsp, err := c.ListCustomerSubscriptions(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCustomerSubscriptionsResp(rsp)
+}
+
 // CreateCustomerSubscriptionWithBodyWithResponse Create a subscription
 //
 // Creates one dashboard, report, or commitment subscription with one, two, or three scheduled subscriptions: `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Create does not accept `alert` or `budget`. Each type appears at most once. The response is that subscription. Nested entries are ordered by `type`. `name` is `{source name} (Dashboard Subscription)`, `(Report Subscription)`, or `(Commitment Subscription)`, taken from the nested type that sorts first. `createdBy` is the caller.
@@ -57567,6 +57795,80 @@ func ParseUpdateCustomerNotificationResp(rsp *http.Response) (*UpdateCustomerNot
 			headers.RequestId = &value
 		}
 		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListCustomerSubscriptionsResp parses an HTTP response from a ListCustomerSubscriptionsWithResponse call
+func ParseListCustomerSubscriptionsResp(rsp *http.Response) (*ListCustomerSubscriptionsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCustomerSubscriptionsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomerSubscriptionListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest N400
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest N401
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest N403
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest N500
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListCustomerSubscriptionsResp200Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil

@@ -3930,6 +3930,112 @@ paths:
         "500":
           $ref: "#/components/responses/500"
   /customers/v1/subscriptions:
+    get:
+      operationId: listCustomerSubscriptions
+      tags: [Subscriptions]
+      summary: List subscriptions
+      description: >-
+        Lists dashboard, report, commitment, alert, and budget subscriptions visible to the caller. Items are ordered by `id` ascending. Nested `subscriptions` are ordered by `type` ascending. `maxResults` defaults to 50. An omitted value, `0`, or a value above 500 is treated as 50. A non-integer `maxResults` is `400`. Pass the response `pageToken` to request the next page. That field is absent when there are no more pages. A `pageToken` that matches no id is `400`. `rowCount` is the total number of subscriptions visible to the caller. That value is the same on every page.
+
+        One subscription record is one item. Its dashboard, report, and commitment subscriptions are nested entries that share `recipients`. An alert is one item. A budget is one item. An alert or a budget never shares an item with a scheduled subscription. Draft budgets are omitted. An alert is included only when the tenant has the Governance Alerts entitlement and the caller can view that alert. When the entitlement is missing or cannot be confirmed, the list contains no alerts. An alert with no recipients is still included.
+
+        One id namespace is shared by a scheduled subscription, an alert, and a budget. Create accepts only `dashboard-subscription`, `report-subscription`, and `commitment-manager`. Those scheduled types are the resource: create, recipient replace, subscription-set replace, and delete. GET returns alerts and budgets so a caller can see who receives them. Create, delete, and full management of those resources, including recipients, stay on `PATCH /analytics/v1/alerts/{id}` and `PATCH /analytics/v1/budgets/{id}`. PATCH on this API may replace those same recipient lists. DELETE of an alert or a budget returns `409` `customers.entry_is_resource`.
+
+        Manage Settings users can view every subscription. A scheduled subscription is also visible to its creator when the caller has the permission for that type, to an owner, editor, or viewer of its source, and to one of its email recipients. Users Manager alone grants no access. A service-account token is evaluated from its own permissions and does not inherit the permissions of the subscription creator. A caller who can see only some nested subscriptions still receives that record; `subscriptions` omits the entries they cannot see.
+      parameters:
+        - $ref: "#/components/parameters/maxResults"
+        - $ref: "#/components/parameters/pageToken"
+      responses:
+        "200":
+          description: OK - Visible subscriptions returned.
+          headers:
+            Request-Id:
+              $ref: "#/components/headers/RequestId"
+            Content-Language:
+              $ref: "#/components/headers/ContentLanguage"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerSubscriptionListResponse"
+              example:
+                items:
+                  - id: alert_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Production spend alert
+                    createdBy: owner@example.com
+                    recipients:
+                      emails: [finops@example.com]
+                      slackChannels: []
+                    subscriptions:
+                      - type: alert
+                        source:
+                          id: alert_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                          name: Production spend alert
+                        permissions:
+                          canEditRecipients: true
+                          canDelete: false
+                          canUnsubscribe: false
+                    etag: 9b2e4d6f8a0c1e3b5d7f9a1c3e5b7d9f1a3c5e7a9b1d3f5a7c9e1b3d5f7a9c1e
+                  - id: budget_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Platform budget
+                    createdBy: owner@example.com
+                    recipients:
+                      emails: [finops@example.com]
+                      slackChannels: []
+                    subscriptions:
+                      - type: budget
+                        source:
+                          id: budget_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                          name: Platform budget
+                        permissions:
+                          canEditRecipients: true
+                          canDelete: false
+                          canUnsubscribe: false
+                    etag: 1a3c5e7a9b1d3f5a7c9e1b3d5f7a9c1e3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d
+                  - id: notif_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                    name: Executive costs (Dashboard Subscription)
+                    createdBy: owner@example.com
+                    recipients:
+                      emails: [finops@example.com]
+                      slackChannels: [C0123ABCD]
+                    subscriptions:
+                      - type: dashboard-subscription
+                        source:
+                          id: dashboard_123
+                          name: Executive costs
+                        schedule:
+                          timeZone: Europe/Warsaw
+                          startDate: "2026-10-23T00:00:00Z"
+                          time: "2026-10-23T08:00:00Z"
+                          frequency: Weekly
+                          nextAt: "2026-10-30T08:00:00Z"
+                        permissions:
+                          canEditRecipients: true
+                          canDelete: true
+                          canUnsubscribe: false
+                      - type: report-subscription
+                        source:
+                          id: report_456
+                          name: Monthly costs
+                        schedule:
+                          timeZone: Europe/Warsaw
+                          startDate: "2026-11-01T00:00:00Z"
+                          time: "2026-11-01T08:00:00Z"
+                          frequency: Monthly
+                          nextAt: "2026-12-01T08:00:00Z"
+                        permissions:
+                          canEditRecipients: true
+                          canDelete: true
+                          canUnsubscribe: false
+                    etag: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
+                rowCount: 3
+        "400":
+          $ref: "#/components/responses/400"
+        "401":
+          $ref: "#/components/responses/401"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
     post:
       operationId: createCustomerSubscription
       tags: [Subscriptions]
@@ -13264,6 +13370,28 @@ components:
         Monthly: Deliver once a month at the configured time.
         Annually: Deliver once a year at the configured time.
         Custom: Deliver on the interval in `customPeriodAmount` and `customPeriodUnit`.
+    CustomerSubscriptionListResponse:
+      type: object
+      additionalProperties: false
+      description: One page of visible subscriptions.
+      required: [items, rowCount]
+      properties:
+        items:
+          type: array
+          description: Subscriptions ordered by `id` ascending.
+          items:
+            $ref: "#/components/schemas/CustomerSubscription"
+          example: []
+        pageToken:
+          type: string
+          description: Pass as `pageToken` to fetch the next page. Absent when there are no more pages.
+        rowCount:
+          type: integer
+          format: int64
+          description: Total number of subscriptions visible to the caller. The same value is returned on every page.
+      example:
+        items: []
+        rowCount: 0
     CustomerSubscriptionPdfSettings:
       type: object
       additionalProperties: false
