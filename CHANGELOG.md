@@ -18,6 +18,8 @@
 
 - **data-source/doit_customer_notification, data-source/doit_customer_notifications**: New data sources to read one organization-wide cost-anomaly notification by ID, or list all of them (not paginated). Emails are returned as the API stores them, in lowercase. Require the `settings` (Manage settings) permission
 
+- **data-source/doit_customer_subscription, data-source/doit_customer_subscriptions**: New data sources to read one organization-wide subscription by ID, or list the ones visible to the caller. Without `max_results` the list fetches every page; with it, a single page is returned together with the `page_token` of the next one. Alerts and budgets share the subscription ID space and are returned too, with an entry of type `alert` or `budget` and no schedule. Emails are returned as the API stores them, in lowercase, and schedule timestamps in UTC
+
 ### ENHANCEMENTS
 
 - **resource/doit_alert, data-source/doit_dimension**: Warn again that `type = "attribution"` and `"attribution_group"` are deprecated in favor of `allocation_rule` and `allocation`; both APIs now accept the new names. The warning for `attribution` now also says to change `id` to `allocation_rule`, because the API rejects a mismatched type and id. `doit_dimension` keeps the configured `id` in state when the API returns the new name ([#443](https://github.com/doitintl/terraform-provider-doit/issues/443))
