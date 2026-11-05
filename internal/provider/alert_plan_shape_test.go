@@ -56,6 +56,8 @@ resource "doit_alert" "this" {
 				Config: config(2000),
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectUnknownValue("doit_alert.this", channelPath.AtMapKey("customer_id")),
+					// shared = true forces workspace to null even while the other children are unknown.
+					plancheck.ExpectKnownValue("doit_alert.this", channelPath.AtMapKey("workspace"), knownvalue.Null()),
 				}},
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue("doit_alert.this", channelPath.AtMapKey("id"), knownvalue.StringExact(testSlackChannel())),
