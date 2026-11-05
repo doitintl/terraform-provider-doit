@@ -271,6 +271,8 @@ Every configurable field must be settable on create and changeable on update wit
 
 The same applies to a field that changes only through a delta endpoint, such as `POST /{id}/recipients` with `add`/`remove`. The provider would have to read, diff and send the delta in hand-written code, and "desired state = X" is no longer one call. A delta endpoint next to a `PATCH`/`PUT` that also sets the full list is fine.
 
+**Per-part update rules.** Record how an update endpoint treats the parts of its body. Which parts need which permission (a recipient-only editor may be forbidden from sending report attachments), and which fields a partial patch must not carry even unchanged. Probe it: send a patch with only one part, then one that repeats an unchanged part, as a caller who has just the narrower permission. The provider sends only the changed parts (see implement-resource, Step 4), so the rules decide how the update request is built.
+
 Fields accepted on create but not on update must be documented as immutable. Replacement on change is hand-written per resource (neither generator adds it), so ask whether the field should be updatable, and tell the provider team if it is not.
 
 A new contract missing update or delete is a finding. Ask whether that is intended before settling on **Suitable as data source only**.
@@ -316,6 +318,7 @@ Common patterns:
 | Sentinel stripping | `[Service N/A]` → `Service` | Need `mergeSentinelValues` in Read |
 | Type aliasing | `allocation_rule` → `attribution` | Need `normalizeDimensionsType` (for the type **and** its paired id). Whether an endpoint accepts the new alias varies per endpoint and changes over time (alerts and `GET /dimension` rejected it until Nov 2026, #384/#443): probe each endpoint before deciding where a deprecation warning goes, and never leave a "API rejects X" workaround without an acceptance test that notices when it stops being true |
 | Timestamp to UTC | `2024-01-15T00:00:00-05:00` → `2024-01-15T05:00:00Z` | Need timestamp preservation |
+| Fractional seconds | `…00.123456Z` sent, `…00Z` or `…00.123Z` returned | Record whether the API keeps, truncates or rounds them. Truncating is lossy (upstream finding); keeping them means the provider must format with `RFC3339Nano` |
 | Boolean defaults | `include_null: true` → API returns `false` | Need state-first read pattern |
 | Empty list to null | `scopes: []` → API returns `null` | Need empty-list fallback |
 | Array order or duplicates | IDs sorted, grouped by type, or de-duplicated | The generator emits a list unless the array declares `format: set` (`uniqueItems` only adds a validator), and no spec does today. Preferred: ask for order as sent, with duplicates rejected (422). If the API sorts or de-duplicates, a documented sort key is not enough on its own: either the array becomes a set (see **Sets** below), or users must write the server's order, and every config in another order diffs. Record which. |
@@ -420,6 +423,8 @@ Create a summary with:
    - defaults echoed on read;
    - normalization;
    - array order and duplicates;
+   - per-part permissions and fields a partial update must not carry;
+   - whether timestamps keep fractional seconds;
    - what happens to references that disappear;
    - whether `id` is unique on its own;
    - for a contract without create, whether objects are meant to exist before Terraform.
