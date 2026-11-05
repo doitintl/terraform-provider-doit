@@ -323,6 +323,12 @@ Templates from the attribution-report guard (`internal/provider/attribution_vali
 - Make a probe that asserts "the value is kept" able to fail: first check the tenant default differs from the value you store, and add a control resource created without the attribute. `TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate` first passed vacuously because the tenant default was the stored value.
 - Unit side: `TestReportResource_ModifyPlan_AttributionReportReadOnly` (`attribution_validator_internal_test.go`).
 
+### Unit tests for plan helpers
+
+- **Never compare a result with the input variable.** Build the expected value fresh (a second literal, or a second call to the builder). A helper may modify its input, and then `got == input` passes whatever the helper did. A broken fallback in `planSetNestedAttributesFromState` went unnoticed through two review rounds this way.
+- **Decision table.** As for validators (see [implement-validator](../implement-validator/SKILL.md)), a helper that reads config, plan and state needs a table test over null, unknown and known config values against each attribute class: Required, Optional, Optional+Computed without and with a clearing modifier, Computed-only, and an attribute with a schema `Default`. A table like this catches two bugs a happy-path test missed: element pairing that treated unknown and omitted values as wildcards, and a false "Duplicate Set Elements" error for unknown values.
+- **Generic set code needs permutations.** Run every element order, elements that overlap in omitted or unknown values, and new and removed elements. First-fit matching passed 2 of the 4 orders of a two-element case.
+
 ---
 
 ## Generated Import Configuration
@@ -399,7 +405,7 @@ every set-nested attribute needs these acceptance steps, each followed by an
 | Step | Why |
 | --- | --- |
 | Create with every element Optional+Computed attribute **omitted** | Omitted O+C attributes are wildcards when matching prior elements |
-| Change **one** attribute of **one** element | Only that element may change; assert the others keep their computed values |
+| Change **one** attribute of **one** of **two or more** elements | Only that element may change; assert the others keep their computed values. A single-element set cannot show this |
 | Change an attribute **outside** the set | The set must stay unchanged, not show replaced elements |
 | Add an element, then remove one | Set membership updates in place |
 | Values the API normalizes inside an element | Read must keep the planned spelling, or the overlay cannot pair the element |
@@ -411,6 +417,8 @@ Assert set contents with `knownvalue.SetExact` / `knownvalue.SetPartial` of
 For unit tests of the planner itself, build `tftypes` values for config, plan and
 state as in `set_nested_plan_internal_test.go`. The planned value must be what
 the framework produces: Computed attributes the config leaves null are unknown.
+Cover every element order and elements that overlap in omitted or unknown values
+(see [Unit tests for plan helpers](#unit-tests-for-plan-helpers)).
 
 ---
 
@@ -521,5 +529,8 @@ func getAlertCount(t *testing.T) int {
 - [ ] Add the `GenerateConfig` import-block step to the import test
 - [ ] Cover empty lists and omitted attributes
 - [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks
+- [ ] Build expected values fresh, never from the input the code under test received
+- [ ] Plan helpers: null/unknown/known × attribute-class decision table; set code: every element order
+- [ ] Set attributes: change one element of two and assert the other keeps its computed values
 - [ ] Use unique resource names
 - [ ] Cache expensive helpers with `sync.Once`

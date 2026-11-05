@@ -72,6 +72,10 @@ Every resource must implement these in `<name>.go`:
 
 **Invariant:** Create/Update = overlay wrapper. Read/Import = full mapping via populateState. Never mix these.
 
+**Send only the parts that change when the API checks permissions per part.** Some update endpoints authorize each part of the body separately: the subscriptions PATCH forbids report attachments in a recipient-only patch, so a request that repeats unchanged attachments can reject an edit the caller is allowed to make. Build the update request per part, from the difference between plan and state, and leave out parts that did not change. The `evaluate-api` skill records these per-part rules.
+
+**Cite the source for framework behavior.** A claim about what the plugin framework or Terraform Core passes to a plan modifier, validator or `ModifyPlan` must come from the code (for example `internal/fwserver/attribute_plan_modification.go` in the framework version in `go.mod`, read from the module cache) or from a plan check, not from memory. "Plan modifiers inside a set element see no prior state" was written from memory and was wrong.
+
 > **Linters:** `overlaycheck`, `overlayinvariant` — enforce overlay pattern correctness.
 
 ## Step 5: Register the Resource
@@ -104,9 +108,11 @@ existingTime, err := time.Parse(time.RFC3339, state.Timestamp.ValueString())
 if err == nil && existingTime.Equal(resp.Timestamp) {
     // Keep existing string to avoid diffs
 } else {
-    state.Timestamp = types.StringValue(resp.Timestamp.UTC().Format(time.RFC3339))
+    state.Timestamp = types.StringValue(resp.Timestamp.UTC().Format(time.RFC3339Nano))
 }
 ```
+
+Format with `time.RFC3339Nano`, not `time.RFC3339`: the latter drops fractional seconds, so a timestamp the API returns as `…00.123Z` reads back as `…00Z` and drifts (`annotation.go` is the reference). `RFC3339Nano` trims trailing zeros but keeps every non-zero digit.
 
 ### List Attribute Mapping
 
