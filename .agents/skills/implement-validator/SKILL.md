@@ -88,7 +88,7 @@ A Boolean `hasUnknown` flag may replace the counter. The uncertainty update and 
 ## Verification
 
 ```bash
-cd tools/linters && go test ./validatorshape/... ./validatordefer/... -v
+cd tools/linters && go test -count=1 ./validatorshape/... ./validatordefer/... -v
 make test
 make lint
 make lint-tools
