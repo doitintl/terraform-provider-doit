@@ -76,6 +76,21 @@ resource "doit_report" "test" {
 				),
 			},
 			{
+				// Settings dropped from the config while forecast stays on: the plan
+				// holds the stored settings, and the modifier resets them to the
+				// default object rather than keeping them.
+				Config: config("two", forecastOn, ""),
+				ConfigPlanChecks: checkPlan(
+					plancheck.ExpectKnownValue(resourceName, settingsPath.AtMapKey("mode"), knownvalue.StringExact("totals")),
+					plancheck.ExpectKnownValue(resourceName, settingsPath.AtMapKey("future_time_intervals"), knownvalue.Null()),
+				),
+			},
+			{
+				// ... and that is stable: nothing else changes, the plan is empty.
+				Config:           config("two", forecastOn, ""),
+				ConfigPlanChecks: checkPlan(plancheck.ExpectEmptyPlan()),
+			},
+			{
 				// Forecast switched off with the settings omitted: null.
 				Config: config("two", forecastOff, ""),
 				ConfigPlanChecks: checkPlan(

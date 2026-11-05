@@ -205,6 +205,14 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 		attrs["mode"] = types.StringValue("grouping")
 		return types.ObjectValueMust(attrTypes, attrs)
 	}
+	// storedForecastSettings is a stored object that differs from the default:
+	// intervals set, mode and ranges as the API returns them.
+	storedForecastSettings := func() types.Object {
+		attrs := configuredForecastSettings().Attributes()
+		attrs["mode"] = types.StringValue("totals")
+		attrs["future_time_intervals"] = types.Int64Value(12)
+		return types.ObjectValueMust(attrTypes, attrs)
+	}
 	configValueFor := func(s valueState) types.Object {
 		if s == vsKnown {
 			return configuredForecastSettings()
@@ -225,6 +233,7 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 		configForecast tftypes.Value
 		planForecast   tftypes.Value
 		missingPath    bool // schema has no config.advanced_analysis.forecast
+		storedPlan     bool // forecast_settings omitted, plan holds the stored (non-default) object
 		want           string
 	}{
 		{name: "forecast_settings configured", configValue: vsKnown, configForecast: boolValue(true), planForecast: boolValue(true), want: wantAsPlan},
@@ -235,6 +244,12 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 		{name: "forecast omitted, stored true", configValue: vsNull, configForecast: nullBool, planForecast: boolValue(true), want: wantNull},
 		{name: "forecast true", configValue: vsNull, configForecast: boolValue(true), planForecast: boolValue(true), want: wantTotals},
 		{name: "forecast false", configValue: vsNull, configForecast: boolValue(false), planForecast: boolValue(false), want: wantNull},
+		// Nothing else changes, so Terraform plans the stored settings. The
+		// modifier replaces them: the default object while forecast is on, null
+		// when it is off (TestAccReport_PlanShapeOfForecastSettings).
+		{name: "forecast true, stored settings retained in the plan", configValue: vsNull, configForecast: boolValue(true), planForecast: boolValue(true), storedPlan: true, want: wantTotals},
+		{name: "forecast false, stored settings retained in the plan", configValue: vsNull, configForecast: boolValue(false), planForecast: boolValue(false), storedPlan: true, want: wantNull},
+		{name: "forecast omitted, stored settings retained in the plan", configValue: vsNull, configForecast: nullBool, planForecast: boolValue(true), storedPlan: true, want: wantNull},
 		{name: "forecast unknown in config and plan", configValue: vsNull, configForecast: unknownBool, planForecast: unknownBool, want: wantUnknown},
 		{name: "forecast attribute missing from the config schema", configValue: vsNull, missingPath: true, want: wantNull},
 	}
@@ -261,6 +276,9 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 			planValue := types.ObjectUnknown(attrTypes)
 			if tt.configValue == vsKnown {
 				planValue = configuredForecastSettings()
+			}
+			if tt.storedPlan {
+				planValue = storedForecastSettings()
 			}
 			req := planmodifier.ObjectRequest{
 				Config:      cfg,
