@@ -214,8 +214,11 @@ func TestToExternalConfigWrite_NullPlanSerialization(t *testing.T) {
 	if err := json.Unmarshal(gotJSON, &got); err != nil {
 		t.Fatalf("unmarshal write config: %v", err)
 	}
-	if count, ok := got["count"]; !ok || string(count) != "null" {
-		t.Errorf("count: want an explicit JSON null, got %q (present=%v)", count, ok)
+	// Nullable objects send an explicit null so the PATCH merge clears the stored value.
+	for _, key := range []string{"count", "customTimeRange", "limitByChange", "metricFilter", "forecastSettings"} {
+		if raw, ok := got[key]; !ok || string(raw) != "null" {
+			t.Errorf("%s: want an explicit JSON null, got %q (present=%v)", key, raw, ok)
+		}
 	}
 	var filters []map[string]json.RawMessage
 	if err := json.Unmarshal(got["filters"], &filters); err != nil || len(filters) != 1 {
