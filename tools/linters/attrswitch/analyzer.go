@@ -168,8 +168,16 @@ func hasCommentedDefault(pass *analysis.Pass, sw *ast.TypeSwitchStmt) bool {
 				to = sw.Body.List[i+1].Pos()
 			}
 		}
+		lastLine := pass.Fset.Position(clause.End()).Line
 		for _, group := range file.Comments {
-			if group.Pos() < from || group.End() > to {
+			if group.Pos() < from {
+				continue
+			}
+			// A comment that starts on the line the clause ends on trails it.
+			if pass.Fset.Position(group.Pos()).Line == lastLine {
+				return true
+			}
+			if group.End() > to {
 				continue
 			}
 			if len(clause.Body) == 0 && followed &&

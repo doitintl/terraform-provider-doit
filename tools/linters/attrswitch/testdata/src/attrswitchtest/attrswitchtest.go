@@ -202,3 +202,34 @@ func commentOnlyFinalDefault(a schema.Attribute) int {
 	}
 	return 0
 }
+
+// GOOD: a trailing comment on the default's last statement.
+func trailingCommentOnStatement(a schema.Attribute) int {
+	switch a := a.(type) {
+	default:
+		return 0 // Other kinds are intentionally ignored.
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	}
+}
+
+// GOOD: an empty default with a comment on its own line, then another case.
+func trailingCommentOnEmptyDefault(a schema.Attribute) int {
+	switch a := a.(type) {
+	default: // Other kinds are intentionally ignored.
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	}
+	return 0
+}
+
+// BAD: an empty default whose next case has a comment on the line above it.
+func emptyDefaultThenCommentedCase(a schema.Attribute) int {
+	switch a := a.(type) { // want `handles some nested attribute kinds but not SingleNestedAttribute, ListNestedAttribute, MapNestedAttribute`
+	default:
+	// Sets are the only nested kind that matters here.
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	}
+	return 0
+}
