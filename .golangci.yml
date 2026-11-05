@@ -55,6 +55,7 @@ linters:
     - clearableattr
     - validatorshape
     - validatordefer
+    - attrswitch
     - modernize
   exclusions:
     generated: lax
@@ -109,6 +110,7 @@ linters:
           - clearableattr
           - validatorshape
           - validatordefer
+          - attrswitch
           - modernize
       # Test files — exclude custom linters. paralleltest, retrypolicy and
       # testserver are absent deliberately: they only apply to tests.
@@ -136,6 +138,7 @@ linters:
           - clearableattr
           - validatorshape
           - validatordefer
+          - attrswitch
       # Data sources — exclude resource-only linters
       - path: _data_source\.go
         linters:
@@ -223,6 +226,9 @@ linters:
       read404:
         type: "module"
         description: "Ensures resource Read methods call RemoveResource for externally deleted resources."
+      attrswitch:
+        type: "module"
+        description: "Requires type switches over schema.Attribute to handle every nested kind and every kind with the field they read."
       setnestedplan:
         type: "module"
         description: "Ensures resources with Computed attributes inside a SetNestedAttribute plan the set from the prior state in ModifyPlan."
