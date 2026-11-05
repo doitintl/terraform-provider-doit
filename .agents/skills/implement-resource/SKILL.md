@@ -311,12 +311,31 @@ func (m useNullOrDefaultForSettingsModifier) PlanModifyObject(ctx context.Contex
         return // user set the block explicitly — leave it alone
     }
     attrTypes := resource_report.SettingsValue{}.AttributeTypes(ctx)
+    siblingPath := path.Root("config").AtName("sibling")
+
+    // The config decides first: a sibling the user omitted clears the block.
+    var configSibling types.Bool
+    resp.Diagnostics.Append(req.Config.GetAttribute(ctx, siblingPath, &configSibling)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+    if configSibling.IsNull() {
+        resp.PlanValue = req.ConfigValue // null → clears
+        return
+    }
+
+    // The sibling is set or unknown in the config: the plan holds what it resolves to.
     var sibling types.Bool
-    resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("config").AtName("sibling"), &sibling)...)
+    resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, siblingPath, &sibling)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
     switch {
     case sibling.IsUnknown():
         resp.PlanValue = types.ObjectUnknown(attrTypes) // defer until the dependency resolves
     case !sibling.IsNull() && sibling.ValueBool():
+        // Replaces whatever the plan holds, including the stored block when
+        // nothing else changes: omitting the block resets it to the default.
         v, d := resource_report.NewSettingsValue(attrTypes, defaultAttrs)
         resp.Diagnostics.Append(d...)
         obj, d := v.ToObjectValue(ctx) // typed conversion preserves nested custom types
@@ -343,6 +362,20 @@ if !plan.Settings.IsNull() && !plan.Settings.IsUnknown() {
 **Children of a clearable nested object** follow the same Category A / Category B classification as top-level attributes. A clearable parent can have Category B children (API-computed defaults that the user can't independently clear). These children go in `acknowledgeNotClearable` as usual.
 
 **API-computed fields alongside user-configured fields:** Some APIs return computed values alongside user-configured ones (e.g., `futureTimeIntervals` computed from `futureCustomDateRange`). The read path (`mapXxxToModel`) should map all API-returned fields faithfully. The overlay preserves the user's plan values on Create/Update. On subsequent no-change plans, the framework's default Optional+Computed behavior proposes the prior state value for omitted fields, so the computed value doesn't cause drift. On an update that changes something else, the omitted field plans as Unknown and the overlay resolves it from the API response.
+
+#### Writing a custom plan modifier: decisions to make
+
+A modifier runs for every plan, and for an omitted Optional+Computed attribute what it receives differs by case. Decide each of these explicitly before writing it:
+
+1. **What the plan holds when the config is null.** Unknown on create and on an update of another attribute; the stored value when nothing else changes; a known default when the schema has a `Default` or an earlier modifier set one. The modifier must give a defined answer for each (see [Guards that read an omitted Optional+Computed attribute](#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan)).
+2. **What omitting means:** clear (null or `[]`), keep the stored value, reset to a default, or defer (unknown). `useNullOrDefaultForForecastSettings` resets: with forecast on, dropping `forecast_settings` plans the default object even though the plan held the stored settings. Say it in `Description()`.
+3. **Act only on a null config value.** Return early for a configured or unknown value so what the user set, and an unknown reference, reach the plan unchanged.
+4. **Read siblings from the config first, then the plan.** The config tells whether the user omitted the sibling; the plan tells what it resolves to. Append the diagnostics of every `GetAttribute` to `resp.Diagnostics` and return on error. Never write `_ = req.Config.GetAttribute(...)`: a path that stops existing then turns into a silent null instead of an error. (`diagsuppressed` catches `x, _ :=` and bare calls; check the single-value `_ =` form by eye.)
+5. **Confirm it fires.** Plan modifiers on children of an unknown object, or on custom-typed parents like `config.*`, do not run (see `report.go`, Category C below). Pin the plan shape with an acceptance test before relying on the modifier.
+6. **Keep the other layers in step.** The overlay, the Read mapping and the request builder must agree with the value the modifier plans (`useEmptyForUnconfiguredMetricsMirror` and `mapReportToModel`, the clearing table above).
+7. **Name it for what it does.** `clearableattr` classifies attributes by modifier names of the form `use{Empty,Null}ForUnknown*WhenConfigNull` as Category A. A modifier that clears nothing server-side (the metrics mirror) must not use such a name.
+
+Tests for every custom modifier: a null/unknown/known decision table of the modifier itself and an acceptance plan-shape test, both described in the [testing skill](../testing/SKILL.md#unit-tests-for-plan-helpers).
 
 #### Category B: Not clearable (API-computed default)
 
