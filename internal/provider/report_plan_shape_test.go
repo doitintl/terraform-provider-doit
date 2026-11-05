@@ -202,3 +202,63 @@ resource "doit_report" "test" {
 		},
 	})
 }
+
+// TestAccReport_IgnoredAggregationIsValidatedAsPlanned pins how
+// lifecycle.ignore_changes reaches the count/aggregation validators. With
+// ignore_changes = [config.aggregation] the plan keeps the stored aggregation
+// while the configuration asks for another one:
+//
+//   - ValidateConfig sees the raw configuration, so aggregation = "count" with no
+//     count block fails there ("Missing Count Configuration").
+//   - ModifyPlan sees the configuration with the ignored attribute at its stored
+//     value (measured with Terraform 1.17.1), so aggregation = "count" with a
+//     count block fails there against the stored "total" ("only applicable"),
+//     which is what the update request would carry.
+//
+// If a Terraform release stops applying ignore_changes to the config it hands to
+// PlanResourceChange, the second step fails and ModifyPlan needs to read the plan.
+func TestAccReport_IgnoredAggregationIsValidatedAsPlanned(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(aggregation, count, lifecycle string) string {
+		return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-ignored-aggregation-%d"
+  config = {
+    aggregation   = %q
+    currency      = "USD"
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+    %s
+  }
+  %s
+}
+`, n, aggregation, count, lifecycle)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: config("total", "", "")},
+			{
+				Config:      config("count", "", "lifecycle { ignore_changes = [config.aggregation] }"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Missing Count Configuration`),
+			},
+			{
+				Config: config("count",
+					`count = { id = "service_description", type = "fixed" }`,
+					"lifecycle { ignore_changes = [config.aggregation] }"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`only applicable`),
+			},
+		},
+	})
+}
