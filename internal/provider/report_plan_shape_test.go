@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -70,6 +71,8 @@ resource "doit_report" "test" {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectUnknownValue(resourceName, tfjsonpath.New("labels")),
 					plancheck.ExpectUnknownValue(resourceName, configPath.AtMapKey("data_source")),
+					plancheck.ExpectUnknownValue(resourceName, configPath.AtMapKey("secondary_time_range")),
+					plancheck.ExpectUnknownValue(resourceName, configPath.AtMapKey("aggregation")),
 					plancheck.ExpectKnownValue(resourceName, tfjsonpath.New("folder_id"), knownvalue.StringExact("root")),
 				}},
 			},
@@ -79,6 +82,54 @@ resource "doit_report" "test" {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectKnownValue(resourceName, modePath, knownvalue.Null()),
 				}},
+			},
+		},
+	})
+}
+
+// TestAccReport_CumulativeComparisonOnUpdateRequiresSecondaryTimeRange checks
+// that switching a stored report to layout "cumulative_comparison" without a
+// secondary_time_range is rejected at plan time. On update an omitted
+// secondary_time_range plans unknown, not as the stored (absent) value, so a
+// validator that skips unknown values never reports it.
+func TestAccReport_CumulativeComparisonOnUpdateRequiresSecondaryTimeRange(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(layout string) string {
+		return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-cumulative-secondary-%d"
+  config = {
+    layout        = %q
+    aggregation   = "total"
+    currency      = "USD"
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    dimensions = [
+      { id = "year", type = "datetime" },
+      { id = "month", type = "datetime" },
+      { id = "day", type = "datetime" },
+    ]
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+}
+`, n, layout)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: config("table")},
+			{
+				Config:      config("cumulative_comparison"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Missing Secondary Time Range`),
 			},
 		},
 	})
