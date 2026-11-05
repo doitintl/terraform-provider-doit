@@ -137,8 +137,7 @@ func typeOfPosition(pass *analysis.Pass, assign *ast.AssignStmt, pos int) types.
 		// Multi-value return is represented as a Tuple.
 		tuple, ok := rhsType.(*types.Tuple)
 		if !ok {
-			// A single-value call (_ = x.ElementsAs(...)). With more than one
-			// LHS this is a comma-ok form, which never yields Diagnostics.
+			// A single-value call (_ = x.ElementsAs(...)).
 			if len(assign.Lhs) == 1 && pos == 0 {
 				return rhsType
 			}

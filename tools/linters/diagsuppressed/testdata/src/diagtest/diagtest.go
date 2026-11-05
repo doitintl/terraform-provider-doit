@@ -71,14 +71,14 @@ func badDiscardedMultiReturn() {
 
 func goodHandledDiag() {
 	_, diags := listValue()
-	_ = diags
+	diags.HasError()
 }
 
 func goodHandledDiagAppend() {
 	var allDiags diag.Diagnostics
 	_, diags := listValue()
 	allDiags.Append(diags...)
-	_ = allDiags
+	allDiags.HasError()
 }
 
 func goodCapturedDiscardedCall() {
@@ -86,7 +86,7 @@ func goodCapturedDiscardedCall() {
 	var allDiags diag.Diagnostics
 	diags := list.elementsAs(nil)
 	allDiags.Append(diags...)
-	_ = allDiags
+	allDiags.HasError()
 }
 
 // --- NOT flagged: non-diagnostic blank identifiers ---
@@ -100,8 +100,8 @@ func okBlankTwoStrings() {
 }
 
 func okBlankCommaOk() {
-	m := map[string]diag.Diagnostics{}
-	_, ok := m["k"] // Comma-ok form: the blank is a map value, not a call result.
+	m := map[string]string{}
+	_, ok := m["k"] // Comma-ok form with a non-diagnostic map value.
 	_ = ok
 }
 
