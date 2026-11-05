@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -17,7 +16,6 @@ import (
 // user can subscribe to.
 type userNotificationType struct {
 	attr        string // attribute name under settings
-	api         string // API property name, as a 403 problem names it
 	permission  string // permission the target user must hold; empty for none
 	description string
 }
@@ -35,24 +33,24 @@ const userNotificationEmptyTypeHint = " Set it to `{}` to subscribe."
 const userNotificationBillingProfileHint = " Set it to `{}` to subscribe for every billing profile, or list `billing_profile_ids`."
 
 var userNotificationTypes = []userNotificationType{
-	{"new_invoices", "newInvoices", userNotificationInvoiceViewer, "New invoices." + userNotificationBillingProfileHint},
-	{"new_proforma_invoices", "newProformaInvoices", userNotificationInvoiceViewer, "New proforma invoices." + userNotificationBillingProfileHint},
-	{"payment_reminders", "paymentReminders", userNotificationInvoiceViewer, "Due or overdue payments." + userNotificationBillingProfileHint},
-	{"credit_utilization", "creditUtilization", userNotificationInvoiceViewer, "Credit utilization." + userNotificationEmptyTypeHint},
-	{"quota_utilization", "quotaUtilization", userNotificationCloudAnalyticsUser, "Quota utilization." + userNotificationEmptyTypeHint},
-	{"cloud_incidents", "cloudIncidents", userNotificationIssuesViewer, "Cloud incidents." + userNotificationEmptyTypeHint},
-	{"new_sku_usage", "newSkuUsage", userNotificationCloudAnalyticsUser, "Usage of new SKUs." + userNotificationEmptyTypeHint},
-	{"daily_digest", "dailyDigest", userNotificationCloudAnalyticsUser, "Daily cost digest of the listed allocations."},
-	{"weekly_digest", "weeklyDigest", userNotificationCloudAnalyticsUser, "Weekly cost digest of the listed allocations."},
-	{"monthly_digest", "monthlyDigest", userNotificationCloudAnalyticsUser, "Monthly digest." + userNotificationEmptyTypeHint},
-	{"expert_insights", "expertInsights", userNotificationInsightsManager, "New custom insights from the DoiT expert team." + userNotificationEmptyTypeHint},
-	{"insights", "insights", userNotificationInsightsManager, "New DoiT insights. Set it to `{}` to subscribe to every insight, or narrow it with `pillars`, `severities` and `providers`; an insight must match all three."},
-	{"cost_anomalies", "costAnomalies", "", "Cloud cost anomalies."},
-	{"savings_plan_approval", "savingsPlanApproval", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: an AWS Savings Plan purchase requires approval." + userNotificationEmptyTypeHint},
-	{"savings_plan_purchased", "savingsPlanPurchased", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: an AWS Savings Plan was purchased." + userNotificationEmptyTypeHint},
-	{"cud_approval", "cudApproval", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: a Google Cloud committed use discount purchase requires approval." + userNotificationEmptyTypeHint},
-	{"cud_purchased", "cudPurchased", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: a Google Cloud committed use discount was purchased." + userNotificationEmptyTypeHint},
-	{"data_integration_sync_failure", "dataIntegrationSyncFailure", userNotificationAssetsManager, "Data integration sync failures." + userNotificationEmptyTypeHint},
+	{"new_invoices", userNotificationInvoiceViewer, "New invoices." + userNotificationBillingProfileHint},
+	{"new_proforma_invoices", userNotificationInvoiceViewer, "New proforma invoices." + userNotificationBillingProfileHint},
+	{"payment_reminders", userNotificationInvoiceViewer, "Due or overdue payments." + userNotificationBillingProfileHint},
+	{"credit_utilization", userNotificationInvoiceViewer, "Credit utilization." + userNotificationEmptyTypeHint},
+	{"quota_utilization", userNotificationCloudAnalyticsUser, "Quota utilization." + userNotificationEmptyTypeHint},
+	{"cloud_incidents", userNotificationIssuesViewer, "Cloud incidents." + userNotificationEmptyTypeHint},
+	{"new_sku_usage", userNotificationCloudAnalyticsUser, "Usage of new SKUs." + userNotificationEmptyTypeHint},
+	{"daily_digest", userNotificationCloudAnalyticsUser, "Daily cost digest of the listed allocations."},
+	{"weekly_digest", userNotificationCloudAnalyticsUser, "Weekly cost digest of the listed allocations."},
+	{"monthly_digest", userNotificationCloudAnalyticsUser, "Monthly digest." + userNotificationEmptyTypeHint},
+	{"expert_insights", userNotificationInsightsManager, "New custom insights from the DoiT expert team." + userNotificationEmptyTypeHint},
+	{"insights", userNotificationInsightsManager, "New DoiT insights. Set it to `{}` to subscribe to every insight, or narrow it with `pillars`, `severities` and `providers`; an insight must match all three."},
+	{"cost_anomalies", "", "Cloud cost anomalies."},
+	{"savings_plan_approval", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: an AWS Savings Plan purchase requires approval." + userNotificationEmptyTypeHint},
+	{"savings_plan_purchased", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: an AWS Savings Plan was purchased." + userNotificationEmptyTypeHint},
+	{"cud_approval", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: a Google Cloud committed use discount purchase requires approval." + userNotificationEmptyTypeHint},
+	{"cud_purchased", userNotificationCloudAnalyticsUser, "PerfectScale for Commitments: a Google Cloud committed use discount was purchased." + userNotificationEmptyTypeHint},
+	{"data_integration_sync_failure", userNotificationAssetsManager, "Data integration sync failures." + userNotificationEmptyTypeHint},
 }
 
 const userNotificationDataSourceSettingsDescription = "The notification types the user is subscribed to, one attribute per type. " +
@@ -421,31 +419,4 @@ func toUserNotificationPatchSettings(ctx context.Context, s resource_user_notifi
 	}
 
 	return diags
-}
-
-// userNotificationPermissionHint explains a 403 that names the notification
-// type the target user lacks the permission for. It returns "" for any other
-// response.
-func userNotificationPermissionHint(statusCode int, body []byte) string {
-	if statusCode != 403 {
-		return ""
-	}
-	var problem models.UserNotificationForbidden
-	if err := json.Unmarshal(body, &problem); err != nil || problem.NotificationType == nil {
-		return ""
-	}
-	for _, t := range userNotificationTypes {
-		if t.api != *problem.NotificationType {
-			continue
-		}
-		hint := fmt.Sprintf("The user does not hold the permission that settings.%s requires", t.attr)
-		if t.permission != "" {
-			hint += fmt.Sprintf(" (%s)", t.permission)
-		}
-		if problem.Permission != nil {
-			hint += fmt.Sprintf(", permission ID %q", *problem.Permission)
-		}
-		return hint + ". Grant it to the user or remove the type from settings.\n\n"
-	}
-	return ""
 }

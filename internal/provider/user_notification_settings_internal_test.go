@@ -360,6 +360,13 @@ func TestUserNotificationSettingsListValidators(t *testing.T) {
 		{"weekly_digest", "allocation_ids", testStrings(t, "alloc-a", "alloc-a"), true},
 		{"daily_digest", "allocation_ids", testStrings(t), true},
 		{"insights", "pillars", types.ListUnknown(types.StringType), false},
+		{"daily_digest", "allocation_ids", stringList(t, types.StringNull()), true},
+		{"weekly_digest", "allocation_ids", stringList(t, types.StringValue("alloc-a"), types.StringNull()), true},
+		{"daily_digest", "allocation_ids", stringList(t, types.StringUnknown()), false},
+		{"new_invoices", "billing_profile_ids", stringList(t, types.StringNull()), true},
+		{"insights", "pillars", stringList(t, types.StringNull()), true},
+		{"insights", "severities", stringList(t, types.StringNull()), true},
+		{"insights", "providers", stringList(t, types.StringNull()), true},
 	}
 
 	for _, tt := range tests {
@@ -373,54 +380,6 @@ func TestUserNotificationSettingsListValidators(t *testing.T) {
 			}
 			if got := diags.HasError(); got != tt.wantErr {
 				t.Errorf("error = %v, want %v: %v", got, tt.wantErr, diags)
-			}
-		})
-	}
-}
-
-func TestUserNotificationPermissionHint(t *testing.T) {
-	tests := []struct {
-		name   string
-		status int
-		body   string
-		want   string
-	}{
-		{
-			name:   "type and permission named",
-			status: 403,
-			body:   `{"status":403,"code":"forbidden","notificationType":"newInvoices","permission":"HN6A3cPzDBcAIlc3ncDy"}`,
-			want:   "The user does not hold the permission that settings.new_invoices requires (Invoice Viewer), permission ID \"HN6A3cPzDBcAIlc3ncDy\". Grant it to the user or remove the type from settings.\n\n",
-		},
-		{
-			name:   "caller lacks usersManager",
-			status: 403,
-			body:   `{"status":403,"code":"forbidden"}`,
-			want:   "",
-		},
-		{
-			name:   "not a 403",
-			status: 422,
-			body:   `{"status":422,"notificationType":"newInvoices"}`,
-			want:   "",
-		},
-		{
-			name:   "unknown type",
-			status: 403,
-			body:   `{"status":403,"notificationType":"somethingNew"}`,
-			want:   "",
-		},
-		{
-			name:   "not JSON",
-			status: 403,
-			body:   `forbidden`,
-			want:   "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := userNotificationPermissionHint(tt.status, []byte(tt.body)); got != tt.want {
-				t.Errorf("hint = %q, want %q", got, tt.want)
 			}
 		})
 	}

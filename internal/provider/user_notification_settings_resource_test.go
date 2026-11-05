@@ -296,6 +296,10 @@ func TestAccUserNotification_SettingsValidation(t *testing.T) {
 			settings: `daily_digest = { allocation_ids = [] }`,
 			err:      `at\s+least\s+1`,
 		},
+		"null_digest_allocation": {
+			settings: `daily_digest = { allocation_ids = [null] }`,
+			err:      `null\s+value`,
+		},
 		"duplicate_digest_allocation": {
 			settings: `weekly_digest = { allocation_ids = ["alloc", "alloc"] }`,
 			err:      `duplicate\s+values`,

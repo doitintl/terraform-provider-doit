@@ -341,9 +341,10 @@ const (
 )
 
 // withUserNotificationListRules requires the elements of a settings list to be
-// unique and valid, and sets its description.
+// non-null, unique and valid, and sets its description.
 func withUserNotificationListRules(list schema.ListAttribute, description string, elementValidator validator.String) schema.ListAttribute {
 	list.Validators = append(list.Validators,
+		listvalidator.NoNullValues(),
 		listvalidator.UniqueValues(),
 		listvalidator.ValueStringsAre(elementValidator),
 	)
@@ -391,8 +392,7 @@ func (r *userNotificationResource) Create(ctx context.Context, req resource.Crea
 	if createResp.StatusCode() != 201 {
 		resp.Diagnostics.AddError(
 			"Error Creating User Notification",
-			userNotificationPermissionHint(createResp.StatusCode(), createResp.Body)+
-				fmt.Sprintf("Could not create user notification, status: %d, body: %s", createResp.StatusCode(), string(createResp.Body)),
+			fmt.Sprintf("Could not create user notification, status: %d, body: %s", createResp.StatusCode(), string(createResp.Body)),
 		)
 		return
 	}
@@ -492,8 +492,7 @@ func (r *userNotificationResource) Update(ctx context.Context, req resource.Upda
 	if updateResp.StatusCode() != 200 {
 		resp.Diagnostics.AddError(
 			"Error Updating User Notification",
-			userNotificationPermissionHint(updateResp.StatusCode(), updateResp.Body)+
-				fmt.Sprintf("Could not update user notification, status: %d, body: %s", updateResp.StatusCode(), string(updateResp.Body)),
+			fmt.Sprintf("Could not update user notification, status: %d, body: %s", updateResp.StatusCode(), string(updateResp.Body)),
 		)
 		return
 	}
