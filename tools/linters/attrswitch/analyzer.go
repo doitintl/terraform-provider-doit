@@ -158,16 +158,21 @@ func hasCommentedDefault(pass *analysis.Pass, sw *ast.TypeSwitchStmt) bool {
 			continue
 		}
 		// The clause ends with its last statement; an empty one extends to the
-		// next clause, whose own leading comment is not the default's.
+		// next clause, or to the closing brace of the switch if it is last.
+		// The next clause's own leading comment is not the default's.
 		from, to := clause.Pos(), clause.End()
-		if len(clause.Body) == 0 && i+1 < len(sw.Body.List) {
-			to = sw.Body.List[i+1].Pos()
+		followed := i+1 < len(sw.Body.List)
+		if len(clause.Body) == 0 {
+			to = sw.Body.Rbrace
+			if followed {
+				to = sw.Body.List[i+1].Pos()
+			}
 		}
 		for _, group := range file.Comments {
 			if group.Pos() < from || group.End() > to {
 				continue
 			}
-			if len(clause.Body) == 0 && i+1 < len(sw.Body.List) &&
+			if len(clause.Body) == 0 && followed &&
 				pass.Fset.Position(group.End()).Line+1 == pass.Fset.Position(to).Line {
 				continue
 			}

@@ -191,3 +191,14 @@ func readModifyWrite(a schema.Attribute) schema.Attribute {
 	}
 	return a
 }
+
+// GOOD: a final default that holds only a comment.
+func commentOnlyFinalDefault(a schema.Attribute) int {
+	switch a := a.(type) {
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	default:
+		// Only sets are relevant here.
+	}
+	return 0
+}
