@@ -51,8 +51,7 @@ output "slack_notification_ids" {
 
 ### Read-Only
 
-- `items` (Attributes List) Cost-anomaly notification configs for the tenant, ordered by
-`createTime` ascending, then by `id` ascending. (see [below for nested schema](#nestedatt--items))
+- `items` (Attributes List) Cost-anomaly notification configs for the tenant, ordered by `createTime` ascending, then by `id` ascending. (see [below for nested schema](#nestedatt--items))
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -68,11 +67,8 @@ Optional:
 Read-Only:
 
 - `create_time` (String) When the config was created. `null` only on a dry-run create.
-- `destinations` (Attributes) Delivery targets. Always includes `emails`, `slackChannels`, and
-`teamsChannels`. Unused lists are empty arrays. (see [below for nested schema](#nestedatt--items--destinations))
-- `etag` (String) Current strong ETag as bare SHA-256 hex. The `ETag` response header
-and `If-Match` wrap this value in double quotes. Send that quoted
-form unchanged on update or delete. `null` only on a dry-run create.
+- `destinations` (Attributes) Delivery targets. Always includes `emails`, `slackChannels`, and `teamsChannels`. Unused lists are empty arrays. (see [below for nested schema](#nestedatt--items--destinations))
+- `etag` (String) Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create.
 - `id` (String) Server-assigned notification id. `null` only on a dry-run create.
 - `name` (String) Display name of the notification (max 200 characters). The stored name is trimmed.
 - `settings` (Attributes) Subscribed notification settings. Only `costAnomalies` is accepted; any other notification type is rejected. (see [below for nested schema](#nestedatt--items--settings))

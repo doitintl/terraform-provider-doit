@@ -73,3 +73,28 @@ resource "doit_user_notification" "production_critical" {
     }
   }
 }
+
+# A daily cost digest of the production allocation, plus invoice, credit and
+# insight notifications. Types other than cost anomalies need the user to hold
+# a permission: Cloud Analytics User for digests, Invoice Viewer for invoices
+# and credit utilization, Insights Manager for insights.
+resource "doit_user_notification" "billing_and_digests" {
+  user_id = data.doit_users.jane.users[0].id
+  name    = "Billing and daily digest"
+
+  settings = {
+    daily_digest = { allocation_ids = [doit_allocation.production.id] }
+
+    # {} subscribes to a type without options; for invoices it means every
+    # billing profile.
+    new_invoices       = {}
+    credit_utilization = {}
+
+    # Only critical and high security insights on AWS.
+    insights = {
+      pillars    = ["security"]
+      severities = ["critical", "high"]
+      providers  = ["aws"]
+    }
+  }
+}

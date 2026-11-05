@@ -23,6 +23,7 @@ export TEST_CUSTOMER_ID="your-customer-id"
 # export TEST_CLOUD_INCIDENT_ID="your-cloud-incident-id"
 # export TEST_COMMITMENT_ID="your-commitment-id"
 # export TEST_DASHBOARD_ID="your-dashboard-id"  # no API lists dashboards; copy an ID from the console URL
+# export TEST_BILLING_PROFILE_ID="your-billing-profile-id"  # no API lists billing profiles; copy the ID from the console URL (not the number shown in the UI)
 # export TEST_ASSET_ID="your-asset-id"
 # export TEST_ASSET_ID_AWS="your-aws-asset-id"
 # export TEST_CLOUD_DIAGRAM_RESOURCE="//compute.googleapis.com/projects/your-project/global/networks/your-network"

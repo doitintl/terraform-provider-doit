@@ -64,13 +64,13 @@ func CustomerNotificationResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Required:            true,
-				Description:         "Delivery targets for this config. Must include `emails`,\n`slackChannels`, and `teamsChannels`, with at least one non-empty\narray.\n",
-				MarkdownDescription: "Delivery targets for this config. Must include `emails`,\n`slackChannels`, and `teamsChannels`, with at least one non-empty\narray.\n",
+				Description:         "Delivery targets for this config. Must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.",
+				MarkdownDescription: "Delivery targets for this config. Must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.",
 			},
 			"etag": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Current strong ETag as bare SHA-256 hex. The `ETag` response header\nand `If-Match` wrap this value in double quotes. Send that quoted\nform unchanged on update or delete. `null` only on a dry-run create.\n",
-				MarkdownDescription: "Current strong ETag as bare SHA-256 hex. The `ETag` response header\nand `If-Match` wrap this value in double quotes. Send that quoted\nform unchanged on update or delete. `null` only on a dry-run create.\n",
+				Description:         "Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create.",
+				MarkdownDescription: "Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create.",
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -269,8 +269,8 @@ func CustomerNotificationResourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Required:            true,
-				Description:         "Subscribed notification settings. Only `costAnomalies` is accepted.\nSettings for any other type are rejected; omitting `costAnomalies` is\nrejected.\n",
-				MarkdownDescription: "Subscribed notification settings. Only `costAnomalies` is accepted.\nSettings for any other type are rejected; omitting `costAnomalies` is\nrejected.\n",
+				Description:         "Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected.",
+				MarkdownDescription: "Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected.",
 			},
 			"update_time": schema.StringAttribute{
 				Computed:            true,

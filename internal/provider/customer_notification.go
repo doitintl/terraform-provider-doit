@@ -255,9 +255,57 @@ func overlayCustomerNotificationComputedFields(ctx context.Context, apiResp *mod
 		plan.Etag = resolved.Etag //nolint:overlaycheck // guarded to avoid inconsistent result on Update
 	}
 
-	// name, destinations and settings: Required (settings has no Computed children) — never touch.
+	// name and destinations: Required — never touch. settings is Required,
+	// but the repeat controls under it are Optional+Computed.
+	if plan.Settings.IsUnknown() {
+		plan.Settings = resolved.Settings
+	} else if !plan.Settings.IsNull() {
+		overlayCustomerNotificationSettings(ctx, &resolved.Settings, &plan.Settings)
+	}
 
 	return diags
+}
+
+func overlayCustomerNotificationSettings(ctx context.Context, resolved, plan *resource_customer_notification.SettingsValue) {
+	if plan.CostAnomalies.IsUnknown() {
+		plan.CostAnomalies = resolved.CostAnomalies
+	} else if !plan.CostAnomalies.IsNull() {
+		overlayCustomerNotificationCostAnomalies(ctx, &resolved.CostAnomalies, &plan.CostAnomalies)
+	}
+}
+
+func overlayCustomerNotificationCostAnomalies(ctx context.Context, resolved, plan *resource_customer_notification.CostAnomaliesValue) {
+	if plan.Repeat.IsUnknown() {
+		plan.Repeat = resolved.Repeat
+	} else if !plan.Repeat.IsNull() {
+		overlayCustomerNotificationRepeat(ctx, &resolved.Repeat, &plan.Repeat)
+	}
+}
+
+func overlayCustomerNotificationRepeat(ctx context.Context, resolved, plan *resource_customer_notification.RepeatValue) {
+	if plan.EveryHours.IsUnknown() {
+		plan.EveryHours = resolved.EveryHours
+	}
+	if plan.WhenCostGrows.IsUnknown() {
+		plan.WhenCostGrows = resolved.WhenCostGrows
+	} else if !plan.WhenCostGrows.IsNull() {
+		overlayCustomerNotificationWhenCostGrows(ctx, &resolved.WhenCostGrows, &plan.WhenCostGrows)
+	}
+}
+
+func overlayCustomerNotificationWhenCostGrows(_ context.Context, resolved, plan *resource_customer_notification.WhenCostGrowsValue) {
+	if plan.Match.IsUnknown() {
+		plan.Match = resolved.Match
+	}
+	if plan.PercentIncrease.IsUnknown() {
+		plan.PercentIncrease = resolved.PercentIncrease
+	}
+	if plan.WithinHours.IsUnknown() {
+		plan.WithinHours = resolved.WithinHours
+	}
+	if plan.MinIncrease.IsUnknown() {
+		plan.MinIncrease = resolved.MinIncrease
+	}
 }
 
 // toCreateRequest converts the TF model to a CreateCustomerNotificationRequest.
@@ -290,19 +338,19 @@ func (plan *customerNotificationResourceModel) toCreateRequest(ctx context.Conte
 		},
 	}
 
-	if !ca.Repeat.IsNull() {
+	if !ca.Repeat.IsNull() && !ca.Repeat.IsUnknown() {
 		repeat := &models.CostAnomalyRepeat{
 			EveryHours: int64ToIntPointer(ca.Repeat.EveryHours),
 		}
-		if wcg := ca.Repeat.WhenCostGrows; !wcg.IsNull() {
+		if wcg := ca.Repeat.WhenCostGrows; !wcg.IsNull() && !wcg.IsUnknown() {
 			repeat.WhenCostGrows = &models.CostAnomalyWhenCostGrows{
 				PercentIncrease: int64ToIntPointer(wcg.PercentIncrease),
 				WithinHours:     int64ToIntPointer(wcg.WithinHours),
 			}
-			if !wcg.Match.IsNull() {
+			if !wcg.Match.IsNull() && !wcg.Match.IsUnknown() {
 				repeat.WhenCostGrows.Match = new(models.CostAnomalyWhenCostGrowsMatch(wcg.Match.ValueString()))
 			}
-			if !wcg.MinIncrease.IsNull() {
+			if !wcg.MinIncrease.IsNull() && !wcg.MinIncrease.IsUnknown() {
 				repeat.WhenCostGrows.MinIncrease = &models.Money{
 					Amount:   wcg.MinIncrease.Amount.ValueString(),
 					Currency: wcg.MinIncrease.Currency.ValueString(),
@@ -324,53 +372,8 @@ func (plan *customerNotificationResourceModel) toCreateRequest(ctx context.Conte
 func (plan *customerNotificationResourceModel) toUpdateRequest(ctx context.Context) (models.UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	ca := plan.Settings.CostAnomalies
-
-	ids, d := customerNotificationAllocationIDs(ctx, ca.Allocations)
+	patch, d := toPatchCustomerNotificationCostAnomalies(ctx, plan.Settings.CostAnomalies)
 	diags.Append(d...)
-
-	patch := models.PatchCostAnomalySettings{
-		MinSeverity: new(models.PatchCostAnomalySettingsMinSeverity(ca.MinSeverity.ValueString())),
-		MinExcessCost: &models.Money{
-			Amount:   ca.MinExcessCost.Amount.ValueString(),
-			Currency: ca.MinExcessCost.Currency.ValueString(),
-		},
-		Allocations: &models.PatchCostAnomalyAllocations{
-			Mode: new(models.PatchCostAnomalyAllocationsMode(ca.Allocations.Mode.ValueString())),
-			Ids:  &ids,
-		},
-	}
-
-	if ca.Repeat.IsNull() {
-		patch.Repeat.SetNull()
-	} else {
-		repeat := models.PatchCostAnomalyRepeat{
-			EveryHours: int64ToNullableInt(ca.Repeat.EveryHours),
-		}
-		if wcg := ca.Repeat.WhenCostGrows; wcg.IsNull() {
-			repeat.WhenCostGrows.SetNull()
-		} else {
-			patchWCG := models.PatchCostAnomalyWhenCostGrows{
-				PercentIncrease: int64ToNullableInt(wcg.PercentIncrease),
-				WithinHours:     int64ToNullableInt(wcg.WithinHours),
-			}
-			if wcg.Match.IsNull() {
-				patchWCG.Match.SetNull()
-			} else {
-				patchWCG.Match.Set(models.PatchCostAnomalyWhenCostGrowsMatch(wcg.Match.ValueString()))
-			}
-			if wcg.MinIncrease.IsNull() {
-				patchWCG.MinIncrease.SetNull()
-			} else {
-				patchWCG.MinIncrease.Set(models.Money{
-					Amount:   wcg.MinIncrease.Amount.ValueString(),
-					Currency: wcg.MinIncrease.Currency.ValueString(),
-				})
-			}
-			repeat.WhenCostGrows.Set(patchWCG)
-		}
-		patch.Repeat.Set(repeat)
-	}
 
 	destinations, d := plan.customerNotificationDestinations(ctx)
 	diags.Append(d...)
@@ -384,6 +387,58 @@ func (plan *customerNotificationResourceModel) toUpdateRequest(ctx context.Conte
 	}
 
 	return req, diags
+}
+
+// toPatchCustomerNotificationCostAnomalies builds the cost-anomaly part of the
+// merge patch. Every optional member of repeat is sent as an explicit value or
+// an explicit null: omitting it would keep the stored value.
+func toPatchCustomerNotificationCostAnomalies(ctx context.Context, ca resource_customer_notification.CostAnomaliesValue) (models.PatchCostAnomalySettings, diag.Diagnostics) {
+	ids, diags := customerNotificationAllocationIDs(ctx, ca.Allocations)
+
+	patch := models.PatchCostAnomalySettings{
+		MinSeverity: new(models.PatchCostAnomalySettingsMinSeverity(ca.MinSeverity.ValueString())),
+		MinExcessCost: &models.Money{
+			Amount:   ca.MinExcessCost.Amount.ValueString(),
+			Currency: ca.MinExcessCost.Currency.ValueString(),
+		},
+		Allocations: &models.PatchCostAnomalyAllocations{
+			Mode: new(models.PatchCostAnomalyAllocationsMode(ca.Allocations.Mode.ValueString())),
+			Ids:  &ids,
+		},
+	}
+
+	if ca.Repeat.IsNull() || ca.Repeat.IsUnknown() {
+		patch.Repeat.SetNull()
+	} else {
+		repeat := models.PatchCostAnomalyRepeat{
+			EveryHours: int64ToNullableInt(ca.Repeat.EveryHours),
+		}
+		if wcg := ca.Repeat.WhenCostGrows; wcg.IsNull() || wcg.IsUnknown() {
+			repeat.WhenCostGrows.SetNull()
+		} else {
+			patchWCG := models.PatchCostAnomalyWhenCostGrows{
+				PercentIncrease: int64ToNullableInt(wcg.PercentIncrease),
+				WithinHours:     int64ToNullableInt(wcg.WithinHours),
+			}
+			if wcg.Match.IsNull() || wcg.Match.IsUnknown() {
+				patchWCG.Match.SetNull()
+			} else {
+				patchWCG.Match.Set(models.PatchCostAnomalyWhenCostGrowsMatch(wcg.Match.ValueString()))
+			}
+			if wcg.MinIncrease.IsNull() || wcg.MinIncrease.IsUnknown() {
+				patchWCG.MinIncrease.SetNull()
+			} else {
+				patchWCG.MinIncrease.Set(models.Money{
+					Amount:   wcg.MinIncrease.Amount.ValueString(),
+					Currency: wcg.MinIncrease.Currency.ValueString(),
+				})
+			}
+			repeat.WhenCostGrows.Set(patchWCG)
+		}
+		patch.Repeat.Set(repeat)
+	}
+
+	return patch, diags
 }
 
 // customerNotificationDestinations converts the destinations object. The API

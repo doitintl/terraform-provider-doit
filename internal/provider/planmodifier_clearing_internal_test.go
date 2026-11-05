@@ -78,6 +78,25 @@ func TestClearingPlanModifiers(t *testing.T) {
 		}
 	})
 
+	t.Run("int64", func(t *testing.T) {
+		mod := useNullForUnknownInt64WhenConfigNull()
+		for _, s := range scenarios(types.Int64Value(7), types.Int64Unknown(), types.Int64Null()) {
+			t.Run(s.name, func(t *testing.T) {
+				resp := &planmodifier.Int64Response{PlanValue: s.in.(types.Int64)}
+				mod.PlanModifyInt64(ctx, planmodifier.Int64Request{
+					ConfigValue: s.config.(types.Int64), StateValue: s.state.(types.Int64), PlanValue: s.in.(types.Int64),
+				}, resp)
+				want := s.in
+				if s.wantCleared {
+					want = types.Int64Null()
+				}
+				if !resp.PlanValue.Equal(want) {
+					t.Errorf("plan = %s, want %s", resp.PlanValue, want)
+				}
+			})
+		}
+	})
+
 	t.Run("list", func(t *testing.T) {
 		known := types.ListValueMust(types.StringType, []attr.Value{types.StringValue("x")})
 		unknown, null := types.ListUnknown(types.StringType), types.ListNull(types.StringType)

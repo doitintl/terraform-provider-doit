@@ -26,6 +26,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*customerNotificationResource)(nil)
 	_ resource.ResourceWithImportState      = (*customerNotificationResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*customerNotificationResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*customerNotificationResource)(nil)
 )
 
 // NewCustomerNotificationResource creates a new customer notification resource instance.
@@ -58,6 +59,10 @@ func (r *customerNotificationResource) Metadata(_ context.Context, req resource.
 // ImportState imports a notification by its ID.
 func (r *customerNotificationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func (r *customerNotificationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planNotificationMetadataUnknownOnUpdate(ctx, req, resp)
 }
 
 func (r *customerNotificationResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
@@ -113,31 +118,31 @@ func (r *customerNotificationResource) Schema(ctx context.Context, _ resource.Sc
 				costAnomalies.Attributes["min_excess_cost"] = minExcessCost
 			}
 
-			// repeat and everything under it is user-authored: the API never
-			// fills it in, and omits it when unset. Plain Optional (not
-			// Computed) lets removal from config plan a clear (sent as null).
+			// repeat and everything under it is user-authored: the API omits
+			// it when unset. The clearing modifiers plan null for an omitted
+			// control so removing it from config clears it (sent as null).
 			if repeat, ok := costAnomalies.Attributes["repeat"].(schema.SingleNestedAttribute); ok {
-				repeat.Computed = false
+				repeat.PlanModifiers = append(repeat.PlanModifiers, useNullForOmittedNotificationSetting())
 				if everyHours, ok := repeat.Attributes["every_hours"].(schema.Int64Attribute); ok {
-					everyHours.Computed = false
+					everyHours.PlanModifiers = append(everyHours.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
 					repeat.Attributes["every_hours"] = everyHours
 				}
 				if whenCostGrows, ok := repeat.Attributes["when_cost_grows"].(schema.SingleNestedAttribute); ok {
-					whenCostGrows.Computed = false
+					whenCostGrows.PlanModifiers = append(whenCostGrows.PlanModifiers, useNullForOmittedNotificationSetting())
 					if match, ok := whenCostGrows.Attributes["match"].(schema.StringAttribute); ok {
-						match.Computed = false
+						match.PlanModifiers = append(match.PlanModifiers, useNullForUnknownStringWhenConfigNull())
 						whenCostGrows.Attributes["match"] = match
 					}
 					if percentIncrease, ok := whenCostGrows.Attributes["percent_increase"].(schema.Int64Attribute); ok {
-						percentIncrease.Computed = false
+						percentIncrease.PlanModifiers = append(percentIncrease.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
 						whenCostGrows.Attributes["percent_increase"] = percentIncrease
 					}
 					if withinHours, ok := whenCostGrows.Attributes["within_hours"].(schema.Int64Attribute); ok {
-						withinHours.Computed = false
+						withinHours.PlanModifiers = append(withinHours.PlanModifiers, useNullForUnknownInt64WhenConfigNull())
 						whenCostGrows.Attributes["within_hours"] = withinHours
 					}
 					if minIncrease, ok := whenCostGrows.Attributes["min_increase"].(schema.SingleNestedAttribute); ok {
-						minIncrease.Computed = false
+						minIncrease.PlanModifiers = append(minIncrease.PlanModifiers, useNullForOmittedNotificationSetting())
 						appendCostAnomalyMoneyValidators(minIncrease.Attributes, true)
 						setCostAnomalyDescriptions(minIncrease.Attributes, map[string]string{
 							"amount": costAnomalyAmountDescription + " Must be between `1` and `1000000000`.",

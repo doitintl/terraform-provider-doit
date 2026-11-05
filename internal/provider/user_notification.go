@@ -67,7 +67,7 @@ func mapUserNotificationToModel(ctx context.Context, resp *models.UserNotificati
 	diags.Append(d...)
 	state.Destinations = destinations
 
-	settings, d := buildUserNotificationSettings(ctx, &resp.Settings.CostAnomalies, state.Settings.CostAnomalies)
+	settings, d := buildUserNotificationSettings(ctx, &resp.Settings, state.Settings.CostAnomalies)
 	diags.Append(d...)
 	state.Settings = settings
 
@@ -99,10 +99,37 @@ func buildUserNotificationDestinations(ctx context.Context, destinations *[]mode
 	return list, diags
 }
 
-// buildUserNotificationSettings maps the cost-anomaly settings. prior is the
-// value currently in state; it only decides how amounts are spelled.
-func buildUserNotificationSettings(ctx context.Context, ca *models.CostAnomalySettings, prior resource_user_notification.CostAnomaliesValue) (resource_user_notification.SettingsValue, diag.Diagnostics) {
+// buildUserNotificationSettings maps the subscribed types. prior is the
+// cost-anomaly value currently in state; it only decides how amounts are spelled.
+func buildUserNotificationSettings(ctx context.Context, s *models.UserNotificationSettings, prior resource_user_notification.CostAnomaliesValue) (resource_user_notification.SettingsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	attrTypes := resource_user_notification.SettingsValue{}.AttributeTypes(ctx)
+	objects, d := userNotificationSettingsObjects(ctx, s)
+	diags.Append(d...)
+	values, d := userNotificationSettingsValues(ctx, attrTypes, objects)
+	diags.Append(d...)
+
+	costAnomalies, d := buildUserNotificationCostAnomalies(ctx, s.CostAnomalies, prior)
+	diags.Append(d...)
+	values["cost_anomalies"] = costAnomalies
+
+	if diags.HasError() {
+		return resource_user_notification.NewSettingsValueNull(), diags
+	}
+
+	settings, d := resource_user_notification.NewSettingsValue(attrTypes, values)
+	diags.Append(d...)
+
+	return settings, diags
+}
+
+func buildUserNotificationCostAnomalies(ctx context.Context, ca *models.CostAnomalySettings, prior resource_user_notification.CostAnomaliesValue) (resource_user_notification.CostAnomaliesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if ca == nil {
+		return resource_user_notification.NewCostAnomaliesValueNull(), diags
+	}
 
 	ids := []string{}
 	if ca.Allocations.Ids != nil {
@@ -142,15 +169,7 @@ func buildUserNotificationSettings(ctx context.Context, ca *models.CostAnomalySe
 	)
 	diags.Append(d...)
 
-	settings, d := resource_user_notification.NewSettingsValue(
-		resource_user_notification.SettingsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"cost_anomalies": costAnomalies,
-		},
-	)
-	diags.Append(d...)
-
-	return settings, diags
+	return costAnomalies, diags
 }
 
 func buildUserNotificationRepeat(ctx context.Context, repeat *models.CostAnomalyRepeat, prior resource_user_notification.RepeatValue) (resource_user_notification.RepeatValue, diag.Diagnostics) {
@@ -237,74 +256,227 @@ func overlayUserNotificationComputedFields(ctx context.Context, apiResp *models.
 		plan.Etag = resolved.Etag //nolint:overlaycheck // guarded to avoid inconsistent result on Update
 	}
 
-	// user_id, name and settings: Required (settings has no Computed children) — never touch.
+	// user_id and name: Required — never touch. settings is Required, but its
+	// types and their settings are Optional+Computed.
+	if plan.Settings.IsUnknown() {
+		plan.Settings = resolved.Settings
+	} else if !plan.Settings.IsNull() {
+		overlayUserNotificationSettings(ctx, &resolved.Settings, &plan.Settings)
+	}
 
 	return diags
+}
+
+// overlayUserNotificationSettings resolves the settings the plan leaves
+// unknown. A type is unknown only while its configuration is; the filter lists
+// of a type that is new in this plan are unknown when omitted.
+func overlayUserNotificationSettings(ctx context.Context, resolved, plan *resource_user_notification.SettingsValue) {
+	if plan.CreditUtilization.IsUnknown() {
+		plan.CreditUtilization = resolved.CreditUtilization
+	}
+	if plan.QuotaUtilization.IsUnknown() {
+		plan.QuotaUtilization = resolved.QuotaUtilization
+	}
+	if plan.CloudIncidents.IsUnknown() {
+		plan.CloudIncidents = resolved.CloudIncidents
+	}
+	if plan.NewSkuUsage.IsUnknown() {
+		plan.NewSkuUsage = resolved.NewSkuUsage
+	}
+	if plan.MonthlyDigest.IsUnknown() {
+		plan.MonthlyDigest = resolved.MonthlyDigest
+	}
+	if plan.ExpertInsights.IsUnknown() {
+		plan.ExpertInsights = resolved.ExpertInsights
+	}
+	if plan.SavingsPlanApproval.IsUnknown() {
+		plan.SavingsPlanApproval = resolved.SavingsPlanApproval
+	}
+	if plan.SavingsPlanPurchased.IsUnknown() {
+		plan.SavingsPlanPurchased = resolved.SavingsPlanPurchased
+	}
+	if plan.CudApproval.IsUnknown() {
+		plan.CudApproval = resolved.CudApproval
+	}
+	if plan.CudPurchased.IsUnknown() {
+		plan.CudPurchased = resolved.CudPurchased
+	}
+	if plan.DataIntegrationSyncFailure.IsUnknown() {
+		plan.DataIntegrationSyncFailure = resolved.DataIntegrationSyncFailure
+	}
+	if plan.DailyDigest.IsUnknown() {
+		plan.DailyDigest = resolved.DailyDigest
+	}
+	if plan.WeeklyDigest.IsUnknown() {
+		plan.WeeklyDigest = resolved.WeeklyDigest
+	}
+	if plan.NewInvoices.IsUnknown() {
+		plan.NewInvoices = resolved.NewInvoices
+	} else if !plan.NewInvoices.IsNull() {
+		overlayUserNotificationNewInvoices(ctx, &resolved.NewInvoices, &plan.NewInvoices)
+	}
+	if plan.NewProformaInvoices.IsUnknown() {
+		plan.NewProformaInvoices = resolved.NewProformaInvoices
+	} else if !plan.NewProformaInvoices.IsNull() {
+		overlayUserNotificationNewProformaInvoices(ctx, &resolved.NewProformaInvoices, &plan.NewProformaInvoices)
+	}
+	if plan.PaymentReminders.IsUnknown() {
+		plan.PaymentReminders = resolved.PaymentReminders
+	} else if !plan.PaymentReminders.IsNull() {
+		overlayUserNotificationPaymentReminders(ctx, &resolved.PaymentReminders, &plan.PaymentReminders)
+	}
+	if plan.Insights.IsUnknown() {
+		plan.Insights = resolved.Insights
+	} else if !plan.Insights.IsNull() {
+		overlayUserNotificationInsights(ctx, &resolved.Insights, &plan.Insights)
+	}
+	if plan.CostAnomalies.IsUnknown() {
+		plan.CostAnomalies = resolved.CostAnomalies
+	} else if !plan.CostAnomalies.IsNull() {
+		overlayUserNotificationCostAnomalies(ctx, &resolved.CostAnomalies, &plan.CostAnomalies)
+	}
+}
+
+func overlayUserNotificationNewInvoices(_ context.Context, resolved, plan *resource_user_notification.NewInvoicesValue) {
+	if plan.BillingProfileIds.IsUnknown() {
+		plan.BillingProfileIds = resolved.BillingProfileIds
+	}
+}
+
+func overlayUserNotificationNewProformaInvoices(_ context.Context, resolved, plan *resource_user_notification.NewProformaInvoicesValue) {
+	if plan.BillingProfileIds.IsUnknown() {
+		plan.BillingProfileIds = resolved.BillingProfileIds
+	}
+}
+
+func overlayUserNotificationPaymentReminders(_ context.Context, resolved, plan *resource_user_notification.PaymentRemindersValue) {
+	if plan.BillingProfileIds.IsUnknown() {
+		plan.BillingProfileIds = resolved.BillingProfileIds
+	}
+}
+
+func overlayUserNotificationInsights(_ context.Context, resolved, plan *resource_user_notification.InsightsValue) {
+	if plan.Pillars.IsUnknown() {
+		plan.Pillars = resolved.Pillars
+	}
+	if plan.Severities.IsUnknown() {
+		plan.Severities = resolved.Severities
+	}
+	if plan.Providers.IsUnknown() {
+		plan.Providers = resolved.Providers
+	}
+}
+
+func overlayUserNotificationCostAnomalies(ctx context.Context, resolved, plan *resource_user_notification.CostAnomaliesValue) {
+	if plan.Repeat.IsUnknown() {
+		plan.Repeat = resolved.Repeat
+	} else if !plan.Repeat.IsNull() {
+		overlayUserNotificationRepeat(ctx, &resolved.Repeat, &plan.Repeat)
+	}
+}
+
+func overlayUserNotificationRepeat(ctx context.Context, resolved, plan *resource_user_notification.RepeatValue) {
+	if plan.EveryHours.IsUnknown() {
+		plan.EveryHours = resolved.EveryHours
+	}
+	if plan.WhenCostGrows.IsUnknown() {
+		plan.WhenCostGrows = resolved.WhenCostGrows
+	} else if !plan.WhenCostGrows.IsNull() {
+		overlayUserNotificationWhenCostGrows(ctx, &resolved.WhenCostGrows, &plan.WhenCostGrows)
+	}
+}
+
+func overlayUserNotificationWhenCostGrows(_ context.Context, resolved, plan *resource_user_notification.WhenCostGrowsValue) {
+	if plan.Match.IsUnknown() {
+		plan.Match = resolved.Match
+	}
+	if plan.PercentIncrease.IsUnknown() {
+		plan.PercentIncrease = resolved.PercentIncrease
+	}
+	if plan.WithinHours.IsUnknown() {
+		plan.WithinHours = resolved.WithinHours
+	}
+	if plan.MinIncrease.IsUnknown() {
+		plan.MinIncrease = resolved.MinIncrease
+	}
 }
 
 // toCreateRequest converts the TF model to a CreateUserNotificationRequest.
 func (plan *userNotificationResourceModel) toCreateRequest(ctx context.Context) (models.CreateUserNotificationJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	ca := plan.Settings.CostAnomalies
-
-	ids, d := userNotificationAllocationIDs(ctx, ca.Allocations)
-	diags.Append(d...)
-
 	req := models.CreateUserNotificationJSONRequestBody{
 		Name: plan.Name.ValueString(),
-		Settings: models.UserNotificationSettings{
-			CostAnomalies: models.CostAnomalySettings{
-				MinSeverity: models.CostAnomalySettingsMinSeverity(ca.MinSeverity.ValueString()),
-				MinExcessCost: models.Money{
-					Amount:   ca.MinExcessCost.Amount.ValueString(),
-					Currency: ca.MinExcessCost.Currency.ValueString(),
-				},
-				Allocations: models.CostAnomalyAllocations{
-					Mode: models.CostAnomalyAllocationsMode(ca.Allocations.Mode.ValueString()),
-					Ids:  ids,
-				},
-			},
+	}
+
+	diags.Append(toUserNotificationCreateSettings(ctx, plan.Settings, &req.Settings)...)
+
+	return req, diags
+}
+
+func toCreateCostAnomalies(ctx context.Context, ca resource_user_notification.CostAnomaliesValue) (models.CostAnomalySettings, diag.Diagnostics) {
+	ids, diags := userNotificationAllocationIDs(ctx, ca.Allocations)
+
+	out := models.CostAnomalySettings{
+		MinSeverity: models.CostAnomalySettingsMinSeverity(ca.MinSeverity.ValueString()),
+		MinExcessCost: models.Money{
+			Amount:   ca.MinExcessCost.Amount.ValueString(),
+			Currency: ca.MinExcessCost.Currency.ValueString(),
+		},
+		Allocations: models.CostAnomalyAllocations{
+			Mode: models.CostAnomalyAllocationsMode(ca.Allocations.Mode.ValueString()),
+			Ids:  ids,
 		},
 	}
 
-	if !ca.Repeat.IsNull() {
+	if !ca.Repeat.IsNull() && !ca.Repeat.IsUnknown() {
 		repeat := &models.CostAnomalyRepeat{
 			EveryHours: int64ToIntPointer(ca.Repeat.EveryHours),
 		}
-		if wcg := ca.Repeat.WhenCostGrows; !wcg.IsNull() {
+		if wcg := ca.Repeat.WhenCostGrows; !wcg.IsNull() && !wcg.IsUnknown() {
 			repeat.WhenCostGrows = &models.CostAnomalyWhenCostGrows{
 				PercentIncrease: int64ToIntPointer(wcg.PercentIncrease),
 				WithinHours:     int64ToIntPointer(wcg.WithinHours),
 			}
-			if !wcg.Match.IsNull() {
+			if !wcg.Match.IsNull() && !wcg.Match.IsUnknown() {
 				repeat.WhenCostGrows.Match = new(models.CostAnomalyWhenCostGrowsMatch(wcg.Match.ValueString()))
 			}
-			if !wcg.MinIncrease.IsNull() {
+			if !wcg.MinIncrease.IsNull() && !wcg.MinIncrease.IsUnknown() {
 				repeat.WhenCostGrows.MinIncrease = &models.Money{
 					Amount:   wcg.MinIncrease.Amount.ValueString(),
 					Currency: wcg.MinIncrease.Currency.ValueString(),
 				}
 			}
 		}
-		req.Settings.CostAnomalies.Repeat = repeat
+		out.Repeat = repeat
 	}
 
-	return req, diags
+	return out, diags
 }
 
 // toUpdateRequest converts the TF model to a JSON merge patch (RFC 7396).
 //
 // The patch always carries the full desired settings. Nested objects are
-// deep-merged server-side, so every optional member of repeat is sent as an
-// explicit value or an explicit null — omitting it would keep the stored value.
+// deep-merged server-side, so every type the plan does not subscribe to, and
+// every optional member of repeat, is sent as an explicit value or an explicit
+// null — omitting it would keep the stored value.
 func (plan *userNotificationResourceModel) toUpdateRequest(ctx context.Context) (models.UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	ca := plan.Settings.CostAnomalies
+	settings := &models.PatchUserNotificationSettings{}
+	diags.Append(toUserNotificationPatchSettings(ctx, plan.Settings, settings)...)
 
-	ids, d := userNotificationAllocationIDs(ctx, ca.Allocations)
-	diags.Append(d...)
+	req := models.UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody{
+		Name:     new(plan.Name.ValueString()),
+		Settings: settings,
+	}
+
+	return req, diags
+}
+
+// toPatchCostAnomalies builds the cost-anomaly part of the merge patch.
+func toPatchCostAnomalies(ctx context.Context, ca resource_user_notification.CostAnomaliesValue) (models.PatchCostAnomalySettings, diag.Diagnostics) {
+	ids, diags := userNotificationAllocationIDs(ctx, ca.Allocations)
 
 	patch := models.PatchCostAnomalySettings{
 		MinSeverity: new(models.PatchCostAnomalySettingsMinSeverity(ca.MinSeverity.ValueString())),
@@ -318,25 +490,25 @@ func (plan *userNotificationResourceModel) toUpdateRequest(ctx context.Context) 
 		},
 	}
 
-	if ca.Repeat.IsNull() {
+	if ca.Repeat.IsNull() || ca.Repeat.IsUnknown() {
 		patch.Repeat.SetNull()
 	} else {
 		repeat := models.PatchCostAnomalyRepeat{
 			EveryHours: int64ToNullableInt(ca.Repeat.EveryHours),
 		}
-		if wcg := ca.Repeat.WhenCostGrows; wcg.IsNull() {
+		if wcg := ca.Repeat.WhenCostGrows; wcg.IsNull() || wcg.IsUnknown() {
 			repeat.WhenCostGrows.SetNull()
 		} else {
 			patchWCG := models.PatchCostAnomalyWhenCostGrows{
 				PercentIncrease: int64ToNullableInt(wcg.PercentIncrease),
 				WithinHours:     int64ToNullableInt(wcg.WithinHours),
 			}
-			if wcg.Match.IsNull() {
+			if wcg.Match.IsNull() || wcg.Match.IsUnknown() {
 				patchWCG.Match.SetNull()
 			} else {
 				patchWCG.Match.Set(models.PatchCostAnomalyWhenCostGrowsMatch(wcg.Match.ValueString()))
 			}
-			if wcg.MinIncrease.IsNull() {
+			if wcg.MinIncrease.IsNull() || wcg.MinIncrease.IsUnknown() {
 				patchWCG.MinIncrease.SetNull()
 			} else {
 				patchWCG.MinIncrease.Set(models.Money{
@@ -349,14 +521,7 @@ func (plan *userNotificationResourceModel) toUpdateRequest(ctx context.Context) 
 		patch.Repeat.Set(repeat)
 	}
 
-	req := models.UpdateUserNotificationApplicationMergePatchPlusJSONRequestBody{
-		Name: new(plan.Name.ValueString()),
-		Settings: &models.PatchUserNotificationSettings{
-			CostAnomalies: &patch,
-		},
-	}
-
-	return req, diags
+	return patch, diags
 }
 
 // userNotificationAllocationIDs returns the configured allocation IDs, never nil:
@@ -367,15 +532,19 @@ func userNotificationAllocationIDs(ctx context.Context, allocations resource_use
 	return ids, diags
 }
 
+// int64ToIntPointer returns nil for null and for unknown: an omitted resend
+// control that is not stored plans unknown, and there is nothing to send.
 func int64ToIntPointer(v types.Int64) *int {
-	if v.IsNull() {
+	if v.IsNull() || v.IsUnknown() {
 		return nil
 	}
 	return new(int(v.ValueInt64()))
 }
 
+// int64ToNullableInt returns an explicit null for null and for unknown (an
+// omitted control that is not stored).
 func int64ToNullableInt(v types.Int64) nullable.Nullable[int] {
-	if v.IsNull() {
+	if v.IsNull() || v.IsUnknown() {
 		return nullable.NewNullNullable[int]()
 	}
 	return valueToNullable(int(v.ValueInt64()))

@@ -3679,6 +3679,57 @@ func (e GroupAllocationRuleAction) Valid() bool {
 	}
 }
 
+// Defines values for InsightsNotificationSettingsPillars.
+const (
+	InsightsNotificationSettingsPillarsCompliance  InsightsNotificationSettingsPillars = "compliance"
+	InsightsNotificationSettingsPillarsCost        InsightsNotificationSettingsPillars = "cost"
+	InsightsNotificationSettingsPillarsOperations  InsightsNotificationSettingsPillars = "operations"
+	InsightsNotificationSettingsPillarsPerformance InsightsNotificationSettingsPillars = "performance"
+	InsightsNotificationSettingsPillarsSecurity    InsightsNotificationSettingsPillars = "security"
+)
+
+// Valid indicates whether the value is a known member of the InsightsNotificationSettingsPillars enum.
+func (e InsightsNotificationSettingsPillars) Valid() bool {
+	switch e {
+	case InsightsNotificationSettingsPillarsCompliance:
+		return true
+	case InsightsNotificationSettingsPillarsCost:
+		return true
+	case InsightsNotificationSettingsPillarsOperations:
+		return true
+	case InsightsNotificationSettingsPillarsPerformance:
+		return true
+	case InsightsNotificationSettingsPillarsSecurity:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for InsightsNotificationSettingsSeverities.
+const (
+	InsightsNotificationSettingsSeveritiesCritical InsightsNotificationSettingsSeverities = "critical"
+	InsightsNotificationSettingsSeveritiesHigh     InsightsNotificationSettingsSeverities = "high"
+	InsightsNotificationSettingsSeveritiesLow      InsightsNotificationSettingsSeverities = "low"
+	InsightsNotificationSettingsSeveritiesMedium   InsightsNotificationSettingsSeverities = "medium"
+)
+
+// Valid indicates whether the value is a known member of the InsightsNotificationSettingsSeverities enum.
+func (e InsightsNotificationSettingsSeverities) Valid() bool {
+	switch e {
+	case InsightsNotificationSettingsSeveritiesCritical:
+		return true
+	case InsightsNotificationSettingsSeveritiesHigh:
+		return true
+	case InsightsNotificationSettingsSeveritiesLow:
+		return true
+	case InsightsNotificationSettingsSeveritiesMedium:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InviteUserRequestJobTitle.
 const (
 	InviteUserRequestJobTitleDataEngineerDataAnalysts InviteUserRequestJobTitle = "Data Engineer / Data Analysts"
@@ -7002,6 +7053,12 @@ type BillingExplainerSupportDetail struct {
 	ServiceDescription string                `json:"serviceDescription"`
 }
 
+// BillingProfileNotificationSettings Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id.
+type BillingProfileNotificationSettings struct {
+	// BillingProfileIds Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+	BillingProfileIds *[]string `json:"billingProfileIds,omitempty"`
+}
+
 // BudgetAPI Budget details and runtime metrics.
 type BudgetAPI struct {
 	// Alerts List of up to three thresholds defined as a percentage of amount.
@@ -9059,17 +9116,11 @@ type CreateCustomThemeRequest struct {
 	PrimaryColor HexColor `json:"primaryColor"`
 }
 
-// CreateCustomerNotificationRequest Fields of a new organization notification. Unknown fields are
-// rejected. `settings` must include `costAnomalies` and must not include
-// any other notification type. `destinations` must include `emails`,
-// `slackChannels`, and `teamsChannels`, with at least one non-empty
-// array.
+// CreateCustomerNotificationRequest Fields of a new organization notification. Unknown fields are rejected. `settings` must include `costAnomalies` and must not include any other notification type. `destinations` must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.
 //
 // Example: {"destinations":{"emails":["finops@example.com"],"slackChannels":[],"teamsChannels":[]},"name":"Anomaly alerts","settings":{"costAnomalies":{"allocations":{"ids":[],"mode":"all"},"minExcessCost":{"amount":"100.00","currency":"USD"},"minSeverity":"warning"}}}
 type CreateCustomerNotificationRequest struct {
-	// Destinations Delivery targets for this config. Must include `emails`,
-	// `slackChannels`, and `teamsChannels`, with at least one non-empty
-	// array.
+	// Destinations Delivery targets for this config. Must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.
 	Destinations CustomerNotificationDestinations `json:"destinations"`
 
 	// Name Display name of the notification (max 200 characters). The stored name is trimmed.
@@ -9077,9 +9128,7 @@ type CreateCustomerNotificationRequest struct {
 	// Example: Anomaly alerts
 	Name string `json:"name"`
 
-	// Settings Subscribed notification settings. Only `costAnomalies` is accepted.
-	// Settings for any other type are rejected; omitting `costAnomalies` is
-	// rejected.
+	// Settings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected.
 	Settings CustomerNotificationSettings `json:"settings"`
 }
 
@@ -9304,9 +9353,7 @@ type CreateServiceAccountTokenResponse struct {
 // Example: active
 type CreateServiceAccountTokenResponseState string
 
-// CreateUserNotificationRequest Fields of a new personal notification. No email address — the server copies the target user's email
-// as the destination. Unknown fields are rejected. `settings` must include `costAnomalies` and must
-// not include any other notification type.
+// CreateUserNotificationRequest Fields of a new personal notification. No email address — the server copies the target user's email as the destination. Unknown fields are rejected. `settings` must include at least one notification type. `costAnomalies` is optional.
 //
 // Example: {"name":"Anomaly alerts","settings":{"costAnomalies":{"allocations":{"ids":[],"mode":"all"},"minExcessCost":{"amount":"100.00","currency":"USD"},"minSeverity":"warning"}}}
 type CreateUserNotificationRequest struct {
@@ -9315,8 +9362,26 @@ type CreateUserNotificationRequest struct {
 	// Example: Anomaly alerts
 	Name string `json:"name"`
 
-	// Settings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are
-	// rejected; omitting `costAnomalies` is rejected.
+	// Settings Subscribed notification settings. One property per type. A present property means that type is
+	// subscribed. At least one property is required. `costAnomalies` is not required. `awsBillingDataImport`
+	// is not a personal type and is rejected with `422`. `conditions` is not a field and is rejected with
+	// `422`.
+	//
+	// The caller still needs Users Manager (`usersManager`). For every subscribed type other than `costAnomalies`, the
+	// target user must hold the permission below on create and on update. The type permission is not
+	// re-checked on read. The `403` problem includes `permission` (the id) and `notificationType` (the
+	// property name). Cost anomalies do not add this check. That difference is intentional: the Console
+	// associates cloud cost anomalies with Cloud Analytics, and this API does not require a target-user
+	// Cloud Analytics permission for `costAnomalies`.
+	//
+	// | Property | Permission | Permission id |
+	// | --- | --- | --- |
+	// | `newInvoices`, `newProformaInvoices`, `paymentReminders`, `creditUtilization` | Invoice Viewer | `HN6A3cPzDBcAIlc3ncDy` |
+	// | `quotaUtilization`, `dailyDigest`, `weeklyDigest`, `monthlyDigest`, `newSkuUsage` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |
+	// | `savingsPlanApproval`, `savingsPlanPurchased`, `cudApproval`, `cudPurchased` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |
+	// | `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |
+	// | `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |
+	// | `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |
 	Settings UserNotificationSettings `json:"settings"`
 }
 
@@ -9378,23 +9443,17 @@ type CustomerContact struct {
 	Emails *[]openapi_types.Email `json:"emails,omitempty"`
 }
 
-// CustomerNotification Organization-wide notification config. Create and read return the full
-// resource with the same field names. Update and delete require
-// `If-Match` against the strong `etag`.
+// CustomerNotification Organization-wide notification config. Create and read return the full resource with the same field names. Update and delete require `If-Match` against the strong `etag`.
 type CustomerNotification struct {
 	// CreateTime When the config was created. `null` only on a dry-run create.
 	//
 	// Example: 2026-10-01T08:00:00Z
 	CreateTime nullable.Nullable[time.Time] `json:"createTime,omitempty"`
 
-	// Destinations Delivery targets. Always includes `emails`, `slackChannels`, and
-	// `teamsChannels`. Unused lists are empty arrays.
+	// Destinations Delivery targets. Always includes `emails`, `slackChannels`, and `teamsChannels`. Unused lists are empty arrays.
 	Destinations CustomerNotificationDestinations `json:"destinations"`
 
-	// Etag Current strong ETag as bare SHA-256 hex. The `ETag` response header
-	// and `If-Match` wrap this value in double quotes. Send that quoted
-	// form unchanged on update or delete. `null` only on a dry-run create.
-	//
+	// Etag Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create.
 	//
 	// Example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
 	Etag nullable.Nullable[string] `json:"etag,omitempty"`
@@ -9440,17 +9499,13 @@ type CustomerNotificationDestinations struct {
 //
 // Example: {"items":[]}
 type CustomerNotificationListResponse struct {
-	// Items Cost-anomaly notification configs for the tenant, ordered by
-	// `createTime` ascending, then by `id` ascending.
-	//
+	// Items Cost-anomaly notification configs for the tenant, ordered by `createTime` ascending, then by `id` ascending.
 	//
 	// Example: []
 	Items []CustomerNotification `json:"items"`
 }
 
-// CustomerNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted.
-// Settings for any other type are rejected; omitting `costAnomalies` is
-// rejected.
+// CustomerNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected.
 type CustomerNotificationSettings struct {
 	// CostAnomalies Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
 	// optional resend controls.
@@ -9984,6 +10039,12 @@ type DiagramRelationshipsResponseDirection string
 
 // DiagramRelationshipsResponseKind defines model for DiagramRelationshipsResponse.Kind.
 type DiagramRelationshipsResponseKind string
+
+// DigestNotificationSettings Allocation rules included in a daily or weekly digest. At least one id is required.
+type DigestNotificationSettings struct {
+	// AllocationIds Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
+	AllocationIds []string `json:"allocationIds"`
+}
 
 // Dimension Definition of a report dimension.
 //
@@ -11846,6 +11907,24 @@ type IdOfAssets200Response struct {
 	RowCount *int64 `json:"rowCount,omitempty"`
 }
 
+// InsightsNotificationSettings Optional insight filters. An empty or omitted list means every value of that filter. An insight must match every criterion across `pillars`, `severities`, and `providers`. A read of an omitted or empty list returns that field absent. An explicit list is returned in the order sent. A repeated value is rejected with `422`.
+type InsightsNotificationSettings struct {
+	// Pillars Insight pillars. Empty or omitted means all pillars.
+	Pillars *[]InsightsNotificationSettingsPillars `json:"pillars,omitempty"`
+
+	// Providers Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
+	Providers *[]string `json:"providers,omitempty"`
+
+	// Severities Insight severities. Empty or omitted means all severities.
+	Severities *[]InsightsNotificationSettingsSeverities `json:"severities,omitempty"`
+}
+
+// InsightsNotificationSettingsPillars defines model for InsightsNotificationSettings.Pillars.
+type InsightsNotificationSettingsPillars string
+
+// InsightsNotificationSettingsSeverities defines model for InsightsNotificationSettings.Severities.
+type InsightsNotificationSettingsSeverities string
+
 // InviteResponse Response returned after creating a user invitation.
 type InviteResponse struct {
 	// Message Success message
@@ -12318,6 +12397,11 @@ type Money struct {
 	Currency string `json:"currency"`
 }
 
+// NotificationEmptySettings A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+//
+// Example: {}
+type NotificationEmptySettings = map[string]interface{}
+
 // NotificationEvent A successful notification dispatch for an anomaly.
 // This records that the API/worker sent the notification, not that delivery was confirmed.
 type NotificationEvent struct {
@@ -12343,14 +12427,9 @@ type Organization struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// PatchCostAnomalyAllocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
-// the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` /
-// `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same
-// rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
+// PatchCostAnomalyAllocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` / `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
 type PatchCostAnomalyAllocations struct {
-	// Ids Replacement allocation ids when present, in the order sent. A read returns that same order. A
-	// duplicate id is rejected with `422`. Empty when `mode` is `all`. Non-empty when `mode` is
-	// `include` or `exclude`.
+	// Ids Replacement allocation ids when present, in the order sent. A read returns that same order. A duplicate id is rejected with `422`. Empty when `mode` is `all`. Non-empty when `mode` is `include` or `exclude`.
 	Ids *[]string `json:"ids,omitempty"`
 
 	// Mode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be paired with a non-empty `ids`. `include` and `exclude` cannot be paired with an empty `ids`.
@@ -12360,10 +12439,7 @@ type PatchCostAnomalyAllocations struct {
 // PatchCostAnomalyAllocationsMode `all` — every allocation with anomaly detection enabled (and unallocated anomalies). `include` — only the listed ids. `exclude` — all enabled allocations except the listed ids. `all` cannot be paired with a non-empty `ids`. `include` and `exclude` cannot be paired with an empty `ids`.
 type PatchCostAnomalyAllocationsMode string
 
-// PatchCostAnomalyRepeat Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. Nulling the
-// last remaining control, for example `everyHours: null` when that is the only stored field, leaves
-// `repeat: {}`. An empty `repeat` is rejected with `422`. To clear every resend control, send `null` for
-// `costAnomalies.repeat` itself.
+// PatchCostAnomalyRepeat Merge-patch for `repeat`. Nested `whenCostGrows` may be `null` to clear only that branch. Nulling the last remaining control, for example `everyHours: null` when that is the only stored field, leaves `repeat: {}`. An empty `repeat` is rejected with `422`. To clear every resend control, send `null` for `costAnomalies.repeat` itself.
 type PatchCostAnomalyRepeat struct {
 	// EveryHours Resend until the anomaly is inactive, every N hours (1–24). Send `null` to clear.
 	EveryHours nullable.Nullable[int] `json:"everyHours,omitempty"`
@@ -12372,21 +12448,12 @@ type PatchCostAnomalyRepeat struct {
 	WhenCostGrows nullable.Nullable[PatchCostAnomalyWhenCostGrows] `json:"whenCostGrows,omitempty"`
 }
 
-// PatchCostAnomalySettings Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
-// resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
-// send a new value.
+// PatchCostAnomalySettings Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or send a new value.
 type PatchCostAnomalySettings struct {
-	// Allocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces
-	// the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` /
-	// `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same
-	// rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
+	// Allocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` / `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
 	Allocations *PatchCostAnomalyAllocations `json:"allocations,omitempty"`
 
-	// MinExcessCost Minimum excess cost, as Money. Omit it to leave the current value; it cannot be cleared. `currency`
-	// must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with `422`.
-	// A fractional amount is rejected with `422` (`100.99` is not a whole number of dollars). `100` and
-	// `100.00` are both accepted. `0` and `0.00` are accepted. Amounts above 1,000,000,000 whole dollars,
-	// and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+	// MinExcessCost Minimum excess cost, as Money. Omit it to leave the current value; it cannot be cleared. `currency` must be `USD`; any other currency is rejected with `422`. A negative amount is rejected with `422`. A fractional amount is rejected with `422` (`100.99` is not a whole number of dollars). `100` and `100.00` are both accepted. `0` and `0.00` are accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
 	MinExcessCost *Money `json:"minExcessCost,omitempty"`
 
 	// MinSeverity `warning` — warning and above. `critical` — critical only. Clients may send only `warning` or `critical`. A write of `all` is rejected with `422`.
@@ -12399,19 +12466,12 @@ type PatchCostAnomalySettings struct {
 // PatchCostAnomalySettingsMinSeverity `warning` — warning and above. `critical` — critical only. Clients may send only `warning` or `critical`. A write of `all` is rejected with `422`.
 type PatchCostAnomalySettingsMinSeverity string
 
-// PatchCostAnomalyWhenCostGrows Merge-patch for `whenCostGrows`. Omit a field to leave it; send `null` to clear `match`,
-// `percentIncrease`, `minIncrease`, or `withinHours`. After the merge, `percentIncrease` and/or
-// `minIncrease` must still be set, and both amounts still require `match`. A merged object with only
-// `withinHours`, only `match`, or neither amount is rejected with `422`.
+// PatchCostAnomalyWhenCostGrows Merge-patch for `whenCostGrows`. Omit a field to leave it; send `null` to clear `match`, `percentIncrease`, `minIncrease`, or `withinHours`. After the merge, `percentIncrease` and/or `minIncrease` must still be set, and both amounts still require `match`. A merged object with only `withinHours`, only `match`, or neither amount is rejected with `422`.
 type PatchCostAnomalyWhenCostGrows struct {
 	// Match How to combine percent and dollar growth when both are set. Send `null` to clear.
 	Match nullable.Nullable[PatchCostAnomalyWhenCostGrowsMatch] `json:"match,omitempty"`
 
-	// MinIncrease Minimum cost growth, as Money. Must be a positive whole number of dollars. Send `null` to clear.
-	// `currency` must be `USD`; any other currency is rejected with `422`. `0`, `0.00`, and a negative
-	// amount are rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a whole
-	// number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars,
-	// and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
+	// MinIncrease Minimum cost growth, as Money. Must be a positive whole number of dollars. Send `null` to clear. `currency` must be `USD`; any other currency is rejected with `422`. `0`, `0.00`, and a negative amount are rejected with `422`. A fractional amount is rejected with `422` (`150.99` is not a whole number of dollars). `150` and `150.00` are both accepted. Amounts above 1,000,000,000 whole dollars, and forms such as `Inf`, exponents, a leading `+`, or underscores, are rejected with `422`.
 	MinIncrease nullable.Nullable[Money] `json:"minIncrease,omitempty"`
 
 	// PercentIncrease Minimum percent cost increase that triggers a resend. Must be greater than 0. Send `null` to clear.
@@ -12424,22 +12484,67 @@ type PatchCostAnomalyWhenCostGrows struct {
 // PatchCostAnomalyWhenCostGrowsMatch How to combine percent and dollar growth when both are set. Send `null` to clear.
 type PatchCostAnomalyWhenCostGrowsMatch string
 
-// PatchCustomerNotificationSettings Merge-patch for `settings`. Omit `costAnomalies` to leave settings
-// unchanged. Only `costAnomalies` is accepted.
+// PatchCustomerNotificationSettings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies` is accepted.
 type PatchCustomerNotificationSettings struct {
-	// CostAnomalies Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
-	// resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
-	// send a new value.
+	// CostAnomalies Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or send a new value.
 	CostAnomalies *PatchCostAnomalySettings `json:"costAnomalies,omitempty"`
 }
 
-// PatchUserNotificationSettings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies`
-// is accepted.
+// PatchUserNotificationSettings Merge-patch for `settings`. Omit a property to leave that type unchanged. Send `null` to unsubscribe that type. After the merge at least one type must remain.
 type PatchUserNotificationSettings struct {
-	// CostAnomalies Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all
-	// resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or
-	// send a new value.
-	CostAnomalies *PatchCostAnomalySettings `json:"costAnomalies,omitempty"`
+	// CloudIncidents Cloud incidents.
+	CloudIncidents nullable.Nullable[NotificationEmptySettings] `json:"cloudIncidents,omitempty"`
+
+	// CostAnomalies Cloud cost anomalies. Sending `costAnomalies` when that type is not yet subscribed requires `minSeverity`, `minExcessCost`, and `allocations`; a partial object is `422`.
+	CostAnomalies nullable.Nullable[PatchCostAnomalySettings] `json:"costAnomalies,omitempty"`
+
+	// CreditUtilization Credit utilization.
+	CreditUtilization nullable.Nullable[NotificationEmptySettings] `json:"creditUtilization,omitempty"`
+
+	// CudApproval PerfectScale for Commitments, Google Cloud committed use discounts: purchases require approval.
+	CudApproval nullable.Nullable[NotificationEmptySettings] `json:"cudApproval,omitempty"`
+
+	// CudPurchased PerfectScale for Commitments, Google Cloud committed use discounts: a committed use discount was purchased.
+	CudPurchased nullable.Nullable[NotificationEmptySettings] `json:"cudPurchased,omitempty"`
+
+	// DailyDigest Daily digest.
+	DailyDigest nullable.Nullable[DigestNotificationSettings] `json:"dailyDigest,omitempty"`
+
+	// DataIntegrationSyncFailure Data integration sync failures.
+	DataIntegrationSyncFailure nullable.Nullable[NotificationEmptySettings] `json:"dataIntegrationSyncFailure,omitempty"`
+
+	// ExpertInsights Third-party insights (a new custom insight from the DoiT expert team).
+	ExpertInsights nullable.Nullable[NotificationEmptySettings] `json:"expertInsights,omitempty"`
+
+	// Insights New insights (DoiT proprietary insights).
+	Insights nullable.Nullable[InsightsNotificationSettings] `json:"insights,omitempty"`
+
+	// MonthlyDigest Monthly digest.
+	MonthlyDigest nullable.Nullable[NotificationEmptySettings] `json:"monthlyDigest,omitempty"`
+
+	// NewInvoices New invoices.
+	NewInvoices nullable.Nullable[BillingProfileNotificationSettings] `json:"newInvoices,omitempty"`
+
+	// NewProformaInvoices New proforma invoices.
+	NewProformaInvoices nullable.Nullable[BillingProfileNotificationSettings] `json:"newProformaInvoices,omitempty"`
+
+	// NewSkuUsage New SKUs Usage Detected.
+	NewSkuUsage nullable.Nullable[NotificationEmptySettings] `json:"newSkuUsage,omitempty"`
+
+	// PaymentReminders Due or overdue payments.
+	PaymentReminders nullable.Nullable[BillingProfileNotificationSettings] `json:"paymentReminders,omitempty"`
+
+	// QuotaUtilization Quota utilization.
+	QuotaUtilization nullable.Nullable[NotificationEmptySettings] `json:"quotaUtilization,omitempty"`
+
+	// SavingsPlanApproval PerfectScale for Commitments, AWS Savings Plans: purchases require approval.
+	SavingsPlanApproval nullable.Nullable[NotificationEmptySettings] `json:"savingsPlanApproval,omitempty"`
+
+	// SavingsPlanPurchased PerfectScale for Commitments, AWS Savings Plans: a Savings Plan was purchased.
+	SavingsPlanPurchased nullable.Nullable[NotificationEmptySettings] `json:"savingsPlanPurchased,omitempty"`
+
+	// WeeklyDigest Weekly digest.
+	WeeklyDigest nullable.Nullable[DigestNotificationSettings] `json:"weeklyDigest,omitempty"`
 }
 
 // PlatformAPI Platform metadata used by product listing endpoints.
@@ -12965,17 +13070,13 @@ type TagsGetResponse struct {
 	Tags *[]string `json:"tags,omitempty"`
 }
 
-// TagsRequest Request body for adding (POST) or removing (DELETE) tags on a support
-// request. The operation is surgical — only the tags listed are affected;
-// any other tags on the ticket are preserved.
+// TagsRequest Request body for adding (POST) or removing (DELETE) tags on a support request. The operation is surgical — only the tags listed are affected; any other tags on the ticket are preserved.
 type TagsRequest struct {
 	// Tags List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
 	Tags []string `json:"tags"`
 }
 
-// TagsResponse Response body echoing the tags the operation actually acted on, after
-// server-side transformation (trim + lowercase + customer namespace prefix
-// where applicable).
+// TagsResponse Response body echoing the tags the operation actually acted on, after server-side transformation (trim + lowercase + customer namespace prefix where applicable).
 type TagsResponse struct {
 	// AppliedTags The tags that were stored on (POST) or removed from (DELETE) the ticket.
 	AppliedTags *[]string `json:"applied_tags,omitempty"`
@@ -13237,17 +13338,11 @@ type UpdateCustomThemeRequest struct {
 	PrimaryColor *HexColor `json:"primaryColor,omitempty"`
 }
 
-// UpdateCustomerNotificationRequest JSON Merge Patch (RFC 7396) for an organization notification. Omitted
-// fields stay unchanged; nested objects are deep-merged; nested arrays
-// (for example `allocations.ids`) are replaced when present. When
-// `destinations` is present it replaces the whole destinations object.
-// Send `null` to clear optional members such as `repeat`,
-// `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
+// UpdateCustomerNotificationRequest JSON Merge Patch (RFC 7396) for an organization notification. Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object. Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
 //
 // Example: {"settings":{"costAnomalies":{"minSeverity":"critical"}}}
 type UpdateCustomerNotificationRequest struct {
-	// Destinations Replacement destinations when present. Replaces the whole object;
-	// all three arrays are required and at least one must be non-empty.
+	// Destinations Replacement destinations when present. Replaces the whole object; all three arrays are required and at least one must be non-empty.
 	Destinations *CustomerNotificationDestinations `json:"destinations,omitempty"`
 
 	// Name Display name of the notification (max 200 characters). The stored name is trimmed.
@@ -13255,8 +13350,7 @@ type UpdateCustomerNotificationRequest struct {
 	// Example: Anomaly alerts (updated)
 	Name *string `json:"name,omitempty"`
 
-	// Settings Merge-patch for `settings`. Omit `costAnomalies` to leave settings
-	// unchanged. Only `costAnomalies` is accepted.
+	// Settings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies` is accepted.
 	Settings *PatchCustomerNotificationSettings `json:"settings,omitempty"`
 }
 
@@ -13430,10 +13524,7 @@ type UpdateServiceAccountTokenRequest struct {
 // Example: disabled
 type UpdateServiceAccountTokenRequestState string
 
-// UpdateUserNotificationRequest JSON Merge Patch (RFC 7396) for a personal notification. Omitted fields stay unchanged; nested
-// objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present.
-// Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`,
-// `percentIncrease`, and `minIncrease`.
+// UpdateUserNotificationRequest JSON Merge Patch (RFC 7396) for a personal notification. Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
 //
 // Example: {"settings":{"costAnomalies":{"minSeverity":"critical"}}}
 type UpdateUserNotificationRequest struct {
@@ -13442,8 +13533,7 @@ type UpdateUserNotificationRequest struct {
 	// Example: Anomaly alerts (updated)
 	Name *string `json:"name,omitempty"`
 
-	// Settings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies`
-	// is accepted.
+	// Settings Merge-patch for `settings`. Omit a property to leave that type unchanged. Send `null` to unsubscribe that type. After the merge at least one type must remain.
 	Settings *PatchUserNotificationSettings `json:"settings,omitempty"`
 }
 
@@ -13585,8 +13675,7 @@ type UserListItemLanguage string
 // UserListItemStatus The status of the user (active or invited).
 type UserListItemStatus string
 
-// UserNotification Personal notification config for one user. Create and read return the full resource with the same
-// field names. Update and delete require `If-Match` against the strong `etag`.
+// UserNotification Personal notification config for one user. Create and read return the full resource with the same field names. Update and delete require `If-Match` against the strong `etag`.
 type UserNotification struct {
 	// CreateTime When the config was created. `null` only on a dry-run create.
 	//
@@ -13595,13 +13684,10 @@ type UserNotification struct {
 
 	// Destinations Server-managed destinations. Always one email entry with the target user's address.
 	//
-	//
 	// Example: [{"address":"jane.doe@example.com","type":"email"}]
 	Destinations *[]UserNotificationEmailDestination `json:"destinations,omitempty"`
 
-	// Etag Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run
-	// create.
-	//
+	// Etag Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run create.
 	//
 	// Example: 3f7a1c9e2b4d6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e
 	Etag nullable.Nullable[string] `json:"etag,omitempty"`
@@ -13617,6 +13703,8 @@ type UserNotification struct {
 	Name string `json:"name"`
 
 	// Settings Subscribed settings.
+	//
+	// Example: {"dailyDigest":{"allocationIds":["alloc_abc"]}}
 	Settings UserNotificationSettings `json:"settings"`
 
 	// UpdateTime When the config was last changed. `null` only on a dry-run create.
@@ -13625,8 +13713,7 @@ type UserNotification struct {
 	UpdateTime nullable.Nullable[time.Time] `json:"updateTime,omitempty"`
 }
 
-// UserNotificationEmailDestination Server-copied email destination. The create/update body does not accept an email address; the server
-// copies the target user's email.
+// UserNotificationEmailDestination Server-copied email destination. The create/update body does not accept an email address; the server copies the target user's email.
 type UserNotificationEmailDestination struct {
 	// Address Target user's email, copied by the server.
 	//
@@ -13650,12 +13737,80 @@ type UserNotificationListResponse struct {
 	Items []UserNotification `json:"items"`
 }
 
-// UserNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are
-// rejected; omitting `costAnomalies` is rejected.
+// UserNotificationSettings Subscribed notification settings. One property per type. A present property means that type is
+// subscribed. At least one property is required. `costAnomalies` is not required. `awsBillingDataImport`
+// is not a personal type and is rejected with `422`. `conditions` is not a field and is rejected with
+// `422`.
+//
+// The caller still needs Users Manager (`usersManager`). For every subscribed type other than `costAnomalies`, the
+// target user must hold the permission below on create and on update. The type permission is not
+// re-checked on read. The `403` problem includes `permission` (the id) and `notificationType` (the
+// property name). Cost anomalies do not add this check. That difference is intentional: the Console
+// associates cloud cost anomalies with Cloud Analytics, and this API does not require a target-user
+// Cloud Analytics permission for `costAnomalies`.
+//
+// | Property | Permission | Permission id |
+// | --- | --- | --- |
+// | `newInvoices`, `newProformaInvoices`, `paymentReminders`, `creditUtilization` | Invoice Viewer | `HN6A3cPzDBcAIlc3ncDy` |
+// | `quotaUtilization`, `dailyDigest`, `weeklyDigest`, `monthlyDigest`, `newSkuUsage` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |
+// | `savingsPlanApproval`, `savingsPlanPurchased`, `cudApproval`, `cudPurchased` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |
+// | `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |
+// | `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |
+// | `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |
 type UserNotificationSettings struct {
-	// CostAnomalies Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
-	// optional resend controls.
-	CostAnomalies CostAnomalySettings `json:"costAnomalies"`
+	// CloudIncidents Cloud incidents.
+	CloudIncidents *NotificationEmptySettings `json:"cloudIncidents,omitempty"`
+
+	// CostAnomalies Cloud cost anomalies.
+	CostAnomalies *CostAnomalySettings `json:"costAnomalies,omitempty"`
+
+	// CreditUtilization Credit utilization.
+	CreditUtilization *NotificationEmptySettings `json:"creditUtilization,omitempty"`
+
+	// CudApproval PerfectScale for Commitments, Google Cloud committed use discounts: purchases require approval.
+	CudApproval *NotificationEmptySettings `json:"cudApproval,omitempty"`
+
+	// CudPurchased PerfectScale for Commitments, Google Cloud committed use discounts: a committed use discount was purchased.
+	CudPurchased *NotificationEmptySettings `json:"cudPurchased,omitempty"`
+
+	// DailyDigest Daily digest.
+	DailyDigest *DigestNotificationSettings `json:"dailyDigest,omitempty"`
+
+	// DataIntegrationSyncFailure Data integration sync failures.
+	DataIntegrationSyncFailure *NotificationEmptySettings `json:"dataIntegrationSyncFailure,omitempty"`
+
+	// ExpertInsights Third-party insights (a new custom insight from the DoiT expert team).
+	ExpertInsights *NotificationEmptySettings `json:"expertInsights,omitempty"`
+
+	// Insights New insights (DoiT proprietary insights).
+	Insights *InsightsNotificationSettings `json:"insights,omitempty"`
+
+	// MonthlyDigest Monthly digest.
+	MonthlyDigest *NotificationEmptySettings `json:"monthlyDigest,omitempty"`
+
+	// NewInvoices New invoices.
+	NewInvoices *BillingProfileNotificationSettings `json:"newInvoices,omitempty"`
+
+	// NewProformaInvoices New proforma invoices.
+	NewProformaInvoices *BillingProfileNotificationSettings `json:"newProformaInvoices,omitempty"`
+
+	// NewSkuUsage New SKUs Usage Detected.
+	NewSkuUsage *NotificationEmptySettings `json:"newSkuUsage,omitempty"`
+
+	// PaymentReminders Due or overdue payments.
+	PaymentReminders *BillingProfileNotificationSettings `json:"paymentReminders,omitempty"`
+
+	// QuotaUtilization Quota utilization.
+	QuotaUtilization *NotificationEmptySettings `json:"quotaUtilization,omitempty"`
+
+	// SavingsPlanApproval PerfectScale for Commitments, AWS Savings Plans: purchases require approval.
+	SavingsPlanApproval *NotificationEmptySettings `json:"savingsPlanApproval,omitempty"`
+
+	// SavingsPlanPurchased PerfectScale for Commitments, AWS Savings Plans: a Savings Plan was purchased.
+	SavingsPlanPurchased *NotificationEmptySettings `json:"savingsPlanPurchased,omitempty"`
+
+	// WeeklyDigest Weekly digest.
+	WeeklyDigest *DigestNotificationSettings `json:"weeklyDigest,omitempty"`
 }
 
 // ValidateResponse A response confirming caller's domain and email.
@@ -13958,6 +14113,43 @@ type UnprocessableEntity = ProblemDetails
 
 // UnsupportedMediaType RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
 type UnsupportedMediaType = ProblemDetails
+
+// UserNotificationForbidden defines model for UserNotificationForbidden.
+type UserNotificationForbidden struct {
+	// Code Example: not_found
+	Code string `json:"code"`
+
+	// Detail Example: customer not found
+	Detail  string                       `json:"detail"`
+	Details *[]ProblemDetailsDetailsItem `json:"details,omitempty"`
+	DocsUrl nullable.Nullable[string]    `json:"docsUrl,omitempty"`
+
+	// Instance Example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+	Instance string `json:"instance"`
+
+	// NotificationType Present when the target user lacks the permission for a subscribed type. Omitted when the caller lacks `usersManager`. Settings property that failed the permission check.
+	//
+	// Example: newInvoices
+	NotificationType *string `json:"notificationType,omitempty"`
+
+	// Permission Present when the target user lacks the permission for a subscribed type. Omitted when the caller lacks `usersManager`. Permission id the target user must hold for this notification type.
+	//
+	// Example: HN6A3cPzDBcAIlc3ncDy
+	Permission *string `json:"permission,omitempty"`
+
+	// Retryable Example: false
+	Retryable bool `json:"retryable"`
+
+	// Status Example: 404
+	Status int `json:"status"`
+
+	// Title Example: Resource not found
+	Title string `json:"title"`
+
+	// Type Example: https://developer.doit.com/errors/not_found
+	Type                 string                 `json:"type"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
 
 // ListAlertsParams defines parameters for ListAlerts.
 type ListAlertsParams struct {
@@ -15748,6 +15940,210 @@ func (a ProblemDetailsDetailsItem) MarshalJSON() ([]byte, error) {
 	object["issue"], err = json.Marshal(a.Issue)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'issue': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for UserNotificationForbidden. Returns the specified
+// element and whether it was found
+func (a UserNotificationForbidden) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for UserNotificationForbidden
+func (a *UserNotificationForbidden) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for UserNotificationForbidden to handle AdditionalProperties
+func (a *UserNotificationForbidden) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["code"]; found {
+		err = json.Unmarshal(raw, &a.Code)
+		if err != nil {
+			return fmt.Errorf("error reading 'code': %w", err)
+		}
+		delete(object, "code")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["details"]; found {
+		err = json.Unmarshal(raw, &a.Details)
+		if err != nil {
+			return fmt.Errorf("error reading 'details': %w", err)
+		}
+		delete(object, "details")
+	}
+
+	if raw, found := object["docsUrl"]; found {
+		err = json.Unmarshal(raw, &a.DocsUrl)
+		if err != nil {
+			return fmt.Errorf("error reading 'docsUrl': %w", err)
+		}
+		delete(object, "docsUrl")
+	}
+
+	if raw, found := object["instance"]; found {
+		err = json.Unmarshal(raw, &a.Instance)
+		if err != nil {
+			return fmt.Errorf("error reading 'instance': %w", err)
+		}
+		delete(object, "instance")
+	}
+
+	if raw, found := object["notificationType"]; found {
+		err = json.Unmarshal(raw, &a.NotificationType)
+		if err != nil {
+			return fmt.Errorf("error reading 'notificationType': %w", err)
+		}
+		delete(object, "notificationType")
+	}
+
+	if raw, found := object["permission"]; found {
+		err = json.Unmarshal(raw, &a.Permission)
+		if err != nil {
+			return fmt.Errorf("error reading 'permission': %w", err)
+		}
+		delete(object, "permission")
+	}
+
+	if raw, found := object["retryable"]; found {
+		err = json.Unmarshal(raw, &a.Retryable)
+		if err != nil {
+			return fmt.Errorf("error reading 'retryable': %w", err)
+		}
+		delete(object, "retryable")
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &a.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+		delete(object, "status")
+	}
+
+	if raw, found := object["title"]; found {
+		err = json.Unmarshal(raw, &a.Title)
+		if err != nil {
+			return fmt.Errorf("error reading 'title': %w", err)
+		}
+		delete(object, "title")
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for UserNotificationForbidden to handle AdditionalProperties
+func (a UserNotificationForbidden) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["code"], err = json.Marshal(a.Code)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'code': %w", err)
+	}
+
+	object["detail"], err = json.Marshal(a.Detail)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+	}
+
+	if a.Details != nil {
+		object["details"], err = json.Marshal(a.Details)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'details': %w", err)
+		}
+	}
+
+	if a.DocsUrl != nil {
+		object["docsUrl"], err = json.Marshal(a.DocsUrl)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'docsUrl': %w", err)
+		}
+	}
+
+	object["instance"], err = json.Marshal(a.Instance)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'instance': %w", err)
+	}
+
+	if a.NotificationType != nil {
+		object["notificationType"], err = json.Marshal(a.NotificationType)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'notificationType': %w", err)
+		}
+	}
+
+	if a.Permission != nil {
+		object["permission"], err = json.Marshal(a.Permission)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'permission': %w", err)
+		}
+	}
+
+	object["retryable"], err = json.Marshal(a.Retryable)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'retryable': %w", err)
+	}
+
+	object["status"], err = json.Marshal(a.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	object["title"], err = json.Marshal(a.Title)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'title': %w", err)
+	}
+
+	object["type"], err = json.Marshal(a.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
@@ -17572,29 +17968,18 @@ type ClientInterface interface {
 
 	// ListUserNotifications List personal notifications for a user
 	//
-	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
-	// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
-	// ascending, then by `id` ascending.
-	//
-	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }` array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime` ascending, then by `id` ascending.
+	// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant.
 	//
 	// Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
 	ListUserNotifications(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateUserNotificationWithBody Create a personal notification for a user
 	//
-	// Creates a personal cost-anomaly notification config for the user. The request body has no email
-	// address; the server copies the target user's email onto the config as the sole destination.
-	//
-	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-	//
-	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-	// original response and does not create a second config. With `dryRun=true` the request goes through
-	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-	//
-	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-	// config.
+	// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+	// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -17603,18 +17988,10 @@ type ClientInterface interface {
 
 	// CreateUserNotification Create a personal notification for a user
 	//
-	// Creates a personal cost-anomaly notification config for the user. The request body has no email
-	// address; the server copies the target user's email onto the config as the sole destination.
-	//
-	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-	//
-	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-	// original response and does not create a second config. With `dryRun=true` the request goes through
-	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-	//
-	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-	// config.
+	// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+	// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -17623,38 +18000,23 @@ type ClientInterface interface {
 
 	// DeleteUserNotification Delete a personal notification
 	//
-	// Permanently deletes a personal notification config. Requires `usersManager` permission, the
-	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-	// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
-	// `404`.
-	//
-	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
-	// of that notification returns `404`.
+	// Permanently deletes a personal notification config. Requires Users Manager (`usersManager`), the `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that no longer exists returns `404`.
+	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 	//
 	// Corresponds with DELETE /iam/v1/users/{userId}/notifications/{id} (the `DeleteUserNotification` operationId).
 	DeleteUserNotification(ctx context.Context, userId string, id string, params *DeleteUserNotificationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetUserNotification Get a personal notification
+	// GetUserNotification Retrieve a personal notification
 	//
-	// Returns one personal notification config. Requires `usersManager` permission. A notification id that
-	// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
-	// elsewhere.
+	// Returns one personal notification config. Requires Users Manager (`usersManager`). A subscribed type stays in the response when the target user later loses that type's permission; the type permission is not re-checked on read. A notification id that does not belong to this user in the resolved tenant returns `404`, without saying whether it exists elsewhere.
 	//
 	// Corresponds with GET /iam/v1/users/{userId}/notifications/{id} (the `GetUserNotification` operationId).
 	GetUserNotification(ctx context.Context, userId string, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UpdateUserNotificationWithBody Update a personal notification
 	//
-	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-	// same checks as a real update and returns the notification as it would look after the patch, without
-	// changing anything.
-	//
-	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-	// new state.
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -17663,16 +18025,8 @@ type ClientInterface interface {
 
 	// UpdateUserNotificationWithApplicationMergePatchPlusJSONBody Update a personal notification
 	//
-	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-	// same checks as a real update and returns the notification as it would look after the patch, without
-	// changing anything.
-	//
-	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-	// new state.
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
 	// Takes a body of the `application/merge-patch+json` content type.
 	//
@@ -21325,11 +21679,8 @@ func (c *Client) UpdateUser(ctx context.Context, id string, body UpdateUserJSONR
 
 // ListUserNotifications List personal notifications for a user
 //
-// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
-// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
-// ascending, then by `id` ascending.
-//
-// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }` array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime` ascending, then by `id` ascending.
+// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant.
 //
 // Corresponds with GET /iam/v1/users/{userId}/notifications (the `ListUserNotifications` operationId).
 func (c *Client) ListUserNotifications(ctx context.Context, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -21346,18 +21697,10 @@ func (c *Client) ListUserNotifications(ctx context.Context, userId string, reqEd
 
 // CreateUserNotificationWithBody Create a personal notification for a user
 //
-// Creates a personal cost-anomaly notification config for the user. The request body has no email
-// address; the server copies the target user's email onto the config as the sole destination.
-//
-// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-//
-// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-// original response and does not create a second config. With `dryRun=true` the request goes through
-// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-//
-// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-// config.
+// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 //
 // Takes any type of body and a specified content type.
 //
@@ -21376,18 +21719,10 @@ func (c *Client) CreateUserNotificationWithBody(ctx context.Context, userId stri
 
 // CreateUserNotification Create a personal notification for a user
 //
-// Creates a personal cost-anomaly notification config for the user. The request body has no email
-// address; the server copies the target user's email onto the config as the sole destination.
-//
-// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-//
-// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-// original response and does not create a second config. With `dryRun=true` the request goes through
-// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-//
-// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-// config.
+// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -21406,13 +21741,8 @@ func (c *Client) CreateUserNotification(ctx context.Context, userId string, para
 
 // DeleteUserNotification Delete a personal notification
 //
-// Permanently deletes a personal notification config. Requires `usersManager` permission, the
-// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
-// `404`.
-//
-// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
-// of that notification returns `404`.
+// Permanently deletes a personal notification config. Requires Users Manager (`usersManager`), the `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that no longer exists returns `404`.
+// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 //
 // Corresponds with DELETE /iam/v1/users/{userId}/notifications/{id} (the `DeleteUserNotification` operationId).
 func (c *Client) DeleteUserNotification(ctx context.Context, userId string, id string, params *DeleteUserNotificationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -21427,11 +21757,9 @@ func (c *Client) DeleteUserNotification(ctx context.Context, userId string, id s
 	return c.Client.Do(req)
 }
 
-// GetUserNotification Get a personal notification
+// GetUserNotification Retrieve a personal notification
 //
-// Returns one personal notification config. Requires `usersManager` permission. A notification id that
-// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
-// elsewhere.
+// Returns one personal notification config. Requires Users Manager (`usersManager`). A subscribed type stays in the response when the target user later loses that type's permission; the type permission is not re-checked on read. A notification id that does not belong to this user in the resolved tenant returns `404`, without saying whether it exists elsewhere.
 //
 // Corresponds with GET /iam/v1/users/{userId}/notifications/{id} (the `GetUserNotification` operationId).
 func (c *Client) GetUserNotification(ctx context.Context, userId string, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -21448,16 +21776,8 @@ func (c *Client) GetUserNotification(ctx context.Context, userId string, id stri
 
 // UpdateUserNotificationWithBody Update a personal notification
 //
-// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-// same checks as a real update and returns the notification as it would look after the patch, without
-// changing anything.
-//
-// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-// new state.
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //
 // Takes any type of body and a specified content type.
 //
@@ -21476,16 +21796,8 @@ func (c *Client) UpdateUserNotificationWithBody(ctx context.Context, userId stri
 
 // UpdateUserNotificationWithApplicationMergePatchPlusJSONBody Update a personal notification
 //
-// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-// same checks as a real update and returns the notification as it would look after the patch, without
-// changing anything.
-//
-// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-// new state.
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //
 // Takes a body of the `application/merge-patch+json` content type.
 //
@@ -33064,11 +33376,8 @@ type ClientWithResponsesInterface interface {
 
 	// ListUserNotificationsWithResponse List personal notifications for a user
 	//
-	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
-	// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
-	// ascending, then by `id` ascending.
-	//
-	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+	// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }` array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime` ascending, then by `id` ascending.
+	// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -33077,18 +33386,10 @@ type ClientWithResponsesInterface interface {
 
 	// CreateUserNotificationWithBodyWithResponse Create a personal notification for a user
 	//
-	// Creates a personal cost-anomaly notification config for the user. The request body has no email
-	// address; the server copies the target user's email onto the config as the sole destination.
-	//
-	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-	//
-	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-	// original response and does not create a second config. With `dryRun=true` the request goes through
-	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-	//
-	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-	// config.
+	// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+	// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -33097,18 +33398,10 @@ type ClientWithResponsesInterface interface {
 
 	// CreateUserNotificationWithResponse Create a personal notification for a user
 	//
-	// Creates a personal cost-anomaly notification config for the user. The request body has no email
-	// address; the server copies the target user's email onto the config as the sole destination.
-	//
-	// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-	//
-	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-	// original response and does not create a second config. With `dryRun=true` the request goes through
-	// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-	// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-	//
-	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-	// config.
+	// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+	// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+	// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -33117,24 +33410,17 @@ type ClientWithResponsesInterface interface {
 
 	// DeleteUserNotificationWithResponse Delete a personal notification
 	//
-	// Permanently deletes a personal notification config. Requires `usersManager` permission, the
-	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-	// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
-	// `404`.
-	//
-	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
-	// of that notification returns `404`.
+	// Permanently deletes a personal notification config. Requires Users Manager (`usersManager`), the `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that no longer exists returns `404`.
+	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with DELETE /iam/v1/users/{userId}/notifications/{id} (the `DeleteUserNotification` operationId).
 	DeleteUserNotificationWithResponse(ctx context.Context, userId string, id string, params *DeleteUserNotificationParams, reqEditors ...RequestEditorFn) (*DeleteUserNotificationResp, error)
 
-	// GetUserNotificationWithResponse Get a personal notification
+	// GetUserNotificationWithResponse Retrieve a personal notification
 	//
-	// Returns one personal notification config. Requires `usersManager` permission. A notification id that
-	// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
-	// elsewhere.
+	// Returns one personal notification config. Requires Users Manager (`usersManager`). A subscribed type stays in the response when the target user later loses that type's permission; the type permission is not re-checked on read. A notification id that does not belong to this user in the resolved tenant returns `404`, without saying whether it exists elsewhere.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -33143,16 +33429,8 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateUserNotificationWithBodyWithResponse Update a personal notification
 	//
-	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-	// same checks as a real update and returns the notification as it would look after the patch, without
-	// changing anything.
-	//
-	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-	// new state.
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -33161,16 +33439,8 @@ type ClientWithResponsesInterface interface {
 
 	// UpdateUserNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update a personal notification
 	//
-	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-	// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-	// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-	// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-	// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-	// same checks as a real update and returns the notification as it would look after the patch, without
-	// changing anything.
-	//
-	// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-	// new state.
+	// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
 	// Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -44140,6 +44410,13 @@ type CreateUserNotificationResp500Headers struct {
 	RequestId       *string
 }
 
+// CreateUserNotificationResp503Headers the declared response headers of an HTTP 503 response for CreateUserNotification
+type CreateUserNotificationResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
 type CreateUserNotificationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -44152,7 +44429,7 @@ type CreateUserNotificationResp struct {
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthorized
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
-	ApplicationproblemJSON403 *Forbidden
+	ApplicationproblemJSON403 *UserNotificationForbidden
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *NotFound
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
@@ -44161,6 +44438,8 @@ type CreateUserNotificationResp struct {
 	ApplicationproblemJSON422 *UnprocessableEntity
 	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
 	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *CreateUserNotificationResp200Headers
 	// Headers201 the parsed response headers for an HTTP 201 response
@@ -44179,6 +44458,8 @@ type CreateUserNotificationResp struct {
 	Headers422 *CreateUserNotificationResp422Headers
 	// Headers500 the parsed response headers for an HTTP 500 response
 	Headers500 *CreateUserNotificationResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreateUserNotificationResp503Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -44202,7 +44483,7 @@ func (r CreateUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized
 }
 
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
-func (r CreateUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+func (r CreateUserNotificationResp) GetApplicationproblemJSON403() *UserNotificationForbidden {
 	return r.ApplicationproblemJSON403
 }
 
@@ -44224,6 +44505,11 @@ func (r CreateUserNotificationResp) GetApplicationproblemJSON422() *Unprocessabl
 // GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
 func (r CreateUserNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
 	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreateUserNotificationResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -44325,7 +44611,7 @@ type DeleteUserNotificationResp struct {
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthorized
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
-	ApplicationproblemJSON403 *Forbidden
+	ApplicationproblemJSON403 *UserNotificationForbidden
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *NotFound
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
@@ -44371,7 +44657,7 @@ func (r DeleteUserNotificationResp) GetApplicationproblemJSON401() *Unauthorized
 }
 
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
-func (r DeleteUserNotificationResp) GetApplicationproblemJSON403() *Forbidden {
+func (r DeleteUserNotificationResp) GetApplicationproblemJSON403() *UserNotificationForbidden {
 	return r.ApplicationproblemJSON403
 }
 
@@ -44629,6 +44915,13 @@ type UpdateUserNotificationResp500Headers struct {
 	RequestId       *string
 }
 
+// UpdateUserNotificationResp503Headers the declared response headers of an HTTP 503 response for UpdateUserNotification
+type UpdateUserNotificationResp503Headers struct {
+	ContentLanguage *string
+	RequestId       *string
+	RetryAfter      *int
+}
+
 type UpdateUserNotificationResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -44654,6 +44947,8 @@ type UpdateUserNotificationResp struct {
 	ApplicationproblemJSON428 *PreconditionRequired
 	// ApplicationproblemJSON500 the response for an HTTP 500 `application/problem+json` response
 	ApplicationproblemJSON500 *InternalServerError
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *ServiceUnavailable
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *UpdateUserNotificationResp200Headers
 	// Headers400 the parsed response headers for an HTTP 400 response
@@ -44676,6 +44971,8 @@ type UpdateUserNotificationResp struct {
 	Headers428 *UpdateUserNotificationResp428Headers
 	// Headers500 the parsed response headers for an HTTP 500 response
 	Headers500 *UpdateUserNotificationResp500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *UpdateUserNotificationResp503Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -44731,6 +45028,11 @@ func (r UpdateUserNotificationResp) GetApplicationproblemJSON428() *Precondition
 // GetApplicationproblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
 func (r UpdateUserNotificationResp) GetApplicationproblemJSON500() *InternalServerError {
 	return r.ApplicationproblemJSON500
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r UpdateUserNotificationResp) GetApplicationproblemJSON503() *ServiceUnavailable {
+	return r.ApplicationproblemJSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -50206,11 +50508,8 @@ func (c *ClientWithResponses) UpdateUserWithResponse(ctx context.Context, id str
 
 // ListUserNotificationsWithResponse List personal notifications for a user
 //
-// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }`
-// array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime`
-// ascending, then by `id` ascending.
-//
-// Requires `usersManager` permission. The user id must belong to the resolved tenant.
+// Returns every personal notification config for the user as an unpaginated `{ "items": [...] }` array. One user has a handful of configs; there is no pagination. Items are ordered by `createTime` ascending, then by `id` ascending.
+// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -50225,18 +50524,10 @@ func (c *ClientWithResponses) ListUserNotificationsWithResponse(ctx context.Cont
 
 // CreateUserNotificationWithBodyWithResponse Create a personal notification for a user
 //
-// Creates a personal cost-anomaly notification config for the user. The request body has no email
-// address; the server copies the target user's email onto the config as the sole destination.
-//
-// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-//
-// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-// original response and does not create a second config. With `dryRun=true` the request goes through
-// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-//
-// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-// config.
+// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -50251,18 +50542,10 @@ func (c *ClientWithResponses) CreateUserNotificationWithBodyWithResponse(ctx con
 
 // CreateUserNotificationWithResponse Create a personal notification for a user
 //
-// Creates a personal cost-anomaly notification config for the user. The request body has no email
-// address; the server copies the target user's email onto the config as the sole destination.
-//
-// Requires `usersManager` permission. The user id must belong to the resolved tenant.
-//
-// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the
-// original response and does not create a second config. With `dryRun=true` the request goes through
-// the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields
-// (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
-//
-// Reads are immediately consistent. After a `201`, a GET of that notification returns the created
-// config.
+// Creates a personal notification config for the user. The request body has no email address; the server copies the target user's email onto the config as the sole destination. `settings` has one property per subscribed type and must include at least one. `costAnomalies` is optional.
+// Requires Users Manager (`usersManager`). The user id must belong to the resolved tenant. For each subscribed type other than `costAnomalies`, the target user must also hold that type's permission. The permission id for each type is documented on `UserNotificationSettings`. If they do not, the response is `403` and the problem body includes `permission` (the permission id) and `notificationType` (the settings property). A permission lookup that fails is `503`. If the permission service does not recognize an invited user, the response is `403`.
+// Requires the `Idempotency-Key` header so a retried create with the same key and body returns the original response and does not create a second config. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
+// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -50277,13 +50560,8 @@ func (c *ClientWithResponses) CreateUserNotificationWithResponse(ctx context.Con
 
 // DeleteUserNotificationWithResponse Delete a personal notification
 //
-// Permanently deletes a personal notification config. Requires `usersManager` permission, the
-// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-// same checks as a real delete without deleting anything. Deleting an id that no longer exists returns
-// `404`.
-//
-// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET
-// of that notification returns `404`.
+// Permanently deletes a personal notification config. Requires Users Manager (`usersManager`), the `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that no longer exists returns `404`.
+// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -50296,11 +50574,9 @@ func (c *ClientWithResponses) DeleteUserNotificationWithResponse(ctx context.Con
 	return ParseDeleteUserNotificationResp(rsp)
 }
 
-// GetUserNotificationWithResponse Get a personal notification
+// GetUserNotificationWithResponse Retrieve a personal notification
 //
-// Returns one personal notification config. Requires `usersManager` permission. A notification id that
-// does not belong to this user in the resolved tenant returns `404`, without saying whether it exists
-// elsewhere.
+// Returns one personal notification config. Requires Users Manager (`usersManager`). A subscribed type stays in the response when the target user later loses that type's permission; the type permission is not re-checked on read. A notification id that does not belong to this user in the resolved tenant returns `404`, without saying whether it exists elsewhere.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -50315,16 +50591,8 @@ func (c *ClientWithResponses) GetUserNotificationWithResponse(ctx context.Contex
 
 // UpdateUserNotificationWithBodyWithResponse Update a personal notification
 //
-// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-// same checks as a real update and returns the notification as it would look after the patch, without
-// changing anything.
-//
-// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-// new state.
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -50339,16 +50607,8 @@ func (c *ClientWithResponses) UpdateUserNotificationWithBodyWithResponse(ctx con
 
 // UpdateUserNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update a personal notification
 //
-// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396).
-// Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example
-// `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for
-// example `"settings":{"costAnomalies":{"repeat":null}}`). Requires `usersManager` permission, the
-// `If-Match` header, and the `Idempotency-Key` header. With `dryRun=true` the request goes through the
-// same checks as a real update and returns the notification as it would look after the patch, without
-// changing anything.
-//
-// Reads are immediately consistent. After a completed update, a GET of that notification returns the
-// new state.
+// Partially updates a personal notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). Send `null` for a settings property to unsubscribe that type. Nulling the last remaining type is `422`, decided before the type-permission check, so the status does not depend on which permissions the target user holds. Requires Users Manager (`usersManager`). For each type still subscribed after the merge, other than `costAnomalies`, the target user must hold that type's permission, including when the patch does not mention that type (a rename included). The permission id for each type is documented on `UserNotificationSettings`. A missing permission is `403` with `permission` and `notificationType`. A permission lookup that fails is `503`. The request also requires the `If-Match` header and the `Idempotency-Key` header. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
+// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //
 // Takes a body of the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -61068,7 +61328,7 @@ func ParseCreateUserNotificationResp(rsp *http.Response) (*CreateUserNotificatio
 		response.ApplicationproblemJSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Forbidden
+		var dest UserNotificationForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -61101,6 +61361,13 @@ func ParseCreateUserNotificationResp(rsp *http.Response) (*CreateUserNotificatio
 			return nil, err
 		}
 		response.ApplicationproblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
 
 	}
 
@@ -61286,6 +61553,30 @@ func ParseCreateUserNotificationResp(rsp *http.Response) (*CreateUserNotificatio
 			headers.RequestId = &value
 		}
 		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreateUserNotificationResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil
@@ -61323,7 +61614,7 @@ func ParseDeleteUserNotificationResp(rsp *http.Response) (*DeleteUserNotificatio
 		response.ApplicationproblemJSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Forbidden
+		var dest UserNotificationForbidden
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -61834,6 +62125,13 @@ func ParseUpdateUserNotificationResp(rsp *http.Response) (*UpdateUserNotificatio
 		}
 		response.ApplicationproblemJSON500 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
 	}
 
 	switch {
@@ -62045,6 +62343,30 @@ func ParseUpdateUserNotificationResp(rsp *http.Response) (*UpdateUserNotificatio
 			headers.RequestId = &value
 		}
 		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers UpdateUserNotificationResp503Headers
+		if values := rsp.Header.Values("Content-Language"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Language", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentLanguage = &value
+		}
+		if values := rsp.Header.Values("Request-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Request-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RequestId = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil

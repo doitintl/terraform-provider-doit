@@ -52,13 +52,13 @@ func CustomerNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Delivery targets. Always includes `emails`, `slackChannels`, and\n`teamsChannels`. Unused lists are empty arrays.\n",
-				MarkdownDescription: "Delivery targets. Always includes `emails`, `slackChannels`, and\n`teamsChannels`. Unused lists are empty arrays.\n",
+				Description:         "Delivery targets. Always includes `emails`, `slackChannels`, and `teamsChannels`. Unused lists are empty arrays.",
+				MarkdownDescription: "Delivery targets. Always includes `emails`, `slackChannels`, and `teamsChannels`. Unused lists are empty arrays.",
 			},
 			"etag": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Current strong ETag as bare SHA-256 hex. The `ETag` response header\nand `If-Match` wrap this value in double quotes. Send that quoted\nform unchanged on update or delete. `null` only on a dry-run create.\n",
-				MarkdownDescription: "Current strong ETag as bare SHA-256 hex. The `ETag` response header\nand `If-Match` wrap this value in double quotes. Send that quoted\nform unchanged on update or delete. `null` only on a dry-run create.\n",
+				Description:         "Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create.",
+				MarkdownDescription: "Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create.",
 			},
 			"id": schema.StringAttribute{
 				Required:            true,

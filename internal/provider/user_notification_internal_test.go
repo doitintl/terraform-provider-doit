@@ -39,7 +39,7 @@ func testUserNotificationResponse() *models.UserNotification {
 			{Type: "email", Address: &address},
 		},
 		Settings: models.UserNotificationSettings{
-			CostAnomalies: models.CostAnomalySettings{
+			CostAnomalies: &models.CostAnomalySettings{
 				MinSeverity:   "critical",
 				MinExcessCost: models.Money{Amount: "100.00", Currency: "USD"},
 				Allocations: models.CostAnomalyAllocations{
@@ -343,10 +343,19 @@ func TestUserNotificationToCreateRequest(t *testing.T) {
 	})
 }
 
-// The merge patch must carry explicit nulls for every unset optional member:
-// an omitted member would keep its stored value.
+// testUserNotificationOtherTypesNull is the patch fragment that unsubscribes
+// every type except costAnomalies.
+const testUserNotificationOtherTypesNull = `"newInvoices": null, "newProformaInvoices": null, "paymentReminders": null,
+	"creditUtilization": null, "quotaUtilization": null, "cloudIncidents": null, "newSkuUsage": null,
+	"dailyDigest": null, "weeklyDigest": null, "monthlyDigest": null, "expertInsights": null, "insights": null,
+	"savingsPlanApproval": null, "savingsPlanPurchased": null, "cudApproval": null, "cudPurchased": null,
+	"dataIntegrationSyncFailure": null,`
+
+// The merge patch must carry explicit nulls for every unset optional member
+// and every type that is not subscribed: an omitted member would keep its
+// stored value.
 func TestUserNotificationToUpdateRequest(t *testing.T) {
-	const head = `"name": "Anomaly alerts", "settings": {"costAnomalies": {
+	const head = `"name": "Anomaly alerts", "settings": {` + testUserNotificationOtherTypesNull + `"costAnomalies": {
 		"minSeverity": "critical",
 		"minExcessCost": {"amount": "100.00", "currency": "USD"},
 		"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},`

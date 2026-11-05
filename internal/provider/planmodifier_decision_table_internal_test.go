@@ -17,6 +17,7 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
 )
 
 // valueState is how a config, state or plan value is shaped in a decision table.
@@ -112,6 +113,8 @@ func TestObjectNullWhenConfigNullModifiers(t *testing.T) {
 		{"report custom_time_range", useNullForCustomTimeRange(), resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), presentReportConfig},
 		{"report limit_by_change", useNullForLimitByChange(), resource_report.LimitByChangeValue{}.AttributeTypes(ctx), presentReportConfig},
 		{"report metric_filter", useNullForMetricFilter(), resource_report.MetricFilterValue{}.AttributeTypes(ctx), presentReportConfig},
+		{"notification when_cost_grows", useNullForOmittedNotificationSetting(), resource_user_notification.WhenCostGrowsValue{}.AttributeTypes(ctx), tfsdk.Config{}},
+		{"notification min_increase", useNullForOmittedNotificationSetting(), resource_user_notification.MinIncreaseValue{}.AttributeTypes(ctx), tfsdk.Config{}},
 	}
 
 	// The configured and the planned object are the same (a configured
