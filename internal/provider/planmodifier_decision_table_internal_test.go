@@ -138,6 +138,27 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 	nullBool := tftypes.NewValue(tftypes.Bool, nil)
 	unknownBool := tftypes.NewValue(tftypes.Bool, tftypes.UnknownValue)
 
+	// configuredForecastSettings is what a configuration that sets
+	// forecast_settings plans: a known object with its own mode.
+	configuredForecastSettings := func() types.Object {
+		attrs := map[string]attr.Value{}
+		for name, at := range attrTypes {
+			v, err := at.ValueFromTerraform(ctx, tftypes.NewValue(at.TerraformType(ctx), nil))
+			if err != nil {
+				t.Fatalf("null value for %s: %v", name, err)
+			}
+			attrs[name] = v
+		}
+		attrs["mode"] = types.StringValue("grouping")
+		return types.ObjectValueMust(attrTypes, attrs)
+	}
+	configValueFor := func(s valueState) types.Object {
+		if s == vsKnown {
+			return configuredForecastSettings()
+		}
+		return objectInState(ctx, t, s, attrTypes)
+	}
+
 	const (
 		wantNull    = "null"
 		wantUnknown = "unknown"
@@ -154,7 +175,7 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 		want           string
 	}{
 		{name: "forecast_settings configured", configValue: vsKnown, configForecast: boolValue(true), planForecast: boolValue(true), want: wantAsPlan},
-		{name: "forecast_settings unknown", configValue: vsUnknown, configForecast: boolValue(true), planForecast: boolValue(true), want: wantAsPlan},
+		{name: "forecast_settings unknown", configValue: vsUnknown, configForecast: boolValue(true), planForecast: boolValue(true), want: wantUnknown},
 		{name: "forecast omitted", configValue: vsNull, configForecast: nullBool, planForecast: nullBool, want: wantNull},
 		{name: "forecast omitted, plan unknown", configValue: vsNull, configForecast: nullBool, planForecast: unknownBool, want: wantNull},
 		{name: "forecast true", configValue: vsNull, configForecast: boolValue(true), planForecast: boolValue(true), want: wantTotals},
@@ -181,11 +202,16 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 				plan = tfsdk.Plan{Schema: s, Raw: planRaw}
 			}
 
+			// With forecast_settings configured the framework plans the configured
+			// object, so the plan is known there; elsewhere it is unknown.
 			planValue := types.ObjectUnknown(attrTypes)
+			if tt.configValue == vsKnown {
+				planValue = configuredForecastSettings()
+			}
 			req := planmodifier.ObjectRequest{
 				Config:      cfg,
 				Plan:        plan,
-				ConfigValue: objectInState(ctx, t, tt.configValue, attrTypes),
+				ConfigValue: configValueFor(tt.configValue),
 				PlanValue:   planValue,
 			}
 			resp := &planmodifier.ObjectResponse{PlanValue: planValue}
@@ -200,9 +226,14 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 				if !resp.PlanValue.IsNull() {
 					t.Errorf("PlanValue = %v, want null", resp.PlanValue)
 				}
-			case wantUnknown, wantAsPlan:
+			case wantUnknown:
 				if !resp.PlanValue.IsUnknown() {
 					t.Errorf("PlanValue = %v, want unknown", resp.PlanValue)
+				}
+			case wantAsPlan:
+				// A fresh object, not the one handed to the modifier.
+				if want := configuredForecastSettings(); !resp.PlanValue.Equal(want) {
+					t.Errorf("PlanValue = %v, want the configured object %v", resp.PlanValue, want)
 				}
 			case wantTotals:
 				if resp.PlanValue.IsNull() || resp.PlanValue.IsUnknown() {
@@ -316,9 +347,14 @@ func TestRequiresReplaceWhenCleared(t *testing.T) {
 			if resp.Diagnostics.HasError() {
 				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
 			}
-			got := len(resp.RequiresReplace) == 1 && resp.RequiresReplace[0].Equal(thing)
-			if got != tt.want {
-				t.Errorf("replace = %v (paths %v), want %v", got, resp.RequiresReplace, tt.want)
+			if !tt.want {
+				if len(resp.RequiresReplace) != 0 {
+					t.Errorf("RequiresReplace = %v, want none", resp.RequiresReplace)
+				}
+				return
+			}
+			if len(resp.RequiresReplace) != 1 || !resp.RequiresReplace[0].Equal(thing) {
+				t.Errorf("RequiresReplace = %v, want exactly [%v]", resp.RequiresReplace, thing)
 			}
 		})
 	}
