@@ -304,6 +304,15 @@ func TestAccUser_Import(t *testing.T) {
 					return nil
 				},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_user.test",
+				ImportStateId:   email,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Step 3: Drift check — re-apply config after import.
 			{
 				Config: testAccUserAllFields(email),

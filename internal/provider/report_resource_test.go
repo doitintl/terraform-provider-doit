@@ -189,6 +189,14 @@ func TestAccReport_Import(t *testing.T) {
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_report.this",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }
@@ -5385,6 +5393,14 @@ func TestAccReport_Count_Lifecycle(t *testing.T) {
 				// a configured resource holds an empty list. The trailing dot keeps
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
+			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_report.count_test",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
 			},
 		},
 	})

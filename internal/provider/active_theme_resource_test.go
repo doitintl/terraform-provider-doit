@@ -73,6 +73,15 @@ func TestAccActiveTheme_Import(t *testing.T) {
 				ImportStateId:     "active-theme",
 				ImportStateVerify: true,
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_active_theme.this",
+				ImportStateId:   "active-theme",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Step 3: Drift check
 			{
 				Config: testAccActiveThemeConfig(rName),

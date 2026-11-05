@@ -277,6 +277,15 @@ func TestAccCloudconnectAwsAccount_Import(t *testing.T) {
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "account_id",
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_cloudconnect_aws_account.this",
+				ImportStateId:   accountID,
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 			// Step 3: Drift check — re-apply config after import, expect no changes.
 			{
 				Config: testAccCloudconnectAwsAccountConfig_basic(accountID, roleArn),

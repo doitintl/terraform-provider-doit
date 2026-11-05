@@ -305,6 +305,23 @@ func TestAccSharing_Import(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"timeouts"},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName: "doit_sharing.this",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["doit_sharing.this"]
+					if !ok {
+						return "", fmt.Errorf("resource not found: doit_sharing.this")
+					}
+					resType := rs.Primary.Attributes["resource_type"]
+					resID := rs.Primary.Attributes["resource_id"]
+					return fmt.Sprintf("%s/%s", resType, resID), nil
+				},
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }
@@ -746,6 +763,21 @@ func TestAccSharing_Allocation(t *testing.T) {
 				},
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"timeouts"},
+			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName: "doit_sharing.allocation",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["doit_sharing.allocation"]
+					if !ok {
+						return "", fmt.Errorf("resource not found: doit_sharing.allocation")
+					}
+					return fmt.Sprintf("%s/%s", rs.Primary.Attributes["resource_type"], rs.Primary.Attributes["resource_id"]), nil
+				},
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
 			},
 		},
 	})

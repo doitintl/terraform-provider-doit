@@ -81,6 +81,14 @@ func TestAccAllocation(t *testing.T) {
 					"update_time", // Computed field that changes on each modification
 				},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_allocation.this",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }
@@ -129,6 +137,14 @@ func TestAccAllocation_Group(t *testing.T) {
 					"update_time", // Computed field that changes on each modification
 					"rules",       // API doesn't return the 'action' field for rules
 				},
+			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_allocation.group",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
 			},
 		},
 	})
@@ -251,6 +267,14 @@ func TestAccAllocation_Group_Select(t *testing.T) {
 					"update_time", // Computed field that changes on each modification
 					"rules",       // API doesn't return the 'action' field for rules
 				},
+			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_allocation.group_select",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
 			},
 		},
 	})
@@ -989,6 +1013,14 @@ func TestAccAllocation_NestedAllocationRule(t *testing.T) {
 				ImportStateVerifyIgnore: []string{
 					"update_time", // Computed field that changes on each modification
 				},
+			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_allocation.nested",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
 			},
 		},
 	})

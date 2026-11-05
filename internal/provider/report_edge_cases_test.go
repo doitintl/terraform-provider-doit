@@ -83,6 +83,14 @@ func TestAccReport_ForecastSettings_ImportWithIntervals(t *testing.T) {
 				// config.metric_filter.* out of the prefix match.
 				ImportStateVerifyIgnore: []string{"config.metrics."},
 			},
+			// Configuration generated for the import (an import block with
+			// -generate-config-out) is valid and plans no change.
+			{
+				ResourceName:    "doit_report.intervals_test",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
 		},
 	})
 }
