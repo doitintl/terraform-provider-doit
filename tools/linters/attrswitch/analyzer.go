@@ -18,6 +18,7 @@ package attrswitch
 
 import (
 	"go/ast"
+	"go/token"
 	"go/types"
 	"sort"
 	"strings"
@@ -112,7 +113,7 @@ func attributePackage(pass *analysis.Pass, sw *ast.TypeSwitchStmt) *types.Packag
 	if !ok {
 		return nil
 	}
-	named, ok := pass.TypesInfo.TypeOf(assert.X).(*types.Named)
+	named, ok := types.Unalias(pass.TypesInfo.TypeOf(assert.X)).(*types.Named)
 	if !ok || named.Obj().Name() != "Attribute" || named.Obj().Pkg() == nil {
 		return nil
 	}
@@ -127,9 +128,9 @@ func attributePackage(pass *analysis.Pass, sw *ast.TypeSwitchStmt) *types.Packag
 
 // kindName returns the name of the schema attribute type a case lists.
 func kindName(pass *analysis.Pass, expr ast.Expr, pkg *types.Package) string {
-	t := pass.TypesInfo.TypeOf(expr)
+	t := types.Unalias(pass.TypesInfo.TypeOf(expr))
 	if p, ok := t.(*types.Pointer); ok {
-		t = p.Elem()
+		t = types.Unalias(p.Elem())
 	}
 	named, ok := t.(*types.Named)
 	if !ok || named.Obj().Pkg() != pkg {
@@ -156,31 +157,46 @@ func hasCommentedDefault(pass *analysis.Pass, sw *ast.TypeSwitchStmt) bool {
 		if clause.List != nil {
 			continue
 		}
-		end := sw.Body.Rbrace
-		if i+1 < len(sw.Body.List) {
-			end = sw.Body.List[i+1].Pos()
+		// The clause ends with its last statement; an empty one extends to the
+		// next clause, whose own leading comment is not the default's.
+		from, to := clause.Pos(), clause.End()
+		if len(clause.Body) == 0 && i+1 < len(sw.Body.List) {
+			to = sw.Body.List[i+1].Pos()
 		}
 		for _, group := range file.Comments {
-			if group.Pos() >= clause.Pos() && group.End() <= end {
-				return true
+			if group.Pos() < from || group.End() > to {
+				continue
 			}
+			if len(clause.Body) == 0 && i+1 < len(sw.Body.List) &&
+				pass.Fset.Position(group.End()).Line+1 == pass.Fset.Position(to).Line {
+				continue
+			}
+			return true
 		}
 	}
 	return false
 }
 
 // fieldsRead returns the checked fields the clause reads from its case
-// variable.
+// variable. Plain assignment targets are writes, not reads.
 func fieldsRead(pass *analysis.Pass, clause *ast.CaseClause) []string {
 	obj := pass.TypesInfo.Implicits[clause]
 	if obj == nil {
 		return nil
 	}
 	var fields []string
+	written := map[*ast.SelectorExpr]bool{} // targets of plain assignments
 	for _, stmt := range clause.Body {
 		ast.Inspect(stmt, func(n ast.Node) bool {
+			if as, ok := n.(*ast.AssignStmt); ok && as.Tok == token.ASSIGN {
+				for _, lhs := range as.Lhs {
+					if sel, ok := lhs.(*ast.SelectorExpr); ok {
+						written[sel] = true
+					}
+				}
+			}
 			sel, ok := n.(*ast.SelectorExpr)
-			if !ok {
+			if !ok || written[sel] {
 				return true
 			}
 			id, ok := sel.X.(*ast.Ident)

@@ -117,3 +117,77 @@ func other(v any) int {
 	}
 	return 0
 }
+
+type attr = schema.Attribute
+
+type mapAttr = schema.MapNestedAttribute
+
+// BAD: the switch input is declared through an alias.
+func aliasInput(a attr) int {
+	switch a := a.(type) { // want `handles some nested attribute kinds but not MapNestedAttribute`
+	case schema.SingleNestedAttribute:
+		return len(a.Attributes)
+	case schema.ListNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	}
+	return 0
+}
+
+// GOOD: a case type declared through an alias still counts as handled.
+func aliasCase(a schema.Attribute) int {
+	switch a := a.(type) {
+	case schema.SingleNestedAttribute:
+		return len(a.Attributes)
+	case schema.ListNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	case mapAttr:
+		return len(a.NestedObject.Attributes)
+	}
+	return 0
+}
+
+// BAD: the comment documents the case after the bare default, not the default.
+func defaultFirst(a schema.Attribute) int {
+	switch a := a.(type) { // want `handles some nested attribute kinds but not SingleNestedAttribute, ListNestedAttribute, MapNestedAttribute`
+	default:
+		return 0
+	// Sets are the only nested kind that matters here.
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	}
+}
+
+// GOOD: a comment inside a default that is not the last clause.
+func commentedDefaultFirst(a schema.Attribute) int {
+	switch a := a.(type) {
+	default:
+		// Only sets are relevant here.
+		return 0
+	case schema.SetNestedAttribute:
+		return len(a.NestedObject.Attributes)
+	}
+}
+
+// GOOD: Default is only written, never read.
+func writeOnly(a schema.Attribute) schema.Attribute {
+	switch a := a.(type) {
+	case schema.StringAttribute:
+		a.Default = nil
+		return a
+	}
+	return a
+}
+
+// BAD: append reads Validators before assigning it.
+func readModifyWrite(a schema.Attribute) schema.Attribute {
+	switch a := a.(type) { // want `reads Validators but does not handle Int64Attribute, ListNestedAttribute, MapNestedAttribute, SetNestedAttribute, SingleNestedAttribute`
+	case schema.StringAttribute:
+		a.Validators = append(a.Validators, nil)
+		return a
+	}
+	return a
+}
