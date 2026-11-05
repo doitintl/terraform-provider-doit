@@ -237,6 +237,11 @@ data "doit_customer_subscriptions" "paged" {
 data "doit_customer_subscriptions" "all" {
   depends_on = [doit_customer_subscription.this, doit_customer_subscription.that]
 }
+
+# Auto-pagination that starts at the token of the first page.
+data "doit_customer_subscriptions" "from_token" {
+  page_token = data.doit_customer_subscriptions.paged.page_token
+}
 `
 	const paged = "data.doit_customer_subscriptions.paged"
 	const all = "data.doit_customer_subscriptions.all"
@@ -254,6 +259,9 @@ data "doit_customer_subscriptions" "all" {
 					resource.TestCheckResourceAttr(paged, "items.#", "1"),
 					resource.TestCheckResourceAttr(paged, "max_results", "1"),
 					resource.TestCheckResourceAttrSet(paged, "page_token"),
+					// Starting at a token fetches only the rest, but row_count is
+					// still the API's total across all pages.
+					resource.TestCheckResourceAttrPair("data.doit_customer_subscriptions.from_token", "row_count", paged, "row_count"),
 					// Auto mode fetches both of ours, however many pages that takes.
 					testAccCheckCustomerSubscriptionsListContains(all, testAccCustomerSubscriptionAddr, 1),
 					testAccCheckCustomerSubscriptionsListContains(all, "doit_customer_subscription.that", 1),

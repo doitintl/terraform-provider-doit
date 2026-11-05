@@ -406,8 +406,10 @@ func TestCustomerSubscriptionsDataSourcePageTokenStartsAutoPagination(t *testing
 	if data.PageToken.ValueString() != "p2" {
 		t.Errorf("configured page_token must be kept, got %v", data.PageToken)
 	}
-	if data.RowCount.ValueInt64() != 2 {
-		t.Errorf("row_count = %v", data.RowCount)
+	// row_count is the API's total across all pages, not the size of the suffix
+	// that was fetched.
+	if data.RowCount.ValueInt64() != 3 {
+		t.Errorf("row_count = %v, want the API's total of 3", data.RowCount)
 	}
 }
 

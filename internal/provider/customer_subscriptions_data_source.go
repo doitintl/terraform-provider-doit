@@ -102,10 +102,17 @@ func (d *customerSubscriptionsDataSource) Read(ctx context.Context, req datasour
 		data.PageToken = types.StringPointerValue(page.PageToken)
 		data.RowCount = types.Int64Value(page.RowCount)
 	} else {
+		// row_count is the API's total across all pages, even when a page_token
+		// starts the read after the first item, so it is taken from the first page.
+		first := true
 		for {
 			page, ok := d.listPage(ctx, params, &resp.Diagnostics)
 			if !ok {
 				return
+			}
+			if first {
+				data.RowCount = types.Int64Value(page.RowCount)
+				first = false
 			}
 			items = append(items, page.Items...)
 			if page.PageToken == nil || *page.PageToken == "" {
@@ -115,7 +122,6 @@ func (d *customerSubscriptionsDataSource) Read(ctx context.Context, req datasour
 		}
 		// A configured page_token stays as configured.
 		data.MaxResults = types.Int64Null()
-		data.RowCount = types.Int64Value(int64(len(items)))
 	}
 
 	resp.Diagnostics.Append(mapCustomerSubscriptionsToDataSource(ctx, items, &data)...)
