@@ -137,7 +137,7 @@ golangci-lint custom
 
 2. **The binary may rebuild but use cached analyzer results.** `golangci-lint custom` rebuilds the binary from source via the `path:` directive in `.custom-gcl.yml`. But the analysis framework caches fact/result data separately. The binary can contain new code while golangci-lint serves stale analyzer outputs.
 
-3. **`pass.Reportf()` diagnostics on the same file+line get deduplicated.** If your linter reports multiple findings at the same position (e.g., all at `fn.Pos()`), only one survives. Use unique positions per finding — either from AST nodes in the function body, or synthetic offsets from `fn.Body.Lbrace`.
+3. **`pass.Reportf()` diagnostics on the same file+line get deduplicated.** If your linter reports multiple findings at the same position (e.g., all at `fn.Pos()`), only one survives. Use unique positions per finding — either from AST nodes in the function body, or synthetic offsets from `fn.Body.Lbrace`. `analysistest` does not catch this, so in `analyzer_test.go` call `lintertest.RunUniqueLines` (from `tools/linters/internal/lintertest`) instead of `analysistest.Run` for any analyzer with more than one kind of finding; it fails when two diagnostics share a file and line.
 
 4. **golangci-lint captures stderr.** `fmt.Fprintf(os.Stderr, ...)` from analyzer code is NOT visible in terminal output. For debug logging, write to a temp file instead:
    ```go

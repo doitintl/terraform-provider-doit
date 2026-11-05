@@ -1,6 +1,7 @@
 package schemaparser_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/doitintl/terraform-provider-doit/tools/linters/schemaparser"
@@ -179,6 +180,81 @@ func TestSchemaParserOverrides(t *testing.T) {
 		t.Run("currency_not_replace_on_clear", func(t *testing.T) {
 			if info, ok := schema.Attrs["currency"]; ok && info.RequiresReplaceOnClear {
 				t.Error("expected currency.RequiresReplaceOnClear = false")
+			}
+		})
+	}
+}
+
+// TestSchemaParserLiteralOverrideParity requires an attribute property to parse
+// the same way whether it is written as a literal in a generated schema, as a
+// full replacement in Schema(), or as an in-place edit in Schema(). The
+// fixtures live in example_gen/parity_gen.go and example_provider/parity.go.
+func TestSchemaParserLiteralOverrideParity(t *testing.T) {
+	testdata := analysistest.TestData()
+	results := analysistest.RunWithSuggestedFixes(t, testdata, schemaparser.Analyzer, "example_gen", "example_provider")
+
+	var schema *schemaparser.SchemaInfo
+	for _, r := range results {
+		if r.Pass.Pkg.Name() != "example_provider" {
+			continue
+		}
+		facts, ok := r.Result.(*schemaparser.SchemaFacts)
+		if !ok {
+			t.Fatalf("expected *SchemaFacts, got %T", r.Result)
+		}
+		schema = facts.Schemas["ParityResourceSchema"]
+	}
+	if schema == nil {
+		t.Fatal("expected to find ParityResourceSchema in merged facts")
+	}
+
+	properties := []struct {
+		name    string
+		class   schemaparser.FieldClass
+		modsLen int
+		// inplace is false for properties the parser does not read from
+		// modify-in-place blocks.
+		inplace bool
+	}{
+		{"required", schemaparser.Required, 0, true},
+		{"optional", schemaparser.Optional, 0, true},
+		{"computed", schemaparser.ComputedOnly, 0, true},
+		{"optional_computed", schemaparser.OptionalComputed, 0, true},
+		{"plan_modifiers", schemaparser.OptionalComputed, 2, true},
+		{"default", schemaparser.OptionalComputed, 0, false},
+	}
+
+	for _, p := range properties {
+		t.Run(p.name, func(t *testing.T) {
+			lit, ok := schema.Attrs[p.name+"_lit"]
+			if !ok {
+				t.Fatalf("attribute %s_lit not found", p.name)
+			}
+
+			// Guard against a vacuous comparison: the reference form must
+			// itself carry the property under test.
+			if lit.Class != p.class {
+				t.Errorf("%s_lit: got class %s, want %s", p.name, lit.Class, p.class)
+			}
+			if len(lit.PlanModifiers) != p.modsLen {
+				t.Errorf("%s_lit: got %d plan modifiers, want %d", p.name, len(lit.PlanModifiers), p.modsLen)
+			}
+			if lit.HasDefault != (p.name == "default") {
+				t.Errorf("%s_lit: got HasDefault=%v", p.name, lit.HasDefault)
+			}
+
+			forms := []string{"full"}
+			if p.inplace {
+				forms = append(forms, "inplace")
+			}
+			for _, form := range forms {
+				got, ok := schema.Attrs[p.name+"_"+form]
+				if !ok {
+					t.Fatalf("attribute %s_%s not found", p.name, form)
+				}
+				if !reflect.DeepEqual(lit, got) {
+					t.Errorf("%s_%s differs from %s_lit:\n got: %+v\nwant: %+v", p.name, form, p.name, got, lit)
+				}
 			}
 		})
 	}

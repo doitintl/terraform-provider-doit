@@ -3,10 +3,11 @@ package testserver
 import (
 	"testing"
 
+	"github.com/doitintl/terraform-provider-doit/tools/linters/internal/lintertest"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
 func TestTestServer(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, Analyzer, "testserver")
+	lintertest.RunUniqueLines(t, testdata, Analyzer, "testserver")
 }
