@@ -198,7 +198,13 @@ func testAccCheckUserNotificationsItem(name string, want map[string]string) reso
 // testAccUserNotificationCopyConfig reads the notification named rName from
 // TEST_USER with the list data source and creates a copy of it on TEST_USER_2.
 func testAccUserNotificationCopyConfig(rName, costAnomalies string) string {
-	return testAccUserNotificationConfig(rName, rName, costAnomalies) + fmt.Sprintf(`
+	return testAccUserNotificationConfig(rName, rName, costAnomalies) + testAccUserNotificationCopySection(rName)
+}
+
+// testAccUserNotificationCopySection is the list data source and the copy on
+// TEST_USER_2 of the notification named rName.
+func testAccUserNotificationCopySection(rName string) string {
+	return fmt.Sprintf(`
 data "doit_user_notifications" "source" {
   user_id    = doit_user_notification.this.user_id
   depends_on = [doit_user_notification.this]
@@ -284,6 +290,40 @@ func TestAccUserNotificationDataSource_CopyToAnotherUserWithRepeat(t *testing.T)
 					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.cost_anomalies.repeat.when_cost_grows.percent_increase", "10"),
 					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.cost_anomalies.repeat.when_cost_grows.within_hours", "6"),
 					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.cost_anomalies.repeat.when_cost_grows.min_increase.amount", "150.00"),
+				),
+			},
+			testAccUserNotificationDriftCheck(config),
+		},
+	})
+}
+
+// The {} types and the [] filter lists the data source reports survive the
+// data source → resource round trip.
+func TestAccUserNotificationDataSource_CopySettingsTypesToAnotherUser(t *testing.T) {
+	if testUser2() == "" {
+		t.Skip("TEST_USER_2 must be set")
+	}
+	rName := acctest.RandomWithPrefix("tf-acc-un-copy-types")
+	config := testAccUserNotificationSettingsConfig(rName, rName, `
+    credit_utilization = {}
+    new_invoices       = {}
+    daily_digest       = { allocation_ids = [doit_allocation.a.id] }
+    insights           = { severities = ["critical"] }
+`) + testAccUserNotificationCopySection(rName)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.credit_utilization.%", "0"),
+					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.new_invoices.billing_profile_ids.#", "0"),
+					resource.TestCheckResourceAttrPair(testAccUserNotificationCopyAddr, "settings.daily_digest.allocation_ids.0", "doit_allocation.a", "id"),
+					resource.TestCheckResourceAttr(testAccUserNotificationCopyAddr, "settings.insights.severities.0", "critical"),
+					resource.TestCheckNoResourceAttr(testAccUserNotificationCopyAddr, "settings.cost_anomalies.min_severity"),
 				),
 			},
 			testAccUserNotificationDriftCheck(config),

@@ -46,13 +46,13 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 					},
 				},
 				Computed:            true,
-				Description:         "Server-managed destinations. Always one email entry with the target user's address.\n",
-				MarkdownDescription: "Server-managed destinations. Always one email entry with the target user's address.\n",
+				Description:         "Server-managed destinations. Always one email entry with the target user's address.",
+				MarkdownDescription: "Server-managed destinations. Always one email entry with the target user's address.",
 			},
 			"etag": schema.StringAttribute{
 				Computed:            true,
-				Description:         "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run\ncreate.\n",
-				MarkdownDescription: "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run\ncreate.\n",
+				Description:         "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run create.",
+				MarkdownDescription: "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run create.",
 			},
 			"id": schema.StringAttribute{
 				Required:            true,
@@ -69,6 +69,17 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"settings": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
+					"cloud_incidents": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: CloudIncidentsType{
+							ObjectType: types.ObjectType{
+								AttrTypes: CloudIncidentsValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Cloud incidents.",
+						MarkdownDescription: "Cloud incidents.",
+					},
 					"cost_anomalies": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
 							"allocations": schema.SingleNestedAttribute{
@@ -194,8 +205,238 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 							},
 						},
 						Computed:            true,
-						Description:         "Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and\noptional resend controls.\n",
-						MarkdownDescription: "Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and\noptional resend controls.\n",
+						Description:         "Cloud cost anomalies.",
+						MarkdownDescription: "Cloud cost anomalies.",
+					},
+					"credit_utilization": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: CreditUtilizationType{
+							ObjectType: types.ObjectType{
+								AttrTypes: CreditUtilizationValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Credit utilization.",
+						MarkdownDescription: "Credit utilization.",
+					},
+					"cud_approval": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: CudApprovalType{
+							ObjectType: types.ObjectType{
+								AttrTypes: CudApprovalValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "PerfectScale for Commitments, Google Cloud committed use discounts: purchases require approval.",
+						MarkdownDescription: "PerfectScale for Commitments, Google Cloud committed use discounts: purchases require approval.",
+					},
+					"cud_purchased": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: CudPurchasedType{
+							ObjectType: types.ObjectType{
+								AttrTypes: CudPurchasedValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "PerfectScale for Commitments, Google Cloud committed use discounts: a committed use discount was purchased.",
+						MarkdownDescription: "PerfectScale for Commitments, Google Cloud committed use discounts: a committed use discount was purchased.",
+					},
+					"daily_digest": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"allocation_ids": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+								MarkdownDescription: "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+							},
+						},
+						CustomType: DailyDigestType{
+							ObjectType: types.ObjectType{
+								AttrTypes: DailyDigestValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Daily digest.",
+						MarkdownDescription: "Daily digest.",
+					},
+					"data_integration_sync_failure": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: DataIntegrationSyncFailureType{
+							ObjectType: types.ObjectType{
+								AttrTypes: DataIntegrationSyncFailureValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Data integration sync failures.",
+						MarkdownDescription: "Data integration sync failures.",
+					},
+					"expert_insights": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: ExpertInsightsType{
+							ObjectType: types.ObjectType{
+								AttrTypes: ExpertInsightsValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Third-party insights (a new custom insight from the DoiT expert team).",
+						MarkdownDescription: "Third-party insights (a new custom insight from the DoiT expert team).",
+					},
+					"insights": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"pillars": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Insight pillars. Empty or omitted means all pillars.",
+								MarkdownDescription: "Insight pillars. Empty or omitted means all pillars.",
+							},
+							"providers": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.",
+								MarkdownDescription: "Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.",
+							},
+							"severities": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Insight severities. Empty or omitted means all severities.",
+								MarkdownDescription: "Insight severities. Empty or omitted means all severities.",
+							},
+						},
+						CustomType: InsightsType{
+							ObjectType: types.ObjectType{
+								AttrTypes: InsightsValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "New insights (DoiT proprietary insights).",
+						MarkdownDescription: "New insights (DoiT proprietary insights).",
+					},
+					"monthly_digest": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: MonthlyDigestType{
+							ObjectType: types.ObjectType{
+								AttrTypes: MonthlyDigestValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Monthly digest.",
+						MarkdownDescription: "Monthly digest.",
+					},
+					"new_invoices": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"billing_profile_ids": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.",
+								MarkdownDescription: "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.",
+							},
+						},
+						CustomType: NewInvoicesType{
+							ObjectType: types.ObjectType{
+								AttrTypes: NewInvoicesValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "New invoices.",
+						MarkdownDescription: "New invoices.",
+					},
+					"new_proforma_invoices": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"billing_profile_ids": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.",
+								MarkdownDescription: "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.",
+							},
+						},
+						CustomType: NewProformaInvoicesType{
+							ObjectType: types.ObjectType{
+								AttrTypes: NewProformaInvoicesValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "New proforma invoices.",
+						MarkdownDescription: "New proforma invoices.",
+					},
+					"new_sku_usage": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: NewSkuUsageType{
+							ObjectType: types.ObjectType{
+								AttrTypes: NewSkuUsageValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "New SKUs Usage Detected.",
+						MarkdownDescription: "New SKUs Usage Detected.",
+					},
+					"payment_reminders": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"billing_profile_ids": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.",
+								MarkdownDescription: "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.",
+							},
+						},
+						CustomType: PaymentRemindersType{
+							ObjectType: types.ObjectType{
+								AttrTypes: PaymentRemindersValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Due or overdue payments.",
+						MarkdownDescription: "Due or overdue payments.",
+					},
+					"quota_utilization": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: QuotaUtilizationType{
+							ObjectType: types.ObjectType{
+								AttrTypes: QuotaUtilizationValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Quota utilization.",
+						MarkdownDescription: "Quota utilization.",
+					},
+					"savings_plan_approval": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: SavingsPlanApprovalType{
+							ObjectType: types.ObjectType{
+								AttrTypes: SavingsPlanApprovalValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "PerfectScale for Commitments, AWS Savings Plans: purchases require approval.",
+						MarkdownDescription: "PerfectScale for Commitments, AWS Savings Plans: purchases require approval.",
+					},
+					"savings_plan_purchased": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{},
+						CustomType: SavingsPlanPurchasedType{
+							ObjectType: types.ObjectType{
+								AttrTypes: SavingsPlanPurchasedValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "PerfectScale for Commitments, AWS Savings Plans: a Savings Plan was purchased.",
+						MarkdownDescription: "PerfectScale for Commitments, AWS Savings Plans: a Savings Plan was purchased.",
+					},
+					"weekly_digest": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"allocation_ids": schema.ListAttribute{
+								ElementType:         types.StringType,
+								Computed:            true,
+								Description:         "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+								MarkdownDescription: "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+							},
+						},
+						CustomType: WeeklyDigestType{
+							ObjectType: types.ObjectType{
+								AttrTypes: WeeklyDigestValue{}.AttributeTypes(ctx),
+							},
+						},
+						Computed:            true,
+						Description:         "Weekly digest.",
+						MarkdownDescription: "Weekly digest.",
 					},
 				},
 				CustomType: SettingsType{
@@ -214,8 +455,8 @@ func UserNotificationDataSourceSchema(ctx context.Context) schema.Schema {
 			},
 			"user_id": schema.StringAttribute{
 				Required:            true,
-				Description:         "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional\n`X-Tenant-Id`.\n",
-				MarkdownDescription: "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional\n`X-Tenant-Id`.\n",
+				Description:         "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional `X-Tenant-Id`.",
+				MarkdownDescription: "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional `X-Tenant-Id`.",
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
@@ -657,6 +898,50 @@ func (t SettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 
 	attributes := in.Attributes()
 
+	cloudIncidentsAttribute, ok := attributes["cloud_incidents"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud_incidents is missing from object`)
+
+		return nil, diags
+	}
+
+	cloudIncidentsValuable, ok := cloudIncidentsAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_incidents expected to be basetypes.ObjectValuable, was: %T`, cloudIncidentsAttribute))
+
+		return nil, diags
+	}
+
+	cloudIncidentsObjVal, cloudIncidentsObjValDiags := cloudIncidentsValuable.ToObjectValue(ctx)
+	diags.Append(cloudIncidentsObjValDiags...)
+
+	cloudIncidentsTypable, ok := t.AttrTypes["cloud_incidents"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_incidents expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["cloud_incidents"]))
+
+		return nil, diags
+	}
+
+	cloudIncidentsConverted, cloudIncidentsConvertedDiags := cloudIncidentsTypable.ValueFromObject(ctx, cloudIncidentsObjVal)
+	diags.Append(cloudIncidentsConvertedDiags...)
+
+	cloudIncidentsVal, ok := cloudIncidentsConverted.(CloudIncidentsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_incidents expected to be CloudIncidentsValue, was: %T`, cloudIncidentsConverted))
+	}
+
 	costAnomaliesAttribute, ok := attributes["cost_anomalies"]
 
 	if !ok {
@@ -701,13 +986,734 @@ func (t SettingsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVa
 			fmt.Sprintf(`cost_anomalies expected to be CostAnomaliesValue, was: %T`, costAnomaliesConverted))
 	}
 
+	creditUtilizationAttribute, ok := attributes["credit_utilization"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`credit_utilization is missing from object`)
+
+		return nil, diags
+	}
+
+	creditUtilizationValuable, ok := creditUtilizationAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`credit_utilization expected to be basetypes.ObjectValuable, was: %T`, creditUtilizationAttribute))
+
+		return nil, diags
+	}
+
+	creditUtilizationObjVal, creditUtilizationObjValDiags := creditUtilizationValuable.ToObjectValue(ctx)
+	diags.Append(creditUtilizationObjValDiags...)
+
+	creditUtilizationTypable, ok := t.AttrTypes["credit_utilization"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`credit_utilization expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["credit_utilization"]))
+
+		return nil, diags
+	}
+
+	creditUtilizationConverted, creditUtilizationConvertedDiags := creditUtilizationTypable.ValueFromObject(ctx, creditUtilizationObjVal)
+	diags.Append(creditUtilizationConvertedDiags...)
+
+	creditUtilizationVal, ok := creditUtilizationConverted.(CreditUtilizationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`credit_utilization expected to be CreditUtilizationValue, was: %T`, creditUtilizationConverted))
+	}
+
+	cudApprovalAttribute, ok := attributes["cud_approval"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cud_approval is missing from object`)
+
+		return nil, diags
+	}
+
+	cudApprovalValuable, ok := cudApprovalAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_approval expected to be basetypes.ObjectValuable, was: %T`, cudApprovalAttribute))
+
+		return nil, diags
+	}
+
+	cudApprovalObjVal, cudApprovalObjValDiags := cudApprovalValuable.ToObjectValue(ctx)
+	diags.Append(cudApprovalObjValDiags...)
+
+	cudApprovalTypable, ok := t.AttrTypes["cud_approval"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_approval expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["cud_approval"]))
+
+		return nil, diags
+	}
+
+	cudApprovalConverted, cudApprovalConvertedDiags := cudApprovalTypable.ValueFromObject(ctx, cudApprovalObjVal)
+	diags.Append(cudApprovalConvertedDiags...)
+
+	cudApprovalVal, ok := cudApprovalConverted.(CudApprovalValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_approval expected to be CudApprovalValue, was: %T`, cudApprovalConverted))
+	}
+
+	cudPurchasedAttribute, ok := attributes["cud_purchased"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cud_purchased is missing from object`)
+
+		return nil, diags
+	}
+
+	cudPurchasedValuable, ok := cudPurchasedAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_purchased expected to be basetypes.ObjectValuable, was: %T`, cudPurchasedAttribute))
+
+		return nil, diags
+	}
+
+	cudPurchasedObjVal, cudPurchasedObjValDiags := cudPurchasedValuable.ToObjectValue(ctx)
+	diags.Append(cudPurchasedObjValDiags...)
+
+	cudPurchasedTypable, ok := t.AttrTypes["cud_purchased"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_purchased expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["cud_purchased"]))
+
+		return nil, diags
+	}
+
+	cudPurchasedConverted, cudPurchasedConvertedDiags := cudPurchasedTypable.ValueFromObject(ctx, cudPurchasedObjVal)
+	diags.Append(cudPurchasedConvertedDiags...)
+
+	cudPurchasedVal, ok := cudPurchasedConverted.(CudPurchasedValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_purchased expected to be CudPurchasedValue, was: %T`, cudPurchasedConverted))
+	}
+
+	dailyDigestAttribute, ok := attributes["daily_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`daily_digest is missing from object`)
+
+		return nil, diags
+	}
+
+	dailyDigestValuable, ok := dailyDigestAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`daily_digest expected to be basetypes.ObjectValuable, was: %T`, dailyDigestAttribute))
+
+		return nil, diags
+	}
+
+	dailyDigestObjVal, dailyDigestObjValDiags := dailyDigestValuable.ToObjectValue(ctx)
+	diags.Append(dailyDigestObjValDiags...)
+
+	dailyDigestTypable, ok := t.AttrTypes["daily_digest"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`daily_digest expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["daily_digest"]))
+
+		return nil, diags
+	}
+
+	dailyDigestConverted, dailyDigestConvertedDiags := dailyDigestTypable.ValueFromObject(ctx, dailyDigestObjVal)
+	diags.Append(dailyDigestConvertedDiags...)
+
+	dailyDigestVal, ok := dailyDigestConverted.(DailyDigestValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`daily_digest expected to be DailyDigestValue, was: %T`, dailyDigestConverted))
+	}
+
+	dataIntegrationSyncFailureAttribute, ok := attributes["data_integration_sync_failure"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`data_integration_sync_failure is missing from object`)
+
+		return nil, diags
+	}
+
+	dataIntegrationSyncFailureValuable, ok := dataIntegrationSyncFailureAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`data_integration_sync_failure expected to be basetypes.ObjectValuable, was: %T`, dataIntegrationSyncFailureAttribute))
+
+		return nil, diags
+	}
+
+	dataIntegrationSyncFailureObjVal, dataIntegrationSyncFailureObjValDiags := dataIntegrationSyncFailureValuable.ToObjectValue(ctx)
+	diags.Append(dataIntegrationSyncFailureObjValDiags...)
+
+	dataIntegrationSyncFailureTypable, ok := t.AttrTypes["data_integration_sync_failure"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`data_integration_sync_failure expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["data_integration_sync_failure"]))
+
+		return nil, diags
+	}
+
+	dataIntegrationSyncFailureConverted, dataIntegrationSyncFailureConvertedDiags := dataIntegrationSyncFailureTypable.ValueFromObject(ctx, dataIntegrationSyncFailureObjVal)
+	diags.Append(dataIntegrationSyncFailureConvertedDiags...)
+
+	dataIntegrationSyncFailureVal, ok := dataIntegrationSyncFailureConverted.(DataIntegrationSyncFailureValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`data_integration_sync_failure expected to be DataIntegrationSyncFailureValue, was: %T`, dataIntegrationSyncFailureConverted))
+	}
+
+	expertInsightsAttribute, ok := attributes["expert_insights"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`expert_insights is missing from object`)
+
+		return nil, diags
+	}
+
+	expertInsightsValuable, ok := expertInsightsAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`expert_insights expected to be basetypes.ObjectValuable, was: %T`, expertInsightsAttribute))
+
+		return nil, diags
+	}
+
+	expertInsightsObjVal, expertInsightsObjValDiags := expertInsightsValuable.ToObjectValue(ctx)
+	diags.Append(expertInsightsObjValDiags...)
+
+	expertInsightsTypable, ok := t.AttrTypes["expert_insights"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`expert_insights expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["expert_insights"]))
+
+		return nil, diags
+	}
+
+	expertInsightsConverted, expertInsightsConvertedDiags := expertInsightsTypable.ValueFromObject(ctx, expertInsightsObjVal)
+	diags.Append(expertInsightsConvertedDiags...)
+
+	expertInsightsVal, ok := expertInsightsConverted.(ExpertInsightsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`expert_insights expected to be ExpertInsightsValue, was: %T`, expertInsightsConverted))
+	}
+
+	insightsAttribute, ok := attributes["insights"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`insights is missing from object`)
+
+		return nil, diags
+	}
+
+	insightsValuable, ok := insightsAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`insights expected to be basetypes.ObjectValuable, was: %T`, insightsAttribute))
+
+		return nil, diags
+	}
+
+	insightsObjVal, insightsObjValDiags := insightsValuable.ToObjectValue(ctx)
+	diags.Append(insightsObjValDiags...)
+
+	insightsTypable, ok := t.AttrTypes["insights"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`insights expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["insights"]))
+
+		return nil, diags
+	}
+
+	insightsConverted, insightsConvertedDiags := insightsTypable.ValueFromObject(ctx, insightsObjVal)
+	diags.Append(insightsConvertedDiags...)
+
+	insightsVal, ok := insightsConverted.(InsightsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`insights expected to be InsightsValue, was: %T`, insightsConverted))
+	}
+
+	monthlyDigestAttribute, ok := attributes["monthly_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`monthly_digest is missing from object`)
+
+		return nil, diags
+	}
+
+	monthlyDigestValuable, ok := monthlyDigestAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`monthly_digest expected to be basetypes.ObjectValuable, was: %T`, monthlyDigestAttribute))
+
+		return nil, diags
+	}
+
+	monthlyDigestObjVal, monthlyDigestObjValDiags := monthlyDigestValuable.ToObjectValue(ctx)
+	diags.Append(monthlyDigestObjValDiags...)
+
+	monthlyDigestTypable, ok := t.AttrTypes["monthly_digest"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`monthly_digest expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["monthly_digest"]))
+
+		return nil, diags
+	}
+
+	monthlyDigestConverted, monthlyDigestConvertedDiags := monthlyDigestTypable.ValueFromObject(ctx, monthlyDigestObjVal)
+	diags.Append(monthlyDigestConvertedDiags...)
+
+	monthlyDigestVal, ok := monthlyDigestConverted.(MonthlyDigestValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`monthly_digest expected to be MonthlyDigestValue, was: %T`, monthlyDigestConverted))
+	}
+
+	newInvoicesAttribute, ok := attributes["new_invoices"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`new_invoices is missing from object`)
+
+		return nil, diags
+	}
+
+	newInvoicesValuable, ok := newInvoicesAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_invoices expected to be basetypes.ObjectValuable, was: %T`, newInvoicesAttribute))
+
+		return nil, diags
+	}
+
+	newInvoicesObjVal, newInvoicesObjValDiags := newInvoicesValuable.ToObjectValue(ctx)
+	diags.Append(newInvoicesObjValDiags...)
+
+	newInvoicesTypable, ok := t.AttrTypes["new_invoices"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_invoices expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["new_invoices"]))
+
+		return nil, diags
+	}
+
+	newInvoicesConverted, newInvoicesConvertedDiags := newInvoicesTypable.ValueFromObject(ctx, newInvoicesObjVal)
+	diags.Append(newInvoicesConvertedDiags...)
+
+	newInvoicesVal, ok := newInvoicesConverted.(NewInvoicesValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_invoices expected to be NewInvoicesValue, was: %T`, newInvoicesConverted))
+	}
+
+	newProformaInvoicesAttribute, ok := attributes["new_proforma_invoices"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`new_proforma_invoices is missing from object`)
+
+		return nil, diags
+	}
+
+	newProformaInvoicesValuable, ok := newProformaInvoicesAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_proforma_invoices expected to be basetypes.ObjectValuable, was: %T`, newProformaInvoicesAttribute))
+
+		return nil, diags
+	}
+
+	newProformaInvoicesObjVal, newProformaInvoicesObjValDiags := newProformaInvoicesValuable.ToObjectValue(ctx)
+	diags.Append(newProformaInvoicesObjValDiags...)
+
+	newProformaInvoicesTypable, ok := t.AttrTypes["new_proforma_invoices"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_proforma_invoices expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["new_proforma_invoices"]))
+
+		return nil, diags
+	}
+
+	newProformaInvoicesConverted, newProformaInvoicesConvertedDiags := newProformaInvoicesTypable.ValueFromObject(ctx, newProformaInvoicesObjVal)
+	diags.Append(newProformaInvoicesConvertedDiags...)
+
+	newProformaInvoicesVal, ok := newProformaInvoicesConverted.(NewProformaInvoicesValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_proforma_invoices expected to be NewProformaInvoicesValue, was: %T`, newProformaInvoicesConverted))
+	}
+
+	newSkuUsageAttribute, ok := attributes["new_sku_usage"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`new_sku_usage is missing from object`)
+
+		return nil, diags
+	}
+
+	newSkuUsageValuable, ok := newSkuUsageAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_sku_usage expected to be basetypes.ObjectValuable, was: %T`, newSkuUsageAttribute))
+
+		return nil, diags
+	}
+
+	newSkuUsageObjVal, newSkuUsageObjValDiags := newSkuUsageValuable.ToObjectValue(ctx)
+	diags.Append(newSkuUsageObjValDiags...)
+
+	newSkuUsageTypable, ok := t.AttrTypes["new_sku_usage"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_sku_usage expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["new_sku_usage"]))
+
+		return nil, diags
+	}
+
+	newSkuUsageConverted, newSkuUsageConvertedDiags := newSkuUsageTypable.ValueFromObject(ctx, newSkuUsageObjVal)
+	diags.Append(newSkuUsageConvertedDiags...)
+
+	newSkuUsageVal, ok := newSkuUsageConverted.(NewSkuUsageValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_sku_usage expected to be NewSkuUsageValue, was: %T`, newSkuUsageConverted))
+	}
+
+	paymentRemindersAttribute, ok := attributes["payment_reminders"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`payment_reminders is missing from object`)
+
+		return nil, diags
+	}
+
+	paymentRemindersValuable, ok := paymentRemindersAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`payment_reminders expected to be basetypes.ObjectValuable, was: %T`, paymentRemindersAttribute))
+
+		return nil, diags
+	}
+
+	paymentRemindersObjVal, paymentRemindersObjValDiags := paymentRemindersValuable.ToObjectValue(ctx)
+	diags.Append(paymentRemindersObjValDiags...)
+
+	paymentRemindersTypable, ok := t.AttrTypes["payment_reminders"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`payment_reminders expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["payment_reminders"]))
+
+		return nil, diags
+	}
+
+	paymentRemindersConverted, paymentRemindersConvertedDiags := paymentRemindersTypable.ValueFromObject(ctx, paymentRemindersObjVal)
+	diags.Append(paymentRemindersConvertedDiags...)
+
+	paymentRemindersVal, ok := paymentRemindersConverted.(PaymentRemindersValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`payment_reminders expected to be PaymentRemindersValue, was: %T`, paymentRemindersConverted))
+	}
+
+	quotaUtilizationAttribute, ok := attributes["quota_utilization"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`quota_utilization is missing from object`)
+
+		return nil, diags
+	}
+
+	quotaUtilizationValuable, ok := quotaUtilizationAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`quota_utilization expected to be basetypes.ObjectValuable, was: %T`, quotaUtilizationAttribute))
+
+		return nil, diags
+	}
+
+	quotaUtilizationObjVal, quotaUtilizationObjValDiags := quotaUtilizationValuable.ToObjectValue(ctx)
+	diags.Append(quotaUtilizationObjValDiags...)
+
+	quotaUtilizationTypable, ok := t.AttrTypes["quota_utilization"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`quota_utilization expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["quota_utilization"]))
+
+		return nil, diags
+	}
+
+	quotaUtilizationConverted, quotaUtilizationConvertedDiags := quotaUtilizationTypable.ValueFromObject(ctx, quotaUtilizationObjVal)
+	diags.Append(quotaUtilizationConvertedDiags...)
+
+	quotaUtilizationVal, ok := quotaUtilizationConverted.(QuotaUtilizationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`quota_utilization expected to be QuotaUtilizationValue, was: %T`, quotaUtilizationConverted))
+	}
+
+	savingsPlanApprovalAttribute, ok := attributes["savings_plan_approval"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`savings_plan_approval is missing from object`)
+
+		return nil, diags
+	}
+
+	savingsPlanApprovalValuable, ok := savingsPlanApprovalAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_approval expected to be basetypes.ObjectValuable, was: %T`, savingsPlanApprovalAttribute))
+
+		return nil, diags
+	}
+
+	savingsPlanApprovalObjVal, savingsPlanApprovalObjValDiags := savingsPlanApprovalValuable.ToObjectValue(ctx)
+	diags.Append(savingsPlanApprovalObjValDiags...)
+
+	savingsPlanApprovalTypable, ok := t.AttrTypes["savings_plan_approval"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_approval expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["savings_plan_approval"]))
+
+		return nil, diags
+	}
+
+	savingsPlanApprovalConverted, savingsPlanApprovalConvertedDiags := savingsPlanApprovalTypable.ValueFromObject(ctx, savingsPlanApprovalObjVal)
+	diags.Append(savingsPlanApprovalConvertedDiags...)
+
+	savingsPlanApprovalVal, ok := savingsPlanApprovalConverted.(SavingsPlanApprovalValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_approval expected to be SavingsPlanApprovalValue, was: %T`, savingsPlanApprovalConverted))
+	}
+
+	savingsPlanPurchasedAttribute, ok := attributes["savings_plan_purchased"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`savings_plan_purchased is missing from object`)
+
+		return nil, diags
+	}
+
+	savingsPlanPurchasedValuable, ok := savingsPlanPurchasedAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_purchased expected to be basetypes.ObjectValuable, was: %T`, savingsPlanPurchasedAttribute))
+
+		return nil, diags
+	}
+
+	savingsPlanPurchasedObjVal, savingsPlanPurchasedObjValDiags := savingsPlanPurchasedValuable.ToObjectValue(ctx)
+	diags.Append(savingsPlanPurchasedObjValDiags...)
+
+	savingsPlanPurchasedTypable, ok := t.AttrTypes["savings_plan_purchased"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_purchased expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["savings_plan_purchased"]))
+
+		return nil, diags
+	}
+
+	savingsPlanPurchasedConverted, savingsPlanPurchasedConvertedDiags := savingsPlanPurchasedTypable.ValueFromObject(ctx, savingsPlanPurchasedObjVal)
+	diags.Append(savingsPlanPurchasedConvertedDiags...)
+
+	savingsPlanPurchasedVal, ok := savingsPlanPurchasedConverted.(SavingsPlanPurchasedValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_purchased expected to be SavingsPlanPurchasedValue, was: %T`, savingsPlanPurchasedConverted))
+	}
+
+	weeklyDigestAttribute, ok := attributes["weekly_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`weekly_digest is missing from object`)
+
+		return nil, diags
+	}
+
+	weeklyDigestValuable, ok := weeklyDigestAttribute.(basetypes.ObjectValuable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`weekly_digest expected to be basetypes.ObjectValuable, was: %T`, weeklyDigestAttribute))
+
+		return nil, diags
+	}
+
+	weeklyDigestObjVal, weeklyDigestObjValDiags := weeklyDigestValuable.ToObjectValue(ctx)
+	diags.Append(weeklyDigestObjValDiags...)
+
+	weeklyDigestTypable, ok := t.AttrTypes["weekly_digest"].(basetypes.ObjectTypable)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`weekly_digest expected type to be basetypes.ObjectTypable, was: %T`, t.AttrTypes["weekly_digest"]))
+
+		return nil, diags
+	}
+
+	weeklyDigestConverted, weeklyDigestConvertedDiags := weeklyDigestTypable.ValueFromObject(ctx, weeklyDigestObjVal)
+	diags.Append(weeklyDigestConvertedDiags...)
+
+	weeklyDigestVal, ok := weeklyDigestConverted.(WeeklyDigestValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`weekly_digest expected to be WeeklyDigestValue, was: %T`, weeklyDigestConverted))
+	}
+
 	if diags.HasError() {
 		return nil, diags
 	}
 
 	return SettingsValue{
-		CostAnomalies: costAnomaliesVal,
-		state:         attr.ValueStateKnown,
+		CloudIncidents:             cloudIncidentsVal,
+		CostAnomalies:              costAnomaliesVal,
+		CreditUtilization:          creditUtilizationVal,
+		CudApproval:                cudApprovalVal,
+		CudPurchased:               cudPurchasedVal,
+		DailyDigest:                dailyDigestVal,
+		DataIntegrationSyncFailure: dataIntegrationSyncFailureVal,
+		ExpertInsights:             expertInsightsVal,
+		Insights:                   insightsVal,
+		MonthlyDigest:              monthlyDigestVal,
+		NewInvoices:                newInvoicesVal,
+		NewProformaInvoices:        newProformaInvoicesVal,
+		NewSkuUsage:                newSkuUsageVal,
+		PaymentReminders:           paymentRemindersVal,
+		QuotaUtilization:           quotaUtilizationVal,
+		SavingsPlanApproval:        savingsPlanApprovalVal,
+		SavingsPlanPurchased:       savingsPlanPurchasedVal,
+		WeeklyDigest:               weeklyDigestVal,
+		state:                      attr.ValueStateKnown,
 	}, diags
 }
 
@@ -774,6 +1780,24 @@ func NewSettingsValue(attributeTypes map[string]attr.Type, attributes map[string
 		return NewSettingsValueUnknown(), diags
 	}
 
+	cloudIncidentsAttribute, ok := attributes["cloud_incidents"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cloud_incidents is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	cloudIncidentsVal, ok := cloudIncidentsAttribute.(CloudIncidentsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cloud_incidents expected to be CloudIncidentsValue, was: %T`, cloudIncidentsAttribute))
+	}
+
 	costAnomaliesAttribute, ok := attributes["cost_anomalies"]
 
 	if !ok {
@@ -792,13 +1816,318 @@ func NewSettingsValue(attributeTypes map[string]attr.Type, attributes map[string
 			fmt.Sprintf(`cost_anomalies expected to be CostAnomaliesValue, was: %T`, costAnomaliesAttribute))
 	}
 
+	creditUtilizationAttribute, ok := attributes["credit_utilization"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`credit_utilization is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	creditUtilizationVal, ok := creditUtilizationAttribute.(CreditUtilizationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`credit_utilization expected to be CreditUtilizationValue, was: %T`, creditUtilizationAttribute))
+	}
+
+	cudApprovalAttribute, ok := attributes["cud_approval"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cud_approval is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	cudApprovalVal, ok := cudApprovalAttribute.(CudApprovalValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_approval expected to be CudApprovalValue, was: %T`, cudApprovalAttribute))
+	}
+
+	cudPurchasedAttribute, ok := attributes["cud_purchased"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`cud_purchased is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	cudPurchasedVal, ok := cudPurchasedAttribute.(CudPurchasedValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`cud_purchased expected to be CudPurchasedValue, was: %T`, cudPurchasedAttribute))
+	}
+
+	dailyDigestAttribute, ok := attributes["daily_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`daily_digest is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	dailyDigestVal, ok := dailyDigestAttribute.(DailyDigestValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`daily_digest expected to be DailyDigestValue, was: %T`, dailyDigestAttribute))
+	}
+
+	dataIntegrationSyncFailureAttribute, ok := attributes["data_integration_sync_failure"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`data_integration_sync_failure is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	dataIntegrationSyncFailureVal, ok := dataIntegrationSyncFailureAttribute.(DataIntegrationSyncFailureValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`data_integration_sync_failure expected to be DataIntegrationSyncFailureValue, was: %T`, dataIntegrationSyncFailureAttribute))
+	}
+
+	expertInsightsAttribute, ok := attributes["expert_insights"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`expert_insights is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	expertInsightsVal, ok := expertInsightsAttribute.(ExpertInsightsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`expert_insights expected to be ExpertInsightsValue, was: %T`, expertInsightsAttribute))
+	}
+
+	insightsAttribute, ok := attributes["insights"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`insights is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	insightsVal, ok := insightsAttribute.(InsightsValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`insights expected to be InsightsValue, was: %T`, insightsAttribute))
+	}
+
+	monthlyDigestAttribute, ok := attributes["monthly_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`monthly_digest is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	monthlyDigestVal, ok := monthlyDigestAttribute.(MonthlyDigestValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`monthly_digest expected to be MonthlyDigestValue, was: %T`, monthlyDigestAttribute))
+	}
+
+	newInvoicesAttribute, ok := attributes["new_invoices"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`new_invoices is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	newInvoicesVal, ok := newInvoicesAttribute.(NewInvoicesValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_invoices expected to be NewInvoicesValue, was: %T`, newInvoicesAttribute))
+	}
+
+	newProformaInvoicesAttribute, ok := attributes["new_proforma_invoices"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`new_proforma_invoices is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	newProformaInvoicesVal, ok := newProformaInvoicesAttribute.(NewProformaInvoicesValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_proforma_invoices expected to be NewProformaInvoicesValue, was: %T`, newProformaInvoicesAttribute))
+	}
+
+	newSkuUsageAttribute, ok := attributes["new_sku_usage"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`new_sku_usage is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	newSkuUsageVal, ok := newSkuUsageAttribute.(NewSkuUsageValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`new_sku_usage expected to be NewSkuUsageValue, was: %T`, newSkuUsageAttribute))
+	}
+
+	paymentRemindersAttribute, ok := attributes["payment_reminders"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`payment_reminders is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	paymentRemindersVal, ok := paymentRemindersAttribute.(PaymentRemindersValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`payment_reminders expected to be PaymentRemindersValue, was: %T`, paymentRemindersAttribute))
+	}
+
+	quotaUtilizationAttribute, ok := attributes["quota_utilization"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`quota_utilization is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	quotaUtilizationVal, ok := quotaUtilizationAttribute.(QuotaUtilizationValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`quota_utilization expected to be QuotaUtilizationValue, was: %T`, quotaUtilizationAttribute))
+	}
+
+	savingsPlanApprovalAttribute, ok := attributes["savings_plan_approval"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`savings_plan_approval is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	savingsPlanApprovalVal, ok := savingsPlanApprovalAttribute.(SavingsPlanApprovalValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_approval expected to be SavingsPlanApprovalValue, was: %T`, savingsPlanApprovalAttribute))
+	}
+
+	savingsPlanPurchasedAttribute, ok := attributes["savings_plan_purchased"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`savings_plan_purchased is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	savingsPlanPurchasedVal, ok := savingsPlanPurchasedAttribute.(SavingsPlanPurchasedValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`savings_plan_purchased expected to be SavingsPlanPurchasedValue, was: %T`, savingsPlanPurchasedAttribute))
+	}
+
+	weeklyDigestAttribute, ok := attributes["weekly_digest"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`weekly_digest is missing from object`)
+
+		return NewSettingsValueUnknown(), diags
+	}
+
+	weeklyDigestVal, ok := weeklyDigestAttribute.(WeeklyDigestValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`weekly_digest expected to be WeeklyDigestValue, was: %T`, weeklyDigestAttribute))
+	}
+
 	if diags.HasError() {
 		return NewSettingsValueUnknown(), diags
 	}
 
 	return SettingsValue{
-		CostAnomalies: costAnomaliesVal,
-		state:         attr.ValueStateKnown,
+		CloudIncidents:             cloudIncidentsVal,
+		CostAnomalies:              costAnomaliesVal,
+		CreditUtilization:          creditUtilizationVal,
+		CudApproval:                cudApprovalVal,
+		CudPurchased:               cudPurchasedVal,
+		DailyDigest:                dailyDigestVal,
+		DataIntegrationSyncFailure: dataIntegrationSyncFailureVal,
+		ExpertInsights:             expertInsightsVal,
+		Insights:                   insightsVal,
+		MonthlyDigest:              monthlyDigestVal,
+		NewInvoices:                newInvoicesVal,
+		NewProformaInvoices:        newProformaInvoicesVal,
+		NewSkuUsage:                newSkuUsageVal,
+		PaymentReminders:           paymentRemindersVal,
+		QuotaUtilization:           quotaUtilizationVal,
+		SavingsPlanApproval:        savingsPlanApprovalVal,
+		SavingsPlanPurchased:       savingsPlanPurchasedVal,
+		WeeklyDigest:               weeklyDigestVal,
+		state:                      attr.ValueStateKnown,
 	}, diags
 }
 
@@ -870,19 +2199,121 @@ func (t SettingsType) ValueType(ctx context.Context) attr.Value {
 var _ basetypes.ObjectValuable = SettingsValue{}
 
 type SettingsValue struct {
-	CostAnomalies CostAnomaliesValue `tfsdk:"cost_anomalies"`
-	state         attr.ValueState
+	CloudIncidents             CloudIncidentsValue             `tfsdk:"cloud_incidents"`
+	CostAnomalies              CostAnomaliesValue              `tfsdk:"cost_anomalies"`
+	CreditUtilization          CreditUtilizationValue          `tfsdk:"credit_utilization"`
+	CudApproval                CudApprovalValue                `tfsdk:"cud_approval"`
+	CudPurchased               CudPurchasedValue               `tfsdk:"cud_purchased"`
+	DailyDigest                DailyDigestValue                `tfsdk:"daily_digest"`
+	DataIntegrationSyncFailure DataIntegrationSyncFailureValue `tfsdk:"data_integration_sync_failure"`
+	ExpertInsights             ExpertInsightsValue             `tfsdk:"expert_insights"`
+	Insights                   InsightsValue                   `tfsdk:"insights"`
+	MonthlyDigest              MonthlyDigestValue              `tfsdk:"monthly_digest"`
+	NewInvoices                NewInvoicesValue                `tfsdk:"new_invoices"`
+	NewProformaInvoices        NewProformaInvoicesValue        `tfsdk:"new_proforma_invoices"`
+	NewSkuUsage                NewSkuUsageValue                `tfsdk:"new_sku_usage"`
+	PaymentReminders           PaymentRemindersValue           `tfsdk:"payment_reminders"`
+	QuotaUtilization           QuotaUtilizationValue           `tfsdk:"quota_utilization"`
+	SavingsPlanApproval        SavingsPlanApprovalValue        `tfsdk:"savings_plan_approval"`
+	SavingsPlanPurchased       SavingsPlanPurchasedValue       `tfsdk:"savings_plan_purchased"`
+	WeeklyDigest               WeeklyDigestValue               `tfsdk:"weekly_digest"`
+	state                      attr.ValueState
 }
 
 func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 1)
+	attrTypes := make(map[string]tftypes.Type, 18)
 
 	var val tftypes.Value
 	var err error
 
+	attrTypes["cloud_incidents"] = CloudIncidentsType{
+		basetypes.ObjectType{
+			AttrTypes: CloudIncidentsValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
 	attrTypes["cost_anomalies"] = CostAnomaliesType{
 		basetypes.ObjectType{
 			AttrTypes: CostAnomaliesValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["credit_utilization"] = CreditUtilizationType{
+		basetypes.ObjectType{
+			AttrTypes: CreditUtilizationValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["cud_approval"] = CudApprovalType{
+		basetypes.ObjectType{
+			AttrTypes: CudApprovalValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["cud_purchased"] = CudPurchasedType{
+		basetypes.ObjectType{
+			AttrTypes: CudPurchasedValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["daily_digest"] = DailyDigestType{
+		basetypes.ObjectType{
+			AttrTypes: DailyDigestValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["data_integration_sync_failure"] = DataIntegrationSyncFailureType{
+		basetypes.ObjectType{
+			AttrTypes: DataIntegrationSyncFailureValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["expert_insights"] = ExpertInsightsType{
+		basetypes.ObjectType{
+			AttrTypes: ExpertInsightsValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["insights"] = InsightsType{
+		basetypes.ObjectType{
+			AttrTypes: InsightsValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["monthly_digest"] = MonthlyDigestType{
+		basetypes.ObjectType{
+			AttrTypes: MonthlyDigestValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["new_invoices"] = NewInvoicesType{
+		basetypes.ObjectType{
+			AttrTypes: NewInvoicesValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["new_proforma_invoices"] = NewProformaInvoicesType{
+		basetypes.ObjectType{
+			AttrTypes: NewProformaInvoicesValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["new_sku_usage"] = NewSkuUsageType{
+		basetypes.ObjectType{
+			AttrTypes: NewSkuUsageValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["payment_reminders"] = PaymentRemindersType{
+		basetypes.ObjectType{
+			AttrTypes: PaymentRemindersValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["quota_utilization"] = QuotaUtilizationType{
+		basetypes.ObjectType{
+			AttrTypes: QuotaUtilizationValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["savings_plan_approval"] = SavingsPlanApprovalType{
+		basetypes.ObjectType{
+			AttrTypes: SavingsPlanApprovalValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["savings_plan_purchased"] = SavingsPlanPurchasedType{
+		basetypes.ObjectType{
+			AttrTypes: SavingsPlanPurchasedValue{}.AttributeTypes(ctx),
+		},
+	}.TerraformType(ctx)
+	attrTypes["weekly_digest"] = WeeklyDigestType{
+		basetypes.ObjectType{
+			AttrTypes: WeeklyDigestValue{}.AttributeTypes(ctx),
 		},
 	}.TerraformType(ctx)
 
@@ -890,7 +2321,15 @@ func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 1)
+		vals := make(map[string]tftypes.Value, 18)
+
+		val, err = v.CloudIncidents.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cloud_incidents"] = val
 
 		val, err = v.CostAnomalies.ToTerraformValue(ctx)
 
@@ -899,6 +2338,134 @@ func (v SettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, err
 		}
 
 		vals["cost_anomalies"] = val
+
+		val, err = v.CreditUtilization.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["credit_utilization"] = val
+
+		val, err = v.CudApproval.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cud_approval"] = val
+
+		val, err = v.CudPurchased.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["cud_purchased"] = val
+
+		val, err = v.DailyDigest.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["daily_digest"] = val
+
+		val, err = v.DataIntegrationSyncFailure.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["data_integration_sync_failure"] = val
+
+		val, err = v.ExpertInsights.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["expert_insights"] = val
+
+		val, err = v.Insights.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["insights"] = val
+
+		val, err = v.MonthlyDigest.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["monthly_digest"] = val
+
+		val, err = v.NewInvoices.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["new_invoices"] = val
+
+		val, err = v.NewProformaInvoices.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["new_proforma_invoices"] = val
+
+		val, err = v.NewSkuUsage.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["new_sku_usage"] = val
+
+		val, err = v.PaymentReminders.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["payment_reminders"] = val
+
+		val, err = v.QuotaUtilization.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["quota_utilization"] = val
+
+		val, err = v.SavingsPlanApproval.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["savings_plan_approval"] = val
+
+		val, err = v.SavingsPlanPurchased.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["savings_plan_purchased"] = val
+
+		val, err = v.WeeklyDigest.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["weekly_digest"] = val
 
 		if err := tftypes.ValidateValue(objectType, vals); err != nil {
 			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
@@ -929,16 +2496,203 @@ func (v SettingsValue) String() string {
 func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
+	var cloudIncidents attr.Value
+
+	{
+		cloudIncidents = v.CloudIncidents
+	}
+
 	var costAnomalies attr.Value
 
 	{
 		costAnomalies = v.CostAnomalies
 	}
 
+	var creditUtilization attr.Value
+
+	{
+		creditUtilization = v.CreditUtilization
+	}
+
+	var cudApproval attr.Value
+
+	{
+		cudApproval = v.CudApproval
+	}
+
+	var cudPurchased attr.Value
+
+	{
+		cudPurchased = v.CudPurchased
+	}
+
+	var dailyDigest attr.Value
+
+	{
+		dailyDigest = v.DailyDigest
+	}
+
+	var dataIntegrationSyncFailure attr.Value
+
+	{
+		dataIntegrationSyncFailure = v.DataIntegrationSyncFailure
+	}
+
+	var expertInsights attr.Value
+
+	{
+		expertInsights = v.ExpertInsights
+	}
+
+	var insights attr.Value
+
+	{
+		insights = v.Insights
+	}
+
+	var monthlyDigest attr.Value
+
+	{
+		monthlyDigest = v.MonthlyDigest
+	}
+
+	var newInvoices attr.Value
+
+	{
+		newInvoices = v.NewInvoices
+	}
+
+	var newProformaInvoices attr.Value
+
+	{
+		newProformaInvoices = v.NewProformaInvoices
+	}
+
+	var newSkuUsage attr.Value
+
+	{
+		newSkuUsage = v.NewSkuUsage
+	}
+
+	var paymentReminders attr.Value
+
+	{
+		paymentReminders = v.PaymentReminders
+	}
+
+	var quotaUtilization attr.Value
+
+	{
+		quotaUtilization = v.QuotaUtilization
+	}
+
+	var savingsPlanApproval attr.Value
+
+	{
+		savingsPlanApproval = v.SavingsPlanApproval
+	}
+
+	var savingsPlanPurchased attr.Value
+
+	{
+		savingsPlanPurchased = v.SavingsPlanPurchased
+	}
+
+	var weeklyDigest attr.Value
+
+	{
+		weeklyDigest = v.WeeklyDigest
+	}
+
 	attributeTypes := map[string]attr.Type{
+		"cloud_incidents": CloudIncidentsType{
+			basetypes.ObjectType{
+				AttrTypes: CloudIncidentsValue{}.AttributeTypes(ctx),
+			},
+		},
 		"cost_anomalies": CostAnomaliesType{
 			basetypes.ObjectType{
 				AttrTypes: CostAnomaliesValue{}.AttributeTypes(ctx),
+			},
+		},
+		"credit_utilization": CreditUtilizationType{
+			basetypes.ObjectType{
+				AttrTypes: CreditUtilizationValue{}.AttributeTypes(ctx),
+			},
+		},
+		"cud_approval": CudApprovalType{
+			basetypes.ObjectType{
+				AttrTypes: CudApprovalValue{}.AttributeTypes(ctx),
+			},
+		},
+		"cud_purchased": CudPurchasedType{
+			basetypes.ObjectType{
+				AttrTypes: CudPurchasedValue{}.AttributeTypes(ctx),
+			},
+		},
+		"daily_digest": DailyDigestType{
+			basetypes.ObjectType{
+				AttrTypes: DailyDigestValue{}.AttributeTypes(ctx),
+			},
+		},
+		"data_integration_sync_failure": DataIntegrationSyncFailureType{
+			basetypes.ObjectType{
+				AttrTypes: DataIntegrationSyncFailureValue{}.AttributeTypes(ctx),
+			},
+		},
+		"expert_insights": ExpertInsightsType{
+			basetypes.ObjectType{
+				AttrTypes: ExpertInsightsValue{}.AttributeTypes(ctx),
+			},
+		},
+		"insights": InsightsType{
+			basetypes.ObjectType{
+				AttrTypes: InsightsValue{}.AttributeTypes(ctx),
+			},
+		},
+		"monthly_digest": MonthlyDigestType{
+			basetypes.ObjectType{
+				AttrTypes: MonthlyDigestValue{}.AttributeTypes(ctx),
+			},
+		},
+		"new_invoices": NewInvoicesType{
+			basetypes.ObjectType{
+				AttrTypes: NewInvoicesValue{}.AttributeTypes(ctx),
+			},
+		},
+		"new_proforma_invoices": NewProformaInvoicesType{
+			basetypes.ObjectType{
+				AttrTypes: NewProformaInvoicesValue{}.AttributeTypes(ctx),
+			},
+		},
+		"new_sku_usage": NewSkuUsageType{
+			basetypes.ObjectType{
+				AttrTypes: NewSkuUsageValue{}.AttributeTypes(ctx),
+			},
+		},
+		"payment_reminders": PaymentRemindersType{
+			basetypes.ObjectType{
+				AttrTypes: PaymentRemindersValue{}.AttributeTypes(ctx),
+			},
+		},
+		"quota_utilization": QuotaUtilizationType{
+			basetypes.ObjectType{
+				AttrTypes: QuotaUtilizationValue{}.AttributeTypes(ctx),
+			},
+		},
+		"savings_plan_approval": SavingsPlanApprovalType{
+			basetypes.ObjectType{
+				AttrTypes: SavingsPlanApprovalValue{}.AttributeTypes(ctx),
+			},
+		},
+		"savings_plan_purchased": SavingsPlanPurchasedType{
+			basetypes.ObjectType{
+				AttrTypes: SavingsPlanPurchasedValue{}.AttributeTypes(ctx),
+			},
+		},
+		"weekly_digest": WeeklyDigestType{
+			basetypes.ObjectType{
+				AttrTypes: WeeklyDigestValue{}.AttributeTypes(ctx),
 			},
 		},
 	}
@@ -954,7 +2708,24 @@ func (v SettingsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue
 	objVal, diags := types.ObjectValue(
 		attributeTypes,
 		map[string]attr.Value{
-			"cost_anomalies": costAnomalies,
+			"cloud_incidents":               cloudIncidents,
+			"cost_anomalies":                costAnomalies,
+			"credit_utilization":            creditUtilization,
+			"cud_approval":                  cudApproval,
+			"cud_purchased":                 cudPurchased,
+			"daily_digest":                  dailyDigest,
+			"data_integration_sync_failure": dataIntegrationSyncFailure,
+			"expert_insights":               expertInsights,
+			"insights":                      insights,
+			"monthly_digest":                monthlyDigest,
+			"new_invoices":                  newInvoices,
+			"new_proforma_invoices":         newProformaInvoices,
+			"new_sku_usage":                 newSkuUsage,
+			"payment_reminders":             paymentReminders,
+			"quota_utilization":             quotaUtilization,
+			"savings_plan_approval":         savingsPlanApproval,
+			"savings_plan_purchased":        savingsPlanPurchased,
+			"weekly_digest":                 weeklyDigest,
 		})
 
 	return objVal, diags
@@ -975,7 +2746,75 @@ func (v SettingsValue) Equal(o attr.Value) bool {
 		return true
 	}
 
+	if !v.CloudIncidents.Equal(other.CloudIncidents) {
+		return false
+	}
+
 	if !v.CostAnomalies.Equal(other.CostAnomalies) {
+		return false
+	}
+
+	if !v.CreditUtilization.Equal(other.CreditUtilization) {
+		return false
+	}
+
+	if !v.CudApproval.Equal(other.CudApproval) {
+		return false
+	}
+
+	if !v.CudPurchased.Equal(other.CudPurchased) {
+		return false
+	}
+
+	if !v.DailyDigest.Equal(other.DailyDigest) {
+		return false
+	}
+
+	if !v.DataIntegrationSyncFailure.Equal(other.DataIntegrationSyncFailure) {
+		return false
+	}
+
+	if !v.ExpertInsights.Equal(other.ExpertInsights) {
+		return false
+	}
+
+	if !v.Insights.Equal(other.Insights) {
+		return false
+	}
+
+	if !v.MonthlyDigest.Equal(other.MonthlyDigest) {
+		return false
+	}
+
+	if !v.NewInvoices.Equal(other.NewInvoices) {
+		return false
+	}
+
+	if !v.NewProformaInvoices.Equal(other.NewProformaInvoices) {
+		return false
+	}
+
+	if !v.NewSkuUsage.Equal(other.NewSkuUsage) {
+		return false
+	}
+
+	if !v.PaymentReminders.Equal(other.PaymentReminders) {
+		return false
+	}
+
+	if !v.QuotaUtilization.Equal(other.QuotaUtilization) {
+		return false
+	}
+
+	if !v.SavingsPlanApproval.Equal(other.SavingsPlanApproval) {
+		return false
+	}
+
+	if !v.SavingsPlanPurchased.Equal(other.SavingsPlanPurchased) {
+		return false
+	}
+
+	if !v.WeeklyDigest.Equal(other.WeeklyDigest) {
 		return false
 	}
 
@@ -992,12 +2831,365 @@ func (v SettingsValue) Type(ctx context.Context) attr.Type {
 
 func (v SettingsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 	return map[string]attr.Type{
+		"cloud_incidents": CloudIncidentsType{
+			basetypes.ObjectType{
+				AttrTypes: CloudIncidentsValue{}.AttributeTypes(ctx),
+			},
+		},
 		"cost_anomalies": CostAnomaliesType{
 			basetypes.ObjectType{
 				AttrTypes: CostAnomaliesValue{}.AttributeTypes(ctx),
 			},
 		},
+		"credit_utilization": CreditUtilizationType{
+			basetypes.ObjectType{
+				AttrTypes: CreditUtilizationValue{}.AttributeTypes(ctx),
+			},
+		},
+		"cud_approval": CudApprovalType{
+			basetypes.ObjectType{
+				AttrTypes: CudApprovalValue{}.AttributeTypes(ctx),
+			},
+		},
+		"cud_purchased": CudPurchasedType{
+			basetypes.ObjectType{
+				AttrTypes: CudPurchasedValue{}.AttributeTypes(ctx),
+			},
+		},
+		"daily_digest": DailyDigestType{
+			basetypes.ObjectType{
+				AttrTypes: DailyDigestValue{}.AttributeTypes(ctx),
+			},
+		},
+		"data_integration_sync_failure": DataIntegrationSyncFailureType{
+			basetypes.ObjectType{
+				AttrTypes: DataIntegrationSyncFailureValue{}.AttributeTypes(ctx),
+			},
+		},
+		"expert_insights": ExpertInsightsType{
+			basetypes.ObjectType{
+				AttrTypes: ExpertInsightsValue{}.AttributeTypes(ctx),
+			},
+		},
+		"insights": InsightsType{
+			basetypes.ObjectType{
+				AttrTypes: InsightsValue{}.AttributeTypes(ctx),
+			},
+		},
+		"monthly_digest": MonthlyDigestType{
+			basetypes.ObjectType{
+				AttrTypes: MonthlyDigestValue{}.AttributeTypes(ctx),
+			},
+		},
+		"new_invoices": NewInvoicesType{
+			basetypes.ObjectType{
+				AttrTypes: NewInvoicesValue{}.AttributeTypes(ctx),
+			},
+		},
+		"new_proforma_invoices": NewProformaInvoicesType{
+			basetypes.ObjectType{
+				AttrTypes: NewProformaInvoicesValue{}.AttributeTypes(ctx),
+			},
+		},
+		"new_sku_usage": NewSkuUsageType{
+			basetypes.ObjectType{
+				AttrTypes: NewSkuUsageValue{}.AttributeTypes(ctx),
+			},
+		},
+		"payment_reminders": PaymentRemindersType{
+			basetypes.ObjectType{
+				AttrTypes: PaymentRemindersValue{}.AttributeTypes(ctx),
+			},
+		},
+		"quota_utilization": QuotaUtilizationType{
+			basetypes.ObjectType{
+				AttrTypes: QuotaUtilizationValue{}.AttributeTypes(ctx),
+			},
+		},
+		"savings_plan_approval": SavingsPlanApprovalType{
+			basetypes.ObjectType{
+				AttrTypes: SavingsPlanApprovalValue{}.AttributeTypes(ctx),
+			},
+		},
+		"savings_plan_purchased": SavingsPlanPurchasedType{
+			basetypes.ObjectType{
+				AttrTypes: SavingsPlanPurchasedValue{}.AttributeTypes(ctx),
+			},
+		},
+		"weekly_digest": WeeklyDigestType{
+			basetypes.ObjectType{
+				AttrTypes: WeeklyDigestValue{}.AttributeTypes(ctx),
+			},
+		},
 	}
+}
+
+var _ basetypes.ObjectTypable = CloudIncidentsType{}
+
+type CloudIncidentsType struct {
+	basetypes.ObjectType
+}
+
+func (t CloudIncidentsType) Equal(o attr.Type) bool {
+	other, ok := o.(CloudIncidentsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CloudIncidentsType) String() string {
+	return "CloudIncidentsType"
+}
+
+func (t CloudIncidentsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCloudIncidentsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCloudIncidentsValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CloudIncidentsValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCloudIncidentsValueNull() CloudIncidentsValue {
+	return CloudIncidentsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCloudIncidentsValueUnknown() CloudIncidentsValue {
+	return CloudIncidentsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCloudIncidentsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CloudIncidentsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CloudIncidentsValue Attribute Value",
+				"While creating a CloudIncidentsValue value, a missing attribute value was detected. "+
+					"A CloudIncidentsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CloudIncidentsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CloudIncidentsValue Attribute Type",
+				"While creating a CloudIncidentsValue value, an invalid attribute value was detected. "+
+					"A CloudIncidentsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CloudIncidentsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CloudIncidentsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CloudIncidentsValue Attribute Value",
+				"While creating a CloudIncidentsValue value, an extra attribute value was detected. "+
+					"A CloudIncidentsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CloudIncidentsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCloudIncidentsValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewCloudIncidentsValueUnknown(), diags
+	}
+
+	return CloudIncidentsValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCloudIncidentsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CloudIncidentsValue {
+	object, diags := NewCloudIncidentsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCloudIncidentsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CloudIncidentsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCloudIncidentsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCloudIncidentsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCloudIncidentsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCloudIncidentsValueMust(CloudIncidentsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CloudIncidentsType) ValueType(ctx context.Context) attr.Value {
+	return CloudIncidentsValue{}
+}
+
+var _ basetypes.ObjectValuable = CloudIncidentsValue{}
+
+type CloudIncidentsValue struct {
+	state attr.ValueState
+}
+
+func (v CloudIncidentsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CloudIncidentsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CloudIncidentsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CloudIncidentsValue) String() string {
+	return "CloudIncidentsValue"
+}
+
+func (v CloudIncidentsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v CloudIncidentsValue) Equal(o attr.Value) bool {
+	other, ok := o.(CloudIncidentsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v CloudIncidentsValue) Type(ctx context.Context) attr.Type {
+	return CloudIncidentsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CloudIncidentsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
 }
 
 var _ basetypes.ObjectTypable = CostAnomaliesType{}
@@ -3786,5 +5978,5013 @@ func (v MinIncreaseValue) AttributeTypes(ctx context.Context) map[string]attr.Ty
 	return map[string]attr.Type{
 		"amount":   basetypes.StringType{},
 		"currency": basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = CreditUtilizationType{}
+
+type CreditUtilizationType struct {
+	basetypes.ObjectType
+}
+
+func (t CreditUtilizationType) Equal(o attr.Type) bool {
+	other, ok := o.(CreditUtilizationType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CreditUtilizationType) String() string {
+	return "CreditUtilizationType"
+}
+
+func (t CreditUtilizationType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCreditUtilizationValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCreditUtilizationValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CreditUtilizationValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCreditUtilizationValueNull() CreditUtilizationValue {
+	return CreditUtilizationValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCreditUtilizationValueUnknown() CreditUtilizationValue {
+	return CreditUtilizationValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCreditUtilizationValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CreditUtilizationValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CreditUtilizationValue Attribute Value",
+				"While creating a CreditUtilizationValue value, a missing attribute value was detected. "+
+					"A CreditUtilizationValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CreditUtilizationValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CreditUtilizationValue Attribute Type",
+				"While creating a CreditUtilizationValue value, an invalid attribute value was detected. "+
+					"A CreditUtilizationValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CreditUtilizationValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CreditUtilizationValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CreditUtilizationValue Attribute Value",
+				"While creating a CreditUtilizationValue value, an extra attribute value was detected. "+
+					"A CreditUtilizationValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CreditUtilizationValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCreditUtilizationValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewCreditUtilizationValueUnknown(), diags
+	}
+
+	return CreditUtilizationValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCreditUtilizationValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CreditUtilizationValue {
+	object, diags := NewCreditUtilizationValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCreditUtilizationValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CreditUtilizationType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCreditUtilizationValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCreditUtilizationValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCreditUtilizationValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCreditUtilizationValueMust(CreditUtilizationValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CreditUtilizationType) ValueType(ctx context.Context) attr.Value {
+	return CreditUtilizationValue{}
+}
+
+var _ basetypes.ObjectValuable = CreditUtilizationValue{}
+
+type CreditUtilizationValue struct {
+	state attr.ValueState
+}
+
+func (v CreditUtilizationValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CreditUtilizationValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CreditUtilizationValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CreditUtilizationValue) String() string {
+	return "CreditUtilizationValue"
+}
+
+func (v CreditUtilizationValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v CreditUtilizationValue) Equal(o attr.Value) bool {
+	other, ok := o.(CreditUtilizationValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v CreditUtilizationValue) Type(ctx context.Context) attr.Type {
+	return CreditUtilizationType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CreditUtilizationValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = CudApprovalType{}
+
+type CudApprovalType struct {
+	basetypes.ObjectType
+}
+
+func (t CudApprovalType) Equal(o attr.Type) bool {
+	other, ok := o.(CudApprovalType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CudApprovalType) String() string {
+	return "CudApprovalType"
+}
+
+func (t CudApprovalType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCudApprovalValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCudApprovalValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CudApprovalValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCudApprovalValueNull() CudApprovalValue {
+	return CudApprovalValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCudApprovalValueUnknown() CudApprovalValue {
+	return CudApprovalValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCudApprovalValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CudApprovalValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CudApprovalValue Attribute Value",
+				"While creating a CudApprovalValue value, a missing attribute value was detected. "+
+					"A CudApprovalValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CudApprovalValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CudApprovalValue Attribute Type",
+				"While creating a CudApprovalValue value, an invalid attribute value was detected. "+
+					"A CudApprovalValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CudApprovalValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CudApprovalValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CudApprovalValue Attribute Value",
+				"While creating a CudApprovalValue value, an extra attribute value was detected. "+
+					"A CudApprovalValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CudApprovalValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCudApprovalValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewCudApprovalValueUnknown(), diags
+	}
+
+	return CudApprovalValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCudApprovalValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CudApprovalValue {
+	object, diags := NewCudApprovalValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCudApprovalValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CudApprovalType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCudApprovalValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCudApprovalValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCudApprovalValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCudApprovalValueMust(CudApprovalValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CudApprovalType) ValueType(ctx context.Context) attr.Value {
+	return CudApprovalValue{}
+}
+
+var _ basetypes.ObjectValuable = CudApprovalValue{}
+
+type CudApprovalValue struct {
+	state attr.ValueState
+}
+
+func (v CudApprovalValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CudApprovalValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CudApprovalValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CudApprovalValue) String() string {
+	return "CudApprovalValue"
+}
+
+func (v CudApprovalValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v CudApprovalValue) Equal(o attr.Value) bool {
+	other, ok := o.(CudApprovalValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v CudApprovalValue) Type(ctx context.Context) attr.Type {
+	return CudApprovalType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CudApprovalValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = CudPurchasedType{}
+
+type CudPurchasedType struct {
+	basetypes.ObjectType
+}
+
+func (t CudPurchasedType) Equal(o attr.Type) bool {
+	other, ok := o.(CudPurchasedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t CudPurchasedType) String() string {
+	return "CudPurchasedType"
+}
+
+func (t CudPurchasedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewCudPurchasedValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewCudPurchasedValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return CudPurchasedValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCudPurchasedValueNull() CudPurchasedValue {
+	return CudPurchasedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewCudPurchasedValueUnknown() CudPurchasedValue {
+	return CudPurchasedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewCudPurchasedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (CudPurchasedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing CudPurchasedValue Attribute Value",
+				"While creating a CudPurchasedValue value, a missing attribute value was detected. "+
+					"A CudPurchasedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CudPurchasedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid CudPurchasedValue Attribute Type",
+				"While creating a CudPurchasedValue value, an invalid attribute value was detected. "+
+					"A CudPurchasedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("CudPurchasedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("CudPurchasedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra CudPurchasedValue Attribute Value",
+				"While creating a CudPurchasedValue value, an extra attribute value was detected. "+
+					"A CudPurchasedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra CudPurchasedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewCudPurchasedValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewCudPurchasedValueUnknown(), diags
+	}
+
+	return CudPurchasedValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewCudPurchasedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) CudPurchasedValue {
+	object, diags := NewCudPurchasedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewCudPurchasedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t CudPurchasedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewCudPurchasedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewCudPurchasedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewCudPurchasedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewCudPurchasedValueMust(CudPurchasedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t CudPurchasedType) ValueType(ctx context.Context) attr.Value {
+	return CudPurchasedValue{}
+}
+
+var _ basetypes.ObjectValuable = CudPurchasedValue{}
+
+type CudPurchasedValue struct {
+	state attr.ValueState
+}
+
+func (v CudPurchasedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v CudPurchasedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v CudPurchasedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v CudPurchasedValue) String() string {
+	return "CudPurchasedValue"
+}
+
+func (v CudPurchasedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v CudPurchasedValue) Equal(o attr.Value) bool {
+	other, ok := o.(CudPurchasedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v CudPurchasedValue) Type(ctx context.Context) attr.Type {
+	return CudPurchasedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v CudPurchasedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = DailyDigestType{}
+
+type DailyDigestType struct {
+	basetypes.ObjectType
+}
+
+func (t DailyDigestType) Equal(o attr.Type) bool {
+	other, ok := o.(DailyDigestType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t DailyDigestType) String() string {
+	return "DailyDigestType"
+}
+
+func (t DailyDigestType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewDailyDigestValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDailyDigestValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	allocationIdsAttribute, ok := attributes["allocation_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`allocation_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	allocationIdsVal, ok := allocationIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`allocation_ids expected to be basetypes.ListValue, was: %T`, allocationIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return DailyDigestValue{
+		AllocationIds: allocationIdsVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDailyDigestValueNull() DailyDigestValue {
+	return DailyDigestValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewDailyDigestValueUnknown() DailyDigestValue {
+	return DailyDigestValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewDailyDigestValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (DailyDigestValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing DailyDigestValue Attribute Value",
+				"While creating a DailyDigestValue value, a missing attribute value was detected. "+
+					"A DailyDigestValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DailyDigestValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid DailyDigestValue Attribute Type",
+				"While creating a DailyDigestValue value, an invalid attribute value was detected. "+
+					"A DailyDigestValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DailyDigestValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("DailyDigestValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra DailyDigestValue Attribute Value",
+				"While creating a DailyDigestValue value, an extra attribute value was detected. "+
+					"A DailyDigestValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra DailyDigestValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewDailyDigestValueUnknown(), diags
+	}
+
+	allocationIdsAttribute, ok := attributes["allocation_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`allocation_ids is missing from object`)
+
+		return NewDailyDigestValueUnknown(), diags
+	}
+
+	allocationIdsVal, ok := allocationIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`allocation_ids expected to be basetypes.ListValue, was: %T`, allocationIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return NewDailyDigestValueUnknown(), diags
+	}
+
+	return DailyDigestValue{
+		AllocationIds: allocationIdsVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDailyDigestValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) DailyDigestValue {
+	object, diags := NewDailyDigestValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewDailyDigestValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t DailyDigestType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewDailyDigestValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewDailyDigestValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewDailyDigestValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewDailyDigestValueMust(DailyDigestValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t DailyDigestType) ValueType(ctx context.Context) attr.Value {
+	return DailyDigestValue{}
+}
+
+var _ basetypes.ObjectValuable = DailyDigestValue{}
+
+type DailyDigestValue struct {
+	AllocationIds basetypes.ListValue `tfsdk:"allocation_ids"`
+	state         attr.ValueState
+}
+
+func (v DailyDigestValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["allocation_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.AllocationIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["allocation_ids"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v DailyDigestValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v DailyDigestValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v DailyDigestValue) String() string {
+	return "DailyDigestValue"
+}
+
+func (v DailyDigestValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var allocationIdsVal basetypes.ListValue
+	switch {
+	case v.AllocationIds.IsUnknown():
+		allocationIdsVal = types.ListUnknown(types.StringType)
+	case v.AllocationIds.IsNull():
+		allocationIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		allocationIdsVal, d = types.ListValue(types.StringType, v.AllocationIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"allocation_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"allocation_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"allocation_ids": allocationIdsVal,
+		})
+
+	return objVal, diags
+}
+
+func (v DailyDigestValue) Equal(o attr.Value) bool {
+	other, ok := o.(DailyDigestValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.AllocationIds.Equal(other.AllocationIds) {
+		return false
+	}
+
+	return true
+}
+
+func (v DailyDigestValue) Type(ctx context.Context) attr.Type {
+	return DailyDigestType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v DailyDigestValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"allocation_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = DataIntegrationSyncFailureType{}
+
+type DataIntegrationSyncFailureType struct {
+	basetypes.ObjectType
+}
+
+func (t DataIntegrationSyncFailureType) Equal(o attr.Type) bool {
+	other, ok := o.(DataIntegrationSyncFailureType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t DataIntegrationSyncFailureType) String() string {
+	return "DataIntegrationSyncFailureType"
+}
+
+func (t DataIntegrationSyncFailureType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewDataIntegrationSyncFailureValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewDataIntegrationSyncFailureValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return DataIntegrationSyncFailureValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDataIntegrationSyncFailureValueNull() DataIntegrationSyncFailureValue {
+	return DataIntegrationSyncFailureValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewDataIntegrationSyncFailureValueUnknown() DataIntegrationSyncFailureValue {
+	return DataIntegrationSyncFailureValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewDataIntegrationSyncFailureValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (DataIntegrationSyncFailureValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing DataIntegrationSyncFailureValue Attribute Value",
+				"While creating a DataIntegrationSyncFailureValue value, a missing attribute value was detected. "+
+					"A DataIntegrationSyncFailureValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DataIntegrationSyncFailureValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid DataIntegrationSyncFailureValue Attribute Type",
+				"While creating a DataIntegrationSyncFailureValue value, an invalid attribute value was detected. "+
+					"A DataIntegrationSyncFailureValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("DataIntegrationSyncFailureValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("DataIntegrationSyncFailureValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra DataIntegrationSyncFailureValue Attribute Value",
+				"While creating a DataIntegrationSyncFailureValue value, an extra attribute value was detected. "+
+					"A DataIntegrationSyncFailureValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra DataIntegrationSyncFailureValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewDataIntegrationSyncFailureValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewDataIntegrationSyncFailureValueUnknown(), diags
+	}
+
+	return DataIntegrationSyncFailureValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewDataIntegrationSyncFailureValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) DataIntegrationSyncFailureValue {
+	object, diags := NewDataIntegrationSyncFailureValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewDataIntegrationSyncFailureValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t DataIntegrationSyncFailureType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewDataIntegrationSyncFailureValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewDataIntegrationSyncFailureValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewDataIntegrationSyncFailureValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewDataIntegrationSyncFailureValueMust(DataIntegrationSyncFailureValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t DataIntegrationSyncFailureType) ValueType(ctx context.Context) attr.Value {
+	return DataIntegrationSyncFailureValue{}
+}
+
+var _ basetypes.ObjectValuable = DataIntegrationSyncFailureValue{}
+
+type DataIntegrationSyncFailureValue struct {
+	state attr.ValueState
+}
+
+func (v DataIntegrationSyncFailureValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v DataIntegrationSyncFailureValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v DataIntegrationSyncFailureValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v DataIntegrationSyncFailureValue) String() string {
+	return "DataIntegrationSyncFailureValue"
+}
+
+func (v DataIntegrationSyncFailureValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v DataIntegrationSyncFailureValue) Equal(o attr.Value) bool {
+	other, ok := o.(DataIntegrationSyncFailureValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v DataIntegrationSyncFailureValue) Type(ctx context.Context) attr.Type {
+	return DataIntegrationSyncFailureType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v DataIntegrationSyncFailureValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = ExpertInsightsType{}
+
+type ExpertInsightsType struct {
+	basetypes.ObjectType
+}
+
+func (t ExpertInsightsType) Equal(o attr.Type) bool {
+	other, ok := o.(ExpertInsightsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t ExpertInsightsType) String() string {
+	return "ExpertInsightsType"
+}
+
+func (t ExpertInsightsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewExpertInsightsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewExpertInsightsValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return ExpertInsightsValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewExpertInsightsValueNull() ExpertInsightsValue {
+	return ExpertInsightsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewExpertInsightsValueUnknown() ExpertInsightsValue {
+	return ExpertInsightsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewExpertInsightsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (ExpertInsightsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing ExpertInsightsValue Attribute Value",
+				"While creating a ExpertInsightsValue value, a missing attribute value was detected. "+
+					"A ExpertInsightsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ExpertInsightsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid ExpertInsightsValue Attribute Type",
+				"While creating a ExpertInsightsValue value, an invalid attribute value was detected. "+
+					"A ExpertInsightsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("ExpertInsightsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("ExpertInsightsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra ExpertInsightsValue Attribute Value",
+				"While creating a ExpertInsightsValue value, an extra attribute value was detected. "+
+					"A ExpertInsightsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra ExpertInsightsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewExpertInsightsValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewExpertInsightsValueUnknown(), diags
+	}
+
+	return ExpertInsightsValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewExpertInsightsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) ExpertInsightsValue {
+	object, diags := NewExpertInsightsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewExpertInsightsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t ExpertInsightsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewExpertInsightsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewExpertInsightsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewExpertInsightsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewExpertInsightsValueMust(ExpertInsightsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t ExpertInsightsType) ValueType(ctx context.Context) attr.Value {
+	return ExpertInsightsValue{}
+}
+
+var _ basetypes.ObjectValuable = ExpertInsightsValue{}
+
+type ExpertInsightsValue struct {
+	state attr.ValueState
+}
+
+func (v ExpertInsightsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v ExpertInsightsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v ExpertInsightsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v ExpertInsightsValue) String() string {
+	return "ExpertInsightsValue"
+}
+
+func (v ExpertInsightsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v ExpertInsightsValue) Equal(o attr.Value) bool {
+	other, ok := o.(ExpertInsightsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v ExpertInsightsValue) Type(ctx context.Context) attr.Type {
+	return ExpertInsightsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v ExpertInsightsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = InsightsType{}
+
+type InsightsType struct {
+	basetypes.ObjectType
+}
+
+func (t InsightsType) Equal(o attr.Type) bool {
+	other, ok := o.(InsightsType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t InsightsType) String() string {
+	return "InsightsType"
+}
+
+func (t InsightsType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewInsightsValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewInsightsValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	pillarsAttribute, ok := attributes["pillars"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`pillars is missing from object`)
+
+		return nil, diags
+	}
+
+	pillarsVal, ok := pillarsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`pillars expected to be basetypes.ListValue, was: %T`, pillarsAttribute))
+	}
+
+	providersAttribute, ok := attributes["providers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`providers is missing from object`)
+
+		return nil, diags
+	}
+
+	providersVal, ok := providersAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`providers expected to be basetypes.ListValue, was: %T`, providersAttribute))
+	}
+
+	severitiesAttribute, ok := attributes["severities"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`severities is missing from object`)
+
+		return nil, diags
+	}
+
+	severitiesVal, ok := severitiesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`severities expected to be basetypes.ListValue, was: %T`, severitiesAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return InsightsValue{
+		Pillars:    pillarsVal,
+		Providers:  providersVal,
+		Severities: severitiesVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewInsightsValueNull() InsightsValue {
+	return InsightsValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewInsightsValueUnknown() InsightsValue {
+	return InsightsValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewInsightsValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (InsightsValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing InsightsValue Attribute Value",
+				"While creating a InsightsValue value, a missing attribute value was detected. "+
+					"A InsightsValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("InsightsValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid InsightsValue Attribute Type",
+				"While creating a InsightsValue value, an invalid attribute value was detected. "+
+					"A InsightsValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("InsightsValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("InsightsValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra InsightsValue Attribute Value",
+				"While creating a InsightsValue value, an extra attribute value was detected. "+
+					"A InsightsValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra InsightsValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewInsightsValueUnknown(), diags
+	}
+
+	pillarsAttribute, ok := attributes["pillars"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`pillars is missing from object`)
+
+		return NewInsightsValueUnknown(), diags
+	}
+
+	pillarsVal, ok := pillarsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`pillars expected to be basetypes.ListValue, was: %T`, pillarsAttribute))
+	}
+
+	providersAttribute, ok := attributes["providers"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`providers is missing from object`)
+
+		return NewInsightsValueUnknown(), diags
+	}
+
+	providersVal, ok := providersAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`providers expected to be basetypes.ListValue, was: %T`, providersAttribute))
+	}
+
+	severitiesAttribute, ok := attributes["severities"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`severities is missing from object`)
+
+		return NewInsightsValueUnknown(), diags
+	}
+
+	severitiesVal, ok := severitiesAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`severities expected to be basetypes.ListValue, was: %T`, severitiesAttribute))
+	}
+
+	if diags.HasError() {
+		return NewInsightsValueUnknown(), diags
+	}
+
+	return InsightsValue{
+		Pillars:    pillarsVal,
+		Providers:  providersVal,
+		Severities: severitiesVal,
+		state:      attr.ValueStateKnown,
+	}, diags
+}
+
+func NewInsightsValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) InsightsValue {
+	object, diags := NewInsightsValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewInsightsValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t InsightsType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewInsightsValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewInsightsValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewInsightsValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewInsightsValueMust(InsightsValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t InsightsType) ValueType(ctx context.Context) attr.Value {
+	return InsightsValue{}
+}
+
+var _ basetypes.ObjectValuable = InsightsValue{}
+
+type InsightsValue struct {
+	Pillars    basetypes.ListValue `tfsdk:"pillars"`
+	Providers  basetypes.ListValue `tfsdk:"providers"`
+	Severities basetypes.ListValue `tfsdk:"severities"`
+	state      attr.ValueState
+}
+
+func (v InsightsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 3)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["pillars"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["providers"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+	attrTypes["severities"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 3)
+
+		val, err = v.Pillars.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["pillars"] = val
+
+		val, err = v.Providers.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["providers"] = val
+
+		val, err = v.Severities.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["severities"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v InsightsValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v InsightsValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v InsightsValue) String() string {
+	return "InsightsValue"
+}
+
+func (v InsightsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var pillarsVal basetypes.ListValue
+	switch {
+	case v.Pillars.IsUnknown():
+		pillarsVal = types.ListUnknown(types.StringType)
+	case v.Pillars.IsNull():
+		pillarsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		pillarsVal, d = types.ListValue(types.StringType, v.Pillars.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"pillars": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"providers": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"severities": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	var providersVal basetypes.ListValue
+	switch {
+	case v.Providers.IsUnknown():
+		providersVal = types.ListUnknown(types.StringType)
+	case v.Providers.IsNull():
+		providersVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		providersVal, d = types.ListValue(types.StringType, v.Providers.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"pillars": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"providers": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"severities": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	var severitiesVal basetypes.ListValue
+	switch {
+	case v.Severities.IsUnknown():
+		severitiesVal = types.ListUnknown(types.StringType)
+	case v.Severities.IsNull():
+		severitiesVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		severitiesVal, d = types.ListValue(types.StringType, v.Severities.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"pillars": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"providers": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+			"severities": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"pillars": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"providers": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"severities": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"pillars":    pillarsVal,
+			"providers":  providersVal,
+			"severities": severitiesVal,
+		})
+
+	return objVal, diags
+}
+
+func (v InsightsValue) Equal(o attr.Value) bool {
+	other, ok := o.(InsightsValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Pillars.Equal(other.Pillars) {
+		return false
+	}
+
+	if !v.Providers.Equal(other.Providers) {
+		return false
+	}
+
+	if !v.Severities.Equal(other.Severities) {
+		return false
+	}
+
+	return true
+}
+
+func (v InsightsValue) Type(ctx context.Context) attr.Type {
+	return InsightsType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v InsightsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"pillars": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"providers": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+		"severities": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = MonthlyDigestType{}
+
+type MonthlyDigestType struct {
+	basetypes.ObjectType
+}
+
+func (t MonthlyDigestType) Equal(o attr.Type) bool {
+	other, ok := o.(MonthlyDigestType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t MonthlyDigestType) String() string {
+	return "MonthlyDigestType"
+}
+
+func (t MonthlyDigestType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewMonthlyDigestValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewMonthlyDigestValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return MonthlyDigestValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewMonthlyDigestValueNull() MonthlyDigestValue {
+	return MonthlyDigestValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewMonthlyDigestValueUnknown() MonthlyDigestValue {
+	return MonthlyDigestValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewMonthlyDigestValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (MonthlyDigestValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing MonthlyDigestValue Attribute Value",
+				"While creating a MonthlyDigestValue value, a missing attribute value was detected. "+
+					"A MonthlyDigestValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("MonthlyDigestValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid MonthlyDigestValue Attribute Type",
+				"While creating a MonthlyDigestValue value, an invalid attribute value was detected. "+
+					"A MonthlyDigestValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("MonthlyDigestValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("MonthlyDigestValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra MonthlyDigestValue Attribute Value",
+				"While creating a MonthlyDigestValue value, an extra attribute value was detected. "+
+					"A MonthlyDigestValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra MonthlyDigestValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewMonthlyDigestValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewMonthlyDigestValueUnknown(), diags
+	}
+
+	return MonthlyDigestValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewMonthlyDigestValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) MonthlyDigestValue {
+	object, diags := NewMonthlyDigestValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewMonthlyDigestValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t MonthlyDigestType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewMonthlyDigestValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewMonthlyDigestValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewMonthlyDigestValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewMonthlyDigestValueMust(MonthlyDigestValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t MonthlyDigestType) ValueType(ctx context.Context) attr.Value {
+	return MonthlyDigestValue{}
+}
+
+var _ basetypes.ObjectValuable = MonthlyDigestValue{}
+
+type MonthlyDigestValue struct {
+	state attr.ValueState
+}
+
+func (v MonthlyDigestValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v MonthlyDigestValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v MonthlyDigestValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v MonthlyDigestValue) String() string {
+	return "MonthlyDigestValue"
+}
+
+func (v MonthlyDigestValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v MonthlyDigestValue) Equal(o attr.Value) bool {
+	other, ok := o.(MonthlyDigestValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v MonthlyDigestValue) Type(ctx context.Context) attr.Type {
+	return MonthlyDigestType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v MonthlyDigestValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = NewInvoicesType{}
+
+type NewInvoicesType struct {
+	basetypes.ObjectType
+}
+
+func (t NewInvoicesType) Equal(o attr.Type) bool {
+	other, ok := o.(NewInvoicesType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t NewInvoicesType) String() string {
+	return "NewInvoicesType"
+}
+
+func (t NewInvoicesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewNewInvoicesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNewInvoicesValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	billingProfileIdsAttribute, ok := attributes["billing_profile_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_profile_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	billingProfileIdsVal, ok := billingProfileIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_profile_ids expected to be basetypes.ListValue, was: %T`, billingProfileIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return NewInvoicesValue{
+		BillingProfileIds: billingProfileIdsVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNewInvoicesValueNull() NewInvoicesValue {
+	return NewInvoicesValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewNewInvoicesValueUnknown() NewInvoicesValue {
+	return NewInvoicesValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewNewInvoicesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (NewInvoicesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing NewInvoicesValue Attribute Value",
+				"While creating a NewInvoicesValue value, a missing attribute value was detected. "+
+					"A NewInvoicesValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NewInvoicesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid NewInvoicesValue Attribute Type",
+				"While creating a NewInvoicesValue value, an invalid attribute value was detected. "+
+					"A NewInvoicesValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NewInvoicesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("NewInvoicesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra NewInvoicesValue Attribute Value",
+				"While creating a NewInvoicesValue value, an extra attribute value was detected. "+
+					"A NewInvoicesValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra NewInvoicesValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewNewInvoicesValueUnknown(), diags
+	}
+
+	billingProfileIdsAttribute, ok := attributes["billing_profile_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_profile_ids is missing from object`)
+
+		return NewNewInvoicesValueUnknown(), diags
+	}
+
+	billingProfileIdsVal, ok := billingProfileIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_profile_ids expected to be basetypes.ListValue, was: %T`, billingProfileIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return NewNewInvoicesValueUnknown(), diags
+	}
+
+	return NewInvoicesValue{
+		BillingProfileIds: billingProfileIdsVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNewInvoicesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) NewInvoicesValue {
+	object, diags := NewNewInvoicesValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewNewInvoicesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t NewInvoicesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewNewInvoicesValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewNewInvoicesValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewNewInvoicesValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewNewInvoicesValueMust(NewInvoicesValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t NewInvoicesType) ValueType(ctx context.Context) attr.Value {
+	return NewInvoicesValue{}
+}
+
+var _ basetypes.ObjectValuable = NewInvoicesValue{}
+
+type NewInvoicesValue struct {
+	BillingProfileIds basetypes.ListValue `tfsdk:"billing_profile_ids"`
+	state             attr.ValueState
+}
+
+func (v NewInvoicesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["billing_profile_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.BillingProfileIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_profile_ids"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v NewInvoicesValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v NewInvoicesValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v NewInvoicesValue) String() string {
+	return "NewInvoicesValue"
+}
+
+func (v NewInvoicesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var billingProfileIdsVal basetypes.ListValue
+	switch {
+	case v.BillingProfileIds.IsUnknown():
+		billingProfileIdsVal = types.ListUnknown(types.StringType)
+	case v.BillingProfileIds.IsNull():
+		billingProfileIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		billingProfileIdsVal, d = types.ListValue(types.StringType, v.BillingProfileIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"billing_profile_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"billing_profile_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"billing_profile_ids": billingProfileIdsVal,
+		})
+
+	return objVal, diags
+}
+
+func (v NewInvoicesValue) Equal(o attr.Value) bool {
+	other, ok := o.(NewInvoicesValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.BillingProfileIds.Equal(other.BillingProfileIds) {
+		return false
+	}
+
+	return true
+}
+
+func (v NewInvoicesValue) Type(ctx context.Context) attr.Type {
+	return NewInvoicesType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v NewInvoicesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"billing_profile_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = NewProformaInvoicesType{}
+
+type NewProformaInvoicesType struct {
+	basetypes.ObjectType
+}
+
+func (t NewProformaInvoicesType) Equal(o attr.Type) bool {
+	other, ok := o.(NewProformaInvoicesType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t NewProformaInvoicesType) String() string {
+	return "NewProformaInvoicesType"
+}
+
+func (t NewProformaInvoicesType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewNewProformaInvoicesValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNewProformaInvoicesValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	billingProfileIdsAttribute, ok := attributes["billing_profile_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_profile_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	billingProfileIdsVal, ok := billingProfileIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_profile_ids expected to be basetypes.ListValue, was: %T`, billingProfileIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return NewProformaInvoicesValue{
+		BillingProfileIds: billingProfileIdsVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNewProformaInvoicesValueNull() NewProformaInvoicesValue {
+	return NewProformaInvoicesValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewNewProformaInvoicesValueUnknown() NewProformaInvoicesValue {
+	return NewProformaInvoicesValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewNewProformaInvoicesValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (NewProformaInvoicesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing NewProformaInvoicesValue Attribute Value",
+				"While creating a NewProformaInvoicesValue value, a missing attribute value was detected. "+
+					"A NewProformaInvoicesValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NewProformaInvoicesValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid NewProformaInvoicesValue Attribute Type",
+				"While creating a NewProformaInvoicesValue value, an invalid attribute value was detected. "+
+					"A NewProformaInvoicesValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NewProformaInvoicesValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("NewProformaInvoicesValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra NewProformaInvoicesValue Attribute Value",
+				"While creating a NewProformaInvoicesValue value, an extra attribute value was detected. "+
+					"A NewProformaInvoicesValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra NewProformaInvoicesValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewNewProformaInvoicesValueUnknown(), diags
+	}
+
+	billingProfileIdsAttribute, ok := attributes["billing_profile_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_profile_ids is missing from object`)
+
+		return NewNewProformaInvoicesValueUnknown(), diags
+	}
+
+	billingProfileIdsVal, ok := billingProfileIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_profile_ids expected to be basetypes.ListValue, was: %T`, billingProfileIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return NewNewProformaInvoicesValueUnknown(), diags
+	}
+
+	return NewProformaInvoicesValue{
+		BillingProfileIds: billingProfileIdsVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNewProformaInvoicesValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) NewProformaInvoicesValue {
+	object, diags := NewNewProformaInvoicesValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewNewProformaInvoicesValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t NewProformaInvoicesType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewNewProformaInvoicesValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewNewProformaInvoicesValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewNewProformaInvoicesValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewNewProformaInvoicesValueMust(NewProformaInvoicesValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t NewProformaInvoicesType) ValueType(ctx context.Context) attr.Value {
+	return NewProformaInvoicesValue{}
+}
+
+var _ basetypes.ObjectValuable = NewProformaInvoicesValue{}
+
+type NewProformaInvoicesValue struct {
+	BillingProfileIds basetypes.ListValue `tfsdk:"billing_profile_ids"`
+	state             attr.ValueState
+}
+
+func (v NewProformaInvoicesValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["billing_profile_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.BillingProfileIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_profile_ids"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v NewProformaInvoicesValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v NewProformaInvoicesValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v NewProformaInvoicesValue) String() string {
+	return "NewProformaInvoicesValue"
+}
+
+func (v NewProformaInvoicesValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var billingProfileIdsVal basetypes.ListValue
+	switch {
+	case v.BillingProfileIds.IsUnknown():
+		billingProfileIdsVal = types.ListUnknown(types.StringType)
+	case v.BillingProfileIds.IsNull():
+		billingProfileIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		billingProfileIdsVal, d = types.ListValue(types.StringType, v.BillingProfileIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"billing_profile_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"billing_profile_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"billing_profile_ids": billingProfileIdsVal,
+		})
+
+	return objVal, diags
+}
+
+func (v NewProformaInvoicesValue) Equal(o attr.Value) bool {
+	other, ok := o.(NewProformaInvoicesValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.BillingProfileIds.Equal(other.BillingProfileIds) {
+		return false
+	}
+
+	return true
+}
+
+func (v NewProformaInvoicesValue) Type(ctx context.Context) attr.Type {
+	return NewProformaInvoicesType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v NewProformaInvoicesValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"billing_profile_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = NewSkuUsageType{}
+
+type NewSkuUsageType struct {
+	basetypes.ObjectType
+}
+
+func (t NewSkuUsageType) Equal(o attr.Type) bool {
+	other, ok := o.(NewSkuUsageType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t NewSkuUsageType) String() string {
+	return "NewSkuUsageType"
+}
+
+func (t NewSkuUsageType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewNewSkuUsageValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewNewSkuUsageValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return NewSkuUsageValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNewSkuUsageValueNull() NewSkuUsageValue {
+	return NewSkuUsageValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewNewSkuUsageValueUnknown() NewSkuUsageValue {
+	return NewSkuUsageValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewNewSkuUsageValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (NewSkuUsageValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing NewSkuUsageValue Attribute Value",
+				"While creating a NewSkuUsageValue value, a missing attribute value was detected. "+
+					"A NewSkuUsageValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NewSkuUsageValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid NewSkuUsageValue Attribute Type",
+				"While creating a NewSkuUsageValue value, an invalid attribute value was detected. "+
+					"A NewSkuUsageValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("NewSkuUsageValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("NewSkuUsageValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra NewSkuUsageValue Attribute Value",
+				"While creating a NewSkuUsageValue value, an extra attribute value was detected. "+
+					"A NewSkuUsageValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra NewSkuUsageValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewNewSkuUsageValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewNewSkuUsageValueUnknown(), diags
+	}
+
+	return NewSkuUsageValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewNewSkuUsageValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) NewSkuUsageValue {
+	object, diags := NewNewSkuUsageValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewNewSkuUsageValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t NewSkuUsageType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewNewSkuUsageValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewNewSkuUsageValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewNewSkuUsageValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewNewSkuUsageValueMust(NewSkuUsageValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t NewSkuUsageType) ValueType(ctx context.Context) attr.Value {
+	return NewSkuUsageValue{}
+}
+
+var _ basetypes.ObjectValuable = NewSkuUsageValue{}
+
+type NewSkuUsageValue struct {
+	state attr.ValueState
+}
+
+func (v NewSkuUsageValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v NewSkuUsageValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v NewSkuUsageValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v NewSkuUsageValue) String() string {
+	return "NewSkuUsageValue"
+}
+
+func (v NewSkuUsageValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v NewSkuUsageValue) Equal(o attr.Value) bool {
+	other, ok := o.(NewSkuUsageValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v NewSkuUsageValue) Type(ctx context.Context) attr.Type {
+	return NewSkuUsageType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v NewSkuUsageValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = PaymentRemindersType{}
+
+type PaymentRemindersType struct {
+	basetypes.ObjectType
+}
+
+func (t PaymentRemindersType) Equal(o attr.Type) bool {
+	other, ok := o.(PaymentRemindersType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t PaymentRemindersType) String() string {
+	return "PaymentRemindersType"
+}
+
+func (t PaymentRemindersType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewPaymentRemindersValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewPaymentRemindersValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	billingProfileIdsAttribute, ok := attributes["billing_profile_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_profile_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	billingProfileIdsVal, ok := billingProfileIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_profile_ids expected to be basetypes.ListValue, was: %T`, billingProfileIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return PaymentRemindersValue{
+		BillingProfileIds: billingProfileIdsVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewPaymentRemindersValueNull() PaymentRemindersValue {
+	return PaymentRemindersValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewPaymentRemindersValueUnknown() PaymentRemindersValue {
+	return PaymentRemindersValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewPaymentRemindersValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (PaymentRemindersValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing PaymentRemindersValue Attribute Value",
+				"While creating a PaymentRemindersValue value, a missing attribute value was detected. "+
+					"A PaymentRemindersValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("PaymentRemindersValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid PaymentRemindersValue Attribute Type",
+				"While creating a PaymentRemindersValue value, an invalid attribute value was detected. "+
+					"A PaymentRemindersValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("PaymentRemindersValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("PaymentRemindersValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra PaymentRemindersValue Attribute Value",
+				"While creating a PaymentRemindersValue value, an extra attribute value was detected. "+
+					"A PaymentRemindersValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra PaymentRemindersValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewPaymentRemindersValueUnknown(), diags
+	}
+
+	billingProfileIdsAttribute, ok := attributes["billing_profile_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`billing_profile_ids is missing from object`)
+
+		return NewPaymentRemindersValueUnknown(), diags
+	}
+
+	billingProfileIdsVal, ok := billingProfileIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`billing_profile_ids expected to be basetypes.ListValue, was: %T`, billingProfileIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return NewPaymentRemindersValueUnknown(), diags
+	}
+
+	return PaymentRemindersValue{
+		BillingProfileIds: billingProfileIdsVal,
+		state:             attr.ValueStateKnown,
+	}, diags
+}
+
+func NewPaymentRemindersValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) PaymentRemindersValue {
+	object, diags := NewPaymentRemindersValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewPaymentRemindersValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t PaymentRemindersType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewPaymentRemindersValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewPaymentRemindersValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewPaymentRemindersValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewPaymentRemindersValueMust(PaymentRemindersValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t PaymentRemindersType) ValueType(ctx context.Context) attr.Value {
+	return PaymentRemindersValue{}
+}
+
+var _ basetypes.ObjectValuable = PaymentRemindersValue{}
+
+type PaymentRemindersValue struct {
+	BillingProfileIds basetypes.ListValue `tfsdk:"billing_profile_ids"`
+	state             attr.ValueState
+}
+
+func (v PaymentRemindersValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["billing_profile_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.BillingProfileIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["billing_profile_ids"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v PaymentRemindersValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v PaymentRemindersValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v PaymentRemindersValue) String() string {
+	return "PaymentRemindersValue"
+}
+
+func (v PaymentRemindersValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var billingProfileIdsVal basetypes.ListValue
+	switch {
+	case v.BillingProfileIds.IsUnknown():
+		billingProfileIdsVal = types.ListUnknown(types.StringType)
+	case v.BillingProfileIds.IsNull():
+		billingProfileIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		billingProfileIdsVal, d = types.ListValue(types.StringType, v.BillingProfileIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"billing_profile_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"billing_profile_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"billing_profile_ids": billingProfileIdsVal,
+		})
+
+	return objVal, diags
+}
+
+func (v PaymentRemindersValue) Equal(o attr.Value) bool {
+	other, ok := o.(PaymentRemindersValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.BillingProfileIds.Equal(other.BillingProfileIds) {
+		return false
+	}
+
+	return true
+}
+
+func (v PaymentRemindersValue) Type(ctx context.Context) attr.Type {
+	return PaymentRemindersType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v PaymentRemindersValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"billing_profile_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+}
+
+var _ basetypes.ObjectTypable = QuotaUtilizationType{}
+
+type QuotaUtilizationType struct {
+	basetypes.ObjectType
+}
+
+func (t QuotaUtilizationType) Equal(o attr.Type) bool {
+	other, ok := o.(QuotaUtilizationType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t QuotaUtilizationType) String() string {
+	return "QuotaUtilizationType"
+}
+
+func (t QuotaUtilizationType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewQuotaUtilizationValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewQuotaUtilizationValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return QuotaUtilizationValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewQuotaUtilizationValueNull() QuotaUtilizationValue {
+	return QuotaUtilizationValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewQuotaUtilizationValueUnknown() QuotaUtilizationValue {
+	return QuotaUtilizationValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewQuotaUtilizationValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (QuotaUtilizationValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing QuotaUtilizationValue Attribute Value",
+				"While creating a QuotaUtilizationValue value, a missing attribute value was detected. "+
+					"A QuotaUtilizationValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("QuotaUtilizationValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid QuotaUtilizationValue Attribute Type",
+				"While creating a QuotaUtilizationValue value, an invalid attribute value was detected. "+
+					"A QuotaUtilizationValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("QuotaUtilizationValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("QuotaUtilizationValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra QuotaUtilizationValue Attribute Value",
+				"While creating a QuotaUtilizationValue value, an extra attribute value was detected. "+
+					"A QuotaUtilizationValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra QuotaUtilizationValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewQuotaUtilizationValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewQuotaUtilizationValueUnknown(), diags
+	}
+
+	return QuotaUtilizationValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewQuotaUtilizationValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) QuotaUtilizationValue {
+	object, diags := NewQuotaUtilizationValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewQuotaUtilizationValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t QuotaUtilizationType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewQuotaUtilizationValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewQuotaUtilizationValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewQuotaUtilizationValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewQuotaUtilizationValueMust(QuotaUtilizationValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t QuotaUtilizationType) ValueType(ctx context.Context) attr.Value {
+	return QuotaUtilizationValue{}
+}
+
+var _ basetypes.ObjectValuable = QuotaUtilizationValue{}
+
+type QuotaUtilizationValue struct {
+	state attr.ValueState
+}
+
+func (v QuotaUtilizationValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v QuotaUtilizationValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v QuotaUtilizationValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v QuotaUtilizationValue) String() string {
+	return "QuotaUtilizationValue"
+}
+
+func (v QuotaUtilizationValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v QuotaUtilizationValue) Equal(o attr.Value) bool {
+	other, ok := o.(QuotaUtilizationValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v QuotaUtilizationValue) Type(ctx context.Context) attr.Type {
+	return QuotaUtilizationType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v QuotaUtilizationValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = SavingsPlanApprovalType{}
+
+type SavingsPlanApprovalType struct {
+	basetypes.ObjectType
+}
+
+func (t SavingsPlanApprovalType) Equal(o attr.Type) bool {
+	other, ok := o.(SavingsPlanApprovalType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SavingsPlanApprovalType) String() string {
+	return "SavingsPlanApprovalType"
+}
+
+func (t SavingsPlanApprovalType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSavingsPlanApprovalValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSavingsPlanApprovalValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SavingsPlanApprovalValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSavingsPlanApprovalValueNull() SavingsPlanApprovalValue {
+	return SavingsPlanApprovalValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSavingsPlanApprovalValueUnknown() SavingsPlanApprovalValue {
+	return SavingsPlanApprovalValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSavingsPlanApprovalValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SavingsPlanApprovalValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SavingsPlanApprovalValue Attribute Value",
+				"While creating a SavingsPlanApprovalValue value, a missing attribute value was detected. "+
+					"A SavingsPlanApprovalValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SavingsPlanApprovalValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SavingsPlanApprovalValue Attribute Type",
+				"While creating a SavingsPlanApprovalValue value, an invalid attribute value was detected. "+
+					"A SavingsPlanApprovalValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SavingsPlanApprovalValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SavingsPlanApprovalValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SavingsPlanApprovalValue Attribute Value",
+				"While creating a SavingsPlanApprovalValue value, an extra attribute value was detected. "+
+					"A SavingsPlanApprovalValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SavingsPlanApprovalValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSavingsPlanApprovalValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewSavingsPlanApprovalValueUnknown(), diags
+	}
+
+	return SavingsPlanApprovalValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSavingsPlanApprovalValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SavingsPlanApprovalValue {
+	object, diags := NewSavingsPlanApprovalValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSavingsPlanApprovalValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SavingsPlanApprovalType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSavingsPlanApprovalValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSavingsPlanApprovalValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSavingsPlanApprovalValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSavingsPlanApprovalValueMust(SavingsPlanApprovalValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SavingsPlanApprovalType) ValueType(ctx context.Context) attr.Value {
+	return SavingsPlanApprovalValue{}
+}
+
+var _ basetypes.ObjectValuable = SavingsPlanApprovalValue{}
+
+type SavingsPlanApprovalValue struct {
+	state attr.ValueState
+}
+
+func (v SavingsPlanApprovalValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SavingsPlanApprovalValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SavingsPlanApprovalValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SavingsPlanApprovalValue) String() string {
+	return "SavingsPlanApprovalValue"
+}
+
+func (v SavingsPlanApprovalValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v SavingsPlanApprovalValue) Equal(o attr.Value) bool {
+	other, ok := o.(SavingsPlanApprovalValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v SavingsPlanApprovalValue) Type(ctx context.Context) attr.Type {
+	return SavingsPlanApprovalType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SavingsPlanApprovalValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = SavingsPlanPurchasedType{}
+
+type SavingsPlanPurchasedType struct {
+	basetypes.ObjectType
+}
+
+func (t SavingsPlanPurchasedType) Equal(o attr.Type) bool {
+	other, ok := o.(SavingsPlanPurchasedType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SavingsPlanPurchasedType) String() string {
+	return "SavingsPlanPurchasedType"
+}
+
+func (t SavingsPlanPurchasedType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSavingsPlanPurchasedValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSavingsPlanPurchasedValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SavingsPlanPurchasedValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSavingsPlanPurchasedValueNull() SavingsPlanPurchasedValue {
+	return SavingsPlanPurchasedValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSavingsPlanPurchasedValueUnknown() SavingsPlanPurchasedValue {
+	return SavingsPlanPurchasedValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSavingsPlanPurchasedValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SavingsPlanPurchasedValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SavingsPlanPurchasedValue Attribute Value",
+				"While creating a SavingsPlanPurchasedValue value, a missing attribute value was detected. "+
+					"A SavingsPlanPurchasedValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SavingsPlanPurchasedValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SavingsPlanPurchasedValue Attribute Type",
+				"While creating a SavingsPlanPurchasedValue value, an invalid attribute value was detected. "+
+					"A SavingsPlanPurchasedValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SavingsPlanPurchasedValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SavingsPlanPurchasedValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SavingsPlanPurchasedValue Attribute Value",
+				"While creating a SavingsPlanPurchasedValue value, an extra attribute value was detected. "+
+					"A SavingsPlanPurchasedValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SavingsPlanPurchasedValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSavingsPlanPurchasedValueUnknown(), diags
+	}
+
+	if diags.HasError() {
+		return NewSavingsPlanPurchasedValueUnknown(), diags
+	}
+
+	return SavingsPlanPurchasedValue{
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSavingsPlanPurchasedValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SavingsPlanPurchasedValue {
+	object, diags := NewSavingsPlanPurchasedValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSavingsPlanPurchasedValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SavingsPlanPurchasedType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSavingsPlanPurchasedValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSavingsPlanPurchasedValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSavingsPlanPurchasedValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSavingsPlanPurchasedValueMust(SavingsPlanPurchasedValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SavingsPlanPurchasedType) ValueType(ctx context.Context) attr.Value {
+	return SavingsPlanPurchasedValue{}
+}
+
+var _ basetypes.ObjectValuable = SavingsPlanPurchasedValue{}
+
+type SavingsPlanPurchasedValue struct {
+	state attr.ValueState
+}
+
+func (v SavingsPlanPurchasedValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 0)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 0)
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SavingsPlanPurchasedValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SavingsPlanPurchasedValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SavingsPlanPurchasedValue) String() string {
+	return "SavingsPlanPurchasedValue"
+}
+
+func (v SavingsPlanPurchasedValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{})
+
+	return objVal, diags
+}
+
+func (v SavingsPlanPurchasedValue) Equal(o attr.Value) bool {
+	other, ok := o.(SavingsPlanPurchasedValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	return true
+}
+
+func (v SavingsPlanPurchasedValue) Type(ctx context.Context) attr.Type {
+	return SavingsPlanPurchasedType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SavingsPlanPurchasedValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{}
+}
+
+var _ basetypes.ObjectTypable = WeeklyDigestType{}
+
+type WeeklyDigestType struct {
+	basetypes.ObjectType
+}
+
+func (t WeeklyDigestType) Equal(o attr.Type) bool {
+	other, ok := o.(WeeklyDigestType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t WeeklyDigestType) String() string {
+	return "WeeklyDigestType"
+}
+
+func (t WeeklyDigestType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewWeeklyDigestValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewWeeklyDigestValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	allocationIdsAttribute, ok := attributes["allocation_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`allocation_ids is missing from object`)
+
+		return nil, diags
+	}
+
+	allocationIdsVal, ok := allocationIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`allocation_ids expected to be basetypes.ListValue, was: %T`, allocationIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return WeeklyDigestValue{
+		AllocationIds: allocationIdsVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewWeeklyDigestValueNull() WeeklyDigestValue {
+	return WeeklyDigestValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewWeeklyDigestValueUnknown() WeeklyDigestValue {
+	return WeeklyDigestValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewWeeklyDigestValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (WeeklyDigestValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing WeeklyDigestValue Attribute Value",
+				"While creating a WeeklyDigestValue value, a missing attribute value was detected. "+
+					"A WeeklyDigestValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("WeeklyDigestValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid WeeklyDigestValue Attribute Type",
+				"While creating a WeeklyDigestValue value, an invalid attribute value was detected. "+
+					"A WeeklyDigestValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("WeeklyDigestValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("WeeklyDigestValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra WeeklyDigestValue Attribute Value",
+				"While creating a WeeklyDigestValue value, an extra attribute value was detected. "+
+					"A WeeklyDigestValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra WeeklyDigestValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewWeeklyDigestValueUnknown(), diags
+	}
+
+	allocationIdsAttribute, ok := attributes["allocation_ids"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`allocation_ids is missing from object`)
+
+		return NewWeeklyDigestValueUnknown(), diags
+	}
+
+	allocationIdsVal, ok := allocationIdsAttribute.(basetypes.ListValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`allocation_ids expected to be basetypes.ListValue, was: %T`, allocationIdsAttribute))
+	}
+
+	if diags.HasError() {
+		return NewWeeklyDigestValueUnknown(), diags
+	}
+
+	return WeeklyDigestValue{
+		AllocationIds: allocationIdsVal,
+		state:         attr.ValueStateKnown,
+	}, diags
+}
+
+func NewWeeklyDigestValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) WeeklyDigestValue {
+	object, diags := NewWeeklyDigestValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewWeeklyDigestValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t WeeklyDigestType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewWeeklyDigestValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewWeeklyDigestValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewWeeklyDigestValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewWeeklyDigestValueMust(WeeklyDigestValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t WeeklyDigestType) ValueType(ctx context.Context) attr.Value {
+	return WeeklyDigestValue{}
+}
+
+var _ basetypes.ObjectValuable = WeeklyDigestValue{}
+
+type WeeklyDigestValue struct {
+	AllocationIds basetypes.ListValue `tfsdk:"allocation_ids"`
+	state         attr.ValueState
+}
+
+func (v WeeklyDigestValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 1)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["allocation_ids"] = basetypes.ListType{
+		ElemType: types.StringType,
+	}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 1)
+
+		val, err = v.AllocationIds.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["allocation_ids"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v WeeklyDigestValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v WeeklyDigestValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v WeeklyDigestValue) String() string {
+	return "WeeklyDigestValue"
+}
+
+func (v WeeklyDigestValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var allocationIdsVal basetypes.ListValue
+	switch {
+	case v.AllocationIds.IsUnknown():
+		allocationIdsVal = types.ListUnknown(types.StringType)
+	case v.AllocationIds.IsNull():
+		allocationIdsVal = types.ListNull(types.StringType)
+	default:
+		var d diag.Diagnostics
+		allocationIdsVal, d = types.ListValue(types.StringType, v.AllocationIds.Elements())
+		diags.Append(d...)
+	}
+
+	if diags.HasError() {
+		return types.ObjectUnknown(map[string]attr.Type{
+			"allocation_ids": basetypes.ListType{
+				ElemType: types.StringType,
+			},
+		}), diags
+	}
+
+	attributeTypes := map[string]attr.Type{
+		"allocation_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"allocation_ids": allocationIdsVal,
+		})
+
+	return objVal, diags
+}
+
+func (v WeeklyDigestValue) Equal(o attr.Value) bool {
+	other, ok := o.(WeeklyDigestValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.AllocationIds.Equal(other.AllocationIds) {
+		return false
+	}
+
+	return true
+}
+
+func (v WeeklyDigestValue) Type(ctx context.Context) attr.Type {
+	return WeeklyDigestType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v WeeklyDigestValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"allocation_ids": basetypes.ListType{
+			ElemType: types.StringType,
+		},
 	}
 }

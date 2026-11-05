@@ -295,6 +295,33 @@ func TestCustomerNotificationToUpdateRequest(t *testing.T) {
 		}`)
 	})
 
+	// An omitted control that is not stored plans unknown (its clearing
+	// modifier acts only on a stored value); there is nothing to keep, so the
+	// patch sends null.
+	t.Run("unknown controls", func(t *testing.T) {
+		plan := customerNotificationPlanFromResponse(t, testCustomerNotificationResponse())
+		plan.Settings.CostAnomalies.Repeat.EveryHours = types.Int64Unknown()
+		plan.Settings.CostAnomalies.Repeat.WhenCostGrows.Match = types.StringUnknown()
+		plan.Settings.CostAnomalies.Repeat.WhenCostGrows.WithinHours = types.Int64Unknown()
+		req, diags := plan.toUpdateRequest(t.Context())
+		if diags.HasError() {
+			t.Fatalf("unexpected diagnostics: %v", diags)
+		}
+		assertJSONEqual(t, req, `{
+			"name": "Anomaly alerts",
+			"destinations": {"emails": ["finops@example.com", "ops@example.com"], "slackChannels": ["C0123ABCD"], "teamsChannels": []},
+			"settings": {"costAnomalies": {
+				"minSeverity": "critical",
+				"minExcessCost": {"amount": "100.00", "currency": "USD"},
+				"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
+				"repeat": {
+					"everyHours": null,
+					"whenCostGrows": {"match": null, "percentIncrease": 10, "minIncrease": {"amount": "150.00", "currency": "USD"}, "withinHours": null}
+				}
+			}}
+		}`)
+	})
+
 	t.Run("leaves cleared", func(t *testing.T) {
 		resp := testCustomerNotificationResponse()
 		resp.Settings.CostAnomalies.Repeat = &models.CostAnomalyRepeat{

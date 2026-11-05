@@ -8,6 +8,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -46,8 +47,16 @@ func (d *userNotificationDataSource) Schema(ctx context.Context, _ datasource.Sc
 
 	// The spec text for these endpoints also mentions organization-wide
 	// notifications, which are a separate resource (doit_customer_notification).
-	s.Description = "Personal notification configs for a user. Cost-anomaly configs are supported."
+	s.Description = "Personal notification config of a user, with the notification types the user is subscribed to."
 	s.MarkdownDescription = s.Description
+
+	// The generated settings text is written for API clients (camelCase
+	// names, permission IDs).
+	if settings, ok := s.Attributes["settings"].(schema.SingleNestedAttribute); ok {
+		settings.Description = userNotificationDataSourceSettingsDescription
+		settings.MarkdownDescription = settings.Description
+		s.Attributes["settings"] = settings
+	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s

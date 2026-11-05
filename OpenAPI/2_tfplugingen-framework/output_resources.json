@@ -2080,7 +2080,7 @@
 									}
 								}
 							],
-							"description": "Delivery targets for this config. Must include `emails`,\n`slackChannels`, and `teamsChannels`, with at least one non-empty\narray.\n"
+							"description": "Delivery targets for this config. Must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array."
 						}
 					},
 					{
@@ -2374,7 +2374,7 @@
 									}
 								}
 							],
-							"description": "Subscribed notification settings. Only `costAnomalies` is accepted.\nSettings for any other type are rejected; omitting `costAnomalies` is\nrejected.\n"
+							"description": "Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected."
 						}
 					},
 					{
@@ -2388,7 +2388,7 @@
 						"name": "etag",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Current strong ETag as bare SHA-256 hex. The `ETag` response header\nand `If-Match` wrap this value in double quotes. Send that quoted\nform unchanged on update or delete. `null` only on a dry-run create.\n"
+							"description": "Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create."
 						}
 					},
 					{
@@ -5103,9 +5103,16 @@
 							"computed_optional_required": "required",
 							"attributes": [
 								{
+									"name": "cloud_incidents",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Cloud incidents."
+									}
+								},
+								{
 									"name": "cost_anomalies",
 									"single_nested": {
-										"computed_optional_required": "required",
+										"computed_optional_required": "computed_optional",
 										"attributes": [
 											{
 												"name": "allocations",
@@ -5365,11 +5372,239 @@
 												}
 											}
 										],
-										"description": "Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and\noptional resend controls.\n"
+										"description": "Cloud cost anomalies."
+									}
+								},
+								{
+									"name": "credit_utilization",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Credit utilization."
+									}
+								},
+								{
+									"name": "cud_approval",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "PerfectScale for Commitments, Google Cloud committed use discounts: purchases require approval."
+									}
+								},
+								{
+									"name": "cud_purchased",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "PerfectScale for Commitments, Google Cloud committed use discounts: a committed use discount was purchased."
+									}
+								},
+								{
+									"name": "daily_digest",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "allocation_ids",
+												"list": {
+													"computed_optional_required": "required",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+																	}
+																],
+																"schema_definition": "listvalidator.SizeAtLeast(1)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "Daily digest."
+									}
+								},
+								{
+									"name": "data_integration_sync_failure",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Data integration sync failures."
+									}
+								},
+								{
+									"name": "expert_insights",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Third-party insights (a new custom insight from the DoiT expert team)."
+									}
+								},
+								{
+									"name": "insights",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "pillars",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Insight pillars. Empty or omitted means all pillars."
+												}
+											},
+											{
+												"name": "providers",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string."
+												}
+											},
+											{
+												"name": "severities",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Insight severities. Empty or omitted means all severities."
+												}
+											}
+										],
+										"description": "New insights (DoiT proprietary insights)."
+									}
+								},
+								{
+									"name": "monthly_digest",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Monthly digest."
+									}
+								},
+								{
+									"name": "new_invoices",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "billing_profile_ids",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`."
+												}
+											}
+										],
+										"description": "New invoices."
+									}
+								},
+								{
+									"name": "new_proforma_invoices",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "billing_profile_ids",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`."
+												}
+											}
+										],
+										"description": "New proforma invoices."
+									}
+								},
+								{
+									"name": "new_sku_usage",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "New SKUs Usage Detected."
+									}
+								},
+								{
+									"name": "payment_reminders",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "billing_profile_ids",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`."
+												}
+											}
+										],
+										"description": "Due or overdue payments."
+									}
+								},
+								{
+									"name": "quota_utilization",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "Quota utilization."
+									}
+								},
+								{
+									"name": "savings_plan_approval",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "PerfectScale for Commitments, AWS Savings Plans: purchases require approval."
+									}
+								},
+								{
+									"name": "savings_plan_purchased",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "PerfectScale for Commitments, AWS Savings Plans: a Savings Plan was purchased."
+									}
+								},
+								{
+									"name": "weekly_digest",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "allocation_ids",
+												"list": {
+													"computed_optional_required": "required",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+																	}
+																],
+																"schema_definition": "listvalidator.SizeAtLeast(1)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "Weekly digest."
 									}
 								}
 							],
-							"description": "Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are\nrejected; omitting `costAnomalies` is rejected.\n"
+							"description": "Subscribed notification settings. One property per type. A present property means that type is\nsubscribed. At least one property is required. `costAnomalies` is not required. `awsBillingDataImport`\nis not a personal type and is rejected with `422`. `conditions` is not a field and is rejected with\n`422`.\n\nThe caller still needs Users Manager (`usersManager`). For every subscribed type other than `costAnomalies`, the\ntarget user must hold the permission below on create and on update. The type permission is not\nre-checked on read. The `403` problem includes `permission` (the id) and `notificationType` (the\nproperty name). Cost anomalies do not add this check. That difference is intentional: the Console\nassociates cloud cost anomalies with Cloud Analytics, and this API does not require a target-user\nCloud Analytics permission for `costAnomalies`.\n\n| Property | Permission | Permission id |\n| --- | --- | --- |\n| `newInvoices`, `newProformaInvoices`, `paymentReminders`, `creditUtilization` | Invoice Viewer | `HN6A3cPzDBcAIlc3ncDy` |\n| `quotaUtilization`, `dailyDigest`, `weeklyDigest`, `monthlyDigest`, `newSkuUsage` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |\n| `savingsPlanApproval`, `savingsPlanPurchased`, `cudApproval`, `cudPurchased` | Cloud Analytics User | `sfmBZeLN8uXWooCqJ4NO` |\n| `cloudIncidents` | Issues Viewer | `dEJbIiUcHn8GhW7IiWLW` |\n| `expertInsights`, `insights` | Insights Manager | `Co8Hf8SfDWvS7PxPlqc6` |\n| `dataIntegrationSyncFailure` | Assets Manager | `wfDH3k1FmYKHlQBwGIzZ` |"
 						}
 					},
 					{
@@ -5401,14 +5636,14 @@
 									}
 								]
 							},
-							"description": "Server-managed destinations. Always one email entry with the target user's address.\n"
+							"description": "Server-managed destinations. Always one email entry with the target user's address."
 						}
 					},
 					{
 						"name": "etag",
 						"string": {
 							"computed_optional_required": "computed",
-							"description": "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run\ncreate.\n"
+							"description": "Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run create."
 						}
 					},
 					{
@@ -5429,7 +5664,7 @@
 						"name": "user_id",
 						"string": {
 							"computed_optional_required": "required",
-							"description": "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional\n`X-Tenant-Id`.\n",
+							"description": "The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional `X-Tenant-Id`.",
 							"validators": [
 								{
 									"custom": {

@@ -31,7 +31,7 @@ func mapUserNotificationToDataSource(ctx context.Context, resp *models.UserNotif
 	diags.Append(d...)
 	data.Destinations = destinations
 
-	settings, d := buildUserNotificationDataSourceSettings(ctx, &resp.Settings.CostAnomalies)
+	settings, d := buildUserNotificationDataSourceSettings(ctx, &resp.Settings)
 	diags.Append(d...)
 	data.Settings = settings
 
@@ -59,8 +59,35 @@ func buildUserNotificationDataSourceDestinations(ctx context.Context, destinatio
 	return list, diags
 }
 
-func buildUserNotificationDataSourceSettings(ctx context.Context, ca *models.CostAnomalySettings) (datasource_user_notification.SettingsValue, diag.Diagnostics) {
+func buildUserNotificationDataSourceSettings(ctx context.Context, s *models.UserNotificationSettings) (datasource_user_notification.SettingsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	attrTypes := datasource_user_notification.SettingsValue{}.AttributeTypes(ctx)
+	objects, d := userNotificationSettingsObjects(ctx, s)
+	diags.Append(d...)
+	values, d := userNotificationSettingsValues(ctx, attrTypes, objects)
+	diags.Append(d...)
+
+	costAnomalies, d := buildUserNotificationDataSourceCostAnomalies(ctx, s.CostAnomalies)
+	diags.Append(d...)
+	values["cost_anomalies"] = costAnomalies
+
+	if diags.HasError() {
+		return datasource_user_notification.NewSettingsValueNull(), diags
+	}
+
+	settings, d := datasource_user_notification.NewSettingsValue(attrTypes, values)
+	diags.Append(d...)
+
+	return settings, diags
+}
+
+func buildUserNotificationDataSourceCostAnomalies(ctx context.Context, ca *models.CostAnomalySettings) (datasource_user_notification.CostAnomaliesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if ca == nil {
+		return datasource_user_notification.NewCostAnomaliesValueNull(), diags
+	}
 
 	ids := ca.Allocations.Ids
 	if ids == nil {
@@ -100,13 +127,7 @@ func buildUserNotificationDataSourceSettings(ctx context.Context, ca *models.Cos
 	)
 	diags.Append(d...)
 
-	settings, d := datasource_user_notification.NewSettingsValue(
-		datasource_user_notification.SettingsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"cost_anomalies": costAnomalies},
-	)
-	diags.Append(d...)
-
-	return settings, diags
+	return costAnomalies, diags
 }
 
 func buildUserNotificationDataSourceRepeat(ctx context.Context, repeat *models.CostAnomalyRepeat) (datasource_user_notification.RepeatValue, diag.Diagnostics) {
@@ -168,7 +189,7 @@ func mapUserNotificationsToDataSource(ctx context.Context, items []models.UserNo
 
 		destinations, d := buildUserNotificationsDataSourceDestinations(ctx, item.Destinations)
 		diags.Append(d...)
-		settings, d := buildUserNotificationsDataSourceSettings(ctx, &item.Settings.CostAnomalies)
+		settings, d := buildUserNotificationsDataSourceSettings(ctx, &item.Settings)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
@@ -220,8 +241,35 @@ func buildUserNotificationsDataSourceDestinations(ctx context.Context, destinati
 	return list, diags
 }
 
-func buildUserNotificationsDataSourceSettings(ctx context.Context, ca *models.CostAnomalySettings) (datasource_user_notifications.SettingsValue, diag.Diagnostics) {
+func buildUserNotificationsDataSourceSettings(ctx context.Context, s *models.UserNotificationSettings) (datasource_user_notifications.SettingsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	attrTypes := datasource_user_notifications.SettingsValue{}.AttributeTypes(ctx)
+	objects, d := userNotificationSettingsObjects(ctx, s)
+	diags.Append(d...)
+	values, d := userNotificationSettingsValues(ctx, attrTypes, objects)
+	diags.Append(d...)
+
+	costAnomalies, d := buildUserNotificationsDataSourceCostAnomalies(ctx, s.CostAnomalies)
+	diags.Append(d...)
+	values["cost_anomalies"] = costAnomalies
+
+	if diags.HasError() {
+		return datasource_user_notifications.NewSettingsValueNull(), diags
+	}
+
+	settings, d := datasource_user_notifications.NewSettingsValue(attrTypes, values)
+	diags.Append(d...)
+
+	return settings, diags
+}
+
+func buildUserNotificationsDataSourceCostAnomalies(ctx context.Context, ca *models.CostAnomalySettings) (datasource_user_notifications.CostAnomaliesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if ca == nil {
+		return datasource_user_notifications.NewCostAnomaliesValueNull(), diags
+	}
 
 	ids := ca.Allocations.Ids
 	if ids == nil {
@@ -261,13 +309,7 @@ func buildUserNotificationsDataSourceSettings(ctx context.Context, ca *models.Co
 	)
 	diags.Append(d...)
 
-	settings, d := datasource_user_notifications.NewSettingsValue(
-		datasource_user_notifications.SettingsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"cost_anomalies": costAnomalies},
-	)
-	diags.Append(d...)
-
-	return settings, diags
+	return costAnomalies, diags
 }
 
 func buildUserNotificationsDataSourceRepeat(ctx context.Context, repeat *models.CostAnomalyRepeat) (datasource_user_notifications.RepeatValue, diag.Diagnostics) {

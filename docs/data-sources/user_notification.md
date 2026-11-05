@@ -3,12 +3,12 @@
 page_title: "doit_user_notification Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Personal notification configs for a user. Cost-anomaly configs are supported.
+  Personal notification config of a user, with the notification types the user is subscribed to.
 ---
 
 # doit_user_notification (Data Source)
 
-Personal notification configs for a user. Cost-anomaly configs are supported.
+Personal notification config of a user, with the notification types the user is subscribed to.
 
 ## Example Usage
 
@@ -82,8 +82,7 @@ output "copied_notification_id" {
 ### Required
 
 - `id` (String) The unique ID of the notification config returned by create or list.
-- `user_id` (String) The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional
-`X-Tenant-Id`.
+- `user_id` (String) The unique ID of the user. Must belong to the tenant resolved from the bearer token and optional `X-Tenant-Id`.
 
 ### Optional
 
@@ -93,10 +92,9 @@ output "copied_notification_id" {
 
 - `create_time` (String) When the config was created. `null` only on a dry-run create.
 - `destinations` (Attributes List) Server-managed destinations. Always one email entry with the target user's address. (see [below for nested schema](#nestedatt--destinations))
-- `etag` (String) Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run
-create.
+- `etag` (String) Current strong ETag. Send it unchanged in `If-Match` on update or delete. `null` only on a dry-run create.
 - `name` (String) Display name of the notification config.
-- `settings` (Attributes) Subscribed settings. (see [below for nested schema](#nestedatt--settings))
+- `settings` (Attributes) The notification types the user is subscribed to, one attribute per type. A type the user is not subscribed to is null; an empty object (`{}`) means subscribed without options. An empty filter list means every value of that filter. (see [below for nested schema](#nestedatt--settings))
 - `update_time` (String) When the config was last changed. `null` only on a dry-run create.
 
 <a id="nestedatt--timeouts"></a>
@@ -121,8 +119,28 @@ Read-Only:
 
 Read-Only:
 
-- `cost_anomalies` (Attributes) Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
-optional resend controls. (see [below for nested schema](#nestedatt--settings--cost_anomalies))
+- `cloud_incidents` (Attributes) Cloud incidents. (see [below for nested schema](#nestedatt--settings--cloud_incidents))
+- `cost_anomalies` (Attributes) Cloud cost anomalies. (see [below for nested schema](#nestedatt--settings--cost_anomalies))
+- `credit_utilization` (Attributes) Credit utilization. (see [below for nested schema](#nestedatt--settings--credit_utilization))
+- `cud_approval` (Attributes) PerfectScale for Commitments, Google Cloud committed use discounts: purchases require approval. (see [below for nested schema](#nestedatt--settings--cud_approval))
+- `cud_purchased` (Attributes) PerfectScale for Commitments, Google Cloud committed use discounts: a committed use discount was purchased. (see [below for nested schema](#nestedatt--settings--cud_purchased))
+- `daily_digest` (Attributes) Daily digest. (see [below for nested schema](#nestedatt--settings--daily_digest))
+- `data_integration_sync_failure` (Attributes) Data integration sync failures. (see [below for nested schema](#nestedatt--settings--data_integration_sync_failure))
+- `expert_insights` (Attributes) Third-party insights (a new custom insight from the DoiT expert team). (see [below for nested schema](#nestedatt--settings--expert_insights))
+- `insights` (Attributes) New insights (DoiT proprietary insights). (see [below for nested schema](#nestedatt--settings--insights))
+- `monthly_digest` (Attributes) Monthly digest. (see [below for nested schema](#nestedatt--settings--monthly_digest))
+- `new_invoices` (Attributes) New invoices. (see [below for nested schema](#nestedatt--settings--new_invoices))
+- `new_proforma_invoices` (Attributes) New proforma invoices. (see [below for nested schema](#nestedatt--settings--new_proforma_invoices))
+- `new_sku_usage` (Attributes) New SKUs Usage Detected. (see [below for nested schema](#nestedatt--settings--new_sku_usage))
+- `payment_reminders` (Attributes) Due or overdue payments. (see [below for nested schema](#nestedatt--settings--payment_reminders))
+- `quota_utilization` (Attributes) Quota utilization. (see [below for nested schema](#nestedatt--settings--quota_utilization))
+- `savings_plan_approval` (Attributes) PerfectScale for Commitments, AWS Savings Plans: purchases require approval. (see [below for nested schema](#nestedatt--settings--savings_plan_approval))
+- `savings_plan_purchased` (Attributes) PerfectScale for Commitments, AWS Savings Plans: a Savings Plan was purchased. (see [below for nested schema](#nestedatt--settings--savings_plan_purchased))
+- `weekly_digest` (Attributes) Weekly digest. (see [below for nested schema](#nestedatt--settings--weekly_digest))
+
+<a id="nestedatt--settings--cloud_incidents"></a>
+### Nested Schema for `settings.cloud_incidents`
+
 
 <a id="nestedatt--settings--cost_anomalies"></a>
 ### Nested Schema for `settings.cost_anomalies`
@@ -207,3 +225,96 @@ Read-Only:
 
 - `amount` (String) Decimal monetary amount at ISO 4217 minor-unit precision (string).
 - `currency` (String) ISO 4217 currency code.
+
+
+
+
+
+<a id="nestedatt--settings--credit_utilization"></a>
+### Nested Schema for `settings.credit_utilization`
+
+
+<a id="nestedatt--settings--cud_approval"></a>
+### Nested Schema for `settings.cud_approval`
+
+
+<a id="nestedatt--settings--cud_purchased"></a>
+### Nested Schema for `settings.cud_purchased`
+
+
+<a id="nestedatt--settings--daily_digest"></a>
+### Nested Schema for `settings.daily_digest`
+
+Read-Only:
+
+- `allocation_ids` (List of String) Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
+
+
+<a id="nestedatt--settings--data_integration_sync_failure"></a>
+### Nested Schema for `settings.data_integration_sync_failure`
+
+
+<a id="nestedatt--settings--expert_insights"></a>
+### Nested Schema for `settings.expert_insights`
+
+
+<a id="nestedatt--settings--insights"></a>
+### Nested Schema for `settings.insights`
+
+Read-Only:
+
+- `pillars` (List of String) Insight pillars. Empty or omitted means all pillars.
+- `providers` (List of String) Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
+- `severities` (List of String) Insight severities. Empty or omitted means all severities.
+
+
+<a id="nestedatt--settings--monthly_digest"></a>
+### Nested Schema for `settings.monthly_digest`
+
+
+<a id="nestedatt--settings--new_invoices"></a>
+### Nested Schema for `settings.new_invoices`
+
+Read-Only:
+
+- `billing_profile_ids` (List of String) Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+
+
+<a id="nestedatt--settings--new_proforma_invoices"></a>
+### Nested Schema for `settings.new_proforma_invoices`
+
+Read-Only:
+
+- `billing_profile_ids` (List of String) Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+
+
+<a id="nestedatt--settings--new_sku_usage"></a>
+### Nested Schema for `settings.new_sku_usage`
+
+
+<a id="nestedatt--settings--payment_reminders"></a>
+### Nested Schema for `settings.payment_reminders`
+
+Read-Only:
+
+- `billing_profile_ids` (List of String) Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+
+
+<a id="nestedatt--settings--quota_utilization"></a>
+### Nested Schema for `settings.quota_utilization`
+
+
+<a id="nestedatt--settings--savings_plan_approval"></a>
+### Nested Schema for `settings.savings_plan_approval`
+
+
+<a id="nestedatt--settings--savings_plan_purchased"></a>
+### Nested Schema for `settings.savings_plan_purchased`
+
+
+<a id="nestedatt--settings--weekly_digest"></a>
+### Nested Schema for `settings.weekly_digest`
+
+Read-Only:
+
+- `allocation_ids` (List of String) Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.

@@ -34,6 +34,30 @@ func (m useNullForUnknownStringWhenConfigNullModifier) PlanModifyString(_ contex
 	}
 }
 
+// useNullForUnknownInt64WhenConfigNull is the Int64 equivalent of
+// useNullForUnknownStringWhenConfigNull: it proposes Int64Null when the config
+// value is null and a prior state value exists.
+func useNullForUnknownInt64WhenConfigNull() planmodifier.Int64 {
+	return useNullForUnknownInt64WhenConfigNullModifier{}
+}
+
+type useNullForUnknownInt64WhenConfigNullModifier struct{}
+
+func (m useNullForUnknownInt64WhenConfigNullModifier) Description(_ context.Context) string {
+	return "Proposes null when the config value is null (omitted or explicitly set) " +
+		"and a prior state value exists, allowing the attribute to be cleared."
+}
+
+func (m useNullForUnknownInt64WhenConfigNullModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m useNullForUnknownInt64WhenConfigNullModifier) PlanModifyInt64(_ context.Context, req planmodifier.Int64Request, resp *planmodifier.Int64Response) {
+	if req.ConfigValue.IsNull() && !req.StateValue.IsNull() {
+		resp.PlanValue = types.Int64Null()
+	}
+}
+
 // useNullForUnknownListNullWhenConfigNull is a null-based List equivalent of
 // the clearing modifier. Unlike useNullForUnknownListWhenConfigNull (which proposes []),
 // this modifier proposes ListNull. Use it when the API returns nil (not [])
@@ -68,5 +92,10 @@ func (m useNullForUnknownStringWhenConfigNullModifier) clearedValue(t tftypes.Ty
 
 // clearedValue implements configNullClearer for planSetNestedAttributesFromState.
 func (m useNullForUnknownListNullWhenConfigNullModifier) clearedValue(t tftypes.Type) tftypes.Value {
+	return tftypes.NewValue(t, nil)
+}
+
+// clearedValue implements configNullClearer for planSetNestedAttributesFromState.
+func (m useNullForUnknownInt64WhenConfigNullModifier) clearedValue(t tftypes.Type) tftypes.Value {
 	return tftypes.NewValue(t, nil)
 }
