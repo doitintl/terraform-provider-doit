@@ -2,12 +2,14 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
@@ -70,6 +72,8 @@ resource "doit_report" "test" {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectUnknownValue(resourceName, tfjsonpath.New("labels")),
 					plancheck.ExpectUnknownValue(resourceName, configPath.AtMapKey("data_source")),
+					plancheck.ExpectUnknownValue(resourceName, configPath.AtMapKey("secondary_time_range")),
+					plancheck.ExpectUnknownValue(resourceName, configPath.AtMapKey("aggregation")),
 					plancheck.ExpectKnownValue(resourceName, tfjsonpath.New("folder_id"), knownvalue.StringExact("root")),
 				}},
 			},
@@ -79,6 +83,181 @@ resource "doit_report" "test" {
 				ConfigPlanChecks: resource.ConfigPlanChecks{PreApply: []plancheck.PlanCheck{
 					plancheck.ExpectKnownValue(resourceName, modePath, knownvalue.Null()),
 				}},
+			},
+		},
+	})
+}
+
+// TestAccReport_CumulativeComparisonOnUpdateRequiresSecondaryTimeRange checks
+// that switching a stored report to layout "cumulative_comparison" without a
+// secondary_time_range is rejected at plan time. On update an omitted
+// secondary_time_range plans unknown, not as the stored (absent) value, so a
+// validator that skips unknown values never reports it.
+func TestAccReport_CumulativeComparisonOnUpdateRequiresSecondaryTimeRange(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(layout string) string {
+		return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-cumulative-secondary-%d"
+  config = {
+    layout        = %q
+    aggregation   = "total"
+    currency      = "USD"
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    dimensions = [
+      { id = "year", type = "datetime" },
+      { id = "month", type = "datetime" },
+      { id = "day", type = "datetime" },
+    ]
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+}
+`, n, layout)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: config("table")},
+			{
+				Config:      config("cumulative_comparison"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Missing Secondary Time Range`),
+			},
+		},
+	})
+}
+
+// TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate checks that dropping
+// data_source from the config of a report stored with a non-default data source
+// (billing; the CI tenant default is billing-datahub) does not change it. The omitted attribute plans unknown on update and the
+// request omits dataSource, which the API may reset to the tenant default.
+func TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(dataSource, currency string) string {
+		return fmt.Sprintf(`
+# Control: created without data_source, so it shows the tenant default
+# (billing-datahub). test stores billing, which differs, so the check on test
+# below cannot pass by accident.
+resource "doit_report" "control" {
+  name = "test-omitted-data-source-control-%[1]d"
+  config = {
+    currency      = "USD"
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+}
+
+resource "doit_report" "test" {
+  name = "test-omitted-data-source-keeps-%[1]d"
+  config = {
+    %[2]s
+    currency      = %[3]q
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+  }
+}
+`, n, dataSource, currency)
+	}
+	dataSourcePath := tfjsonpath.New("config").AtMapKey("data_source")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config(`data_source = "billing"`, "USD"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.test", dataSourcePath, knownvalue.StringExact("billing")),
+					statecheck.ExpectKnownValue("doit_report.control", dataSourcePath, knownvalue.StringExact("billing-datahub")),
+				},
+			},
+			{
+				Config: config("", "EUR"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_report.test", dataSourcePath, knownvalue.StringExact("billing")),
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_IgnoredAggregationIsValidatedAsPlanned pins how
+// lifecycle.ignore_changes reaches the count/aggregation validators. With
+// ignore_changes = [config.aggregation] the plan keeps the stored aggregation
+// while the configuration asks for another one:
+//
+//   - ValidateConfig sees the raw configuration, so aggregation = "count" with no
+//     count block fails there ("Missing Count Configuration").
+//   - ModifyPlan sees the configuration with the ignored attribute at its stored
+//     value (measured with Terraform 1.17.1), so aggregation = "count" with a
+//     count block fails there against the stored "total" ("only applicable"),
+//     which is what the update request would carry.
+//
+// If a Terraform release stops applying ignore_changes to the config it hands to
+// PlanResourceChange, the second step fails and ModifyPlan needs to read the plan.
+func TestAccReport_IgnoredAggregationIsValidatedAsPlanned(t *testing.T) {
+	n := acctest.RandInt()
+	config := func(aggregation, count, lifecycle string) string {
+		return fmt.Sprintf(`
+resource "doit_report" "test" {
+  name = "test-ignored-aggregation-%d"
+  config = {
+    aggregation   = %q
+    currency      = "USD"
+    time_interval = "day"
+    time_range = {
+      mode            = "last"
+      amount          = 7
+      unit            = "day"
+      include_current = true
+    }
+    metrics = [{ type = "basic", value = "cost" }]
+    %s
+  }
+  %s
+}
+`, n, aggregation, count, lifecycle)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: config("total", "", "")},
+			{
+				Config:      config("count", "", "lifecycle { ignore_changes = [config.aggregation] }"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Missing Count Configuration`),
+			},
+			{
+				Config: config("count",
+					`count = { id = "service_description", type = "fixed" }`,
+					"lifecycle { ignore_changes = [config.aggregation] }"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`only applicable`),
 			},
 		},
 	})

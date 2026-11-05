@@ -481,7 +481,7 @@ See: `internal/provider/planmodifier_null_on_config_null_list.go` and [framework
 A `ModifyPlan` guard that decides on an Optional+Computed attribute the user may have omitted (e.g. reject updates of a report whose stored `data_source` is `"attribution"`) cannot read the attribute from one place:
 
 - **An omitted attribute plans as Unknown** (when it has no schema `Default` and no plan modifier that sets it) on any update that changes something else (see [Clearing Optional+Computed Attributes](#clearing-optionalcomputed-attributes)). Skipping unknown values makes the guard never fire for the case it was written for.
-- **`lifecycle.ignore_changes` makes the plan differ from the config.** The plan keeps the stored value while config says another one.
+- **`lifecycle.ignore_changes` makes the plan differ from the configuration.** The plan keeps the stored value while the configuration says another one. What the provider sees as config depends on the call: `ValidateConfig` gets the raw configuration, while `ModifyPlan` gets the configuration with the ignored attribute already at its stored value (measured with Terraform 1.17.1, `TestAccReport_IgnoredAggregationIsValidatedAsPlanned`). Reading the plan first is correct in both cases.
 - **The update request sends the planned value**, so the plan is what the API will see; a guard that only reads config lets the update through to an apply-time rejection.
 
 Decide in this order:
@@ -508,6 +508,15 @@ if !value.IsUnknown() && !value.IsNull() && value.ValueString() == forbidden { /
 ```
 
 An `IsUnknown()` check alone does not make a guard correct: deciding what unknown *means* (here: the stored value) is the part that matters. If the API treats an omitted field as "reset to default" rather than "keep", decide that explicitly too.
+
+#### Validators and request builders see the same unknowns
+
+The same unknown reaches code outside `ModifyPlan`:
+
+- **Plan-time validators on update** that read `req.Plan` skip an omitted Category B attribute because it is unknown. Resolve it first: `plannedOrStoredGetter` (`report_validator.go`) returns the stored value when the plan is unknown and config omits the attribute. Without it, `layout = "cumulative_comparison"` on a stored report without `secondary_time_range` passed the plan and failed at the API (`TestAccReport_CumulativeComparisonOnUpdateRequiresSecondaryTimeRange`).
+- **Request builders**: `ValueStringPointer()` and the other pointer helpers return nil only for null. For an unknown they return a pointer to the zero value, so the request carries `""` or `false`. Guard every Optional+Computed read with `IsUnknown()` unless the zero value is meant.
+- **The API may reset an omitted field instead of keeping it.** When a request leaves out an unknown Category B attribute, check what the API does. For `config.data_source` it resets to the tenant default, so the stored `billing` silently became `billing-datahub`; `withStoredDataSource` (`report.go`) sends the stored value (`TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate`). Probe this on the CI tenant, with a control that shows the default differs from the value you store.
+- **An attribute the API requires but the spec marks Optional+Computed** (budget collaborator `role`: the API answers `400 invalid role`, there is no default) is caught at plan time with a validator, not by sending a different value (`budgetCollaboratorsRoleValidator`).
 
 Reference: the attribution guard in `ModifyPlan` of `internal/provider/report_resource.go` (`data_source` is Category B, so it treats a null plan like an unknown one). The plan shapes this relies on are pinned by `TestAccReport_PlanShapeOfOmittedOptionalComputed` (`report_plan_shape_test.go`): unchanged plan is empty, omitted no-default attributes plan unknown, a schema `Default` stays known, a clearing modifier plans null. Tests: see [Pin the real plan shape](../testing/SKILL.md#pin-the-real-plan-shape-for-modifyplan-logic).
 

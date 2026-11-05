@@ -329,6 +329,51 @@ func (v budgetEndPeriodValidator) ValidateInt64(_ context.Context, req validator
 	}
 }
 
+// budgetCollaboratorsRoleValidator rejects a configured collaborator that has no
+// role. The schema marks role Optional+Computed, but the API answers a request
+// without one with "invalid role" and assigns no default, so an omitted role
+// can only fail at apply.
+type budgetCollaboratorsRoleValidator struct{}
+
+func (v budgetCollaboratorsRoleValidator) Description(_ context.Context) string {
+	return "Validates that every collaborator has a role"
+}
+
+func (v budgetCollaboratorsRoleValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that every `collaborators` entry has a `role`"
+}
+
+func (v budgetCollaboratorsRoleValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var collaborators types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("collaborators"), &collaborators)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if collaborators.IsNull() || collaborators.IsUnknown() {
+		return
+	}
+
+	for i, elem := range collaborators.Elements() {
+		if elem.IsNull() || elem.IsUnknown() {
+			continue
+		}
+		collabVal, ok := elem.(resource_budget.CollaboratorsValue)
+		if !ok {
+			continue
+		}
+		if collabVal.Role.IsUnknown() {
+			continue
+		}
+		if collabVal.Role.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("collaborators").AtListIndex(i).AtName("role"),
+				"Collaborator Role Required",
+				"Every collaborator needs a role (owner, editor or viewer). The DoiT API rejects a collaborator without one.",
+			)
+		}
+	}
+}
+
 // budgetCollaboratorsOwnerValidator validates that a configured collaborators
 // list contains exactly one owner.
 //

@@ -690,6 +690,23 @@ func toExternalConfigWrite(ctx context.Context, config resource_report.ConfigVal
 	return &write, diags
 }
 
+// withStoredDataSource returns the model with an unknown config.data_source
+// replaced by the stored one. An omitted data_source plans unknown on update, the
+// request leaves an unknown out, and the API resets an omitted data source to the
+// tenant default instead of keeping the stored one. A value the plan holds
+// (explicit, or kept by ignore_changes) is sent as planned.
+func (plan reportResourceModel) withStoredDataSource(state reportResourceModel) reportResourceModel {
+	if plan.Config.IsNull() || plan.Config.IsUnknown() || state.Config.IsNull() || state.Config.IsUnknown() {
+		return plan
+	}
+	if plan.Config.DataSource.IsUnknown() && !state.Config.DataSource.IsUnknown() && !state.Config.DataSource.IsNull() {
+		config := plan.Config
+		config.DataSource = state.Config.DataSource
+		plan.Config = config
+	}
+	return plan
+}
+
 func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (externalConfig *models.ExternalConfig, diags diag.Diagnostics) {
 	if config.IsNull() || config.IsUnknown() {
 		return nil, diags

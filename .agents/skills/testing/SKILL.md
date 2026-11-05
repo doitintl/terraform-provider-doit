@@ -320,6 +320,7 @@ Templates from the attribution-report guard (`internal/provider/attribution_vali
 - `TestAccReport_OmittedDataSourceIsUnknownOnUpdate`: an omitted Optional+Computed attribute plans Unknown when another attribute changes.
 - `TestAccReport_IgnoredDataSourceKeepsStoredPlanValue`: with `lifecycle.ignore_changes`, the plan keeps the stored value while config says another.
 - `TestAccReport_PlanShapeOfOmittedOptionalComputed` (`report_plan_shape_test.go`): one resource, all four shapes (unchanged, unknown, schema `Default`, clearing modifier). `PreApply` plan checks cannot run with `PlanOnly`, so those steps apply.
+- Make a probe that asserts "the value is kept" able to fail: first check the tenant default differs from the value you store, and add a control resource created without the attribute. `TestAccReport_OmittedDataSourceKeepsStoredValueOnUpdate` first passed vacuously because the tenant default was the stored value.
 - Unit side: `TestReportResource_ModifyPlan_AttributionReportReadOnly` (`attribution_validator_internal_test.go`).
 
 ---
