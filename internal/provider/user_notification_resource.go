@@ -78,7 +78,7 @@ func (r *userNotificationResource) ImportState(ctx context.Context, req resource
 }
 
 func (r *userNotificationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	planNotificationMetadataUnknownOnUpdate(ctx, req, resp)
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"), path.Root("update_time"))
 }
 
 func (r *userNotificationResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
