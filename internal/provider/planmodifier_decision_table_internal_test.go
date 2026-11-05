@@ -310,48 +310,57 @@ func TestUseNullOrDefaultForForecastSettings(t *testing.T) {
 func TestUseEmptyForUnconfiguredMetricsMirror(t *testing.T) {
 	ctx := t.Context()
 	elemType := resource_report.MetricsValue{}.Type(ctx)
+	attrTypes := resource_report.MetricsValue{}.AttributeTypes(ctx)
+	// populated builds a list of two populated metrics whose values depend on
+	// the marker, so the configured and planned list differ from the stored one.
+	populated := func(marker string) types.List {
+		metrics := make([]attr.Value, 0, 2)
+		for _, name := range []string{"cost", "usage"} {
+			metrics = append(metrics, resource_report.NewMetricsValueMust(attrTypes, map[string]attr.Value{
+				"type":  types.StringValue("basic"),
+				"value": types.StringValue(name + "-" + marker),
+			}))
+		}
+		return types.ListValueMust(elemType, metrics)
+	}
 	empty := func() types.List { return types.ListValueMust(elemType, []attr.Value{}) }
-	known := func() types.List {
-		return types.ListValueMust(elemType, []attr.Value{resource_report.NewMetricsValueNull()})
+	unknown := func() types.List { return types.ListUnknown(elemType) }
+	null := func() types.List { return types.ListNull(elemType) }
+
+	// The plan is what Terraform plans for the config: a configured list as
+	// it is, an unknown reference as unknown, and an omitted list as unknown
+	// (create, or an update of another attribute) or as the stored list
+	// (nothing else changes); see TestAccReport_PlanShapeOfOmittedMetrics.
+	tests := []struct {
+		name                string
+		config, state, plan types.List
+		want                types.List
+	}{
+		{"omitted, create", null(), null(), unknown(), empty()},
+		{"omitted, update of another attribute", null(), populated("stored"), unknown(), empty()},
+		{"omitted, nothing else changes", null(), populated("stored"), populated("stored"), empty()},
+		{"omitted, stored empty", null(), empty(), empty(), empty()},
+		{"configured, create", populated("planned"), null(), populated("planned"), populated("planned")},
+		{"configured, update", populated("planned"), populated("stored"), populated("planned"), populated("planned")},
+		{"configured empty", empty(), populated("stored"), empty(), empty()},
+		{"unknown reference, create", unknown(), null(), unknown(), unknown()},
+		{"unknown reference, update", unknown(), populated("stored"), unknown(), unknown()},
 	}
-	listInState := func(s valueState) types.List {
-		switch s {
-		case vsNull:
-			return types.ListNull(elemType)
-		case vsUnknown:
-			return types.ListUnknown(elemType)
-		default:
-			return known()
-		}
-	}
 
-	for _, config := range []valueState{vsNull, vsUnknown, vsKnown} {
-		for _, state := range []valueState{vsNull, vsKnown} {
-			for _, plan := range []valueState{vsNull, vsUnknown, vsKnown} {
-				t.Run("config "+string(config)+", state "+string(state)+", plan "+string(plan), func(t *testing.T) {
-					req := planmodifier.ListRequest{
-						ConfigValue: listInState(config),
-						StateValue:  listInState(state),
-						PlanValue:   listInState(plan),
-					}
-					resp := &planmodifier.ListResponse{PlanValue: req.PlanValue}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := planmodifier.ListRequest{ConfigValue: tt.config, StateValue: tt.state, PlanValue: tt.plan}
+			resp := &planmodifier.ListResponse{PlanValue: req.PlanValue}
 
-					useEmptyForUnconfiguredMetricsMirror().PlanModifyList(ctx, req, resp)
+			useEmptyForUnconfiguredMetricsMirror().PlanModifyList(ctx, req, resp)
 
-					if resp.Diagnostics.HasError() {
-						t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
-					}
-					// Only a null config value is replaced, on create and update alike.
-					want := listInState(plan)
-					if config == vsNull {
-						want = empty()
-					}
-					if !resp.PlanValue.Equal(want) {
-						t.Errorf("PlanValue = %v, want %v", resp.PlanValue, want)
-					}
-				})
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)
 			}
-		}
+			if !resp.PlanValue.Equal(tt.want) {
+				t.Errorf("PlanValue = %v, want %v", resp.PlanValue, tt.want)
+			}
+		})
 	}
 }
 
