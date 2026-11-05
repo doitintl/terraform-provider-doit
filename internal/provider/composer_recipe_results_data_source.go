@@ -181,7 +181,7 @@ func mapComposerRecipeResultsItemsList(ctx context.Context, items []models.Compo
 	for _, item := range items {
 		var resolvedTime types.String
 		if item.ResolvedTime != nil {
-			resolvedTime = types.StringValue(item.ResolvedTime.UTC().Format(time.RFC3339))
+			resolvedTime = types.StringValue(item.ResolvedTime.UTC().Format(time.RFC3339Nano))
 		} else {
 			resolvedTime = types.StringNull()
 		}
@@ -206,7 +206,7 @@ func mapComposerRecipeResultsItemsList(ctx context.Context, items []models.Compo
 				"cost_estimation_potential_increased_commitments_required": types.Float64PointerValue(item.CostEstimationPotentialIncreasedCommitmentsRequired),
 				"cost_estimation_potential_increased_costs":                types.Float64PointerValue(item.CostEstimationPotentialIncreasedCosts),
 				"cost_estimation_potential_savings":                        types.Float64PointerValue(item.CostEstimationPotentialSavings),
-				"detection_time":                                           types.StringValue(item.DetectionTime.UTC().Format(time.RFC3339)),
+				"detection_time":                                           types.StringValue(item.DetectionTime.UTC().Format(time.RFC3339Nano)),
 				"first_flow_id":                                            types.StringPointerValue(item.FirstFlowId),
 				"id":                                                       types.Int64Value(item.Id),
 				"is_active":                                                types.BoolValue(item.IsActive),

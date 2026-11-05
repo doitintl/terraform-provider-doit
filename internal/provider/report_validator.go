@@ -1439,11 +1439,11 @@ func reportCustomRangeDays(ctr resource_report.CustomTimeRangeValue) (time.Time,
 		return time.Time{}, time.Time{}, false
 	}
 
-	from, err := time.Parse(time.RFC3339, ctr.From.ValueString())
+	from, err := time.Parse(time.RFC3339Nano, ctr.From.ValueString())
 	if err != nil {
 		return time.Time{}, time.Time{}, false
 	}
-	to, err := time.Parse(time.RFC3339, ctr.To.ValueString())
+	to, err := time.Parse(time.RFC3339Nano, ctr.To.ValueString())
 	if err != nil {
 		return time.Time{}, time.Time{}, false
 	}

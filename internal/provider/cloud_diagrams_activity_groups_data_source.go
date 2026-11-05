@@ -150,7 +150,7 @@ func (d *cloudDiagramsActivityGroupsDataSource) Read(ctx context.Context, req da
 					"snapshot":    types.StringValue(g.Snapshot),
 					"statussheet": types.StringValue(g.Statussheet),
 					"tags":        tagsList,
-					"timestamp":   types.StringValue(g.Timestamp.UTC().Format(time.RFC3339)),
+					"timestamp":   types.StringValue(g.Timestamp.UTC().Format(time.RFC3339Nano)),
 				},
 			)
 			resp.Diagnostics.Append(valDiags...)
@@ -203,7 +203,7 @@ func mapActivityItems(ctx context.Context, items *[]models.CloudDiagramActivityI
 				"metadata":     metadataVal,
 				"service_type": types.StringPointerValue(item.ServiceType),
 				"tags":         tagsList,
-				"timestamp":    types.StringValue(item.Timestamp.UTC().Format(time.RFC3339)),
+				"timestamp":    types.StringValue(item.Timestamp.UTC().Format(time.RFC3339Nano)),
 			},
 		)
 		diags.Append(valDiags...)

@@ -11,6 +11,7 @@ linters:
     - depguard
     - durationcheck
     - errcheck
+    - forbidigo
     - forcetypeassert
     - godot
     - ineffassign
@@ -71,6 +72,13 @@ linters:
       - examples$
     rules:
       # Test file exclusions
+      - path: _test\.go
+        linters:
+          - forbidigo
+      # budget_validator.go formats times for error messages only, not API values
+      - path: budget_validator\.go
+        linters:
+          - forbidigo
       - path: _test\.go
         linters:
           - forcetypeassert
@@ -160,6 +168,11 @@ linters:
           - usestatefunknown
           - clearableattr
   settings:
+    forbidigo:
+      forbid:
+        - pattern: '^time\.RFC3339$'
+          msg: "Format API timestamps with time.RFC3339Nano: RFC3339 drops fractional seconds"
+      analyze-types: true
     depguard:
       rules:
         main:

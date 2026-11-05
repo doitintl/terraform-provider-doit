@@ -427,7 +427,7 @@ func mapStatussheetEntry(
 		imp := ssData.Statussheet.Import
 		var syncedAt basetypes.StringValue
 		if imp.SyncedAt != nil {
-			syncedAt = types.StringValue(imp.SyncedAt.Format(time.RFC3339))
+			syncedAt = types.StringValue(imp.SyncedAt.Format(time.RFC3339Nano))
 		} else {
 			syncedAt = types.StringNull()
 		}
@@ -456,7 +456,7 @@ func mapStatussheetEntry(
 			"_id":           types.StringValue(ssData.Statussheet.UnderscoreId),
 			"import":        importVal,
 			"links_version": types.Int64PointerValue(intPtrToInt64Ptr(ssData.Statussheet.LinksVersion)),
-			"updated_at":    types.StringValue(ssData.Statussheet.UpdatedAt.Format(time.RFC3339)),
+			"updated_at":    types.StringValue(ssData.Statussheet.UpdatedAt.Format(time.RFC3339Nano)),
 		},
 	)
 	diags.Append(metaDiags...)

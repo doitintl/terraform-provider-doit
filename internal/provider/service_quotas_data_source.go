@@ -226,7 +226,7 @@ func mapServiceQuotaToItemsValue(ctx context.Context, quota models.ServiceQuota)
 		map[string]attr.Value{
 			"cloud_provider":      types.StringValue(string(quota.CloudProvider)),
 			"limit":               types.Float64Value(quota.Limit),
-			"observed_at":         types.StringValue(quota.ObservedAt.UTC().Format(time.RFC3339)),
+			"observed_at":         types.StringValue(quota.ObservedAt.UTC().Format(time.RFC3339Nano)),
 			"quota":               types.StringValue(quota.Quota),
 			"region":              types.StringPointerValue(quota.Region),
 			"resource":            resourceVal,

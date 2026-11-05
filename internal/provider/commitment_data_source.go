@@ -172,12 +172,12 @@ func (ds *commitmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// Map date-time fields using RFC3339 for consistency with other data sources
 	if commitment.StartDate != nil {
-		state.StartDate = types.StringValue(commitment.StartDate.UTC().Format(time.RFC3339))
+		state.StartDate = types.StringValue(commitment.StartDate.UTC().Format(time.RFC3339Nano))
 	} else {
 		state.StartDate = types.StringNull()
 	}
 	if commitment.EndDate != nil {
-		state.EndDate = types.StringValue(commitment.EndDate.UTC().Format(time.RFC3339))
+		state.EndDate = types.StringValue(commitment.EndDate.UTC().Format(time.RFC3339Nano))
 	} else {
 		state.EndDate = types.StringNull()
 	}
@@ -228,14 +228,14 @@ func mapCommitmentPeriods(ctx context.Context, periods *[]models.CommitmentPerio
 
 		var startDate types.String
 		if p.StartDate != nil {
-			startDate = types.StringValue(p.StartDate.UTC().Format(time.RFC3339))
+			startDate = types.StringValue(p.StartDate.UTC().Format(time.RFC3339Nano))
 		} else {
 			startDate = types.StringNull()
 		}
 
 		var endDate types.String
 		if p.EndDate != nil {
-			endDate = types.StringValue(p.EndDate.UTC().Format(time.RFC3339))
+			endDate = types.StringValue(p.EndDate.UTC().Format(time.RFC3339Nano))
 		} else {
 			endDate = types.StringNull()
 		}

@@ -54,7 +54,7 @@ func budgetSuggestionItemAttrs(ctx context.Context, item models.BudgetSuggestion
 
 	generatedTime := types.StringNull()
 	if item.GeneratedTime != nil {
-		generatedTime = types.StringValue(item.GeneratedTime.UTC().Format(time.RFC3339))
+		generatedTime = types.StringValue(item.GeneratedTime.UTC().Format(time.RFC3339Nano))
 	}
 
 	confidence := types.StringNull()

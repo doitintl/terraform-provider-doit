@@ -30,17 +30,17 @@ func gcpSpendCudItemAttrs(_ context.Context, cud models.GcpSpendCud) (map[string
 
 	endTime := types.StringNull()
 	if t := nullableToPointer(cud.EndTime); t != nil {
-		endTime = types.StringValue(t.UTC().Format(time.RFC3339))
+		endTime = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	exportDate := types.StringNull()
 	if t := cud.ExportDate; t != nil {
-		exportDate = types.StringValue(t.UTC().Format(time.RFC3339))
+		exportDate = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	startTime := types.StringNull()
 	if t := nullableToPointer(cud.StartTime); t != nil {
-		startTime = types.StringValue(t.UTC().Format(time.RFC3339))
+		startTime = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	return map[string]attr.Value{

@@ -30,7 +30,7 @@ func gcpBillingAccountItemAttrs(ctx context.Context, account models.GcpBillingAc
 
 	commitmentsSyncTime := types.StringNull()
 	if syncTime := nullableToPointer(account.CommitmentsSyncTime); syncTime != nil {
-		commitmentsSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339))
+		commitmentsSyncTime = types.StringValue(syncTime.UTC().Format(time.RFC3339Nano))
 	}
 
 	onboardingStatus, d := mapGcpAccountsOnboardingStatus(ctx, account.OnboardingStatus)
@@ -104,7 +104,7 @@ func mapGcpAccountsOnboardingStatus(ctx context.Context, status *[]models.GcpOnb
 		func(i int) (map[string]attr.Value, diag.Diagnostics) {
 			startedAt := types.StringNull()
 			if t := nullableToPointer(entries[i].OnboardingStartedAt); t != nil {
-				startedAt = types.StringValue(t.UTC().Format(time.RFC3339))
+				startedAt = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 			}
 
 			return map[string]attr.Value{

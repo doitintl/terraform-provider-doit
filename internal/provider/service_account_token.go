@@ -18,7 +18,7 @@ import (
 
 // serviceAccountTokenExpiresTimePattern is the canonical form of expires_time:
 // UTC, whole seconds. The API normalizes timestamps to UTC (truncated to
-// microseconds) on read, while the provider formats with time.RFC3339, so any
+// microseconds) on read, while the provider formats with whole seconds, so any
 // other spelling would never match state and — because expires_time forces
 // replacement — would recreate the token on every apply.
 var serviceAccountTokenExpiresTimePattern = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$`)
@@ -74,9 +74,9 @@ func mapServiceAccountTokenToModel(resp *models.ServiceAccountToken, state *serv
 	state.CustomerId = types.StringPointerValue(resp.CustomerId)
 	state.Name = types.StringValue(resp.Name)
 	state.State = types.StringValue(string(resp.State))
-	state.CreateTime = nullableTimeToString(resp.CreateTime)
-	state.ExpiresTime = nullableTimeToString(resp.ExpiresTime)
-	state.LastUsedTime = nullableTimeToString(resp.LastUsedTime)
+	state.CreateTime = nullableTimeToWholeSeconds(resp.CreateTime)
+	state.ExpiresTime = nullableTimeToWholeSeconds(resp.ExpiresTime)
+	state.LastUsedTime = nullableTimeToWholeSeconds(resp.LastUsedTime)
 
 	// The path parameter is the source of truth during import; keep it when the
 	// response omits the field.
@@ -85,10 +85,21 @@ func mapServiceAccountTokenToModel(resp *models.ServiceAccountToken, state *serv
 	}
 }
 
-// nullableTimeToString formats an optional API timestamp as UTC RFC 3339.
+// nullableTimeToString formats an optional API timestamp as UTC RFC 3339,
+// keeping fractional seconds.
 func nullableTimeToString(n nullable.Nullable[time.Time]) types.String {
 	if t := nullableToPointer(n); t != nil {
-		return types.StringValue(t.UTC().Format(time.RFC3339))
+		return types.StringValue(t.UTC().Format(time.RFC3339Nano))
+	}
+	return types.StringNull()
+}
+
+// nullableTimeToWholeSeconds formats an optional API timestamp as UTC RFC 3339
+// truncated to whole seconds. Token timestamps need this: create and read
+// return different sub-second precision (see serviceAccountTokenExpiresTimePattern).
+func nullableTimeToWholeSeconds(n nullable.Nullable[time.Time]) types.String {
+	if t := nullableToPointer(n); t != nil {
+		return types.StringValue(t.UTC().Format(time.RFC3339)) //nolint:forbidigo // intentional truncation
 	}
 	return types.StringNull()
 }
@@ -161,7 +172,7 @@ func (plan *serviceAccountTokenResourceModel) toCreateRequest() (models.CreateSe
 	}
 
 	if !plan.ExpiresTime.IsUnknown() && !plan.ExpiresTime.IsNull() {
-		expires, err := time.Parse(time.RFC3339, plan.ExpiresTime.ValueString())
+		expires, err := time.Parse(time.RFC3339Nano, plan.ExpiresTime.ValueString())
 		if err != nil {
 			diags.AddAttributeError(
 				path.Root("expires_time"),

@@ -786,14 +786,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 	if !config.CustomTimeRange.IsNull() && !config.CustomTimeRange.IsUnknown() {
 		customTimeRange := models.ExternalConfigCustomTimeRange{}
 		if !config.CustomTimeRange.From.IsNull() && !config.CustomTimeRange.From.IsUnknown() {
-			fromTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.From.ValueString())
+			fromTime, err := time.Parse(time.RFC3339Nano, config.CustomTimeRange.From.ValueString())
 			if err != nil {
 				diags.AddError("Invalid From Time", "Could not parse CustomTimeRange.From as RFC3339: "+err.Error())
 			}
 			customTimeRange.From = &fromTime
 		}
 		if !config.CustomTimeRange.To.IsNull() && !config.CustomTimeRange.To.IsUnknown() {
-			toTime, err := time.Parse(time.RFC3339, config.CustomTimeRange.To.ValueString())
+			toTime, err := time.Parse(time.RFC3339Nano, config.CustomTimeRange.To.ValueString())
 			if err != nil {
 				diags.AddError("Invalid To Time", "Could not parse CustomTimeRange.To as RFC3339: "+err.Error())
 			}
@@ -1014,14 +1014,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !config.SecondaryTimeRange.CustomTimeRange.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.IsUnknown() {
 			ctr := models.TimeSettingsSecondaryCustomTimeRange{}
 			if !config.SecondaryTimeRange.CustomTimeRange.From.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.From.IsUnknown() {
-				fromTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.From.ValueString())
+				fromTime, err := time.Parse(time.RFC3339Nano, config.SecondaryTimeRange.CustomTimeRange.From.ValueString())
 				if err != nil {
 					diags.AddError("Invalid From Time", "Could not parse SecondaryTimeRange.CustomTimeRange.From as RFC3339: "+err.Error())
 				}
 				ctr.From = &fromTime
 			}
 			if !config.SecondaryTimeRange.CustomTimeRange.To.IsNull() && !config.SecondaryTimeRange.CustomTimeRange.To.IsUnknown() {
-				toTime, err := time.Parse(time.RFC3339, config.SecondaryTimeRange.CustomTimeRange.To.ValueString())
+				toTime, err := time.Parse(time.RFC3339Nano, config.SecondaryTimeRange.CustomTimeRange.To.ValueString())
 				if err != nil {
 					diags.AddError("Invalid To Time", "Could not parse SecondaryTimeRange.CustomTimeRange.To as RFC3339: "+err.Error())
 				}
@@ -1079,14 +1079,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			if !config.ForecastSettings.FutureCustomDateRange.IsNull() && !config.ForecastSettings.FutureCustomDateRange.IsUnknown() {
 				fcdr := models.ExternalForecastDateRange{}
 				if !config.ForecastSettings.FutureCustomDateRange.From.IsNull() && !config.ForecastSettings.FutureCustomDateRange.From.IsUnknown() {
-					fromTime, err := time.Parse(time.RFC3339, config.ForecastSettings.FutureCustomDateRange.From.ValueString())
+					fromTime, err := time.Parse(time.RFC3339Nano, config.ForecastSettings.FutureCustomDateRange.From.ValueString())
 					if err != nil {
 						diags.AddError("Invalid From Time", "Could not parse ForecastSettings.FutureCustomDateRange.From as RFC3339: "+err.Error())
 					}
 					fcdr.From = &fromTime
 				}
 				if !config.ForecastSettings.FutureCustomDateRange.To.IsNull() && !config.ForecastSettings.FutureCustomDateRange.To.IsUnknown() {
-					toTime, err := time.Parse(time.RFC3339, config.ForecastSettings.FutureCustomDateRange.To.ValueString())
+					toTime, err := time.Parse(time.RFC3339Nano, config.ForecastSettings.FutureCustomDateRange.To.ValueString())
 					if err != nil {
 						diags.AddError("Invalid To Time", "Could not parse ForecastSettings.FutureCustomDateRange.To as RFC3339: "+err.Error())
 					}
@@ -1099,14 +1099,14 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 			if !config.ForecastSettings.HistoricalCustomDateRange.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.IsUnknown() {
 				hcdr := models.ExternalForecastDateRange{}
 				if !config.ForecastSettings.HistoricalCustomDateRange.From.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.From.IsUnknown() {
-					fromTime, err := time.Parse(time.RFC3339, config.ForecastSettings.HistoricalCustomDateRange.From.ValueString())
+					fromTime, err := time.Parse(time.RFC3339Nano, config.ForecastSettings.HistoricalCustomDateRange.From.ValueString())
 					if err != nil {
 						diags.AddError("Invalid From Time", "Could not parse ForecastSettings.HistoricalCustomDateRange.From as RFC3339: "+err.Error())
 					}
 					hcdr.From = &fromTime
 				}
 				if !config.ForecastSettings.HistoricalCustomDateRange.To.IsNull() && !config.ForecastSettings.HistoricalCustomDateRange.To.IsUnknown() {
-					toTime, err := time.Parse(time.RFC3339, config.ForecastSettings.HistoricalCustomDateRange.To.ValueString())
+					toTime, err := time.Parse(time.RFC3339Nano, config.ForecastSettings.HistoricalCustomDateRange.To.ValueString())
 					if err != nil {
 						diags.AddError("Invalid To Time", "Could not parse ForecastSettings.HistoricalCustomDateRange.To as RFC3339: "+err.Error())
 					}
@@ -1265,20 +1265,20 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 
 		if ctr.From != nil {
 			// Preserve user's timestamp format if semantically equal
-			existingTime, err := time.Parse(time.RFC3339, existingFrom)
+			existingTime, err := time.Parse(time.RFC3339Nano, existingFrom)
 			if err == nil && existingTime.Equal(*ctr.From) {
 				ctrMap["from"] = types.StringValue(existingFrom)
 			} else {
-				ctrMap["from"] = types.StringValue(ctr.From.Format(time.RFC3339))
+				ctrMap["from"] = types.StringValue(ctr.From.Format(time.RFC3339Nano))
 			}
 		}
 		if ctr.To != nil {
 			// Preserve user's timestamp format if semantically equal
-			existingTime, err := time.Parse(time.RFC3339, existingTo)
+			existingTime, err := time.Parse(time.RFC3339Nano, existingTo)
 			if err == nil && existingTime.Equal(*ctr.To) {
 				ctrMap["to"] = types.StringValue(existingTo)
 			} else {
-				ctrMap["to"] = types.StringValue(ctr.To.Format(time.RFC3339))
+				ctrMap["to"] = types.StringValue(ctr.To.Format(time.RFC3339Nano))
 			}
 		}
 		ctrVal, d := resource_report.NewCustomTimeRangeValue(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
@@ -1749,19 +1749,19 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 
 			if config.SecondaryTimeRange.CustomTimeRange.From != nil {
-				existingTime, err := time.Parse(time.RFC3339, existingFrom)
+				existingTime, err := time.Parse(time.RFC3339Nano, existingFrom)
 				if err == nil && existingTime.Equal(*config.SecondaryTimeRange.CustomTimeRange.From) {
 					ctrMap["from"] = types.StringValue(existingFrom)
 				} else {
-					ctrMap["from"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.From.Format(time.RFC3339))
+					ctrMap["from"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.From.Format(time.RFC3339Nano))
 				}
 			}
 			if config.SecondaryTimeRange.CustomTimeRange.To != nil {
-				existingTime, err := time.Parse(time.RFC3339, existingTo)
+				existingTime, err := time.Parse(time.RFC3339Nano, existingTo)
 				if err == nil && existingTime.Equal(*config.SecondaryTimeRange.CustomTimeRange.To) {
 					ctrMap["to"] = types.StringValue(existingTo)
 				} else {
-					ctrMap["to"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.To.Format(time.RFC3339))
+					ctrMap["to"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.To.Format(time.RFC3339Nano))
 				}
 			}
 			ctrVal, ctrDiags := resource_report.NewCustomTimeRangeValue(resource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
@@ -1851,19 +1851,19 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 
 			if fs.FutureCustomDateRange.From != nil {
-				existingTime, err := time.Parse(time.RFC3339, existingFutureFrom)
+				existingTime, err := time.Parse(time.RFC3339Nano, existingFutureFrom)
 				if err == nil && datesEqualUTC(existingTime, *fs.FutureCustomDateRange.From) {
 					fcdrMap["from"] = types.StringValue(existingFutureFrom)
 				} else {
-					fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339))
+					fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339Nano))
 				}
 			}
 			if fs.FutureCustomDateRange.To != nil {
-				existingTime, err := time.Parse(time.RFC3339, existingFutureTo)
+				existingTime, err := time.Parse(time.RFC3339Nano, existingFutureTo)
 				if err == nil && datesEqualUTC(existingTime, *fs.FutureCustomDateRange.To) {
 					fcdrMap["to"] = types.StringValue(existingFutureTo)
 				} else {
-					fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339))
+					fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339Nano))
 				}
 			}
 			fcdrVal, fcdrDiags := resource_report.NewFutureCustomDateRangeValue(resource_report.FutureCustomDateRangeValue{}.AttributeTypes(ctx), fcdrMap)
@@ -1885,19 +1885,19 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			}
 
 			if fs.HistoricalCustomDateRange.From != nil {
-				existingTime, err := time.Parse(time.RFC3339, existingHistFrom)
+				existingTime, err := time.Parse(time.RFC3339Nano, existingHistFrom)
 				if err == nil && datesEqualUTC(existingTime, *fs.HistoricalCustomDateRange.From) {
 					hcdrMap["from"] = types.StringValue(existingHistFrom)
 				} else {
-					hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339))
+					hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339Nano))
 				}
 			}
 			if fs.HistoricalCustomDateRange.To != nil {
-				existingTime, err := time.Parse(time.RFC3339, existingHistTo)
+				existingTime, err := time.Parse(time.RFC3339Nano, existingHistTo)
 				if err == nil && datesEqualUTC(existingTime, *fs.HistoricalCustomDateRange.To) {
 					hcdrMap["to"] = types.StringValue(existingHistTo)
 				} else {
-					hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339))
+					hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339Nano))
 				}
 			}
 			hcdrVal, hcdrDiags := resource_report.NewHistoricalCustomDateRangeValue(resource_report.HistoricalCustomDateRangeValue{}.AttributeTypes(ctx), hcdrMap)

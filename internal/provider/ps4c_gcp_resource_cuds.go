@@ -30,27 +30,27 @@ func gcpResourceCudItemAttrs(ctx context.Context, cud models.GcpResourceCud) (ma
 
 	createdTime := types.StringNull()
 	if t := nullableToPointer(cud.CreatedTime); t != nil {
-		createdTime = types.StringValue(t.UTC().Format(time.RFC3339))
+		createdTime = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	customTermEligibleUntil := types.StringNull()
 	if t := nullableToPointer(cud.CustomTermEligibleUntil); t != nil {
-		customTermEligibleUntil = types.StringValue(t.UTC().Format(time.RFC3339))
+		customTermEligibleUntil = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	endTime := types.StringNull()
 	if t := nullableToPointer(cud.EndTime); t != nil {
-		endTime = types.StringValue(t.UTC().Format(time.RFC3339))
+		endTime = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	exportDate := types.StringNull()
 	if t := cud.ExportDate; t != nil {
-		exportDate = types.StringValue(t.UTC().Format(time.RFC3339))
+		exportDate = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	startTime := types.StringNull()
 	if t := nullableToPointer(cud.StartTime); t != nil {
-		startTime = types.StringValue(t.UTC().Format(time.RFC3339))
+		startTime = types.StringValue(t.UTC().Format(time.RFC3339Nano))
 	}
 
 	var reservedResourcesItems []models.GcpResourceCudReservedResourcesItem

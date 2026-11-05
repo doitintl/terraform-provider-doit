@@ -111,7 +111,7 @@ func (d *cloudDiagramsStatsDataSource) Read(ctx context.Context, req datasource.
 	}
 
 	// Parse the required start/end timestamps.
-	startTime, err := time.Parse(time.RFC3339, data.Start.ValueString())
+	startTime, err := time.Parse(time.RFC3339Nano, data.Start.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Start Time",
@@ -120,7 +120,7 @@ func (d *cloudDiagramsStatsDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	endTime, err := time.Parse(time.RFC3339, data.End.ValueString())
+	endTime, err := time.Parse(time.RFC3339Nano, data.End.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid End Time",
@@ -316,7 +316,7 @@ func mapStatsImport(
 	// Map synced_at timestamp.
 	var syncedAt types.String
 	if importState.SyncedAt != nil {
-		syncedAt = types.StringValue(importState.SyncedAt.Format(time.RFC3339))
+		syncedAt = types.StringValue(importState.SyncedAt.Format(time.RFC3339Nano))
 	} else {
 		syncedAt = types.StringNull()
 	}

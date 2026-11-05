@@ -270,10 +270,10 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 				"to":   types.StringNull(),
 			}
 			if fs.FutureCustomDateRange.From != nil {
-				fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339))
+				fcdrMap["from"] = types.StringValue(fs.FutureCustomDateRange.From.UTC().Format(time.RFC3339Nano))
 			}
 			if fs.FutureCustomDateRange.To != nil {
-				fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339))
+				fcdrMap["to"] = types.StringValue(fs.FutureCustomDateRange.To.UTC().Format(time.RFC3339Nano))
 			}
 			fcdrVal, fcdrDiags := datasource_report.NewFutureCustomDateRangeValue(datasource_report.FutureCustomDateRangeValue{}.AttributeTypes(ctx), fcdrMap)
 			diags.Append(fcdrDiags...)
@@ -286,10 +286,10 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 				"to":   types.StringNull(),
 			}
 			if fs.HistoricalCustomDateRange.From != nil {
-				hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339))
+				hcdrMap["from"] = types.StringValue(fs.HistoricalCustomDateRange.From.UTC().Format(time.RFC3339Nano))
 			}
 			if fs.HistoricalCustomDateRange.To != nil {
-				hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339))
+				hcdrMap["to"] = types.StringValue(fs.HistoricalCustomDateRange.To.UTC().Format(time.RFC3339Nano))
 			}
 			hcdrVal, hcdrDiags := datasource_report.NewHistoricalCustomDateRangeValue(datasource_report.HistoricalCustomDateRangeValue{}.AttributeTypes(ctx), hcdrMap)
 			diags.Append(hcdrDiags...)
@@ -312,10 +312,10 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 			"to":   types.StringNull(),
 		}
 		if ctr.From != nil {
-			ctrMap["from"] = types.StringValue(ctr.From.Format(time.RFC3339))
+			ctrMap["from"] = types.StringValue(ctr.From.Format(time.RFC3339Nano))
 		}
 		if ctr.To != nil {
-			ctrMap["to"] = types.StringValue(ctr.To.Format(time.RFC3339))
+			ctrMap["to"] = types.StringValue(ctr.To.Format(time.RFC3339Nano))
 		}
 		ctrVal, ctrDiags := datasource_report.NewCustomTimeRangeValue(datasource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
 		diags.Append(ctrDiags...)
@@ -619,10 +619,10 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 				"to":   types.StringNull(),
 			}
 			if config.SecondaryTimeRange.CustomTimeRange.From != nil {
-				ctrMap["from"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.From.Format(time.RFC3339))
+				ctrMap["from"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.From.Format(time.RFC3339Nano))
 			}
 			if config.SecondaryTimeRange.CustomTimeRange.To != nil {
-				ctrMap["to"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.To.Format(time.RFC3339))
+				ctrMap["to"] = types.StringValue(config.SecondaryTimeRange.CustomTimeRange.To.Format(time.RFC3339Nano))
 			}
 			ctrVal, ctrDiags := datasource_report.NewCustomTimeRangeValue(datasource_report.CustomTimeRangeValue{}.AttributeTypes(ctx), ctrMap)
 			diags.Append(ctrDiags...)

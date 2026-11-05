@@ -46,6 +46,8 @@
 
 ### BUG FIXES
 
+- **all resources and data sources**: Timestamps read from the API now keep fractional seconds (RFC 3339 with nanoseconds) instead of being truncated to whole seconds. Whole-second values are unchanged. Computed timestamps that the API returns with sub-second precision show the precise value after the next refresh, and configured timestamps keep their configured spelling when the instant is the same. `doit_service_account_token` still uses whole seconds ([#446](https://github.com/doitintl/terraform-provider-doit/issues/446))
+
 - **resource/doit_budget**: The `scoped_to_allocation` example scoped the budget to every allocation, including group allocations, which budgets reject. It now uses the first single allocation
 
 - **resource/doit_sharing**: Group allocations can now be shared. Previously the provider sent `public = ""`, which the API rejected for group allocations ([#317](https://github.com/doitintl/terraform-provider-doit/issues/317)). Requires the upstream API change from CMP-51363, which is already deployed
