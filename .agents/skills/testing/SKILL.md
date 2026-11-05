@@ -328,6 +328,9 @@ Templates from the attribution-report guard (`internal/provider/attribution_vali
 - **Never compare a result with the input variable.** Build the expected value fresh (a second literal, or a second call to the builder). A helper may modify its input, and then `got == input` passes whatever the helper did. A broken fallback in `planSetNestedAttributesFromState` went unnoticed through two review rounds this way.
 - **Decision table.** As for validators (see [implement-validator](../implement-validator/SKILL.md)), a helper that reads config, plan and state needs a table test over null, unknown and known config values against each attribute class: Required, Optional, Optional+Computed without and with a clearing modifier, Computed-only, and an attribute with a schema `Default`. A table like this catches two bugs a happy-path test missed: element pairing that treated unknown and omitted values as wildcards, and a false "Duplicate Set Elements" error for unknown values.
 - **Generic set code needs permutations.** Run every element order, elements that overlap in omitted or unknown values, and new and removed elements. First-fit matching passed 2 of the 4 orders of a two-element case.
+- **Give each row inputs shaped like the framework's.** The config, plan and state of a row must be what Terraform would hand the helper for that row: a configured value is planned as that value, an omitted Computed value is unknown. One fixed plan for every row (for example always unknown) leaves the rows where the plan is known untested, and a "left alone" row cannot fail.
+- **Assert the exact output, not a class of it.** Compare with a freshly built expected value. `IsUnknown()` or `!IsNull()` passes when a helper overwrites a known value with another of the same class, and `len(paths) == 1 && paths[0] == p` reduced to a boolean passes a wrong or extra path on a row that expects none. A negative row asserts the empty result (no replace paths, no diagnostics); a positive row asserts exactly the expected result.
+- **Prove the table can fail.** Before pushing a new table, mutate the code under test (weaken its condition, make it overwrite a known value, add an extra output) and check that at least one row fails, then revert. Run the unmutated baseline in the same session: a row whose expectation is wrong shows up there.
 
 ---
 
@@ -530,7 +533,8 @@ func getAlertCount(t *testing.T) int {
 - [ ] Cover empty lists and omitted attributes
 - [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks
 - [ ] Build expected values fresh, never from the input the code under test received
-- [ ] Plan helpers: null/unknown/known × attribute-class decision table; set code: every element order
+- [ ] Plan helpers: null/unknown/known × attribute-class decision table with framework-shaped inputs per row; set code: every element order
+- [ ] Assert exact outputs (empty result on negative rows), then mutate the code under test once to see a row fail
 - [ ] Set attributes: change one element of two and assert the other keeps its computed values
 - [ ] Use unique resource names
 - [ ] Cache expensive helpers with `sync.Once`
