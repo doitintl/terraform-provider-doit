@@ -8,7 +8,8 @@
 // first (maps.Clone, slices.Clone, or the asCopy helper in internal/provider).
 //
 // The check is intentionally local: it tracks the variable passed as &v to As
-// and reports writes to v until v is reassigned. It does not follow v into
+// and reports writes to v, or to a subslice of v, unless v was reassigned
+// before them on every path. It does not follow v into
 // other variables or functions.
 package tftypesalias
 
@@ -38,6 +39,8 @@ var Analyzer = &analysis.Analyzer{
 var inPlaceSliceFuncs = map[string]bool{
 	"slices.Reverse": true, "slices.Sort": true, "slices.SortFunc": true,
 	"slices.SortStableFunc": true, "slices.Fill": true,
+	"slices.Delete": true, "slices.DeleteFunc": true, "slices.Insert": true,
+	"slices.Replace": true, "slices.Compact": true, "slices.CompactFunc": true,
 	"sort.Slice": true, "sort.SliceStable": true,
 }
 
@@ -52,29 +55,47 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-// checkBody collects the alias variables of one function body, then reports
-// the writes to them. Positions order the two: a write counts only after the
-// As call and before the next reassignment of the variable.
-func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
-	aliasFrom := map[types.Object]token.Pos{} // object → position of its As call
-	reassigned := map[types.Object][]token.Pos{}
+// reassignment is a plain or short-declaration assignment to an alias
+// variable. It clears the alias only for positions inside scope, the block
+// that holds it: an assignment under an if, in a loop body or in a closure
+// that is never called is not guaranteed to run before a later write.
+type reassignment struct {
+	end   token.Pos
+	scope ast.Node
+}
 
+// checkBody collects the alias variables of one function body, then reports
+// the writes to them. Positions order the two: a write counts when some As
+// call precedes it with no guaranteed reassignment in between.
+func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
+	aliasFrom := map[types.Object][]token.Pos{} // object → ends of its As calls
+	reassigned := map[types.Object][]reassignment{}
+
+	var stack []ast.Node
 	ast.Inspect(body, func(n ast.Node) bool {
+		if n == nil {
+			stack = stack[:len(stack)-1]
+			return true
+		}
+		stack = append(stack, n)
 		switch n := n.(type) {
 		case *ast.CallExpr:
 			if obj := aliasTarget(pass, n); obj != nil {
-				if _, seen := aliasFrom[obj]; !seen {
-					aliasFrom[obj] = n.End()
-				}
+				aliasFrom[obj] = append(aliasFrom[obj], n.End())
 			}
 		case *ast.AssignStmt:
-			if n.Tok == token.ASSIGN {
-				for _, lhs := range n.Lhs {
-					if id, ok := lhs.(*ast.Ident); ok {
-						if obj := pass.TypesInfo.Uses[id]; obj != nil {
-							reassigned[obj] = append(reassigned[obj], n.End())
-						}
-					}
+			if n.Tok != token.ASSIGN && n.Tok != token.DEFINE {
+				break
+			}
+			for _, lhs := range n.Lhs {
+				id, ok := lhs.(*ast.Ident)
+				if !ok {
+					continue
+				}
+				// Uses holds the variables an assignment reuses; a := that
+				// declares a new name records it in Defs instead.
+				if obj := pass.TypesInfo.Uses[id]; obj != nil {
+					reassigned[obj] = append(reassigned[obj], reassignment{n.End(), enclosingScope(stack)})
 				}
 			}
 		}
@@ -84,21 +105,26 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 		return
 	}
 
-	// written reports whether expr is an alias variable that is live at pos.
+	// written reports whether expr, possibly sliced, is an alias variable
+	// that is live at pos.
 	written := func(expr ast.Expr, pos token.Pos) (string, bool) {
-		id, ok := ast.Unparen(expr).(*ast.Ident)
+		id, ok := unsliced(expr).(*ast.Ident)
 		if !ok {
 			return "", false
 		}
 		obj := pass.TypesInfo.Uses[id]
-		from, ok := aliasFrom[obj]
-		if !ok || pos < from {
-			return "", false
+		for _, from := range aliasFrom[obj] {
+			if pos < from {
+				continue
+			}
+			cleared := slices.ContainsFunc(reassigned[obj], func(r reassignment) bool {
+				return r.end > from && r.end <= pos && r.scope.Pos() <= pos && pos < r.scope.End()
+			})
+			if !cleared {
+				return id.Name, true
+			}
 		}
-		if slices.ContainsFunc(reassigned[obj], func(p token.Pos) bool { return p > from && p <= pos }) {
-			return "", false
-		}
-		return id.Name, true
+		return "", false
 	}
 	report := func(pos token.Pos, name string) {
 		pass.Reportf(pos,
@@ -123,10 +149,7 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 		case *ast.IncDecStmt:
 			indexed(n.X)
 		case *ast.CallExpr:
-			if len(n.Args) == 0 {
-				return true
-			}
-			if !isWriteCall(pass, n) {
+			if len(n.Args) == 0 || !isWriteCall(pass, n) {
 				return true
 			}
 			if name, ok := written(n.Args[0], n.Pos()); ok {
@@ -135,6 +158,30 @@ func checkBody(pass *analysis.Pass, body *ast.BlockStmt) {
 		}
 		return true
 	})
+}
+
+// enclosingScope returns the innermost block of the node on top of stack.
+func enclosingScope(stack []ast.Node) ast.Node {
+	for i := len(stack) - 2; i >= 0; i-- {
+		switch stack[i].(type) {
+		case *ast.BlockStmt, *ast.CaseClause, *ast.CommClause:
+			return stack[i]
+		}
+	}
+	return stack[0]
+}
+
+// unsliced strips parentheses and slice expressions: s[1:] and s[:] share
+// the backing array of s.
+func unsliced(expr ast.Expr) ast.Expr {
+	for {
+		switch e := ast.Unparen(expr).(type) {
+		case *ast.SliceExpr:
+			expr = e.X
+		default:
+			return e
+		}
+	}
 }
 
 // aliasTarget returns the variable v of a call x.As(&v), where x is a
