@@ -15,6 +15,9 @@ make testacc
 
 # Run a specific acceptance test
 make testacc-run TEST=TestAccLabel
+
+# Regex anchors work; single-quote the pattern so your shell keeps the "$"
+make testacc-run TEST='TestAccLabel$|TestAccBudget$'
 ```
 
 Do NOT use `go test` directly.
@@ -88,7 +91,7 @@ See `.envrc.example` for the full list. Key variables:
 
 `make testacc` automatically runs acceptance tests using `-run '^TestAcc'`,
 skipping the package's unit tests (`*_internal_test.go` and other non-`TestAcc` tests).
-`make testacc-run TEST=...` forwards your specific test regex (`-run '$(TEST)'`).
+`make testacc-run TEST=...` forwards your specific test regex (`-run '$(value TEST)'`, so `$` anchors are preserved).
 The unit suite (`make test`) runs in a hermetic cleanroom environment where all
 credentials and `TF_ACC` are explicitly cleared. CI runs both `make test` (credential-free)
 and `make testacc` in separate jobs. **Before pushing, always run the unit suite:**
