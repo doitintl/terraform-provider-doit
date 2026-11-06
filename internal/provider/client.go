@@ -209,6 +209,9 @@ func parseRetryAfterBounded(header string, now time.Time, minWait, maxWait time.
 // | 524 | Permanent error - no retry (Cloudflare edge timeout) |
 // | Other 4xx/5xx | Permanent error - no retry |
 //
+// The pass-through case of the switch below is also what the retrystatus linter
+// reads: it flags resource code that branches on any status not returned here.
+//
 // # Timeout
 //
 // The retry loop has no elapsed-time limit of its own (MaxElapsedTime is 0). It

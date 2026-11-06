@@ -54,6 +54,7 @@ linters:
     - methodreceiver
     - requestguard
     - retrypolicy
+    - retrystatus
     - testserver
     - zerocount
     - clearableattr
@@ -105,6 +106,7 @@ linters:
           - delete404
           - timeoutcheck
           - read404
+          - retrystatus
           - setnestedplan
           - volatileplan
           - tftypesalias
@@ -134,6 +136,7 @@ linters:
           - delete404
           - timeoutcheck
           - read404
+          - retrystatus
           - setnestedplan
           - volatileplan
           - tftypesalias
@@ -244,6 +247,9 @@ linters:
       timeoutcheck:
         type: "module"
         description: "Ensures CRUD methods use context.WithTimeout."
+      retrystatus:
+        type: "module"
+        description: "Flags branches on statuses DCIRetryClient turns into errors, which resource code never sees."
       read404:
         type: "module"
         description: "Ensures resource Read methods call RemoveResource for externally deleted resources."
