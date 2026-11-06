@@ -24,7 +24,8 @@
 //     a switch case. Range checks such as "StatusCode() >= 400" are not flagged;
 //     they are the generic way to detect an error and are valid;
 //   - a read of a generated response's JSON<status> or
-//     ApplicationproblemJSON<status> field for such a status. The 4xx and 5xx
+//     ApplicationproblemJSON<status> field, or of its GetJSON<status> getter,
+//     for such a status. The 4xx and 5xx
 //     catch-all fields are flagged only when no status in that class is passed
 //     through.
 //
@@ -36,6 +37,7 @@ import (
 	"go/ast"
 	"go/constant"
 	"go/token"
+	"go/types"
 	"regexp"
 	"strconv"
 
@@ -57,7 +59,10 @@ const (
 
 // bodyFieldPattern matches the generated typed-body fields, for example JSON403
 // and ApplicationproblemJSON404, and the class forms JSON4xx and JSON5xx.
-var bodyFieldPattern = regexp.MustCompile(`^(?:Applicationproblem)?JSON([0-9]{3}|[45]xx)$`)
+//
+// The generated getters GetJSON403 and friends return the same field, so the
+// pattern accepts an optional Get prefix.
+var bodyFieldPattern = regexp.MustCompile(`^(?:Get)?(?:Applicationproblem)?JSON([0-9]{3}|[45]xx)$`)
 
 // Analyzer is the go/analysis Analyzer for retrystatus.
 var Analyzer = &analysis.Analyzer{
@@ -174,13 +179,47 @@ func statusConstant(pass *analysis.Pass, expr ast.Expr) (int, bool) {
 
 // isStatusCodeCall reports whether expr is a call of a method named StatusCode,
 // which is how the generated clients expose a response's status.
-func isStatusCodeCall(expr ast.Expr) bool {
+func isStatusCodeCall(pass *analysis.Pass, expr ast.Expr) bool {
 	call, ok := expr.(*ast.CallExpr)
 	if !ok || len(call.Args) != 0 {
 		return false
 	}
 	sel, ok := call.Fun.(*ast.SelectorExpr)
-	return ok && sel.Sel.Name == "StatusCode"
+	return ok && sel.Sel.Name == "StatusCode" && isGeneratedResponse(pass.TypesInfo.TypeOf(sel.X))
+}
+
+// isGeneratedResponse reports whether t is a generated client response: a
+// struct holding both the raw Body bytes and the HTTPResponse. Matching the
+// shape rather than a package or type name covers every generated XxxResp and
+// leaves unrelated types with a StatusCode method or a JSON403 field alone.
+func isGeneratedResponse(t types.Type) bool {
+	if t == nil {
+		return false
+	}
+	if ptr, ok := t.Underlying().(*types.Pointer); ok {
+		t = ptr.Elem()
+	}
+	st, ok := t.Underlying().(*types.Struct)
+	if !ok {
+		return false
+	}
+	var hasBody, hasHTTP bool
+	for field := range st.Fields() {
+		switch field.Name() {
+		case "Body":
+			if slice, ok := field.Type().(*types.Slice); ok {
+				basic, ok := slice.Elem().(*types.Basic)
+				hasBody = ok && basic.Kind() == types.Byte
+			}
+		case "HTTPResponse":
+			if ptr, ok := field.Type().(*types.Pointer); ok {
+				if named, ok := ptr.Elem().(*types.Named); ok {
+					hasHTTP = named.Obj().Name() == "Response"
+				}
+			}
+		}
+	}
+	return hasBody && hasHTTP
 }
 
 func unreachable(passed map[int]bool, status int) bool {
@@ -199,7 +238,7 @@ func checkComparison(pass *analysis.Pass, passed map[int]bool, expr *ast.BinaryE
 		return
 	}
 	for _, pair := range [][2]ast.Expr{{expr.X, expr.Y}, {expr.Y, expr.X}} {
-		if !isStatusCodeCall(pair[0]) {
+		if !isStatusCodeCall(pass, pair[0]) {
 			continue
 		}
 		if status, ok := statusConstant(pass, pair[1]); ok && unreachable(passed, status) {
@@ -209,7 +248,7 @@ func checkComparison(pass *analysis.Pass, passed map[int]bool, expr *ast.BinaryE
 }
 
 func checkSwitch(pass *analysis.Pass, passed map[int]bool, stmt *ast.SwitchStmt) {
-	if stmt.Tag == nil || !isStatusCodeCall(stmt.Tag) {
+	if stmt.Tag == nil || !isStatusCodeCall(pass, stmt.Tag) {
 		return
 	}
 	for _, stmt := range stmt.Body.List {
@@ -230,8 +269,9 @@ func checkBodyField(pass *analysis.Pass, passed map[int]bool, sel *ast.SelectorE
 	if match == nil {
 		return
 	}
-	// Only fields of a struct: a package-qualified identifier is not a body.
-	if _, ok := pass.TypesInfo.Selections[sel]; !ok {
+	// Only members of a generated response: a package-qualified identifier or
+	// an unrelated struct's JSON403 field is not a response body.
+	if !isGeneratedResponse(pass.TypesInfo.TypeOf(sel.X)) {
 		return
 	}
 	switch match[1] {

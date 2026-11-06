@@ -23,6 +23,8 @@ func (c *DCIRetryClient) Do(resp *http.Response) (*http.Response, error) {
 type problem struct{}
 
 type response struct {
+	Body                      []byte
+	HTTPResponse              *http.Response
 	JSON200                   *problem
 	JSON403                   *problem
 	JSON404                   *problem
@@ -33,6 +35,21 @@ type response struct {
 }
 
 func (r *response) StatusCode() int { return 0 }
+
+func (r *response) GetJSON403() *problem { return r.JSON403 } // want `field JSON403 is never seen by resource code`
+func (r *response) GetJSON404() *problem { return r.JSON404 }
+
+// unrelated has the same member names but is not a generated response.
+type unrelated struct {
+	JSON403 *problem
+}
+
+func (u *unrelated) StatusCode() int { return 0 }
+
+func useUnrelated(u *unrelated) {
+	_ = u.StatusCode() == http.StatusForbidden
+	_ = u.JSON403
+}
 
 func use(r *response) {
 	_ = r.StatusCode() == http.StatusNotFound // passed through
@@ -54,6 +71,8 @@ func use(r *response) {
 	_ = r.JSON4xx // class contains passed-through statuses
 	_ = r.ApplicationproblemJSON412
 
+	_ = r.GetJSON404()
+	_ = r.GetJSON403()              // want `field GetJSON403 is never seen by resource code`
 	_ = r.JSON403                   // want `field JSON403 is never seen by resource code`
 	_ = r.JSON5xx                   // want `field JSON5xx is never seen by resource code`
 	_ = r.ApplicationproblemJSON500 // want `field ApplicationproblemJSON500 is never seen by resource code`
