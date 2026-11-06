@@ -163,6 +163,14 @@ if resp.StatusCode() != 201 {
 
 > **Linter:** `errformat` — flags `AddError` calls missing status code or body.
 
+### Statuses resource code can see
+
+`DCIRetryClient.Do` returns a response only for 2xx, 3xx, 404, 412 and 425. Every other status becomes an error: 429/502/503/504 after the retries, the rest as `backoff.Permanent`. The error message (`non-retryable error: 403, body: ...`) already carries the status and body.
+
+So never branch on `StatusCode() == 403` (or any other status outside that list), and never read `JSON403`/`ApplicationproblemJSON500`-style typed bodies for it: the call returns `nil, err`, the `err != nil` branch runs first, and the code you wrote is unreachable. Unit tests that call a helper directly will not catch this. If a resource genuinely needs another status (as 412 and 425 do), add it to the pass-through case in `DCIRetryClient.Do` and its status table in `client.go`.
+
+> **Linter:** `retrystatus` — flags comparisons, `switch` cases and typed-body reads for statuses the retry client never passes through. It reads the pass-through set from `DCIRetryClient.Do`, so it follows that switch.
+
 ## Delete 404 Handling
 
 Treat HTTP 404 as success in Delete — the resource is already gone:
