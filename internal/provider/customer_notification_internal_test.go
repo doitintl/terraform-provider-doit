@@ -511,13 +511,13 @@ func TestValidateCustomerNotificationAllocations(t *testing.T) {
 		{"include ids", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, a, b)), ""},
 		{"duplicate before unknown", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, a, a, unknown)), "Duplicate Allocation ID"},
 		{"duplicate after unknown", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, unknown, a, a)), "Duplicate Allocation ID"},
-		// Null and empty IDs are rejected by the API, and a null element cannot
-		// be converted to the request's []string.
-		{"null id", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, types.StringNull())), "Invalid Allocation ID"},
+		// Empty IDs are rejected by the API. Null IDs are rejected by the
+		// attribute's NoNullValues validator, so this one stays silent.
+		{"null id", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, types.StringNull())), ""},
 		{"empty id", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, a, types.StringValue(""))), "Invalid Allocation ID"},
-		{"null id after unknown", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, unknown, types.StringNull())), "Invalid Allocation ID"},
+		{"null id after unknown", testCustomerAllocationsValue(t, types.StringValue("include"), stringList(t, unknown, types.StringNull())), ""},
 		{"empty id before unknown", testCustomerAllocationsValue(t, types.StringValue("exclude"), stringList(t, types.StringValue(""), unknown)), "Invalid Allocation ID"},
-		{"null id with unknown mode", testCustomerAllocationsValue(t, types.StringUnknown(), stringList(t, types.StringNull())), "Invalid Allocation ID"},
+		{"null id with unknown mode", testCustomerAllocationsValue(t, types.StringUnknown(), stringList(t, types.StringNull())), ""},
 	}
 
 	for _, tt := range tests {

@@ -200,6 +200,7 @@ func (r *allocationResource) Schema(ctx context.Context, _ resource.SchemaReques
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

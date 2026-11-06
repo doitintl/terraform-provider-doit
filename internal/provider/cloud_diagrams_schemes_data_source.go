@@ -78,6 +78,7 @@ func (d *cloudDiagramsSchemesDataSource) Schema(ctx context.Context, _ datasourc
 	genSchema.Description = "Retrieves Cloud Diagram data including diagrams, layers, and components."
 	genSchema.MarkdownDescription = "Retrieves Cloud Diagram data including diagrams, layers, and components."
 
+	rejectNullDataSourceCollectionElements(genSchema.Attributes)
 	resp.Schema = genSchema
 }
 

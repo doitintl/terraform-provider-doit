@@ -44,6 +44,7 @@ func (d *cloudDiagramsActivityGroupsDataSource) Schema(ctx context.Context, _ da
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	s.Description = "Retrieves snapshot activity groups for a Cloud Diagram layer."
 	s.MarkdownDescription = "Retrieves snapshot activity groups for a Cloud Diagram layer."
+	rejectNullDataSourceCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

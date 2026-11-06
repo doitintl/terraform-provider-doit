@@ -128,6 +128,7 @@ func (r *alertResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

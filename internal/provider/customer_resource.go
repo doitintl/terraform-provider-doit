@@ -116,6 +116,7 @@ func (r *customerResource) Schema(ctx context.Context, _ resource.SchemaRequest,
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 

@@ -119,6 +119,7 @@ func (r *roleResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 		Delete: true,
 	})
 
+	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
 }
 
