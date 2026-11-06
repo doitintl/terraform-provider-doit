@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 const (
@@ -58,10 +59,10 @@ func TestAccUserNotificationDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccUserNotificationDataSourceAddr, "settings.cost_anomalies.min_excess_cost.amount", "1000000.00"),
 					resource.TestCheckResourceAttr(testAccUserNotificationDataSourceAddr, "settings.cost_anomalies.min_excess_cost.currency", "USD"),
 					resource.TestCheckResourceAttr(testAccUserNotificationDataSourceAddr, "settings.cost_anomalies.allocations.mode", "all"),
-					resource.TestCheckResourceAttr(testAccUserNotificationDataSourceAddr, "settings.cost_anomalies.allocations.ids.#", "0"),
 					resource.TestCheckNoResourceAttr(testAccUserNotificationDataSourceAddr, "settings.cost_anomalies.repeat.every_hours"),
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr, tfjsonpath.New("settings").AtMapKey("cost_anomalies").AtMapKey("allocations").AtMapKey("ids"), knownvalue.ListExact([]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccUserNotificationDataSourceAddr,
 						testAccUserNotificationPath("repeat"), knownvalue.Null()),
 				},

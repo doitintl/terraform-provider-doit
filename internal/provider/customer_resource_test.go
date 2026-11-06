@@ -10,7 +10,10 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -265,10 +268,12 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 				Config: omittedConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
-					resource.TestCheckResourceAttr("doit_customer.test", "contact.emails.#", "0"),
-					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.#", "0"),
 					resource.TestCheckResourceAttr("doit_customer.test", "settings.mfa_required", "true"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_customer.test", tfjsonpath.New("contact"), knownvalue.Null()),
+					statecheck.ExpectKnownValue("doit_customer.test", tfjsonpath.New("settings").AtMapKey("allowed_invite_domains"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 			},
 			// Step 9: Drift check after clearing via omission
 			{
@@ -285,9 +290,11 @@ func TestAccCustomerResource_Lifecycle(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_customer.test", "id", original.Id),
 					resource.TestCheckResourceAttr("doit_customer.test", "url_slug", ""),
-					resource.TestCheckResourceAttr("doit_customer.test", "contact.emails.#", "0"),
-					resource.TestCheckResourceAttr("doit_customer.test", "settings.allowed_invite_domains.#", "0"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_customer.test", tfjsonpath.New("contact").AtMapKey("emails"), knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue("doit_customer.test", tfjsonpath.New("settings").AtMapKey("allowed_invite_domains"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 			},
 			// Step 11: Drift check after explicit clear
 			{

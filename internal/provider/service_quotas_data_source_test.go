@@ -10,8 +10,11 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // TestAccServiceQuotasDataSource_AutoPagination tests that without max_results,
@@ -157,9 +160,11 @@ func TestAccServiceQuotasDataSource_MinUtilization_Excludes(t *testing.T) {
 			{
 				Config: testAccServiceQuotasDataSourceMinUtilizationConfig(math.Min(maxUtil+1, 100)),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_service_quotas.by_utilization", "items.#", "0"),
 					resource.TestCheckResourceAttr("data.doit_service_quotas.by_utilization", "row_count", "0"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.doit_service_quotas.by_utilization", tfjsonpath.New("items"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 			},
 		},
 	})
