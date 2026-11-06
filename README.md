@@ -252,6 +252,8 @@ The `make testacc` targets automatically source `.envrc.local`. If you use [dire
 | `TEST_ANOMALY_ID`                      | Anomaly ID for anomaly data source tests                     |
 | `TEST_CLOUD_INCIDENT_ID`               | Cloud incident ID for cloud incident data source tests       |
 | `TEST_COMMITMENT_ID`                   | Commitment ID for commitment data source tests               |
+| `TEST_DASHBOARD_ID`                    | Dashboard ID for customer subscription tests (copy from the console URL) |
+| `TEST_BILLING_PROFILE_ID`              | Billing profile ID for user notification tests (copy from the console URL) |
 | `TEST_ASSET_ID`                        | Asset ID for asset data source tests (G Suite)               |
 | `TEST_ASSET_ID_AWS`                    | AWS asset ID for asset data source tests                     |
 | `TEST_CLOUD_DIAGRAM_RESOURCE`          | Cloud resource ID for cloud diagrams data source tests       |
