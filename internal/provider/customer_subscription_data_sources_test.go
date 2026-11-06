@@ -91,10 +91,10 @@ func TestAccCustomerSubscriptionDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrPair(testAccCustomerSubscriptionDataSourceAddr, "etag", testAccCustomerSubscriptionAddr, "etag"),
 					resource.TestCheckResourceAttrPair(testAccCustomerSubscriptionDataSourceAddr, "created_by", testAccCustomerSubscriptionAddr, "created_by"),
 					resource.TestCheckResourceAttr(testAccCustomerSubscriptionDataSourceAddr, "recipients.emails.0", strings.ToLower(email)),
-					resource.TestCheckResourceAttr(testAccCustomerSubscriptionDataSourceAddr, "recipients.slack_channels.#", "0"),
 					resource.TestCheckResourceAttr(testAccCustomerSubscriptionDataSourceAddr, "subscriptions.#", "1"),
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccCustomerSubscriptionDataSourceAddr, tfjsonpath.New("recipients").AtMapKey("slack_channels"), knownvalue.ListExact([]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccCustomerSubscriptionDataSourceAddr, tfjsonpath.New("subscriptions"),
 						knownvalue.SetExact([]knownvalue.Check{knownvalue.ObjectExact(map[string]knownvalue.Check{
 							"type":         knownvalue.StringExact("report-subscription"),

@@ -8,7 +8,10 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // TestAccReportsDataSource_MaxResultsOnly tests that setting max_results limits results.
@@ -176,9 +179,11 @@ func TestAccReportsDataSource_NameContains(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_reports.filtered", "reports.0.report_name", rName),
 					resource.TestCheckResourceAttrPair("data.doit_reports.filtered", "reports.0.id", "doit_report.test", "id"),
 					resource.TestCheckResourceAttr("data.doit_reports.filtered", "row_count", "1"),
-					resource.TestCheckResourceAttr("data.doit_reports.empty", "reports.#", "0"),
 					resource.TestCheckResourceAttr("data.doit_reports.empty", "row_count", "0"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.doit_reports.empty", tfjsonpath.New("reports"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
 			{

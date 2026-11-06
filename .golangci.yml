@@ -55,6 +55,7 @@ linters:
     - requestguard
     - retrypolicy
     - testserver
+    - zerocount
     - clearableattr
     - validatorshape
     - validatordefer
@@ -124,8 +125,8 @@ linters:
           - validatordefer
           - attrswitch
           - modernize
-      # Test files — exclude custom linters. paralleltest, retrypolicy and
-      # testserver are absent deliberately: they only apply to tests.
+      # Test files — exclude custom linters. paralleltest, retrypolicy,
+      # testserver and zerocount are absent deliberately: they only apply to tests.
       - path: _test\.go
         linters:
           - overlaycheck
@@ -306,6 +307,9 @@ linters:
       testserver:
         type: "module"
         description: "Enforces httptest.NewTestServer and flags its redundant cleanup calls in tests."
+      zerocount:
+        type: "module"
+        description: "Flags TestCheckResourceAttr zero-count checks (.# / .%) that also pass for null attributes."
       clearableattr:
         type: "module"
         description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."

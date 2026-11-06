@@ -396,6 +396,14 @@ func TestAccResource_WithEmptyLists(t *testing.T) {
 }
 ```
 
+> [!CAUTION]
+> **Never assert emptiness with `TestCheckResourceAttr(addr, "attr.#", "0")`** (or `.%` for maps and objects).
+> terraform-plugin-testing treats a missing count key as zero, so the check also passes when the attribute is
+> null — and when a parent object is null, so it can pass without the attribute existing at all. Use
+> `knownvalue.ListExact([]knownvalue.Check{})`, `SetExact`, `MapExact` or `ObjectExact` as above; they fail on
+> null. To assert that an attribute is null, say so with `knownvalue.Null()`. The `zerocount` linter enforces
+> this; suppress with `//nolint:zerocount // <reason>` only where "absent or empty" is really the intent.
+
 ---
 
 ## Set Nested Attribute Coverage

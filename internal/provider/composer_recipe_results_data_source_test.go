@@ -6,7 +6,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 )
 
@@ -193,8 +196,10 @@ data "doit_composer_recipe_results" "nonexistent" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_composer_recipe_results.nonexistent", "recipe_id", "999999999"),
 					resource.TestCheckResourceAttr("data.doit_composer_recipe_results.nonexistent", "row_count", "0"),
-					resource.TestCheckResourceAttr("data.doit_composer_recipe_results.nonexistent", "items.#", "0"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.doit_composer_recipe_results.nonexistent", tfjsonpath.New("items"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),

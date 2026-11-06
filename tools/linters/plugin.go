@@ -32,6 +32,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/validatordefer"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/validatorshape"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/volatileplan"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/zerocount"
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/modernize"
@@ -63,6 +64,9 @@ func init() {
 	})
 	register.Plugin("testserver", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{testserver.Analyzer}}, nil
+	})
+	register.Plugin("zerocount", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{zerocount.Analyzer}}, nil
 	})
 
 	register.Plugin("overlayinvariant", func(_ any) (register.LinterPlugin, error) {

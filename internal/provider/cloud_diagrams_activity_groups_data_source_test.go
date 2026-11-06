@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccCloudDiagramsActivityGroupsDataSource_Basic(t *testing.T) {
@@ -55,9 +58,9 @@ data "doit_cloud_diagrams_activity_groups" "test" {
   ss_id  = local.first_layer_id
   offset = 999999
 }`,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.doit_cloud_diagrams_activity_groups.test", "cloud_diagrams_activity_groups.#", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.doit_cloud_diagrams_activity_groups.test", tfjsonpath.New("cloud_diagrams_activity_groups"), knownvalue.SetExact([]knownvalue.Check{})),
+				},
 			},
 		},
 	})

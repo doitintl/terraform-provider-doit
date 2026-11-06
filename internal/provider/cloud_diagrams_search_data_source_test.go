@@ -7,7 +7,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccCloudDiagramsSearchDataSource_Basic(t *testing.T) {
@@ -20,10 +23,12 @@ func TestAccCloudDiagramsSearchDataSource_Basic(t *testing.T) {
 				Config: testAccCloudDiagramsSearchDataSourceConfig("nonexistent-resource-12345"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.doit_cloud_diagrams_search.test", "id"),
-					resource.TestCheckResourceAttr("data.doit_cloud_diagrams_search.test", "scheme.#", "0"),
-					resource.TestCheckResourceAttr("data.doit_cloud_diagrams_search.test", "component.#", "0"),
-					resource.TestCheckResourceAttr("data.doit_cloud_diagrams_search.test", "prop.#", "0"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.doit_cloud_diagrams_search.test", tfjsonpath.New("scheme"), knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue("data.doit_cloud_diagrams_search.test", tfjsonpath.New("component"), knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue("data.doit_cloud_diagrams_search.test", tfjsonpath.New("prop"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 			},
 			{
 				Config:   testAccCloudDiagramsSearchDataSourceConfig("nonexistent-resource-12345"),

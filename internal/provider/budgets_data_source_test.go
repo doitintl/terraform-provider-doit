@@ -7,7 +7,10 @@ import (
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func testAccBudgetsDataSourceConfig() string {
@@ -231,9 +234,11 @@ func TestAccBudgetsDataSource_NameContains(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_budgets.first", "budgets.0.budget_name"),
 					resource.TestCheckResourceAttrSet("data.doit_budgets.filtered", "budgets.0.id"),
 					resource.TestCheckResourceAttrSet("data.doit_budgets.filtered", "row_count"),
-					resource.TestCheckResourceAttr("data.doit_budgets.empty", "budgets.#", "0"),
 					resource.TestCheckResourceAttr("data.doit_budgets.empty", "row_count", "0"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("data.doit_budgets.empty", tfjsonpath.New("budgets"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 			},
 			// Drift verification: re-apply the same config should produce an empty plan
 			{

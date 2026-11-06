@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 const (
@@ -53,17 +54,17 @@ func TestAccCustomerNotificationDataSource_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrPair(testAccCustomerNotificationDataSourceAddr, "create_time", testAccCustomerNotificationAddr, "create_time"),
 					resource.TestCheckResourceAttrPair(testAccCustomerNotificationDataSourceAddr, "update_time", testAccCustomerNotificationAddr, "update_time"),
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "destinations.emails.#", "1"),
-					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "destinations.slack_channels.#", "0"),
-					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "destinations.teams_channels.#", "0"),
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "settings.cost_anomalies.min_severity", "warning"),
 					// The data source reports the API's spelling of the amount, not the configured "1000000".
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "settings.cost_anomalies.min_excess_cost.amount", "1000000.00"),
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "settings.cost_anomalies.min_excess_cost.currency", "USD"),
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "settings.cost_anomalies.allocations.mode", "all"),
-					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "settings.cost_anomalies.allocations.ids.#", "0"),
 					resource.TestCheckNoResourceAttr(testAccCustomerNotificationDataSourceAddr, "settings.cost_anomalies.repeat.every_hours"),
 				),
 				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccCustomerNotificationDataSourceAddr, tfjsonpath.New("destinations").AtMapKey("slack_channels"), knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccCustomerNotificationDataSourceAddr, tfjsonpath.New("destinations").AtMapKey("teams_channels"), knownvalue.ListExact([]knownvalue.Check{})),
+					statecheck.ExpectKnownValue(testAccCustomerNotificationDataSourceAddr, tfjsonpath.New("settings").AtMapKey("cost_anomalies").AtMapKey("allocations").AtMapKey("ids"), knownvalue.ListExact([]knownvalue.Check{})),
 					statecheck.ExpectKnownValue(testAccCustomerNotificationDataSourceAddr,
 						testAccCustomerNotificationPath("repeat"), knownvalue.Null()),
 				},
@@ -140,8 +141,10 @@ func TestAccCustomerNotificationDataSource_Destinations(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "destinations.emails.0", strings.ToLower(testUser())),
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "destinations.slack_channels.#", "1"),
 					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "destinations.slack_channels.0", slack),
-					resource.TestCheckResourceAttr(testAccCustomerNotificationDataSourceAddr, "destinations.teams_channels.#", "0"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(testAccCustomerNotificationDataSourceAddr, tfjsonpath.New("destinations").AtMapKey("teams_channels"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
 			},
 			testAccCustomerNotificationDriftCheck(config),
 		},
