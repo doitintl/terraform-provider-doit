@@ -3,13 +3,14 @@ package provider
 import (
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func TestPlanNotificationMetadataUnknownOnUpdate(t *testing.T) {
+func TestPlanVolatileAttributesUnknownOnUpdate(t *testing.T) {
 	s := schema.Schema{Attributes: map[string]schema.Attribute{
 		"name":        schema.StringAttribute{Required: true},
 		"etag":        schema.StringAttribute{Computed: true},
@@ -48,7 +49,7 @@ func TestPlanNotificationMetadataUnknownOnUpdate(t *testing.T) {
 			}
 			resp := &resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: s, Raw: tt.plan.Copy()}}
 
-			planNotificationMetadataUnknownOnUpdate(t.Context(), req, resp)
+			planVolatileAttributesUnknownOnUpdate(t.Context(), req, resp, path.Root("etag"), path.Root("update_time"))
 
 			if resp.Diagnostics.HasError() {
 				t.Fatalf("unexpected diagnostics: %v", resp.Diagnostics)

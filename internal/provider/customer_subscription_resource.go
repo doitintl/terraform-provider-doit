@@ -63,9 +63,11 @@ func (r *customerSubscriptionResource) ImportState(ctx context.Context, req reso
 }
 
 // ModifyPlan plans the subscriptions set from the prior state: Terraform
-// cannot match set elements with computed attributes to it on its own.
+// cannot match set elements with computed attributes to it on its own. It then
+// marks etag unknown on every update, which the API changes.
 func (r *customerSubscriptionResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	planSetNestedAttributesFromState(ctx, req, resp)
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"))
 }
 
 func (r *customerSubscriptionResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {

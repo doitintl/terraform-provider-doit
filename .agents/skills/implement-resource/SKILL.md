@@ -267,7 +267,7 @@ if plan.Labels.IsNull() || (plan.Labels.IsKnown() && len(plan.Labels.Elements())
 | Import, has values         | n/a               | n/a                 | `["a"]`       | ✅      |
 | Explicit empty `[]`        | `[]` (plan)       | `[]` (plan wins)    | `[]`          | ✅      |
 
-> **Note on Computed-only fields:** When the list clearing modifier triggers an Update, Computed-only timestamp fields like `update_time` must be guarded with `IsUnknown()` in the overlay to avoid "inconsistent result" errors. On Create the field is Unknown (overlay sets it); on modifier-triggered Updates the field is Known (overlay preserves it; the next Read fetches the new value).
+> **Note on Computed-only fields:** The framework marks computed values unknown only when Terraform's proposed state differs from the prior state, and attribute plan modifiers run afterwards. An update caused only by a clearing modifier therefore plans volatile fields (`etag`, `update_time`) with their stored, known values. Keep the `IsUnknown()` guard in the overlay (it avoids "inconsistent result" errors on Update), but do not rely on the next Read to fix the value: state keeps the old `etag` after apply, and the next update without a refresh sends a stale `If-Match` and fails with 412. In `ModifyPlan`, call `planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"), path.Root("update_time"))` (`volatile_plan.go`) on every resource that has a clearing modifier and a volatile Computed-only attribute. Verify with an acceptance test that removes only the clearable attribute and asserts `plancheck.ExpectUnknownValue` on `etag` (see `TestAccServiceAccount_ClearOnlyUpdateRefreshesEtag`).
 
 ```go
 // In overlayXxxComputedFields:

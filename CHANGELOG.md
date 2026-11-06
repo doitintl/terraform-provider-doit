@@ -50,6 +50,8 @@
 
 ### BUG FIXES
 
+- **resource/doit_service_account**: Removing only `description` or `permissions` from the configuration planned the update with the stored `etag` and `update_time`, so state kept the old etag and the next update without a refresh failed with a 412 precondition error. Both are now planned unknown on every update
+
 - **all resources and data sources**: Timestamps read from the API now keep fractional seconds (RFC 3339 with nanoseconds) instead of being truncated to whole seconds. Whole-second values are unchanged. Computed timestamps that the API returns with sub-second precision show the precise value after the next refresh, and configured timestamps keep their configured spelling when the instant is the same. `doit_service_account_token` still uses whole seconds ([#446](https://github.com/doitintl/terraform-provider-doit/issues/446))
 
 - **resource/doit_budget**: The `scoped_to_allocation` example scoped the budget to every allocation, including group allocations, which budgets reject. It now uses the first single allocation
