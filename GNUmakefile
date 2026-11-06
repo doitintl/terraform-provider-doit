@@ -114,6 +114,8 @@ testacc:
 
 # Run a specific acceptance test
 # Usage: make testacc-run TEST=TestAccBudget
+# Regex anchors work: make testacc-run TEST='TestAccA$|TestAccB$'
+# ($(value TEST) keeps the pattern literal; $(TEST) would let make eat the "$".)
 testacc-run:
 	@$(LOAD_ACC_ENV); \
 	TF_ACC=1 $(GOTESTSUM) \
@@ -122,7 +124,7 @@ testacc-run:
 		--rerun-fails-max-failures=5 \
 		--rerun-fails-report=/tmp/testacc-reruns.txt \
 		--packages='./internal/provider/...' \
-		-- -timeout 120m -run '$(TEST)'
+		-- -timeout 120m -run '$(value TEST)'
 
 # Validate all examples against the provider schema
 validate-examples:
