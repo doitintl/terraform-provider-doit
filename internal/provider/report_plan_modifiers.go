@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"maps"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -268,4 +269,90 @@ func planReportTimeRangeOmittedFields(ctx context.Context, req resource.ModifyPl
 	if configTimeRange.IncludeCurrent.IsNull() && planTimeRange.IncludeCurrent.IsUnknown() {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, timeRangePath.AtName("include_current"), types.BoolValue(false))...)
 	}
+}
+
+// chartOptionAttrs are the display_settings booleans that default to false and
+// are cleared by sending an explicit false.
+var chartOptionAttrs = []string{"show_data_labels", "logarithmic_scale", "show_totals_panel"}
+
+// resetChartOptionsWhenDisplaySettingsOmitted plans the chart options as false
+// when the display_settings block is omitted and a block is stored. The other
+// leaves keep their stored values (Category B), as the PATCH preserves them.
+//
+// The leaf modifiers cannot do this: the framework skips the children of an
+// object whose plan is unknown, and an omitted display_settings plans unknown
+// as soon as another attribute of config changes. This object-level modifier
+// runs in that case too, because config itself is known.
+func resetChartOptionsWhenDisplaySettingsOmitted() planmodifier.Object {
+	return resetChartOptionsWhenDisplaySettingsOmittedModifier{}
+}
+
+type resetChartOptionsWhenDisplaySettingsOmittedModifier struct{}
+
+func (m resetChartOptionsWhenDisplaySettingsOmittedModifier) Description(_ context.Context) string {
+	return "Plans the stored display_settings with the chart options set to false when the block is omitted."
+}
+
+func (m resetChartOptionsWhenDisplaySettingsOmittedModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m resetChartOptionsWhenDisplaySettingsOmittedModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	// config is preserved on omission (Category B): while the wrapper is omitted
+	// nothing below it is cleared.
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+
+	// Nothing to clear on create, for a configured block, or for an unknown reference.
+	if !req.ConfigValue.IsNull() || req.StateValue.IsNull() || req.StateValue.IsUnknown() {
+		return
+	}
+
+	attrs := maps.Clone(req.StateValue.Attributes())
+	for _, name := range chartOptionAttrs {
+		attrs[name] = types.BoolValue(false)
+	}
+
+	val, diags := resource_report.NewDisplaySettingsValue(resource_report.DisplaySettingsValue{}.AttributeTypes(ctx), attrs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	obj, diags := val.ToObjectValue(ctx)
+	resp.Diagnostics.Append(diags...)
+	if !resp.Diagnostics.HasError() {
+		resp.PlanValue = obj
+	}
+}
+
+// useEmptyForUnknownBoolInReportConfigWhenConfigNull is
+// useEmptyForUnknownBoolWhenConfigNull for a boolean below config: it does
+// nothing while the config wrapper is omitted or unknown, because config is
+// preserved on omission and an unchanged plan must stay empty.
+func useEmptyForUnknownBoolInReportConfigWhenConfigNull() planmodifier.Bool {
+	return reportConfigBoolClearModifier{inner: useEmptyForUnknownBoolWhenConfigNull()}
+}
+
+type reportConfigBoolClearModifier struct {
+	inner planmodifier.Bool
+}
+
+func (m reportConfigBoolClearModifier) Description(ctx context.Context) string {
+	return m.inner.Description(ctx) + " Skipped while the config wrapper is omitted."
+}
+
+func (m reportConfigBoolClearModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m reportConfigBoolClearModifier) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+	m.inner.PlanModifyBool(ctx, req, resp)
 }

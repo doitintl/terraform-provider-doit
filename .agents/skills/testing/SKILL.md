@@ -310,6 +310,7 @@ Every plan-first resource must have these test categories:
 | **null↔[] consistency (non-clearable)** | Omit list fields, assert `ListSizeExact(0)` on Create AND drift-check                                                                                                               |
 | **null↔[] consistency (clearable)**     | Omit clearable list fields, assert `knownvalue.ListExact([]knownvalue.Check{})` on Create AND drift-check                                                                           |
 | **Clearing lifecycle**                  | Set a clearable attribute → drift check → clear it → drift check (see [Clearing Optional+Computed Attributes](../implement-resource/SKILL.md#clearing-optionalcomputed-attributes)) |
+| **Clearing with a sibling change**      | Clear the attribute (and, for a leaf in an optional nested object, remove the whole object) in the same step that changes another attribute of the parent; assert it is cleared after one apply and the next plan is empty. A leaf modifier is skipped while its parent plans unknown (see [Clearing Optional+Computed Attributes](../implement-resource/SKILL.md#testing-requirements)) |
 | **API normalization**                   | Use values the API will normalize, verify user value preserved                                                                                                                      |
 | **Value with boolean flags**            | Omit booleans, verify they resolve to `false` not `Unknown`                                                                                                                         |
 | **ModifyPlan / plan modifier plan shape** | Plan checks (`ExpectUnknownValue` / `ExpectKnownValue`) for any `ModifyPlan` logic or custom plan modifier that reads or decides on omitted or computed values (see below)                                           |
@@ -541,6 +542,8 @@ func getAlertCount(t *testing.T) int {
 
 - [ ] Use `resource.ParallelTest()`
 - [ ] Add drift verification step (`ExpectEmptyPlan()`)
+- [ ] Every clearable attribute: also clear it in the same step as a sibling change (a nested leaf: also remove the whole parent object)
+- [ ] Clearing modifier below an Optional+Computed wrapper that is preserved on omission: test the wrapper omitted (declare the resource without it, change the value through the API in `PreConfig`, expect an empty plan)
 - [ ] Add the `GenerateConfig` import-block step to the import test
 - [ ] Cover empty lists and omitted attributes
 - [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks

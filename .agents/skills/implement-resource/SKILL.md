@@ -494,6 +494,39 @@ Every clearable attribute (Category A) must have a clearing lifecycle test:
 // Step 4: Drift check (ExpectEmptyPlan) → confirms cleared value is stable
 ```
 
+**Clear it in the same step as a sibling change, too.** A leaf modifier inside an
+optional nested object does not run when the object plans unknown, which is what an
+omitted object does as soon as any other attribute of its parent changes (point 5 under
+[Writing a custom plan modifier](#writing-a-custom-plan-modifier-decisions-to-make)).
+Clearing only passes the lifecycle above because nothing else changes in that step, so
+the parent's plan is the stored one. Add the variants that can differ:
+
+```go
+// Variant A: remove the leaf AND change a sibling attribute in one step
+//            → value must be cleared after ONE apply, then ExpectEmptyPlan
+// Variant B (leaf inside an optional nested object): remove the WHOLE object,
+//            alone and together with a sibling change → assert the leaf's value
+```
+
+If variant A or B fails, clear it at the object level: a `planmodifier.Object` on the
+parent that, when its config is null and a stored object exists, plans the stored
+object with the clearable leaves reset (`resetChartOptionsWhenDisplaySettingsOmitted`
+in `report_plan_modifiers.go`). Keep the leaf modifiers for a block that is present
+with the leaf omitted. Every clearing modifier on a descendant of an Optional+Computed wrapper that is itself
+preserved on omission (`config` on `doit_report`) must first skip while that wrapper is
+omitted or unknown: call `isReportConfigWrapperNullOrUnknown(ctx, req.Config)`
+(`report_plan_modifiers.go`), as `useNullForCount` and the other `config.*` modifiers do.
+Without it, a report declared without `config` whose value changed outside Terraform
+plans an update to the cleared value on every plan. A shared generic modifier cannot
+know the wrapper, so wrap it (`useEmptyForUnknownBoolInReportConfigWhenConfigNull`; keep
+the `use…ForUnknown…WhenConfigNull` name shape, which `clearableattr` matches). Test it
+with an acceptance step that creates the resource without the wrapper, changes the value
+through the API in `PreConfig`, and expects an empty plan, plus a unit row whose
+`tfsdk.Config` has the wrapper null. Do not state what removing the whole object does from reasoning:
+measure it, then pin it with a test. The `clearableattr` linter reads the leaf names
+from a literal list, so keep the schema loop's names literal (a shared variable hides
+them).
+
 Every Category C (replace-on-clear) attribute must have a removal test:
 
 ```go

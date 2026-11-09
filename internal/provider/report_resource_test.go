@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
+
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
@@ -7119,4 +7122,316 @@ resource "doit_report" "cc_unknown_metric_forecast" {
   }
 }
 `, i)
+}
+
+// chartOptionsReportConfig renders a column_chart report whose display_settings
+// carries the given extra attribute lines (for example the chart options).
+func chartOptionsReportConfig(i int, displaySettings string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "chart_options" {
+    name        = "test-chart-options-%d"
+    description = "Report testing the display_settings chart options"
+    config = {
+        metrics = [{
+          type  = "basic"
+          value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_chart"
+        display_settings = {
+%s
+        }
+    }
+}
+`, i, displaySettings)
+}
+
+func expectChartOptions(showDataLabels, logarithmicScale, showTotalsPanel bool) []statecheck.StateCheck {
+	check := func(attrName string, want bool) statecheck.StateCheck {
+		return statecheck.ExpectKnownValue(
+			"doit_report.chart_options",
+			tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey(attrName),
+			knownvalue.Bool(want))
+	}
+	return []statecheck.StateCheck{
+		check("show_data_labels", showDataLabels),
+		check("logarithmic_scale", logarithmicScale),
+		check("show_totals_panel", showTotalsPanel),
+	}
+}
+
+// TestAccReport_DisplaySettings_ChartOptions covers the three chart options
+// (show_data_labels, logarithmic_scale, show_totals_panel): create, flip,
+// change one option on its own, import, and clearing.
+//
+// The options are Category A: false is the API's stored default and a PATCH
+// that omits a field keeps the stored value, so removing an option from the
+// configuration must send an explicit false.
+func TestAccReport_DisplaySettings_ChartOptions(t *testing.T) {
+	n := acctest.RandInt()
+
+	allTrue := `
+            show_data_labels  = true
+            logarithmic_scale = true
+            show_totals_panel = true`
+	allFalse := `
+            show_data_labels  = false
+            logarithmic_scale = false
+            show_totals_panel = false`
+	onlyLog := `
+            show_data_labels  = false
+            logarithmic_scale = true
+            show_totals_panel = false`
+	// number_scale keeps the block present while the three options are removed.
+	cleared := `
+            number_scale = "millions"`
+
+	noDrift := resource.ConfigPlanChecks{
+		PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			// Create with every option on.
+			{
+				Config:            chartOptionsReportConfig(n, allTrue),
+				ConfigStateChecks: expectChartOptions(true, true, true),
+			},
+			{Config: chartOptionsReportConfig(n, allTrue), ConfigPlanChecks: noDrift},
+			// Import: Read builds the options with no prior state.
+			{
+				ResourceName:      "doit_report.chart_options",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				ResourceName:    "doit_report.chart_options",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
+			// Flip all to false (explicit false is sent, not dropped).
+			{
+				Config:            chartOptionsReportConfig(n, allFalse),
+				ConfigStateChecks: expectChartOptions(false, false, false),
+			},
+			{Config: chartOptionsReportConfig(n, allFalse), ConfigPlanChecks: noDrift},
+			// Change one option; the others keep their values.
+			{
+				Config:            chartOptionsReportConfig(n, onlyLog),
+				ConfigStateChecks: expectChartOptions(false, true, false),
+			},
+			{Config: chartOptionsReportConfig(n, onlyLog), ConfigPlanChecks: noDrift},
+			// Set everything again, then clear by removing the three options.
+			{
+				Config:            chartOptionsReportConfig(n, allTrue),
+				ConfigStateChecks: expectChartOptions(true, true, true),
+			},
+			{
+				Config: chartOptionsReportConfig(n, cleared),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_report.chart_options", plancheck.ResourceActionUpdate),
+					},
+				},
+				ConfigStateChecks: expectChartOptions(false, false, false),
+			},
+			{Config: chartOptionsReportConfig(n, cleared), ConfigPlanChecks: noDrift},
+		},
+	})
+}
+
+// TestAccReport_DisplaySettings_ChartOptionsOmitted pins what an omitted option
+// reads back as: a known false, not null or unknown.
+func TestAccReport_DisplaySettings_ChartOptionsOmitted(t *testing.T) {
+	n := acctest.RandInt()
+	cfg := chartOptionsReportConfig(n, `            number_scale = "millions"`)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:            cfg,
+				ConfigStateChecks: expectChartOptions(false, false, false),
+			},
+			{
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_DisplaySettings_ChartOptionsBlockRemoved pins removing the
+// whole display_settings block. The other display_settings leaves are silently
+// preserved (Category B, see TestAccReport_DisplaySettings_NotClearable), but
+// the chart options are Category A: their clearing modifiers still run, so the
+// update sends false and they read back false without drift.
+func TestAccReport_DisplaySettings_ChartOptionsBlockRemoved(t *testing.T) {
+	n := acctest.RandInt()
+	withOptions := chartOptionsReportConfig(n, `            show_data_labels = true`)
+	withoutBlock := fmt.Sprintf(`
+resource "doit_report" "chart_options" {
+    name        = "test-chart-options-%d"
+    description = "Report testing the display_settings chart options"
+    config = {
+        metrics = [{
+          type  = "basic"
+          value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_chart"
+    }
+}
+`, n)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: withOptions,
+				ConfigStateChecks: []statecheck.StateCheck{statecheck.ExpectKnownValue(
+					"doit_report.chart_options",
+					tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("show_data_labels"),
+					knownvalue.Bool(true))},
+			},
+			{
+				Config: withoutBlock,
+				ConfigStateChecks: []statecheck.StateCheck{statecheck.ExpectKnownValue(
+					"doit_report.chart_options",
+					tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("show_data_labels"),
+					knownvalue.Bool(false))},
+			},
+			{
+				Config: withoutBlock,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAccReport_DisplaySettings_ChartOptionsBlockRemovedWithSiblingChange removes
+// the whole display_settings block in the same update that changes another
+// config attribute. The planned display_settings is then unknown, so the
+// modifiers of its children do not run; the options must still end up false in
+// one apply, with no follow-up diff.
+func TestAccReport_DisplaySettings_ChartOptionsBlockRemovedWithSiblingChange(t *testing.T) {
+	n := acctest.RandInt()
+	withOptions := chartOptionsReportConfig(n, `            show_data_labels = true`)
+	withoutBlock := strings.Replace(
+		chartOptionsReportConfigWithoutBlock(n), `currency       = "USD"`, `currency       = "EUR"`, 1)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:            withOptions,
+				ConfigStateChecks: expectChartOptions(true, false, false),
+			},
+			{
+				Config:            withoutBlock,
+				ConfigStateChecks: expectChartOptions(false, false, false),
+			},
+			{
+				Config: withoutBlock,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func chartOptionsReportConfigWithoutBlock(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "chart_options" {
+    name        = "test-chart-options-%d"
+    description = "Report testing the display_settings chart options"
+    config = {
+        metrics = [{
+          type  = "basic"
+          value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_chart"
+    }
+}
+`, i)
+}
+
+// TestAccReport_DisplaySettings_ChartOptionsConfigOmitted pins that a report
+// declared without config keeps chart options that were set outside Terraform.
+// config is Category B (preserved on omission), so the clearing modifiers of its
+// descendants must not plan false for options the user never configured.
+func TestAccReport_DisplaySettings_ChartOptionsConfigOmitted(t *testing.T) {
+	n := acctest.RandInt()
+	var reportID string
+	cfg := fmt.Sprintf(`
+resource "doit_report" "chart_options" {
+    name        = "test-chart-options-%d"
+    description = "Report testing the display_settings chart options"
+}
+`, n)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.TestCheckResourceAttrWith("doit_report.chart_options", "id", func(v string) error {
+					reportID = v
+					return nil
+				}),
+			},
+			// Turn an option on outside Terraform (the console), then plan the same
+			// configuration: the refreshed state holds true and config is still omitted.
+			{
+				PreConfig: func() {
+					resp, err := getAPIClient(t).UpdateReportWithResponse(t.Context(), reportID, models.UpdateReportJSONRequestBody{
+						Config: &models.ExternalConfigWrite{
+							DisplaySettings: &models.ExternalDisplaySettings{ShowDataLabels: new(true)},
+						},
+					})
+					if err != nil || resp.StatusCode() != 200 {
+						t.Fatalf("PATCH report: err=%v resp=%v", err, resp)
+					}
+				},
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{statecheck.ExpectKnownValue(
+					"doit_report.chart_options",
+					tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("show_data_labels"),
+					knownvalue.Bool(true))},
+			},
+		},
+	})
 }

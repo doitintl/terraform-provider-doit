@@ -3337,6 +3337,13 @@
 												}
 											},
 											{
+												"name": "logarithmic_scale",
+												"bool": {
+													"computed_optional_required": "computed_optional",
+													"description": "Plot the value axis on a logarithmic scale (the console's\n\"Logarithmic scale\" chart option). Applies to `line_chart`,\n`spline_chart`, `bar_chart` and `column_chart`; other layouts\nignore it. Omit on PATCH to leave the stored value unchanged. Has\nno effect on query results."
+												}
+											},
+											{
 												"name": "number_scale",
 												"string": {
 													"computed_optional_required": "computed_optional",
@@ -3353,6 +3360,20 @@
 															}
 														}
 													]
+												}
+											},
+											{
+												"name": "show_data_labels",
+												"bool": {
+													"computed_optional_required": "computed_optional",
+													"description": "Show value labels on chart data points (the console's \"Show labels\"\nchart option). Stacked layouts never draw data labels. `false` is\nalso returned for reports that never set the option; the console\nthen picks labels based on the layout and series count. Omit on\nPATCH to leave the stored value unchanged. Has no effect on query\nresults."
+												}
+											},
+											{
+												"name": "show_totals_panel",
+												"bool": {
+													"computed_optional_required": "computed_optional",
+													"description": "Open the series totals panel beside the chart when the report\nloads in the console (the \"Show totals panel\" chart option).\nApplies to line, area, bar and column layouts, stacked or not;\ndashboard widgets and exports never show it. Omit on PATCH to leave the stored value\nunchanged. Has no effect on query results."
 												}
 											},
 											{

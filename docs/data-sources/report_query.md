@@ -351,8 +351,24 @@ Possible values: `auto`, `small`, `medium`, `large`
 - `data_label_font_size` (String) Font size used for data labels on charts.
 Possible values: `auto`, `small`, `medium`, `large`
 - `decimal_precision` (Number) Number of decimal places shown for numeric values.
+- `logarithmic_scale` (Boolean) Plot the value axis on a logarithmic scale (the console's
+"Logarithmic scale" chart option). Applies to `line_chart`,
+`spline_chart`, `bar_chart` and `column_chart`; other layouts
+ignore it. Omit on PATCH to leave the stored value unchanged. Has
+no effect on query results.
 - `number_scale` (String) Scale applied to numeric values when rendering the report.
 Possible values: `auto`, `thousands`, `millions`, `billions`, `raw`
+- `show_data_labels` (Boolean) Show value labels on chart data points (the console's "Show labels"
+chart option). Stacked layouts never draw data labels. `false` is
+also returned for reports that never set the option; the console
+then picks labels based on the layout and series count. Omit on
+PATCH to leave the stored value unchanged. Has no effect on query
+results.
+- `show_totals_panel` (Boolean) Open the series totals panel beside the chart when the report
+loads in the console (the "Show totals panel" chart option).
+Applies to line, area, bar and column layouts, stacked or not;
+dashboard widgets and exports never show it. Omit on PATCH to leave the stored value
+unchanged. Has no effect on query results.
 - `theme_id` (String) Identifier of the theme applied to the report. The reserved
 sentinel `"default"` is returned on GET when no theme is stored
 and clears the stored value on PATCH. Omit the field on PATCH

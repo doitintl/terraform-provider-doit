@@ -243,6 +243,15 @@ func overlayDisplaySettings(resolved, plan *resource_report.DisplaySettingsValue
 	if plan.NumberScale.IsUnknown() {
 		plan.NumberScale = resolved.NumberScale
 	}
+	if plan.ShowDataLabels.IsUnknown() {
+		plan.ShowDataLabels = resolved.ShowDataLabels
+	}
+	if plan.LogarithmicScale.IsUnknown() {
+		plan.LogarithmicScale = resolved.LogarithmicScale
+	}
+	if plan.ShowTotalsPanel.IsUnknown() {
+		plan.ShowTotalsPanel = resolved.ShowTotalsPanel
+	}
 
 	// theme_id: Optional+Computed with Default "default" — never Unknown at plan time.
 }
@@ -1048,6 +1057,16 @@ func toExternalConfig(ctx context.Context, config resource_report.ConfigValue) (
 		if !config.DisplaySettings.NumberScale.IsNull() && !config.DisplaySettings.NumberScale.IsUnknown() {
 			ds.NumberScale = new(models.ExternalDisplaySettingsNumberScale(config.DisplaySettings.NumberScale.ValueString()))
 		}
+		// An explicit false is sent: it is what clears a stored true.
+		if !config.DisplaySettings.ShowDataLabels.IsNull() && !config.DisplaySettings.ShowDataLabels.IsUnknown() {
+			ds.ShowDataLabels = new(config.DisplaySettings.ShowDataLabels.ValueBool())
+		}
+		if !config.DisplaySettings.LogarithmicScale.IsNull() && !config.DisplaySettings.LogarithmicScale.IsUnknown() {
+			ds.LogarithmicScale = new(config.DisplaySettings.LogarithmicScale.ValueBool())
+		}
+		if !config.DisplaySettings.ShowTotalsPanel.IsNull() && !config.DisplaySettings.ShowTotalsPanel.IsUnknown() {
+			ds.ShowTotalsPanel = new(config.DisplaySettings.ShowTotalsPanel.ValueBool())
+		}
 		if !config.DisplaySettings.ThemeId.IsNull() {
 			ds.ThemeId = new(config.DisplaySettings.ThemeId.ValueString())
 		}
@@ -1785,6 +1804,9 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 			"data_label_font_size": types.StringNull(),
 			"decimal_precision":    types.Int64Null(),
 			"number_scale":         types.StringNull(),
+			"show_data_labels":     types.BoolNull(),
+			"logarithmic_scale":    types.BoolNull(),
+			"show_totals_panel":    types.BoolNull(),
 			// Defend against API returning nil: fall back to "default" to match
 			// the schema default and prevent perpetual plan drift.
 			"theme_id": types.StringValue("default"),
@@ -1800,6 +1822,15 @@ func mapReportToModel(ctx context.Context, resp *models.ExternalReport, state *r
 		}
 		if config.DisplaySettings.NumberScale != nil {
 			dsMap["number_scale"] = types.StringValue(string(*config.DisplaySettings.NumberScale))
+		}
+		if config.DisplaySettings.ShowDataLabels != nil {
+			dsMap["show_data_labels"] = types.BoolValue(*config.DisplaySettings.ShowDataLabels)
+		}
+		if config.DisplaySettings.LogarithmicScale != nil {
+			dsMap["logarithmic_scale"] = types.BoolValue(*config.DisplaySettings.LogarithmicScale)
+		}
+		if config.DisplaySettings.ShowTotalsPanel != nil {
+			dsMap["show_totals_panel"] = types.BoolValue(*config.DisplaySettings.ShowTotalsPanel)
 		}
 		if config.DisplaySettings.ThemeId != nil {
 			dsMap["theme_id"] = types.StringValue(*config.DisplaySettings.ThemeId)
