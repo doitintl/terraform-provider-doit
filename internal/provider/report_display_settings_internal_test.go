@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
@@ -223,5 +224,60 @@ func TestReportSchema_ChartOptionsAreClearable(t *testing.T) {
 		if !found {
 			t.Errorf("%s has no useEmptyForUnknownBoolWhenConfigNull modifier", name)
 		}
+	}
+}
+
+// resetChartOptionsWhenDisplaySettingsOmitted decision table: it acts only when
+// the block is omitted and a block is stored, and then plans the stored block
+// with the three chart options false and every other leaf as stored.
+func TestResetChartOptionsWhenDisplaySettingsOmitted(t *testing.T) {
+	ctx := t.Context()
+	attrTypes := resource_report.DisplaySettingsValue{}.AttributeTypes(ctx)
+
+	build := func(scale string, a, b, c bool) types.Object {
+		v := resource_report.NewDisplaySettingsValueMust(attrTypes, map[string]attr.Value{
+			"axis_label_font_size": types.StringValue("large"),
+			"data_label_font_size": types.StringNull(),
+			"decimal_precision":    types.Int64Value(2),
+			"number_scale":         types.StringValue(scale),
+			"show_data_labels":     types.BoolValue(a),
+			"logarithmic_scale":    types.BoolValue(b),
+			"show_totals_panel":    types.BoolValue(c),
+			"theme_id":             types.StringValue("default"),
+		})
+		o, d := v.ToObjectValue(ctx)
+		if d.HasError() {
+			t.Fatalf("ToObjectValue: %v", d)
+		}
+		return o
+	}
+	objType := types.ObjectNull(attrTypes)
+
+	tests := []struct {
+		name                string
+		config, state, plan types.Object
+		want                types.Object
+	}{
+		{"omitted, stored options on, plan unknown", objType, build("millions", true, true, true), types.ObjectUnknown(attrTypes), build("millions", false, false, false)},
+		{"omitted, stored options on, plan holds stored", objType, build("millions", true, false, true), build("millions", true, false, true), build("millions", false, false, false)},
+		{"omitted, stored options already off", objType, build("millions", false, false, false), types.ObjectUnknown(attrTypes), build("millions", false, false, false)},
+		{"create: nothing stored, plan unknown stays unknown", objType, objType, types.ObjectUnknown(attrTypes), types.ObjectUnknown(attrTypes)},
+		{"configured block is left alone", build("billions", true, true, true), build("millions", true, true, true), build("billions", true, true, true), build("billions", true, true, true)},
+		{"unknown config is left alone", types.ObjectUnknown(attrTypes), build("millions", true, true, true), types.ObjectUnknown(attrTypes), types.ObjectUnknown(attrTypes)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := &planmodifier.ObjectResponse{PlanValue: tt.plan}
+			resetChartOptionsWhenDisplaySettingsOmitted().PlanModifyObject(ctx, planmodifier.ObjectRequest{
+				ConfigValue: tt.config, StateValue: tt.state, PlanValue: tt.plan,
+			}, resp)
+			if resp.Diagnostics.HasError() {
+				t.Fatalf("diagnostics: %v", resp.Diagnostics)
+			}
+			if !resp.PlanValue.Equal(tt.want) {
+				t.Errorf("got %v, want %v", resp.PlanValue, tt.want)
+			}
+		})
 	}
 }

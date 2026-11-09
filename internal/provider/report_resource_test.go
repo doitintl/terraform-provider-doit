@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -7324,4 +7325,59 @@ resource "doit_report" "chart_options" {
 			},
 		},
 	})
+}
+
+// TestAccReport_DisplaySettings_ChartOptionsBlockRemovedWithSiblingChange removes
+// the whole display_settings block in the same update that changes another
+// config attribute. The planned display_settings is then unknown, so the
+// modifiers of its children do not run; the options must still end up false in
+// one apply, with no follow-up diff.
+func TestAccReport_DisplaySettings_ChartOptionsBlockRemovedWithSiblingChange(t *testing.T) {
+	n := acctest.RandInt()
+	withOptions := chartOptionsReportConfig(n, `            show_data_labels = true`)
+	withoutBlock := strings.Replace(
+		chartOptionsReportConfigWithoutBlock(n), `currency       = "USD"`, `currency       = "EUR"`, 1)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config:            withOptions,
+				ConfigStateChecks: expectChartOptions(true, false, false),
+			},
+			{
+				Config:            withoutBlock,
+				ConfigStateChecks: expectChartOptions(false, false, false),
+			},
+			{
+				Config: withoutBlock,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func chartOptionsReportConfigWithoutBlock(i int) string {
+	return fmt.Sprintf(`
+resource "doit_report" "chart_options" {
+    name        = "test-chart-options-%d"
+    description = "Report testing the display_settings chart options"
+    config = {
+        metrics = [{
+          type  = "basic"
+          value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_chart"
+    }
+}
+`, i)
 }

@@ -136,7 +136,11 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		// Category A: the chart options default to false and the API never returns
 		// null, so false is the cleared state. A PATCH that omits the field keeps the
 		// stored value, so clearing sends an explicit false (see toExternalConfig).
+		//
+		// Omitting the whole block clears them too, through an object-level modifier:
+		// the leaf modifiers do not run while the block plans unknown.
 		if dsAttr, ok := configAttr.Attributes["display_settings"].(schema.SingleNestedAttribute); ok {
+			dsAttr.PlanModifiers = append(dsAttr.PlanModifiers, resetChartOptionsWhenDisplaySettingsOmitted())
 			for _, name := range []string{"show_data_labels", "logarithmic_scale", "show_totals_panel"} {
 				if attr, ok := dsAttr.Attributes[name].(schema.BoolAttribute); ok {
 					attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownBoolWhenConfigNull())

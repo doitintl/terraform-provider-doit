@@ -494,6 +494,29 @@ Every clearable attribute (Category A) must have a clearing lifecycle test:
 // Step 4: Drift check (ExpectEmptyPlan) → confirms cleared value is stable
 ```
 
+**Clear it in the same step as a sibling change, too.** A leaf modifier inside an
+optional nested object does not run when the object plans unknown, which is what an
+omitted object does as soon as any other attribute of its parent changes (point 5 under
+[Writing a custom plan modifier](#writing-a-custom-plan-modifier-decisions-to-make)).
+Clearing only passes the lifecycle above because nothing else changes in that step, so
+the parent's plan is the stored one. Add the variants that can differ:
+
+```go
+// Variant A: remove the leaf AND change a sibling attribute in one step
+//            → value must be cleared after ONE apply, then ExpectEmptyPlan
+// Variant B (leaf inside an optional nested object): remove the WHOLE object,
+//            alone and together with a sibling change → assert the leaf's value
+```
+
+If variant A or B fails, clear it at the object level: a `planmodifier.Object` on the
+parent that, when its config is null and a stored object exists, plans the stored
+object with the clearable leaves reset (`resetChartOptionsWhenDisplaySettingsOmitted`
+in `report_plan_modifiers.go`). Keep the leaf modifiers for a block that is present
+with the leaf omitted. Do not state what removing the whole object does from reasoning:
+measure it, then pin it with a test. The `clearableattr` linter reads the leaf names
+from a literal list, so keep the schema loop's names literal (a shared variable hides
+them).
+
 Every Category C (replace-on-clear) attribute must have a removal test:
 
 ```go
