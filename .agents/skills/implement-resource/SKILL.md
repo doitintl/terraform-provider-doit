@@ -512,7 +512,17 @@ If variant A or B fails, clear it at the object level: a `planmodifier.Object` o
 parent that, when its config is null and a stored object exists, plans the stored
 object with the clearable leaves reset (`resetChartOptionsWhenDisplaySettingsOmitted`
 in `report_plan_modifiers.go`). Keep the leaf modifiers for a block that is present
-with the leaf omitted. Do not state what removing the whole object does from reasoning:
+with the leaf omitted. Every clearing modifier on a descendant of an Optional+Computed wrapper that is itself
+preserved on omission (`config` on `doit_report`) must first skip while that wrapper is
+omitted or unknown: call `isReportConfigWrapperNullOrUnknown(ctx, req.Config)`
+(`report_plan_modifiers.go`), as `useNullForCount` and the other `config.*` modifiers do.
+Without it, a report declared without `config` whose value changed outside Terraform
+plans an update to the cleared value on every plan. A shared generic modifier cannot
+know the wrapper, so wrap it (`useEmptyForUnknownBoolInReportConfigWhenConfigNull`; keep
+the `use…ForUnknown…WhenConfigNull` name shape, which `clearableattr` matches). Test it
+with an acceptance step that creates the resource without the wrapper, changes the value
+through the API in `PreConfig`, and expects an empty plan, plus a unit row whose
+`tfsdk.Config` has the wrapper null. Do not state what removing the whole object does from reasoning:
 measure it, then pin it with a test. The `clearableattr` linter reads the leaf names
 from a literal list, so keep the schema loop's names literal (a shared variable hides
 them).

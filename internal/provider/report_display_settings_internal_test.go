@@ -7,7 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	resource_report "github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
@@ -217,12 +219,12 @@ func TestReportSchema_ChartOptionsAreClearable(t *testing.T) {
 		}
 		found := false
 		for _, m := range b.PlanModifiers {
-			if _, ok := m.(useEmptyForUnknownBoolWhenConfigNullModifier); ok {
+			if _, ok := m.(reportConfigBoolClearModifier); ok {
 				found = true
 			}
 		}
 		if !found {
-			t.Errorf("%s has no useEmptyForUnknownBoolWhenConfigNull modifier", name)
+			t.Errorf("%s has no reportConfigBoolClearModifier", name)
 		}
 	}
 }
@@ -280,4 +282,64 @@ func TestResetChartOptionsWhenDisplaySettingsOmitted(t *testing.T) {
 			}
 		})
 	}
+}
+
+// While the config wrapper is omitted, config is preserved (Category B), so
+// neither the object modifier nor the leaf modifier may plan anything: the plan
+// holds the stored value and must stay as it is.
+func TestChartOptionModifiers_ConfigWrapperOmitted(t *testing.T) {
+	ctx := t.Context()
+
+	var schemaResp resource.SchemaResponse
+	(&reportResource{}).Schema(ctx, resource.SchemaRequest{}, &schemaResp)
+	rawNull := tftypes.NewValue(schemaResp.Schema.Type().TerraformType(ctx), nil)
+	omittedConfig := tfsdk.Config{Schema: schemaResp.Schema, Raw: rawNull}
+
+	attrTypes := resource_report.DisplaySettingsValue{}.AttributeTypes(ctx)
+	storedVal := resource_report.NewDisplaySettingsValueMust(attrTypes, map[string]attr.Value{
+		"axis_label_font_size": types.StringNull(),
+		"data_label_font_size": types.StringNull(),
+		"decimal_precision":    types.Int64Null(),
+		"number_scale":         types.StringNull(),
+		"show_data_labels":     types.BoolValue(true),
+		"logarithmic_scale":    types.BoolValue(true),
+		"show_totals_panel":    types.BoolValue(true),
+		"theme_id":             types.StringValue("default"),
+	})
+	stored, d := storedVal.ToObjectValue(ctx)
+	if d.HasError() {
+		t.Fatalf("ToObjectValue: %v", d)
+	}
+
+	t.Run("object modifier", func(t *testing.T) {
+		resp := &planmodifier.ObjectResponse{PlanValue: stored}
+		resetChartOptionsWhenDisplaySettingsOmitted().PlanModifyObject(ctx, planmodifier.ObjectRequest{
+			Config:      omittedConfig,
+			ConfigValue: types.ObjectNull(attrTypes),
+			StateValue:  stored,
+			PlanValue:   stored,
+		}, resp)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("diagnostics: %v", resp.Diagnostics)
+		}
+		if !resp.PlanValue.Equal(stored) {
+			t.Errorf("plan changed to %v, want the stored value %v", resp.PlanValue, stored)
+		}
+	})
+
+	t.Run("leaf modifier", func(t *testing.T) {
+		resp := &planmodifier.BoolResponse{PlanValue: types.BoolValue(true)}
+		useEmptyForUnknownBoolInReportConfigWhenConfigNull().PlanModifyBool(ctx, planmodifier.BoolRequest{
+			Config:      omittedConfig,
+			ConfigValue: types.BoolNull(),
+			StateValue:  types.BoolValue(true),
+			PlanValue:   types.BoolValue(true),
+		}, resp)
+		if resp.Diagnostics.HasError() {
+			t.Fatalf("diagnostics: %v", resp.Diagnostics)
+		}
+		if !resp.PlanValue.Equal(types.BoolValue(true)) {
+			t.Errorf("plan changed to %v, want true", resp.PlanValue)
+		}
+	})
 }

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -7380,4 +7382,56 @@ resource "doit_report" "chart_options" {
     }
 }
 `, i)
+}
+
+// TestAccReport_DisplaySettings_ChartOptionsConfigOmitted pins that a report
+// declared without config keeps chart options that were set outside Terraform.
+// config is Category B (preserved on omission), so the clearing modifiers of its
+// descendants must not plan false for options the user never configured.
+func TestAccReport_DisplaySettings_ChartOptionsConfigOmitted(t *testing.T) {
+	n := acctest.RandInt()
+	var reportID string
+	cfg := fmt.Sprintf(`
+resource "doit_report" "chart_options" {
+    name        = "test-chart-options-%d"
+    description = "Report testing the display_settings chart options"
+}
+`, n)
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.TestCheckResourceAttrWith("doit_report.chart_options", "id", func(v string) error {
+					reportID = v
+					return nil
+				}),
+			},
+			// Turn an option on outside Terraform (the console), then plan the same
+			// configuration: the refreshed state holds true and config is still omitted.
+			{
+				PreConfig: func() {
+					resp, err := getAPIClient(t).UpdateReportWithResponse(t.Context(), reportID, models.UpdateReportJSONRequestBody{
+						Config: &models.ExternalConfigWrite{
+							DisplaySettings: &models.ExternalDisplaySettings{ShowDataLabels: new(true)},
+						},
+					})
+					if err != nil || resp.StatusCode() != 200 {
+						t.Fatalf("PATCH report: err=%v resp=%v", err, resp)
+					}
+				},
+				Config: cfg,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{statecheck.ExpectKnownValue(
+					"doit_report.chart_options",
+					tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey("show_data_labels"),
+					knownvalue.Bool(true))},
+			},
+		},
+	})
 }

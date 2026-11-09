@@ -298,6 +298,14 @@ func (m resetChartOptionsWhenDisplaySettingsOmittedModifier) MarkdownDescription
 }
 
 func (m resetChartOptionsWhenDisplaySettingsOmittedModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	// config is preserved on omission (Category B): while the wrapper is omitted
+	// nothing below it is cleared.
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+
 	// Nothing to clear on create, for a configured block, or for an unknown reference.
 	if !req.ConfigValue.IsNull() || req.StateValue.IsNull() || req.StateValue.IsUnknown() {
 		return
@@ -318,4 +326,33 @@ func (m resetChartOptionsWhenDisplaySettingsOmittedModifier) PlanModifyObject(ct
 	if !resp.Diagnostics.HasError() {
 		resp.PlanValue = obj
 	}
+}
+
+// useEmptyForUnknownBoolInReportConfigWhenConfigNull is
+// useEmptyForUnknownBoolWhenConfigNull for a boolean below config: it does
+// nothing while the config wrapper is omitted or unknown, because config is
+// preserved on omission and an unchanged plan must stay empty.
+func useEmptyForUnknownBoolInReportConfigWhenConfigNull() planmodifier.Bool {
+	return reportConfigBoolClearModifier{inner: useEmptyForUnknownBoolWhenConfigNull()}
+}
+
+type reportConfigBoolClearModifier struct {
+	inner planmodifier.Bool
+}
+
+func (m reportConfigBoolClearModifier) Description(ctx context.Context) string {
+	return m.inner.Description(ctx) + " Skipped while the config wrapper is omitted."
+}
+
+func (m reportConfigBoolClearModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m reportConfigBoolClearModifier) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
+	wrapperNullOrUnknown, diags := isReportConfigWrapperNullOrUnknown(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || wrapperNullOrUnknown {
+		return
+	}
+	m.inner.PlanModifyBool(ctx, req, resp)
 }

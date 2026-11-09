@@ -143,7 +143,7 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			dsAttr.PlanModifiers = append(dsAttr.PlanModifiers, resetChartOptionsWhenDisplaySettingsOmitted())
 			for _, name := range []string{"show_data_labels", "logarithmic_scale", "show_totals_panel"} {
 				if attr, ok := dsAttr.Attributes[name].(schema.BoolAttribute); ok {
-					attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownBoolWhenConfigNull())
+					attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownBoolInReportConfigWhenConfigNull())
 					dsAttr.Attributes[name] = attr
 				}
 			}

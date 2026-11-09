@@ -543,6 +543,7 @@ func getAlertCount(t *testing.T) int {
 - [ ] Use `resource.ParallelTest()`
 - [ ] Add drift verification step (`ExpectEmptyPlan()`)
 - [ ] Every clearable attribute: also clear it in the same step as a sibling change (a nested leaf: also remove the whole parent object)
+- [ ] Clearing modifier below an Optional+Computed wrapper that is preserved on omission: test the wrapper omitted (declare the resource without it, change the value through the API in `PreConfig`, expect an empty plan)
 - [ ] Add the `GenerateConfig` import-block step to the import test
 - [ ] Cover empty lists and omitted attributes
 - [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks
