@@ -256,6 +256,12 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 									int64validator.Between(0, 8),
 								},
 							},
+							"logarithmic_scale": schema.BoolAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Plot the value axis on a logarithmic scale (the console's\n\"Logarithmic scale\" chart option). Applies to `line_chart`,\n`spline_chart`, `bar_chart` and `column_chart`; other layouts\nignore it. Omit on PATCH to leave the stored value unchanged. Has\nno effect on query results.",
+								MarkdownDescription: "Plot the value axis on a logarithmic scale (the console's\n\"Logarithmic scale\" chart option). Applies to `line_chart`,\n`spline_chart`, `bar_chart` and `column_chart`; other layouts\nignore it. Omit on PATCH to leave the stored value unchanged. Has\nno effect on query results.",
+							},
 							"number_scale": schema.StringAttribute{
 								Optional:            true,
 								Computed:            true,
@@ -270,6 +276,18 @@ func ReportResourceSchema(ctx context.Context) schema.Schema {
 										"raw",
 									),
 								},
+							},
+							"show_data_labels": schema.BoolAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Show value labels on chart data points (the console's \"Show labels\"\nchart option). Stacked layouts never draw data labels. `false` is\nalso returned for reports that never set the option; the console\nthen picks labels based on the layout and series count. Omit on\nPATCH to leave the stored value unchanged. Has no effect on query\nresults.",
+								MarkdownDescription: "Show value labels on chart data points (the console's \"Show labels\"\nchart option). Stacked layouts never draw data labels. `false` is\nalso returned for reports that never set the option; the console\nthen picks labels based on the layout and series count. Omit on\nPATCH to leave the stored value unchanged. Has no effect on query\nresults.",
+							},
+							"show_totals_panel": schema.BoolAttribute{
+								Optional:            true,
+								Computed:            true,
+								Description:         "Open the series totals panel beside the chart when the report\nloads in the console (the \"Show totals panel\" chart option).\nApplies to line, area, bar and column layouts, stacked or not;\ndashboard widgets and exports never show it. Omit on PATCH to leave the stored value\nunchanged. Has no effect on query results.",
+								MarkdownDescription: "Open the series totals panel beside the chart when the report\nloads in the console (the \"Show totals panel\" chart option).\nApplies to line, area, bar and column layouts, stacked or not;\ndashboard widgets and exports never show it. Omit on PATCH to leave the stored value\nunchanged. Has no effect on query results.",
 							},
 							"theme_id": schema.StringAttribute{
 								Optional:            true,
@@ -5055,6 +5073,24 @@ func (t DisplaySettingsType) ValueFromObject(ctx context.Context, in basetypes.O
 			fmt.Sprintf(`decimal_precision expected to be basetypes.Int64Value, was: %T`, decimalPrecisionAttribute))
 	}
 
+	logarithmicScaleAttribute, ok := attributes["logarithmic_scale"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`logarithmic_scale is missing from object`)
+
+		return nil, diags
+	}
+
+	logarithmicScaleVal, ok := logarithmicScaleAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`logarithmic_scale expected to be basetypes.BoolValue, was: %T`, logarithmicScaleAttribute))
+	}
+
 	numberScaleAttribute, ok := attributes["number_scale"]
 
 	if !ok {
@@ -5071,6 +5107,42 @@ func (t DisplaySettingsType) ValueFromObject(ctx context.Context, in basetypes.O
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`number_scale expected to be basetypes.StringValue, was: %T`, numberScaleAttribute))
+	}
+
+	showDataLabelsAttribute, ok := attributes["show_data_labels"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`show_data_labels is missing from object`)
+
+		return nil, diags
+	}
+
+	showDataLabelsVal, ok := showDataLabelsAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`show_data_labels expected to be basetypes.BoolValue, was: %T`, showDataLabelsAttribute))
+	}
+
+	showTotalsPanelAttribute, ok := attributes["show_totals_panel"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`show_totals_panel is missing from object`)
+
+		return nil, diags
+	}
+
+	showTotalsPanelVal, ok := showTotalsPanelAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`show_totals_panel expected to be basetypes.BoolValue, was: %T`, showTotalsPanelAttribute))
 	}
 
 	themeIdAttribute, ok := attributes["theme_id"]
@@ -5099,7 +5171,10 @@ func (t DisplaySettingsType) ValueFromObject(ctx context.Context, in basetypes.O
 		AxisLabelFontSize: axisLabelFontSizeVal,
 		DataLabelFontSize: dataLabelFontSizeVal,
 		DecimalPrecision:  decimalPrecisionVal,
+		LogarithmicScale:  logarithmicScaleVal,
 		NumberScale:       numberScaleVal,
+		ShowDataLabels:    showDataLabelsVal,
+		ShowTotalsPanel:   showTotalsPanelVal,
 		ThemeId:           themeIdVal,
 		state:             attr.ValueStateKnown,
 	}, diags
@@ -5222,6 +5297,24 @@ func NewDisplaySettingsValue(attributeTypes map[string]attr.Type, attributes map
 			fmt.Sprintf(`decimal_precision expected to be basetypes.Int64Value, was: %T`, decimalPrecisionAttribute))
 	}
 
+	logarithmicScaleAttribute, ok := attributes["logarithmic_scale"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`logarithmic_scale is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	logarithmicScaleVal, ok := logarithmicScaleAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`logarithmic_scale expected to be basetypes.BoolValue, was: %T`, logarithmicScaleAttribute))
+	}
+
 	numberScaleAttribute, ok := attributes["number_scale"]
 
 	if !ok {
@@ -5238,6 +5331,42 @@ func NewDisplaySettingsValue(attributeTypes map[string]attr.Type, attributes map
 		diags.AddError(
 			"Attribute Wrong Type",
 			fmt.Sprintf(`number_scale expected to be basetypes.StringValue, was: %T`, numberScaleAttribute))
+	}
+
+	showDataLabelsAttribute, ok := attributes["show_data_labels"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`show_data_labels is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	showDataLabelsVal, ok := showDataLabelsAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`show_data_labels expected to be basetypes.BoolValue, was: %T`, showDataLabelsAttribute))
+	}
+
+	showTotalsPanelAttribute, ok := attributes["show_totals_panel"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`show_totals_panel is missing from object`)
+
+		return NewDisplaySettingsValueUnknown(), diags
+	}
+
+	showTotalsPanelVal, ok := showTotalsPanelAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`show_totals_panel expected to be basetypes.BoolValue, was: %T`, showTotalsPanelAttribute))
 	}
 
 	themeIdAttribute, ok := attributes["theme_id"]
@@ -5266,7 +5395,10 @@ func NewDisplaySettingsValue(attributeTypes map[string]attr.Type, attributes map
 		AxisLabelFontSize: axisLabelFontSizeVal,
 		DataLabelFontSize: dataLabelFontSizeVal,
 		DecimalPrecision:  decimalPrecisionVal,
+		LogarithmicScale:  logarithmicScaleVal,
 		NumberScale:       numberScaleVal,
+		ShowDataLabels:    showDataLabelsVal,
+		ShowTotalsPanel:   showTotalsPanelVal,
 		ThemeId:           themeIdVal,
 		state:             attr.ValueStateKnown,
 	}, diags
@@ -5343,13 +5475,16 @@ type DisplaySettingsValue struct {
 	AxisLabelFontSize basetypes.StringValue `tfsdk:"axis_label_font_size"`
 	DataLabelFontSize basetypes.StringValue `tfsdk:"data_label_font_size"`
 	DecimalPrecision  basetypes.Int64Value  `tfsdk:"decimal_precision"`
+	LogarithmicScale  basetypes.BoolValue   `tfsdk:"logarithmic_scale"`
 	NumberScale       basetypes.StringValue `tfsdk:"number_scale"`
+	ShowDataLabels    basetypes.BoolValue   `tfsdk:"show_data_labels"`
+	ShowTotalsPanel   basetypes.BoolValue   `tfsdk:"show_totals_panel"`
 	ThemeId           basetypes.StringValue `tfsdk:"theme_id"`
 	state             attr.ValueState
 }
 
 func (v DisplaySettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 5)
+	attrTypes := make(map[string]tftypes.Type, 8)
 
 	var val tftypes.Value
 	var err error
@@ -5357,14 +5492,17 @@ func (v DisplaySettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Val
 	attrTypes["axis_label_font_size"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["data_label_font_size"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["decimal_precision"] = basetypes.Int64Type{}.TerraformType(ctx)
+	attrTypes["logarithmic_scale"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["number_scale"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["show_data_labels"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["show_totals_panel"] = basetypes.BoolType{}.TerraformType(ctx)
 	attrTypes["theme_id"] = basetypes.StringType{}.TerraformType(ctx)
 
 	objectType := tftypes.Object{AttributeTypes: attrTypes}
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 5)
+		vals := make(map[string]tftypes.Value, 8)
 
 		val, err = v.AxisLabelFontSize.ToTerraformValue(ctx)
 
@@ -5390,6 +5528,14 @@ func (v DisplaySettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Val
 
 		vals["decimal_precision"] = val
 
+		val, err = v.LogarithmicScale.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["logarithmic_scale"] = val
+
 		val, err = v.NumberScale.ToTerraformValue(ctx)
 
 		if err != nil {
@@ -5397,6 +5543,22 @@ func (v DisplaySettingsValue) ToTerraformValue(ctx context.Context) (tftypes.Val
 		}
 
 		vals["number_scale"] = val
+
+		val, err = v.ShowDataLabels.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["show_data_labels"] = val
+
+		val, err = v.ShowTotalsPanel.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["show_totals_panel"] = val
 
 		val, err = v.ThemeId.ToTerraformValue(ctx)
 
@@ -5439,7 +5601,10 @@ func (v DisplaySettingsValue) ToObjectValue(ctx context.Context) (basetypes.Obje
 		"axis_label_font_size": basetypes.StringType{},
 		"data_label_font_size": basetypes.StringType{},
 		"decimal_precision":    basetypes.Int64Type{},
+		"logarithmic_scale":    basetypes.BoolType{},
 		"number_scale":         basetypes.StringType{},
+		"show_data_labels":     basetypes.BoolType{},
+		"show_totals_panel":    basetypes.BoolType{},
 		"theme_id":             basetypes.StringType{},
 	}
 
@@ -5457,7 +5622,10 @@ func (v DisplaySettingsValue) ToObjectValue(ctx context.Context) (basetypes.Obje
 			"axis_label_font_size": v.AxisLabelFontSize,
 			"data_label_font_size": v.DataLabelFontSize,
 			"decimal_precision":    v.DecimalPrecision,
+			"logarithmic_scale":    v.LogarithmicScale,
 			"number_scale":         v.NumberScale,
+			"show_data_labels":     v.ShowDataLabels,
+			"show_totals_panel":    v.ShowTotalsPanel,
 			"theme_id":             v.ThemeId,
 		})
 
@@ -5491,7 +5659,19 @@ func (v DisplaySettingsValue) Equal(o attr.Value) bool {
 		return false
 	}
 
+	if !v.LogarithmicScale.Equal(other.LogarithmicScale) {
+		return false
+	}
+
 	if !v.NumberScale.Equal(other.NumberScale) {
+		return false
+	}
+
+	if !v.ShowDataLabels.Equal(other.ShowDataLabels) {
+		return false
+	}
+
+	if !v.ShowTotalsPanel.Equal(other.ShowTotalsPanel) {
 		return false
 	}
 
@@ -5515,7 +5695,10 @@ func (v DisplaySettingsValue) AttributeTypes(ctx context.Context) map[string]att
 		"axis_label_font_size": basetypes.StringType{},
 		"data_label_font_size": basetypes.StringType{},
 		"decimal_precision":    basetypes.Int64Type{},
+		"logarithmic_scale":    basetypes.BoolType{},
 		"number_scale":         basetypes.StringType{},
+		"show_data_labels":     basetypes.BoolType{},
+		"show_totals_panel":    basetypes.BoolType{},
 		"theme_id":             basetypes.StringType{},
 	}
 }

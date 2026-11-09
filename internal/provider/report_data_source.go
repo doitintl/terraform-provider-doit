@@ -645,6 +645,9 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 			"data_label_font_size": types.StringNull(),
 			"decimal_precision":    types.Int64Null(),
 			"number_scale":         types.StringNull(),
+			"show_data_labels":     types.BoolNull(),
+			"logarithmic_scale":    types.BoolNull(),
+			"show_totals_panel":    types.BoolNull(),
 			"theme_id":             types.StringNull(),
 		}
 		if config.DisplaySettings.AxisLabelFontSize != nil {
@@ -658,6 +661,15 @@ func (ds *reportDataSource) populateState(ctx context.Context, state *reportData
 		}
 		if config.DisplaySettings.NumberScale != nil {
 			dsMap["number_scale"] = types.StringValue(string(*config.DisplaySettings.NumberScale))
+		}
+		if config.DisplaySettings.ShowDataLabels != nil {
+			dsMap["show_data_labels"] = types.BoolValue(*config.DisplaySettings.ShowDataLabels)
+		}
+		if config.DisplaySettings.LogarithmicScale != nil {
+			dsMap["logarithmic_scale"] = types.BoolValue(*config.DisplaySettings.LogarithmicScale)
+		}
+		if config.DisplaySettings.ShowTotalsPanel != nil {
+			dsMap["show_totals_panel"] = types.BoolValue(*config.DisplaySettings.ShowTotalsPanel)
 		}
 		if config.DisplaySettings.ThemeId != nil {
 			dsMap["theme_id"] = types.StringValue(*config.DisplaySettings.ThemeId)

@@ -572,3 +572,60 @@ data "doit_report" "test" {
 }
 `, name)
 }
+
+func TestAccReportDataSource_DisplaySettingsChartOptions(t *testing.T) {
+	rName := acctest.RandomWithPrefix("tf-acc-report-ds-chart")
+
+	check := func(attrName string, want bool) statecheck.StateCheck {
+		return statecheck.ExpectKnownValue(
+			"data.doit_report.test",
+			tfjsonpath.New("config").AtMapKey("display_settings").AtMapKey(attrName),
+			knownvalue.Bool(want))
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccReportDataSourceChartOptionsConfig(rName),
+				ConfigStateChecks: []statecheck.StateCheck{
+					check("show_data_labels", true),
+					check("logarithmic_scale", false),
+					check("show_totals_panel", true),
+				},
+			},
+		},
+	})
+}
+
+func testAccReportDataSourceChartOptionsConfig(name string) string {
+	return fmt.Sprintf(`
+resource "doit_report" "test" {
+    name        = %q
+    description = "test report with chart options for data source"
+    config = {
+        metrics = [{
+          type  = "basic"
+          value = "cost"
+        }]
+        aggregation    = "total"
+        time_interval  = "month"
+        data_source    = "billing"
+        display_values = "actuals_only"
+        currency       = "USD"
+        layout         = "column_chart"
+        display_settings = {
+            show_data_labels  = true
+            logarithmic_scale = false
+            show_totals_panel = true
+        }
+    }
+}
+
+data "doit_report" "test" {
+    id = doit_report.test.id
+}
+`, name)
+}

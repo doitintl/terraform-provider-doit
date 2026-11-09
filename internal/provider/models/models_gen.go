@@ -10551,8 +10551,30 @@ type ExternalDisplaySettings struct {
 	// DecimalPrecision Number of decimal places shown for numeric values.
 	DecimalPrecision *int `json:"decimalPrecision,omitempty"`
 
+	// LogarithmicScale Plot the value axis on a logarithmic scale (the console's
+	// "Logarithmic scale" chart option). Applies to `line_chart`,
+	// `spline_chart`, `bar_chart` and `column_chart`; other layouts
+	// ignore it. Omit on PATCH to leave the stored value unchanged. Has
+	// no effect on query results.
+	LogarithmicScale *bool `json:"logarithmicScale,omitempty"`
+
 	// NumberScale Scale applied to numeric values when rendering the report.
 	NumberScale *ExternalDisplaySettingsNumberScale `json:"numberScale,omitempty"`
+
+	// ShowDataLabels Show value labels on chart data points (the console's "Show labels"
+	// chart option). Stacked layouts never draw data labels. `false` is
+	// also returned for reports that never set the option; the console
+	// then picks labels based on the layout and series count. Omit on
+	// PATCH to leave the stored value unchanged. Has no effect on query
+	// results.
+	ShowDataLabels *bool `json:"showDataLabels,omitempty"`
+
+	// ShowTotalsPanel Open the series totals panel beside the chart when the report
+	// loads in the console (the "Show totals panel" chart option).
+	// Applies to line, area, bar and column layouts, stacked or not;
+	// dashboard widgets and exports never show it. Omit on PATCH to leave the stored value
+	// unchanged. Has no effect on query results.
+	ShowTotalsPanel *bool `json:"showTotalsPanel,omitempty"`
 
 	// ThemeId Identifier of the theme applied to the report. The reserved
 	// sentinel `"default"` is returned on GET when no theme is stored

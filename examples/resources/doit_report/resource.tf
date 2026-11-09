@@ -399,3 +399,40 @@ resource "doit_report" "forecast" {
     }
   }
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chart options: data labels, logarithmic scale, totals panel
+# ─────────────────────────────────────────────────────────────────────────────
+# show_data_labels, logarithmic_scale and show_totals_panel default to false.
+# Removing one of them from the configuration sets it back to false.
+# logarithmic_scale applies to line, spline, bar and column charts;
+# show_totals_panel to line, area, bar and column charts.
+
+resource "doit_report" "chart_options" {
+  name        = "Monthly Spend (log scale)"
+  description = "Monthly spend as a column chart with labels and a totals panel"
+  config = {
+    metrics       = [{ type = "basic", value = "cost" }]
+    aggregation   = "total"
+    time_interval = "month"
+    currency      = "USD"
+    data_source   = "billing"
+    time_range = {
+      mode            = "last"
+      amount          = 6
+      unit            = "month"
+      include_current = true
+    }
+    dimensions = [
+      { id = "year", type = "datetime" },
+      { id = "month", type = "datetime" },
+    ]
+    layout         = "column_chart"
+    display_values = "actuals_only"
+    display_settings = {
+      show_data_labels  = true
+      logarithmic_scale = true
+      show_totals_panel = true
+    }
+  }
+}

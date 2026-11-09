@@ -133,6 +133,19 @@ func (r *reportResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 			configAttr.Attributes["metrics"] = attr
 		}
 
+		// Category A: the chart options default to false and the API never returns
+		// null, so false is the cleared state. A PATCH that omits the field keeps the
+		// stored value, so clearing sends an explicit false (see toExternalConfig).
+		if dsAttr, ok := configAttr.Attributes["display_settings"].(schema.SingleNestedAttribute); ok {
+			for _, name := range []string{"show_data_labels", "logarithmic_scale", "show_totals_panel"} {
+				if attr, ok := dsAttr.Attributes[name].(schema.BoolAttribute); ok {
+					attr.PlanModifiers = append(attr.PlanModifiers, useEmptyForUnknownBoolWhenConfigNull())
+					dsAttr.Attributes[name] = attr
+				}
+			}
+			configAttr.Attributes["display_settings"] = dsAttr
+		}
+
 		s.Attributes["config"] = configAttr
 	}
 
