@@ -47,6 +47,14 @@ func mapAssetToModel(ctx context.Context, asset *models.AssetItemDetailed, state
 	state.Quantity = types.Int64PointerValue(asset.Quantity)
 	state.CreateTime = types.Int64PointerValue(asset.CreateTime)
 
+	if asset.Support == nil {
+		state.Support = resource_asset.NewSupportValueNull()
+	} else {
+		supportVal, d := resource_asset.NewSupportValue(resource_asset.SupportValue{}.AttributeTypes(ctx), assetSupportAttrs(asset.Support))
+		diags.Append(d...)
+		state.Support = supportVal
+	}
+
 	if asset.Properties == nil {
 		state.Properties = resource_asset.NewPropertiesValueNull()
 		return diags
@@ -71,6 +79,22 @@ func mapAssetToModel(ctx context.Context, asset *models.AssetItemDetailed, state
 	state.Properties = propsVal
 
 	return diags
+}
+
+// assetSupportAttrs maps the API support plan to the attribute values shared by
+// the generated SupportValue types of the asset resource and data sources.
+// Fields the API omits (unknown support) are null.
+func assetSupportAttrs(s *models.AssetSupport) map[string]attr.Value {
+	model, tier := types.StringNull(), types.StringNull()
+	if s != nil {
+		if s.Model != nil {
+			model = types.StringValue(string(*s.Model))
+		}
+		if s.Tier != nil {
+			tier = types.StringValue(string(*s.Tier))
+		}
+	}
+	return map[string]attr.Value{"model": model, "tier": tier}
 }
 
 func mapSubscriptionToValue(ctx context.Context, sub *models.Subscription) (resource_asset.SubscriptionValue, diag.Diagnostics) {
@@ -207,6 +231,7 @@ func overlayAssetComputedFields(ctx context.Context, apiResp *models.AssetItemDe
 	plan.Url = resolved.Url
 	plan.CreateTime = resolved.CreateTime
 	plan.Properties = resolved.Properties
+	plan.Support = resolved.Support
 
 	return diags
 }

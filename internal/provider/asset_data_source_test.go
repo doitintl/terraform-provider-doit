@@ -6,7 +6,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccAssetDataSource_Basic(t *testing.T) {
@@ -22,6 +25,10 @@ func TestAccAssetDataSource_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccAssetDataSourceConfig(assetID),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Support is only reported for AWS and Google Cloud assets.
+					statecheck.ExpectKnownValue("data.doit_asset.test", tfjsonpath.New("support"), knownvalue.Null()),
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.doit_asset.test", "id", assetID),
 					resource.TestCheckResourceAttrSet("data.doit_asset.test", "type"),
@@ -65,6 +72,41 @@ func TestAccAssetDataSource_AWS(t *testing.T) {
 					resource.TestCheckResourceAttr("data.doit_asset.test", "id", assetID),
 					resource.TestCheckResourceAttr("data.doit_asset.test", "type", "amazon-web-services"),
 					resource.TestCheckNoResourceAttr("data.doit_asset.test", "quantity"),
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "support.model"),
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "support.tier"),
+				),
+			},
+			// Drift verification
+			{
+				Config: testAccAssetDataSourceConfig(assetID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestAccAssetDataSource_GoogleCloud(t *testing.T) {
+	assetID := os.Getenv("TEST_ASSET_ID_GCP")
+	if assetID == "" {
+		t.Skip("TEST_ASSET_ID_GCP environment variable not set")
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAssetDataSourceConfig(assetID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.doit_asset.test", "id", assetID),
+					resource.TestCheckResourceAttr("data.doit_asset.test", "type", "google-cloud"),
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "support.model"),
+					resource.TestCheckResourceAttrSet("data.doit_asset.test", "support.tier"),
 				),
 			},
 			// Drift verification

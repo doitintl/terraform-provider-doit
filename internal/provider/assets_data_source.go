@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -171,6 +172,12 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if len(allAssets) > 0 {
 		assetVals := make([]datasource_assets.AssetsValue, 0, len(allAssets))
 		for _, asset := range allAssets {
+			supportVal := datasource_assets.NewSupportValueNull()
+			if asset.Support != nil {
+				var d diag.Diagnostics
+				supportVal, d = datasource_assets.NewSupportValue(datasource_assets.SupportValue{}.AttributeTypes(ctx), assetSupportAttrs(asset.Support))
+				resp.Diagnostics.Append(d...)
+			}
 			assetVal, diags := datasource_assets.NewAssetsValue(
 				datasource_assets.AssetsValue{}.AttributeTypes(ctx),
 				map[string]attr.Value{
@@ -180,6 +187,7 @@ func (d *assetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 					"url":         types.StringPointerValue(asset.Url),
 					"quantity":    types.Int64PointerValue(asset.Quantity),
 					"create_time": types.Int64PointerValue(asset.CreateTime),
+					"support":     supportVal,
 				},
 			)
 			resp.Diagnostics.Append(diags...)

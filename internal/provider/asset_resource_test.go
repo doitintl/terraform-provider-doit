@@ -8,7 +8,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // TestAccAssetResource_Import tests importing an existing G Suite asset and
@@ -96,7 +99,18 @@ func TestAccAssetResource_ImportAWS(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("doit_asset.test", "id", assetID),
 					resource.TestCheckResourceAttr("doit_asset.test", "type", "amazon-web-services"),
+					resource.TestCheckResourceAttrSet("doit_asset.test", "support.model"),
+					resource.TestCheckResourceAttrSet("doit_asset.test", "support.tier"),
 				),
+			},
+			// Drift verification: support is Computed-only and must not show a diff
+			{
+				Config: testAccAssetResourceConfig(assetID, ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 			// Configuration generated for the import (an import block with
 			// -generate-config-out) is valid and plans no change. After step 1
@@ -164,6 +178,10 @@ func TestAccAssetResource_UpdateQuantity(t *testing.T) {
 					resource.TestCheckResourceAttr("doit_asset.test", "id", assetID),
 					resource.TestCheckResourceAttr("doit_asset.test", "quantity", strconv.Itoa(updatedQty)),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					// G Suite assets have no support plan; the overlay must keep it null.
+					statecheck.ExpectKnownValue("doit_asset.test", tfjsonpath.New("support"), knownvalue.Null()),
+				},
 			},
 			// Drift verification after update
 			{

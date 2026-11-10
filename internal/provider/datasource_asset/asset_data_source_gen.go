@@ -205,6 +205,28 @@ func AssetDataSourceSchema(ctx context.Context) schema.Schema {
 				Description:         "The number of licenses or seats currently assigned to this asset.",
 				MarkdownDescription: "The number of licenses or seats currently assigned to this asset.",
 			},
+			"support": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"model": schema.StringAttribute{
+						Computed:            true,
+						Description:         "How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown.",
+						MarkdownDescription: "How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown.",
+					},
+					"tier": schema.StringAttribute{
+						Computed:            true,
+						Description:         "The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown.",
+						MarkdownDescription: "The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown.",
+					},
+				},
+				CustomType: SupportType{
+					ObjectType: types.ObjectType{
+						AttrTypes: SupportValue{}.AttributeTypes(ctx),
+					},
+				},
+				Computed:            true,
+				Description:         "The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data.",
+				MarkdownDescription: "The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data.",
+			},
 			"type": schema.StringAttribute{
 				Computed:            true,
 				Description:         "The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.",
@@ -227,6 +249,7 @@ type AssetModel struct {
 	Name       types.String    `tfsdk:"name"`
 	Properties PropertiesValue `tfsdk:"properties"`
 	Quantity   types.Int64     `tfsdk:"quantity"`
+	Support    SupportValue    `tfsdk:"support"`
 	Type       types.String    `tfsdk:"type"`
 	Url        types.String    `tfsdk:"url"`
 }
@@ -3430,5 +3453,392 @@ func (v SeatsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"licensed_number_of_seats": basetypes.Int64Type{},
 		"maximum_number_of_seats":  basetypes.Int64Type{},
 		"number_of_seats":          basetypes.Int64Type{},
+	}
+}
+
+var _ basetypes.ObjectTypable = SupportType{}
+
+type SupportType struct {
+	basetypes.ObjectType
+}
+
+func (t SupportType) Equal(o attr.Type) bool {
+	other, ok := o.(SupportType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t SupportType) String() string {
+	return "SupportType"
+}
+
+func (t SupportType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewSupportValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewSupportValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	modelAttribute, ok := attributes["model"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`model is missing from object`)
+
+		return nil, diags
+	}
+
+	modelVal, ok := modelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`model expected to be basetypes.StringValue, was: %T`, modelAttribute))
+	}
+
+	tierAttribute, ok := attributes["tier"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tier is missing from object`)
+
+		return nil, diags
+	}
+
+	tierVal, ok := tierAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tier expected to be basetypes.StringValue, was: %T`, tierAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return SupportValue{
+		Model: modelVal,
+		Tier:  tierVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSupportValueNull() SupportValue {
+	return SupportValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewSupportValueUnknown() SupportValue {
+	return SupportValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewSupportValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (SupportValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing SupportValue Attribute Value",
+				"While creating a SupportValue value, a missing attribute value was detected. "+
+					"A SupportValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SupportValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid SupportValue Attribute Type",
+				"While creating a SupportValue value, an invalid attribute value was detected. "+
+					"A SupportValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("SupportValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("SupportValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra SupportValue Attribute Value",
+				"While creating a SupportValue value, an extra attribute value was detected. "+
+					"A SupportValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra SupportValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewSupportValueUnknown(), diags
+	}
+
+	modelAttribute, ok := attributes["model"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`model is missing from object`)
+
+		return NewSupportValueUnknown(), diags
+	}
+
+	modelVal, ok := modelAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`model expected to be basetypes.StringValue, was: %T`, modelAttribute))
+	}
+
+	tierAttribute, ok := attributes["tier"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`tier is missing from object`)
+
+		return NewSupportValueUnknown(), diags
+	}
+
+	tierVal, ok := tierAttribute.(basetypes.StringValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`tier expected to be basetypes.StringValue, was: %T`, tierAttribute))
+	}
+
+	if diags.HasError() {
+		return NewSupportValueUnknown(), diags
+	}
+
+	return SupportValue{
+		Model: modelVal,
+		Tier:  tierVal,
+		state: attr.ValueStateKnown,
+	}, diags
+}
+
+func NewSupportValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) SupportValue {
+	object, diags := NewSupportValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewSupportValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t SupportType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewSupportValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewSupportValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewSupportValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewSupportValueMust(SupportValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t SupportType) ValueType(ctx context.Context) attr.Value {
+	return SupportValue{}
+}
+
+var _ basetypes.ObjectValuable = SupportValue{}
+
+type SupportValue struct {
+	Model basetypes.StringValue `tfsdk:"model"`
+	Tier  basetypes.StringValue `tfsdk:"tier"`
+	state attr.ValueState
+}
+
+func (v SupportValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["model"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["tier"] = basetypes.StringType{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Model.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["model"] = val
+
+		val, err = v.Tier.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["tier"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v SupportValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v SupportValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v SupportValue) String() string {
+	return "SupportValue"
+}
+
+func (v SupportValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"model": basetypes.StringType{},
+		"tier":  basetypes.StringType{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"model": v.Model,
+			"tier":  v.Tier,
+		})
+
+	return objVal, diags
+}
+
+func (v SupportValue) Equal(o attr.Value) bool {
+	other, ok := o.(SupportValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Model.Equal(other.Model) {
+		return false
+	}
+
+	if !v.Tier.Equal(other.Tier) {
+		return false
+	}
+
+	return true
+}
+
+func (v SupportValue) Type(ctx context.Context) attr.Type {
+	return SupportType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v SupportValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"model": basetypes.StringType{},
+		"tier":  basetypes.StringType{},
 	}
 }

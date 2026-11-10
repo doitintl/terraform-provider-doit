@@ -64,5 +64,14 @@ Read-Only:
 - `id` (String) The unique identifier of the asset.
 - `name` (String) A human-readable label for the asset, typically combining the product name and domain or account ID.
 - `quantity` (Number) The number of licenses or seats currently assigned to this asset.
+- `support` (Attributes) The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data. (see [below for nested schema](#nestedatt--assets--support))
 - `type` (String) The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
 - `url` (String) A link to the asset details page in the DoiT console.
+
+<a id="nestedatt--assets--support"></a>
+### Nested Schema for `assets.support`
+
+Read-Only:
+
+- `model` (String) How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown.
+- `tier` (String) The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown.

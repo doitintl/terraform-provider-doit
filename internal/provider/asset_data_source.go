@@ -80,6 +80,7 @@ func (ds *assetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		data.Quantity = types.Int64Unknown()
 		data.CreateTime = types.Int64Unknown()
 		data.Properties = datasource_asset.NewPropertiesValueUnknown()
+		data.Support = datasource_asset.NewSupportValueUnknown()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -110,6 +111,13 @@ func (ds *assetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	data.Url = types.StringPointerValue(asset.Url)
 	data.Quantity = types.Int64PointerValue(asset.Quantity)
 	data.CreateTime = types.Int64PointerValue(asset.CreateTime)
+
+	data.Support = datasource_asset.NewSupportValueNull()
+	if asset.Support != nil {
+		supportVal, d := datasource_asset.NewSupportValue(datasource_asset.SupportValue{}.AttributeTypes(ctx), assetSupportAttrs(asset.Support))
+		resp.Diagnostics.Append(d...)
+		data.Support = supportVal
+	}
 
 	resp.Diagnostics.Append(mapAssetPropertiesToDataSource(ctx, asset, &data.AssetModel)...)
 	if resp.Diagnostics.HasError() {
