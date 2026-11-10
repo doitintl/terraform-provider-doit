@@ -186,6 +186,7 @@ jobs:
           TEST_BILLING_PROFILE_ID: ${{ vars.TEST_BILLING_PROFILE_ID }}
           TEST_ASSET_ID: ${{ vars.TEST_ASSET_ID }}
           TEST_ASSET_ID_AWS: ${{ vars.TEST_ASSET_ID_AWS }}
+          TEST_ASSET_ID_GCP: ${{ vars.TEST_ASSET_ID_GCP }}
           TEST_CLOUD_DIAGRAM_RESOURCE: ${{ vars.TEST_CLOUD_DIAGRAM_RESOURCE }}
           TEST_DATAHUB_DATASET: ${{ vars.TEST_DATAHUB_DATASET }}
           TEST_USER_2: ${{ vars.TEST_USER_2 }}

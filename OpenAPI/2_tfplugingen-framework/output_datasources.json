@@ -2855,6 +2855,29 @@
 						}
 					},
 					{
+						"name": "support",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "model",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown."
+									}
+								},
+								{
+									"name": "tier",
+									"string": {
+										"computed_optional_required": "computed",
+										"description": "The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown."
+									}
+								}
+							],
+							"description": "The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data."
+						}
+					},
+					{
 						"name": "type",
 						"string": {
 							"computed_optional_required": "computed",
@@ -2930,6 +2953,29 @@
 										"int64": {
 											"computed_optional_required": "computed",
 											"description": "The number of licenses or seats currently assigned to this asset."
+										}
+									},
+									{
+										"name": "support",
+										"single_nested": {
+											"computed_optional_required": "computed",
+											"attributes": [
+												{
+													"name": "model",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown."
+													}
+												},
+												{
+													"name": "tier",
+													"string": {
+														"computed_optional_required": "computed",
+														"description": "The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown."
+													}
+												}
+											],
+											"description": "The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data."
 										}
 									},
 									{

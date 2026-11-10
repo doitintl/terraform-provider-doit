@@ -25701,6 +25701,8 @@ components:
         url:
           type: string
           description: A link to the asset details page in the DoiT console.
+        support:
+          $ref: "#/components/schemas/AssetSupport"
     AssetItemDetailed:
       type: object
       description: Detailed information about a single asset, including subscription properties.
@@ -25727,6 +25729,33 @@ components:
           description: A link to the asset details page in the DoiT console.
         properties:
           $ref: "#/components/schemas/AssetProperties"
+        support:
+          $ref: "#/components/schemas/AssetSupport"
+    AssetSupport:
+      type: object
+      description: "The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data."
+      properties:
+        model:
+          type: string
+          enum:
+            - partner_led
+            - resold
+          description: "How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown."
+        tier:
+          type: string
+          enum:
+            - basic
+            - developer
+            - business
+            - business_plus
+            - enterprise_on_ramp
+            - enterprise
+            - unified_operations
+            - no_support
+            - standard
+            - enhanced
+            - premium
+          description: "The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown."
     AssetProperties:
       type: object
       description: Additional properties associated with an asset, such as subscription and customer details.

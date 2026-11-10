@@ -472,6 +472,69 @@ func (e AnomalyItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for AssetSupportModel.
+const (
+	AssetSupportModelPartnerLed AssetSupportModel = "partner_led"
+	AssetSupportModelResold     AssetSupportModel = "resold"
+)
+
+// Valid indicates whether the value is a known member of the AssetSupportModel enum.
+func (e AssetSupportModel) Valid() bool {
+	switch e {
+	case AssetSupportModelPartnerLed:
+		return true
+	case AssetSupportModelResold:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AssetSupportTier.
+const (
+	AssetSupportTierBasic             AssetSupportTier = "basic"
+	AssetSupportTierBusiness          AssetSupportTier = "business"
+	AssetSupportTierBusinessPlus      AssetSupportTier = "business_plus"
+	AssetSupportTierDeveloper         AssetSupportTier = "developer"
+	AssetSupportTierEnhanced          AssetSupportTier = "enhanced"
+	AssetSupportTierEnterprise        AssetSupportTier = "enterprise"
+	AssetSupportTierEnterpriseOnRamp  AssetSupportTier = "enterprise_on_ramp"
+	AssetSupportTierNoSupport         AssetSupportTier = "no_support"
+	AssetSupportTierPremium           AssetSupportTier = "premium"
+	AssetSupportTierStandard          AssetSupportTier = "standard"
+	AssetSupportTierUnifiedOperations AssetSupportTier = "unified_operations"
+)
+
+// Valid indicates whether the value is a known member of the AssetSupportTier enum.
+func (e AssetSupportTier) Valid() bool {
+	switch e {
+	case AssetSupportTierBasic:
+		return true
+	case AssetSupportTierBusiness:
+		return true
+	case AssetSupportTierBusinessPlus:
+		return true
+	case AssetSupportTierDeveloper:
+		return true
+	case AssetSupportTierEnhanced:
+		return true
+	case AssetSupportTierEnterprise:
+		return true
+	case AssetSupportTierEnterpriseOnRamp:
+		return true
+	case AssetSupportTierNoSupport:
+		return true
+	case AssetSupportTierPremium:
+		return true
+	case AssetSupportTierStandard:
+		return true
+	case AssetSupportTierUnifiedOperations:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AsyncOperationPollResponseStatus.
 const (
 	AsyncOperationPollResponseStatusCanceled  AsyncOperationPollResponseStatus = "canceled"
@@ -6590,6 +6653,9 @@ type AssetItem struct {
 	// Quantity The number of licenses or seats currently assigned to this asset.
 	Quantity *int64 `json:"quantity,omitempty"`
 
+	// Support The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data.
+	Support *AssetSupport `json:"support,omitempty"`
+
 	// Type The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
 	Type *string `json:"type,omitempty"`
 
@@ -6614,6 +6680,9 @@ type AssetItemDetailed struct {
 	// Quantity The number of licenses or seats currently assigned to this asset.
 	Quantity *int64 `json:"quantity,omitempty"`
 
+	// Support The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data.
+	Support *AssetSupport `json:"support,omitempty"`
+
 	// Type The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
 	Type *string `json:"type,omitempty"`
 
@@ -6635,6 +6704,21 @@ type AssetProperties struct {
 	// Subscription Subscription details for a G Suite or Office 365 asset.
 	Subscription *Subscription `json:"subscription,omitempty"`
 }
+
+// AssetSupport The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data.
+type AssetSupport struct {
+	// Model How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown.
+	Model *AssetSupportModel `json:"model,omitempty"`
+
+	// Tier The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown.
+	Tier *AssetSupportTier `json:"tier,omitempty"`
+}
+
+// AssetSupportModel How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown.
+type AssetSupportModel string
+
+// AssetSupportTier The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown.
+type AssetSupportTier string
 
 // AssignObjectsToLabelRequest Request to assign or remove objects from a label.
 type AssignObjectsToLabelRequest struct {

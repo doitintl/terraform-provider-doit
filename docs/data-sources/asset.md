@@ -27,6 +27,15 @@ output "asset_type" {
   value = data.doit_asset.example.type
 }
 
+# Vendor support plan (AWS and Google Cloud assets only; null when unknown)
+output "asset_support_model" {
+  value = data.doit_asset.example.support.model
+}
+
+output "asset_support_tier" {
+  value = data.doit_asset.example.support.tier
+}
+
 output "asset_url" {
   value = data.doit_asset.example.url
 }
@@ -49,6 +58,7 @@ output "asset_url" {
 - `name` (String) A human-readable label for the asset, typically combining the product name and domain or account ID.
 - `properties` (Attributes) Additional properties associated with an asset, such as subscription and customer details. (see [below for nested schema](#nestedatt--properties))
 - `quantity` (Number) The number of licenses or seats currently assigned to this asset.
+- `support` (Attributes) The cloud vendor support plan DoiT records for this asset. Returned for amazon-web-services and google-cloud assets only, and omitted when no support data is recorded. An absent field means unknown, not 'no support'. Tiers are inferred daily from billing data. (see [below for nested schema](#nestedatt--support))
 - `type` (String) The asset type, e.g. g-suite, office-365, google-cloud, amazon-web-services, or microsoft-azure.
 - `url` (String) A link to the asset details page in the DoiT console.
 
@@ -122,3 +132,14 @@ Read-Only:
 - `licensed_number_of_seats` (Number) The number of seats that are currently in use or assigned to users.
 - `maximum_number_of_seats` (Number) The maximum number of seats that can be used. Applies to flexible (non-commitment) plans.
 - `number_of_seats` (Number) The number of committed seats. Applies to annual commitment plans.
+
+
+
+
+<a id="nestedatt--support"></a>
+### Nested Schema for `support`
+
+Read-Only:
+
+- `model` (String) How support is provided: partner_led (DoiT Partner-Led Support on AWS, Partner-Led Premium Support on Google Cloud) or resold (the customer's own vendor support plan, purchased through DoiT). Omitted when unknown.
+- `tier` (String) The vendor support tier, with any DoiT override applied. AWS tiers are basic, developer, business, business_plus, enterprise_on_ramp, enterprise and unified_operations. Google Cloud tiers are no_support, standard, enhanced and premium. A Google Cloud tier is returned only when DoiT recorded it for this billing account alone within the last 7 days. Omitted when unknown.
