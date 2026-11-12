@@ -15,13 +15,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// Permission IDs are opaque and tenant-specific, so the test configs take them
-// from the "View Only" preset role. Permission expressions below index into
-// local.preset_permissions, e.g. "[local.preset_permissions[0]]".
+// Permission IDs are opaque and tenant-specific, and the API rejects roles that
+// grant permissions the caller does not hold itself. The test configs therefore
+// take them from the role of the authenticated user (doit_current_user). Permission
+// expressions below index into local.caller_permissions, e.g.
+// "[local.caller_permissions[0]]".
 const (
-	rolePermsTwo      = "[local.preset_permissions[0], local.preset_permissions[1]]"
-	rolePermsTwoSwap  = "[local.preset_permissions[1], local.preset_permissions[0]]"
-	rolePermsThree    = "[local.preset_permissions[0], local.preset_permissions[1], local.preset_permissions[2]]"
+	rolePermsTwo      = "[local.caller_permissions[0], local.caller_permissions[1]]"
+	rolePermsTwoSwap  = "[local.caller_permissions[1], local.caller_permissions[0]]"
+	rolePermsThree    = "[local.caller_permissions[0], local.caller_permissions[1], local.caller_permissions[2]]"
 	rolePermsEmpty    = "[]"
 	roleResourceAddr  = "doit_role.this"
 	roleExpectedPerms = "expected_permissions"
@@ -379,17 +381,28 @@ func testAccCheckRolePermissionsMatchOutput(resourceName, outputName string) res
 	}
 }
 
-// testAccRolePermissionsPreamble looks up the permission IDs of the "View Only"
-// preset role, which every tenant has.
+// testAccRolePermissionsPreamble looks up the permission IDs of the role held
+// by the authenticated user. doit_current_user only exposes permission names,
+// so the user is resolved by email to get its role ID. Roles built from these
+// can never exceed the caller's own permissions, whichever role the CI user is
+// assigned. The IDs are sorted so the indexes used by the test configs are
+// stable.
 func testAccRolePermissionsPreamble() string {
 	return `
+data "doit_current_user" "me" {}
+
+data "doit_users" "caller" {
+  email = data.doit_current_user.me.email
+}
+
 data "doit_roles" "all" {}
 
 locals {
-  preset_permissions = one([
+  caller_role_id = one(data.doit_users.caller.users[*].role_id)
+  caller_permissions = sort(one([
     for r in data.doit_roles.all.roles : r.permissions
-    if r.type == "preset" && r.name == "View Only"
-  ])
+    if r.id == local.caller_role_id
+  ]))
 }
 `
 }
