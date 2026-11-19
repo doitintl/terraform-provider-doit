@@ -8,7 +8,7 @@
 
 ### FEATURES
 
-- **resource/doit_custom_metric**: New resource to manage custom metrics: a formula over the cost, usage, savings or extended metrics (`billing` and `billing-datahub` keys) of up to five single allocations, with a unit type and an optional display precision (`decimals`; removing the block clears it). The order of `variables` sets the letters (`A` to `E`) used in `formula`; the letters are known at plan time. Reports use a custom metric with `metric = { type = "custom", value = doit_custom_metric.<name>.id }`. Requires the calculated metrics entitlement; only the owner can delete a custom metric, and one that a report, an alert or an allocation uses cannot be deleted ([doiteng/omni#72530](https://github.com/doiteng/omni/pull/72530))
+- **resource/doit_custom_metric**: New resource to manage custom metrics: a formula over the cost, usage, savings or extended metrics (`billing` and `billing-datahub` keys) of up to five single allocations, with a unit type and an optional display precision (`decimals`; removing the block clears it). The order of `variables` sets the letters (`A` to `E`) used in `formula`; the letters are known at plan time. Reports use a custom metric with `metric = { type = "custom", value = doit_custom_metric.<name>.id }`. Requires the calculated metrics entitlement; only the owner can delete a custom metric, and one that a report, an alert or an allocation uses cannot be deleted ([#502](https://github.com/doitintl/terraform-provider-doit/pull/502), [doiteng/omni#72530](https://github.com/doiteng/omni/pull/72530))
 
 ### ENHANCEMENTS
 
