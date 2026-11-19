@@ -627,8 +627,10 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 
 	var stateModel allocationResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
+	// Read the plan from the response: the rule ID matching below sets the
+	// whole plan, which must keep update_time unknown.
 	var planModel allocationResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planModel)...)
+	resp.Diagnostics.Append(resp.Plan.Get(ctx, &planModel)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

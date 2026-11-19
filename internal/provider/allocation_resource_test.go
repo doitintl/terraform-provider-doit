@@ -4565,7 +4565,8 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 					},
 				},
 			},
-			// Step 3: Clear end_date on inline rule.
+			// Step 3: Clear end_date on inline rule. The clearing modifier is the only
+			// change, so update_time must still be unknown.
 			{
 				Config: testAccAllocationGroupValidityPeriods(rName, &clearedEndDatePeriods),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -4574,6 +4575,7 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 							"doit_allocation.group",
 							plancheck.ResourceActionUpdate,
 						),
+						plancheck.ExpectUnknownValue("doit_allocation.group", tfjsonpath.New("update_time")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -4672,7 +4674,8 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 					},
 				},
 			},
-			// Step 9: Clear validity_periods by omitting it.
+			// Step 9: Clear validity_periods by omitting it. The clearing modifier is the only
+			// change, so update_time must still be unknown.
 			{
 				Config: testAccAllocationGroupValidityPeriods(rName, nil),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -4681,6 +4684,7 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 							"doit_allocation.group",
 							plancheck.ResourceActionUpdate,
 						),
+						plancheck.ExpectUnknownValue("doit_allocation.group", tfjsonpath.New("update_time")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{

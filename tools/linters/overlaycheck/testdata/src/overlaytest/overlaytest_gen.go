@@ -667,6 +667,9 @@ func VolatileResourceSchema(ctx context.Context) schema.Schema {
 			"last_alerted": schema.StringAttribute{
 				Computed: true,
 			},
+			"etag": schema.StringAttribute{
+				Computed: true,
+			},
 			"description": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
@@ -679,5 +682,6 @@ type VolatileModel struct {
 	Id          types.String
 	UpdateTime  types.String
 	LastAlerted types.String
+	Etag        types.String
 	Description types.String
 }

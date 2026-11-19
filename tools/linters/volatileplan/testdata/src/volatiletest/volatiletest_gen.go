@@ -70,3 +70,12 @@ func NoClearingResourceSchema(ctx context.Context) schema.Schema {
 		},
 	}
 }
+
+func DirectResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"description": schema.StringAttribute{Optional: true, Computed: true},
+			"etag":        schema.StringAttribute{Computed: true},
+		},
+	}
+}

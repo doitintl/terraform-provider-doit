@@ -3,9 +3,10 @@
 //
 //   - Computed-only fields must be unconditionally assigned from resolved,
 //     except that a field the resource's ModifyPlan passes to
-//     planVolatileAttributesUnknownOnUpdate may be guarded by IsUnknown()
-//     (it is unknown on every update, and known only in the plan of a
-//     resource that is not being updated)
+//     planVolatileAttributesUnknownOnUpdate may be assigned inside its own
+//     IsUnknown() guard, `if plan.X.IsUnknown() { plan.X = resolved.X }` (it
+//     is unknown on every update, and known only in the plan of a resource
+//     that is not being updated)
 //   - Required/Optional fields must NOT be assigned in the overlay
 //   - Optional+Computed fields must be guarded by IsUnknown() before assignment
 //
@@ -43,6 +44,9 @@ type fieldAssignment struct {
 	unconditional bool
 	// guardedByIsUnknown is true if inside `if plan.X.IsUnknown() { ... }`.
 	guardedByIsUnknown bool
+	// ownIsUnknownGuard is true if the guard checks the assigned field itself:
+	// `if plan.X.IsUnknown() { plan.X = resolved.X }`.
+	ownIsUnknownGuard bool
 	// pos is the position of the assignment for error reporting.
 	pos token.Pos
 }
@@ -287,6 +291,7 @@ func analyzeOverlayBody(body *ast.BlockStmt, planParam string) overlayBodyResult
 							if fieldName != "" {
 								result.assignments[fieldName] = &fieldAssignment{
 									guardedByIsUnknown: true,
+									ownIsUnknownGuard:  fieldName == guardedField,
 									pos:                inner.Pos(),
 								}
 							}
@@ -727,7 +732,7 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 		case schemaparser.ComputedOnly:
 			if !hasAssignment {
 				missingComputed = append(missingComputed, attrName)
-			} else if assignment.guardedByIsUnknown && !attrInfo.VolatileOnUpdate {
+			} else if assignment.guardedByIsUnknown && (!attrInfo.VolatileOnUpdate || !assignment.ownIsUnknownGuard) {
 				pass.Reportf(assignment.pos,
 					"%s: Computed-only field %q should be assigned unconditionally (not guarded by IsUnknown)",
 					fn.Name.Name, attrName)

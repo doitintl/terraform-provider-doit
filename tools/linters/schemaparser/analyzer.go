@@ -417,6 +417,13 @@ func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
 		// Find the base schema call: s := resource_xxx.XxxResourceSchema(ctx)
 		baseSchemaName, schemaVar := findBaseSchemaCall(fn)
 		if baseSchemaName == "" || schemaVar == "" {
+			// resp.Schema = resource_xxx.XxxResourceSchema(ctx) has no overrides,
+			// but its ModifyPlan facts still belong to that schema.
+			if name := findDirectSchemaAssignment(fn); name != "" {
+				if recv := receiverTypeName(fn); recv != "" {
+					receiverToSchema[recv] = name
+				}
+			}
 			return
 		}
 
@@ -575,6 +582,36 @@ func pathExprToDotted(expr ast.Expr) string {
 			return ""
 		}
 	}
+}
+
+// findDirectSchemaAssignment returns the generated schema function of a
+// Schema() method that assigns it directly:
+// resp.Schema = resource_xxx.XxxResourceSchema(ctx).
+func findDirectSchemaAssignment(fn *ast.FuncDecl) string {
+	for _, stmt := range fn.Body.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			continue
+		}
+		if sel, ok := assign.Lhs[0].(*ast.SelectorExpr); !ok || sel.Sel.Name != "Schema" {
+			continue
+		}
+		call, ok := assign.Rhs[0].(*ast.CallExpr)
+		if !ok {
+			continue
+		}
+		var name string
+		switch f := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			name = f.Sel.Name
+		case *ast.Ident:
+			name = f.Name
+		}
+		if strings.HasSuffix(name, "ResourceSchema") {
+			return name
+		}
+	}
+	return ""
 }
 
 // findBaseSchemaCall finds the call to the generated schema function in a Schema()

@@ -92,3 +92,16 @@ func (r *noClearingResource) Schema(ctx context.Context, _ resource.SchemaReques
 	s := NoClearingResourceSchema(ctx)
 	resp.Schema = s
 }
+
+// --- GOOD: the schema is assigned directly, without a local variable ---
+
+type directResource struct{}
+
+func (r *directResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	useEmptyForUnknownWhenConfigNull()
+	resp.Schema = DirectResourceSchema(ctx)
+}
+
+func (r *directResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"))
+}
