@@ -157,6 +157,14 @@ if i < len(existingIncludeNull) && existingIncludeNull[i] != nil {
 }
 ```
 
+### API Defaults for Objects with Required Leaves
+
+Some APIs return an object for every resource, even one that never configured it: `doit_budget.rollover` comes back as `{enabled: false, limit: 0}`. When the schema makes the object Optional+Computed and its leaves Required, mapping that default into state makes Terraform plan to remove the object on every plan (a Required leaf cannot be omitted, so the omitted block plans as removal).
+
+- **Read**: keep the API default out of state (null) unless the prior state or plan already holds the object. A disabled object is kept out of state whatever its leaves are (`{enabled: false, limit: 5}` too) while the prior is null or unknown; once the prior holds an object, it is mapped as returned. An enabled object is always mapped, so one enabled outside Terraform shows up as a change. `TestMapBudgetRollover` covers the prior × API matrix. Reference: `mapBudgetRollover` (`budget.go`).
+- **Removing a configured block** needs an object plan modifier that plans null when the configuration omits it (`useNullForOmittedBudgetRollover`, `budget_plan_modifiers.go`). Terraform proposes null for the removed block, but the framework (v1.19, `MarkComputedNilsAsUnknown`) turns that into Unknown because the attribute is Computed, and an unknown value is left out of the request, so the stored object survives. Have the request builder send the explicit "off" value for a null plan.
+- Test: omit the block on create (empty plan, no state entry), configure it, remove it, and configure the default value explicitly.
+
 ### UseStateForUnknown for Stable Fields
 
 Add `UseStateForUnknown()` plan modifiers to Computed-only fields that never change after creation:
@@ -584,6 +592,8 @@ if !value.IsUnknown() && !value.IsNull() && value.ValueString() == forbidden { /
 ```
 
 An `IsUnknown()` check alone does not make a guard correct: deciding what unknown *means* (here: the stored value) is the part that matters. If the API treats an omitted field as "reset to default" rather than "keep", decide that explicitly too.
+
+**Decide removals on the configuration, not the plan.** When a clearing modifier is the only change, the other omitted Optional+Computed attributes plan with their stored values. When the configuration changes as well (for example an explicit `[]`), they plan Unknown. A check that decides whether a removal has its replacement (`amount` or `use_prev_spend` next to a removed `seasonal_amounts`) therefore reads the configuration; the planned value cannot tell an omitted attribute from a configured one. Reference: `validateBudgetSeasonalRemoval` (`budget_validator.go`). Test removal alone and removal with another change as separate rows.
 
 #### Validators and request builders see the same unknowns
 
