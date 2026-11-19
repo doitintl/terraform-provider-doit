@@ -76,7 +76,7 @@ fmt:
 # explicitly cleared so unit tests execute in a cleanroom environment even if
 # .envrc.local is loaded in the developer's shell.
 test:
-	TF_ACC= TF_ACC_SWEEP= DOIT_API_TOKEN=DOIT_HOST= DOIT_CUSTOMER_CONTEXT= DOIT_REQUEST_TIMEOUT= \
+	TF_ACC= TF_ACC_SWEEP= DOIT_API_TOKEN= DOIT_HOST= DOIT_CUSTOMER_CONTEXT= DOIT_REQUEST_TIMEOUT= \
 	go test -v -cover -timeout=120s -parallel=10 -count=3 -shuffle=on ./...
 
 # gotestsum wraps `go test` and automatically reruns individual failed tests,
