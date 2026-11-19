@@ -37,7 +37,7 @@ func testCustomerNotificationResponse() *models.CustomerNotification {
 			TeamsChannels: []string{},
 		},
 		Settings: models.CustomerNotificationSettings{
-			CostAnomalies: models.CostAnomalySettings{
+			CostAnomalies: &models.CostAnomalySettings{
 				MinSeverity:   "critical",
 				MinExcessCost: models.Money{Amount: "100.00", Currency: "USD"},
 				Allocations: models.CostAnomalyAllocations{
@@ -215,15 +215,17 @@ func TestCustomerNotificationToCreateRequest(t *testing.T) {
 		assertJSONEqual(t, req, `{
 			"name": "Anomaly alerts",
 			"destinations": {"emails": ["finops@example.com", "ops@example.com"], "slackChannels": ["C0123ABCD"], "teamsChannels": []},
-			"settings": {"costAnomalies": {
-				"minSeverity": "critical",
-				"minExcessCost": {"amount": "100.00", "currency": "USD"},
-				"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
-				"repeat": {
-					"everyHours": 24,
-					"whenCostGrows": {"match": "or", "percentIncrease": 10, "minIncrease": {"amount": "150.00", "currency": "USD"}, "withinHours": 6}
+			"settings": {
+				"costAnomalies": {
+					"minSeverity": "critical",
+					"minExcessCost": {"amount": "100.00", "currency": "USD"},
+					"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
+					"repeat": {
+						"everyHours": 24,
+						"whenCostGrows": {"match": "or", "percentIncrease": 10, "minIncrease": {"amount": "150.00", "currency": "USD"}, "withinHours": 6}
+					}
 				}
-			}}
+			}
 		}`)
 	})
 
@@ -251,9 +253,21 @@ func TestCustomerNotificationToCreateRequest(t *testing.T) {
 	})
 }
 
+// assertCustomerNotificationCostAnomaliesPatch compares the cost-anomaly part
+// of an update request with want.
+func assertCustomerNotificationCostAnomaliesPatch(t *testing.T, req models.UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, want string) {
+	t.Helper()
+	patch, err := req.Settings.CostAnomalies.Get()
+	if err != nil {
+		t.Fatalf("costAnomalies: %v", err)
+	}
+	assertJSONEqual(t, patch, want)
+}
+
 func TestCustomerNotificationToUpdateRequest(t *testing.T) {
 	// The patch carries the full desired state: destinations replace the stored
-	// object, and every optional repeat member is explicit.
+	// object, every unsubscribed type is null, and every optional repeat member
+	// is explicit.
 	t.Run("full", func(t *testing.T) {
 		plan := customerNotificationPlanFromResponse(t, testCustomerNotificationResponse())
 		req, diags := plan.toUpdateRequest(t.Context())
@@ -263,15 +277,22 @@ func TestCustomerNotificationToUpdateRequest(t *testing.T) {
 		assertJSONEqual(t, req, `{
 			"name": "Anomaly alerts",
 			"destinations": {"emails": ["finops@example.com", "ops@example.com"], "slackChannels": ["C0123ABCD"], "teamsChannels": []},
-			"settings": {"costAnomalies": {
-				"minSeverity": "critical",
-				"minExcessCost": {"amount": "100.00", "currency": "USD"},
-				"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
-				"repeat": {
-					"everyHours": 24,
-					"whenCostGrows": {"match": "or", "percentIncrease": 10, "minIncrease": {"amount": "150.00", "currency": "USD"}, "withinHours": 6}
-				}
-			}}
+			"settings": {
+				"costAnomalies": {
+					"minSeverity": "critical",
+					"minExcessCost": {"amount": "100.00", "currency": "USD"},
+					"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
+					"repeat": {
+						"everyHours": 24,
+						"whenCostGrows": {"match": "or", "percentIncrease": 10, "minIncrease": {"amount": "150.00", "currency": "USD"}, "withinHours": 6}
+					}
+				},
+				"newInvoices": null, "newProformaInvoices": null, "paymentReminders": null, "creditUtilization": null,
+				"quotaUtilization": null, "cloudIncidents": null, "newSkuUsage": null, "dailyDigest": null, "weeklyDigest": null,
+				"monthlyDigest": null, "expertInsights": null, "insights": null, "savingsPlanApproval": null,
+				"savingsPlanPurchased": null, "cudApproval": null, "cudPurchased": null, "dataIntegrationSyncFailure": null,
+				"awsBillingDataImport": null
+			}
 		}`)
 	})
 
@@ -283,15 +304,11 @@ func TestCustomerNotificationToUpdateRequest(t *testing.T) {
 		if diags.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", diags)
 		}
-		assertJSONEqual(t, req, `{
-			"name": "Anomaly alerts",
-			"destinations": {"emails": ["finops@example.com", "ops@example.com"], "slackChannels": ["C0123ABCD"], "teamsChannels": []},
-			"settings": {"costAnomalies": {
-				"minSeverity": "critical",
-				"minExcessCost": {"amount": "100.00", "currency": "USD"},
-				"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
-				"repeat": null
-			}}
+		assertCustomerNotificationCostAnomaliesPatch(t, req, `{
+			"minSeverity": "critical",
+			"minExcessCost": {"amount": "100.00", "currency": "USD"},
+			"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
+			"repeat": null
 		}`)
 	})
 
@@ -307,18 +324,14 @@ func TestCustomerNotificationToUpdateRequest(t *testing.T) {
 		if diags.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", diags)
 		}
-		assertJSONEqual(t, req, `{
-			"name": "Anomaly alerts",
-			"destinations": {"emails": ["finops@example.com", "ops@example.com"], "slackChannels": ["C0123ABCD"], "teamsChannels": []},
-			"settings": {"costAnomalies": {
-				"minSeverity": "critical",
-				"minExcessCost": {"amount": "100.00", "currency": "USD"},
-				"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
-				"repeat": {
-					"everyHours": null,
-					"whenCostGrows": {"match": null, "percentIncrease": 10, "minIncrease": {"amount": "150.00", "currency": "USD"}, "withinHours": null}
-				}
-			}}
+		assertCustomerNotificationCostAnomaliesPatch(t, req, `{
+			"minSeverity": "critical",
+			"minExcessCost": {"amount": "100.00", "currency": "USD"},
+			"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
+			"repeat": {
+				"everyHours": null,
+				"whenCostGrows": {"match": null, "percentIncrease": 10, "minIncrease": {"amount": "150.00", "currency": "USD"}, "withinHours": null}
+			}
 		}`)
 	})
 
@@ -332,18 +345,14 @@ func TestCustomerNotificationToUpdateRequest(t *testing.T) {
 		if diags.HasError() {
 			t.Fatalf("unexpected diagnostics: %v", diags)
 		}
-		assertJSONEqual(t, req, `{
-			"name": "Anomaly alerts",
-			"destinations": {"emails": ["finops@example.com", "ops@example.com"], "slackChannels": ["C0123ABCD"], "teamsChannels": []},
-			"settings": {"costAnomalies": {
-				"minSeverity": "critical",
-				"minExcessCost": {"amount": "100.00", "currency": "USD"},
-				"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
-				"repeat": {
-					"everyHours": null,
-					"whenCostGrows": {"match": null, "percentIncrease": 5, "minIncrease": null, "withinHours": null}
-				}
-			}}
+		assertCustomerNotificationCostAnomaliesPatch(t, req, `{
+			"minSeverity": "critical",
+			"minExcessCost": {"amount": "100.00", "currency": "USD"},
+			"allocations": {"mode": "include", "ids": ["alloc-b", "alloc-a"]},
+			"repeat": {
+				"everyHours": null,
+				"whenCostGrows": {"match": null, "percentIncrease": 5, "minIncrease": null, "withinHours": null}
+			}
 		}`)
 	})
 }

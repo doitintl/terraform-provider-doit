@@ -9,7 +9,6 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
 type userNotificationResource struct {
@@ -178,7 +176,7 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 			newInvoices.PlanModifiers = append(newInvoices.PlanModifiers, useNullForOmittedNotificationSetting())
 			if ids, ok := newInvoices.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {
 				ids.PlanModifiers = append(ids.PlanModifiers, useNullForUnknownListWhenConfigNull())
-				newInvoices.Attributes["billing_profile_ids"] = withUserNotificationListRules(ids, userNotificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
+				newInvoices.Attributes["billing_profile_ids"] = withNotificationListRules(ids, notificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
 			}
 			settings.Attributes["new_invoices"] = newInvoices
 		}
@@ -186,7 +184,7 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 			newProformaInvoices.PlanModifiers = append(newProformaInvoices.PlanModifiers, useNullForOmittedNotificationSetting())
 			if ids, ok := newProformaInvoices.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {
 				ids.PlanModifiers = append(ids.PlanModifiers, useNullForUnknownListWhenConfigNull())
-				newProformaInvoices.Attributes["billing_profile_ids"] = withUserNotificationListRules(ids, userNotificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
+				newProformaInvoices.Attributes["billing_profile_ids"] = withNotificationListRules(ids, notificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
 			}
 			settings.Attributes["new_proforma_invoices"] = newProformaInvoices
 		}
@@ -194,21 +192,21 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 			paymentReminders.PlanModifiers = append(paymentReminders.PlanModifiers, useNullForOmittedNotificationSetting())
 			if ids, ok := paymentReminders.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {
 				ids.PlanModifiers = append(ids.PlanModifiers, useNullForUnknownListWhenConfigNull())
-				paymentReminders.Attributes["billing_profile_ids"] = withUserNotificationListRules(ids, userNotificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
+				paymentReminders.Attributes["billing_profile_ids"] = withNotificationListRules(ids, notificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
 			}
 			settings.Attributes["payment_reminders"] = paymentReminders
 		}
 		if dailyDigest, ok := settings.Attributes["daily_digest"].(schema.SingleNestedAttribute); ok {
 			dailyDigest.PlanModifiers = append(dailyDigest.PlanModifiers, useNullForOmittedNotificationSetting())
 			if ids, ok := dailyDigest.Attributes["allocation_ids"].(schema.ListAttribute); ok {
-				dailyDigest.Attributes["allocation_ids"] = withUserNotificationListRules(ids, userNotificationDigestAllocationIDsDescription, stringvalidator.LengthAtLeast(1))
+				dailyDigest.Attributes["allocation_ids"] = withNotificationListRules(ids, notificationDigestAllocationIDsDescription, stringvalidator.LengthAtLeast(1))
 			}
 			settings.Attributes["daily_digest"] = dailyDigest
 		}
 		if weeklyDigest, ok := settings.Attributes["weekly_digest"].(schema.SingleNestedAttribute); ok {
 			weeklyDigest.PlanModifiers = append(weeklyDigest.PlanModifiers, useNullForOmittedNotificationSetting())
 			if ids, ok := weeklyDigest.Attributes["allocation_ids"].(schema.ListAttribute); ok {
-				weeklyDigest.Attributes["allocation_ids"] = withUserNotificationListRules(ids, userNotificationDigestAllocationIDsDescription, stringvalidator.LengthAtLeast(1))
+				weeklyDigest.Attributes["allocation_ids"] = withNotificationListRules(ids, notificationDigestAllocationIDsDescription, stringvalidator.LengthAtLeast(1))
 			}
 			settings.Attributes["weekly_digest"] = weeklyDigest
 		}
@@ -216,38 +214,21 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 			insights.PlanModifiers = append(insights.PlanModifiers, useNullForOmittedNotificationSetting())
 			if pillars, ok := insights.Attributes["pillars"].(schema.ListAttribute); ok {
 				pillars.PlanModifiers = append(pillars.PlanModifiers, useNullForUnknownListWhenConfigNull())
-				insights.Attributes["pillars"] = withUserNotificationListRules(pillars,
-					"Insight pillars to notify about: `cost`, `operations`, `performance`, `security` or `compliance`. Omit it or set `[]` for every pillar.",
-					stringvalidator.OneOf(
-						string(models.InsightsNotificationSettingsPillarsCost),
-						string(models.InsightsNotificationSettingsPillarsOperations),
-						string(models.InsightsNotificationSettingsPillarsPerformance),
-						string(models.InsightsNotificationSettingsPillarsSecurity),
-						string(models.InsightsNotificationSettingsPillarsCompliance),
-					))
+				insights.Attributes["pillars"] = withNotificationListRules(pillars, notificationInsightPillarsDescription, stringvalidator.OneOf(notificationInsightPillars...))
 			}
 			if severities, ok := insights.Attributes["severities"].(schema.ListAttribute); ok {
 				severities.PlanModifiers = append(severities.PlanModifiers, useNullForUnknownListWhenConfigNull())
-				insights.Attributes["severities"] = withUserNotificationListRules(severities,
-					"Insight severities to notify about: `critical`, `high`, `medium` or `low`. Omit it or set `[]` for every severity.",
-					stringvalidator.OneOf(
-						string(models.InsightsNotificationSettingsSeveritiesCritical),
-						string(models.InsightsNotificationSettingsSeveritiesHigh),
-						string(models.InsightsNotificationSettingsSeveritiesMedium),
-						string(models.InsightsNotificationSettingsSeveritiesLow),
-					))
+				insights.Attributes["severities"] = withNotificationListRules(severities, notificationInsightSeveritiesDescription, stringvalidator.OneOf(notificationInsightSeverities...))
 			}
 			if providers, ok := insights.Attributes["providers"].(schema.ListAttribute); ok {
 				providers.PlanModifiers = append(providers.PlanModifiers, useNullForUnknownListWhenConfigNull())
-				insights.Attributes["providers"] = withUserNotificationListRules(providers,
-					"Insights provider IDs to notify about, such as `aws`, `gcp`, `azure`, `k8s` or `google-workspace` (not invoice platform IDs such as `amazon-web-services`). Omit it or set `[]` for every provider.",
-					stringvalidator.LengthAtLeast(1))
+				insights.Attributes["providers"] = withNotificationListRules(providers, notificationInsightProvidersDescription, stringvalidator.LengthAtLeast(1))
 			}
 			settings.Attributes["insights"] = insights
 		}
 
-		typeDescriptions := make(map[string]string, len(userNotificationTypes))
-		for _, t := range userNotificationTypes {
+		typeDescriptions := map[string]string{}
+		for _, t := range userNotificationTypes() {
 			typeDescriptions[t.attr] = userNotificationTypeDescription(t)
 		}
 		setCostAnomalyDescriptions(settings.Attributes, typeDescriptions)
@@ -339,23 +320,6 @@ func (r *userNotificationResource) Schema(ctx context.Context, _ resource.Schema
 
 	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
-}
-
-const (
-	userNotificationBillingProfileIDsDescription   = "IDs of the billing profiles to notify about, such as `ent_01HEXAMPLEBILLING0001`. Omit it or set `[]` for every billing profile."
-	userNotificationDigestAllocationIDsDescription = "IDs of custom single allocations to include in the digest, kept in the configured order. At least one; preset and group allocations are rejected."
-)
-
-// withUserNotificationListRules requires the elements of a settings list to be
-// non-null, unique and valid, and sets its description.
-func withUserNotificationListRules(list schema.ListAttribute, description string, elementValidator validator.String) schema.ListAttribute {
-	list.Validators = append(list.Validators,
-		listvalidator.UniqueValues(),
-		listvalidator.ValueStringsAre(elementValidator),
-	)
-	list.Description = description
-	list.MarkdownDescription = description
-	return list
 }
 
 func (r *userNotificationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

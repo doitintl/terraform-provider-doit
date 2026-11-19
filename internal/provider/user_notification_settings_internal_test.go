@@ -95,7 +95,7 @@ func testMultiTypeResponse() *models.UserNotification {
 		NewProformaInvoices: &models.BillingProfileNotificationSettings{BillingProfileIds: &[]string{"ent_2", "ent_1"}},
 		DailyDigest:         &models.DigestNotificationSettings{AllocationIds: []string{"alloc-b", "alloc-a"}},
 		Insights: &models.InsightsNotificationSettings{
-			Pillars: &[]models.InsightsNotificationSettingsPillars{"security", "cost"},
+			Pillars: &[]string{"security", "cost"},
 		},
 	}
 	return resp
@@ -277,7 +277,7 @@ func TestValidateUserNotificationSubscribesAType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var diags diag.Diagnostics
-			validateUserNotificationSubscribesAType(t.Context(), tt.settings, &diags)
+			validateNotificationSubscribesAType(t.Context(), tt.settings, userNotificationSettingsPath, &diags)
 			if tt.wantErr {
 				assertSingleError(t, diags, "No Notification Type", "settings")
 				return
@@ -389,7 +389,7 @@ func TestUserNotificationSettingsListValidators(t *testing.T) {
 func TestUserNotificationTypesCoverSchema(t *testing.T) {
 	attrTypes := resource_user_notification.SettingsValue{}.AttributeTypes(t.Context())
 	described := map[string]bool{}
-	for _, nt := range userNotificationTypes {
+	for _, nt := range userNotificationTypes() {
 		if _, ok := attrTypes[nt.attr]; !ok {
 			t.Errorf("userNotificationTypes lists %q, which is not in the schema", nt.attr)
 		}

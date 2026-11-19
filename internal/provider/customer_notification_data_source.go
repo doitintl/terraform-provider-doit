@@ -8,6 +8,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -44,8 +45,15 @@ func (d *customerNotificationDataSource) Configure(_ context.Context, req dataso
 func (d *customerNotificationDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_customer_notification.CustomerNotificationDataSourceSchema(ctx)
 
-	s.Description = "Organization-wide cost-anomaly notification config, delivered by email, Slack and Microsoft Teams. Requires the Manage settings permission."
+	s.Description = "Organization-wide notification config: the notification types it subscribes to, delivered by email, Slack and Microsoft Teams. Requires the Manage settings permission."
 	s.MarkdownDescription = s.Description
+
+	// The generated settings text is written for API clients (camelCase names).
+	if settings, ok := s.Attributes["settings"].(schema.SingleNestedAttribute); ok {
+		settings.Description = customerNotificationDataSourceSettingsDescription
+		settings.MarkdownDescription = settings.Description
+		s.Attributes["settings"] = settings
+	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s

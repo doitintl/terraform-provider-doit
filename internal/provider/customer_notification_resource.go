@@ -9,6 +9,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_customer_notification"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -69,6 +70,7 @@ func (r *customerNotificationResource) ConfigValidators(_ context.Context) []res
 	return []resource.ConfigValidator{
 		customerNotificationSettingsValidator{},
 		customerNotificationDestinationsValidator{},
+		customerNotificationChannelsValidator{},
 	}
 }
 
@@ -104,12 +106,130 @@ func (r *customerNotificationResource) Schema(ctx context.Context, _ resource.Sc
 		"create_time":  "When the notification was created (RFC 3339, UTC).",
 		"update_time":  "When the notification was last changed (RFC 3339, UTC).",
 		"etag":         "Current ETag of the notification. The provider sends it with updates and deletes to detect changes made outside Terraform.",
-		"settings":     "Notification settings. Only cost-anomaly settings are supported.",
+		"settings":     "The notification types the notification subscribes to, one attribute per type. Set at least one; removing a type from the configuration unsubscribes it. `expert_insights` and `data_integration_sync_failure` cannot be delivered to Microsoft Teams.",
 		"destinations": "Where the notification is delivered. All three lists are required; use `[]` for an unused destination type. At least one list must be non-empty.",
 	})
 
 	if settings, ok := s.Attributes["settings"].(schema.SingleNestedAttribute); ok {
+		// Omitting a type unsubscribes it: its modifier plans null, which the
+		// update sends. The filter lists inside a type are clearable too: the
+		// API stores an empty list as absent (meaning all), which Read maps
+		// to [].
+		if creditUtilization, ok := settings.Attributes["credit_utilization"].(schema.SingleNestedAttribute); ok {
+			creditUtilization.PlanModifiers = append(creditUtilization.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["credit_utilization"] = creditUtilization
+		}
+		if quotaUtilization, ok := settings.Attributes["quota_utilization"].(schema.SingleNestedAttribute); ok {
+			quotaUtilization.PlanModifiers = append(quotaUtilization.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["quota_utilization"] = quotaUtilization
+		}
+		if cloudIncidents, ok := settings.Attributes["cloud_incidents"].(schema.SingleNestedAttribute); ok {
+			cloudIncidents.PlanModifiers = append(cloudIncidents.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["cloud_incidents"] = cloudIncidents
+		}
+		if newSkuUsage, ok := settings.Attributes["new_sku_usage"].(schema.SingleNestedAttribute); ok {
+			newSkuUsage.PlanModifiers = append(newSkuUsage.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["new_sku_usage"] = newSkuUsage
+		}
+		if monthlyDigest, ok := settings.Attributes["monthly_digest"].(schema.SingleNestedAttribute); ok {
+			monthlyDigest.PlanModifiers = append(monthlyDigest.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["monthly_digest"] = monthlyDigest
+		}
+		if expertInsights, ok := settings.Attributes["expert_insights"].(schema.SingleNestedAttribute); ok {
+			expertInsights.PlanModifiers = append(expertInsights.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["expert_insights"] = expertInsights
+		}
+		if savingsPlanApproval, ok := settings.Attributes["savings_plan_approval"].(schema.SingleNestedAttribute); ok {
+			savingsPlanApproval.PlanModifiers = append(savingsPlanApproval.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["savings_plan_approval"] = savingsPlanApproval
+		}
+		if savingsPlanPurchased, ok := settings.Attributes["savings_plan_purchased"].(schema.SingleNestedAttribute); ok {
+			savingsPlanPurchased.PlanModifiers = append(savingsPlanPurchased.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["savings_plan_purchased"] = savingsPlanPurchased
+		}
+		if cudApproval, ok := settings.Attributes["cud_approval"].(schema.SingleNestedAttribute); ok {
+			cudApproval.PlanModifiers = append(cudApproval.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["cud_approval"] = cudApproval
+		}
+		if cudPurchased, ok := settings.Attributes["cud_purchased"].(schema.SingleNestedAttribute); ok {
+			cudPurchased.PlanModifiers = append(cudPurchased.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["cud_purchased"] = cudPurchased
+		}
+		if dataIntegrationSyncFailure, ok := settings.Attributes["data_integration_sync_failure"].(schema.SingleNestedAttribute); ok {
+			dataIntegrationSyncFailure.PlanModifiers = append(dataIntegrationSyncFailure.PlanModifiers, useNullForOmittedNotificationSetting())
+			settings.Attributes["data_integration_sync_failure"] = dataIntegrationSyncFailure
+		}
+		if newInvoices, ok := settings.Attributes["new_invoices"].(schema.SingleNestedAttribute); ok {
+			newInvoices.PlanModifiers = append(newInvoices.PlanModifiers, useNullForOmittedNotificationSetting())
+			if ids, ok := newInvoices.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {
+				ids.PlanModifiers = append(ids.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				newInvoices.Attributes["billing_profile_ids"] = withNotificationListRules(ids, notificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
+			}
+			settings.Attributes["new_invoices"] = newInvoices
+		}
+		if newProformaInvoices, ok := settings.Attributes["new_proforma_invoices"].(schema.SingleNestedAttribute); ok {
+			newProformaInvoices.PlanModifiers = append(newProformaInvoices.PlanModifiers, useNullForOmittedNotificationSetting())
+			if ids, ok := newProformaInvoices.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {
+				ids.PlanModifiers = append(ids.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				newProformaInvoices.Attributes["billing_profile_ids"] = withNotificationListRules(ids, notificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
+			}
+			settings.Attributes["new_proforma_invoices"] = newProformaInvoices
+		}
+		if paymentReminders, ok := settings.Attributes["payment_reminders"].(schema.SingleNestedAttribute); ok {
+			paymentReminders.PlanModifiers = append(paymentReminders.PlanModifiers, useNullForOmittedNotificationSetting())
+			if ids, ok := paymentReminders.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {
+				ids.PlanModifiers = append(ids.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				paymentReminders.Attributes["billing_profile_ids"] = withNotificationListRules(ids, notificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
+			}
+			settings.Attributes["payment_reminders"] = paymentReminders
+		}
+		if awsBillingDataImport, ok := settings.Attributes["aws_billing_data_import"].(schema.SingleNestedAttribute); ok {
+			awsBillingDataImport.PlanModifiers = append(awsBillingDataImport.PlanModifiers, useNullForOmittedNotificationSetting())
+			if ids, ok := awsBillingDataImport.Attributes["billing_profile_ids"].(schema.ListAttribute); ok {
+				ids.PlanModifiers = append(ids.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				awsBillingDataImport.Attributes["billing_profile_ids"] = withNotificationListRules(ids, notificationBillingProfileIDsDescription, stringvalidator.LengthAtLeast(1))
+			}
+			settings.Attributes["aws_billing_data_import"] = awsBillingDataImport
+		}
+		if dailyDigest, ok := settings.Attributes["daily_digest"].(schema.SingleNestedAttribute); ok {
+			dailyDigest.PlanModifiers = append(dailyDigest.PlanModifiers, useNullForOmittedNotificationSetting())
+			if ids, ok := dailyDigest.Attributes["allocation_ids"].(schema.ListAttribute); ok {
+				dailyDigest.Attributes["allocation_ids"] = withNotificationListRules(ids, notificationDigestAllocationIDsDescription, stringvalidator.LengthAtLeast(1))
+			}
+			settings.Attributes["daily_digest"] = dailyDigest
+		}
+		if weeklyDigest, ok := settings.Attributes["weekly_digest"].(schema.SingleNestedAttribute); ok {
+			weeklyDigest.PlanModifiers = append(weeklyDigest.PlanModifiers, useNullForOmittedNotificationSetting())
+			if ids, ok := weeklyDigest.Attributes["allocation_ids"].(schema.ListAttribute); ok {
+				weeklyDigest.Attributes["allocation_ids"] = withNotificationListRules(ids, notificationDigestAllocationIDsDescription, stringvalidator.LengthAtLeast(1))
+			}
+			settings.Attributes["weekly_digest"] = weeklyDigest
+		}
+		if insights, ok := settings.Attributes["insights"].(schema.SingleNestedAttribute); ok {
+			insights.PlanModifiers = append(insights.PlanModifiers, useNullForOmittedNotificationSetting())
+			if pillars, ok := insights.Attributes["pillars"].(schema.ListAttribute); ok {
+				pillars.PlanModifiers = append(pillars.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				insights.Attributes["pillars"] = withNotificationListRules(pillars, notificationInsightPillarsDescription, stringvalidator.OneOf(notificationInsightPillars...))
+			}
+			if severities, ok := insights.Attributes["severities"].(schema.ListAttribute); ok {
+				severities.PlanModifiers = append(severities.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				insights.Attributes["severities"] = withNotificationListRules(severities, notificationInsightSeveritiesDescription, stringvalidator.OneOf(notificationInsightSeverities...))
+			}
+			if providers, ok := insights.Attributes["providers"].(schema.ListAttribute); ok {
+				providers.PlanModifiers = append(providers.PlanModifiers, useNullForUnknownListWhenConfigNull())
+				insights.Attributes["providers"] = withNotificationListRules(providers, notificationInsightProvidersDescription, stringvalidator.LengthAtLeast(1))
+			}
+			settings.Attributes["insights"] = insights
+		}
+
+		typeDescriptions := map[string]string{}
+		for _, t := range notificationTypes {
+			typeDescriptions[t.attr] = customerNotificationTypeDescription(t)
+		}
+		setCostAnomalyDescriptions(settings.Attributes, typeDescriptions)
+
 		if costAnomalies, ok := settings.Attributes["cost_anomalies"].(schema.SingleNestedAttribute); ok {
+			costAnomalies.PlanModifiers = append(costAnomalies.PlanModifiers, useNullForOmittedNotificationSetting())
 			if minExcessCost, ok := costAnomalies.Attributes["min_excess_cost"].(schema.SingleNestedAttribute); ok {
 				appendCostAnomalyMoneyValidators(minExcessCost.Attributes, false)
 				setCostAnomalyDescriptions(minExcessCost.Attributes, map[string]string{
@@ -177,16 +297,14 @@ func (r *customerNotificationResource) Schema(ctx context.Context, _ resource.Sc
 				"repeat":          "Resend controls while an anomaly is active. Set `every_hours`, `when_cost_grows`, or both; remove the block to turn resending off.",
 			})
 			settings.Attributes["cost_anomalies"] = costAnomalies
-			setCostAnomalyDescriptions(settings.Attributes, map[string]string{
-				"cost_anomalies": "Cost-anomaly notification settings.",
-			})
 		}
 		s.Attributes["settings"] = settings
 	}
 
-	s.Description = "Manages an organization-wide notification. Cost-anomaly notifications are supported.\n\n" +
+	s.Description = "Manages an organization-wide notification: the notification types it subscribes to, such as cost anomalies, invoices, digests and insights, and where it is delivered.\n\n" +
 		"Slack channel IDs and Microsoft Teams conversation IDs are supplied by you; the API has no lookup for them yet. " +
 		"A channel that is deleted, archived or disconnected later stays in `destinations` without an error, so a listed channel does not guarantee delivery.\n\n" +
+		"A notification that also holds a type the API does not expose (a dashboard, report or commitment subscription, or a prompt schedule, added in the DoiT console) cannot be read through the API, so Terraform treats it as deleted.\n\n" +
 		"~> **Note:** Managing notifications requires the `settings` (Manage settings) permission."
 	s.MarkdownDescription = s.Description
 

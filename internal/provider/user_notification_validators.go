@@ -37,7 +37,7 @@ func (v userNotificationSettingsValidator) ValidateResource(ctx context.Context,
 	d := req.Config.GetAttribute(ctx, userNotificationSettingsPath, &settings)
 	resp.Diagnostics.Append(d...)
 	if !d.HasError() {
-		validateUserNotificationSubscribesAType(ctx, settings, &resp.Diagnostics)
+		validateNotificationSubscribesAType(ctx, settings, userNotificationSettingsPath, &resp.Diagnostics)
 	}
 
 	var allocations resource_user_notification.AllocationsValue
@@ -54,40 +54,6 @@ func (v userNotificationSettingsValidator) ValidateResource(ctx context.Context,
 		validateUserNotificationRepeat(repeat, &resp.Diagnostics)
 		validateUserNotificationWhenCostGrows(repeat.WhenCostGrows, &resp.Diagnostics)
 	}
-}
-
-// validateUserNotificationSubscribesAType requires at least one type in
-// settings: the API rejects a create without one, and an update that removes
-// the last one, with 422.
-func validateUserNotificationSubscribesAType(ctx context.Context, settings resource_user_notification.SettingsValue, diags *diag.Diagnostics) {
-	if settings.IsNull() || settings.IsUnknown() {
-		return
-	}
-
-	object, d := settings.ToObjectValue(ctx)
-	diags.Append(d...)
-	if d.HasError() {
-		return
-	}
-	if object.IsNull() || object.IsUnknown() {
-		return
-	}
-
-	for _, value := range object.Attributes() {
-		if value.IsUnknown() {
-			return
-		}
-		if !value.IsNull() {
-			return
-		}
-	}
-
-	diags.AddAttributeError(
-		userNotificationSettingsPath,
-		"No Notification Type",
-		"`settings` must subscribe to at least one notification type, for example `credit_utilization = {}`. "+
-			"To stop every notification, remove the resource instead.",
-	)
 }
 
 // validateUserNotificationAllocations checks that ids match mode and has no duplicates.

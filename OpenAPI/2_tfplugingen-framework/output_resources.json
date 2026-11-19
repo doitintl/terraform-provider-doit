@@ -2168,9 +2168,35 @@
 							"computed_optional_required": "required",
 							"attributes": [
 								{
+									"name": "aws_billing_data_import",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "billing_profile_ids",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`."
+												}
+											}
+										],
+										"description": "Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id."
+									}
+								},
+								{
+									"name": "cloud_incidents",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
 									"name": "cost_anomalies",
 									"single_nested": {
-										"computed_optional_required": "required",
+										"computed_optional_required": "computed_optional",
 										"attributes": [
 											{
 												"name": "allocations",
@@ -2432,9 +2458,237 @@
 										],
 										"description": "Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and\noptional resend controls.\n"
 									}
+								},
+								{
+									"name": "credit_utilization",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "cud_approval",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "cud_purchased",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "daily_digest",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "allocation_ids",
+												"list": {
+													"computed_optional_required": "required",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+																	}
+																],
+																"schema_definition": "listvalidator.SizeAtLeast(1)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "Allocation rules included in a daily or weekly digest. At least one id is required."
+									}
+								},
+								{
+									"name": "data_integration_sync_failure",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "expert_insights",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "insights",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "pillars",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Insight pillars. Empty or omitted means all pillars."
+												}
+											},
+											{
+												"name": "providers",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string."
+												}
+											},
+											{
+												"name": "severities",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Insight severities. Empty or omitted means all severities."
+												}
+											}
+										],
+										"description": "Optional insight filters. An empty or omitted list means every value of that filter. An insight must match every criterion across `pillars`, `severities`, and `providers`. A read of an omitted or empty list returns that field absent. An explicit list is returned in the order sent. A repeated value is rejected with `422`."
+									}
+								},
+								{
+									"name": "monthly_digest",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "new_invoices",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "billing_profile_ids",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`."
+												}
+											}
+										],
+										"description": "Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id."
+									}
+								},
+								{
+									"name": "new_proforma_invoices",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "billing_profile_ids",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`."
+												}
+											}
+										],
+										"description": "Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id."
+									}
+								},
+								{
+									"name": "new_sku_usage",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "payment_reminders",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "billing_profile_ids",
+												"list": {
+													"computed_optional_required": "computed_optional",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`."
+												}
+											}
+										],
+										"description": "Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id."
+									}
+								},
+								{
+									"name": "quota_utilization",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "savings_plan_approval",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "savings_plan_purchased",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"description": "A present empty object means this type is subscribed, for example `\"creditUtilization\": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value."
+									}
+								},
+								{
+									"name": "weekly_digest",
+									"single_nested": {
+										"computed_optional_required": "computed_optional",
+										"attributes": [
+											{
+												"name": "allocation_ids",
+												"list": {
+													"computed_optional_required": "required",
+													"element_type": {
+														"string": {}
+													},
+													"description": "Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.",
+													"validators": [
+														{
+															"custom": {
+																"imports": [
+																	{
+																		"path": "github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+																	}
+																],
+																"schema_definition": "listvalidator.SizeAtLeast(1)"
+															}
+														}
+													]
+												}
+											}
+										],
+										"description": "Allocation rules included in a daily or weekly digest. At least one id is required."
+									}
 								}
 							],
-							"description": "Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected."
+							"description": "Subscribed notification settings, one property per type. A present property subscribes that type;\n`{}` subscribes a type that has no fields. Omitting a property on create leaves that type\nunsubscribed. At least one property is required. Unknown properties, including dashboard, report,\nand commitment subscriptions, prompt schedules, and `conditions`, are rejected with `422`.\n\nProperties and their Console labels:\n\n- `newInvoices`: New invoices\n- `newProformaInvoices`: New proforma invoices\n- `paymentReminders`: Due or overdue payments\n- `creditUtilization`: Credit utilization\n- `quotaUtilization`: Quota utilization\n- `cloudIncidents`: Cloud incidents\n- `newSkuUsage`: New SKUs usage detected\n- `dailyDigest`: Daily digest, one email per selected allocation rule each day\n- `weeklyDigest`: Weekly digest, one email per selected allocation rule each week\n- `monthlyDigest`: Monthly digest\n- `expertInsights`: Third-party insights (Console item \"New insights recommended by DoiT experts\")\n- `insights`: New insights\n- `costAnomalies`: Cloud cost anomalies (Console item \"Cost anomaly detection\")\n- `savingsPlanApproval`: Savings Plan purchase requires approval (PerfectScale for Commitments)\n- `savingsPlanPurchased`: Savings Plan purchased\n- `cudApproval`: committed use discount (CUD) purchase requires approval\n- `cudPurchased`: CUD purchased\n- `dataIntegrationSyncFailure`: Data integration sync failures\n- `awsBillingDataImport`: AWS Billing Data Import Alert\n\nRequires Manage settings; no other permission is checked.\n\nEvery destination channel must be supported by every subscribed type, or the response is `422`\n`customers.channel_not_supported`:\n\n- Email and Slack only: `expertInsights`, `dataIntegrationSyncFailure`\n- Email, Slack, and Microsoft Teams: every other property\n- A Teams destination on a supported type is still `422` `validation_failed` when the tenant has\n  no Teams entitlement"
 						}
 					},
 					{

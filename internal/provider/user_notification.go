@@ -105,9 +105,9 @@ func buildUserNotificationSettings(ctx context.Context, s *models.UserNotificati
 	var diags diag.Diagnostics
 
 	attrTypes := resource_user_notification.SettingsValue{}.AttributeTypes(ctx)
-	objects, d := userNotificationSettingsObjects(ctx, s)
+	objects, d := notificationSettingsObjects(ctx, userNotificationSettingsSource(s))
 	diags.Append(d...)
-	values, d := userNotificationSettingsValues(ctx, attrTypes, objects)
+	values, d := notificationSettingsValues(ctx, attrTypes, objects)
 	diags.Append(d...)
 
 	costAnomalies, d := buildUserNotificationCostAnomalies(ctx, s.CostAnomalies, prior)

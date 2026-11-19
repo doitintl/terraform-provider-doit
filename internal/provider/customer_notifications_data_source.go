@@ -8,6 +8,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/datasource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -44,8 +45,18 @@ func (d *customerNotificationsDataSource) Configure(_ context.Context, req datas
 func (d *customerNotificationsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	s := datasource_customer_notifications.CustomerNotificationsDataSourceSchema(ctx)
 
-	s.Description = "Organization-wide cost-anomaly notification configs, delivered by email, Slack and Microsoft Teams. Requires the Manage settings permission."
+	s.Description = "Organization-wide notification configs: the notification types each subscribes to, delivered by email, Slack and Microsoft Teams. Configs that also hold a type the API does not expose (a dashboard, report or commitment subscription, or a prompt schedule) are not listed. Requires the Manage settings permission."
 	s.MarkdownDescription = s.Description
+
+	// The generated settings text is written for API clients (camelCase names).
+	if items, ok := s.Attributes["items"].(schema.ListNestedAttribute); ok {
+		if settings, ok := items.NestedObject.Attributes["settings"].(schema.SingleNestedAttribute); ok {
+			settings.Description = customerNotificationDataSourceSettingsDescription
+			settings.MarkdownDescription = settings.Description
+			items.NestedObject.Attributes["settings"] = settings
+		}
+		s.Attributes["items"] = items
+	}
 
 	s.Attributes["timeouts"] = timeouts.Attributes(ctx)
 	resp.Schema = s

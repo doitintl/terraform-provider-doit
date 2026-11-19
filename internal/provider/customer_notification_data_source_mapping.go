@@ -31,7 +31,7 @@ func mapCustomerNotificationToDataSource(ctx context.Context, resp *models.Custo
 	diags.Append(d...)
 	data.Destinations = destinations
 
-	settings, d := buildCustomerNotificationDataSourceSettings(ctx, &resp.Settings.CostAnomalies)
+	settings, d := buildCustomerNotificationDataSourceSettings(ctx, &resp.Settings)
 	diags.Append(d...)
 	data.Settings = settings
 
@@ -64,8 +64,37 @@ func buildCustomerNotificationDataSourceDestinations(ctx context.Context, destin
 	return v, diags
 }
 
-func buildCustomerNotificationDataSourceSettings(ctx context.Context, ca *models.CostAnomalySettings) (datasource_customer_notification.SettingsValue, diag.Diagnostics) {
+func buildCustomerNotificationDataSourceSettings(ctx context.Context, s *models.CustomerNotificationSettings) (datasource_customer_notification.SettingsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	attrTypes := datasource_customer_notification.SettingsValue{}.AttributeTypes(ctx)
+	objects, d := notificationSettingsObjects(ctx, customerNotificationSettingsSource(s))
+	diags.Append(d...)
+	values, d := notificationSettingsValues(ctx, attrTypes, objects)
+	diags.Append(d...)
+
+	costAnomalies, d := buildCustomerNotificationDataSourceCostAnomalies(ctx, s.CostAnomalies)
+	diags.Append(d...)
+	values["cost_anomalies"] = costAnomalies
+
+	if diags.HasError() {
+		return datasource_customer_notification.NewSettingsValueNull(), diags
+	}
+
+	settings, d := datasource_customer_notification.NewSettingsValue(attrTypes, values)
+	diags.Append(d...)
+
+	return settings, diags
+}
+
+// buildCustomerNotificationDataSourceCostAnomalies maps the cost-anomaly settings; nil (not
+// subscribed) maps to null.
+func buildCustomerNotificationDataSourceCostAnomalies(ctx context.Context, ca *models.CostAnomalySettings) (datasource_customer_notification.CostAnomaliesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if ca == nil {
+		return datasource_customer_notification.NewCostAnomaliesValueNull(), diags
+	}
 
 	idList, d := types.ListValueFrom(ctx, types.StringType, nonNilStrings(ca.Allocations.Ids))
 	diags.Append(d...)
@@ -101,13 +130,7 @@ func buildCustomerNotificationDataSourceSettings(ctx context.Context, ca *models
 	)
 	diags.Append(d...)
 
-	settings, d := datasource_customer_notification.NewSettingsValue(
-		datasource_customer_notification.SettingsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"cost_anomalies": costAnomalies},
-	)
-	diags.Append(d...)
-
-	return settings, diags
+	return costAnomalies, diags
 }
 
 func buildCustomerNotificationDataSourceRepeat(ctx context.Context, repeat *models.CostAnomalyRepeat) (datasource_customer_notification.RepeatValue, diag.Diagnostics) {
@@ -169,7 +192,7 @@ func mapCustomerNotificationsToDataSource(ctx context.Context, items []models.Cu
 
 		destinations, d := buildCustomerNotificationsDataSourceDestinations(ctx, item.Destinations)
 		diags.Append(d...)
-		settings, d := buildCustomerNotificationsDataSourceSettings(ctx, &item.Settings.CostAnomalies)
+		settings, d := buildCustomerNotificationsDataSourceSettings(ctx, &item.Settings)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
@@ -226,8 +249,37 @@ func buildCustomerNotificationsDataSourceDestinations(ctx context.Context, desti
 	return v, diags
 }
 
-func buildCustomerNotificationsDataSourceSettings(ctx context.Context, ca *models.CostAnomalySettings) (datasource_customer_notifications.SettingsValue, diag.Diagnostics) {
+func buildCustomerNotificationsDataSourceSettings(ctx context.Context, s *models.CustomerNotificationSettings) (datasource_customer_notifications.SettingsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	attrTypes := datasource_customer_notifications.SettingsValue{}.AttributeTypes(ctx)
+	objects, d := notificationSettingsObjects(ctx, customerNotificationSettingsSource(s))
+	diags.Append(d...)
+	values, d := notificationSettingsValues(ctx, attrTypes, objects)
+	diags.Append(d...)
+
+	costAnomalies, d := buildCustomerNotificationsDataSourceCostAnomalies(ctx, s.CostAnomalies)
+	diags.Append(d...)
+	values["cost_anomalies"] = costAnomalies
+
+	if diags.HasError() {
+		return datasource_customer_notifications.NewSettingsValueNull(), diags
+	}
+
+	settings, d := datasource_customer_notifications.NewSettingsValue(attrTypes, values)
+	diags.Append(d...)
+
+	return settings, diags
+}
+
+// buildCustomerNotificationsDataSourceCostAnomalies maps the cost-anomaly settings; nil (not
+// subscribed) maps to null.
+func buildCustomerNotificationsDataSourceCostAnomalies(ctx context.Context, ca *models.CostAnomalySettings) (datasource_customer_notifications.CostAnomaliesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if ca == nil {
+		return datasource_customer_notifications.NewCostAnomaliesValueNull(), diags
+	}
 
 	idList, d := types.ListValueFrom(ctx, types.StringType, nonNilStrings(ca.Allocations.Ids))
 	diags.Append(d...)
@@ -263,13 +315,7 @@ func buildCustomerNotificationsDataSourceSettings(ctx context.Context, ca *model
 	)
 	diags.Append(d...)
 
-	settings, d := datasource_customer_notifications.NewSettingsValue(
-		datasource_customer_notifications.SettingsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{"cost_anomalies": costAnomalies},
-	)
-	diags.Append(d...)
-
-	return settings, diags
+	return costAnomalies, diags
 }
 
 func buildCustomerNotificationsDataSourceRepeat(ctx context.Context, repeat *models.CostAnomalyRepeat) (datasource_customer_notifications.RepeatValue, diag.Diagnostics) {

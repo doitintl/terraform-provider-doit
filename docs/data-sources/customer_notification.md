@@ -3,12 +3,12 @@
 page_title: "doit_customer_notification Data Source - terraform-provider-doit"
 subcategory: ""
 description: |-
-  Organization-wide cost-anomaly notification config, delivered by email, Slack and Microsoft Teams. Requires the Manage settings permission.
+  Organization-wide notification config: the notification types it subscribes to, delivered by email, Slack and Microsoft Teams. Requires the Manage settings permission.
 ---
 
 # doit_customer_notification (Data Source)
 
-Organization-wide cost-anomaly notification config, delivered by email, Slack and Microsoft Teams. Requires the Manage settings permission.
+Organization-wide notification config: the notification types it subscribes to, delivered by email, Slack and Microsoft Teams. Requires the Manage settings permission.
 
 ## Example Usage
 
@@ -51,7 +51,7 @@ output "min_severity" {
 ### Required
 
 - `id` (String) The unique ID of the notification config returned by create or list.
-An id that is not a cost-anomaly config for this tenant returns `404`.
+An id that is not a public organization config for this tenant returns `404`.
 
 ### Optional
 
@@ -63,7 +63,7 @@ An id that is not a cost-anomaly config for this tenant returns `404`.
 - `destinations` (Attributes) Delivery targets. Always includes `emails`, `slackChannels`, and `teamsChannels`. Unused lists are empty arrays. (see [below for nested schema](#nestedatt--destinations))
 - `etag` (String) Current strong ETag as bare SHA-256 hex. The `ETag` response header and `If-Match` wrap this value in double quotes. Send that quoted form unchanged on update or delete. `null` only on a dry-run create.
 - `name` (String) Display name of the notification (max 200 characters). The stored name is trimmed.
-- `settings` (Attributes) Subscribed notification settings. Only `costAnomalies` is accepted; any other notification type is rejected. (see [below for nested schema](#nestedatt--settings))
+- `settings` (Attributes) The notification types the notification subscribes to, one attribute per type. A type that is not subscribed is null; an empty object (`{}`) means subscribed without options. An empty filter list means every value of that filter. (see [below for nested schema](#nestedatt--settings))
 - `update_time` (String) When the config was last changed. `null` only on a dry-run create.
 
 <a id="nestedatt--timeouts"></a>
@@ -89,8 +89,38 @@ Read-Only:
 
 Read-Only:
 
+- `aws_billing_data_import` (Attributes) Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id. (see [below for nested schema](#nestedatt--settings--aws_billing_data_import))
+- `cloud_incidents` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--cloud_incidents))
 - `cost_anomalies` (Attributes) Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
 optional resend controls. (see [below for nested schema](#nestedatt--settings--cost_anomalies))
+- `credit_utilization` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--credit_utilization))
+- `cud_approval` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--cud_approval))
+- `cud_purchased` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--cud_purchased))
+- `daily_digest` (Attributes) Allocation rules included in a daily or weekly digest. At least one id is required. (see [below for nested schema](#nestedatt--settings--daily_digest))
+- `data_integration_sync_failure` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--data_integration_sync_failure))
+- `expert_insights` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--expert_insights))
+- `insights` (Attributes) Optional insight filters. An empty or omitted list means every value of that filter. An insight must match every criterion across `pillars`, `severities`, and `providers`. A read of an omitted or empty list returns that field absent. An explicit list is returned in the order sent. A repeated value is rejected with `422`. (see [below for nested schema](#nestedatt--settings--insights))
+- `monthly_digest` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--monthly_digest))
+- `new_invoices` (Attributes) Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id. (see [below for nested schema](#nestedatt--settings--new_invoices))
+- `new_proforma_invoices` (Attributes) Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id. (see [below for nested schema](#nestedatt--settings--new_proforma_invoices))
+- `new_sku_usage` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--new_sku_usage))
+- `payment_reminders` (Attributes) Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id. (see [below for nested schema](#nestedatt--settings--payment_reminders))
+- `quota_utilization` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--quota_utilization))
+- `savings_plan_approval` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--savings_plan_approval))
+- `savings_plan_purchased` (Attributes) A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value. (see [below for nested schema](#nestedatt--settings--savings_plan_purchased))
+- `weekly_digest` (Attributes) Allocation rules included in a daily or weekly digest. At least one id is required. (see [below for nested schema](#nestedatt--settings--weekly_digest))
+
+<a id="nestedatt--settings--aws_billing_data_import"></a>
+### Nested Schema for `settings.aws_billing_data_import`
+
+Read-Only:
+
+- `billing_profile_ids` (List of String) Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+
+
+<a id="nestedatt--settings--cloud_incidents"></a>
+### Nested Schema for `settings.cloud_incidents`
+
 
 <a id="nestedatt--settings--cost_anomalies"></a>
 ### Nested Schema for `settings.cost_anomalies`
@@ -175,3 +205,96 @@ Read-Only:
 
 - `amount` (String) Decimal monetary amount at ISO 4217 minor-unit precision (string).
 - `currency` (String) ISO 4217 currency code.
+
+
+
+
+
+<a id="nestedatt--settings--credit_utilization"></a>
+### Nested Schema for `settings.credit_utilization`
+
+
+<a id="nestedatt--settings--cud_approval"></a>
+### Nested Schema for `settings.cud_approval`
+
+
+<a id="nestedatt--settings--cud_purchased"></a>
+### Nested Schema for `settings.cud_purchased`
+
+
+<a id="nestedatt--settings--daily_digest"></a>
+### Nested Schema for `settings.daily_digest`
+
+Read-Only:
+
+- `allocation_ids` (List of String) Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
+
+
+<a id="nestedatt--settings--data_integration_sync_failure"></a>
+### Nested Schema for `settings.data_integration_sync_failure`
+
+
+<a id="nestedatt--settings--expert_insights"></a>
+### Nested Schema for `settings.expert_insights`
+
+
+<a id="nestedatt--settings--insights"></a>
+### Nested Schema for `settings.insights`
+
+Read-Only:
+
+- `pillars` (List of String) Insight pillars. Empty or omitted means all pillars.
+- `providers` (List of String) Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
+- `severities` (List of String) Insight severities. Empty or omitted means all severities.
+
+
+<a id="nestedatt--settings--monthly_digest"></a>
+### Nested Schema for `settings.monthly_digest`
+
+
+<a id="nestedatt--settings--new_invoices"></a>
+### Nested Schema for `settings.new_invoices`
+
+Read-Only:
+
+- `billing_profile_ids` (List of String) Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+
+
+<a id="nestedatt--settings--new_proforma_invoices"></a>
+### Nested Schema for `settings.new_proforma_invoices`
+
+Read-Only:
+
+- `billing_profile_ids` (List of String) Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+
+
+<a id="nestedatt--settings--new_sku_usage"></a>
+### Nested Schema for `settings.new_sku_usage`
+
+
+<a id="nestedatt--settings--payment_reminders"></a>
+### Nested Schema for `settings.payment_reminders`
+
+Read-Only:
+
+- `billing_profile_ids` (List of String) Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+
+
+<a id="nestedatt--settings--quota_utilization"></a>
+### Nested Schema for `settings.quota_utilization`
+
+
+<a id="nestedatt--settings--savings_plan_approval"></a>
+### Nested Schema for `settings.savings_plan_approval`
+
+
+<a id="nestedatt--settings--savings_plan_purchased"></a>
+### Nested Schema for `settings.savings_plan_purchased`
+
+
+<a id="nestedatt--settings--weekly_digest"></a>
+### Nested Schema for `settings.weekly_digest`
+
+Read-Only:
+
+- `allocation_ids` (List of String) Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.

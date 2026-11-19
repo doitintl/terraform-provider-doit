@@ -81,3 +81,31 @@ resource "doit_customer_notification" "production_critical" {
     }
   }
 }
+
+# Billing and insight notifications for the FinOps channel in Slack. Set a
+# type to {} to subscribe with its defaults; an omitted or empty filter list
+# means every value. Removing a type from the configuration unsubscribes it.
+# expert_insights and data_integration_sync_failure cannot be delivered to
+# Microsoft Teams, so teams_channels must stay empty when they are set.
+resource "doit_customer_notification" "finops_digest" {
+  name = "FinOps billing and insights"
+
+  destinations = {
+    emails         = []
+    slack_channels = ["C0123ABCD"]
+    teams_channels = []
+  }
+
+  settings = {
+    new_invoices      = {}
+    payment_reminders = {}
+    expert_insights   = {}
+    insights = {
+      pillars    = ["cost"]
+      severities = ["critical", "high"]
+    }
+    weekly_digest = {
+      allocation_ids = [doit_allocation.production.id]
+    }
+  }
+}

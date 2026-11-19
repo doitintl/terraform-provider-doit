@@ -13,7 +13,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var customerNotificationCostAnomaliesPath = path.Root("settings").AtName("cost_anomalies")
+var (
+	customerNotificationSettingsPath      = path.Root("settings")
+	customerNotificationCostAnomaliesPath = customerNotificationSettingsPath.AtName("cost_anomalies")
+)
 
 // customerNotificationSettingsValidator checks the cross-attribute rules of
 // settings.cost_anomalies that the API otherwise rejects with 422 at apply.
@@ -22,7 +25,8 @@ type customerNotificationSettingsValidator struct{}
 var _ resource.ConfigValidator = customerNotificationSettingsValidator{}
 
 func (v customerNotificationSettingsValidator) Description(_ context.Context) string {
-	return "allocations.ids must be empty for mode \"all\" and non-empty for \"include\"/\"exclude\" without duplicates; " +
+	return "settings must subscribe to at least one type; " +
+		"allocations.ids must be empty for mode \"all\" and non-empty for \"include\"/\"exclude\" without duplicates; " +
 		"repeat must set every_hours or when_cost_grows; when_cost_grows must set percent_increase or min_increase, and match when both are set"
 }
 
@@ -31,8 +35,15 @@ func (v customerNotificationSettingsValidator) MarkdownDescription(ctx context.C
 }
 
 func (v customerNotificationSettingsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var settings resource_customer_notification.SettingsValue
+	d := req.Config.GetAttribute(ctx, customerNotificationSettingsPath, &settings)
+	resp.Diagnostics.Append(d...)
+	if !d.HasError() {
+		validateNotificationSubscribesAType(ctx, settings, customerNotificationSettingsPath, &resp.Diagnostics)
+	}
+
 	var allocations resource_customer_notification.AllocationsValue
-	d := req.Config.GetAttribute(ctx, customerNotificationCostAnomaliesPath.AtName("allocations"), &allocations)
+	d = req.Config.GetAttribute(ctx, customerNotificationCostAnomaliesPath.AtName("allocations"), &allocations)
 	resp.Diagnostics.Append(d...)
 	if !d.HasError() {
 		validateCustomerNotificationAllocations(allocations, &resp.Diagnostics)
@@ -260,6 +271,80 @@ func validateDestinationLists(basePath path.Path, lists []destinationList, noneD
 
 	if !anyEntry {
 		diags.AddAttributeError(basePath, "No Destinations", noneDetail)
+	}
+}
+
+// customerNotificationChannelsValidator rejects a Microsoft Teams destination
+// on a notification that subscribes to a type Teams cannot deliver, which the
+// API otherwise rejects with 422 channel_not_supported at apply.
+type customerNotificationChannelsValidator struct{}
+
+var _ resource.ConfigValidator = customerNotificationChannelsValidator{}
+
+func (v customerNotificationChannelsValidator) Description(_ context.Context) string {
+	return "destinations.teams_channels must be empty when settings subscribes to " + strings.Join(customerNotificationNoTeamsTypes(), " or ")
+}
+
+func (v customerNotificationChannelsValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v customerNotificationChannelsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var destinations resource_customer_notification.DestinationsValue
+	d := req.Config.GetAttribute(ctx, customerNotificationDestinationsPath, &destinations)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() {
+		return
+	}
+	var settings resource_customer_notification.SettingsValue
+	d = req.Config.GetAttribute(ctx, customerNotificationSettingsPath, &settings)
+	resp.Diagnostics.Append(d...)
+	if d.HasError() {
+		return
+	}
+	validateCustomerNotificationChannels(ctx, destinations, settings, &resp.Diagnostics)
+}
+
+// validateCustomerNotificationChannels reports every subscribed type that
+// Teams cannot deliver while teams_channels has an entry. An entry counts even
+// while its value is unknown; an unknown list or type defers the check.
+func validateCustomerNotificationChannels(ctx context.Context, destinations resource_customer_notification.DestinationsValue, settings resource_customer_notification.SettingsValue, diags *diag.Diagnostics) {
+	if destinations.IsNull() || destinations.IsUnknown() {
+		return
+	}
+	if settings.IsNull() || settings.IsUnknown() {
+		return
+	}
+	teams := destinations.TeamsChannels
+	if teams.IsNull() || teams.IsUnknown() {
+		return
+	}
+	if len(teams.Elements()) == 0 {
+		return
+	}
+
+	object, d := settings.ToObjectValue(ctx)
+	diags.Append(d...)
+	if d.HasError() {
+		return
+	}
+	if object.IsNull() || object.IsUnknown() {
+		return
+	}
+	attributes := object.Attributes()
+	for _, name := range customerNotificationNoTeamsTypes() {
+		value, ok := attributes[name]
+		if !ok {
+			continue
+		}
+		if value.IsNull() || value.IsUnknown() {
+			continue
+		}
+		diags.AddAttributeError(
+			customerNotificationSettingsPath.AtName(name),
+			"Channel Not Supported",
+			fmt.Sprintf("`%s` cannot be delivered to Microsoft Teams. Remove it from `settings`, or set `destinations.teams_channels = []` and use a separate notification for Teams.", name),
+		)
 	}
 }
 
