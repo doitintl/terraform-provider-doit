@@ -61,7 +61,7 @@ An api-specs PR for a v1 service still goes through the v1 pipeline, as describe
 
 ```bash
 make sync-spec PR=<omni-pr>   # or REF=<branch>; replaces OpenAPI/openapi_spec_full.yml
-make apply-pr PR=<omni-pr>    # alternative: apply only the PR's diff to the synced spec
+make apply-pr PR=<omni-pr>    # alternative: three-way merge only the PR's spec changes into the synced spec
 ```
 
 A contract that exists only as a `doiteng/api-specs` PR has not reached omni yet. Every spec PR publishes its own spec as a pre-release asset, and you can run the pipeline on it directly: copy it to `OpenAPI/openapi_spec_full.yml`. Services whose spec is OpenAPI 3.1 need no conversion to 3.0.1.
