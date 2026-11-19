@@ -18,7 +18,7 @@ import (
 )
 
 // testAllocPrefix is the namespace prefix for all test allocation names.
-// The sweep function deletes any allocation whose name starts with this prefix.
+// The sweep function deletes every allocation owned by TEST_USER.
 const testAllocPrefix = "tfacc"
 
 func testProject() string {

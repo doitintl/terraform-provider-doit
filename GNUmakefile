@@ -76,7 +76,7 @@ fmt:
 # explicitly cleared so unit tests execute in a cleanroom environment even if
 # .envrc.local is loaded in the developer's shell.
 test:
-	TF_ACC= DOIT_API_TOKEN= DOIT_HOST= DOIT_CUSTOMER_CONTEXT= DOIT_REQUEST_TIMEOUT= \
+	TF_ACC= TF_ACC_SWEEP= DOIT_API_TOKEN= DOIT_HOST= DOIT_CUSTOMER_CONTEXT= DOIT_REQUEST_TIMEOUT= \
 	go test -v -cover -timeout=120s -parallel=10 -count=3 -shuffle=on ./...
 
 # gotestsum wraps `go test` and automatically reruns individual failed tests,
@@ -103,7 +103,7 @@ LOAD_ACC_ENV := \
 # failures (i.e. a systemic break rather than flakiness).
 testacc:
 	@$(LOAD_ACC_ENV); \
-	TF_ACC=1 $(GOTESTSUM) \
+	TF_ACC=1 TF_ACC_SWEEP=1 $(GOTESTSUM) \
 		--format standard-verbose \
 		--rerun-fails=2 \
 		--rerun-fails-max-failures=5 \
@@ -118,7 +118,7 @@ testacc:
 # ($(value TEST) keeps the pattern literal; $(TEST) would let make eat the "$".)
 testacc-run:
 	@$(LOAD_ACC_ENV); \
-	TF_ACC=1 $(GOTESTSUM) \
+	TF_ACC=1 TF_ACC_SWEEP=1 $(GOTESTSUM) \
 		--format standard-verbose \
 		--rerun-fails=2 \
 		--rerun-fails-max-failures=5 \

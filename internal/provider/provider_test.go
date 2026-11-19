@@ -19,13 +19,15 @@ import (
 )
 
 // TestMain runs after all tests complete. It sweeps orphaned test allocations
-// whose names start with testAllocPrefix. This must happen here (not in
-// CheckDestroy) to avoid deleting allocations that belong to other parallel tests.
+// owned by TEST_USER. This must happen here (not in CheckDestroy) to avoid
+// deleting allocations that belong to other parallel tests.
 func TestMain(m *testing.M) {
 	code := m.Run()
 
-	// Only sweep during acceptance tests
-	if os.Getenv("TF_ACC") != "" {
+	// The sweep is opt-in via TF_ACC_SWEEP, which only the acceptance targets
+	// set. TF_ACC alone is not enough: it is often exported in a developer's
+	// shell, where a targeted unit-test run must not touch the tenant.
+	if os.Getenv("TF_ACC_SWEEP") != "" {
 		sweepOrphanedAllocations()
 	}
 
