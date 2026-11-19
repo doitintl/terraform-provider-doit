@@ -471,3 +471,108 @@ func jsonOf(t *testing.T, v any) string {
 	}
 	return string(b)
 }
+
+// TestBudgetModifyPlanSeasonalRemoval covers removing stored seasonal amounts.
+// The plan of each row is the one the framework builds: an omitted
+// seasonal_amounts is planned [] by the clearing modifier; amount, which a
+// seasonal budget stores as null, keeps that null when the removal is the
+// only change and is unknown when the configuration changes too;
+// use_prev_spend takes its default false when omitted.
+func TestBudgetModifyPlanSeasonalRemoval(t *testing.T) {
+	ctx := t.Context()
+	errMissingAmount := wantBudgetDiag{path.Root("seasonal_amounts"), "Missing Budget Amount"}
+	empty := testSeasonalList()
+
+	tests := []struct {
+		name   string
+		create bool
+		config map[string]attr.Value
+		plan   map[string]attr.Value // planned values that differ from the configuration
+		stored map[string]attr.Value
+		want   []wantBudgetDiag
+	}{
+		{"omitted, removal is the only change", false, nil,
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Null()}, nil, []wantBudgetDiag{errMissingAmount}},
+		{"omitted, with another change", false, map[string]attr.Value{"name": types.StringValue("renamed")},
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Unknown()}, nil, []wantBudgetDiag{errMissingAmount}},
+		{"explicit empty list", false, map[string]attr.Value{"seasonal_amounts": empty},
+			map[string]attr.Value{"amount": types.Float64Unknown()}, nil, []wantBudgetDiag{errMissingAmount}},
+		{"use_prev_spend false", false, map[string]attr.Value{"use_prev_spend": types.BoolValue(false)},
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Unknown()}, nil, []wantBudgetDiag{errMissingAmount}},
+
+		{"amount set", false, map[string]attr.Value{"amount": types.Float64Value(100)},
+			map[string]attr.Value{"seasonal_amounts": empty}, nil, nil},
+		{"amount zero", false, map[string]attr.Value{"amount": types.Float64Value(0)},
+			map[string]attr.Value{"seasonal_amounts": empty}, nil, nil},
+		{"amount unknown", false, map[string]attr.Value{"amount": types.Float64Unknown()},
+			map[string]attr.Value{"seasonal_amounts": empty}, nil, nil},
+		{"use_prev_spend true", false, map[string]attr.Value{"use_prev_spend": types.BoolValue(true)},
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Unknown()}, nil, nil},
+		{"use_prev_spend unknown", false, map[string]attr.Value{"use_prev_spend": types.BoolUnknown()},
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Unknown()}, nil, nil},
+
+		{"seasonal amounts changed, not removed", false, map[string]attr.Value{"seasonal_amounts": testSeasonalAmounts(12)},
+			map[string]attr.Value{"amount": types.Float64Null()}, map[string]attr.Value{"seasonal_amounts": testSeasonalList(
+				types.Float64Value(1), types.Float64Value(2), types.Float64Value(3), types.Float64Value(4), types.Float64Value(5), types.Float64Value(6),
+				types.Float64Value(7), types.Float64Value(8), types.Float64Value(9), types.Float64Value(10), types.Float64Value(11), types.Float64Value(12))}, nil},
+		{"seasonal amounts unknown", false, map[string]attr.Value{"seasonal_amounts": types.ListUnknown(types.Float64Type)},
+			map[string]attr.Value{"amount": types.Float64Unknown()}, nil, nil},
+		{"nothing stored", false, map[string]attr.Value{"name": types.StringValue("renamed")},
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Unknown()},
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Value(100)}, nil},
+		{"stored null (upgraded state)", false, map[string]attr.Value{"name": types.StringValue("renamed")},
+			map[string]attr.Value{"seasonal_amounts": empty, "amount": types.Float64Unknown()},
+			map[string]attr.Value{"seasonal_amounts": types.ListNull(types.Float64Type)}, nil},
+		// Creating a budget without any target fails at the API as before; this
+		// check only covers removing stored seasonal amounts.
+		{"create", true, map[string]attr.Value{"seasonal_amounts": empty},
+			map[string]attr.Value{"amount": types.Float64Unknown()}, nil, nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			configValues := map[string]attr.Value{
+				"name":          types.StringValue("budget"),
+				"type":          types.StringValue("recurring"),
+				"start_period":  types.Int64Value(1759276800000),
+				"time_interval": types.StringValue("month"),
+			}
+			maps.Copy(configValues, tt.config)
+			config := buildBudgetValidatorConfig(ctx, t, configValues)
+
+			planValues := maps.Clone(configValues)
+			planValues["growth_per_period"] = types.Float64Value(0)
+			planValues["allow_growth"] = types.BoolValue(false)
+			if _, ok := tt.config["use_prev_spend"]; !ok {
+				planValues["use_prev_spend"] = types.BoolValue(false)
+			}
+			maps.Copy(planValues, tt.plan)
+			plan := buildBudgetValidatorConfig(ctx, t, planValues)
+
+			storedValues := map[string]attr.Value{
+				"name":              types.StringValue("budget"),
+				"type":              types.StringValue("recurring"),
+				"start_period":      types.Int64Value(1759276800000),
+				"time_interval":     types.StringValue("month"),
+				"allow_growth":      types.BoolValue(false),
+				"growth_per_period": types.Float64Value(0),
+				"use_prev_spend":    types.BoolValue(false),
+				"seasonal_amounts":  testSeasonalAmounts(12),
+				"amount":            types.Float64Null(),
+			}
+			maps.Copy(storedValues, tt.stored)
+			stateRaw := buildBudgetValidatorConfig(ctx, t, storedValues).Raw
+			if tt.create {
+				stateRaw = tftypes.NewValue(config.Raw.Type(), nil)
+			}
+
+			resp := &resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: config.Schema, Raw: plan.Raw.Copy()}}
+			(&budgetResource{}).ModifyPlan(ctx, resource.ModifyPlanRequest{
+				Config: config,
+				State:  tfsdk.State{Schema: config.Schema, Raw: stateRaw},
+				Plan:   tfsdk.Plan{Schema: config.Schema, Raw: plan.Raw},
+			}, resp)
+			assertBudgetDiagnostics(t, resp.Diagnostics, tt.want)
+		})
+	}
+}

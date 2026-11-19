@@ -217,6 +217,7 @@ func (r *budgetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 	validateBudgetSeasonalGrowth(ctx, req, resp, isCreate)
 	if !isCreate {
 		validateBudgetPlanAgainstStoredInterval(ctx, req, resp)
+		validateBudgetSeasonalRemoval(ctx, req, resp)
 	}
 
 	// Optional+Computed values may be omitted on update and carried forward from

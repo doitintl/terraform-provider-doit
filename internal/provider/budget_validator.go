@@ -992,3 +992,71 @@ func validateBudgetRolloverLimitForInterval(ctx context.Context, req resource.Mo
 		resp.Diagnostics.AddAttributeError(path.Root("rollover").AtName("limit"), "Invalid Rollover Limit", msg)
 	}
 }
+
+// validateBudgetSeasonalRemoval rejects an update that removes the stored
+// seasonal amounts without a replacement target: the API needs amount or
+// use_prev_spend = true in the same request. The planned amount cannot tell an
+// omitted amount from a configured one that is not known yet (it is null when
+// the removal is the only change and unknown otherwise), so the configuration
+// decides, and an unknown amount or use_prev_spend defers to apply.
+func validateBudgetSeasonalRemoval(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var planned types.List
+	diags := req.Plan.GetAttribute(ctx, path.Root("seasonal_amounts"), &planned)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if planned.IsUnknown() {
+		return
+	}
+	if !planned.IsNull() && len(planned.Elements()) > 0 {
+		return
+	}
+
+	var stored types.List
+	diags = req.State.GetAttribute(ctx, path.Root("seasonal_amounts"), &stored)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if stored.IsNull() || stored.IsUnknown() {
+		return
+	}
+	if len(stored.Elements()) == 0 {
+		return
+	}
+
+	var amount types.Float64
+	diags = req.Config.GetAttribute(ctx, path.Root("amount"), &amount)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if amount.IsUnknown() {
+		return
+	}
+	if !amount.IsNull() {
+		return
+	}
+
+	var usePrevSpend types.Bool
+	diags = req.Config.GetAttribute(ctx, path.Root("use_prev_spend"), &usePrevSpend)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if usePrevSpend.IsUnknown() {
+		return
+	}
+	// An omitted use_prev_spend is its default, false.
+	if !usePrevSpend.IsNull() && usePrevSpend.ValueBool() {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		path.Root("seasonal_amounts"),
+		"Missing Budget Amount",
+		"Removing seasonal_amounts needs a replacement for the amount of each period: set amount, "+
+			"or use_prev_spend = true. The DoiT API rejects removing seasonal amounts without one.",
+	)
+}

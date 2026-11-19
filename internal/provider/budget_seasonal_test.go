@@ -155,6 +155,55 @@ data "doit_budget" "this" {
 	})
 }
 
+// TestAccBudget_SeasonalRemovalNeedsTarget removes the seasonal amounts of a
+// budget without amount or use_prev_spend = true, which the API rejects.
+// Omitting the list plans amount as its stored null (the removal is the only
+// change); setting it to [] plans amount unknown; both fail at plan time. An
+// amount that is not known until apply defers the check.
+func TestAccBudget_SeasonalRemovalNeedsTarget(t *testing.T) {
+	name := fmt.Sprintf("test-seasonal-removal-%d", acctest.RandInt())
+	seasonal := testAccBudgetLifecycleConfig(name, "  seasonal_amounts = "+budgetMonthlySeasonal)
+	unknownAmount := testAccBudgetLifecycleConfig(name, "  amount = terraform_data.amount.output") + `
+resource "terraform_data" "amount" {
+  input = 100
+}
+`
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders:        budgetTimeProvider(),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{Config: seasonal},
+			{
+				Config:      testAccBudgetLifecycleConfig(name, ""),
+				PlanOnly:    true,
+				ExpectError: budgetErrorPattern("Removing seasonal_amounts needs a replacement for the amount of each period"),
+			},
+			{
+				Config:      testAccBudgetLifecycleConfig(name, "  seasonal_amounts = []"),
+				PlanOnly:    true,
+				ExpectError: budgetErrorPattern("Removing seasonal_amounts needs a replacement for the amount of each period"),
+			},
+			{
+				Config: unknownAmount,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("doit_budget.this", plancheck.ResourceActionUpdate),
+						plancheck.ExpectUnknownValue("doit_budget.this", tfjsonpath.New("amount")),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					budgetState("amount", knownvalue.Float64Exact(100)),
+					budgetState("seasonal_amounts", knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			budgetDriftStep(unknownAmount),
+		},
+	})
+}
+
 // TestAccBudget_SeasonalImport imports a seasonal budget. The configuration
 // generated for it has no amount, allow_growth = false and growth_per_period
 // = 0, and must pass the seasonal validators.
