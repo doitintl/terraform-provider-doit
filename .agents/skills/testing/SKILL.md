@@ -369,7 +369,9 @@ the generated config.
 - The step fails if the generated configuration does not validate or does not
   plan as a no-op import. No `ImportStateVerify` is needed.
 - Use the test whose config sets the most Optional attributes (a group, not a
-  minimal single).
+  minimal single), and run the step on a minimal configuration too. Omitted lists
+  read back as `[]` and end up in the generated configuration, which a validator
+  may reject (#482); a full configuration never exercises that.
 - For a resource whose test imports a pre-existing object that the test config
   already declares (`doit_customer`, `doit_asset`), append the step after the
   existing import and drift checks, with the import ID and no
@@ -550,7 +552,7 @@ func getAlertCount(t *testing.T) int {
 - [ ] Add drift verification step (`ExpectEmptyPlan()`)
 - [ ] Every clearable attribute: also clear it in the same step as a sibling change (a nested leaf: also remove the whole parent object)
 - [ ] Clearing modifier below an Optional+Computed wrapper that is preserved on omission: test the wrapper omitted (declare the resource without it, change the value through the API in `PreConfig`, expect an empty plan)
-- [ ] Add the `GenerateConfig` import-block step to the import test
+- [ ] Add the `GenerateConfig` import-block step to the import test, on a full and on a minimal configuration
 - [ ] Cover empty lists and omitted attributes
 - [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks
 - [ ] Build expected values fresh, never from the input the code under test received
