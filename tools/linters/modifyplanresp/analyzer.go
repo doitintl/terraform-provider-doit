@@ -11,8 +11,9 @@
 //
 // Three shapes are flagged:
 //
-//   - a keyed composite literal with no Plan key, including the empty one;
-//   - new(resource.ModifyPlanResponse);
+//   - a keyed composite literal with no Plan key, including the empty one and
+//     one elided in a slice or map of *resource.ModifyPlanResponse;
+//   - new(resource.ModifyPlanResponse), the type form only;
 //   - var x resource.ModifyPlanResponse without an initializer.
 //
 // Every such value is flagged, not only one seen flowing into a ModifyPlan call
@@ -85,9 +86,15 @@ func run(pass *analysis.Pass) (any, error) {
 // checkLiteral reports a keyed ModifyPlanResponse literal without a Plan key.
 //
 // The literal inside &resource.ModifyPlanResponse{} is itself a CompositeLit,
-// so the pointer form needs no separate case.
+// so the pointer form needs no separate case. An elided literal in a
+// []*resource.ModifyPlanResponse or map[K]*resource.ModifyPlanResponse is
+// typed as the pointer, so the pointer is unwrapped first.
 func checkLiteral(pass *analysis.Pass, lit *ast.CompositeLit) {
-	if !isModifyPlanResponse(pass.TypesInfo.TypeOf(lit)) {
+	t := pass.TypesInfo.TypeOf(lit)
+	if ptr, ok := t.(*types.Pointer); ok {
+		t = ptr.Elem()
+	}
+	if !isModifyPlanResponse(t) {
 		return
 	}
 	for _, elt := range lit.Elts {
@@ -105,6 +112,11 @@ func checkLiteral(pass *analysis.Pass, lit *ast.CompositeLit) {
 }
 
 // checkNew reports new(resource.ModifyPlanResponse).
+//
+// Only the type form allocates a zero value. new(expr) copies the value of
+// expr, so new(seeded) and new(resource.ModifyPlanResponse{Plan: req.Plan})
+// are left alone, and an unseeded literal in new(...) is reported once, by
+// checkLiteral.
 func checkNew(pass *analysis.Pass, call *ast.CallExpr) {
 	ident, ok := call.Fun.(*ast.Ident)
 	if !ok || len(call.Args) != 1 {
@@ -114,7 +126,8 @@ func checkNew(pass *analysis.Pass, call *ast.CallExpr) {
 	if !ok || builtin.Name() != "new" {
 		return
 	}
-	if !isModifyPlanResponse(pass.TypesInfo.TypeOf(call.Args[0])) {
+	arg, ok := pass.TypesInfo.Types[call.Args[0]]
+	if !ok || !arg.IsType() || !isModifyPlanResponse(arg.Type) {
 		return
 	}
 

@@ -39,6 +39,14 @@ func TestBad(t *testing.T) {
 	)
 	modifyPlan(req, &a)
 	modifyPlan(req, &b)
+
+	// Elided literals in table-driven tests.
+	_ = []*resource.ModifyPlanResponse{{}}                                  // want `without Plan`
+	_ = map[string]*resource.ModifyPlanResponse{"case": {Diagnostics: nil}} // want `without Plan`
+	_ = []resource.ModifyPlanResponse{{}}                                   // want `without Plan`
+
+	// An unseeded literal in new(expr) is reported once, as a literal.
+	modifyPlan(req, new(resource.ModifyPlanResponse{})) // want `without Plan`
 }
 
 func TestGood(t *testing.T) {
@@ -62,6 +70,14 @@ func TestGood(t *testing.T) {
 
 	var ptr *resource.ModifyPlanResponse
 	_ = ptr
+
+	_ = []*resource.ModifyPlanResponse{{Plan: req.Plan}}
+	_ = map[string]*resource.ModifyPlanResponse{"case": {Plan: req.Plan}}
+
+	// new(expr) copies a seeded value.
+	seeded := resource.ModifyPlanResponse{Plan: req.Plan}
+	modifyPlan(req, new(seeded))
+	modifyPlan(req, new(resource.ModifyPlanResponse{Plan: req.Plan}))
 
 	// An unrelated type of the same name.
 	_ = &other.ModifyPlanResponse{}
