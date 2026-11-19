@@ -1302,14 +1302,14 @@
 						"name": "allow_growth",
 						"bool": {
 							"computed_optional_required": "computed_optional",
-							"description": "Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request."
+							"description": "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`."
 						}
 					},
 					{
 						"name": "amount",
 						"float64": {
 							"computed_optional_required": "computed_optional",
-							"description": "Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true."
+							"description": "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set."
 						}
 					},
 					{
@@ -1409,7 +1409,7 @@
 							"default": {
 								"static": 0
 							},
-							"description": "Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`."
+							"description": "Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true."
 						}
 					},
 					{

@@ -287,8 +287,8 @@ Possible values: `USD`, `ILS`, `EUR`, `AUD`, `CAD`, `GBP`, `DKK`, `NOK`, `SEK`, 
 ### Optional
 
 - `alerts` (Attributes List) List of up to three thresholds defined as a percentage of the amount. (see [below for nested schema](#nestedatt--alerts))
-- `allow_growth` (Boolean) Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.
-- `amount` (Number) Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.
+- `allow_growth` (Boolean) Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.
+- `amount` (Number) Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.
 - `collaborators` (Attributes List) List of permitted users to view/edit the report. (see [below for nested schema](#nestedatt--collaborators))
 - `data_source` (String) Data source used to evaluate the budget.
 When omitted on create, the API resolves the data source to `billing-datahub` if the customer has DataHub metrics configured, otherwise `billing`.
@@ -297,7 +297,7 @@ Possible values: `billing`, `billing-datahub`
 - `description` (String) Budget description
 - `end_period` (Number) Fixed budget end date
 required: true(if budget type is fixed)
-- `growth_per_period` (Number) Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.
+- `growth_per_period` (Number) Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.
 - `metric` (String) Budget metric
 Possible values: `cost`, `amortized_cost`
 - `public` (String) Public sharing access level for the budget.

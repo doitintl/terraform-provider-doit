@@ -52,14 +52,14 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"allow_growth": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.",
-				MarkdownDescription: "Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.",
+				Description:         "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.",
+				MarkdownDescription: "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.",
 			},
 			"amount": schema.Float64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.",
-				MarkdownDescription: "Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.",
+				Description:         "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.",
+				MarkdownDescription: "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.",
 			},
 			"collaborators": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -168,8 +168,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"growth_per_period": schema.Float64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.",
-				MarkdownDescription: "Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.",
+				Description:         "Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.",
+				MarkdownDescription: "Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.",
 				Default:             float64default.StaticFloat64(0),
 			},
 			"id": schema.StringAttribute{
