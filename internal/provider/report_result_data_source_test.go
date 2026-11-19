@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -60,39 +59,23 @@ func TestAccReportResultDataSource(t *testing.T) {
 
 func TestAccReportResultDataSource_FileOutput(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-file")
-	filename := t.TempDir() + "/report.pdf"
 	config := strings.Replace(testAccReportResultDataSourceConfig(rName),
 		"id = doit_report.test.id", "id = doit_report.test.id\n    file_output = \"pdf\"", 1)
-	config += fmt.Sprintf(`
-data "http" "report_pdf" {
-    url = data.doit_report_result.test.file_output_url
-}
-
-resource "local_sensitive_file" "report_pdf" {
-    filename       = %q
-    content_base64 = data.http.report_pdf.response_body_base64
-}
-`, filename)
 
 	resource.ParallelTest(t, resource.TestCase{
-		ExternalProviders: map[string]resource.ExternalProvider{
-			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
-			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
-		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
-			Config:             config,
-			ExpectNonEmptyPlan: true, // A fresh signed URL makes the dependent file plan a replacement.
+			Config: config,
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.NotNull()),
 				// The rows are in the file, so the inline row count is unknown.
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
-			Check: func(_ *terraform.State) error {
-				content, err := os.ReadFile(filename)
+			Check: func(s *terraform.State) error {
+				content, err := testAccDownloadFileOutput(s, "data.doit_report_result.test")
 				if err != nil {
 					return err
 				}
@@ -107,25 +90,10 @@ resource "local_sensitive_file" "report_pdf" {
 
 func TestAccReportResultDataSource_FileOutputCSV(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-csv")
-	filename := t.TempDir() + "/report.csv"
 	config := strings.Replace(testAccReportResultDataSourceConfig(rName),
 		"id = doit_report.test.id", "id = doit_report.test.id\n    file_output = \"csv\"", 1)
-	config += fmt.Sprintf(`
-data "http" "report_csv" {
-    url = data.doit_report_result.test.file_output_url
-}
-
-resource "local_sensitive_file" "report_csv" {
-    filename       = %q
-    content_base64 = data.http.report_csv.response_body_base64
-}
-`, filename)
 
 	resource.ParallelTest(t, resource.TestCase{
-		ExternalProviders: map[string]resource.ExternalProvider{
-			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
-			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
-		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -137,8 +105,8 @@ resource "local_sensitive_file" "report_csv" {
 				// The rows are in the file, so the inline row count is unknown.
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
-			Check: func(_ *terraform.State) error {
-				content, err := os.ReadFile(filename)
+			Check: func(s *terraform.State) error {
+				content, err := testAccDownloadFileOutput(s, "data.doit_report_result.test")
 				if err != nil {
 					return err
 				}
@@ -160,25 +128,10 @@ resource "local_sensitive_file" "report_csv" {
 
 func TestAccReportResultDataSource_FileOutputJSON(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-json")
-	filename := t.TempDir() + "/report.json"
 	config := strings.Replace(testAccReportResultDataSourceConfig(rName),
 		"id = doit_report.test.id", "id = doit_report.test.id\n    file_output = \"json\"", 1)
-	config += fmt.Sprintf(`
-data "http" "report_json" {
-    url = data.doit_report_result.test.file_output_url
-}
-
-resource "local_sensitive_file" "report_json" {
-    filename       = %q
-    content_base64 = data.http.report_json.response_body_base64
-}
-`, filename)
 
 	resource.ParallelTest(t, resource.TestCase{
-		ExternalProviders: map[string]resource.ExternalProvider{
-			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
-			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
-		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
@@ -190,8 +143,8 @@ resource "local_sensitive_file" "report_json" {
 				// The full result is in the file, so the inline row count is unknown.
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
-			Check: func(_ *terraform.State) error {
-				content, err := os.ReadFile(filename)
+			Check: func(s *terraform.State) error {
+				content, err := testAccDownloadFileOutput(s, "data.doit_report_result.test")
 				if err != nil {
 					return err
 				}
@@ -702,28 +655,20 @@ func TestAccReportResultDataSource_ForecastSettings(t *testing.T) {
 // in result_json and a downloadable PDF via file_output_url.
 func TestAccReportResultDataSource_ForecastFileOutput(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-rr-fc-file")
-	filename := t.TempDir() + "/forecast_report.pdf"
-	config := testAccReportResultDataSourceForecastFileOutputConfig(rName, filename)
-
 	resource.ParallelTest(t, resource.TestCase{
-		ExternalProviders: map[string]resource.ExternalProvider{
-			"http":  {Source: "hashicorp/http", VersionConstraint: "~> 3.4"},
-			"local": {Source: "hashicorp/local", VersionConstraint: "~> 2.5"},
-		},
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
 		PreCheck:                 testAccPreCheckFunc(t),
 		TerraformVersionChecks:   testAccTFVersionChecks,
 		Steps: []resource.TestStep{{
-			Config:             config,
-			ExpectNonEmptyPlan: true, // A fresh signed URL makes the dependent file plan a replacement.
+			Config: testAccReportResultDataSourceForecastFileOutputConfig(rName),
 			ConfigStateChecks: []statecheck.StateCheck{
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("file_output_url"), knownvalue.NotNull()),
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("result_json"), knownvalue.StringRegexp(regexp.MustCompile(`"forecastRows"\s*:\s*\[\s*\[`))),
 				// The rows are in the file, so the inline row count is unknown.
 				statecheck.ExpectKnownValue("data.doit_report_result.test", tfjsonpath.New("row_count"), knownvalue.Null()),
 			},
-			Check: func(_ *terraform.State) error {
-				content, err := os.ReadFile(filename)
+			Check: func(s *terraform.State) error {
+				content, err := testAccDownloadFileOutput(s, "data.doit_report_result.test")
 				if err != nil {
 					return err
 				}
@@ -778,7 +723,7 @@ data "doit_report_result" "test" {
 `, name)
 }
 
-func testAccReportResultDataSourceForecastFileOutputConfig(name, filename string) string {
+func testAccReportResultDataSourceForecastFileOutputConfig(name string) string {
 	return fmt.Sprintf(`
 resource "doit_report" "test" {
     name        = %[1]q
@@ -818,14 +763,5 @@ data "doit_report_result" "test" {
     id          = doit_report.test.id
     file_output = "pdf"
 }
-
-data "http" "report_pdf" {
-    url = data.doit_report_result.test.file_output_url
-}
-
-resource "local_sensitive_file" "report_pdf" {
-    filename       = %[2]q
-    content_base64 = data.http.report_pdf.response_body_base64
-}
-`, name, filename)
+`, name)
 }
