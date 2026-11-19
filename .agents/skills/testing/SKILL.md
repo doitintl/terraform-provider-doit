@@ -80,6 +80,7 @@ See `.envrc.example` for the full list. Key variables:
 | Variable           | Description                             |
 | ------------------ | --------------------------------------- |
 | `TF_ACC`           | Set to `1` to enable acceptance tests   |
+| `TF_ACC_SWEEP`     | Set to `1` to sweep `TEST_USER`'s allocations after the run; set only by `make testacc`, `make testacc-run` and the CI acceptance job |
 | `DOIT_API_TOKEN`   | Your DoiT API token                     |
 | `DOIT_HOST`        | API host (e.g., `https://api.doit.com`) |
 | `TEST_USER`        | Email for test budget collaborators     |
@@ -101,10 +102,13 @@ make test          # full credential-free unit suite (clears TF_ACC and DOIT_* e
 ```
 
 Targeted unit tests (which need no API env) may use `go test` directly — the
-"use Makefile targets" rule exists for acceptance tests that load `.envrc.local`:
+"use Makefile targets" rule exists for acceptance tests that load `.envrc.local`.
+Direct `go test` never runs the post-run allocation sweep (that needs `TF_ACC_SWEEP`,
+which only the acceptance targets set). If your shell exports `TF_ACC=1` and live
+credentials, still unset them so no acceptance test runs against the tenant:
 
 ```bash
-go test ./internal/provider/ -run 'TestReportTimestampValidator|TestToExternalConfig'
+env -u TF_ACC go test ./internal/provider/ -run 'TestReportTimestampValidator|TestToExternalConfig'
 ```
 
 ### Gotcha: adding a field to a generated nested object breaks `NewXxxValue` callers
