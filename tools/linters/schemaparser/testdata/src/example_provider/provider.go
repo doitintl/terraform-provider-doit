@@ -52,9 +52,12 @@ func (r *exampleResource) Schema(ctx context.Context, req schemaRequest, resp *s
 	resp.Schema = s
 }
 
-// ModifyPlan marks config.count as Category C (replace-on-clear).
+// ModifyPlan marks config.count as Category C (replace-on-clear) and
+// display_name and config.count.id as volatile on update. The path to a missing
+// attribute marks nothing.
 func (r *exampleResource) ModifyPlan(ctx context.Context, req modifyPlanRequest, resp *modifyPlanResponse) {
 	requiresReplaceWhenCleared[countValue](ctx, req, resp, path.Root("config").AtName("count"))
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("display_name"), path.Root("config").AtName("count").AtName("id"), path.Root("missing"))
 }
 
 // Stubs.
@@ -67,4 +70,7 @@ type modifyPlanResponse struct{}
 type countValue struct{}
 
 func requiresReplaceWhenCleared[T any](_ context.Context, _ modifyPlanRequest, _ *modifyPlanResponse, _ path.Path) {
+}
+
+func planVolatileAttributesUnknownOnUpdate(_ context.Context, _ modifyPlanRequest, _ *modifyPlanResponse, _ ...path.Path) {
 }

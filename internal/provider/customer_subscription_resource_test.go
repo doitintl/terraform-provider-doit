@@ -397,8 +397,8 @@ func TestAccCustomerSubscription_ClearAttachments(t *testing.T) {
 }
 
 // An update whose only change comes from a clearing plan modifier (Terraform
-// proposed the stored value) must still plan etag unknown, or state keeps the
-// old etag and the next update without refresh fails with 412.
+// proposed the stored value) must still plan etag and name unknown, or state
+// keeps the old etag and the next update without refresh fails with 412.
 func TestAccCustomerSubscription_ClearAttachmentsRefreshesEtag(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-csub-etag")
 
@@ -420,6 +420,7 @@ func TestAccCustomerSubscription_ClearAttachmentsRefreshesEtag(t *testing.T) {
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectResourceAction(testAccCustomerSubscriptionAddr, plancheck.ResourceActionUpdate),
 						plancheck.ExpectUnknownValue(testAccCustomerSubscriptionAddr, tfjsonpath.New("etag")),
+						plancheck.ExpectUnknownValue(testAccCustomerSubscriptionAddr, tfjsonpath.New("name")),
 					},
 				},
 				Check: testAccCheckCustomerSubscriptionEtagCurrent(t),

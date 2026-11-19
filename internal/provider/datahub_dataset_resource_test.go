@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccDatahubDatasetResource(t *testing.T) {
@@ -224,6 +225,19 @@ resource "doit_datahub_dataset" "test" {
 `, name, body)
 }
 
+// testAccDatahubDatasetClearOnlyUpdateChecks checks the plan of an update whose
+// only change comes from a clearing plan modifier (Terraform proposed the
+// stored value): the server-maintained attributes must still be unknown.
+func testAccDatahubDatasetClearOnlyUpdateChecks() []plancheck.PlanCheck {
+	const addr = "doit_datahub_dataset.test"
+	return []plancheck.PlanCheck{
+		plancheck.ExpectResourceAction(addr, plancheck.ResourceActionUpdate),
+		plancheck.ExpectUnknownValue(addr, tfjsonpath.New("records")),
+		plancheck.ExpectUnknownValue(addr, tfjsonpath.New("updated_by")),
+		plancheck.ExpectUnknownValue(addr, tfjsonpath.New("last_updated")),
+	}
+}
+
 // TestAccDatahubDatasetResource_ClearDescription tests that setting a description
 // and then removing it from config results in no drift. This is a diagnostic test
 // for https://github.com/doitintl/terraform-provider-doit/issues/233.
@@ -255,9 +269,7 @@ func TestAccDatahubDatasetResource_ClearDescription(t *testing.T) {
 			{
 				Config: testAccDatahubDatasetResource(rName, ""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNonEmptyPlan(),
-					},
+					PreApply: testAccDatahubDatasetClearOnlyUpdateChecks(),
 				},
 			},
 			// Step 4: Drift check — cleared value should produce no drift
@@ -303,9 +315,7 @@ func TestAccDatahubDatasetResource_ClearLogoName(t *testing.T) {
 			{
 				Config: testAccDatahubDatasetResource(rName, "some description"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNonEmptyPlan(),
-					},
+					PreApply: testAccDatahubDatasetClearOnlyUpdateChecks(),
 				},
 			},
 			// Step 4: Drift check — cleared value should produce no drift
@@ -352,9 +362,7 @@ func TestAccDatahubDatasetResource_ClearDisplayName(t *testing.T) {
 			{
 				Config: testAccDatahubDatasetResourceFull(rName, "some description", "aws"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectNonEmptyPlan(),
-					},
+					PreApply: testAccDatahubDatasetClearOnlyUpdateChecks(),
 				},
 			},
 			// Step 4: Drift check — cleared value should produce no drift

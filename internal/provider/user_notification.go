@@ -248,12 +248,12 @@ func overlayUserNotificationComputedFields(ctx context.Context, apiResp *models.
 	plan.CreateTime = resolved.CreateTime
 	plan.Destinations = resolved.Destinations
 
-	// update_time and etag: Computed-only but change server-side on every Update.
+	// update_time and etag: volatile, marked unknown on every update by ModifyPlan.
 	if plan.UpdateTime.IsUnknown() {
-		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.UpdateTime = resolved.UpdateTime
 	}
 	if plan.Etag.IsUnknown() {
-		plan.Etag = resolved.Etag //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.Etag = resolved.Etag
 	}
 
 	// user_id and name: Required — never touch. settings is Required, but its

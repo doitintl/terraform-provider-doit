@@ -47,13 +47,10 @@ func (r *allocationResource) overlayAllocationComputedFields(ctx context.Context
 	// ── Computed-only fields: always from resolved ──
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
-	// Guarded: a modifier-triggered Update (e.g. clearing anomaly_detection) leaves
-	// UpdateTime Known (copied from prior state) rather than Unknown, but the API
-	// always returns a new timestamp — assigning unconditionally would then conflict
-	// with Terraform's planned (stale) value. On Create/normal Update it's Unknown, so
-	// the guard is a no-op there.
+	// update_time: volatile, marked unknown on every update by ModifyPlan, including
+	// a modifier-triggered one (e.g. clearing anomaly_detection).
 	if plan.UpdateTime.IsUnknown() {
-		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.UpdateTime = resolved.UpdateTime
 	}
 	plan.Type = resolved.Type
 	plan.AllocationType = resolved.AllocationType

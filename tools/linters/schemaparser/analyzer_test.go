@@ -182,6 +182,24 @@ func TestSchemaParserOverrides(t *testing.T) {
 				t.Error("expected currency.RequiresReplaceOnClear = false")
 			}
 		})
+
+		// ModifyPlan passes display_name and config.count.id to
+		// planVolatileAttributesUnknownOnUpdate.
+		t.Run("volatile_on_update", func(t *testing.T) {
+			if info := schema.Attrs["display_name"]; info == nil || !info.VolatileOnUpdate {
+				t.Error("expected display_name.VolatileOnUpdate = true")
+			}
+			count := schema.Attrs["config"].NestedAttrs["count"]
+			if count == nil || count.NestedAttrs["id"] == nil || !count.NestedAttrs["id"].VolatileOnUpdate {
+				t.Error("expected config.count.id.VolatileOnUpdate = true")
+			}
+			if info := schema.Attrs["create_time"]; info == nil || info.VolatileOnUpdate {
+				t.Error("expected create_time.VolatileOnUpdate = false")
+			}
+			if _, ok := schema.Attrs["missing"]; ok {
+				t.Error("expected the path to a missing attribute not to add it")
+			}
+		})
 	}
 }
 

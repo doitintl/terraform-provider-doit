@@ -345,7 +345,8 @@ func TestAlertResource_ModifyPlan_Destinations(t *testing.T) {
 				req.State = tfsdk.State(stateCfg)
 			}
 
-			resp := &resource.ModifyPlanResponse{}
+			// The framework starts the response from the proposed plan.
+			resp := &resource.ModifyPlanResponse{Plan: req.Plan}
 			r := &alertResource{}
 			r.ModifyPlan(ctx, req, resp)
 

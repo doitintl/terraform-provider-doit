@@ -1,7 +1,11 @@
 // Package overlaycheck validates that overlay functions correctly handle all
 // schema fields according to their classification:
 //
-//   - Computed-only fields must be unconditionally assigned from resolved
+//   - Computed-only fields must be unconditionally assigned from resolved,
+//     except that a field the resource's ModifyPlan passes to
+//     planVolatileAttributesUnknownOnUpdate may be guarded by IsUnknown()
+//     (it is unknown on every update, and known only in the plan of a
+//     resource that is not being updated)
 //   - Required/Optional fields must NOT be assigned in the overlay
 //   - Optional+Computed fields must be guarded by IsUnknown() before assignment
 //
@@ -723,7 +727,7 @@ func validateOverlay(pass *analysis.Pass, fn *ast.FuncDecl, schema *schemaparser
 		case schemaparser.ComputedOnly:
 			if !hasAssignment {
 				missingComputed = append(missingComputed, attrName)
-			} else if assignment.guardedByIsUnknown {
+			} else if assignment.guardedByIsUnknown && !attrInfo.VolatileOnUpdate {
 				pass.Reportf(assignment.pos,
 					"%s: Computed-only field %q should be assigned unconditionally (not guarded by IsUnknown)",
 					fn.Name.Name, attrName)

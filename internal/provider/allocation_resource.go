@@ -621,6 +621,10 @@ func (r *allocationResource) ModifyPlan(ctx context.Context, req resource.Modify
 		return
 	}
 
+	// The clearing modifiers can plan an update on their own, which leaves
+	// update_time at its stored value.
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("update_time"))
+
 	var stateModel allocationResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &stateModel)...)
 	var planModel allocationResourceModel

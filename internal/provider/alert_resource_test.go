@@ -828,7 +828,9 @@ func TestAccAlert_ClearScopeMode(t *testing.T) {
 					},
 				},
 			},
-			// Step 3: Clear mode by omitting it from config
+			// Step 3: Clear mode by omitting it from config. The clearing modifier
+			// is the only change, so the server-maintained attributes must still
+			// be unknown.
 			{
 				Config: testAccAlertWithScopeModeCleared(n),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -837,6 +839,8 @@ func TestAccAlert_ClearScopeMode(t *testing.T) {
 							"doit_alert.this",
 							plancheck.ResourceActionUpdate,
 						),
+						plancheck.ExpectUnknownValue("doit_alert.this", tfjsonpath.New("update_time")),
+						plancheck.ExpectUnknownValue("doit_alert.this", tfjsonpath.New("last_alerted")),
 					},
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(

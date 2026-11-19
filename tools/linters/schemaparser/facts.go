@@ -46,6 +46,7 @@ type attrInfoWire struct {
 	PlanModifiers          []string
 	NotClearable           bool
 	RequiresReplaceOnClear bool
+	VolatileOnUpdate       bool
 }
 
 // GobEncode implements gob.GobEncoder with a deterministic representation.
@@ -127,6 +128,7 @@ func encodeAttrInfo(info *AttrInfo) *attrInfoWire {
 		PlanModifiers:          info.PlanModifiers,
 		NotClearable:           info.NotClearable,
 		RequiresReplaceOnClear: info.RequiresReplaceOnClear,
+		VolatileOnUpdate:       info.VolatileOnUpdate,
 	}
 }
 
@@ -182,6 +184,7 @@ func decodeAttrInfo(info *attrInfoWire) *AttrInfo {
 		PlanModifiers:          info.PlanModifiers,
 		NotClearable:           info.NotClearable,
 		RequiresReplaceOnClear: info.RequiresReplaceOnClear,
+		VolatileOnUpdate:       info.VolatileOnUpdate,
 	}
 }
 

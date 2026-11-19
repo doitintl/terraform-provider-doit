@@ -297,12 +297,12 @@ func overlayCustomerSubscriptionComputedFields(ctx context.Context, apiResp *mod
 	plan.Id = resolved.Id
 	plan.CreatedBy = resolved.CreatedBy
 
-	// name and etag: Computed-only but change server-side on updates.
+	// name and etag: volatile, marked unknown on every update by ModifyPlan.
 	if plan.Name.IsUnknown() {
-		plan.Name = resolved.Name //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.Name = resolved.Name
 	}
 	if plan.Etag.IsUnknown() {
-		plan.Etag = resolved.Etag //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.Etag = resolved.Etag
 	}
 
 	// recipients: Required with no Computed children — never touch.
