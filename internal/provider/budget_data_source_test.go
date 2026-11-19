@@ -44,6 +44,24 @@ func TestAccBudgetDataSource(t *testing.T) {
 						"data.doit_budget.test",
 						tfjsonpath.New("amount"),
 						knownvalue.Float64Exact(500)),
+					// No growth or rollover, so the current period's amount is the
+					// configured one. The data source returns the API's disabled
+					// rollover as it is.
+					statecheck.ExpectKnownValue(
+						"data.doit_budget.test",
+						tfjsonpath.New("current_period_amount"),
+						knownvalue.Float64Exact(500)),
+					statecheck.ExpectKnownValue(
+						"data.doit_budget.test",
+						tfjsonpath.New("allow_growth"),
+						knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue(
+						"data.doit_budget.test",
+						tfjsonpath.New("rollover"),
+						knownvalue.ObjectExact(map[string]knownvalue.Check{
+							"enabled": knownvalue.Bool(false),
+							"limit":   knownvalue.Int64Exact(0),
+						})),
 					statecheck.ExpectKnownValue(
 						"data.doit_budget.test",
 						tfjsonpath.New("currency"),

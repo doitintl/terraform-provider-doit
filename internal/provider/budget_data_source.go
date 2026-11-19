@@ -82,6 +82,9 @@ func (d *budgetDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		data.Name = types.StringUnknown()
 		data.Description = types.StringUnknown()
 		data.Amount = types.Float64Unknown()
+		data.CurrentPeriodAmount = types.Float64Unknown()
+		data.AllowGrowth = types.BoolUnknown()
+		data.Rollover = datasource_budget.NewRolloverValueUnknown()
 		data.Currency = types.StringUnknown()
 		data.Type = types.StringUnknown()
 		data.TimeInterval = types.StringUnknown()
@@ -150,7 +153,10 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 	data.Id = types.StringPointerValue(budget.Id)
 	data.Name = types.StringValue(budget.Name)
 	data.Description = types.StringPointerValue(budget.Description)
+	// The API omits amount for seasonal budgets.
 	data.Amount = types.Float64PointerValue(budget.Amount)
+	data.CurrentPeriodAmount = types.Float64PointerValue(budget.CurrentPeriodAmount)
+	data.AllowGrowth = types.BoolPointerValue(budget.AllowGrowth)
 	data.Currency = types.StringValue(string(budget.Currency))
 	data.DataSource = types.StringPointerValue((*string)(budget.DataSource))
 	data.Type = types.StringValue(budget.Type)
@@ -163,6 +169,17 @@ func (d *budgetDataSource) mapBudgetToModel(ctx context.Context, budget *models.
 	data.UpdateTime = types.Int64PointerValue(budget.UpdateTime)
 	data.CurrentUtilization = types.Float64PointerValue(budget.CurrentUtilization)
 	data.ForecastedUtilization = types.Float64PointerValue(budget.ForecastedUtilization)
+
+	if budget.Rollover != nil {
+		var d diag.Diagnostics
+		data.Rollover, d = datasource_budget.NewRolloverValue(datasource_budget.RolloverValue{}.AttributeTypes(ctx), map[string]attr.Value{
+			"enabled": types.BoolValue(budget.Rollover.Enabled),
+			"limit":   types.Int64Value(budget.Rollover.Limit),
+		})
+		diags.Append(d...)
+	} else {
+		data.Rollover = datasource_budget.NewRolloverValueNull()
+	}
 
 	if budget.EndPeriod != nil && *budget.EndPeriod > 0 {
 		data.EndPeriod = types.Int64PointerValue(budget.EndPeriod)

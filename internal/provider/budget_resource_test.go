@@ -706,6 +706,10 @@ func TestAccBudget_Attributes_Coverage(t *testing.T) {
 							knownvalue.Float64Exact(100),
 							knownvalue.Float64Exact(100),
 						})),
+					statecheck.ExpectKnownValue("doit_budget.this", tfjsonpath.New("amount"), knownvalue.Null()),
+					statecheck.ExpectKnownValue("doit_budget.this", tfjsonpath.New("current_period_amount"), knownvalue.Float64Exact(100)),
+					statecheck.ExpectKnownValue("doit_budget.this", tfjsonpath.New("allow_growth"), knownvalue.Bool(false)),
+					statecheck.ExpectKnownValue("doit_budget.this", tfjsonpath.New("rollover"), knownvalue.Null()),
 					statecheck.ExpectKnownValue(
 						"doit_budget.this",
 						tfjsonpath.New("metric"),
@@ -768,9 +772,8 @@ resource "doit_budget" "this" {
   type             = "recurring"
   start_period     = local.start_period
 
-  amount           = 100
-
-  # Covered: seasonal_amounts (all equal to amount to avoid API recomputing amount)
+  # Covered: seasonal_amounts. A seasonal budget has no amount: the API
+  # rejects one and current_period_amount holds the current quarter's value.
   seasonal_amounts = [100, 100, 100, 100]
 
   # Covered: metric explicitly
@@ -808,9 +811,8 @@ resource "doit_budget" "this" {
   type             = "recurring"
   start_period     = local.start_period
 
-  amount           = 100
-
-  # Covered: seasonal_amounts (all equal to amount to avoid API recomputing amount)
+  # Covered: seasonal_amounts. A seasonal budget has no amount: the API
+  # rejects one and current_period_amount holds the current quarter's value.
   seasonal_amounts = [100, 100, 100, 100]
 
   # Covered: metric with amortized_cost value
@@ -2202,6 +2204,13 @@ func TestAccBudget_DriftDetection_CustomerPattern(t *testing.T) {
 						plancheck.ExpectResourceAction("doit_budget.drift_test", plancheck.ResourceActionCreate),
 					},
 				},
+				// amount reads back as configured; the grown amount is
+				// current_period_amount. Create turns growth on from the rate.
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_budget.drift_test", tfjsonpath.New("amount"), knownvalue.Float64Exact(100)),
+					statecheck.ExpectKnownValue("doit_budget.drift_test", tfjsonpath.New("allow_growth"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("doit_budget.drift_test", tfjsonpath.New("current_period_amount"), knownvalue.NotNull()),
+				},
 			},
 			// Drift detection: re-apply same config, expect no changes.
 			// This catches drift from attributes exercised here: amount,
@@ -2611,6 +2620,10 @@ func TestAccBudget_UsePrevSpend(t *testing.T) {
 						"doit_budget.this",
 						tfjsonpath.New("use_prev_spend"),
 						knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue(
+						"doit_budget.this",
+						tfjsonpath.New("current_period_amount"),
+						knownvalue.NotNull()),
 				},
 			},
 			// Drift check

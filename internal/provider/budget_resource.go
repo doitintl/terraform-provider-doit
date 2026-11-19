@@ -7,6 +7,8 @@ import (
 	"github.com/doitintl/terraform-provider-doit/internal/provider/models"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -110,13 +112,13 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 
 	// Category B: API defaults, state-retained values, or legacy fields — not clearable.
 	acknowledgeNotClearable(s,
-		"seasonal_amounts", // optional list, API returns empty list
-		"time_interval",    // omitting on update retains the prior value
-		"amount",           // API-computed for use_prev_spend budgets
-		"public",           // API defaults to false
-		"data_source",      // API resolves default (billing-datahub with DataHub metrics, else billing)
-		"end_period",       // API rejects clearing (endPeriod=0/null)
-		"recipients",       // API auto-assigns creator's email on create
+		"time_interval", // omitting on update retains the prior value
+		"amount",        // API-computed for use_prev_spend budgets, absent for seasonal budgets
+		"allow_growth",  // API infers it from growth_per_period on create; PATCH keeps the stored value
+		"public",        // API defaults to false
+		"data_source",   // API resolves default (billing-datahub with DataHub metrics, else billing)
+		"end_period",    // API rejects clearing (endPeriod=0/null)
+		"recipients",    // API auto-assigns creator's email on create
 
 		// recipients_slack_channels — API-populated Slack metadata
 		"recipients_slack_channels[*].customer_id", // API-populated
@@ -135,6 +137,25 @@ func (r *budgetResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 		// scopes
 		"scopes[*].inverse", // API defaults to false
 	)
+
+	// Category A: omitting seasonal_amounts removes them. The API then needs
+	// amount or use_prev_spend in the same request, which a budget without
+	// seasonal amounts has.
+	if attr, ok := s.Attributes["seasonal_amounts"].(schema.ListAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForUnknownListWhenConfigNull())
+		attr.Validators = append(attr.Validators, listvalidator.ValueFloat64sAre(float64validator.AtLeast(0)))
+		s.Attributes["seasonal_amounts"] = attr
+	}
+
+	// Category A: omitting rollover disables it. The request field is a plain
+	// pointer, so the update sends enabled = false instead of a JSON null
+	// (toUpdateRequest).
+	if attr, ok := s.Attributes["rollover"].(schema.SingleNestedAttribute); ok { //nolint:clearableattr // cleared by sending enabled = false, the field has no null representation
+		attr.PlanModifiers = append(attr.PlanModifiers, useNullForOmittedBudgetRollover())
+		attr.Description += " Removing the block disables rollover."
+		attr.MarkdownDescription += " Removing the block disables rollover."
+		s.Attributes["rollover"] = attr
+	}
 
 	// Category A: nested clearable attributes.
 	if scopesAttr, ok := s.Attributes["scopes"].(schema.ListNestedAttribute); ok {
@@ -168,15 +189,39 @@ func (r *budgetResource) ConfigValidators(_ context.Context) []resource.ConfigVa
 		budgetCollaboratorsOwnerValidator{},
 		budgetCollaboratorsRoleValidator{},
 		budgetSlackChannelsValidator{},
+		budgetSeasonalAmountsValidator{},
+		budgetRolloverValidator{},
 		// Warn when legacy [... N/A] NullFallback sentinels are used in scope values.
 		budgetScopeNAValidator{},
 	}
 }
 
 func (r *budgetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.Type() == nil || req.Plan.Raw.IsNull() {
+		return // destroy
+	}
+	isCreate := req.State.Raw.Type() == nil || req.State.Raw.IsNull()
+
+	// The clearing modifiers (seasonal_amounts, scopes[*].values and mode) can
+	// plan an update on their own, which leaves these server-maintained values
+	// at their stored ones.
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp,
+		path.Root("update_time"),
+		path.Root("current_utilization"),
+		path.Root("forecasted_utilization"),
+		path.Root("current_period_amount"),
+	)
+
+	// Checks that need the stored budget or the create/update distinction,
+	// which the config validators do not have.
+	validateBudgetSeasonalGrowth(ctx, req, resp, isCreate)
+	if !isCreate {
+		validateBudgetPlanAgainstStoredInterval(ctx, req, resp)
+	}
+
 	// Optional+Computed values may be omitted on update and carried forward from
 	// state. On create, the backend has no prior values to use.
-	if req.Plan.Raw.Type() == nil || req.Plan.Raw.IsNull() || (req.State.Raw.Type() != nil && !req.State.Raw.IsNull()) {
+	if !isCreate {
 		return
 	}
 

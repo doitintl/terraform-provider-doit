@@ -50,10 +50,24 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	if plan.UpdateTime.IsUnknown() {
 		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
 	}
-	plan.CurrentUtilization = resolved.CurrentUtilization
-	plan.ForecastedUtilization = resolved.ForecastedUtilization
+	// current_period_amount and the utilizations change over time: ModifyPlan
+	// marks them unknown on every update, and a known plan value is the
+	// stored one of a resource that is not being updated.
+	if plan.CurrentPeriodAmount.IsUnknown() {
+		plan.CurrentPeriodAmount = resolved.CurrentPeriodAmount //nolint:overlaycheck // volatile, marked unknown on update by ModifyPlan
+	}
+	if plan.CurrentUtilization.IsUnknown() {
+		plan.CurrentUtilization = resolved.CurrentUtilization //nolint:overlaycheck // volatile, marked unknown on update by ModifyPlan
+	}
+	if plan.ForecastedUtilization.IsUnknown() {
+		plan.ForecastedUtilization = resolved.ForecastedUtilization //nolint:overlaycheck // volatile, marked unknown on update by ModifyPlan
+	}
 
 	// ── Optional+Computed scalar fields: only when Unknown ──
+	if plan.AllowGrowth.IsUnknown() {
+		plan.AllowGrowth = resolved.AllowGrowth
+	}
+
 	if plan.Amount.IsUnknown() {
 		plan.Amount = resolved.Amount
 	}
@@ -69,6 +83,12 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	if plan.Public.IsUnknown() {
 		plan.Public = resolved.Public
 	}
+
+	// rollover: planned null when omitted (useNullForOmittedBudgetRollover).
+	if plan.Rollover.IsUnknown() {
+		plan.Rollover = resolved.Rollover
+	}
+
 	if plan.TimeInterval.IsUnknown() {
 		plan.TimeInterval = resolved.TimeInterval
 	}
@@ -177,6 +197,8 @@ type budgetRequestParts struct {
 	slackChannels *[]models.SlackChannel
 	scopes        []models.ExternalScopeFilter
 	seasonal      *[]float64
+	allowGrowth   *bool
+	rollover      *models.BudgetRollover
 }
 
 func (plan *budgetResourceModel) toRequestParts(ctx context.Context) (parts budgetRequestParts, diags diag.Diagnostics) {
@@ -281,6 +303,19 @@ func (plan *budgetResourceModel) toRequestParts(ctx context.Context) (parts budg
 		parts.seasonal = &seasonalAmounts
 	}
 
+	if !plan.AllowGrowth.IsNull() && !plan.AllowGrowth.IsUnknown() {
+		parts.allowGrowth = plan.AllowGrowth.ValueBoolPointer()
+	}
+
+	// A null rollover is left out here; toUpdateRequest turns it into a
+	// disabled one.
+	if !plan.Rollover.IsNull() && !plan.Rollover.IsUnknown() {
+		parts.rollover = &models.BudgetRollover{
+			Enabled: plan.Rollover.Enabled.ValueBool(),
+			Limit:   plan.Rollover.Limit.ValueInt64(),
+		}
+	}
+
 	return parts, diags
 }
 
@@ -300,6 +335,8 @@ func (plan *budgetResourceModel) toCreateRequest(ctx context.Context) (req model
 	req.RecipientsSlackChannels = parts.slackChannels
 	req.Scopes = parts.scopes
 	req.SeasonalAmounts = parts.seasonal
+	req.AllowGrowth = parts.allowGrowth
+	req.Rollover = parts.rollover
 
 	req.Name = plan.Name.ValueString()
 	req.Currency = models.Currency(plan.Currency.ValueString())
@@ -333,7 +370,9 @@ func (plan *budgetResourceModel) toCreateRequest(ctx context.Context) (req model
 
 // toUpdateRequest converts the Terraform model to the API BudgetUpdateRequest.
 // The plan is always sent in full: PATCH only changes supplied fields, and every
-// Required attribute is known in the plan.
+// Required attribute is known in the plan. Unknown Optional+Computed values are
+// left out, which keeps them unchanged: amount is unknown on a seasonal budget
+// whose configuration omits it, and the API rejects any amount there.
 func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req models.BudgetUpdateRequest, diags diag.Diagnostics) {
 	parts, d := plan.toRequestParts(ctx)
 	diags.Append(d...)
@@ -347,6 +386,13 @@ func (plan *budgetResourceModel) toUpdateRequest(ctx context.Context) (req model
 	req.RecipientsSlackChannels = parts.slackChannels
 	req.Scopes = &parts.scopes
 	req.SeasonalAmounts = parts.seasonal
+	req.AllowGrowth = parts.allowGrowth
+	req.Rollover = parts.rollover
+	// A null rollover means the block is omitted, which disables rollover. The
+	// API has no null for it and keeps the stored rollover when it is left out.
+	if plan.Rollover.IsNull() {
+		req.Rollover = &models.BudgetRollover{Enabled: false, Limit: 0}
+	}
 
 	req.Name = plan.Name.ValueStringPointer()
 	req.Currency = new(models.Currency(plan.Currency.ValueString()))
@@ -455,7 +501,16 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 		state.Alerts = emptyAlerts
 	}
 
+	if resp.AllowGrowth != nil {
+		state.AllowGrowth = types.BoolValue(*resp.AllowGrowth)
+	} else {
+		state.AllowGrowth = types.BoolValue(false)
+	}
+
+	// The API omits amount for seasonal budgets; current_period_amount holds
+	// the amount of the current period for every budget.
 	state.Amount = types.Float64PointerValue(resp.Amount)
+	state.CurrentPeriodAmount = types.Float64PointerValue(resp.CurrentPeriodAmount)
 
 	// Convert collaborators
 	if resp.Collaborators != nil && len(*resp.Collaborators) > 0 {
@@ -510,6 +565,10 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	} else {
 		state.Public = types.StringNull()
 	}
+
+	var d diag.Diagnostics
+	state.Rollover, d = mapBudgetRollover(ctx, resp.Rollover, state.Rollover)
+	diags.Append(d...)
 
 	// Convert recipients list
 	if resp.Recipients != nil {
@@ -685,4 +744,25 @@ func mapBudgetToModel(ctx context.Context, resp *models.BudgetAPI, state *budget
 	state.ForecastedUtilization = types.Float64PointerValue(resp.ForecastedUtilization)
 
 	return diags
+}
+
+// mapBudgetRollover maps the rollover of an API budget. The API returns a
+// disabled rollover ({enabled: false, limit: 0}) for every budget that does
+// not use it. Because the leaves of rollover are Required, Terraform plans to
+// remove a stored rollover that the configuration omits, so a disabled one is
+// kept out of state unless the prior state (or plan) already holds a rollover:
+// that is a configured one, such as {enabled = false, limit = 3}, and is
+// mapped as returned. An enabled rollover is always mapped, so one enabled
+// outside Terraform shows up as a change.
+func mapBudgetRollover(ctx context.Context, apiRollover *models.BudgetRollover, prior resource_budget.RolloverValue) (resource_budget.RolloverValue, diag.Diagnostics) {
+	if apiRollover == nil {
+		return resource_budget.NewRolloverValueNull(), nil
+	}
+	if !apiRollover.Enabled && (prior.IsNull() || prior.IsUnknown()) {
+		return resource_budget.NewRolloverValueNull(), nil
+	}
+	return resource_budget.NewRolloverValue(resource_budget.RolloverValue{}.AttributeTypes(ctx), map[string]attr.Value{
+		"enabled": types.BoolValue(apiRollover.Enabled),
+		"limit":   types.Int64Value(apiRollover.Limit),
+	})
 }

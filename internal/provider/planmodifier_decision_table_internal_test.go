@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_allocation"
+	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_budget"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_report"
 	"github.com/doitintl/terraform-provider-doit/internal/provider/resource_user_notification"
 )
@@ -44,7 +45,7 @@ func allNullObject(ctx context.Context, t *testing.T, attrTypes map[string]attr.
 	return types.ObjectValueMust(attrTypes, attrs)
 }
 
-// markedObject is a known object with one string (else float) attribute set
+// markedObject is a known object with one string (else float, else int64) attribute set
 // to a value that depends on marker and every other attribute null, so two
 // objects built with different markers differ and the same marker builds equal
 // objects. Tables use it to tell the planned value from the prior state's.
@@ -56,7 +57,7 @@ func markedObject(ctx context.Context, t *testing.T, attrTypes map[string]attr.T
 	}
 	sort.Strings(names)
 	marked := ""
-	for _, kind := range []attr.Type{types.StringType, types.Float64Type} {
+	for _, kind := range []attr.Type{types.StringType, types.Float64Type, types.Int64Type} {
 		for _, name := range names {
 			if attrTypes[name].Equal(kind) {
 				marked = name
@@ -68,12 +69,15 @@ func markedObject(ctx context.Context, t *testing.T, attrTypes map[string]attr.T
 		}
 	}
 	if marked == "" {
-		t.Fatalf("no string or float attribute to mark in %v", names)
+		t.Fatalf("no string, float or int64 attribute to mark in %v", names)
 	}
 	attrs := allNullObject(ctx, t, attrTypes).Attributes()
-	if attrTypes[marked].Equal(types.StringType) {
+	switch {
+	case attrTypes[marked].Equal(types.StringType):
 		attrs[marked] = types.StringValue(fmt.Sprintf("marker-%d", marker))
-	} else {
+	case attrTypes[marked].Equal(types.Int64Type):
+		attrs[marked] = types.Int64Value(int64(marker))
+	default:
 		attrs[marked] = types.Float64Value(float64(marker))
 	}
 	return types.ObjectValueMust(attrTypes, attrs)
@@ -115,6 +119,7 @@ func TestObjectNullWhenConfigNullModifiers(t *testing.T) {
 		{"report metric_filter", useNullForMetricFilter(), resource_report.MetricFilterValue{}.AttributeTypes(ctx), presentReportConfig},
 		{"notification when_cost_grows", useNullForOmittedNotificationSetting(), resource_user_notification.WhenCostGrowsValue{}.AttributeTypes(ctx), tfsdk.Config{}},
 		{"notification min_increase", useNullForOmittedNotificationSetting(), resource_user_notification.MinIncreaseValue{}.AttributeTypes(ctx), tfsdk.Config{}},
+		{"budget rollover", useNullForOmittedBudgetRollover(), resource_budget.RolloverValue{}.AttributeTypes(ctx), tfsdk.Config{}},
 	}
 
 	// The configured and the planned object are the same (a configured

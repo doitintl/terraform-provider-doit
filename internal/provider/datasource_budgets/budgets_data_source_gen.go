@@ -40,7 +40,9 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 							Computed: true,
 						},
 						"amount": schema.Float64Attribute{
-							Computed: true,
+							Computed:            true,
+							Description:         "Budget period amount, as set on create or update. See `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`.",
+							MarkdownDescription: "Budget period amount, as set on create or update. See `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`.",
 						},
 						"budget_name": schema.StringAttribute{
 							Computed: true,
@@ -50,6 +52,11 @@ func BudgetsDataSourceSchema(ctx context.Context) schema.Schema {
 						},
 						"currency": schema.StringAttribute{
 							Computed: true,
+						},
+						"current_period_amount": schema.Float64Attribute{
+							Computed:            true,
+							Description:         "Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alert thresholds are calculated from this amount.",
+							MarkdownDescription: "Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alert thresholds are calculated from this amount.",
 						},
 						"current_utilization": schema.Float64Attribute{
 							Computed: true,
@@ -350,6 +357,24 @@ func (t BudgetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 			fmt.Sprintf(`currency expected to be basetypes.StringValue, was: %T`, currencyAttribute))
 	}
 
+	currentPeriodAmountAttribute, ok := attributes["current_period_amount"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`current_period_amount is missing from object`)
+
+		return nil, diags
+	}
+
+	currentPeriodAmountVal, ok := currentPeriodAmountAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`current_period_amount expected to be basetypes.Float64Value, was: %T`, currentPeriodAmountAttribute))
+	}
+
 	currentUtilizationAttribute, ok := attributes["current_utilization"]
 
 	if !ok {
@@ -558,6 +583,7 @@ func (t BudgetsType) ValueFromObject(ctx context.Context, in basetypes.ObjectVal
 		BudgetName:                budgetNameVal,
 		CreateTime:                createTimeVal,
 		Currency:                  currencyVal,
+		CurrentPeriodAmount:       currentPeriodAmountVal,
 		CurrentUtilization:        currentUtilizationVal,
 		EndPeriod:                 endPeriodVal,
 		ForecastedUtilizationDate: forecastedUtilizationDateVal,
@@ -726,6 +752,24 @@ func NewBudgetsValue(attributeTypes map[string]attr.Type, attributes map[string]
 			fmt.Sprintf(`currency expected to be basetypes.StringValue, was: %T`, currencyAttribute))
 	}
 
+	currentPeriodAmountAttribute, ok := attributes["current_period_amount"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`current_period_amount is missing from object`)
+
+		return NewBudgetsValueUnknown(), diags
+	}
+
+	currentPeriodAmountVal, ok := currentPeriodAmountAttribute.(basetypes.Float64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`current_period_amount expected to be basetypes.Float64Value, was: %T`, currentPeriodAmountAttribute))
+	}
+
 	currentUtilizationAttribute, ok := attributes["current_utilization"]
 
 	if !ok {
@@ -934,6 +978,7 @@ func NewBudgetsValue(attributeTypes map[string]attr.Type, attributes map[string]
 		BudgetName:                budgetNameVal,
 		CreateTime:                createTimeVal,
 		Currency:                  currencyVal,
+		CurrentPeriodAmount:       currentPeriodAmountVal,
 		CurrentUtilization:        currentUtilizationVal,
 		EndPeriod:                 endPeriodVal,
 		ForecastedUtilizationDate: forecastedUtilizationDateVal,
@@ -1022,6 +1067,7 @@ type BudgetsValue struct {
 	BudgetName                basetypes.StringValue  `tfsdk:"budget_name"`
 	CreateTime                basetypes.Int64Value   `tfsdk:"create_time"`
 	Currency                  basetypes.StringValue  `tfsdk:"currency"`
+	CurrentPeriodAmount       basetypes.Float64Value `tfsdk:"current_period_amount"`
 	CurrentUtilization        basetypes.Float64Value `tfsdk:"current_utilization"`
 	EndPeriod                 basetypes.Int64Value   `tfsdk:"end_period"`
 	ForecastedUtilizationDate basetypes.Int64Value   `tfsdk:"forecasted_utilization_date"`
@@ -1037,7 +1083,7 @@ type BudgetsValue struct {
 }
 
 func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
-	attrTypes := make(map[string]tftypes.Type, 16)
+	attrTypes := make(map[string]tftypes.Type, 17)
 
 	var val tftypes.Value
 	var err error
@@ -1049,6 +1095,7 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 	attrTypes["budget_name"] = basetypes.StringType{}.TerraformType(ctx)
 	attrTypes["create_time"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["currency"] = basetypes.StringType{}.TerraformType(ctx)
+	attrTypes["current_period_amount"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["current_utilization"] = basetypes.Float64Type{}.TerraformType(ctx)
 	attrTypes["end_period"] = basetypes.Int64Type{}.TerraformType(ctx)
 	attrTypes["forecasted_utilization_date"] = basetypes.Int64Type{}.TerraformType(ctx)
@@ -1067,7 +1114,7 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 
 	switch v.state {
 	case attr.ValueStateKnown:
-		vals := make(map[string]tftypes.Value, 16)
+		vals := make(map[string]tftypes.Value, 17)
 
 		val, err = v.AlertThresholds.ToTerraformValue(ctx)
 
@@ -1108,6 +1155,14 @@ func (v BudgetsValue) ToTerraformValue(ctx context.Context) (tftypes.Value, erro
 		}
 
 		vals["currency"] = val
+
+		val, err = v.CurrentPeriodAmount.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["current_period_amount"] = val
 
 		val, err = v.CurrentUtilization.ToTerraformValue(ctx)
 
@@ -1246,6 +1301,7 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 		"budget_name":                 basetypes.StringType{},
 		"create_time":                 basetypes.Int64Type{},
 		"currency":                    basetypes.StringType{},
+		"current_period_amount":       basetypes.Float64Type{},
 		"current_utilization":         basetypes.Float64Type{},
 		"end_period":                  basetypes.Int64Type{},
 		"forecasted_utilization_date": basetypes.Int64Type{},
@@ -1277,6 +1333,7 @@ func (v BudgetsValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue,
 			"budget_name":                 v.BudgetName,
 			"create_time":                 v.CreateTime,
 			"currency":                    v.Currency,
+			"current_period_amount":       v.CurrentPeriodAmount,
 			"current_utilization":         v.CurrentUtilization,
 			"end_period":                  v.EndPeriod,
 			"forecasted_utilization_date": v.ForecastedUtilizationDate,
@@ -1325,6 +1382,10 @@ func (v BudgetsValue) Equal(o attr.Value) bool {
 	}
 
 	if !v.Currency.Equal(other.Currency) {
+		return false
+	}
+
+	if !v.CurrentPeriodAmount.Equal(other.CurrentPeriodAmount) {
 		return false
 	}
 
@@ -1392,6 +1453,7 @@ func (v BudgetsValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
 		"budget_name":                 basetypes.StringType{},
 		"create_time":                 basetypes.Int64Type{},
 		"currency":                    basetypes.StringType{},
+		"current_period_amount":       basetypes.Float64Type{},
 		"current_utilization":         basetypes.Float64Type{},
 		"end_period":                  basetypes.Int64Type{},
 		"forecasted_utilization_date": basetypes.Int64Type{},

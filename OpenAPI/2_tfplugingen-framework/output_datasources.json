@@ -4662,14 +4662,21 @@
 									}
 								]
 							},
-							"description": "List of up to three thresholds defined as a percentage of amount."
+							"description": "List of up to three thresholds defined as a percentage of `currentPeriodAmount`."
+						}
+					},
+					{
+						"name": "allow_growth",
+						"bool": {
+							"computed_optional_required": "computed",
+							"description": "Whether `growthPerPeriod` is applied to the amount each period."
 						}
 					},
 					{
 						"name": "amount",
 						"float64": {
 							"computed_optional_required": "computed",
-							"description": "Budget period amount\nrequired: true(if usePrevSpend is false)"
+							"description": "Budget period amount, as set on create or update. Growth and rollover do not change it; see `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`."
 						}
 					},
 					{
@@ -4710,6 +4717,13 @@
 						}
 					},
 					{
+						"name": "current_period_amount",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alerts are evaluated against this amount."
+						}
+					},
+					{
 						"name": "current_utilization",
 						"float64": {
 							"computed_optional_required": "computed"
@@ -4746,7 +4760,7 @@
 						"name": "growth_per_period",
 						"float64": {
 							"computed_optional_required": "computed",
-							"description": "Periodical growth percentage in recurring budgets."
+							"description": "Growth percentage per period, applied when `allowGrowth` is true."
 						}
 					},
 					{
@@ -4828,6 +4842,29 @@
 						}
 					},
 					{
+						"name": "rollover",
+						"single_nested": {
+							"computed_optional_required": "computed",
+							"attributes": [
+								{
+									"name": "enabled",
+									"bool": {
+										"computed_optional_required": "computed",
+										"description": "Whether unspent budget carries over."
+									}
+								},
+								{
+									"name": "limit",
+									"int64": {
+										"computed_optional_required": "computed",
+										"description": "Number of previous periods whose unspent budget carries over, at most 90 for `day`, 52 for `week`, 12 for `month`, 8 for `quarter` and 5 for `year`. At least 1 when `enabled` is true."
+									}
+								}
+							],
+							"description": "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`."
+						}
+					},
+					{
 						"name": "scopes",
 						"list_nested": {
 							"computed_optional_required": "computed",
@@ -4897,7 +4934,7 @@
 							"element_type": {
 								"float64": {}
 							},
-							"description": "List of seasonal amounts for recurring budgets with different amounts per period."
+							"description": "Amount for each period of a recurring budget, in calendar order. When set, `amount` is omitted and `currentPeriodAmount` returns the amount for the current period."
 						}
 					},
 					{
@@ -4932,7 +4969,7 @@
 						"name": "use_prev_spend",
 						"bool": {
 							"computed_optional_required": "computed",
-							"description": "Use the last period's spend as the target amount for recurring budgets."
+							"description": "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`."
 						}
 					}
 				],
@@ -5166,7 +5203,8 @@
 									{
 										"name": "amount",
 										"float64": {
-											"computed_optional_required": "computed"
+											"computed_optional_required": "computed",
+											"description": "Budget period amount, as set on create or update. See `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`."
 										}
 									},
 									{
@@ -5185,6 +5223,13 @@
 										"name": "currency",
 										"string": {
 											"computed_optional_required": "computed"
+										}
+									},
+									{
+										"name": "current_period_amount",
+										"float64": {
+											"computed_optional_required": "computed",
+											"description": "Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alert thresholds are calculated from this amount."
 										}
 									},
 									{

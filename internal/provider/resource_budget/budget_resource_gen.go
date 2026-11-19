@@ -49,11 +49,17 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "List of up to three thresholds defined as a percentage of the amount.",
 				MarkdownDescription: "List of up to three thresholds defined as a percentage of the amount.",
 			},
+			"allow_growth": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Description:         "Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.",
+				MarkdownDescription: "Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.",
+			},
 			"amount": schema.Float64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Budget period amount\nrequired: true(if usePrevSpend is false)",
-				MarkdownDescription: "Budget period amount\nrequired: true(if usePrevSpend is false)",
+				Description:         "Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.",
+				MarkdownDescription: "Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.",
 			},
 			"collaborators": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -123,6 +129,11 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 					),
 				},
 			},
+			"current_period_amount": schema.Float64Attribute{
+				Computed:            true,
+				Description:         "Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alerts are evaluated against this amount.",
+				MarkdownDescription: "Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alerts are evaluated against this amount.",
+			},
 			"current_utilization": schema.Float64Attribute{
 				Computed: true,
 			},
@@ -157,8 +168,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"growth_per_period": schema.Float64Attribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Periodical growth percentage in recurring budget",
-				MarkdownDescription: "Periodical growth percentage in recurring budget",
+				Description:         "Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.",
+				MarkdownDescription: "Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.",
 				Default:             float64default.StaticFloat64(0),
 			},
 			"id": schema.StringAttribute{
@@ -244,6 +255,29 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				Computed:            true,
 				Description:         "List of Slack channels to notify when reaching alert threshold.",
 				MarkdownDescription: "List of Slack channels to notify when reaching alert threshold.",
+			},
+			"rollover": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Required:            true,
+						Description:         "Whether unspent budget carries over.",
+						MarkdownDescription: "Whether unspent budget carries over.",
+					},
+					"limit": schema.Int64Attribute{
+						Required:            true,
+						Description:         "Number of previous periods whose unspent budget carries over, at most 90 for `day`, 52 for `week`, 12 for `month`, 8 for `quarter` and 5 for `year`. At least 1 when `enabled` is true.",
+						MarkdownDescription: "Number of previous periods whose unspent budget carries over, at most 90 for `day`, 52 for `week`, 12 for `month`, 8 for `quarter` and 5 for `year`. At least 1 when `enabled` is true.",
+					},
+				},
+				CustomType: RolloverType{
+					ObjectType: types.ObjectType{
+						AttrTypes: RolloverValue{}.AttributeTypes(ctx),
+					},
+				},
+				Optional:            true,
+				Computed:            true,
+				Description:         "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.",
+				MarkdownDescription: "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.",
 			},
 			"scopes": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
@@ -335,8 +369,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 				ElementType:         types.Float64Type,
 				Optional:            true,
 				Computed:            true,
-				Description:         "List of seasonal amounts for recurring budgets with different amounts per period.",
-				MarkdownDescription: "List of seasonal amounts for recurring budgets with different amounts per period.",
+				Description:         "Amount for each period of a recurring budget, in calendar order. Requires 7 values for `day` (Monday to Sunday), 12 for `month`, 4 for `quarter` and 5 for `year` (counted from the start year). Not allowed for fixed budgets or the `week` interval. When set, `amount` must be omitted, and `currentPeriodAmount` returns the amount for the current period. Cannot be combined with `allowGrowth`, an enabled `rollover` or `usePrevSpend`. To remove seasonal amounts, send an empty array together with `amount` or `usePrevSpend`.",
+				MarkdownDescription: "Amount for each period of a recurring budget, in calendar order. Requires 7 values for `day` (Monday to Sunday), 12 for `month`, 4 for `quarter` and 5 for `year` (counted from the start year). Not allowed for fixed budgets or the `week` interval. When set, `amount` must be omitted, and `currentPeriodAmount` returns the amount for the current period. Cannot be combined with `allowGrowth`, an enabled `rollover` or `usePrevSpend`. To remove seasonal amounts, send an empty array together with `amount` or `usePrevSpend`.",
 			},
 			"start_period": schema.Int64Attribute{
 				Required:            true,
@@ -362,8 +396,8 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 			"use_prev_spend": schema.BoolAttribute{
 				Optional:            true,
 				Computed:            true,
-				Description:         "Use the last period's spend as the target amount for recurring budgets",
-				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets",
+				Description:         "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.",
+				MarkdownDescription: "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.",
 				Default:             booldefault.StaticBool(false),
 			},
 		},
@@ -374,10 +408,12 @@ func BudgetResourceSchema(ctx context.Context) schema.Schema {
 
 type BudgetModel struct {
 	Alerts                  types.List    `tfsdk:"alerts"`
+	AllowGrowth             types.Bool    `tfsdk:"allow_growth"`
 	Amount                  types.Float64 `tfsdk:"amount"`
 	Collaborators           types.List    `tfsdk:"collaborators"`
 	CreateTime              types.Int64   `tfsdk:"create_time"`
 	Currency                types.String  `tfsdk:"currency"`
+	CurrentPeriodAmount     types.Float64 `tfsdk:"current_period_amount"`
 	CurrentUtilization      types.Float64 `tfsdk:"current_utilization"`
 	DataSource              types.String  `tfsdk:"data_source"`
 	Description             types.String  `tfsdk:"description"`
@@ -390,6 +426,7 @@ type BudgetModel struct {
 	Public                  types.String  `tfsdk:"public"`
 	Recipients              types.List    `tfsdk:"recipients"`
 	RecipientsSlackChannels types.List    `tfsdk:"recipients_slack_channels"`
+	Rollover                RolloverValue `tfsdk:"rollover"`
 	Scopes                  types.List    `tfsdk:"scopes"`
 	SeasonalAmounts         types.List    `tfsdk:"seasonal_amounts"`
 	StartPeriod             types.Int64   `tfsdk:"start_period"`
@@ -1832,6 +1869,393 @@ func (v RecipientsSlackChannelsValue) AttributeTypes(ctx context.Context) map[st
 		"shared":      basetypes.BoolType{},
 		"type":        basetypes.StringType{},
 		"workspace":   basetypes.StringType{},
+	}
+}
+
+var _ basetypes.ObjectTypable = RolloverType{}
+
+type RolloverType struct {
+	basetypes.ObjectType
+}
+
+func (t RolloverType) Equal(o attr.Type) bool {
+	other, ok := o.(RolloverType)
+
+	if !ok {
+		return false
+	}
+
+	return t.ObjectType.Equal(other.ObjectType)
+}
+
+func (t RolloverType) String() string {
+	return "RolloverType"
+}
+
+func (t RolloverType) ValueFromObject(ctx context.Context, in basetypes.ObjectValue) (basetypes.ObjectValuable, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if in.IsNull() {
+		return NewRolloverValueNull(), diags
+	}
+
+	if in.IsUnknown() {
+		return NewRolloverValueUnknown(), diags
+	}
+
+	attributes := in.Attributes()
+
+	enabledAttribute, ok := attributes["enabled"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`enabled is missing from object`)
+
+		return nil, diags
+	}
+
+	enabledVal, ok := enabledAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`enabled expected to be basetypes.BoolValue, was: %T`, enabledAttribute))
+	}
+
+	limitAttribute, ok := attributes["limit"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`limit is missing from object`)
+
+		return nil, diags
+	}
+
+	limitVal, ok := limitAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit expected to be basetypes.Int64Value, was: %T`, limitAttribute))
+	}
+
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return RolloverValue{
+		Enabled: enabledVal,
+		Limit:   limitVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRolloverValueNull() RolloverValue {
+	return RolloverValue{
+		state: attr.ValueStateNull,
+	}
+}
+
+func NewRolloverValueUnknown() RolloverValue {
+	return RolloverValue{
+		state: attr.ValueStateUnknown,
+	}
+}
+
+func NewRolloverValue(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) (RolloverValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/521
+	ctx := context.Background()
+
+	for name, attributeType := range attributeTypes {
+		attribute, ok := attributes[name]
+
+		if !ok {
+			diags.AddError(
+				"Missing RolloverValue Attribute Value",
+				"While creating a RolloverValue value, a missing attribute value was detected. "+
+					"A RolloverValue must contain values for all attributes, even if null or unknown. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RolloverValue Attribute Name (%s) Expected Type: %s", name, attributeType.String()),
+			)
+
+			continue
+		}
+
+		if !attributeType.Equal(attribute.Type(ctx)) {
+			diags.AddError(
+				"Invalid RolloverValue Attribute Type",
+				"While creating a RolloverValue value, an invalid attribute value was detected. "+
+					"A RolloverValue must use a matching attribute type for the value. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("RolloverValue Attribute Name (%s) Expected Type: %s\n", name, attributeType.String())+
+					fmt.Sprintf("RolloverValue Attribute Name (%s) Given Type: %s", name, attribute.Type(ctx)),
+			)
+		}
+	}
+
+	for name := range attributes {
+		_, ok := attributeTypes[name]
+
+		if !ok {
+			diags.AddError(
+				"Extra RolloverValue Attribute Value",
+				"While creating a RolloverValue value, an extra attribute value was detected. "+
+					"A RolloverValue must not contain values beyond the expected attribute types. "+
+					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
+					fmt.Sprintf("Extra RolloverValue Attribute Name: %s", name),
+			)
+		}
+	}
+
+	if diags.HasError() {
+		return NewRolloverValueUnknown(), diags
+	}
+
+	enabledAttribute, ok := attributes["enabled"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`enabled is missing from object`)
+
+		return NewRolloverValueUnknown(), diags
+	}
+
+	enabledVal, ok := enabledAttribute.(basetypes.BoolValue)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`enabled expected to be basetypes.BoolValue, was: %T`, enabledAttribute))
+	}
+
+	limitAttribute, ok := attributes["limit"]
+
+	if !ok {
+		diags.AddError(
+			"Attribute Missing",
+			`limit is missing from object`)
+
+		return NewRolloverValueUnknown(), diags
+	}
+
+	limitVal, ok := limitAttribute.(basetypes.Int64Value)
+
+	if !ok {
+		diags.AddError(
+			"Attribute Wrong Type",
+			fmt.Sprintf(`limit expected to be basetypes.Int64Value, was: %T`, limitAttribute))
+	}
+
+	if diags.HasError() {
+		return NewRolloverValueUnknown(), diags
+	}
+
+	return RolloverValue{
+		Enabled: enabledVal,
+		Limit:   limitVal,
+		state:   attr.ValueStateKnown,
+	}, diags
+}
+
+func NewRolloverValueMust(attributeTypes map[string]attr.Type, attributes map[string]attr.Value) RolloverValue {
+	object, diags := NewRolloverValue(attributeTypes, attributes)
+
+	if diags.HasError() {
+		// This could potentially be added to the diag package.
+		diagsStrings := make([]string, 0, len(diags))
+
+		for _, diagnostic := range diags {
+			diagsStrings = append(diagsStrings, fmt.Sprintf(
+				"%s | %s | %s",
+				diagnostic.Severity(),
+				diagnostic.Summary(),
+				diagnostic.Detail()))
+		}
+
+		panic("NewRolloverValueMust received error(s): " + strings.Join(diagsStrings, "\n"))
+	}
+
+	return object
+}
+
+func (t RolloverType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr.Value, error) {
+	if in.Type() == nil {
+		return NewRolloverValueNull(), nil
+	}
+
+	if !in.Type().Equal(t.TerraformType(ctx)) {
+		return nil, fmt.Errorf("expected %s, got %s", t.TerraformType(ctx), in.Type())
+	}
+
+	if !in.IsKnown() {
+		return NewRolloverValueUnknown(), nil
+	}
+
+	if in.IsNull() {
+		return NewRolloverValueNull(), nil
+	}
+
+	attributes := map[string]attr.Value{}
+
+	val := map[string]tftypes.Value{}
+
+	err := in.As(&val)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range val {
+		a, err := t.AttrTypes[k].ValueFromTerraform(ctx, v)
+
+		if err != nil {
+			return nil, err
+		}
+
+		attributes[k] = a
+	}
+
+	return NewRolloverValueMust(RolloverValue{}.AttributeTypes(ctx), attributes), nil
+}
+
+func (t RolloverType) ValueType(ctx context.Context) attr.Value {
+	return RolloverValue{}
+}
+
+var _ basetypes.ObjectValuable = RolloverValue{}
+
+type RolloverValue struct {
+	Enabled basetypes.BoolValue  `tfsdk:"enabled"`
+	Limit   basetypes.Int64Value `tfsdk:"limit"`
+	state   attr.ValueState
+}
+
+func (v RolloverValue) ToTerraformValue(ctx context.Context) (tftypes.Value, error) {
+	attrTypes := make(map[string]tftypes.Type, 2)
+
+	var val tftypes.Value
+	var err error
+
+	attrTypes["enabled"] = basetypes.BoolType{}.TerraformType(ctx)
+	attrTypes["limit"] = basetypes.Int64Type{}.TerraformType(ctx)
+
+	objectType := tftypes.Object{AttributeTypes: attrTypes}
+
+	switch v.state {
+	case attr.ValueStateKnown:
+		vals := make(map[string]tftypes.Value, 2)
+
+		val, err = v.Enabled.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["enabled"] = val
+
+		val, err = v.Limit.ToTerraformValue(ctx)
+
+		if err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		vals["limit"] = val
+
+		if err := tftypes.ValidateValue(objectType, vals); err != nil {
+			return tftypes.NewValue(objectType, tftypes.UnknownValue), err
+		}
+
+		return tftypes.NewValue(objectType, vals), nil
+	case attr.ValueStateNull:
+		return tftypes.NewValue(objectType, nil), nil
+	case attr.ValueStateUnknown:
+		return tftypes.NewValue(objectType, tftypes.UnknownValue), nil
+	default:
+		panic(fmt.Sprintf("unhandled Object state in ToTerraformValue: %s", v.state))
+	}
+}
+
+func (v RolloverValue) IsNull() bool {
+	return v.state == attr.ValueStateNull
+}
+
+func (v RolloverValue) IsUnknown() bool {
+	return v.state == attr.ValueStateUnknown
+}
+
+func (v RolloverValue) String() string {
+	return "RolloverValue"
+}
+
+func (v RolloverValue) ToObjectValue(ctx context.Context) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := map[string]attr.Type{
+		"enabled": basetypes.BoolType{},
+		"limit":   basetypes.Int64Type{},
+	}
+
+	if v.IsNull() {
+		return types.ObjectNull(attributeTypes), diags
+	}
+
+	if v.IsUnknown() {
+		return types.ObjectUnknown(attributeTypes), diags
+	}
+
+	objVal, diags := types.ObjectValue(
+		attributeTypes,
+		map[string]attr.Value{
+			"enabled": v.Enabled,
+			"limit":   v.Limit,
+		})
+
+	return objVal, diags
+}
+
+func (v RolloverValue) Equal(o attr.Value) bool {
+	other, ok := o.(RolloverValue)
+
+	if !ok {
+		return false
+	}
+
+	if v.state != other.state {
+		return false
+	}
+
+	if v.state != attr.ValueStateKnown {
+		return true
+	}
+
+	if !v.Enabled.Equal(other.Enabled) {
+		return false
+	}
+
+	if !v.Limit.Equal(other.Limit) {
+		return false
+	}
+
+	return true
+}
+
+func (v RolloverValue) Type(ctx context.Context) attr.Type {
+	return RolloverType{
+		basetypes.ObjectType{
+			AttrTypes: v.AttributeTypes(ctx),
+		},
+	}
+}
+
+func (v RolloverValue) AttributeTypes(ctx context.Context) map[string]attr.Type {
+	return map[string]attr.Type{
+		"enabled": basetypes.BoolType{},
+		"limit":   basetypes.Int64Type{},
 	}
 }
 

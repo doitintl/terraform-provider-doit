@@ -99,10 +99,11 @@ Optional:
 Read-Only:
 
 - `alert_thresholds` (Attributes List) (see [below for nested schema](#nestedatt--budgets--alert_thresholds))
-- `amount` (Number)
+- `amount` (Number) Budget period amount, as set on create or update. See `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`.
 - `budget_name` (String)
 - `create_time` (Number)
 - `currency` (String)
+- `current_period_amount` (Number) Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alert thresholds are calculated from this amount.
 - `current_utilization` (Number)
 - `end_period` (Number)
 - `forecasted_utilization_date` (Number)

@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### BREAKING CHANGES
+
+- **resource/doit_budget**: A budget with `seasonal_amounts` no longer has an `amount`. The API now rejects `amount` together with `seasonal_amounts` and omits it on read, so `amount` must be removed from the configuration of seasonal budgets (plan fails until it is) and is null in state; `current_period_amount` holds the amount of the current period. `seasonal_amounts` can no longer be combined with growth (`allow_growth`, or a `growth_per_period` above 0 on create), an enabled `rollover` or `use_prev_spend`, must have one amount per period of `time_interval` (7 for `day`, 12 for `month`, 4 for `quarter`, 5 for `year`), and is not allowed for fixed budgets or the `week` interval; all of this is now checked at plan time. Omitting `seasonal_amounts` now removes the seasonal amounts instead of keeping them, together with the `amount` or `use_prev_spend` the API requires for that ([doiteng/omni#72485](https://github.com/doiteng/omni/pull/72485))
+
+### ENHANCEMENTS
+
+- **resource/doit_budget, data-source/doit_budget**: New `allow_growth` and `rollover` attributes. `allow_growth` turns `growth_per_period` on or off; on create it defaults to true for a `growth_per_period` above 0, and an update keeps it, so switching a budget with growth to seasonal amounts needs `allow_growth = false`. `rollover` (`enabled`, `limit`) carries unspent budget of up to `limit` previous periods into the current one; removing the block disables it. New computed `current_period_amount`: the amount of the current period after growth, rollover and seasonal amounts, against which alerts are evaluated ([doiteng/omni#72329](https://github.com/doiteng/omni/pull/72329), [doiteng/omni#72485](https://github.com/doiteng/omni/pull/72485))
+
+- **data-source/doit_budgets**: New `budgets[].current_period_amount` attribute ([doiteng/omni#72329](https://github.com/doiteng/omni/pull/72329))
+
+### BUG FIXES
+
+- **resource/doit_budget**: A budget with `growth_per_period` or rollover no longer shows a permanent diff on `amount`. The API returned the grown amount of the current period in `amount`; it now returns the configured amount ([doiteng/omni#72329](https://github.com/doiteng/omni/pull/72329))
+
+- **resource/doit_budget**: An update that only removed `scopes[].values` or `scopes[].mode` from the configuration planned `update_time`, `current_utilization` and `forecasted_utilization` with their stored values instead of unknown. They are now planned unknown on every update, as is `current_period_amount`
+
 ## v1.12.0 (2026-11-06)
 
 ### BREAKING CHANGES

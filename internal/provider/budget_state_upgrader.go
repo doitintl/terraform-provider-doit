@@ -337,6 +337,11 @@ func upgradeBudgetStateV0ToV1(ctx context.Context, req resource.UpgradeStateRequ
 	newModel.Scopes = types.ListValueMust(types.ObjectType{
 		AttrTypes: resource_budget.ScopesValue{}.AttributeTypes(ctx),
 	}, []attr.Value{})
+	// allow_growth, rollover and current_period_amount came after V1 without a
+	// schema version bump; the next Read fills them.
+	newModel.AllowGrowth = types.BoolNull()
+	newModel.Rollover = resource_budget.NewRolloverValueNull()
+	newModel.CurrentPeriodAmount = types.Float64Null()
 	newModel.CreateTime = types.Int64Null()
 	newModel.UpdateTime = types.Int64Null()
 	newModel.CurrentUtilization = types.Float64Null()
