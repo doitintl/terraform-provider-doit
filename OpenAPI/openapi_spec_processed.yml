@@ -3318,9 +3318,9 @@ paths:
       operationId: listCustomerNotifications
       tags:
         - Notifications
-      summary: List organization cost anomaly notifications
+      summary: List organization notifications
       description: >-
-        Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+        Returns every organization notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Only configs whose settings use the public types on `CustomerNotificationSettings` are returned. Dashboard, report, and commitment subscriptions are separate documents and are omitted. A prompt schedule is personal and is omitted. Creating one of those in the Console does not change a config created with this API.
 
         Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
       responses:
@@ -3381,9 +3381,9 @@ paths:
       operationId: createCustomerNotification
       tags:
         - Notifications
-      summary: Create an organization cost anomaly notification
+      summary: Create an organization notification
       description: >-
-        Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+        Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 
         Requires the `settings` (Manage settings) permission.
 
@@ -3395,12 +3395,8 @@ paths:
         - $ref: "#/components/parameters/dryRun"
       requestBody:
         required: true
-        description: |
-          Organization cost-anomaly notification to create. Unknown fields are
-          rejected. `settings` must include `costAnomalies` and must not include
-          any other notification type. `destinations` must include `emails`,
-          `slackChannels`, and `teamsChannels`, with at least one non-empty
-          array.
+        description: >-
+          Organization notification to create. Unknown fields are rejected. `settings` must include at least one notification type. `destinations` must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.
         content:
           application/json:
             schema:
@@ -3571,7 +3567,7 @@ paths:
         required: true
         description: |
           The unique ID of the notification config returned by create or list.
-          An id that is not a cost-anomaly config for this tenant returns `404`.
+          An id that is not a public organization config for this tenant returns `404`.
         schema:
           type: string
           minLength: 1
@@ -3579,9 +3575,9 @@ paths:
       operationId: getCustomerNotification
       tags:
         - Notifications
-      summary: Get an organization cost anomaly notification
+      summary: Get an organization notification
       description: >-
-        Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+        Returns one public organization notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that is not a config for this tenant, returns `404`, without saying whether it exists elsewhere. PATCH and DELETE of that id also return `404` and leave the stored document unchanged.
       responses:
         "200":
           description: OK - Organization notification returned.
@@ -3633,9 +3629,9 @@ paths:
       operationId: updateCustomerNotification
       tags:
         - Notifications
-      summary: Update an organization cost anomaly notification
+      summary: Update an organization notification
       description: >-
-        Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+        Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 
         Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 
@@ -3792,9 +3788,9 @@ paths:
       operationId: deleteCustomerNotification
       tags:
         - Notifications
-      summary: Delete an organization cost anomaly notification
+      summary: Delete an organization notification
       description: >-
-        Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+        Permanently deletes a public organization notification config. A visible config holds only public types, so the whole document is removed. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that no longer exists, returns `404`.
 
         Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
       parameters:
@@ -9650,13 +9646,7 @@ components:
         Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id.
       properties:
         billingProfileIds:
-          type: array
-          description: >-
-            Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
-          items:
-            type: string
-            minLength: 1
-            example: ent_01HEXAMPLEBILLING0001
+          $ref: "#/components/schemas/NotificationBillingProfileIds"
     BudgetAPI:
       required:
         - currency
@@ -12486,7 +12476,7 @@ components:
       type: object
       additionalProperties: false
       description: >-
-        Fields of a new organization notification. Unknown fields are rejected. `settings` must include `costAnomalies` and must not include any other notification type. `destinations` must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.
+        Fields of a new organization notification. Unknown fields are rejected. `settings` must include at least one notification type. `destinations` must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
       required:
         - name
         - destinations
@@ -12507,21 +12497,16 @@ components:
         settings:
           $ref: "#/components/schemas/CustomerNotificationSettings"
       example:
-        name: Anomaly alerts
+        name: New invoices
         destinations:
-          emails:
-            - finops@example.com
-          slackChannels: []
+          emails: []
+          slackChannels:
+            - C0123ABCD
           teamsChannels: []
         settings:
-          costAnomalies:
-            minSeverity: warning
-            minExcessCost:
-              amount: "100.00"
-              currency: USD
-            allocations:
-              mode: all
-              ids: []
+          newInvoices:
+            billingProfileIds:
+              - ent_01HEXAMPLEBILLING0001
     CreateCustomerSubscriptionRequest:
       type: object
       additionalProperties: false
@@ -13014,7 +12999,7 @@ components:
             - $ref: "#/components/schemas/CustomerNotificationDestinations"
         settings:
           description: >-
-            Subscribed notification settings. Only `costAnomalies` is accepted; any other notification type is rejected.
+            Subscribed notification settings. At least one type is required. A config that also stores a dashboard, report, or commitment subscription or a prompt schedule is omitted from list and get. PATCH and DELETE of that id return `404`.
           allOf:
             - $ref: "#/components/schemas/CustomerNotificationSettings"
     CustomerNotificationDestinations:
@@ -13069,7 +13054,7 @@ components:
         items:
           type: array
           description: >-
-            Cost-anomaly notification configs for the tenant, ordered by `createTime` ascending, then by `id` ascending.
+            Organization notification configs for the tenant, ordered by `createTime` ascending, then by `id` ascending. A config that also stores a dashboard, report, or commitment subscription or a prompt schedule is omitted. PATCH and DELETE of that id return `404`.
           items:
             $ref: "#/components/schemas/CustomerNotification"
           example: []
@@ -13078,13 +13063,83 @@ components:
     CustomerNotificationSettings:
       type: object
       additionalProperties: false
-      description: >-
-        Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected.
-      required:
-        - costAnomalies
+      minProperties: 1
+      description: |-
+        Subscribed notification settings, one property per type. A present property subscribes that type;
+        `{}` subscribes a type that has no fields. Omitting a property on create leaves that type
+        unsubscribed. At least one property is required. Unknown properties, including dashboard, report,
+        and commitment subscriptions, prompt schedules, and `conditions`, are rejected with `422`.
+
+        Properties and their Console labels:
+
+        - `newInvoices`: New invoices
+        - `newProformaInvoices`: New proforma invoices
+        - `paymentReminders`: Due or overdue payments
+        - `creditUtilization`: Credit utilization
+        - `quotaUtilization`: Quota utilization
+        - `cloudIncidents`: Cloud incidents
+        - `newSkuUsage`: New SKUs usage detected
+        - `dailyDigest`: Daily digest, one email per selected allocation rule each day
+        - `weeklyDigest`: Weekly digest, one email per selected allocation rule each week
+        - `monthlyDigest`: Monthly digest
+        - `expertInsights`: Third-party insights (Console item "New insights recommended by DoiT experts")
+        - `insights`: New insights
+        - `costAnomalies`: Cloud cost anomalies (Console item "Cost anomaly detection")
+        - `savingsPlanApproval`: Savings Plan purchase requires approval (PerfectScale for Commitments)
+        - `savingsPlanPurchased`: Savings Plan purchased
+        - `cudApproval`: committed use discount (CUD) purchase requires approval
+        - `cudPurchased`: CUD purchased
+        - `dataIntegrationSyncFailure`: Data integration sync failures
+        - `awsBillingDataImport`: AWS Billing Data Import Alert
+
+        Requires Manage settings; no other permission is checked.
+
+        Every destination channel must be supported by every subscribed type, or the response is `422`
+        `customers.channel_not_supported`:
+
+        - Email and Slack only: `expertInsights`, `dataIntegrationSyncFailure`
+        - Email, Slack, and Microsoft Teams: every other property
+        - A Teams destination on a supported type is still `422` `validation_failed` when the tenant has
+          no Teams entitlement
       properties:
+        newInvoices:
+          $ref: "#/components/schemas/BillingProfileNotificationSettings"
+        newProformaInvoices:
+          $ref: "#/components/schemas/BillingProfileNotificationSettings"
+        paymentReminders:
+          $ref: "#/components/schemas/BillingProfileNotificationSettings"
+        creditUtilization:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        quotaUtilization:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        cloudIncidents:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        newSkuUsage:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        dailyDigest:
+          $ref: "#/components/schemas/DigestNotificationSettings"
+        weeklyDigest:
+          $ref: "#/components/schemas/DigestNotificationSettings"
+        monthlyDigest:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        expertInsights:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        insights:
+          $ref: "#/components/schemas/InsightsNotificationSettings"
         costAnomalies:
           $ref: "#/components/schemas/CostAnomalySettings"
+        savingsPlanApproval:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        savingsPlanPurchased:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        cudApproval:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        cudPurchased:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        dataIntegrationSyncFailure:
+          $ref: "#/components/schemas/NotificationEmptySettings"
+        awsBillingDataImport:
+          $ref: "#/components/schemas/BillingProfileNotificationSettings"
     CustomerSettings:
       type: object
       description: >-
@@ -13934,14 +13989,7 @@ components:
         - allocationIds
       properties:
         allocationIds:
-          type: array
-          minItems: 1
-          description: >-
-            Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
-          items:
-            type: string
-            minLength: 1
-            example: alloc_abc
+          $ref: "#/components/schemas/NotificationAllocationIds"
     Dimension:
       description: Definition of a report dimension.
       type: object
@@ -16649,45 +16697,11 @@ components:
         Optional insight filters. An empty or omitted list means every value of that filter. An insight must match every criterion across `pillars`, `severities`, and `providers`. A read of an omitted or empty list returns that field absent. An explicit list is returned in the order sent. A repeated value is rejected with `422`.
       properties:
         pillars:
-          type: array
-          description: Insight pillars. Empty or omitted means all pillars.
-          items:
-            type: string
-            enum:
-              - cost
-              - operations
-              - performance
-              - security
-              - compliance
-            x-enumDescriptions:
-              cost: Cost. Notify for insights in the Cost category.
-              operations: Operations. Notify for insights in the Operations category.
-              performance: Performance. Notify for insights in the Performance category.
-              security: Security. Notify for insights in the Security category.
-              compliance: Compliance. Notify for insights in the Compliance category.
+          $ref: "#/components/schemas/NotificationInsightPillars"
         severities:
-          type: array
-          description: Insight severities. Empty or omitted means all severities.
-          items:
-            type: string
-            enum:
-              - critical
-              - high
-              - medium
-              - low
-            x-enumDescriptions:
-              critical: Critical. Notify for Critical insights.
-              high: High. Notify for High insights.
-              medium: Medium. Notify for Medium insights.
-              low: Low. Notify for Low insights.
+          $ref: "#/components/schemas/NotificationInsightSeverities"
         providers:
-          type: array
-          description: >-
-            Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
-          items:
-            type: string
-            minLength: 1
-            example: aws
+          $ref: "#/components/schemas/NotificationInsightProviders"
     InviteResponse:
       type: object
       description: Response returned after creating a user invitation.
@@ -17339,6 +17353,23 @@ components:
           pattern: ^[A-Z]{3}$
           description: ISO 4217 currency code.
           example: USD
+    NotificationAllocationIds:
+      type: array
+      minItems: 1
+      description: >-
+        Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
+      items:
+        type: string
+        minLength: 1
+        example: alloc_abc
+    NotificationBillingProfileIds:
+      type: array
+      description: >-
+        Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+      items:
+        type: string
+        minLength: 1
+        example: ent_01HEXAMPLEBILLING0001
     NotificationEmptySettings:
       type: object
       additionalProperties: false
@@ -17370,6 +17401,46 @@ components:
       description: Chronologically ordered notification dispatch events.
       items:
         $ref: "#/components/schemas/NotificationEvent"
+    NotificationInsightPillars:
+      type: array
+      description: Insight pillars. Empty or omitted means all pillars.
+      items:
+        type: string
+        enum:
+          - cost
+          - operations
+          - performance
+          - security
+          - compliance
+        x-enumDescriptions:
+          cost: Cost. Notify for insights in the Cost category.
+          operations: Operations. Notify for insights in the Operations category.
+          performance: Performance. Notify for insights in the Performance category.
+          security: Security. Notify for insights in the Security category.
+          compliance: Compliance. Notify for insights in the Compliance category.
+    NotificationInsightProviders:
+      type: array
+      description: >-
+        Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
+      items:
+        type: string
+        minLength: 1
+        example: aws
+    NotificationInsightSeverities:
+      type: array
+      description: Insight severities. Empty or omitted means all severities.
+      items:
+        type: string
+        enum:
+          - critical
+          - high
+          - medium
+          - low
+        x-enumDescriptions:
+          critical: Critical. Notify for Critical insights.
+          high: High. Notify for High insights.
+          medium: Medium. Notify for Medium insights.
+          low: Low. Notify for Low insights.
     Organization:
       type: object
       description: Organization metadata returned by the API.
@@ -17380,6 +17451,15 @@ components:
         name:
           type: string
           description: The name of the organization
+    PatchBillingProfileNotificationSettings:
+      type: object
+      nullable: true
+      additionalProperties: false
+      description: >-
+        Merge-patch for a billing-profile type. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `billingProfileIds` unchanged. Send `billingProfileIds` to replace the stored list, or send an empty array to clear the restriction so the type covers every billing profile in the tenant. Ids follow the same rules as `BillingProfileNotificationSettings`. `null` unsubscribes the type.
+      properties:
+        billingProfileIds:
+          $ref: "#/components/schemas/NotificationBillingProfileIds"
     PatchCostAnomalyAllocations:
       type: object
       additionalProperties: false
@@ -17426,6 +17506,7 @@ components:
           nullable: true
     PatchCostAnomalySettings:
       type: object
+      nullable: true
       additionalProperties: false
       description: >-
         Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or send a new value.
@@ -17492,10 +17573,75 @@ components:
       type: object
       additionalProperties: false
       description: >-
-        Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies` is accepted.
+        Merge-patch for `settings`. Omit a property to leave that type unchanged. A property you send is merged into the stored settings for that type, not substituted for them: a nested field you omit keeps its stored value, a nested array you send replaces the stored one, and an explicit empty array clears an optional filter. Send `null` to unsubscribe that type. After the merge at least one type must remain. `conditions` is rejected with `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
       properties:
+        newInvoices:
+          $ref: "#/components/schemas/PatchBillingProfileNotificationSettings"
+        newProformaInvoices:
+          $ref: "#/components/schemas/PatchBillingProfileNotificationSettings"
+        paymentReminders:
+          $ref: "#/components/schemas/PatchBillingProfileNotificationSettings"
+        creditUtilization:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        quotaUtilization:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        cloudIncidents:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        newSkuUsage:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        dailyDigest:
+          $ref: "#/components/schemas/PatchDigestNotificationSettings"
+        weeklyDigest:
+          $ref: "#/components/schemas/PatchDigestNotificationSettings"
+        monthlyDigest:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        expertInsights:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        insights:
+          $ref: "#/components/schemas/PatchInsightsNotificationSettings"
         costAnomalies:
           $ref: "#/components/schemas/PatchCostAnomalySettings"
+        savingsPlanApproval:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        savingsPlanPurchased:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        cudApproval:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        cudPurchased:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        dataIntegrationSyncFailure:
+          $ref: "#/components/schemas/PatchNotificationEmptySettings"
+        awsBillingDataImport:
+          $ref: "#/components/schemas/PatchBillingProfileNotificationSettings"
+    PatchDigestNotificationSettings:
+      type: object
+      nullable: true
+      additionalProperties: false
+      description: >-
+        Merge-patch for a daily or weekly digest. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `allocationIds` unchanged. Send `allocationIds` to replace the stored list. The merged list must hold at least one id, so an empty array, and `{}` on a type that is not already subscribed, are rejected with `422`. Ids follow the same rules as `DigestNotificationSettings`. `null` unsubscribes the type.
+      properties:
+        allocationIds:
+          $ref: "#/components/schemas/NotificationAllocationIds"
+    PatchInsightsNotificationSettings:
+      type: object
+      nullable: true
+      additionalProperties: false
+      description: >-
+        Merge-patch for `insights`. The object is merged into the stored filters, not substituted for them. A filter you omit keeps its stored value; a filter you send replaces the stored list for that filter alone; an explicit empty array clears that filter, so it matches every value again. `{}` subscribes the type and, on a type that is already subscribed, leaves every filter unchanged. On a config stored with `pillars: ["cost"]`, sending `{"severities": ["high"]}` keeps the `cost` pillar, and sending `{"pillars": []}` drops it. Values follow the same rules as `InsightsNotificationSettings`. `null` unsubscribes the type.
+      properties:
+        pillars:
+          $ref: "#/components/schemas/NotificationInsightPillars"
+        severities:
+          $ref: "#/components/schemas/NotificationInsightSeverities"
+        providers:
+          $ref: "#/components/schemas/NotificationInsightProviders"
+    PatchNotificationEmptySettings:
+      type: object
+      nullable: true
+      additionalProperties: false
+      description: >-
+        Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+      example: {}
     PatchUserNotificationSettings:
       type: object
       additionalProperties: false
@@ -18701,7 +18847,7 @@ components:
       additionalProperties: false
       minProperties: 1
       description: >-
-        JSON Merge Patch (RFC 7396) for an organization notification. Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object. Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
+        JSON Merge Patch (RFC 7396) for an organization notification. Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
       properties:
         name:
           type: string

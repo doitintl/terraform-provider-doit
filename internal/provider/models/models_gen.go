@@ -3742,57 +3742,6 @@ func (e GroupAllocationRuleAction) Valid() bool {
 	}
 }
 
-// Defines values for InsightsNotificationSettingsPillars.
-const (
-	InsightsNotificationSettingsPillarsCompliance  InsightsNotificationSettingsPillars = "compliance"
-	InsightsNotificationSettingsPillarsCost        InsightsNotificationSettingsPillars = "cost"
-	InsightsNotificationSettingsPillarsOperations  InsightsNotificationSettingsPillars = "operations"
-	InsightsNotificationSettingsPillarsPerformance InsightsNotificationSettingsPillars = "performance"
-	InsightsNotificationSettingsPillarsSecurity    InsightsNotificationSettingsPillars = "security"
-)
-
-// Valid indicates whether the value is a known member of the InsightsNotificationSettingsPillars enum.
-func (e InsightsNotificationSettingsPillars) Valid() bool {
-	switch e {
-	case InsightsNotificationSettingsPillarsCompliance:
-		return true
-	case InsightsNotificationSettingsPillarsCost:
-		return true
-	case InsightsNotificationSettingsPillarsOperations:
-		return true
-	case InsightsNotificationSettingsPillarsPerformance:
-		return true
-	case InsightsNotificationSettingsPillarsSecurity:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for InsightsNotificationSettingsSeverities.
-const (
-	InsightsNotificationSettingsSeveritiesCritical InsightsNotificationSettingsSeverities = "critical"
-	InsightsNotificationSettingsSeveritiesHigh     InsightsNotificationSettingsSeverities = "high"
-	InsightsNotificationSettingsSeveritiesLow      InsightsNotificationSettingsSeverities = "low"
-	InsightsNotificationSettingsSeveritiesMedium   InsightsNotificationSettingsSeverities = "medium"
-)
-
-// Valid indicates whether the value is a known member of the InsightsNotificationSettingsSeverities enum.
-func (e InsightsNotificationSettingsSeverities) Valid() bool {
-	switch e {
-	case InsightsNotificationSettingsSeveritiesCritical:
-		return true
-	case InsightsNotificationSettingsSeveritiesHigh:
-		return true
-	case InsightsNotificationSettingsSeveritiesLow:
-		return true
-	case InsightsNotificationSettingsSeveritiesMedium:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for InviteUserRequestJobTitle.
 const (
 	InviteUserRequestJobTitleDataEngineerDataAnalysts InviteUserRequestJobTitle = "Data Engineer / Data Analysts"
@@ -7140,7 +7089,7 @@ type BillingExplainerSupportDetail struct {
 // BillingProfileNotificationSettings Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id.
 type BillingProfileNotificationSettings struct {
 	// BillingProfileIds Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
-	BillingProfileIds *[]string `json:"billingProfileIds,omitempty"`
+	BillingProfileIds *NotificationBillingProfileIds `json:"billingProfileIds,omitempty"`
 }
 
 // BudgetAPI Budget details and runtime metrics.
@@ -9232,9 +9181,9 @@ type CreateCustomThemeRequest struct {
 	PrimaryColor HexColor `json:"primaryColor"`
 }
 
-// CreateCustomerNotificationRequest Fields of a new organization notification. Unknown fields are rejected. `settings` must include `costAnomalies` and must not include any other notification type. `destinations` must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.
+// CreateCustomerNotificationRequest Fields of a new organization notification. Unknown fields are rejected. `settings` must include at least one notification type. `destinations` must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 //
-// Example: {"destinations":{"emails":["finops@example.com"],"slackChannels":[],"teamsChannels":[]},"name":"Anomaly alerts","settings":{"costAnomalies":{"allocations":{"ids":[],"mode":"all"},"minExcessCost":{"amount":"100.00","currency":"USD"},"minSeverity":"warning"}}}
+// Example: {"destinations":{"emails":[],"slackChannels":["C0123ABCD"],"teamsChannels":[]},"name":"New invoices","settings":{"newInvoices":{"billingProfileIds":["ent_01HEXAMPLEBILLING0001"]}}}
 type CreateCustomerNotificationRequest struct {
 	// Destinations Delivery targets for this config. Must include `emails`, `slackChannels`, and `teamsChannels`, with at least one non-empty array.
 	Destinations CustomerNotificationDestinations `json:"destinations"`
@@ -9244,7 +9193,42 @@ type CreateCustomerNotificationRequest struct {
 	// Example: Anomaly alerts
 	Name string `json:"name"`
 
-	// Settings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected.
+	// Settings Subscribed notification settings, one property per type. A present property subscribes that type;
+	// `{}` subscribes a type that has no fields. Omitting a property on create leaves that type
+	// unsubscribed. At least one property is required. Unknown properties, including dashboard, report,
+	// and commitment subscriptions, prompt schedules, and `conditions`, are rejected with `422`.
+	//
+	// Properties and their Console labels:
+	//
+	// - `newInvoices`: New invoices
+	// - `newProformaInvoices`: New proforma invoices
+	// - `paymentReminders`: Due or overdue payments
+	// - `creditUtilization`: Credit utilization
+	// - `quotaUtilization`: Quota utilization
+	// - `cloudIncidents`: Cloud incidents
+	// - `newSkuUsage`: New SKUs usage detected
+	// - `dailyDigest`: Daily digest, one email per selected allocation rule each day
+	// - `weeklyDigest`: Weekly digest, one email per selected allocation rule each week
+	// - `monthlyDigest`: Monthly digest
+	// - `expertInsights`: Third-party insights (Console item "New insights recommended by DoiT experts")
+	// - `insights`: New insights
+	// - `costAnomalies`: Cloud cost anomalies (Console item "Cost anomaly detection")
+	// - `savingsPlanApproval`: Savings Plan purchase requires approval (PerfectScale for Commitments)
+	// - `savingsPlanPurchased`: Savings Plan purchased
+	// - `cudApproval`: committed use discount (CUD) purchase requires approval
+	// - `cudPurchased`: CUD purchased
+	// - `dataIntegrationSyncFailure`: Data integration sync failures
+	// - `awsBillingDataImport`: AWS Billing Data Import Alert
+	//
+	// Requires Manage settings; no other permission is checked.
+	//
+	// Every destination channel must be supported by every subscribed type, or the response is `422`
+	// `customers.channel_not_supported`:
+	//
+	// - Email and Slack only: `expertInsights`, `dataIntegrationSyncFailure`
+	// - Email, Slack, and Microsoft Teams: every other property
+	// - A Teams destination on a supported type is still `422` `validation_failed` when the tenant has
+	//   no Teams entitlement
 	Settings CustomerNotificationSettings `json:"settings"`
 }
 
@@ -9584,7 +9568,7 @@ type CustomerNotification struct {
 	// Example: Anomaly alerts
 	Name string `json:"name"`
 
-	// Settings Subscribed notification settings. Only `costAnomalies` is accepted; any other notification type is rejected.
+	// Settings Subscribed notification settings. At least one type is required. A config that also stores a dashboard, report, or commitment subscription or a prompt schedule is omitted from list and get. PATCH and DELETE of that id return `404`.
 	Settings CustomerNotificationSettings `json:"settings"`
 
 	// UpdateTime When the config was last changed. `null` only on a dry-run create.
@@ -9615,17 +9599,128 @@ type CustomerNotificationDestinations struct {
 //
 // Example: {"items":[]}
 type CustomerNotificationListResponse struct {
-	// Items Cost-anomaly notification configs for the tenant, ordered by `createTime` ascending, then by `id` ascending.
+	// Items Organization notification configs for the tenant, ordered by `createTime` ascending, then by `id` ascending. A config that also stores a dashboard, report, or commitment subscription or a prompt schedule is omitted. PATCH and DELETE of that id return `404`.
 	//
 	// Example: []
 	Items []CustomerNotification `json:"items"`
 }
 
-// CustomerNotificationSettings Subscribed notification settings. Only `costAnomalies` is accepted. Settings for any other type are rejected; omitting `costAnomalies` is rejected.
+// CustomerNotificationSettings Subscribed notification settings, one property per type. A present property subscribes that type;
+// `{}` subscribes a type that has no fields. Omitting a property on create leaves that type
+// unsubscribed. At least one property is required. Unknown properties, including dashboard, report,
+// and commitment subscriptions, prompt schedules, and `conditions`, are rejected with `422`.
+//
+// Properties and their Console labels:
+//
+// - `newInvoices`: New invoices
+// - `newProformaInvoices`: New proforma invoices
+// - `paymentReminders`: Due or overdue payments
+// - `creditUtilization`: Credit utilization
+// - `quotaUtilization`: Quota utilization
+// - `cloudIncidents`: Cloud incidents
+// - `newSkuUsage`: New SKUs usage detected
+// - `dailyDigest`: Daily digest, one email per selected allocation rule each day
+// - `weeklyDigest`: Weekly digest, one email per selected allocation rule each week
+// - `monthlyDigest`: Monthly digest
+// - `expertInsights`: Third-party insights (Console item "New insights recommended by DoiT experts")
+// - `insights`: New insights
+// - `costAnomalies`: Cloud cost anomalies (Console item "Cost anomaly detection")
+// - `savingsPlanApproval`: Savings Plan purchase requires approval (PerfectScale for Commitments)
+// - `savingsPlanPurchased`: Savings Plan purchased
+// - `cudApproval`: committed use discount (CUD) purchase requires approval
+// - `cudPurchased`: CUD purchased
+// - `dataIntegrationSyncFailure`: Data integration sync failures
+// - `awsBillingDataImport`: AWS Billing Data Import Alert
+//
+// Requires Manage settings; no other permission is checked.
+//
+// Every destination channel must be supported by every subscribed type, or the response is `422`
+// `customers.channel_not_supported`:
+//
+//   - Email and Slack only: `expertInsights`, `dataIntegrationSyncFailure`
+//   - Email, Slack, and Microsoft Teams: every other property
+//   - A Teams destination on a supported type is still `422` `validation_failed` when the tenant has
+//     no Teams entitlement
 type CustomerNotificationSettings struct {
+	// AwsBillingDataImport Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id.
+	AwsBillingDataImport *BillingProfileNotificationSettings `json:"awsBillingDataImport,omitempty"`
+
+	// CloudIncidents A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	CloudIncidents *NotificationEmptySettings `json:"cloudIncidents,omitempty"`
+
 	// CostAnomalies Cost-anomaly notification settings: minimum severity, excess-cost threshold, allocation scope, and
 	// optional resend controls.
-	CostAnomalies CostAnomalySettings `json:"costAnomalies"`
+	CostAnomalies *CostAnomalySettings `json:"costAnomalies,omitempty"`
+
+	// CreditUtilization A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	CreditUtilization *NotificationEmptySettings `json:"creditUtilization,omitempty"`
+
+	// CudApproval A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	CudApproval *NotificationEmptySettings `json:"cudApproval,omitempty"`
+
+	// CudPurchased A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	CudPurchased *NotificationEmptySettings `json:"cudPurchased,omitempty"`
+
+	// DailyDigest Allocation rules included in a daily or weekly digest. At least one id is required.
+	DailyDigest *DigestNotificationSettings `json:"dailyDigest,omitempty"`
+
+	// DataIntegrationSyncFailure A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	DataIntegrationSyncFailure *NotificationEmptySettings `json:"dataIntegrationSyncFailure,omitempty"`
+
+	// ExpertInsights A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	ExpertInsights *NotificationEmptySettings `json:"expertInsights,omitempty"`
+
+	// Insights Optional insight filters. An empty or omitted list means every value of that filter. An insight must match every criterion across `pillars`, `severities`, and `providers`. A read of an omitted or empty list returns that field absent. An explicit list is returned in the order sent. A repeated value is rejected with `422`.
+	Insights *InsightsNotificationSettings `json:"insights,omitempty"`
+
+	// MonthlyDigest A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	MonthlyDigest *NotificationEmptySettings `json:"monthlyDigest,omitempty"`
+
+	// NewInvoices Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id.
+	NewInvoices *BillingProfileNotificationSettings `json:"newInvoices,omitempty"`
+
+	// NewProformaInvoices Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id.
+	NewProformaInvoices *BillingProfileNotificationSettings `json:"newProformaInvoices,omitempty"`
+
+	// NewSkuUsage A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	NewSkuUsage *NotificationEmptySettings `json:"newSkuUsage,omitempty"`
+
+	// PaymentReminders Billing profiles this notification applies to. Omit `billingProfileIds`, or send an empty array, to include every billing profile in the tenant. An id outside the tenant is rejected with `422`, the same error as an unknown id.
+	PaymentReminders *BillingProfileNotificationSettings `json:"paymentReminders,omitempty"`
+
+	// QuotaUtilization A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	QuotaUtilization *NotificationEmptySettings `json:"quotaUtilization,omitempty"`
+
+	// SavingsPlanApproval A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	SavingsPlanApproval *NotificationEmptySettings `json:"savingsPlanApproval,omitempty"`
+
+	// SavingsPlanPurchased A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
+	//
+	// Example: {}
+	SavingsPlanPurchased *NotificationEmptySettings `json:"savingsPlanPurchased,omitempty"`
+
+	// WeeklyDigest Allocation rules included in a daily or weekly digest. At least one id is required.
+	WeeklyDigest *DigestNotificationSettings `json:"weeklyDigest,omitempty"`
 }
 
 // CustomerSettings Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
@@ -10159,7 +10254,7 @@ type DiagramRelationshipsResponseKind string
 // DigestNotificationSettings Allocation rules included in a daily or weekly digest. At least one id is required.
 type DigestNotificationSettings struct {
 	// AllocationIds Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
-	AllocationIds []string `json:"allocationIds"`
+	AllocationIds NotificationAllocationIds `json:"allocationIds"`
 }
 
 // Dimension Definition of a report dimension.
@@ -12048,20 +12143,14 @@ type IdOfAssets200Response struct {
 // InsightsNotificationSettings Optional insight filters. An empty or omitted list means every value of that filter. An insight must match every criterion across `pillars`, `severities`, and `providers`. A read of an omitted or empty list returns that field absent. An explicit list is returned in the order sent. A repeated value is rejected with `422`.
 type InsightsNotificationSettings struct {
 	// Pillars Insight pillars. Empty or omitted means all pillars.
-	Pillars *[]InsightsNotificationSettingsPillars `json:"pillars,omitempty"`
+	Pillars *NotificationInsightPillars `json:"pillars,omitempty"`
 
 	// Providers Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
-	Providers *[]string `json:"providers,omitempty"`
+	Providers *NotificationInsightProviders `json:"providers,omitempty"`
 
 	// Severities Insight severities. Empty or omitted means all severities.
-	Severities *[]InsightsNotificationSettingsSeverities `json:"severities,omitempty"`
+	Severities *NotificationInsightSeverities `json:"severities,omitempty"`
 }
-
-// InsightsNotificationSettingsPillars defines model for InsightsNotificationSettings.Pillars.
-type InsightsNotificationSettingsPillars string
-
-// InsightsNotificationSettingsSeverities defines model for InsightsNotificationSettings.Severities.
-type InsightsNotificationSettingsSeverities string
 
 // InviteResponse Response returned after creating a user invitation.
 type InviteResponse struct {
@@ -12535,6 +12624,12 @@ type Money struct {
 	Currency string `json:"currency"`
 }
 
+// NotificationAllocationIds Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
+type NotificationAllocationIds = []string
+
+// NotificationBillingProfileIds Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+type NotificationBillingProfileIds = []string
+
 // NotificationEmptySettings A present empty object means this type is subscribed, for example `"creditUtilization": {}`. The object has no fields. On a patch property, `null` unsubscribes that type and is a different value.
 //
 // Example: {}
@@ -12556,6 +12651,15 @@ type NotificationEventChannel string
 // NotificationEventArray Chronologically ordered notification dispatch events.
 type NotificationEventArray = []NotificationEvent
 
+// NotificationInsightPillars Insight pillars. Empty or omitted means all pillars.
+type NotificationInsightPillars = []string
+
+// NotificationInsightProviders Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
+type NotificationInsightProviders = []string
+
+// NotificationInsightSeverities Insight severities. Empty or omitted means all severities.
+type NotificationInsightSeverities = []string
+
 // Organization Organization metadata returned by the API.
 type Organization struct {
 	// Id The unique ID of the organization
@@ -12563,6 +12667,12 @@ type Organization struct {
 
 	// Name The name of the organization
 	Name *string `json:"name,omitempty"`
+}
+
+// PatchBillingProfileNotificationSettings Merge-patch for a billing-profile type. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `billingProfileIds` unchanged. Send `billingProfileIds` to replace the stored list, or send an empty array to clear the restriction so the type covers every billing profile in the tenant. Ids follow the same rules as `BillingProfileNotificationSettings`. `null` unsubscribes the type.
+type PatchBillingProfileNotificationSettings struct {
+	// BillingProfileIds Billing-profile ids in this tenant, shaped like `ent_01HEXAMPLEBILLING0001`. This API does not list billing profiles, and `GET /billing/v1/invoices` does not return these ids. Empty or omitted means every billing profile in the tenant. A read of an omitted or empty list returns the field absent. An explicit list is returned in the order sent. A duplicate id is rejected with `422`.
+	BillingProfileIds *NotificationBillingProfileIds `json:"billingProfileIds,omitempty"`
 }
 
 // PatchCostAnomalyAllocations Merge-patch for `allocations`. Omit a field to leave it; when `ids` is present the array replaces the current list. A patch that sets `mode: all` together with a non-empty `ids`, or `include` / `exclude` together with an empty `ids`, is rejected with `422`. The merged allocations follow the same rule: `all` carries an empty `ids`, and `include` or `exclude` carries at least one id.
@@ -12622,11 +12732,110 @@ type PatchCostAnomalyWhenCostGrows struct {
 // PatchCostAnomalyWhenCostGrowsMatch How to combine percent and dollar growth when both are set. Send `null` to clear.
 type PatchCostAnomalyWhenCostGrowsMatch string
 
-// PatchCustomerNotificationSettings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies` is accepted.
+// PatchCustomerNotificationSettings Merge-patch for `settings`. Omit a property to leave that type unchanged. A property you send is merged into the stored settings for that type, not substituted for them: a nested field you omit keeps its stored value, a nested array you send replaces the stored one, and an explicit empty array clears an optional filter. Send `null` to unsubscribe that type. After the merge at least one type must remain. `conditions` is rejected with `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 type PatchCustomerNotificationSettings struct {
+	// AwsBillingDataImport Merge-patch for a billing-profile type. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `billingProfileIds` unchanged. Send `billingProfileIds` to replace the stored list, or send an empty array to clear the restriction so the type covers every billing profile in the tenant. Ids follow the same rules as `BillingProfileNotificationSettings`. `null` unsubscribes the type.
+	AwsBillingDataImport nullable.Nullable[PatchBillingProfileNotificationSettings] `json:"awsBillingDataImport,omitempty"`
+
+	// CloudIncidents Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	CloudIncidents nullable.Nullable[PatchNotificationEmptySettings] `json:"cloudIncidents,omitempty"`
+
 	// CostAnomalies Merge-patch for `costAnomalies`. Omitted fields stay unchanged. `repeat` may be `null` to clear all resend controls. `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared — omit them or send a new value.
-	CostAnomalies *PatchCostAnomalySettings `json:"costAnomalies,omitempty"`
+	CostAnomalies nullable.Nullable[PatchCostAnomalySettings] `json:"costAnomalies,omitempty"`
+
+	// CreditUtilization Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	CreditUtilization nullable.Nullable[PatchNotificationEmptySettings] `json:"creditUtilization,omitempty"`
+
+	// CudApproval Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	CudApproval nullable.Nullable[PatchNotificationEmptySettings] `json:"cudApproval,omitempty"`
+
+	// CudPurchased Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	CudPurchased nullable.Nullable[PatchNotificationEmptySettings] `json:"cudPurchased,omitempty"`
+
+	// DailyDigest Merge-patch for a daily or weekly digest. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `allocationIds` unchanged. Send `allocationIds` to replace the stored list. The merged list must hold at least one id, so an empty array, and `{}` on a type that is not already subscribed, are rejected with `422`. Ids follow the same rules as `DigestNotificationSettings`. `null` unsubscribes the type.
+	DailyDigest nullable.Nullable[PatchDigestNotificationSettings] `json:"dailyDigest,omitempty"`
+
+	// DataIntegrationSyncFailure Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	DataIntegrationSyncFailure nullable.Nullable[PatchNotificationEmptySettings] `json:"dataIntegrationSyncFailure,omitempty"`
+
+	// ExpertInsights Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	ExpertInsights nullable.Nullable[PatchNotificationEmptySettings] `json:"expertInsights,omitempty"`
+
+	// Insights Merge-patch for `insights`. The object is merged into the stored filters, not substituted for them. A filter you omit keeps its stored value; a filter you send replaces the stored list for that filter alone; an explicit empty array clears that filter, so it matches every value again. `{}` subscribes the type and, on a type that is already subscribed, leaves every filter unchanged. On a config stored with `pillars: ["cost"]`, sending `{"severities": ["high"]}` keeps the `cost` pillar, and sending `{"pillars": []}` drops it. Values follow the same rules as `InsightsNotificationSettings`. `null` unsubscribes the type.
+	Insights nullable.Nullable[PatchInsightsNotificationSettings] `json:"insights,omitempty"`
+
+	// MonthlyDigest Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	MonthlyDigest nullable.Nullable[PatchNotificationEmptySettings] `json:"monthlyDigest,omitempty"`
+
+	// NewInvoices Merge-patch for a billing-profile type. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `billingProfileIds` unchanged. Send `billingProfileIds` to replace the stored list, or send an empty array to clear the restriction so the type covers every billing profile in the tenant. Ids follow the same rules as `BillingProfileNotificationSettings`. `null` unsubscribes the type.
+	NewInvoices nullable.Nullable[PatchBillingProfileNotificationSettings] `json:"newInvoices,omitempty"`
+
+	// NewProformaInvoices Merge-patch for a billing-profile type. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `billingProfileIds` unchanged. Send `billingProfileIds` to replace the stored list, or send an empty array to clear the restriction so the type covers every billing profile in the tenant. Ids follow the same rules as `BillingProfileNotificationSettings`. `null` unsubscribes the type.
+	NewProformaInvoices nullable.Nullable[PatchBillingProfileNotificationSettings] `json:"newProformaInvoices,omitempty"`
+
+	// NewSkuUsage Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	NewSkuUsage nullable.Nullable[PatchNotificationEmptySettings] `json:"newSkuUsage,omitempty"`
+
+	// PaymentReminders Merge-patch for a billing-profile type. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `billingProfileIds` unchanged. Send `billingProfileIds` to replace the stored list, or send an empty array to clear the restriction so the type covers every billing profile in the tenant. Ids follow the same rules as `BillingProfileNotificationSettings`. `null` unsubscribes the type.
+	PaymentReminders nullable.Nullable[PatchBillingProfileNotificationSettings] `json:"paymentReminders,omitempty"`
+
+	// QuotaUtilization Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	QuotaUtilization nullable.Nullable[PatchNotificationEmptySettings] `json:"quotaUtilization,omitempty"`
+
+	// SavingsPlanApproval Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	SavingsPlanApproval nullable.Nullable[PatchNotificationEmptySettings] `json:"savingsPlanApproval,omitempty"`
+
+	// SavingsPlanPurchased Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+	//
+	// Example: {}
+	SavingsPlanPurchased nullable.Nullable[PatchNotificationEmptySettings] `json:"savingsPlanPurchased,omitempty"`
+
+	// WeeklyDigest Merge-patch for a daily or weekly digest. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `allocationIds` unchanged. Send `allocationIds` to replace the stored list. The merged list must hold at least one id, so an empty array, and `{}` on a type that is not already subscribed, are rejected with `422`. Ids follow the same rules as `DigestNotificationSettings`. `null` unsubscribes the type.
+	WeeklyDigest nullable.Nullable[PatchDigestNotificationSettings] `json:"weeklyDigest,omitempty"`
 }
+
+// PatchDigestNotificationSettings Merge-patch for a daily or weekly digest. The object is merged into the stored settings for that type, not substituted for them. `{}` subscribes the type and, on a type that is already subscribed, leaves the stored `allocationIds` unchanged. Send `allocationIds` to replace the stored list. The merged list must hold at least one id, so an empty array, and `{}` on a type that is not already subscribed, are rejected with `422`. Ids follow the same rules as `DigestNotificationSettings`. `null` unsubscribes the type.
+type PatchDigestNotificationSettings struct {
+	// AllocationIds Allocation rule ids from `GET /analytics/v1/allocations`. At least one id is required. A read returns the ids in the order sent. A duplicate, or an id outside the tenant, is rejected with `422`.
+	AllocationIds *NotificationAllocationIds `json:"allocationIds,omitempty"`
+}
+
+// PatchInsightsNotificationSettings Merge-patch for `insights`. The object is merged into the stored filters, not substituted for them. A filter you omit keeps its stored value; a filter you send replaces the stored list for that filter alone; an explicit empty array clears that filter, so it matches every value again. `{}` subscribes the type and, on a type that is already subscribed, leaves every filter unchanged. On a config stored with `pillars: ["cost"]`, sending `{"severities": ["high"]}` keeps the `cost` pillar, and sending `{"pillars": []}` drops it. Values follow the same rules as `InsightsNotificationSettings`. `null` unsubscribes the type.
+type PatchInsightsNotificationSettings struct {
+	// Pillars Insight pillars. Empty or omitted means all pillars.
+	Pillars *NotificationInsightPillars `json:"pillars,omitempty"`
+
+	// Providers Insights provider ids such as `aws`, `gcp`, `azure`, `azure-ad`, `general`, `google-cloud-source`, `google-workspace`, `k8s`, `oci`, and `vmware`. These are the ids Insights resources use, not invoice platform ids such as `amazon-web-services`. Empty or omitted means all providers. Available ids depend on the tenant's connected accounts. Each value is a non-empty string.
+	Providers *NotificationInsightProviders `json:"providers,omitempty"`
+
+	// Severities Insight severities. Empty or omitted means all severities.
+	Severities *NotificationInsightSeverities `json:"severities,omitempty"`
+}
+
+// PatchNotificationEmptySettings Merge-patch for a type without fields. `{}` subscribes the type, and is a no-op when the type is already subscribed. `null` unsubscribes it.
+//
+// Example: {}
+type PatchNotificationEmptySettings = map[string]interface{}
 
 // PatchUserNotificationSettings Merge-patch for `settings`. Omit a property to leave that type unchanged. Send `null` to unsubscribe that type. After the merge at least one type must remain.
 type PatchUserNotificationSettings struct {
@@ -13476,7 +13685,7 @@ type UpdateCustomThemeRequest struct {
 	PrimaryColor *HexColor `json:"primaryColor,omitempty"`
 }
 
-// UpdateCustomerNotificationRequest JSON Merge Patch (RFC 7396) for an organization notification. Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object. Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
+// UpdateCustomerNotificationRequest JSON Merge Patch (RFC 7396) for an organization notification. Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. Send `null` to clear optional members such as `repeat`, `whenCostGrows`, `withinHours`, `percentIncrease`, and `minIncrease`.
 //
 // Example: {"settings":{"costAnomalies":{"minSeverity":"critical"}}}
 type UpdateCustomerNotificationRequest struct {
@@ -13488,7 +13697,7 @@ type UpdateCustomerNotificationRequest struct {
 	// Example: Anomaly alerts (updated)
 	Name *string `json:"name,omitempty"`
 
-	// Settings Merge-patch for `settings`. Omit `costAnomalies` to leave settings unchanged. Only `costAnomalies` is accepted.
+	// Settings Merge-patch for `settings`. Omit a property to leave that type unchanged. A property you send is merged into the stored settings for that type, not substituted for them: a nested field you omit keeps its stored value, a nested array you send replaces the stored one, and an explicit empty array clears an optional filter. Send `null` to unsubscribe that type. After the merge at least one type must remain. `conditions` is rejected with `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 	Settings *PatchCustomerNotificationSettings `json:"settings,omitempty"`
 }
 
@@ -17618,17 +17827,17 @@ type ClientInterface interface {
 	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 	UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListCustomerNotifications List organization cost anomaly notifications
+	// ListCustomerNotifications List organization notifications
 	//
-	// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+	// Returns every organization notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Only configs whose settings use the public types on `CustomerNotificationSettings` are returned. Dashboard, report, and commitment subscriptions are separate documents and are omitted. A prompt schedule is personal and is omitted. Creating one of those in the Console does not change a config created with this API.
 	// Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
 	//
 	// Corresponds with GET /customers/v1/notifications (the `ListCustomerNotifications` operationId).
 	ListCustomerNotifications(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateCustomerNotificationWithBody Create an organization cost anomaly notification
+	// CreateCustomerNotificationWithBody Create an organization notification
 	//
-	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 	// Requires the `settings` (Manage settings) permission.
 	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -17638,9 +17847,9 @@ type ClientInterface interface {
 	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
 	CreateCustomerNotificationWithBody(ctx context.Context, params *CreateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateCustomerNotification Create an organization cost anomaly notification
+	// CreateCustomerNotification Create an organization notification
 	//
-	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 	// Requires the `settings` (Manage settings) permission.
 	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -17650,24 +17859,24 @@ type ClientInterface interface {
 	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
 	CreateCustomerNotification(ctx context.Context, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteCustomerNotification Delete an organization cost anomaly notification
+	// DeleteCustomerNotification Delete an organization notification
 	//
-	// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+	// Permanently deletes a public organization notification config. A visible config holds only public types, so the whole document is removed. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that no longer exists, returns `404`.
 	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 	//
 	// Corresponds with DELETE /customers/v1/notifications/{id} (the `DeleteCustomerNotification` operationId).
 	DeleteCustomerNotification(ctx context.Context, id string, params *DeleteCustomerNotificationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCustomerNotification Get an organization cost anomaly notification
+	// GetCustomerNotification Get an organization notification
 	//
-	// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+	// Returns one public organization notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that is not a config for this tenant, returns `404`, without saying whether it exists elsewhere. PATCH and DELETE of that id also return `404` and leave the stored document unchanged.
 	//
 	// Corresponds with GET /customers/v1/notifications/{id} (the `GetCustomerNotification` operationId).
 	GetCustomerNotification(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateCustomerNotificationWithBody Update an organization cost anomaly notification
+	// UpdateCustomerNotificationWithBody Update an organization notification
 	//
-	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
@@ -17676,9 +17885,9 @@ type ClientInterface interface {
 	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 	UpdateCustomerNotificationWithBody(ctx context.Context, id string, params *UpdateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody Update an organization cost anomaly notification
+	// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody Update an organization notification
 	//
-	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
@@ -20839,9 +21048,9 @@ func (c *Client) UpdateCustomerWithApplicationMergePatchPlusJSONBody(ctx context
 	return c.Client.Do(req)
 }
 
-// ListCustomerNotifications List organization cost anomaly notifications
+// ListCustomerNotifications List organization notifications
 //
-// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+// Returns every organization notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Only configs whose settings use the public types on `CustomerNotificationSettings` are returned. Dashboard, report, and commitment subscriptions are separate documents and are omitted. A prompt schedule is personal and is omitted. Creating one of those in the Console does not change a config created with this API.
 // Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
 //
 // Corresponds with GET /customers/v1/notifications (the `ListCustomerNotifications` operationId).
@@ -20857,9 +21066,9 @@ func (c *Client) ListCustomerNotifications(ctx context.Context, reqEditors ...Re
 	return c.Client.Do(req)
 }
 
-// CreateCustomerNotificationWithBody Create an organization cost anomaly notification
+// CreateCustomerNotificationWithBody Create an organization notification
 //
-// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 // Requires the `settings` (Manage settings) permission.
 // The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 // Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -20879,9 +21088,9 @@ func (c *Client) CreateCustomerNotificationWithBody(ctx context.Context, params 
 	return c.Client.Do(req)
 }
 
-// CreateCustomerNotification Create an organization cost anomaly notification
+// CreateCustomerNotification Create an organization notification
 //
-// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 // Requires the `settings` (Manage settings) permission.
 // The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 // Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -20901,9 +21110,9 @@ func (c *Client) CreateCustomerNotification(ctx context.Context, params *CreateC
 	return c.Client.Do(req)
 }
 
-// DeleteCustomerNotification Delete an organization cost anomaly notification
+// DeleteCustomerNotification Delete an organization notification
 //
-// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+// Permanently deletes a public organization notification config. A visible config holds only public types, so the whole document is removed. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that no longer exists, returns `404`.
 // Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 //
 // Corresponds with DELETE /customers/v1/notifications/{id} (the `DeleteCustomerNotification` operationId).
@@ -20919,9 +21128,9 @@ func (c *Client) DeleteCustomerNotification(ctx context.Context, id string, para
 	return c.Client.Do(req)
 }
 
-// GetCustomerNotification Get an organization cost anomaly notification
+// GetCustomerNotification Get an organization notification
 //
-// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+// Returns one public organization notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that is not a config for this tenant, returns `404`, without saying whether it exists elsewhere. PATCH and DELETE of that id also return `404` and leave the stored document unchanged.
 //
 // Corresponds with GET /customers/v1/notifications/{id} (the `GetCustomerNotification` operationId).
 func (c *Client) GetCustomerNotification(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -20936,9 +21145,9 @@ func (c *Client) GetCustomerNotification(ctx context.Context, id string, reqEdit
 	return c.Client.Do(req)
 }
 
-// UpdateCustomerNotificationWithBody Update an organization cost anomaly notification
+// UpdateCustomerNotificationWithBody Update an organization notification
 //
-// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 // Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 // Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //
@@ -20957,9 +21166,9 @@ func (c *Client) UpdateCustomerNotificationWithBody(ctx context.Context, id stri
 	return c.Client.Do(req)
 }
 
-// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody Update an organization cost anomaly notification
+// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBody Update an organization notification
 //
-// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 // Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 // Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //
@@ -32984,9 +33193,9 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PATCH /customers/v1/customers/{customerId} (the `UpdateCustomer` operationId).
 	UpdateCustomerWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, customerId CustomerId, body UpdateCustomerApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateCustomerResp, error)
 
-	// ListCustomerNotificationsWithResponse List organization cost anomaly notifications
+	// ListCustomerNotificationsWithResponse List organization notifications
 	//
-	// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+	// Returns every organization notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Only configs whose settings use the public types on `CustomerNotificationSettings` are returned. Dashboard, report, and commitment subscriptions are separate documents and are omitted. A prompt schedule is personal and is omitted. Creating one of those in the Console does not change a config created with this API.
 	// Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -32994,9 +33203,9 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /customers/v1/notifications (the `ListCustomerNotifications` operationId).
 	ListCustomerNotificationsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCustomerNotificationsResp, error)
 
-	// CreateCustomerNotificationWithBodyWithResponse Create an organization cost anomaly notification
+	// CreateCustomerNotificationWithBodyWithResponse Create an organization notification
 	//
-	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 	// Requires the `settings` (Manage settings) permission.
 	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -33006,9 +33215,9 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
 	CreateCustomerNotificationWithBodyWithResponse(ctx context.Context, params *CreateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateCustomerNotificationResp, error)
 
-	// CreateCustomerNotificationWithResponse Create an organization cost anomaly notification
+	// CreateCustomerNotificationWithResponse Create an organization notification
 	//
-	// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+	// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 	// Requires the `settings` (Manage settings) permission.
 	// The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 	// Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -33018,9 +33227,9 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /customers/v1/notifications (the `CreateCustomerNotification` operationId).
 	CreateCustomerNotificationWithResponse(ctx context.Context, params *CreateCustomerNotificationParams, body CreateCustomerNotificationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateCustomerNotificationResp, error)
 
-	// DeleteCustomerNotificationWithResponse Delete an organization cost anomaly notification
+	// DeleteCustomerNotificationWithResponse Delete an organization notification
 	//
-	// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+	// Permanently deletes a public organization notification config. A visible config holds only public types, so the whole document is removed. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that no longer exists, returns `404`.
 	// Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -33028,18 +33237,18 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with DELETE /customers/v1/notifications/{id} (the `DeleteCustomerNotification` operationId).
 	DeleteCustomerNotificationWithResponse(ctx context.Context, id string, params *DeleteCustomerNotificationParams, reqEditors ...RequestEditorFn) (*DeleteCustomerNotificationResp, error)
 
-	// GetCustomerNotificationWithResponse Get an organization cost anomaly notification
+	// GetCustomerNotificationWithResponse Get an organization notification
 	//
-	// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+	// Returns one public organization notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that is not a config for this tenant, returns `404`, without saying whether it exists elsewhere. PATCH and DELETE of that id also return `404` and leave the stored document unchanged.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with GET /customers/v1/notifications/{id} (the `GetCustomerNotification` operationId).
 	GetCustomerNotificationWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetCustomerNotificationResp, error)
 
-	// UpdateCustomerNotificationWithBodyWithResponse Update an organization cost anomaly notification
+	// UpdateCustomerNotificationWithBodyWithResponse Update an organization notification
 	//
-	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
@@ -33048,9 +33257,9 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PATCH /customers/v1/notifications/{id} (the `UpdateCustomerNotification` operationId).
 	UpdateCustomerNotificationWithBodyWithResponse(ctx context.Context, id string, params *UpdateCustomerNotificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateCustomerNotificationResp, error)
 
-	// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update an organization cost anomaly notification
+	// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update an organization notification
 	//
-	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+	// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 	// Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 	// Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 	//
@@ -49822,9 +50031,9 @@ func (c *ClientWithResponses) UpdateCustomerWithApplicationMergePatchPlusJSONBod
 	return ParseUpdateCustomerResp(rsp)
 }
 
-// ListCustomerNotificationsWithResponse List organization cost anomaly notifications
+// ListCustomerNotificationsWithResponse List organization notifications
 //
-// Returns every organization-wide cost-anomaly notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Configs that are not cost-anomaly configs are omitted.
+// Returns every organization notification config for the tenant as an unpaginated `{ "items": [...] }` array. Items are ordered by `createTime` ascending, then by `id` ascending. Only configs whose settings use the public types on `CustomerNotificationSettings` are returned. Dashboard, report, and commitment subscriptions are separate documents and are omitted. A prompt schedule is personal and is omitted. Creating one of those in the Console does not change a config created with this API.
 // Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -49838,9 +50047,9 @@ func (c *ClientWithResponses) ListCustomerNotificationsWithResponse(ctx context.
 	return ParseListCustomerNotificationsResp(rsp)
 }
 
-// CreateCustomerNotificationWithBodyWithResponse Create an organization cost anomaly notification
+// CreateCustomerNotificationWithBodyWithResponse Create an organization notification
 //
-// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 // Requires the `settings` (Manage settings) permission.
 // The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 // Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -49856,9 +50065,9 @@ func (c *ClientWithResponses) CreateCustomerNotificationWithBodyWithResponse(ctx
 	return ParseCreateCustomerNotificationResp(rsp)
 }
 
-// CreateCustomerNotificationWithResponse Create an organization cost anomaly notification
+// CreateCustomerNotificationWithResponse Create an organization notification
 //
-// Creates an organization-wide cost-anomaly notification config. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays.
+// Creates an organization-wide notification config. `settings` names one or more public types. Destinations are `emails`, `slackChannels`, and `teamsChannels` arrays. The response returns those three arrays. A channel that a subscribed type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement.
 // Requires the `settings` (Manage settings) permission.
 // The `Idempotency-Key` header is required. The same key and the same body replay the stored success. A different body is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real create and returns `200` with `X-Dry-Run: true` and null identity fields (`id`, `createTime`, `updateTime`, `etag`) without creating anything.
 // Reads are immediately consistent. After a `201`, a GET of that notification returns the created config.
@@ -49874,9 +50083,9 @@ func (c *ClientWithResponses) CreateCustomerNotificationWithResponse(ctx context
 	return ParseCreateCustomerNotificationResp(rsp)
 }
 
-// DeleteCustomerNotificationWithResponse Delete an organization cost anomaly notification
+// DeleteCustomerNotificationWithResponse Delete an organization notification
 //
-// Permanently deletes an organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id that is not a cost-anomaly config, or that no longer exists, returns `404`.
+// Permanently deletes a public organization notification config. A visible config holds only public types, so the whole document is removed. Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real delete without deleting anything. Deleting an id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that no longer exists, returns `404`.
 // Reads are immediately consistent. After a completed delete (`204` without `X-Dry-Run: true`), a GET of that notification returns `404`.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -49890,9 +50099,9 @@ func (c *ClientWithResponses) DeleteCustomerNotificationWithResponse(ctx context
 	return ParseDeleteCustomerNotificationResp(rsp)
 }
 
-// GetCustomerNotificationWithResponse Get an organization cost anomaly notification
+// GetCustomerNotificationWithResponse Get an organization notification
 //
-// Returns one organization-wide cost-anomaly notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id that is not a cost-anomaly config for this tenant returns `404`, without saying whether it exists elsewhere.
+// Returns one public organization notification config. Requires the `settings` (Manage settings) permission. The API does not offer the Console's read-only Organization list; a caller without this permission receives `403`. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule, or that is not a config for this tenant, returns `404`, without saying whether it exists elsewhere. PATCH and DELETE of that id also return `404` and leave the stored document unchanged.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -49905,9 +50114,9 @@ func (c *ClientWithResponses) GetCustomerNotificationWithResponse(ctx context.Co
 	return ParseGetCustomerNotificationResp(rsp)
 }
 
-// UpdateCustomerNotificationWithBodyWithResponse Update an organization cost anomaly notification
+// UpdateCustomerNotificationWithBodyWithResponse Update an organization notification
 //
-// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 // Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 // Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //
@@ -49922,9 +50131,9 @@ func (c *ClientWithResponses) UpdateCustomerNotificationWithBodyWithResponse(ctx
 	return ParseUpdateCustomerNotificationResp(rsp)
 }
 
-// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update an organization cost anomaly notification
+// UpdateCustomerNotificationWithApplicationMergePatchPlusJSONBodyWithResponse Update an organization notification
 //
-// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared.
+// Partially updates an organization notification with an `application/merge-patch+json` body (RFC 7396). Omitted fields stay unchanged; nested objects are deep-merged; nested arrays (for example `allocations.ids`) are replaced when present. When `destinations` is present it replaces the whole destinations object; the nested `emails`, `slackChannels`, and `teamsChannels` arrays are the full lists. Send `null` for a settings property to unsubscribe that type. Nulling the last type is `422`. A channel that a remaining type does not support is `422` `customers.channel_not_supported`. A Teams destination on a type that supports Teams is `422` `validation_failed` when the tenant has no Teams entitlement. Optional resend fields are cleared with `null` (for example `"settings":{"costAnomalies":{"repeat":null}}`). `minSeverity`, `minExcessCost`, and `allocations` cannot be cleared. An id whose config stores a dashboard, report, or commitment subscription or a prompt schedule returns `404`. A settings property that is not on `PatchCustomerNotificationSettings` is `422`.
 // Requires the `settings` (Manage settings) permission and the `If-Match` header. The `Idempotency-Key` header is required. The same key, the same body, and the same `If-Match` replay the stored success. A different body or a different `If-Match` is `422` `idempotency_key_reused`. A `5xx` response may leave the key reserved, so a retry returns `409` until the original request is released or about 30 minutes pass. `dryRun=true` does not reserve the key. With `dryRun=true` the request goes through the same checks as a real update and returns the notification as it would look after the patch, without changing anything.
 // Reads are immediately consistent. After a completed update, a GET of that notification returns the new state.
 //

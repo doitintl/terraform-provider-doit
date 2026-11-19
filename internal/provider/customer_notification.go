@@ -65,7 +65,7 @@ func mapCustomerNotificationToModel(ctx context.Context, resp *models.CustomerNo
 	diags.Append(d...)
 	state.Destinations = destinations
 
-	settings, d := buildCustomerNotificationSettings(ctx, &resp.Settings.CostAnomalies, state.Settings.CostAnomalies)
+	settings, d := buildCustomerNotificationSettings(ctx, &resp.Settings, state.Settings.CostAnomalies)
 	diags.Append(d...)
 	state.Settings = settings
 
@@ -125,10 +125,39 @@ func nonNilStrings(v []string) []string {
 	return v
 }
 
-// buildCustomerNotificationSettings maps the cost-anomaly settings. prior is the
-// value currently in state; it only decides how amounts are spelled.
-func buildCustomerNotificationSettings(ctx context.Context, ca *models.CostAnomalySettings, prior resource_customer_notification.CostAnomaliesValue) (resource_customer_notification.SettingsValue, diag.Diagnostics) {
+// buildCustomerNotificationSettings maps the subscribed types. prior is the
+// cost-anomaly value currently in state; it only decides how amounts are spelled.
+func buildCustomerNotificationSettings(ctx context.Context, s *models.CustomerNotificationSettings, prior resource_customer_notification.CostAnomaliesValue) (resource_customer_notification.SettingsValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
+
+	attrTypes := resource_customer_notification.SettingsValue{}.AttributeTypes(ctx)
+	objects, d := notificationSettingsObjects(ctx, customerNotificationSettingsSource(s))
+	diags.Append(d...)
+	values, d := notificationSettingsValues(ctx, attrTypes, objects)
+	diags.Append(d...)
+
+	costAnomalies, d := buildCustomerNotificationCostAnomalies(ctx, s.CostAnomalies, prior)
+	diags.Append(d...)
+	values["cost_anomalies"] = costAnomalies
+
+	if diags.HasError() {
+		return resource_customer_notification.NewSettingsValueNull(), diags
+	}
+
+	settings, d := resource_customer_notification.NewSettingsValue(attrTypes, values)
+	diags.Append(d...)
+
+	return settings, diags
+}
+
+// buildCustomerNotificationCostAnomalies maps the cost-anomaly settings; nil
+// (not subscribed) maps to null.
+func buildCustomerNotificationCostAnomalies(ctx context.Context, ca *models.CostAnomalySettings, prior resource_customer_notification.CostAnomaliesValue) (resource_customer_notification.CostAnomaliesValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if ca == nil {
+		return resource_customer_notification.NewCostAnomaliesValueNull(), diags
+	}
 
 	ids := []string{}
 	if ca.Allocations.Ids != nil {
@@ -168,15 +197,7 @@ func buildCustomerNotificationSettings(ctx context.Context, ca *models.CostAnoma
 	)
 	diags.Append(d...)
 
-	settings, d := resource_customer_notification.NewSettingsValue(
-		resource_customer_notification.SettingsValue{}.AttributeTypes(ctx),
-		map[string]attr.Value{
-			"cost_anomalies": costAnomalies,
-		},
-	)
-	diags.Append(d...)
-
-	return settings, diags
+	return costAnomalies, diags
 }
 
 func buildCustomerNotificationRepeat(ctx context.Context, repeat *models.CostAnomalyRepeat, prior resource_customer_notification.RepeatValue) (resource_customer_notification.RepeatValue, diag.Diagnostics) {
@@ -266,11 +287,114 @@ func overlayCustomerNotificationComputedFields(ctx context.Context, apiResp *mod
 	return diags
 }
 
+// overlayCustomerNotificationSettings resolves the settings the plan leaves
+// unknown. A type is unknown only while its configuration is; the filter lists
+// of a type that is new in this plan are unknown when omitted.
 func overlayCustomerNotificationSettings(ctx context.Context, resolved, plan *resource_customer_notification.SettingsValue) {
+	if plan.CreditUtilization.IsUnknown() {
+		plan.CreditUtilization = resolved.CreditUtilization
+	}
+	if plan.QuotaUtilization.IsUnknown() {
+		plan.QuotaUtilization = resolved.QuotaUtilization
+	}
+	if plan.CloudIncidents.IsUnknown() {
+		plan.CloudIncidents = resolved.CloudIncidents
+	}
+	if plan.NewSkuUsage.IsUnknown() {
+		plan.NewSkuUsage = resolved.NewSkuUsage
+	}
+	if plan.MonthlyDigest.IsUnknown() {
+		plan.MonthlyDigest = resolved.MonthlyDigest
+	}
+	if plan.ExpertInsights.IsUnknown() {
+		plan.ExpertInsights = resolved.ExpertInsights
+	}
+	if plan.SavingsPlanApproval.IsUnknown() {
+		plan.SavingsPlanApproval = resolved.SavingsPlanApproval
+	}
+	if plan.SavingsPlanPurchased.IsUnknown() {
+		plan.SavingsPlanPurchased = resolved.SavingsPlanPurchased
+	}
+	if plan.CudApproval.IsUnknown() {
+		plan.CudApproval = resolved.CudApproval
+	}
+	if plan.CudPurchased.IsUnknown() {
+		plan.CudPurchased = resolved.CudPurchased
+	}
+	if plan.DataIntegrationSyncFailure.IsUnknown() {
+		plan.DataIntegrationSyncFailure = resolved.DataIntegrationSyncFailure
+	}
+	if plan.DailyDigest.IsUnknown() {
+		plan.DailyDigest = resolved.DailyDigest
+	}
+	if plan.WeeklyDigest.IsUnknown() {
+		plan.WeeklyDigest = resolved.WeeklyDigest
+	}
+	if plan.NewInvoices.IsUnknown() {
+		plan.NewInvoices = resolved.NewInvoices
+	} else if !plan.NewInvoices.IsNull() {
+		overlayCustomerNotificationNewInvoices(ctx, &resolved.NewInvoices, &plan.NewInvoices)
+	}
+	if plan.NewProformaInvoices.IsUnknown() {
+		plan.NewProformaInvoices = resolved.NewProformaInvoices
+	} else if !plan.NewProformaInvoices.IsNull() {
+		overlayCustomerNotificationNewProformaInvoices(ctx, &resolved.NewProformaInvoices, &plan.NewProformaInvoices)
+	}
+	if plan.PaymentReminders.IsUnknown() {
+		plan.PaymentReminders = resolved.PaymentReminders
+	} else if !plan.PaymentReminders.IsNull() {
+		overlayCustomerNotificationPaymentReminders(ctx, &resolved.PaymentReminders, &plan.PaymentReminders)
+	}
+	if plan.AwsBillingDataImport.IsUnknown() {
+		plan.AwsBillingDataImport = resolved.AwsBillingDataImport
+	} else if !plan.AwsBillingDataImport.IsNull() {
+		overlayCustomerNotificationAwsBillingDataImport(ctx, &resolved.AwsBillingDataImport, &plan.AwsBillingDataImport)
+	}
+	if plan.Insights.IsUnknown() {
+		plan.Insights = resolved.Insights
+	} else if !plan.Insights.IsNull() {
+		overlayCustomerNotificationInsights(ctx, &resolved.Insights, &plan.Insights)
+	}
 	if plan.CostAnomalies.IsUnknown() {
 		plan.CostAnomalies = resolved.CostAnomalies
 	} else if !plan.CostAnomalies.IsNull() {
 		overlayCustomerNotificationCostAnomalies(ctx, &resolved.CostAnomalies, &plan.CostAnomalies)
+	}
+}
+
+func overlayCustomerNotificationNewInvoices(_ context.Context, resolved, plan *resource_customer_notification.NewInvoicesValue) {
+	if plan.BillingProfileIds.IsUnknown() {
+		plan.BillingProfileIds = resolved.BillingProfileIds
+	}
+}
+
+func overlayCustomerNotificationNewProformaInvoices(_ context.Context, resolved, plan *resource_customer_notification.NewProformaInvoicesValue) {
+	if plan.BillingProfileIds.IsUnknown() {
+		plan.BillingProfileIds = resolved.BillingProfileIds
+	}
+}
+
+func overlayCustomerNotificationPaymentReminders(_ context.Context, resolved, plan *resource_customer_notification.PaymentRemindersValue) {
+	if plan.BillingProfileIds.IsUnknown() {
+		plan.BillingProfileIds = resolved.BillingProfileIds
+	}
+}
+
+func overlayCustomerNotificationAwsBillingDataImport(_ context.Context, resolved, plan *resource_customer_notification.AwsBillingDataImportValue) {
+	if plan.BillingProfileIds.IsUnknown() {
+		plan.BillingProfileIds = resolved.BillingProfileIds
+	}
+}
+
+func overlayCustomerNotificationInsights(_ context.Context, resolved, plan *resource_customer_notification.InsightsValue) {
+	if plan.Pillars.IsUnknown() {
+		plan.Pillars = resolved.Pillars
+	}
+	if plan.Severities.IsUnknown() {
+		plan.Severities = resolved.Severities
+	}
+	if plan.Providers.IsUnknown() {
+		plan.Providers = resolved.Providers
 	}
 }
 
@@ -312,29 +436,33 @@ func overlayCustomerNotificationWhenCostGrows(_ context.Context, resolved, plan 
 func (plan *customerNotificationResourceModel) toCreateRequest(ctx context.Context) (models.CreateCustomerNotificationJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	ca := plan.Settings.CostAnomalies
-
-	ids, d := customerNotificationAllocationIDs(ctx, ca.Allocations)
-	diags.Append(d...)
-
 	destinations, d := plan.customerNotificationDestinations(ctx)
 	diags.Append(d...)
 
 	req := models.CreateCustomerNotificationJSONRequestBody{
 		Name:         plan.Name.ValueString(),
 		Destinations: destinations,
-		Settings: models.CustomerNotificationSettings{
-			CostAnomalies: models.CostAnomalySettings{
-				MinSeverity: models.CostAnomalySettingsMinSeverity(ca.MinSeverity.ValueString()),
-				MinExcessCost: models.Money{
-					Amount:   ca.MinExcessCost.Amount.ValueString(),
-					Currency: ca.MinExcessCost.Currency.ValueString(),
-				},
-				Allocations: models.CostAnomalyAllocations{
-					Mode: models.CostAnomalyAllocationsMode(ca.Allocations.Mode.ValueString()),
-					Ids:  ids,
-				},
-			},
+	}
+
+	diags.Append(toCustomerNotificationCreateSettings(ctx, plan.Settings, &req.Settings)...)
+
+	return req, diags
+}
+
+// toCreateCustomerNotificationCostAnomalies builds the cost-anomaly settings
+// of a create request.
+func toCreateCustomerNotificationCostAnomalies(ctx context.Context, ca resource_customer_notification.CostAnomaliesValue) (models.CostAnomalySettings, diag.Diagnostics) {
+	ids, diags := customerNotificationAllocationIDs(ctx, ca.Allocations)
+
+	out := models.CostAnomalySettings{
+		MinSeverity: models.CostAnomalySettingsMinSeverity(ca.MinSeverity.ValueString()),
+		MinExcessCost: models.Money{
+			Amount:   ca.MinExcessCost.Amount.ValueString(),
+			Currency: ca.MinExcessCost.Currency.ValueString(),
+		},
+		Allocations: models.CostAnomalyAllocations{
+			Mode: models.CostAnomalyAllocationsMode(ca.Allocations.Mode.ValueString()),
+			Ids:  ids,
 		},
 	}
 
@@ -357,23 +485,24 @@ func (plan *customerNotificationResourceModel) toCreateRequest(ctx context.Conte
 				}
 			}
 		}
-		req.Settings.CostAnomalies.Repeat = repeat
+		out.Repeat = repeat
 	}
 
-	return req, diags
+	return out, diags
 }
 
 // toUpdateRequest converts the TF model to a JSON merge patch (RFC 7396).
 //
 // The patch always carries the full desired name, destinations (which replace
-// the stored object) and settings. Nested objects are
-// deep-merged server-side, so every optional member of repeat is sent as an
-// explicit value or an explicit null — omitting it would keep the stored value.
+// the stored object) and settings. Nested objects are deep-merged
+// server-side, so every type the plan does not subscribe to, every filter
+// list, and every optional member of repeat is sent as an explicit value or an
+// explicit null: omitting it would keep the stored value.
 func (plan *customerNotificationResourceModel) toUpdateRequest(ctx context.Context) (models.UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	patch, d := toPatchCustomerNotificationCostAnomalies(ctx, plan.Settings.CostAnomalies)
-	diags.Append(d...)
+	settings := &models.PatchCustomerNotificationSettings{}
+	diags.Append(toCustomerNotificationPatchSettings(ctx, plan.Settings, settings)...)
 
 	destinations, d := plan.customerNotificationDestinations(ctx)
 	diags.Append(d...)
@@ -381,9 +510,7 @@ func (plan *customerNotificationResourceModel) toUpdateRequest(ctx context.Conte
 	req := models.UpdateCustomerNotificationApplicationMergePatchPlusJSONRequestBody{
 		Name:         new(plan.Name.ValueString()),
 		Destinations: &destinations,
-		Settings: &models.PatchCustomerNotificationSettings{
-			CostAnomalies: &patch,
-		},
+		Settings:     settings,
 	}
 
 	return req, diags

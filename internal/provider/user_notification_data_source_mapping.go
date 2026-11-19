@@ -63,9 +63,9 @@ func buildUserNotificationDataSourceSettings(ctx context.Context, s *models.User
 	var diags diag.Diagnostics
 
 	attrTypes := datasource_user_notification.SettingsValue{}.AttributeTypes(ctx)
-	objects, d := userNotificationSettingsObjects(ctx, s)
+	objects, d := notificationSettingsObjects(ctx, userNotificationSettingsSource(s))
 	diags.Append(d...)
-	values, d := userNotificationSettingsValues(ctx, attrTypes, objects)
+	values, d := notificationSettingsValues(ctx, attrTypes, objects)
 	diags.Append(d...)
 
 	costAnomalies, d := buildUserNotificationDataSourceCostAnomalies(ctx, s.CostAnomalies)
@@ -245,9 +245,9 @@ func buildUserNotificationsDataSourceSettings(ctx context.Context, s *models.Use
 	var diags diag.Diagnostics
 
 	attrTypes := datasource_user_notifications.SettingsValue{}.AttributeTypes(ctx)
-	objects, d := userNotificationSettingsObjects(ctx, s)
+	objects, d := notificationSettingsObjects(ctx, userNotificationSettingsSource(s))
 	diags.Append(d...)
-	values, d := userNotificationSettingsValues(ctx, attrTypes, objects)
+	values, d := notificationSettingsValues(ctx, attrTypes, objects)
 	diags.Append(d...)
 
 	costAnomalies, d := buildUserNotificationsDataSourceCostAnomalies(ctx, s.CostAnomalies)
