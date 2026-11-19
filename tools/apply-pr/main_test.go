@@ -663,6 +663,77 @@ components:
 	}
 }
 
+func TestRun_DivergedRequiredListReapply(t *testing.T) {
+	t.Parallel()
+
+	local := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      required:
+        - localReq
+        - name
+        - scope
+`
+	base := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      required:
+        - name
+        - scope
+`
+	head := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      required:
+        - name
+        - scope
+        - prReq1
+        - prReq2
+`
+
+	stub := &stubGitHub{
+		prs: map[int]prMetadata{
+			400: {
+				State: "MERGED",
+				MergeCommit: &struct {
+					OID string `json:"oid"`
+				}{OID: "head-sha"},
+			},
+		},
+		parents: map[string][]string{"head-sha": {"base-sha"}},
+		files: map[string][]byte{
+			"base-sha": []byte(base),
+			"head-sha": []byte(head),
+		},
+	}
+
+	target := filepath.Join(t.TempDir(), "spec.yml")
+	if err := os.WriteFile(target, []byte(local), 0o600); err != nil {
+		t.Fatalf("writing target: %v", err)
+	}
+
+	cfg := config{PR: 400, Repo: defaultRepo, UpstreamPath: defaultUpstreamPath, Target: target}
+	var stdout, stderr bytes.Buffer
+	if err := run(t.Context(), cfg, stub, &stdout, &stderr); err != nil {
+		t.Fatalf("initial diverged merge failed: %v", err)
+	}
+
+	// Reapplying the exact same PR over the already-merged diverged list must succeed idempotently.
+	stdout.Reset()
+	if err := run(t.Context(), cfg, stub, &stdout, &stderr); err != nil {
+		t.Fatalf("reapply over diverged required list failed: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "already present") {
+		t.Fatalf("expected 'already present' message on reapply, got: %q", stdout.String())
+	}
+}
+
 func TestRun_MissingTargetFails(t *testing.T) {
 	t.Parallel()
 

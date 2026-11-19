@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"gopkg.in/yaml.v3"
 )
 
-// maxAliasDepth guards against malformed cyclic YAML alias chains.
-const maxAliasDepth = 64
+const (
+	// maxAliasDepth guards against malformed cyclic YAML alias chains.
+	maxAliasDepth = 64
+	// maxLCSCells bounds the LCS DP table size so pathological diffs fail conservatively.
+	maxLCSCells = 4_000_000
+)
 
 // Mismatch describes a single semantic discrepancy detected after merging.
 type Mismatch struct {
@@ -166,28 +172,243 @@ func verifyNode(parts []string, l, b, h, m *yaml.Node, res *VerifyResult) {
 		res.Diverged = append(res.Diverged, path)
 	}
 
-	if allNonNilMapping(l, b, h, m) {
+	if allNonNilKind(yaml.MappingNode, l, b, h, m) {
 		recurseMappings(parts, l, b, h, m, res)
 		return
 	}
 
 	// Leaf scalar, sequence, or add/delete collision where both sides differed from base.
-	// A clean three-way merge is allowed as long as neither the PR's change nor both
-	// sides' changes were silently dropped.
-	if nodesEqual(m, l) {
-		res.Failures = append(res.Failures, Mismatch{
-			Path:   path,
-			Reason: "PR change was not applied (merged result still equals local)",
-		})
+	// Validate exact delta preservation (including idempotent reapplication) and fail
+	// conservatively whenever unambiguous preservation cannot be established.
+	verifyDivergedLeaf(path, l, b, h, m, res)
+}
+
+func verifyDivergedLeaf(path string, l, b, h, m *yaml.Node, res *VerifyResult) {
+	if allNonNilKind(yaml.SequenceNode, l, b, h, m) {
+		expected, ok := threeWayMerge(l.Content, b.Content, h.Content, nodesEqual)
+		if !ok {
+			res.Failures = append(res.Failures, Mismatch{
+				Path:   path,
+				Reason: "cannot verify diverged sequence merge safely (overlapping local and PR changes)",
+			})
+			return
+		}
+		if !slices.EqualFunc(m.Content, expected, nodesEqual) {
+			res.Failures = append(res.Failures, Mismatch{
+				Path:   path,
+				Reason: "diverged sequence merge did not preserve both local and PR changes",
+			})
+		}
 		return
 	}
-	if nodesEqual(m, b) {
-		res.Failures = append(res.Failures, Mismatch{
-			Path:   path,
-			Reason: "merged result reverted to PR base (lost both local and PR changes)",
-		})
+
+	if allNonNilStringScalar(l, b, h, m) {
+		var split func(string) []string
+		if strings.Contains(b.Value, "\n") || strings.Contains(l.Value, "\n") ||
+			strings.Contains(h.Value, "\n") || strings.Contains(m.Value, "\n") {
+			split = func(s string) []string { return strings.Split(s, "\n") }
+		} else {
+			split = splitWhitespaceTokens
+		}
+		expected, ok := threeWayMerge(split(l.Value), split(b.Value), split(h.Value), func(a, b string) bool { return a == b })
+		if !ok {
+			res.Failures = append(res.Failures, Mismatch{
+				Path:   path,
+				Reason: "cannot verify diverged scalar merge safely (overlapping local and PR changes)",
+			})
+			return
+		}
+		if !slices.Equal(split(m.Value), expected) {
+			res.Failures = append(res.Failures, Mismatch{
+				Path:   path,
+				Reason: "diverged scalar merge did not preserve both local and PR changes",
+			})
+		}
 		return
 	}
+
+	res.Failures = append(res.Failures, Mismatch{
+		Path:   path,
+		Reason: "cannot verify diverged merge safely (both local and PR modified this entry)",
+	})
+}
+
+func allNonNilKind(kind yaml.Kind, nodes ...*yaml.Node) bool {
+	for _, n := range nodes {
+		if n == nil || n.Kind != kind {
+			return false
+		}
+	}
+	return true
+}
+
+func allNonNilStringScalar(nodes ...*yaml.Node) bool {
+	for _, n := range nodes {
+		if n == nil || n.Kind != yaml.ScalarNode || n.ShortTag() != "!!str" {
+			return false
+		}
+	}
+	return true
+}
+
+type editHunk[T any] struct {
+	bStart int
+	bEnd   int
+	repl   []T
+}
+
+// diffHunks computes minimal LCS-based edit hunks transforming base into other.
+// It returns ok=false if the trimmed diff exceeds maxLCSCells.
+func diffHunks[T any](base, other []T, eq func(T, T) bool) ([]editHunk[T], bool) {
+	pre := 0
+	for pre < len(base) && pre < len(other) && eq(base[pre], other[pre]) {
+		pre++
+	}
+	bEnd := len(base)
+	oEnd := len(other)
+	for bEnd > pre && oEnd > pre && eq(base[bEnd-1], other[oEnd-1]) {
+		bEnd--
+		oEnd--
+	}
+	if pre == bEnd && pre == oEnd {
+		return nil, true
+	}
+
+	bMid := base[pre:bEnd]
+	oMid := other[pre:oEnd]
+	if len(bMid) == 0 || len(oMid) == 0 {
+		return []editHunk[T]{{bStart: pre, bEnd: bEnd, repl: oMid}}, true
+	}
+	if len(bMid)*len(oMid) > maxLCSCells {
+		return nil, false
+	}
+
+	rows := len(bMid) + 1
+	cols := len(oMid) + 1
+	dp := make([]int, rows*cols)
+	for i, bVal := range slices.Backward(bMid) {
+		for j, oVal := range slices.Backward(oMid) {
+			if eq(bVal, oVal) {
+				dp[i*cols+j] = dp[(i+1)*cols+(j+1)] + 1
+			} else {
+				dp[i*cols+j] = max(dp[(i+1)*cols+j], dp[i*cols+(j+1)])
+			}
+		}
+	}
+
+	type matchPair struct{ b, o int }
+	var matches []matchPair
+	for i, j := 0, 0; i < len(bMid) && j < len(oMid); {
+		switch {
+		case eq(bMid[i], oMid[j]):
+			matches = append(matches, matchPair{b: pre + i, o: pre + j})
+			i++
+			j++
+		case dp[(i+1)*cols+j] >= dp[i*cols+(j+1)]:
+			i++
+		default:
+			j++
+		}
+	}
+
+	var hunks []editHunk[T]
+	curB, curO := pre, pre
+	for _, m := range matches {
+		if curB < m.b || curO < m.o {
+			hunks = append(hunks, editHunk[T]{
+				bStart: curB,
+				bEnd:   m.b,
+				repl:   other[curO:m.o],
+			})
+		}
+		curB = m.b + 1
+		curO = m.o + 1
+	}
+	if curB < bEnd || curO < oEnd {
+		hunks = append(hunks, editHunk[T]{
+			bStart: curB,
+			bEnd:   bEnd,
+			repl:   other[curO:oEnd],
+		})
+	}
+	return hunks, true
+}
+
+// threeWayMerge merges non-overlapping edits from base->l and base->h.
+// Identical hunks on both sides (such as idempotent reapplication) are
+// deduplicated cleanly; overlapping or touching non-identical hunks return ok=false.
+func threeWayMerge[T any](l, b, h []T, eq func(T, T) bool) ([]T, bool) {
+	lHunks, ok := diffHunks(b, l, eq)
+	if !ok {
+		return nil, false
+	}
+	hHunks, ok := diffHunks(b, h, eq)
+	if !ok {
+		return nil, false
+	}
+
+	var out []T
+	bPos, li, hi := 0, 0, 0
+	for li < len(lHunks) && hi < len(hHunks) {
+		lh := lHunks[li]
+		hh := hHunks[hi]
+		switch {
+		case lh.bEnd < hh.bStart:
+			out = append(out, b[bPos:lh.bStart]...)
+			out = append(out, lh.repl...)
+			bPos = lh.bEnd
+			li++
+		case hh.bEnd < lh.bStart:
+			out = append(out, b[bPos:hh.bStart]...)
+			out = append(out, hh.repl...)
+			bPos = hh.bEnd
+			hi++
+		case lh.bStart == hh.bStart && lh.bEnd == hh.bEnd && slices.EqualFunc(lh.repl, hh.repl, eq):
+			out = append(out, b[bPos:lh.bStart]...)
+			out = append(out, lh.repl...)
+			bPos = lh.bEnd
+			li++
+			hi++
+		default:
+			return nil, false
+		}
+	}
+	for ; li < len(lHunks); li++ {
+		lh := lHunks[li]
+		out = append(out, b[bPos:lh.bStart]...)
+		out = append(out, lh.repl...)
+		bPos = lh.bEnd
+	}
+	for ; hi < len(hHunks); hi++ {
+		hh := hHunks[hi]
+		out = append(out, b[bPos:hh.bStart]...)
+		out = append(out, hh.repl...)
+		bPos = hh.bEnd
+	}
+	out = append(out, b[bPos:]...)
+	return out, true
+}
+
+// splitWhitespaceTokens splits a string into alternating whitespace and
+// non-whitespace runs so single-line folded strings preserve exact spacing.
+func splitWhitespaceTokens(s string) []string {
+	if s == "" {
+		return nil
+	}
+	var tokens []string
+	start := 0
+	firstRune, _ := utf8.DecodeRuneInString(s)
+	inSpace := unicode.IsSpace(firstRune)
+	for i, r := range s {
+		space := unicode.IsSpace(r)
+		if space != inSpace {
+			tokens = append(tokens, s[start:i])
+			start = i
+			inSpace = space
+		}
+	}
+	tokens = append(tokens, s[start:])
+	return tokens
 }
 
 func recurseMappings(parts []string, l, b, h, m *yaml.Node, res *VerifyResult) {
@@ -275,15 +496,6 @@ func allNilOrMapping(nodes ...*yaml.Node) bool {
 		hasMapping = true
 	}
 	return hasMapping
-}
-
-func allNonNilMapping(nodes ...*yaml.Node) bool {
-	for _, n := range nodes {
-		if n == nil || n.Kind != yaml.MappingNode {
-			return false
-		}
-	}
-	return true
 }
 
 func mappingValues(n *yaml.Node) map[string]*yaml.Node {

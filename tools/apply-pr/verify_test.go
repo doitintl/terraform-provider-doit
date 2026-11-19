@@ -460,12 +460,10 @@ components:
       required:
         - name
         - scope
-        - prReq
+        - prReq1
+        - prReq2
 `
-
-	t.Run("clean sequence merge passes", func(t *testing.T) {
-		t.Parallel()
-		merged := `openapi: 3.0.1
+	mergedFull := `openapi: 3.0.1
 components:
   schemas:
     Budget:
@@ -474,14 +472,62 @@ components:
         - localReq
         - name
         - scope
-        - prReq
+        - prReq1
+        - prReq2
 `
-		res, err := VerifyMerge([]byte(local), []byte(base), []byte(head), []byte(merged))
+
+	t.Run("clean sequence merge passes", func(t *testing.T) {
+		t.Parallel()
+		res, err := VerifyMerge([]byte(local), []byte(base), []byte(head), []byte(mergedFull))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if len(res.Failures) != 0 {
 			t.Fatalf("expected no failures, got: %v", res.Failures)
+		}
+	})
+
+	t.Run("reapplying PR when local already has both local and PR additions passes", func(t *testing.T) {
+		t.Parallel()
+		res, err := VerifyMerge([]byte(mergedFull), []byte(base), []byte(head), []byte(mergedFull))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 0 {
+			t.Fatalf("expected no failures on diverged reapply, got: %v", res.Failures)
+		}
+	})
+
+	t.Run("merged equal to head drops local addition and fails", func(t *testing.T) {
+		t.Parallel()
+		res, err := VerifyMerge([]byte(local), []byte(base), []byte(head), []byte(head))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 1 || res.Failures[0].Path != "components.schemas.Budget.required" {
+			t.Fatalf("expected failure on Budget.required when localReq dropped, got: %v", res.Failures)
+		}
+	})
+
+	t.Run("partial PR sequence addition fails", func(t *testing.T) {
+		t.Parallel()
+		partial := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      required:
+        - localReq
+        - name
+        - scope
+        - prReq1
+`
+		res, err := VerifyMerge([]byte(local), []byte(base), []byte(head), []byte(partial))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 1 || res.Failures[0].Path != "components.schemas.Budget.required" {
+			t.Fatalf("expected failure on Budget.required when prReq2 dropped, got: %v", res.Failures)
 		}
 	})
 
@@ -493,6 +539,144 @@ components:
 		}
 		if len(res.Failures) != 1 || res.Failures[0].Path != "components.schemas.Budget.required" {
 			t.Fatalf("expected failure on Budget.required, got: %v", res.Failures)
+		}
+	})
+
+	t.Run("overlapping sequence edits fail conservatively", func(t *testing.T) {
+		t.Parallel()
+		overlapLocal := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      required:
+        - name
+        - scope
+        - localTail
+`
+		overlapMerged := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      required:
+        - name
+        - scope
+        - localTail
+        - prReq1
+        - prReq2
+`
+		res, err := VerifyMerge([]byte(overlapLocal), []byte(base), []byte(head), []byte(overlapMerged))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 1 || res.Failures[0].Path != "components.schemas.Budget.required" {
+			t.Fatalf("expected conservative failure on overlapping sequence edits, got: %v", res.Failures)
+		}
+	})
+
+	t.Run("diverged multiline scalar preserves both edits and supports reapply", func(t *testing.T) {
+		t.Parallel()
+		sBase := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      description: |-
+        Line 1
+        Line 2
+        Line 3
+        Line 4
+`
+		sLocal := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      description: |-
+        Local Line 1
+        Line 2
+        Line 3
+        Line 4
+`
+		sHead := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      description: |-
+        Line 1
+        Line 2
+        Line 3
+        PR Line 4
+`
+		sMerged := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      description: |-
+        Local Line 1
+        Line 2
+        Line 3
+        PR Line 4
+`
+		res, err := VerifyMerge([]byte(sLocal), []byte(sBase), []byte(sHead), []byte(sMerged))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 0 {
+			t.Fatalf("expected clean multiline merge to pass, got: %v", res.Failures)
+		}
+
+		// Reapplying onto sMerged must also pass.
+		res, err = VerifyMerge([]byte(sMerged), []byte(sBase), []byte(sHead), []byte(sMerged))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 0 {
+			t.Fatalf("expected multiline reapply to pass, got: %v", res.Failures)
+		}
+
+		// Dropping local edit (merged == head) must fail.
+		res, err = VerifyMerge([]byte(sLocal), []byte(sBase), []byte(sHead), []byte(sHead))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 1 || res.Failures[0].Path != "components.schemas.Budget.description" {
+			t.Fatalf("expected failure when local multiline edit dropped, got: %v", res.Failures)
+		}
+	})
+
+	t.Run("diverged atomic non-string scalar fails conservatively", func(t *testing.T) {
+		t.Parallel()
+		aBase := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      default: 1
+`
+		aLocal := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      default: 2
+`
+		aHead := `openapi: 3.0.1
+components:
+  schemas:
+    Budget:
+      type: object
+      default: 3
+`
+		res, err := VerifyMerge([]byte(aLocal), []byte(aBase), []byte(aHead), []byte(aHead))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.Failures) != 1 || res.Failures[0].Path != "components.schemas.Budget.default" {
+			t.Fatalf("expected conservative failure on atomic scalar divergence, got: %v", res.Failures)
 		}
 	})
 }
