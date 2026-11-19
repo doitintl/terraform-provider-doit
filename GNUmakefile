@@ -130,12 +130,10 @@ testacc-run:
 validate-examples:
 	./scripts/validate_examples.sh
 
-# Apply diff from a specific upstream PR: make apply-pr PR=61514
+# Apply OpenAPI spec changes from a specific upstream PR: make apply-pr PR=61514
 apply-pr:
 	@if [ -z "$(PR)" ]; then echo "Error: PR number required (e.g. make apply-pr PR=61514)"; exit 1; fi
-	gh pr diff $(PR) --repo doiteng/omni | \
-		sed 's|services/external-api/openapi\.yaml|OpenAPI/openapi_spec_full.yml|g' | \
-		git apply --include='OpenAPI/openapi_spec_full.yml' -v
+	./scripts/apply_pr.sh "$(PR)"
 
 # Fetch full spec from a PR or ref: make sync-spec PR=61514 or make sync-spec REF=dev
 sync-spec:
