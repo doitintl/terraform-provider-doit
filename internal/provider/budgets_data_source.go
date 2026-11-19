@@ -208,6 +208,7 @@ func (d *budgetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 					"owner":                       types.StringPointerValue(budget.Owner),
 					"amount":                      types.Float64PointerValue(budget.Amount),
 					"currency":                    types.StringPointerValue(budget.Currency),
+					"current_period_amount":       types.Float64PointerValue(budget.CurrentPeriodAmount),
 					"current_utilization":         types.Float64PointerValue(budget.CurrentUtilization),
 					"forecasted_utilization_date": types.Int64PointerValue(budget.ForecastedUtilizationDate),
 					"create_time":                 types.Int64PointerValue(budget.CreateTime),

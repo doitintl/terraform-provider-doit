@@ -575,3 +575,488 @@ func (v budgetSlackChannelsValidator) ValidateResource(ctx context.Context, req 
 		}
 	}
 }
+
+// budgetSeasonalAmountsPerInterval is the number of seasonal amounts the API
+// requires per time interval. Seasonal amounts are not allowed for week.
+var budgetSeasonalAmountsPerInterval = map[string]int{
+	"day":     7, // Monday to Sunday
+	"month":   12,
+	"quarter": 4,
+	"year":    5, // counted from the start year
+}
+
+// budgetRolloverMaxLimit is the largest rollover limit the API accepts per
+// time interval.
+var budgetRolloverMaxLimit = map[string]int64{
+	"day":     90,
+	"week":    52,
+	"month":   12,
+	"quarter": 8,
+	"year":    5,
+}
+
+// budgetSeasonalAmountsIntervalError returns why count seasonal amounts do not
+// fit timeInterval, or "" when they do.
+func budgetSeasonalAmountsIntervalError(timeInterval string, count int) string {
+	want, ok := budgetSeasonalAmountsPerInterval[timeInterval]
+	if !ok {
+		return fmt.Sprintf("seasonal_amounts cannot be used with time_interval %q. "+
+			"Use day (7 amounts), month (12), quarter (4) or year (5).", timeInterval)
+	}
+	if count != want {
+		return fmt.Sprintf("time_interval %q requires exactly %d seasonal_amounts, one per period in calendar order. Found %d.",
+			timeInterval, want, count)
+	}
+	return ""
+}
+
+// budgetRolloverLimitError returns why limit is not a valid limit for an
+// enabled rollover with timeInterval, or "" when it is. An unrecognized
+// interval only checks the minimum; budgetTimeIntervalValidator reports it.
+func budgetRolloverLimitError(timeInterval string, limit int64) string {
+	if limit < 1 {
+		return fmt.Sprintf("rollover.limit must be at least 1 when rollover is enabled. Found %d.", limit)
+	}
+	if maxLimit, ok := budgetRolloverMaxLimit[timeInterval]; ok && limit > maxLimit {
+		return fmt.Sprintf("rollover.limit can be at most %d for time_interval %q. Found %d.", maxLimit, timeInterval, limit)
+	}
+	return ""
+}
+
+// budgetSeasonalAmountsValidator rejects what the API rejects together with
+// seasonal amounts: an amount (the API takes the amount of each period from
+// seasonal_amounts), growth, an enabled rollover, use_prev_spend, a fixed
+// budget, the week interval, and a list whose length does not fit the
+// interval. An empty list means no seasonal amounts and is always valid.
+type budgetSeasonalAmountsValidator struct{}
+
+var _ resource.ConfigValidator = budgetSeasonalAmountsValidator{}
+
+func (v budgetSeasonalAmountsValidator) Description(_ context.Context) string {
+	return "Validates that seasonal_amounts is not combined with amount, growth, rollover or use_prev_spend, and fits the time interval"
+}
+
+func (v budgetSeasonalAmountsValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that `seasonal_amounts` is not combined with `amount`, `allow_growth`, an enabled `rollover` " +
+		"or `use_prev_spend`, and has one amount per period of `time_interval`"
+}
+
+func (v budgetSeasonalAmountsValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var seasonal types.List
+	diags := req.Config.GetAttribute(ctx, path.Root("seasonal_amounts"), &seasonal)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if seasonal.IsNull() || seasonal.IsUnknown() {
+		return
+	}
+	count := len(seasonal.Elements())
+	if count == 0 {
+		return
+	}
+
+	validateBudgetSeasonalAmount(ctx, req, resp)
+	validateBudgetSeasonalUsePrevSpend(ctx, req, resp)
+	validateBudgetSeasonalAllowGrowth(ctx, req, resp)
+	validateBudgetSeasonalRollover(ctx, req, resp)
+	validateBudgetSeasonalType(ctx, req, resp)
+	validateBudgetSeasonalInterval(ctx, req, resp, count)
+}
+
+func validateBudgetSeasonalAmount(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var amount types.Float64
+	diags := req.Config.GetAttribute(ctx, path.Root("amount"), &amount)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if amount.IsNull() || amount.IsUnknown() {
+		return
+	}
+	resp.Diagnostics.AddAttributeError(
+		path.Root("amount"),
+		"Invalid Attribute Combination",
+		"Attribute amount cannot be set together with seasonal_amounts. The amount of each period comes from "+
+			"seasonal_amounts, and the DoiT API rejects a request that has both. Remove amount; "+
+			"current_period_amount shows the amount of the current period.",
+	)
+}
+
+func validateBudgetSeasonalUsePrevSpend(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var usePrevSpend types.Bool
+	diags := req.Config.GetAttribute(ctx, path.Root("use_prev_spend"), &usePrevSpend)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if usePrevSpend.IsNull() || usePrevSpend.IsUnknown() {
+		return
+	}
+	if usePrevSpend.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("use_prev_spend"),
+			"Invalid Attribute Combination",
+			"Attribute use_prev_spend cannot be true together with seasonal_amounts.",
+		)
+	}
+}
+
+func validateBudgetSeasonalAllowGrowth(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var allowGrowth types.Bool
+	diags := req.Config.GetAttribute(ctx, path.Root("allow_growth"), &allowGrowth)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if allowGrowth.IsNull() || allowGrowth.IsUnknown() {
+		return
+	}
+	if allowGrowth.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("allow_growth"),
+			"Invalid Attribute Combination",
+			"Attribute allow_growth cannot be true together with seasonal_amounts.",
+		)
+	}
+}
+
+func validateBudgetSeasonalRollover(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var rollover resource_budget.RolloverValue
+	diags := req.Config.GetAttribute(ctx, path.Root("rollover"), &rollover)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if rollover.IsNull() || rollover.IsUnknown() {
+		return
+	}
+	if rollover.Enabled.IsNull() || rollover.Enabled.IsUnknown() {
+		return
+	}
+	if rollover.Enabled.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("rollover").AtName("enabled"),
+			"Invalid Attribute Combination",
+			"Rollover cannot be enabled together with seasonal_amounts.",
+		)
+	}
+}
+
+func validateBudgetSeasonalType(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var budgetType types.String
+	diags := req.Config.GetAttribute(ctx, path.Root("type"), &budgetType)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if budgetType.IsNull() || budgetType.IsUnknown() {
+		return
+	}
+	if budgetType.ValueString() == "fixed" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("seasonal_amounts"),
+			"Invalid Seasonal Amounts",
+			"Attribute seasonal_amounts can only be set for recurring budgets.",
+		)
+	}
+}
+
+func validateBudgetSeasonalInterval(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse, count int) {
+	var timeInterval types.String
+	diags := req.Config.GetAttribute(ctx, path.Root("time_interval"), &timeInterval)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	// An omitted time_interval keeps the stored one on update; ModifyPlan
+	// checks the list against it.
+	if timeInterval.IsNull() || timeInterval.IsUnknown() {
+		return
+	}
+	if msg := budgetSeasonalAmountsIntervalError(timeInterval.ValueString(), count); msg != "" {
+		resp.Diagnostics.AddAttributeError(path.Root("seasonal_amounts"), "Invalid Seasonal Amounts", msg)
+	}
+}
+
+// budgetRolloverValidator checks the limit of an enabled rollover: at least 1,
+// and at most the maximum of the time interval.
+type budgetRolloverValidator struct{}
+
+var _ resource.ConfigValidator = budgetRolloverValidator{}
+
+func (v budgetRolloverValidator) Description(_ context.Context) string {
+	return "Validates that an enabled rollover has a limit between 1 and the maximum of the time interval"
+}
+
+func (v budgetRolloverValidator) MarkdownDescription(_ context.Context) string {
+	return "Validates that an enabled `rollover` has a `limit` between 1 and the maximum of `time_interval` " +
+		"(90 for day, 52 for week, 12 for month, 8 for quarter, 5 for year)"
+}
+
+func (v budgetRolloverValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var rollover resource_budget.RolloverValue
+	diags := req.Config.GetAttribute(ctx, path.Root("rollover"), &rollover)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if rollover.IsNull() || rollover.IsUnknown() {
+		return
+	}
+	if rollover.Enabled.IsUnknown() || rollover.Limit.IsUnknown() {
+		return
+	}
+	if rollover.Enabled.IsNull() || rollover.Limit.IsNull() {
+		return
+	}
+	if !rollover.Enabled.ValueBool() {
+		return
+	}
+
+	// The minimum does not depend on the interval.
+	limit := rollover.Limit.ValueInt64()
+	if msg := budgetRolloverLimitError("", limit); msg != "" {
+		resp.Diagnostics.AddAttributeError(path.Root("rollover").AtName("limit"), "Invalid Rollover Limit", msg)
+		return
+	}
+
+	var timeInterval types.String
+	diags = req.Config.GetAttribute(ctx, path.Root("time_interval"), &timeInterval)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	// A null time_interval keeps the stored one on update; ModifyPlan checks
+	// the maximum against it.
+	if timeInterval.IsNull() || timeInterval.IsUnknown() {
+		return
+	}
+	if msg := budgetRolloverLimitError(timeInterval.ValueString(), limit); msg != "" {
+		resp.Diagnostics.AddAttributeError(path.Root("rollover").AtName("limit"), "Invalid Rollover Limit", msg)
+	}
+}
+
+// validateBudgetSeasonalGrowth rejects seasonal amounts on a budget that would
+// grow, when the configuration omits allow_growth (a configured value is
+// checked by budgetSeasonalAmountsValidator). The API decides growth
+// differently on create and update: create turns it on for a
+// growth_per_period above 0, while an update keeps the stored allow_growth
+// whatever the rate is.
+func validateBudgetSeasonalGrowth(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse, isCreate bool) {
+	var seasonal types.List
+	diags := req.Plan.GetAttribute(ctx, path.Root("seasonal_amounts"), &seasonal)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if seasonal.IsNull() || seasonal.IsUnknown() {
+		return
+	}
+	if len(seasonal.Elements()) == 0 {
+		return
+	}
+
+	var configAllowGrowth types.Bool
+	diags = req.Config.GetAttribute(ctx, path.Root("allow_growth"), &configAllowGrowth)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if configAllowGrowth.IsUnknown() {
+		return
+	}
+	if !configAllowGrowth.IsNull() {
+		return
+	}
+
+	if isCreate {
+		validateBudgetSeasonalGrowthRate(ctx, req, resp)
+		return
+	}
+	validateBudgetSeasonalStoredGrowth(ctx, req, resp)
+}
+
+func validateBudgetSeasonalGrowthRate(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var growth types.Float64
+	diags := req.Plan.GetAttribute(ctx, path.Root("growth_per_period"), &growth)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if growth.IsNull() || growth.IsUnknown() {
+		return
+	}
+	if growth.ValueFloat64() > 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("allow_growth"),
+			"Invalid Attribute Combination",
+			"A growth_per_period above 0 turns growth on when allow_growth is omitted, and seasonal_amounts cannot "+
+				"be combined with growth. Set allow_growth = false (the rate is then stored but not applied) "+
+				"or set growth_per_period to 0.",
+		)
+	}
+}
+
+func validateBudgetSeasonalStoredGrowth(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var stored types.Bool
+	diags := req.State.GetAttribute(ctx, path.Root("allow_growth"), &stored)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if stored.IsNull() || stored.IsUnknown() {
+		return
+	}
+	if stored.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("allow_growth"),
+			"Invalid Attribute Combination",
+			"The budget has growth turned on, and seasonal_amounts cannot be combined with growth. "+
+				"Set allow_growth = false to switch it to seasonal amounts.",
+		)
+	}
+}
+
+// validateBudgetPlanAgainstStoredInterval checks seasonal_amounts and the
+// rollover limit against the stored time_interval when an update omits it,
+// since the API keeps the stored interval then. A configured interval is
+// checked by the config validators.
+func validateBudgetPlanAgainstStoredInterval(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var configInterval types.String
+	diags := req.Config.GetAttribute(ctx, path.Root("time_interval"), &configInterval)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if configInterval.IsUnknown() {
+		return
+	}
+	if !configInterval.IsNull() {
+		return
+	}
+
+	var stored types.String
+	diags = req.State.GetAttribute(ctx, path.Root("time_interval"), &stored)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if stored.IsNull() || stored.IsUnknown() {
+		return
+	}
+
+	validateBudgetSeasonalAmountsForInterval(ctx, req, resp, stored.ValueString())
+	validateBudgetRolloverLimitForInterval(ctx, req, resp, stored.ValueString())
+}
+
+func validateBudgetSeasonalAmountsForInterval(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse, timeInterval string) {
+	var seasonal types.List
+	diags := req.Plan.GetAttribute(ctx, path.Root("seasonal_amounts"), &seasonal)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if seasonal.IsNull() || seasonal.IsUnknown() {
+		return
+	}
+	count := len(seasonal.Elements())
+	if count == 0 {
+		return
+	}
+	if msg := budgetSeasonalAmountsIntervalError(timeInterval, count); msg != "" {
+		resp.Diagnostics.AddAttributeError(path.Root("seasonal_amounts"), "Invalid Seasonal Amounts", msg)
+	}
+}
+
+func validateBudgetRolloverLimitForInterval(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse, timeInterval string) {
+	var rollover resource_budget.RolloverValue
+	diags := req.Plan.GetAttribute(ctx, path.Root("rollover"), &rollover)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if rollover.IsNull() || rollover.IsUnknown() {
+		return
+	}
+	if rollover.Enabled.IsUnknown() || rollover.Limit.IsUnknown() {
+		return
+	}
+	if rollover.Enabled.IsNull() || rollover.Limit.IsNull() {
+		return
+	}
+	if !rollover.Enabled.ValueBool() {
+		return
+	}
+	if msg := budgetRolloverLimitError(timeInterval, rollover.Limit.ValueInt64()); msg != "" {
+		resp.Diagnostics.AddAttributeError(path.Root("rollover").AtName("limit"), "Invalid Rollover Limit", msg)
+	}
+}
+
+// validateBudgetSeasonalRemoval rejects an update that removes the stored
+// seasonal amounts without a replacement target: the API needs amount or
+// use_prev_spend = true in the same request. The planned amount cannot tell an
+// omitted amount from a configured one that is not known yet (it is null when
+// the removal is the only change and unknown otherwise), so the configuration
+// decides, and an unknown amount or use_prev_spend defers to apply.
+func validateBudgetSeasonalRemoval(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var planned types.List
+	diags := req.Plan.GetAttribute(ctx, path.Root("seasonal_amounts"), &planned)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if planned.IsUnknown() {
+		return
+	}
+	if !planned.IsNull() && len(planned.Elements()) > 0 {
+		return
+	}
+
+	var stored types.List
+	diags = req.State.GetAttribute(ctx, path.Root("seasonal_amounts"), &stored)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if stored.IsNull() || stored.IsUnknown() {
+		return
+	}
+	if len(stored.Elements()) == 0 {
+		return
+	}
+
+	var amount types.Float64
+	diags = req.Config.GetAttribute(ctx, path.Root("amount"), &amount)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if amount.IsUnknown() {
+		return
+	}
+	if !amount.IsNull() {
+		return
+	}
+
+	var usePrevSpend types.Bool
+	diags = req.Config.GetAttribute(ctx, path.Root("use_prev_spend"), &usePrevSpend)
+	resp.Diagnostics.Append(diags...)
+	if diags.HasError() {
+		return
+	}
+	if usePrevSpend.IsUnknown() {
+		return
+	}
+	// An omitted use_prev_spend is its default, false.
+	if !usePrevSpend.IsNull() && usePrevSpend.ValueBool() {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		path.Root("seasonal_amounts"),
+		"Missing Budget Amount",
+		"Removing seasonal_amounts needs a replacement for the amount of each period: set amount, "+
+			"or use_prev_spend = true. The DoiT API rejects removing seasonal amounts without one.",
+	)
+}

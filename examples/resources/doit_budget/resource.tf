@@ -202,3 +202,56 @@ resource "doit_budget" "team" {
     workspace   = "your-slack-workspace"
   }]
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Seasonal amounts, growth and rollover
+# ─────────────────────────────────────────────────────────────────────────────
+
+# A different amount for each month, in calendar order (January to December).
+# A seasonal budget has no amount: current_period_amount shows the amount of
+# the current month. Seasonal amounts cannot be combined with growth, rollover
+# or use_prev_spend.
+resource "doit_budget" "seasonal" {
+  name             = "Seasonal Budget"
+  currency         = "USD"
+  type             = "recurring"
+  time_interval    = "month"
+  start_period     = time_static.now.unix * 1000
+  seasonal_amounts = [800, 800, 900, 900, 1000, 1000, 1000, 1000, 1200, 1200, 1500, 2000]
+  alerts           = [{ percentage = 100 }]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["ydDBFKVuz9kGlFDex8cN"]
+    }
+  ]
+}
+
+# Grow the amount by 2% each month and carry unspent budget of up to three
+# previous months into the current one. amount stays the configured value;
+# current_period_amount is the amount after growth and rollover.
+resource "doit_budget" "growing" {
+  name              = "Growing Budget"
+  currency          = "USD"
+  type              = "recurring"
+  amount            = 1000
+  time_interval     = "month"
+  start_period      = time_static.now.unix * 1000
+  growth_per_period = 2
+  allow_growth      = true
+  rollover = {
+    enabled = true
+    limit   = 3
+  }
+  alerts = [{ percentage = 100 }]
+  scopes = [
+    {
+      type   = "allocation_rule"
+      id     = "allocation_rule"
+      mode   = "is"
+      values = ["ydDBFKVuz9kGlFDex8cN"]
+    }
+  ]
+}

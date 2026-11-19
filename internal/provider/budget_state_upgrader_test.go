@@ -294,6 +294,20 @@ func TestBudgetStateUpgradeV0ToV1(t *testing.T) {
 				}
 			}
 
+			// Attributes V0 never had are null until the next Read fills them.
+			for _, tc := range []struct {
+				name  string
+				value interface{ IsNull() bool }
+			}{
+				{"AllowGrowth", upgradedModel.AllowGrowth},
+				{"Rollover", upgradedModel.Rollover},
+				{"CurrentPeriodAmount", upgradedModel.CurrentPeriodAmount},
+			} {
+				if !tc.value.IsNull() {
+					t.Errorf("Expected %s to be null after upgrade, got %v", tc.name, tc.value)
+				}
+			}
+
 			t.Logf("Successfully upgraded state for test: %s", tt.name)
 		})
 	}

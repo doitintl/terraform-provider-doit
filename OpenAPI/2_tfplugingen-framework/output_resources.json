@@ -1299,10 +1299,17 @@
 						}
 					},
 					{
+						"name": "allow_growth",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`."
+						}
+					},
+					{
 						"name": "amount",
 						"float64": {
 							"computed_optional_required": "computed_optional",
-							"description": "Budget period amount\nrequired: true(if usePrevSpend is false)"
+							"description": "Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set."
 						}
 					},
 					{
@@ -1402,7 +1409,7 @@
 							"default": {
 								"static": 0
 							},
-							"description": "Periodical growth percentage in recurring budget"
+							"description": "Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true."
 						}
 					},
 					{
@@ -1523,6 +1530,29 @@
 						}
 					},
 					{
+						"name": "rollover",
+						"single_nested": {
+							"computed_optional_required": "computed_optional",
+							"attributes": [
+								{
+									"name": "enabled",
+									"bool": {
+										"computed_optional_required": "required",
+										"description": "Whether unspent budget carries over."
+									}
+								},
+								{
+									"name": "limit",
+									"int64": {
+										"computed_optional_required": "required",
+										"description": "Number of previous periods whose unspent budget carries over, at most 90 for `day`, 52 for `week`, 12 for `month`, 8 for `quarter` and 5 for `year`. At least 1 when `enabled` is true."
+									}
+								}
+							],
+							"description": "Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`."
+						}
+					},
+					{
 						"name": "scopes",
 						"list_nested": {
 							"computed_optional_required": "required",
@@ -1634,7 +1664,7 @@
 							"element_type": {
 								"float64": {}
 							},
-							"description": "List of seasonal amounts for recurring budgets with different amounts per period."
+							"description": "Amount for each period of a recurring budget, in calendar order. Requires 7 values for `day` (Monday to Sunday), 12 for `month`, 4 for `quarter` and 5 for `year` (counted from the start year). Not allowed for fixed budgets or the `week` interval. When set, `amount` must be omitted, and `currentPeriodAmount` returns the amount for the current period. Cannot be combined with `allowGrowth`, an enabled `rollover` or `usePrevSpend`. To remove seasonal amounts, send an empty array together with `amount` or `usePrevSpend`."
 						}
 					},
 					{
@@ -1665,7 +1695,7 @@
 							"default": {
 								"static": false
 							},
-							"description": "Use the last period's spend as the target amount for recurring budgets"
+							"description": "Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`."
 						}
 					},
 					{
@@ -1673,6 +1703,13 @@
 						"int64": {
 							"computed_optional_required": "computed",
 							"description": "Creation time (in UNIX timestamp)."
+						}
+					},
+					{
+						"name": "current_period_amount",
+						"float64": {
+							"computed_optional_required": "computed",
+							"description": "Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alerts are evaluated against this amount."
 						}
 					},
 					{

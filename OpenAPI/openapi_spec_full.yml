@@ -22764,18 +22764,22 @@ components:
       properties:
         alerts:
           type: array
-          description: List of up to three thresholds defined as a percentage of amount.
+          description: List of up to three thresholds defined as a percentage of `currentPeriodAmount`.
           items:
             $ref: "#/components/schemas/ExternalBudgetAlert"
         amount:
           type: number
           description: |-
-            Budget period amount
-            required: true(if usePrevSpend is false)
+            Budget period amount, as set on create or update. Growth and rollover do not change it; see `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`.
           format: double
+        currentPeriodAmount:
+          type: number
+          description: Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alerts are evaluated against this amount.
+          format: double
+          readOnly: true
         seasonalAmounts:
           type: array
-          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          description: Amount for each period of a recurring budget, in calendar order. When set, `amount` is omitted and `currentPeriodAmount` returns the amount for the current period.
           items:
             type: number
             format: double
@@ -22807,11 +22811,16 @@ components:
         forecastedUtilization:
           type: number
           format: double
+        allowGrowth:
+          type: boolean
+          description: Whether `growthPerPeriod` is applied to the amount each period.
         growthPerPeriod:
           type: number
-          description: Periodical growth percentage in recurring budgets.
+          description: Growth percentage per period, applied when `allowGrowth` is true.
           format: double
           default: 0
+        rollover:
+          $ref: "#/components/schemas/BudgetRollover"
         id:
           type: string
           description: |-
@@ -22862,7 +22871,7 @@ components:
           format: int64
         usePrevSpend:
           type: boolean
-          description: Use the last period's spend as the target amount for recurring budgets.
+          description: Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
           default: false
     BudgetListItem:
       type: object
@@ -22874,6 +22883,11 @@ components:
             $ref: "#/components/schemas/AlertThreshold"
         amount:
           type: number
+          description: Budget period amount, as set on create or update. See `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`.
+          format: double
+        currentPeriodAmount:
+          type: number
+          description: Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alert thresholds are calculated from this amount.
           format: double
         budgetName:
           type: string
@@ -22939,6 +22953,20 @@ components:
         unknown:
           type: integer
           format: int64
+    BudgetRollover:
+      type: object
+      description: Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`.
+      required:
+        - enabled
+        - limit
+      properties:
+        enabled:
+          type: boolean
+          description: Whether unspent budget carries over.
+        limit:
+          type: integer
+          description: Number of previous periods whose unspent budget carries over, at most 90 for `day`, 52 for `week`, 12 for `month`, 8 for `quarter` and 5 for `year`. At least 1 when `enabled` is true.
+          format: int64
     BudgetCreateUpdateAlert:
       type: object
       description: Threshold settings for budget alerts.
@@ -22963,13 +22991,11 @@ components:
             $ref: "#/components/schemas/BudgetCreateUpdateAlert"
         amount:
           type: number
-          description: |-
-            Budget period amount
-            required: true(if usePrevSpend is false)
+          description: Budget period amount. Required unless `usePrevSpend` is true or `seasonalAmounts` is set. Must be omitted when `seasonalAmounts` is set.
           format: double
         seasonalAmounts:
           type: array
-          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          description: Amount for each period of a recurring budget, in calendar order. Requires 7 values for `day` (Monday to Sunday), 12 for `month`, 4 for `quarter` and 5 for `year` (counted from the start year). Not allowed for fixed budgets or the `week` interval. When set, `amount` must be omitted, and `currentPeriodAmount` returns the amount for the current period. Cannot be combined with `allowGrowth`, an enabled `rollover` or `usePrevSpend`. To remove seasonal amounts, send an empty array together with `amount` or `usePrevSpend`.
           items:
             type: number
             format: double
@@ -22992,11 +23018,16 @@ components:
             Fixed budget end date
             required: true(if budget type is fixed)
           format: int64
+        allowGrowth:
+          type: boolean
+          description: Apply `growthPerPeriod` to the amount each period. If omitted, it is true when `growthPerPeriod` is above 0. Cannot be true together with `seasonalAmounts`.
         growthPerPeriod:
           type: number
-          description: Periodical growth percentage in recurring budget
+          description: Growth percentage per period, applied when `allowGrowth` is true. If `allowGrowth` is omitted, a value above 0 sets it to true.
           format: double
           default: 0
+        rollover:
+          $ref: "#/components/schemas/BudgetRollover"
         metric:
           type: string
           description: Budget metric
@@ -23044,7 +23075,7 @@ components:
         usePrevSpend:
           type: boolean
           description: Use the last period's spend as the target amount for recurring
-            budgets
+            budgets. Cannot be combined with `seasonalAmounts`.
           default: false
     BudgetUpdateRequest:
       type: object
@@ -23057,13 +23088,11 @@ components:
             $ref: "#/components/schemas/BudgetCreateUpdateAlert"
         amount:
           type: number
-          description: |-
-            Budget period amount
-            required: true(if usePrevSpend is false)
+          description: Budget period amount. Must be omitted when the budget has `seasonalAmounts`. Required when removing `seasonalAmounts`, unless `usePrevSpend` is true.
           format: double
         seasonalAmounts:
           type: array
-          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          description: Amount for each period of a recurring budget, in calendar order. Requires 7 values for `day` (Monday to Sunday), 12 for `month`, 4 for `quarter` and 5 for `year` (counted from the start year). Not allowed for fixed budgets or the `week` interval. When set, `amount` must be omitted, and `currentPeriodAmount` returns the amount for the current period. Cannot be combined with `allowGrowth`, an enabled `rollover` or `usePrevSpend`. To remove seasonal amounts, send an empty array together with `amount` or `usePrevSpend`.
           items:
             type: number
             format: double
@@ -23086,11 +23115,16 @@ components:
             Fixed budget end date
             required: true(if budget type is fixed)
           format: int64
+        allowGrowth:
+          type: boolean
+          description: Apply `growthPerPeriod` to the amount each period. Cannot be true together with `seasonalAmounts`; to switch a budget with growth to seasonal amounts, send `allowGrowth` false in the same request.
         growthPerPeriod:
           type: number
-          description: Periodical growth percentage in recurring budget
+          description: Growth percentage per period, applied when `allowGrowth` is true. Changing it does not change `allowGrowth`.
           format: double
           default: 0
+        rollover:
+          $ref: "#/components/schemas/BudgetRollover"
         metric:
           type: string
           description: Budget metric
@@ -23137,7 +23171,7 @@ components:
         usePrevSpend:
           type: boolean
           description: Use the last period's spend as the target amount for recurring
-            budgets
+            budgets. Cannot be combined with `seasonalAmounts`.
           default: false
     BudgetSuggestion:
       type: object

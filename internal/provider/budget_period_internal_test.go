@@ -165,7 +165,8 @@ func TestBudgetPeriodModifyPlan(t *testing.T) {
 			if tc.destroy {
 				planRaw = nullRaw
 			}
-			resp := &resource.ModifyPlanResponse{}
+			// The framework hands ModifyPlan a copy of the plan in the response.
+			resp := &resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: config.Schema, Raw: planRaw.Copy()}}
 			(&budgetResource{}).ModifyPlan(ctx, resource.ModifyPlanRequest{
 				Config: config,
 				State:  tfsdk.State{Schema: config.Schema, Raw: stateRaw},
@@ -185,7 +186,7 @@ func TestBudgetPeriodModifyPlanMissingRecurringInterval(t *testing.T) {
 		"start_period":  types.Int64Value(budgetMinStartPeriodMs),
 		"time_interval": types.StringNull(),
 	})
-	resp := &resource.ModifyPlanResponse{}
+	resp := &resource.ModifyPlanResponse{Plan: tfsdk.Plan{Schema: config.Schema, Raw: config.Raw.Copy()}}
 	(&budgetResource{}).ModifyPlan(ctx, resource.ModifyPlanRequest{
 		Config: config,
 		State:  tfsdk.State{Schema: config.Schema, Raw: tftypes.NewValue(config.Raw.Type(), nil)},

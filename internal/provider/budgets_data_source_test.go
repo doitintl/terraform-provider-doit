@@ -43,6 +43,7 @@ func TestAccBudgetsDataSource_MaxResultsOnly(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.doit_budgets.limited", "page_token"),
 					// Verify risk attributes
 					resource.TestCheckResourceAttrSet("data.doit_budgets.limited", "budgets.0.risk_status"),
+					resource.TestCheckResourceAttrSet("data.doit_budgets.limited", "budgets.0.current_period_amount"),
 					resource.TestCheckResourceAttrSet("data.doit_budgets.limited", "risk_aggregations.total"),
 				),
 			},

@@ -49,31 +49,33 @@ output "budget_time_period" {
 
 ### Read-Only
 
-- `alerts` (Attributes List) List of up to three thresholds defined as a percentage of amount. (see [below for nested schema](#nestedatt--alerts))
-- `amount` (Number) Budget period amount
-required: true(if usePrevSpend is false)
+- `alerts` (Attributes List) List of up to three thresholds defined as a percentage of `currentPeriodAmount`. (see [below for nested schema](#nestedatt--alerts))
+- `allow_growth` (Boolean) Whether `growthPerPeriod` is applied to the amount each period.
+- `amount` (Number) Budget period amount, as set on create or update. Growth and rollover do not change it; see `currentPeriodAmount` for the amount that applies to the current period. For budgets with `usePrevSpend`, this is the amount for the current period. Omitted for budgets with `seasonalAmounts`.
 - `collaborators` (Attributes List) List of permitted users to view/edit the report. (see [below for nested schema](#nestedatt--collaborators))
 - `create_time` (Number) Creation time (in UNIX timestamp).
 - `currency` (String) Currency code for monetary values.
+- `current_period_amount` (Number) Budget amount for the current period, after growth, rollover and seasonal amounts are applied. Alerts are evaluated against this amount.
 - `current_utilization` (Number)
 - `data_source` (String) Data source used to evaluate the budget.
 - `description` (String) Budget description.
 - `end_period` (Number) Fixed budget end date (in UNIX timestamp)
 required: true(if budget type is fixed)
 - `forecasted_utilization` (Number)
-- `growth_per_period` (Number) Periodical growth percentage in recurring budgets.
+- `growth_per_period` (Number) Growth percentage per period, applied when `allowGrowth` is true.
 - `metric` (String) Budget metric - currently fixed to "cost"
 - `name` (String) Budget Name
 - `public` (String) Public sharing access level for the budget.
 - `recipients` (List of String) List of emails to notify when reaching alert threshold.
 - `recipients_slack_channels` (Attributes List) List of Slack channels to notify when reaching alert threshold. (see [below for nested schema](#nestedatt--recipients_slack_channels))
+- `rollover` (Attributes) Carries unspent budget from previous periods into the current one. Cannot be enabled together with `seasonalAmounts`. (see [below for nested schema](#nestedatt--rollover))
 - `scopes` (Attributes List) The filters selected define the scope of the budget. (see [below for nested schema](#nestedatt--scopes))
-- `seasonal_amounts` (List of Number) List of seasonal amounts for recurring budgets with different amounts per period.
+- `seasonal_amounts` (List of Number) Amount for each period of a recurring budget, in calendar order. When set, `amount` is omitted and `currentPeriodAmount` returns the amount for the current period.
 - `start_period` (Number) Budget start date (in UNIX timestamp).
 - `time_interval` (String) Recurring budget interval can be one of: ["day", "week", "month", "quarter" ,"year"]
 - `type` (String) budget type can be one of: ["fixed", "recurring"]
 - `update_time` (Number) Update time (in UNIX timestamp).
-- `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets.
+- `use_prev_spend` (Boolean) Use the last period's spend as the target amount for recurring budgets. Cannot be combined with `seasonalAmounts`.
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`
@@ -113,6 +115,15 @@ Read-Only:
 - `shared` (Boolean)
 - `type` (String)
 - `workspace` (String)
+
+
+<a id="nestedatt--rollover"></a>
+### Nested Schema for `rollover`
+
+Read-Only:
+
+- `enabled` (Boolean) Whether unspent budget carries over.
+- `limit` (Number) Number of previous periods whose unspent budget carries over, at most 90 for `day`, 52 for `week`, 12 for `month`, 8 for `quarter` and 5 for `year`. At least 1 when `enabled` is true.
 
 
 <a id="nestedatt--scopes"></a>
