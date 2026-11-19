@@ -45,22 +45,20 @@ func overlayBudgetComputedFields(ctx context.Context, apiResp *models.BudgetAPI,
 	// ── Computed-only fields: always from resolved ──
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
-	// update_time: guard with IsUnknown() — on Update the framework copies
-	// the prior state (Known) into the plan, but the API returns a new timestamp.
+	// update_time, current_period_amount and the utilizations change over
+	// time: ModifyPlan marks them unknown on every update, and a known plan
+	// value is the stored one of a resource that is not being updated.
 	if plan.UpdateTime.IsUnknown() {
-		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.UpdateTime = resolved.UpdateTime
 	}
-	// current_period_amount and the utilizations change over time: ModifyPlan
-	// marks them unknown on every update, and a known plan value is the
-	// stored one of a resource that is not being updated.
 	if plan.CurrentPeriodAmount.IsUnknown() {
-		plan.CurrentPeriodAmount = resolved.CurrentPeriodAmount //nolint:overlaycheck // volatile, marked unknown on update by ModifyPlan
+		plan.CurrentPeriodAmount = resolved.CurrentPeriodAmount
 	}
 	if plan.CurrentUtilization.IsUnknown() {
-		plan.CurrentUtilization = resolved.CurrentUtilization //nolint:overlaycheck // volatile, marked unknown on update by ModifyPlan
+		plan.CurrentUtilization = resolved.CurrentUtilization
 	}
 	if plan.ForecastedUtilization.IsUnknown() {
-		plan.ForecastedUtilization = resolved.ForecastedUtilization //nolint:overlaycheck // volatile, marked unknown on update by ModifyPlan
+		plan.ForecastedUtilization = resolved.ForecastedUtilization
 	}
 
 	// ── Optional+Computed scalar fields: only when Unknown ──

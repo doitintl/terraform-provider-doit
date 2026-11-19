@@ -247,12 +247,12 @@ func overlayCustomerNotificationComputedFields(ctx context.Context, apiResp *mod
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
 
-	// update_time and etag: Computed-only but change server-side on every Update.
+	// update_time and etag: volatile, marked unknown on every update by ModifyPlan.
 	if plan.UpdateTime.IsUnknown() {
-		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.UpdateTime = resolved.UpdateTime
 	}
 	if plan.Etag.IsUnknown() {
-		plan.Etag = resolved.Etag //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.Etag = resolved.Etag
 	}
 
 	// name and destinations: Required — never touch. settings is Required,

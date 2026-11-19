@@ -27,6 +27,7 @@ var (
 	_ resource.Resource                = (*datahubDatasetResource)(nil)
 	_ resource.ResourceWithConfigure   = (*datahubDatasetResource)(nil)
 	_ resource.ResourceWithImportState = (*datahubDatasetResource)(nil)
+	_ resource.ResourceWithModifyPlan  = (*datahubDatasetResource)(nil)
 )
 
 func NewDatahubDatasetResource() resource.Resource {
@@ -92,6 +93,12 @@ func (r *datahubDatasetResource) Schema(ctx context.Context, _ resource.SchemaRe
 	})
 
 	resp.Schema = s
+}
+
+// ModifyPlan marks the server-maintained attributes unknown on every update,
+// including one that only clears an attribute.
+func (r *datahubDatasetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("records"), path.Root("updated_by"), path.Root("last_updated"))
 }
 
 func (r *datahubDatasetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

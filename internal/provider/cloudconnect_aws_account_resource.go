@@ -30,6 +30,7 @@ var (
 	_ resource.ResourceWithConfigure        = (*cloudconnectAwsAccountResource)(nil)
 	_ resource.ResourceWithImportState      = (*cloudconnectAwsAccountResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*cloudconnectAwsAccountResource)(nil)
+	_ resource.ResourceWithModifyPlan       = (*cloudconnectAwsAccountResource)(nil)
 )
 
 // NewCloudconnectAwsAccountResource creates a new cloud connect AWS account resource instance.
@@ -89,7 +90,8 @@ func (r *cloudconnectAwsAccountResource) Schema(ctx context.Context, _ resource.
 
 	// supported_features: Computed-only list. No UseStateForUnknown — the field
 	// can change when IAM permissions are modified externally, and carrying stale
-	// values would risk "inconsistent result" errors after apply.
+	// values would risk "inconsistent result" errors after apply. ModifyPlan
+	// marks it unknown on every update.
 
 	// s3bucket and s3bucket_region are mutually dependent — validate at plan time.
 	// Clearable (Category A): the user clears S3 by removing "real-time-data"
@@ -115,6 +117,12 @@ func (r *cloudconnectAwsAccountResource) Schema(ctx context.Context, _ resource.
 
 	rejectNullCollectionElements(s.Attributes)
 	resp.Schema = s
+}
+
+// ModifyPlan marks supported_features unknown on every update, including one
+// that only clears s3bucket and s3bucket_region.
+func (r *cloudconnectAwsAccountResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("supported_features"))
 }
 
 func (r *cloudconnectAwsAccountResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {

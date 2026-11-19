@@ -135,6 +135,7 @@ func modifyPlanTestModel(t *testing.T, rules []attr.Value, tv timeouts.Value) al
 
 type modifyPlanResult struct {
 	rules       []resource_allocation.RulesValue
+	updateTime  types.Int64
 	diagnostics diag.Diagnostics
 }
 
@@ -188,7 +189,40 @@ func runModifyPlan(t *testing.T, sch schema.Schema, stateModel, planModel alloca
 	if diags.HasError() {
 		t.Fatalf("unexpected rules ElementsAs diags: %v", diags)
 	}
-	return modifyPlanResult{rules: resultRules, diagnostics: resp.Diagnostics}
+	return modifyPlanResult{rules: resultRules, updateTime: resultModel.UpdateTime, diagnostics: resp.Diagnostics}
+}
+
+// TestAllocationResource_ModifyPlan_RuleMatchingKeepsUpdateTimeUnknown verifies
+// that the rule ID matching, which sets the whole plan, keeps update_time
+// unknown after planVolatileAttributesUnknownOnUpdate marked it. The plan
+// carries the stored update_time, as in an update whose only change comes from
+// a clearing modifier.
+func TestAllocationResource_ModifyPlan_RuleMatchingKeepsUpdateTimeUnknown(t *testing.T) {
+	sch := modifyPlanTestSchema(t)
+	tv := modifyPlanTestTimeouts(t, sch)
+	comp := modifyPlanTestComponentList(t, modifyPlanTestComponent(t, "country", []string{"JP"}))
+
+	rule := func(id types.String, name, action string) attr.Value {
+		return modifyPlanTestRule(t, map[string]attr.Value{
+			"id":          id,
+			"name":        types.StringValue(name),
+			"action":      types.StringValue(action),
+			"formula":     types.StringValue("A"),
+			"description": types.StringNull(),
+			"components":  comp,
+		})
+	}
+	stateModel := modifyPlanTestModel(t, []attr.Value{rule(types.StringValue("id-a"), "rule-a", "create")}, tv)
+	planModel := modifyPlanTestModel(t, []attr.Value{rule(types.StringNull(), "rule-a-renamed", "update")}, tv)
+
+	result := runModifyPlan(t, sch, stateModel, planModel)
+
+	if got := result.rules[0].Id.ValueString(); got != "id-a" {
+		t.Fatalf("expected the renamed rule to get id-a, got %q", got)
+	}
+	if !result.updateTime.IsUnknown() {
+		t.Errorf("expected update_time to be unknown, got %s", result.updateTime)
+	}
 }
 
 // TestAllocationResource_ModifyPlan_DeleteAndRenameRuleWithoutId verifies that when Rule A (index 0)

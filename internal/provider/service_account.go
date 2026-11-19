@@ -112,15 +112,12 @@ func overlayServiceAccountComputedFields(ctx context.Context, apiResp *models.Se
 	plan.CreatedByUserId = resolved.CreatedByUserId
 	plan.CreateTime = resolved.CreateTime
 
-	// update_time and etag: Computed-only but change server-side on every Update.
-	// On Create the plan value is Unknown -> overlay fills from API.
-	// On Update the framework copies the prior state into the plan.
-	// Unconditional assignment would cause "inconsistent result" if the plan had a known value.
+	// update_time and etag: volatile, marked unknown on every update by ModifyPlan.
 	if plan.UpdateTime.IsUnknown() {
-		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.UpdateTime = resolved.UpdateTime
 	}
 	if plan.Etag.IsUnknown() {
-		plan.Etag = resolved.Etag //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.Etag = resolved.Etag
 	}
 
 	// Optional+Computed clearable fields:

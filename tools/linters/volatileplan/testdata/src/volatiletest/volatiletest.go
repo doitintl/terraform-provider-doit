@@ -5,6 +5,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 func useEmptyForUnknownWhenConfigNull() {}
@@ -12,80 +14,94 @@ func useEmptyForUnknownWhenConfigNull() {}
 func planVolatileAttributesUnknownOnUpdate(_ context.Context, _ resource.ModifyPlanRequest, _ *resource.ModifyPlanResponse, _ ...path.Path) {
 }
 
-// --- GOOD: clearing modifier and etag, ModifyPlan marks it unknown ---
+// --- GOOD: clearing modifier, ModifyPlan marks every volatile attribute unknown ---
 
 type plannedResource struct{}
 
 func (r *plannedResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := PlannedResourceSchema(ctx)
 	useEmptyForUnknownWhenConfigNull()
-	resp.Schema = PlannedResourceSchema(ctx)
+	resp.Schema = s
 }
 
 func (r *plannedResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"), path.Root("update_time"))
 }
 
-// --- GOOD: etag alone is enough ---
+// --- GOOD: stable attributes have UseStateForUnknown, in Schema() or in the generated schema ---
 
-type etagOnlyResource struct{}
+type stableResource struct{}
 
-func (r *etagOnlyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *stableResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	s := StableResourceSchema(ctx)
 	useEmptyForUnknownWhenConfigNull()
-	resp.Schema = EtagOnlyResourceSchema(ctx)
+	if attr, ok := s.Attributes["id"].(schema.StringAttribute); ok {
+		attr.PlanModifiers = append(attr.PlanModifiers, stringplanmodifier.UseStateForUnknown())
+		s.Attributes["id"] = attr
+	}
+	resp.Schema = s
 }
 
-func (r *etagOnlyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"))
+func (r *stableResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("update_time"))
 }
 
-// --- BAD: clearing modifier and etag, no ModifyPlan ---
+// --- BAD: clearing modifier and an etag, no ModifyPlan ---
 
 type unplannedResource struct{}
 
-func (r *unplannedResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `clearing plan modifier and a Computed etag`
+func (r *unplannedResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `clearing plan modifier.*Computed-only attribute\(s\) etag `
+	s := UnplannedResourceSchema(ctx)
 	useEmptyForUnknownWhenConfigNull()
-	resp.Schema = UnplannedResourceSchema(ctx)
+	resp.Schema = s
 }
 
 // --- BAD: the helper is called without any path ---
 
 type noPathsResource struct{}
 
-func (r *noPathsResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `clearing plan modifier and a Computed etag`
+func (r *noPathsResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `Computed-only attribute\(s\) etag `
+	s := NoPathsResourceSchema(ctx)
 	useEmptyForUnknownWhenConfigNull()
-	resp.Schema = NoPathsResourceSchema(ctx)
+	resp.Schema = s
 }
 
 func (r *noPathsResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	planVolatileAttributesUnknownOnUpdate(ctx, req, resp)
 }
 
-// --- BAD: the helper is called with update_time only ---
+// --- BAD: the helper misses some attributes; all of them are listed in one report ---
 
-type timestampOnlyResource struct{}
+type partialResource struct{}
 
-func (r *timestampOnlyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `clearing plan modifier and a Computed etag`
+func (r *partialResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) { // want `Computed-only attribute\(s\) records, update_time `
+	s := PartialResourceSchema(ctx)
 	useEmptyForUnknownWhenConfigNull()
-	resp.Schema = TimestampOnlyResourceSchema(ctx)
+	resp.Schema = s
 }
 
-func (r *timestampOnlyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("update_time"))
+func (r *partialResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"))
 }
 
-// --- GOOD: update_time alone is replaced by the next Read ---
-
-type noEtagResource struct{}
-
-func (r *noEtagResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	useEmptyForUnknownWhenConfigNull()
-	resp.Schema = NoEtagResourceSchema(ctx)
-}
-
-// --- GOOD: etag without a clearing modifier is already planned unknown ---
+// --- GOOD: without a clearing modifier the framework plans them unknown ---
 
 type noClearingResource struct{}
 
 func (r *noClearingResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = NoClearingResourceSchema(ctx)
+	s := NoClearingResourceSchema(ctx)
+	resp.Schema = s
+}
+
+// --- GOOD: the schema is assigned directly, without a local variable ---
+
+type directResource struct{}
+
+func (r *directResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	useEmptyForUnknownWhenConfigNull()
+	resp.Schema = DirectResourceSchema(ctx)
+}
+
+func (r *directResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("etag"))
 }

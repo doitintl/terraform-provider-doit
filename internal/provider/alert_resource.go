@@ -141,7 +141,9 @@ func (r *alertResource) ConfigValidators(_ context.Context) []resource.ConfigVal
 	}
 }
 
-// ModifyPlan validates destination invariants across create and update semantics.
+// ModifyPlan validates destination invariants across create and update
+// semantics. It then marks update_time and last_alerted unknown on every
+// update, which the API changes.
 func (r *alertResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if req.Plan.Raw.Type() == nil || req.Plan.Raw.IsNull() {
 		return
@@ -153,6 +155,10 @@ func (r *alertResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 	}
 
 	modifyAlertSlackWorkspacePlan(ctx, req, resp)
+
+	// After the workspace change above: like the clearing modifiers, it can
+	// plan an update on its own.
+	planVolatileAttributesUnknownOnUpdate(ctx, req, resp, path.Root("update_time"), path.Root("last_alerted"))
 }
 
 // modifyAlertSlackWorkspacePlan ensures that when a channel has shared = true,

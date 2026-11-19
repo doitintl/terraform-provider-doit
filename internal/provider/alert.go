@@ -38,12 +38,13 @@ func overlayAlertComputedFields(ctx context.Context, apiResp *models.Alert, plan
 	// ── Computed-only fields: always from resolved ──
 	plan.Id = resolved.Id
 	plan.CreateTime = resolved.CreateTime
-	// Guarded: on Update the prior state is Known, but the API returns a new timestamp.
+	// update_time and last_alerted: volatile, marked unknown on every update by
+	// ModifyPlan.
 	if plan.UpdateTime.IsUnknown() {
-		plan.UpdateTime = resolved.UpdateTime //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.UpdateTime = resolved.UpdateTime
 	}
 	if plan.LastAlerted.IsUnknown() {
-		plan.LastAlerted = resolved.LastAlerted //nolint:overlaycheck // guarded to avoid inconsistent result on Update
+		plan.LastAlerted = resolved.LastAlerted
 	}
 
 	// ── Name: Required — never touch ──

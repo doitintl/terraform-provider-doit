@@ -234,6 +234,7 @@ func testSchemaFacts(reverse bool) *schemaparser.SchemaFacts {
 				HasDefault:             true,
 				DefaultValue:           int64(42),
 				RequiresReplaceOnClear: true,
+				VolatileOnUpdate:       true,
 			},
 		},
 		{

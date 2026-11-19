@@ -3670,7 +3670,8 @@ func TestAccAllocation_AnomalyDetectionLifecycle(t *testing.T) {
 				},
 			},
 			// Step 6: omit the attribute — the clearing modifier plans false and the
-			// API honors it. A null here would mean the modifier is wrong.
+			// API honors it. A null here would mean the modifier is wrong. The
+			// modifier is the only change, so update_time must still be unknown.
 			{
 				Config: testAccAllocationAnomalyDetection(rName, nil),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -3679,6 +3680,7 @@ func TestAccAllocation_AnomalyDetectionLifecycle(t *testing.T) {
 							"doit_allocation.anomaly",
 							plancheck.ResourceActionUpdate,
 						),
+						plancheck.ExpectUnknownValue("doit_allocation.anomaly", tfjsonpath.New("update_time")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -4563,7 +4565,8 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 					},
 				},
 			},
-			// Step 3: Clear end_date on inline rule.
+			// Step 3: Clear end_date on inline rule. The clearing modifier is the only
+			// change, so update_time must still be unknown.
 			{
 				Config: testAccAllocationGroupValidityPeriods(rName, &clearedEndDatePeriods),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -4572,6 +4575,7 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 							"doit_allocation.group",
 							plancheck.ResourceActionUpdate,
 						),
+						plancheck.ExpectUnknownValue("doit_allocation.group", tfjsonpath.New("update_time")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{
@@ -4670,7 +4674,8 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 					},
 				},
 			},
-			// Step 9: Clear validity_periods by omitting it.
+			// Step 9: Clear validity_periods by omitting it. The clearing modifier is the only
+			// change, so update_time must still be unknown.
 			{
 				Config: testAccAllocationGroupValidityPeriods(rName, nil),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -4679,6 +4684,7 @@ func TestAccAllocation_GroupValidityPeriods(t *testing.T) {
 							"doit_allocation.group",
 							plancheck.ResourceActionUpdate,
 						),
+						plancheck.ExpectUnknownValue("doit_allocation.group", tfjsonpath.New("update_time")),
 					},
 				},
 				ConfigStateChecks: []statecheck.StateCheck{

@@ -652,3 +652,36 @@ func BadNestedSetMissingResourceSchema(ctx context.Context) schema.Schema {
 		},
 	}
 }
+
+// VolatileResourceSchema — update_time is passed to
+// planVolatileAttributesUnknownOnUpdate in ModifyPlan, last_alerted is not.
+func VolatileResourceSchema(ctx context.Context) schema.Schema {
+	return schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"update_time": schema.StringAttribute{
+				Computed: true,
+			},
+			"last_alerted": schema.StringAttribute{
+				Computed: true,
+			},
+			"etag": schema.StringAttribute{
+				Computed: true,
+			},
+			"description": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
+}
+
+type VolatileModel struct {
+	Id          types.String
+	UpdateTime  types.String
+	LastAlerted types.String
+	Etag        types.String
+	Description types.String
+}

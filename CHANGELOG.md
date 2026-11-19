@@ -18,6 +18,10 @@
 
 - **resource/doit_budget**: An update that only removed `scopes[].values` or `scopes[].mode` from the configuration planned `update_time`, `current_utilization` and `forecasted_utilization` with their stored values instead of unknown. They are now planned unknown on every update, as is `current_period_amount`
 
+- **resource/doit_allocation, resource/doit_alert, resource/doit_customer_subscription**: An update that only removed an attribute from the configuration (such as `anomaly_detection` or `config.scopes[].mode`) planned `update_time` (allocation, alert), `last_alerted` (alert) and `name` (subscription) with their stored values, so state kept the old values until the next refresh. They are now planned unknown on every update
+
+- **resource/doit_datahub_dataset**: An update that only removed `description`, `display_name` or `logo_name` from the configuration planned `records`, `updated_by` and `last_updated` with their stored values, so the apply could fail with "Provider produced inconsistent result" when the API returned new ones (for example when another user or service account had last updated the dataset). They are now planned unknown on every update
+
 ## v1.12.0 (2026-11-06)
 
 ### BREAKING CHANGES

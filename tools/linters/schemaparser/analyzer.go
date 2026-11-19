@@ -82,8 +82,12 @@ type AttrInfo struct {
 	// RequiresReplaceOnClear is true when the resource's ModifyPlan method calls
 	// requiresReplaceWhenCleared(..., <path>) for this attribute (Category C:
 	// removing it from config forces a destroy+create instead of an in-place
-	// clear). Populated by applyReplaceOnClearFacts.
+	// clear). Populated by applyModifyPlanFacts.
 	RequiresReplaceOnClear bool
+	// VolatileOnUpdate is true when the resource's ModifyPlan method passes
+	// this attribute's path to planVolatileAttributesUnknownOnUpdate, which
+	// plans it unknown on every update. Populated by applyModifyPlanFacts.
+	VolatileOnUpdate bool
 }
 
 // SchemaInfo holds the parsed schema for a single resource or data source.
@@ -395,7 +399,7 @@ func unquote(expr ast.Expr) string {
 func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
 	// receiverToSchema maps a resource receiver type name (e.g. "reportResource")
 	// to the base generated schema name its Schema() method references. This lets
-	// applyReplaceOnClearFacts associate a ModifyPlan method (same receiver) with
+	// applyModifyPlanFacts associate a ModifyPlan method (same receiver) with
 	// the schema it governs.
 	receiverToSchema := make(map[string]string)
 
@@ -413,6 +417,13 @@ func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
 		// Find the base schema call: s := resource_xxx.XxxResourceSchema(ctx)
 		baseSchemaName, schemaVar := findBaseSchemaCall(fn)
 		if baseSchemaName == "" || schemaVar == "" {
+			// resp.Schema = resource_xxx.XxxResourceSchema(ctx) has no overrides,
+			// but its ModifyPlan facts still belong to that schema.
+			if name := findDirectSchemaAssignment(fn); name != "" {
+				if recv := receiverTypeName(fn); recv != "" {
+					receiverToSchema[recv] = name
+				}
+			}
 			return
 		}
 
@@ -439,9 +450,9 @@ func applySchemaOverrides(insp *inspector.Inspector, facts *SchemaFacts) {
 		facts.Schemas[baseSchemaName] = merged
 	})
 
-	// Apply Category C facts from ModifyPlan methods after all Schema() overrides
-	// (and the receiver→schema map) are in place.
-	applyReplaceOnClearFacts(insp, facts, receiverToSchema)
+	// Apply facts from ModifyPlan methods after all Schema() overrides (and the
+	// receiver→schema map) are in place.
+	applyModifyPlanFacts(insp, facts, receiverToSchema)
 }
 
 // receiverTypeName returns the receiver type name of a method declaration,
@@ -461,11 +472,13 @@ func receiverTypeName(fn *ast.FuncDecl) string {
 	return ""
 }
 
-// applyReplaceOnClearFacts scans ModifyPlan methods for
-// requiresReplaceWhenCleared[...](..., <path>) calls and marks the referenced
-// attribute paths as RequiresReplaceOnClear (Category C) on the schema governed
-// by the method's receiver.
-func applyReplaceOnClearFacts(insp *inspector.Inspector, facts *SchemaFacts, receiverToSchema map[string]string) {
+// applyModifyPlanFacts scans ModifyPlan methods for helper calls and records
+// them on the schema governed by the method's receiver:
+//   - requiresReplaceWhenCleared[...](..., <path>) marks the path as
+//     RequiresReplaceOnClear (Category C).
+//   - planVolatileAttributesUnknownOnUpdate(ctx, req, resp, <paths>...) marks
+//     each path as VolatileOnUpdate.
+func applyModifyPlanFacts(insp *inspector.Inspector, facts *SchemaFacts, receiverToSchema map[string]string) {
 	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 	insp.Preorder(nodeFilter, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
@@ -490,12 +503,19 @@ func applyReplaceOnClearFacts(insp *inspector.Inspector, facts *SchemaFacts, rec
 			if !ok {
 				return true
 			}
-			if !isRequiresReplaceWhenClearedCall(call) || len(call.Args) == 0 {
-				return true
-			}
-			// The path is the last argument.
-			if p := pathExprToDotted(call.Args[len(call.Args)-1]); p != "" {
-				markRequiresReplaceOnClear(schema, p)
+			switch {
+			case isRequiresReplaceWhenClearedCall(call) && len(call.Args) > 0:
+				// The path is the last argument.
+				if p := pathExprToDotted(call.Args[len(call.Args)-1]); p != "" {
+					markRequiresReplaceOnClear(schema, p)
+				}
+			case isVolatileHelperCall(call) && len(call.Args) > 3:
+				// The paths follow ctx, req and resp.
+				for _, arg := range call.Args[3:] {
+					if info := attrAtPath(schema, pathExprToDotted(arg)); info != nil {
+						info.VolatileOnUpdate = true
+					}
+				}
 			}
 			return true
 		})
@@ -516,6 +536,13 @@ func isRequiresReplaceWhenClearedCall(call *ast.CallExpr) bool {
 	}
 	ident, ok := fun.(*ast.Ident)
 	return ok && ident.Name == "requiresReplaceWhenCleared"
+}
+
+// isVolatileHelperCall reports whether a call expression targets the
+// planVolatileAttributesUnknownOnUpdate helper.
+func isVolatileHelperCall(call *ast.CallExpr) bool {
+	ident, ok := call.Fun.(*ast.Ident)
+	return ok && ident.Name == "planVolatileAttributesUnknownOnUpdate"
 }
 
 // pathExprToDotted converts a terraform-plugin-framework path expression like
@@ -555,6 +582,36 @@ func pathExprToDotted(expr ast.Expr) string {
 			return ""
 		}
 	}
+}
+
+// findDirectSchemaAssignment returns the generated schema function of a
+// Schema() method that assigns it directly:
+// resp.Schema = resource_xxx.XxxResourceSchema(ctx).
+func findDirectSchemaAssignment(fn *ast.FuncDecl) string {
+	for _, stmt := range fn.Body.List {
+		assign, ok := stmt.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			continue
+		}
+		if sel, ok := assign.Lhs[0].(*ast.SelectorExpr); !ok || sel.Sel.Name != "Schema" {
+			continue
+		}
+		call, ok := assign.Rhs[0].(*ast.CallExpr)
+		if !ok {
+			continue
+		}
+		var name string
+		switch f := call.Fun.(type) {
+		case *ast.SelectorExpr:
+			name = f.Sel.Name
+		case *ast.Ident:
+			name = f.Name
+		}
+		if strings.HasSuffix(name, "ResourceSchema") {
+			return name
+		}
+	}
+	return ""
 }
 
 // findBaseSchemaCall finds the call to the generated schema function in a Schema()
@@ -923,6 +980,23 @@ func markRequiresReplaceOnClear(schema *SchemaInfo, path string) {
 	}
 }
 
+// attrAtPath returns the attribute at a dotted path in the schema, or nil if
+// the path is empty or does not exist.
+func attrAtPath(schema *SchemaInfo, path string) *AttrInfo {
+	if path == "" {
+		return nil
+	}
+	attrs := schema.Attrs
+	var info *AttrInfo
+	for seg := range strings.SplitSeq(path, ".") {
+		if info = attrs[seg]; info == nil {
+			return nil
+		}
+		attrs = info.NestedAttrs
+	}
+	return info
+}
+
 // isSchemaAttributes checks if an expression is schemaVar.Attributes
 // (e.g., s.Attributes).
 func isSchemaAttributes(expr ast.Expr, schemaVar string) bool {
@@ -997,6 +1071,7 @@ func cloneAttrInfo(src *AttrInfo) *AttrInfo {
 		DefaultValue:           src.DefaultValue,
 		NotClearable:           src.NotClearable,
 		RequiresReplaceOnClear: src.RequiresReplaceOnClear,
+		VolatileOnUpdate:       src.VolatileOnUpdate,
 	}
 	if len(src.PlanModifiers) > 0 {
 		dst.PlanModifiers = make([]string, len(src.PlanModifiers))
