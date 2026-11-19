@@ -223,17 +223,17 @@ func (v budgetTypeEndPeriodValidator) ValidateResource(ctx context.Context, req 
 	}
 }
 
-// budgetAlertsLengthValidator validates that alerts list has 1-3 items when specified.
-// Empty alerts are not allowed because the API ignores empty lists and applies default alerts;
-// requiring 1-3 alerts or omitting the attribute avoids unexpected API-side defaults.
+// budgetAlertsLengthValidator validates that alerts list has at most 3 items when specified.
+// An empty list is valid: the API stores it as "no alerts", and a budget created without
+// alerts reads back as [], which -generate-config-out writes into the configuration.
 type budgetAlertsLengthValidator struct{}
 
 func (v budgetAlertsLengthValidator) Description(_ context.Context) string {
-	return "Validates that alerts list has 1-3 items when specified"
+	return "Validates that alerts list has at most 3 items when specified"
 }
 
 func (v budgetAlertsLengthValidator) MarkdownDescription(_ context.Context) string {
-	return "Validates that `alerts` list has 1-3 items when specified"
+	return "Validates that `alerts` list has at most 3 items when specified"
 }
 
 func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -247,15 +247,6 @@ func (v budgetAlertsLengthValidator) ValidateResource(ctx context.Context, req r
 	}
 
 	if alerts.IsNull() || alerts.IsUnknown() {
-		return
-	}
-
-	if len(alerts.Elements()) == 0 {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("alerts"),
-			"Invalid Alerts Configuration",
-			"Budget alerts cannot be empty. Specify 1-3 alerts or omit the attribute.",
-		)
 		return
 	}
 

@@ -209,10 +209,7 @@ resource "terraform_data" "amount" {
 // = 0, and must pass the seasonal validators.
 func TestAccBudget_SeasonalImport(t *testing.T) {
 	name := fmt.Sprintf("test-seasonal-import-%d", acctest.RandInt())
-	// alerts is set because a budget without alerts reads back alerts = [],
-	// which budgetAlertsLengthValidator rejects in generated configuration
-	// (#482).
-	config := testAccBudgetLifecycleConfig(name, "  seasonal_amounts = "+budgetMonthlySeasonal+"\n  alerts = [{ percentage = 80 }]")
+	config := testAccBudgetLifecycleConfig(name, "  seasonal_amounts = "+budgetMonthlySeasonal)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ExternalProviders:        budgetTimeProvider(),
