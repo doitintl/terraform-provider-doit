@@ -730,7 +730,7 @@ func lbcModifyPlan(ctx context.Context, t *testing.T, state, plan, config map[st
 		req.State = tfsdk.State(buildReportConfigWithMap(ctx, t, state))
 	}
 
-	resp := &resource.ModifyPlanResponse{}
+	resp := &resource.ModifyPlanResponse{Plan: req.Plan}
 	(&reportResource{}).ModifyPlan(ctx, req, resp)
 	return resp
 }

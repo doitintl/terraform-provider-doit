@@ -57,6 +57,7 @@ linters:
     - retrystatus
     - testserver
     - zerocount
+    - modifyplanresp
     - clearableattr
     - validatorshape
     - validatordefer
@@ -128,7 +129,8 @@ linters:
           - attrswitch
           - modernize
       # Test files — exclude custom linters. paralleltest, retrypolicy,
-      # testserver and zerocount are absent deliberately: they only apply to tests.
+      # testserver, zerocount and modifyplanresp are absent deliberately: they
+      # only apply to tests.
       - path: _test\.go
         linters:
           - overlaycheck
@@ -316,6 +318,9 @@ linters:
       zerocount:
         type: "module"
         description: "Flags TestCheckResourceAttr zero-count checks (.# / .%) that also pass for null attributes."
+      modifyplanresp:
+        type: "module"
+        description: "Flags resource.ModifyPlanResponse values in tests that are built without a Plan."
       clearableattr:
         type: "module"
         description: "Ensures Optional+Computed attributes without Default are explicitly classified as clearable or not."

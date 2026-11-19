@@ -15,6 +15,7 @@ import (
 	"github.com/doitintl/terraform-provider-doit/tools/linters/interfacestyle"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/listnullread"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/methodreceiver"
+	"github.com/doitintl/terraform-provider-doit/tools/linters/modifyplanresp"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/newexpr"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlaycheck"
 	"github.com/doitintl/terraform-provider-doit/tools/linters/overlayinvariant"
@@ -66,6 +67,10 @@ func init() {
 	register.Plugin("testserver", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{testserver.Analyzer}}, nil
 	})
+	register.Plugin("modifyplanresp", func(_ any) (register.LinterPlugin, error) {
+		return &analyzerPlugin{analyzers: []*analysis.Analyzer{modifyplanresp.Analyzer}}, nil
+	})
+
 	register.Plugin("zerocount", func(_ any) (register.LinterPlugin, error) {
 		return &analyzerPlugin{analyzers: []*analysis.Analyzer{zerocount.Analyzer}}, nil
 	})
