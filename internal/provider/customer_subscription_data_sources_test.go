@@ -68,6 +68,45 @@ func testAccCheckCustomerSubscriptionsListContains(dataAddr, resourceAddr string
 	}
 }
 
+// testAccCheckCustomerSubscriptionsResumedAfter checks that the data source
+// started at the page token of the first page: it has at least one item, its
+// row_count covers at least our two subscriptions, and it does not repeat the
+// item of the first page.
+func testAccCheckCustomerSubscriptionsResumedAfter(resumedAddr, firstPageAddr string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resumed, ok := s.RootModule().Resources[resumedAddr]
+		if !ok {
+			return fmt.Errorf("data source %s not found", resumedAddr)
+		}
+		first, ok := s.RootModule().Resources[firstPageAddr]
+		if !ok {
+			return fmt.Errorf("data source %s not found", firstPageAddr)
+		}
+		attrs := resumed.Primary.Attributes
+		rowCount, err := strconv.Atoi(attrs["row_count"])
+		if err != nil {
+			return fmt.Errorf("row_count = %q: %w", attrs["row_count"], err)
+		}
+		if rowCount < 2 {
+			return fmt.Errorf("row_count = %d, want at least 2", rowCount)
+		}
+		n, err := strconv.Atoi(attrs["items.#"])
+		if err != nil {
+			return fmt.Errorf("items.# = %q: %w", attrs["items.#"], err)
+		}
+		if n < 1 {
+			return fmt.Errorf("no items after the page token")
+		}
+		firstID := first.Primary.Attributes["items.0.id"]
+		for i := range n {
+			if attrs[fmt.Sprintf("items.%d.id", i)] == firstID {
+				return fmt.Errorf("item %d repeats the item %s of the first page", i, firstID)
+			}
+		}
+		return nil
+	}
+}
+
 func TestAccCustomerSubscriptionDataSource_Basic(t *testing.T) {
 	rName := acctest.RandomWithPrefix("tf-acc-csub-ds")
 	// The API lowercases emails; the data source returns its spelling.
@@ -245,6 +284,7 @@ data "doit_customer_subscriptions" "from_token" {
 `
 	const paged = "data.doit_customer_subscriptions.paged"
 	const all = "data.doit_customer_subscriptions.all"
+	const fromToken = "data.doit_customer_subscriptions.from_token"
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
@@ -259,9 +299,10 @@ data "doit_customer_subscriptions" "from_token" {
 					resource.TestCheckResourceAttr(paged, "items.#", "1"),
 					resource.TestCheckResourceAttr(paged, "max_results", "1"),
 					resource.TestCheckResourceAttrSet(paged, "page_token"),
-					// Starting at a token fetches only the rest, but row_count is
-					// still the API's total across all pages.
-					resource.TestCheckResourceAttrPair("data.doit_customer_subscriptions.from_token", "row_count", paged, "row_count"),
+					// Starting at a token fetches only the rest. row_count is the
+					// API's tenant-wide total, which other tests change
+					// concurrently, so it is only bounded from below.
+					testAccCheckCustomerSubscriptionsResumedAfter(fromToken, paged),
 					// Auto mode fetches both of ours, however many pages that takes.
 					testAccCheckCustomerSubscriptionsListContains(all, testAccCustomerSubscriptionAddr, 1),
 					testAccCheckCustomerSubscriptionsListContains(all, "doit_customer_subscription.that", 1),
