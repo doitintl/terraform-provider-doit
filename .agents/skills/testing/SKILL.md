@@ -80,6 +80,7 @@ See `.envrc.example` for the full list. Key variables:
 | Variable           | Description                             |
 | ------------------ | --------------------------------------- |
 | `TF_ACC`           | Set to `1` to enable acceptance tests   |
+| `TF_ACC_SWEEP`     | Set to `1` to sweep `TEST_USER`'s allocations after the run; set only by `make testacc`, `make testacc-run` and the CI acceptance job |
 | `DOIT_API_TOKEN`   | Your DoiT API token                     |
 | `DOIT_HOST`        | API host (e.g., `https://api.doit.com`) |
 | `TEST_USER`        | Email for test budget collaborators     |
@@ -101,10 +102,14 @@ make test          # full credential-free unit suite (clears TF_ACC and DOIT_* e
 ```
 
 Targeted unit tests (which need no API env) may use `go test` directly — the
-"use Makefile targets" rule exists for acceptance tests that load `.envrc.local`:
+"use Makefile targets" rule exists for acceptance tests that load `.envrc.local`.
+Direct `go test` runs the post-run allocation sweep only if `TF_ACC_SWEEP` is set
+(the acceptance targets set it; it is not part of `.envrc.example`). If your shell
+exports `TF_ACC` or `TF_ACC_SWEEP` together with live credentials, unset both so no
+acceptance test runs and nothing is swept on the tenant:
 
 ```bash
-go test ./internal/provider/ -run 'TestReportTimestampValidator|TestToExternalConfig'
+env -u TF_ACC -u TF_ACC_SWEEP go test ./internal/provider/ -run 'TestReportTimestampValidator|TestToExternalConfig'
 ```
 
 ### Gotcha: adding a field to a generated nested object breaks `NewXxxValue` callers
@@ -333,6 +338,7 @@ Templates from the attribution-report guard (`internal/provider/attribution_vali
 - **Decision table.** As for validators (see [implement-validator](../implement-validator/SKILL.md)), a helper that reads config, plan and state needs a table test over null, unknown and known config values against each attribute class: Required, Optional, Optional+Computed without and with a clearing modifier, Computed-only, and an attribute with a schema `Default`. A table like this catches two bugs a happy-path test missed: element pairing that treated unknown and omitted values as wildcards, and a false "Duplicate Set Elements" error for unknown values.
 - **Generic set code needs permutations.** Run every element order, elements that overlap in omitted or unknown values, and new and removed elements. First-fit matching passed 2 of the 4 orders of a two-element case.
 - **Plan modifiers: fill the whole request.** `planmodifier.*Request` carries the attribute's `ConfigValue`/`PlanValue`/`StateValue` and also the full `Config`, `Plan` and `State` that the modifier reads siblings from. Set both, consistently: a modifier that calls `req.Plan.GetAttribute` never looks at `PlanValue`, and an empty `tfsdk.Plan` makes it read nothing or fail. Cover create (state null) and update, and a row where the sibling path is missing, to see that the modifier returns an error instead of a silent null.
+- **Seed the response plan in `ModifyPlan` tests.** The framework hands `ModifyPlan` a response whose `Plan` is the request plan, so build it the same way: `&resource.ModifyPlanResponse{Plan: req.Plan}` (or `tfsdk.Plan{Schema: s, Raw: planRaw.Copy()}`). An empty `&resource.ModifyPlanResponse{}` works only while `ModifyPlan` never touches `resp.Plan`. In #483 it panicked as soon as `doit_budget`'s `ModifyPlan` started writing to it. The `modifyplanresp` linter flags a response built without `Plan` in test files.
 - **Give each row inputs shaped like the framework's.** The config, plan and state of a row must be what Terraform would hand the helper for that row: a configured value is planned as that value, and an omitted Optional+Computed or Computed value is unknown only when nothing supplies a known one. It keeps the prior value when nothing else in the plan changes, takes a schema `Default`, or takes the value an earlier plan modifier proposed (see [Pin the real plan shape](#pin-the-real-plan-shape-for-modifyplan-logic)). Give a row each shape that can occur, not just unknown. One fixed plan for every row (for example always unknown) leaves the rows where the plan is known untested, and a "left alone" row cannot fail. Use populated values, and make the prior state differ from the plan: with all-null objects, a helper that copies the state into the plan or clears a field produces the same value and goes unnoticed.
 - **Assert the exact output, not a class of it.** Compare with a freshly built expected value. `IsUnknown()` or `!IsNull()` passes when a helper overwrites a known value with another of the same class, and `len(paths) == 1 && paths[0] == p` reduced to a boolean passes a wrong or extra path on a row that expects none. A negative row asserts the empty result (no replace paths, no diagnostics); a positive row asserts exactly the expected result. For a planned set or object, compare the complete plan (the fresh defaults plus the row's expected overrides), not only the attributes the row is about: otherwise a wrong sibling attribute or an extra element passes.
 - **Prove the table can fail.** Before pushing a new table, mutate the code under test (weaken its condition, make it overwrite a known value, add an extra output) and check that at least one row fails, then revert. Run the unmutated baseline in the same session: a row whose expectation is wrong shows up there.
@@ -363,7 +369,9 @@ the generated config.
 - The step fails if the generated configuration does not validate or does not
   plan as a no-op import. No `ImportStateVerify` is needed.
 - Use the test whose config sets the most Optional attributes (a group, not a
-  minimal single).
+  minimal single), and run the step on a minimal configuration too. Omitted lists
+  read back as `[]` and end up in the generated configuration, which a validator
+  may reject (#482); a full configuration never exercises that.
 - For a resource whose test imports a pre-existing object that the test config
   already declares (`doit_customer`, `doit_asset`), append the step after the
   existing import and drift checks, with the import ID and no
@@ -544,7 +552,7 @@ func getAlertCount(t *testing.T) int {
 - [ ] Add drift verification step (`ExpectEmptyPlan()`)
 - [ ] Every clearable attribute: also clear it in the same step as a sibling change (a nested leaf: also remove the whole parent object)
 - [ ] Clearing modifier below an Optional+Computed wrapper that is preserved on omission: test the wrapper omitted (declare the resource without it, change the value through the API in `PreConfig`, expect an empty plan)
-- [ ] Add the `GenerateConfig` import-block step to the import test
+- [ ] Add the `GenerateConfig` import-block step to the import test, on a full and on a minimal configuration
 - [ ] Cover empty lists and omitted attributes
 - [ ] For `ModifyPlan` logic reading omitted/computed values, pin the real plan shape with plan checks
 - [ ] Build expected values fresh, never from the input the code under test received

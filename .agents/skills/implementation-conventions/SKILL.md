@@ -296,6 +296,10 @@ defer cancel()
 Use the matching constant for each operation: `DefaultCreateTimeout`, `DefaultReadTimeout`,
 `DefaultUpdateTimeout`, `DefaultDeleteTimeout`.
 
+> `resp.Diagnostics.HasError()` is the right check at an entry point like this. A helper
+> that runs after other independent helpers (a validator) checks only the diagnostics of
+> its own call instead; see [implement-validator](../implement-validator/SKILL.md#ordering-and-helpers).
+
 ### For Data Sources
 
 Same pattern, simpler — only Read timeout. Use `datasource/timeouts` import (not `resource/timeouts`).

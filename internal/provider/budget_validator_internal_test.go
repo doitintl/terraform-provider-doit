@@ -442,6 +442,67 @@ func TestBudgetScopeNAValidator_UnknownElement(t *testing.T) {
 	}
 }
 
+func TestBudgetAlertsLengthValidator(t *testing.T) {
+	ctx := t.Context()
+	schema := resource_budget.BudgetResourceSchema(ctx)
+	schemaType := schema.Type().TerraformType(ctx)
+	objType, ok := schemaType.(tftypes.Object)
+	if !ok {
+		t.Fatalf("expected schema to be tftypes.Object, got %T", schemaType)
+	}
+	alertsType := objType.AttributeTypes["alerts"]
+	elemType := alertsType.(tftypes.List).ElementType
+
+	alert := func() tftypes.Value {
+		attrs := map[string]tftypes.Value{}
+		for name, attrType := range elemType.(tftypes.Object).AttributeTypes {
+			attrs[name] = tftypes.NewValue(attrType, nil)
+		}
+		return tftypes.NewValue(elemType, attrs)
+	}
+	alertsOf := func(n int) tftypes.Value {
+		elems := make([]tftypes.Value, n)
+		for i := range elems {
+			elems[i] = alert()
+		}
+		return tftypes.NewValue(alertsType, elems)
+	}
+
+	tests := []struct {
+		name          string
+		alerts        tftypes.Value
+		expectedError bool
+	}{
+		{"Null passes", tftypes.NewValue(alertsType, nil), false},
+		{"Unknown passes", tftypes.NewValue(alertsType, tftypes.UnknownValue), false},
+		{"Empty list passes", alertsOf(0), false},
+		{"One alert passes", alertsOf(1), false},
+		{"Three alerts pass", alertsOf(3), false},
+		{"Four alerts fail", alertsOf(4), true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attrValues := make(map[string]tftypes.Value, len(objType.AttributeTypes))
+			for name, attrType := range objType.AttributeTypes {
+				attrValues[name] = tftypes.NewValue(attrType, nil)
+			}
+			attrValues["alerts"] = tt.alerts
+
+			req := resource.ValidateConfigRequest{Config: tfsdk.Config{
+				Schema: schema,
+				Raw:    tftypes.NewValue(schemaType, attrValues),
+			}}
+			resp := &resource.ValidateConfigResponse{}
+			budgetAlertsLengthValidator{}.ValidateResource(ctx, req, resp)
+
+			if resp.Diagnostics.HasError() != tt.expectedError {
+				t.Errorf("expected error=%v, got diagnostics: %v", tt.expectedError, resp.Diagnostics)
+			}
+		})
+	}
+}
+
 type testSlackChannelConfig struct {
 	id         attr.Value
 	customerID attr.Value

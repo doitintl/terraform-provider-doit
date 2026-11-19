@@ -13,6 +13,7 @@ Use this skill whenever adding or changing validation of Terraform configuration
 - Use a resource, data-source, or provider `ConfigValidator` when validity depends on multiple attributes.
 - Put resource-specific validators in `<resource>_validator.go` or `<resource>_validators.go`. Shared resource/data-source helpers belong in the existing shared validator file.
 - Add compile-time interface checks for configuration validators.
+- Use a state-aware `ModifyPlan` check when the rule applies to the stored object merged with the request (see [Rules on the Merged Result Need State](#rules-on-the-merged-result-need-state)); a config validator cannot see state.
 
 ## Canonical Unknown-Safe Shapes
 
@@ -71,9 +72,29 @@ A Boolean `hasUnknown` flag may replace the counter. The uncertainty update and 
 - Do not put Terraform state predicates in switches or closures. Business-only switches are allowed after the relevant values are known.
 - Any helper that receives Terraform values and emits diagnostics must establish its own null/unknown guards. Never rely on a caller's facts.
 - If one large validator checks independent attributes, extract self-guarding diagnostic helpers so one unknown attribute does not suppress unrelated definite errors.
+- Each independent helper checks the diagnostics of its own `GetAttribute` call, never `resp.Diagnostics.HasError()`:
+
+  ```go
+  var amount types.Float64
+  diags := req.Config.GetAttribute(ctx, path.Root("amount"), &amount)
+  resp.Diagnostics.Append(diags...)
+  if diags.HasError() {
+      return
+  }
+  ```
+
+  `resp.Diagnostics.HasError()` is right at an entry point (a CRUD method) but wrong in a helper that runs after others: the first reported error makes every later helper return, so only one of several independent errors is shown. Reference: `validateBudgetSeasonalAmount` and its siblings in `budget_validator.go`.
 - Track "seen yet" with a separate `bool` when the zero value is a legal value. `first := ""` as "no id seen yet" skips an empty id listed first but reports it listed second. See `first`/`haveFirst` in `validateAttributionTierRefsSameID` (`report_validator.go`).
 
 `validatorshape` enforces these control-flow forms. `validatordefer` consumes the verified form and detects unsafe presence and collection-count diagnostics.
+
+## Rules on the Merged Result Need State
+
+Some API rules apply to the current object merged with the PATCH request, for example "removing `seasonalAmounts` requires `amount` or `use_prev_spend` in the same request". Whether the rule is broken depends on what is stored, so a config validator cannot decide it. Put a state-aware check in `ModifyPlan` (`validateBudgetSeasonalRemoval`, `budget_validator.go`).
+
+- List the transitions before writing it: X→Y, Y→X, removal alone, removal together with another change, and the no-op. Test each one (unit tests with framework-shaped plan, state and config, plus an acceptance case for the rejected ones).
+- Read the configuration, not the plan, to tell an omitted attribute from a configured one (see [Guards that read an omitted Optional+Computed attribute](../implement-resource/SKILL.md#guards-that-read-an-omitted-optionalcomputed-attribute-in-modifyplan)).
+- Skip on create (no state) and defer on unknown values, as in the shapes above.
 
 ## Null Elements in Collections
 
@@ -90,9 +111,10 @@ A Boolean `hasUnknown` flag may replace the counter. The uncertainty update and 
 - Construct generated nested values only with generated `NewXxxValue`, `NewXxxValueMust`, `NewXxxValueNull`, or `NewXxxValueUnknown` constructors.
 - Cover the full null/unknown/known decision table, including unknown collection elements before and after known-invalid elements.
 - Assert diagnostic count, error/warning severity, exact summary, and attribute path when present. Also preserve known-valid and known-invalid behavior.
+- Include one row that triggers every independent error at once and assert all of them are reported. A helper that checks `resp.Diagnostics.HasError()` instead of its own diagnostics passes every single-error row and fails only this one.
 - Test a legal zero value (e.g. an empty string) in both first and later positions; the result must not depend on order.
 - When a data source derives its schema from a resource's (as `doit_report_query` does), pin its value lists with a test that checks them against the resource's, as `TestReportQueryAttributionValuesExtendReportResource` does.
-- A validator must accept every value Read can write to state (empty lists, API-filled defaults): `-generate-config-out` copies state into configuration. #440's `attachments = []` on a commitment entry was rejected this way; the `GenerateConfig` import step in the resource's import test catches it.
+- A validator must accept every value Read can write to state (empty lists, API-filled defaults): `-generate-config-out` copies state into configuration. #440's `attachments = []` on a commitment entry was rejected this way; the `GenerateConfig` import step in the resource's import test catches it. Run that step on a minimal configuration too: omitted lists read back as `[]` and only show up there (see [testing](../testing/SKILL.md#generated-import-configuration)).
 - Add a plan-only acceptance regression when the bug requires Terraform evaluation to produce the unknown value.
 
 ## Verification

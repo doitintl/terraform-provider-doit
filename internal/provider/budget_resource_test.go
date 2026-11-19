@@ -571,6 +571,43 @@ func TestAccBudget_Import(t *testing.T) {
 	})
 }
 
+// TestAccBudget_ImportWithoutAlerts imports a budget created without alerts.
+// It reads back alerts = [], which the generated configuration contains and
+// the alerts validator must accept (#482).
+func TestAccBudget_ImportWithoutAlerts(t *testing.T) {
+	name := fmt.Sprintf("test-import-no-alerts-%d", acctest.RandInt())
+	config := testAccBudgetLifecycleConfig(name, "  amount = 100")
+
+	resource.ParallelTest(t, resource.TestCase{
+		ExternalProviders:        budgetTimeProvider(),
+		ProtoV6ProviderFactories: testAccProvidersProtoV6Factories,
+		PreCheck:                 testAccPreCheckFunc(t),
+		TerraformVersionChecks:   testAccTFVersionChecks,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("doit_budget.this", tfjsonpath.New("alerts"), knownvalue.ListExact([]knownvalue.Check{})),
+				},
+			},
+			{
+				ResourceName:      "doit_budget.this",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// Import has no prior state to keep the aliased scope type
+				// (see TestAccBudget_Import).
+				ImportStateVerifyIgnore: []string{"scopes.0.id", "scopes.0.type"},
+			},
+			{
+				ResourceName:    "doit_budget.this",
+				ImportState:     true,
+				ImportStateKind: resource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
+		},
+	})
+}
+
 func TestAccBudget_Scopes(t *testing.T) {
 	n := acctest.RandInt()
 
@@ -1394,17 +1431,18 @@ func TestAccBudget_ListAttributes_AlertsAndRecipients(t *testing.T) {
 				},
 			},
 			// Test 2: Empty alerts=[] and recipients=[]
-			// Both are blocked by validators - API doesn't support empty lists for these.
+			// recipients=[] is blocked by its validator (the API requires a recipient);
+			// alerts=[] is valid.
 			{
 				Config:      testAccBudgetWithEmptyAlertsAndRecipients(n + 1),
 				ExpectError: regexp.MustCompile(`Invalid Alerts Configuration|Invalid Recipients Configuration|cannot be empty`),
 			},
 			// Test 3: Omitted alerts and recipients - API behavior
-			// NOTE: When omitted, API provides default alerts, and adds creator as default recipient
+			// NOTE: When omitted, alerts read back as [], and the API adds creator as default recipient
 			{
 				Config: testAccBudgetNoAlertsOrRecipients(n + 2),
 				ConfigStateChecks: []statecheck.StateCheck{
-					// API provides default alerts when omitted
+					// Omitted alerts read back as an empty list
 					statecheck.ExpectKnownValue(
 						"doit_budget.this",
 						tfjsonpath.New("alerts"),
