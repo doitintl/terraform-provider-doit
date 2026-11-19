@@ -434,9 +434,11 @@ func TestRequiresReplaceWhenCleared(t *testing.T) {
 		t.Run("config "+string(tt.config)+", state "+string(tt.state), func(t *testing.T) {
 			req := resource.ModifyPlanRequest{
 				Config: tfsdk.Config{Schema: s, Raw: raw(tt.config)},
-				State:  tfsdk.State{Schema: s, Raw: raw(tt.state)},
+				// thing is Optional, so the plan holds the configured value.
+				Plan:  tfsdk.Plan{Schema: s, Raw: raw(tt.config)},
+				State: tfsdk.State{Schema: s, Raw: raw(tt.state)},
 			}
-			resp := &resource.ModifyPlanResponse{}
+			resp := &resource.ModifyPlanResponse{Plan: req.Plan}
 
 			requiresReplaceWhenCleared[types.String](ctx, req, resp, thing)
 

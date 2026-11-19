@@ -1138,7 +1138,7 @@ func TestReportResource_ModifyPlan_CumulativeComparisonInherited(t *testing.T) {
 		Config: configCfg,
 		Plan:   plan,
 	}
-	resp := &resource.ModifyPlanResponse{}
+	resp := &resource.ModifyPlanResponse{Plan: req.Plan}
 
 	r.ModifyPlan(ctx, req, resp)
 
@@ -1180,7 +1180,7 @@ func TestReportResource_ModifyPlan_CumulativeComparisonOmittedSecondaryTimeRange
 		Plan:   tfsdk.Plan(buildReportConfigWithMap(ctx, t, planMap)),
 		Config: buildReportConfigWithMap(ctx, t, configMap),
 	}
-	resp := &resource.ModifyPlanResponse{}
+	resp := &resource.ModifyPlanResponse{Plan: req.Plan}
 	(&reportResource{}).ModifyPlan(ctx, req, resp)
 
 	for _, d := range resp.Diagnostics.Errors() {
@@ -1226,7 +1226,7 @@ func TestReportResource_ModifyPlan_ExplicitUnknownLayoutDeferred(t *testing.T) {
 		Config: cfg,
 		Plan:   plan,
 	}
-	resp := &resource.ModifyPlanResponse{}
+	resp := &resource.ModifyPlanResponse{Plan: req.Plan}
 
 	r.ModifyPlan(ctx, req, resp)
 
@@ -1985,7 +1985,7 @@ func TestReportResource_ModifyPlan_NameOnlyConfigPreservesWrapper(t *testing.T) 
 				Config: configCfg,
 				Plan:   tfsdk.Plan(stateCfg),
 			}
-			mpResp := &resource.ModifyPlanResponse{}
+			mpResp := &resource.ModifyPlanResponse{Plan: mpReq.Plan}
 			(&reportResource{}).ModifyPlan(ctx, mpReq, mpResp)
 			if mpResp.Diagnostics.HasError() {
 				t.Fatalf("ModifyPlan returned unexpected error: %v", mpResp.Diagnostics)
@@ -2040,7 +2040,7 @@ func TestReportCustomTimeRangeModeValidator_TwoPhaseCreateAndUpdate(t *testing.T
 			Config: configCfg,
 			Plan:   tfsdk.Plan(configCfg),
 		}
-		mpResp := &resource.ModifyPlanResponse{}
+		mpResp := &resource.ModifyPlanResponse{Plan: mpReq.Plan}
 		(&reportResource{}).ModifyPlan(ctx, mpReq, mpResp)
 		return mpResp.Diagnostics
 	}
@@ -2181,7 +2181,7 @@ func TestReportCountAggregationValidator_TwoPhaseCreateAndUpdate(t *testing.T) {
 			Config: configCfg,
 			Plan:   tfsdk.Plan(configCfg),
 		}
-		mpResp := &resource.ModifyPlanResponse{}
+		mpResp := &resource.ModifyPlanResponse{Plan: mpReq.Plan}
 		(&reportResource{}).ModifyPlan(ctx, mpReq, mpResp)
 		return mpResp.Diagnostics
 	}
